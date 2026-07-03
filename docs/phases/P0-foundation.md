@@ -54,4 +54,12 @@ None this phase.
 - Icons can be ugly placeholders; do not spend time on them (design phase later).
 
 ## Notes / deviations
-_(filled during execution)_
+
+- **2026-07-03 (Sonnet):** Steps 2–4, 6 done locally; step 5 (auth) built but untestable until a real Supabase project exists; step 7 (deploy) blocked on Cloudflare connection. GitHub repo created + pushed via `gh repo create --private` (Kai approved via AskUserQuestion) — commit `3d04e77`.
+- Toolchain came in newer than expected at plan time: Vite 8, React 19.2, react-router 8, TypeScript ~6.0, Tailwind 4.3, Vitest 4. No API changes needed vs. the plan; noting in case a future session assumes older majors.
+- Persister packages: used `@tanstack/react-query-persist-client` (React provider) + `@tanstack/query-async-storage-persister` (async — required for IndexedDB via idb-keyval; the sync persister only works with localStorage).
+- Placeholder PWA icons are plain solid-color squares (192/512, valid PNGs) — a PowerShell `System.Drawing.Font` overload issue dropped the "K" glyph; cosmetically irrelevant per this phase's scope, will be replaced in the design phase anyway.
+- Browser preview verification: sign-in page confirmed via `preview_snapshot` (correct DOM/text) and `preview_inspect` (Tailwind classes applying, e.g. `max-w-sm` → 384px) and clean `preview_console_logs`. `preview_screenshot` timed out twice (tool-side flakiness, not an app error) — not blocking.
+- Added a `kais-flow` entry to the shared `D:\Coding\.claude\launch.json` (port 5193) without touching the other projects' entries.
+
+**Next session must do, in order:** (1) `[KAI]` finish Supabase project / Groq key / Cloudflare Pages per step 1 and hand back Supabase URL + anon key; (2) `supabase link --project-ref <ref>` + `supabase db push` to apply migration 0001; (3) replace `app/.env` placeholders with real values; (4) `supabase secrets set GROQ_API_KEY=...` (not needed until P2, but fine to set now); (5) `[KAI]` create the single auth user in the Supabase dashboard (no sign-up UI by design); (6) connect Cloudflare Pages to the `kais-flow` GitHub repo (root `app/`, build `npm run build`, output `dist`, env vars `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`) and push to trigger the first deploy; (7) re-run the full acceptance checklist against the live deployment (installability, offline shell, login persistence) before marking P0 done.
