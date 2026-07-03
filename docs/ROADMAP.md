@@ -2,9 +2,9 @@
 
 > **Single source of truth for "where are we".** Update the status column after every working session. Parity rows refer to the feature parity matrix in `PLAN.md` §3.
 
-## ➤ Current phase: **P0 — Foundation** (in progress — blocked on 3 dashboard steps)
+## ➤ Current phase: **P0 — Foundation** (in progress — deployed, one item left)
 
-Local scaffold done, repo live at [github.com/khairyKY/kais-flow](https://github.com/khairyKY/kais-flow) (private). Supabase project linked, migration 0001 applied, Groq key stored as an edge-function secret. **Remaining blockers (all `[KAI]`, all dashboard clicks):** (1) anon key from Project Settings → API, (2) create the single auth user under Authentication → Users, (3) connect Cloudflare Pages to the repo (root `app/`, branch `master`, build `npm run build`, output `dist`). See `phases/P0-foundation.md` Notes for full detail.
+Live at **https://kais-flow.kaidagoat.workers.dev** (Cloudflare Workers static assets, git-connected to `master`, `kaidagoat` account subdomain registered). Supabase linked, migration 0001 applied, Groq key stored server-side, anon key wired into both the app and Cloudflare's build variables. Verified directly: title, manifest, PWA registration, and SPA fallback routing all correct on the live deployment. **Last blocker:** confirm the Supabase auth user exists and sign-in actually works end to end (last test came back `invalid_credentials` — see `phases/P0-foundation.md` Notes). Once that's confirmed, run the remaining P0 acceptance items (installability, offline shell) and mark the phase done.
 
 | Phase | Name | Status | Depends on | Spec | Parity rows |
 |---|---|---|---|---|---|
