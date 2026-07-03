@@ -1,0 +1,24 @@
+# Node / Vite (app/ has its own too, but keep the root safe by default)
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Env secrets
+.env
+!.env.example
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
