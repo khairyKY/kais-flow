@@ -9,6 +9,8 @@ const navItems = [
   { to: '/inbox', label: 'Inbox' },
   { to: '/tasks', label: 'Tasks' },
   { to: '/calendar', label: 'Calendar' },
+  { to: '/routines', label: 'Routines' },
+  { to: '/weekly-review', label: 'Review' },
   { to: '/settings', label: 'Settings' },
 ]
 

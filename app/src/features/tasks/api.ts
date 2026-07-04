@@ -4,6 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { deleteEventsForTask } from '../calendar/api'
+import { nextOccurrence } from './recurrence'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -55,9 +56,30 @@ export function createTask(input: CreateTaskInput): Task {
   return task
 }
 
+/** Completing a recurring task materializes its next occurrence as a fresh task. */
 export function completeTask(task: Task): void {
   writeRow('tasks', { ...task, status: 'done', completed_at: nowIso(), top3: false })
   logActivity('task.completed', 'task', task.id, {})
+
+  if (task.recurrence_rule && task.due_at) {
+    const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
+    if (next) {
+      const nextTask: Task = {
+        ...task,
+        id: crypto.randomUUID(),
+        status: 'todo',
+        completed_at: null,
+        due_at: next.toISOString(),
+        scheduled_start: null,
+        scheduled_end: null,
+        top3: false,
+        created_at: nowIso(),
+        updated_at: nowIso(),
+      }
+      writeRow('tasks', nextTask)
+      logActivity('task.created', 'task', nextTask.id, { recurrence_parent: task.id })
+    }
+  }
 }
 
 export function uncompleteTask(task: Task): void {
@@ -103,4 +125,9 @@ export function renameTask(task: Task, title: string): void {
 export function rescheduleDue(task: Task, dueAt: string | null): void {
   writeRow('tasks', { ...task, due_at: dueAt })
   logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+}
+
+export function setRecurrence(task: Task, rule: string | null): void {
+  writeRow('tasks', { ...task, recurrence_rule: rule })
+  logActivity('task.recurrence_set', 'task', task.id, { rule })
 }

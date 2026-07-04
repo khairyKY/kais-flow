@@ -81,3 +81,54 @@ export interface CalendarEvent {
   created_at: string
   updated_at: string
 }
+
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening'
+
+export interface Cadence {
+  weekdays: number[] // 0=Sunday..6=Saturday
+}
+
+export interface Routine {
+  id: string
+  name: string
+  time_of_day: TimeOfDay
+  cadence: Cadence
+  challenge_start: string | null
+  challenge_end: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface RoutineCompletion {
+  id: string
+  routine_id: string
+  completed_on: string // date, YYYY-MM-DD
+  created_at: string
+}
+
+export interface PushSubscriptionRow {
+  id: string
+  endpoint: string
+  keys: Record<string, string>
+  device_label: string | null
+  created_at: string
+}
+
+export interface AppSettings {
+  id: true
+  timezone: string
+  confidence_threshold: number
+  digest_hour: number
+  slipping_default_days: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SlippingRow {
+  entity_type: 'domain' | 'project'
+  entity_id: string
+  entity_name: string
+  last_touch: string
+  days_since: number
+}

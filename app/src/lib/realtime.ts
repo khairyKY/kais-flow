@@ -2,7 +2,15 @@ import { useEffect } from 'react'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 
-const SYNCED_TABLES = ['domains', 'projects', 'tasks', 'inbox_items'] as const
+const SYNCED_TABLES = [
+  'domains',
+  'projects',
+  'tasks',
+  'inbox_items',
+  'calendar_events',
+  'routines',
+  'routine_completions',
+] as const
 
 /** Subscribes once to realtime changes on every synced table and invalidates the matching query cache. */
 export function useRealtimeSync() {

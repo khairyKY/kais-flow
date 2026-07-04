@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import { useDomains, createDomain, renameDomain, mergeDomain } from '../domains/api'
 import { useProjects, createProject } from '../projects/api'
-import { useTasks, createTask, completeTask, uncompleteTask, toggleTop3, snoozeTask, deleteTask } from './api'
+import {
+  useTasks,
+  createTask,
+  completeTask,
+  uncompleteTask,
+  toggleTop3,
+  snoozeTask,
+  deleteTask,
+  setRecurrence,
+} from './api'
 import type { Domain, Task } from '../../lib/types'
 
 function addDays(days: number): string {
@@ -155,6 +164,17 @@ function TaskRow({ task }: { task: Task }) {
       <button type="button" onClick={() => toggleTop3(task)} title="Top-3" className={task.top3 ? 'text-amber-500' : 'text-slate-300'}>
         ★
       </button>
+      <select
+        value={task.recurrence_rule ?? ''}
+        onChange={(e) => setRecurrence(task, e.target.value || null)}
+        title="Repeat"
+        className="rounded border px-1 py-0.5 text-xs text-slate-500"
+      >
+        <option value="">no repeat</option>
+        <option value="FREQ=DAILY">daily</option>
+        <option value="FREQ=WEEKLY">weekly</option>
+        <option value="FREQ=MONTHLY">monthly</option>
+      </select>
       <button type="button" onClick={() => snoozeTask(task, addDays(1))} className="text-xs text-slate-500">
         snooze 1d
       </button>

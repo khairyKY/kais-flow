@@ -9,6 +9,8 @@ import { TodayPage } from './features/today/TodayPage'
 import { InboxPage } from './features/inbox/InboxPage'
 import { TasksPage } from './features/tasks/TasksPage'
 import { CalendarPage } from './features/calendar/CalendarPage'
+import { RoutinesPage } from './features/routines/RoutinesPage'
+import { WeeklyReviewPage } from './features/rituals/WeeklyReviewPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 
 const router = createBrowserRouter([
@@ -26,6 +28,8 @@ const router = createBrowserRouter([
       { path: 'inbox', element: <InboxPage /> },
       { path: 'tasks', element: <TasksPage /> },
       { path: 'calendar', element: <CalendarPage /> },
+      { path: 'routines', element: <RoutinesPage /> },
+      { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },
