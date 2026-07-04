@@ -54,7 +54,7 @@ Kai's Flow's `projects.type` only encodes `standard | retainer` — there's no e
 - `tasks.area_id uuid?` added alongside the existing `project_id`/`domain_id` — a task can belong to a project, an area, or neither (bare domain-level), matching the flexibility the video shows.
 - Areas get their own simple CRUD page (`features/areas/`), same rename/merge affordance as domains (cheap restructuring is Jerad's lesson #1 — apply it here too).
 
-**Slipping consequence (flagged, not separately re-confirmed):** the video explicitly lists Areas alongside Projects as things that can go stale ("it's not just projects, it's also tasks and other areas as well"). Kai's answer to the Slipping-scope question ("no, projects/domains only") was given *before* Areas existed as an option in this conversation — it was answering whether **tasks** should be included, which stays "no." Areas are a natural, low-cost extension of the existing `slipping` view (same last-`activity_log`-touch logic as projects) and match the video's own wording. **Recommendation: extend `slipping` to include `areas`** when this retrofit lands — flagged here for Kai to wave through or veto, not silently assumed.
+**Slipping consequence — decided 2026-07-04:** the video explicitly lists Areas alongside Projects as things that can go stale ("it's not just projects, it's also tasks and other areas as well"). Kai's earlier answer to the Slipping-scope question ("no, projects/domains only") was given *before* Areas existed as an option in this conversation — it was answering whether **tasks** should be included, which stays "no." Kai has since confirmed: **extend `slipping` to include `areas`**, using the same last-`activity_log`-touch logic already applied to projects/domains. Built as part of the areas retrofit — see `docs/phases/P1-P4-retrofit.md` §Steps 3.
 
 **Where this lands:** P1 is marked done, so this is retrofit debt — a small follow-up migration + UI slice, best done as prep work whenever a session picks up P6 (the next not-yet-started phase) or earlier if convenient. Not blocking any other phase.
 
@@ -232,9 +232,10 @@ Row amendment:
 
 ## 15. Retrofit debt at a glance (phases already marked "done" that need follow-up)
 
-| Phase | New work from this addendum |
-|---|---|
-| **P1** | `areas` table + CRUD + `tasks.area_id`; `tasks.reminder_at` + `reminder_offset_min` in `parse-capture` output |
-| **P4** | `notify` gains `task_reminder` kind + cron sweep; routines gain `any_time`/`scheduled_time`/`notify` columns + form UI; new notification-history page reading `activity_log` |
+| Phase | New work from this addendum | Status |
+|---|---|---|
+| **P1** | `areas` table + CRUD + `tasks.area_id`; `tasks.reminder_at` + `reminder_offset_min` in `parse-capture` output | **Scheduled — actioned 2026-07-04.** See `docs/phases/P1-P4-retrofit.md`. |
+| **P4** | `notify` gains `task_reminder` kind + cron sweep; new notification-history page reading `activity_log` | **Scheduled — actioned 2026-07-04**, bundled into the same retrofit batch as the P1 row above. See `docs/phases/P1-P4-retrofit.md`. |
+| **P4** | Routines gain `any_time`/`scheduled_time`/`notify` columns + form UI (§5) | **Still parked** — not selected for the 2026-07-04 retrofit batch; remains open debt for a future session. |
 
-Neither is large — call it half a session each — but both are real gaps against the source material, not optional polish, and should be scheduled deliberately rather than discovered mid-way through a later phase.
+Areas + reminders + notification history are no longer "should be scheduled deliberately" — they are scheduled, as the retrofit phase immediately ahead of P6 (`docs/ROADMAP.md`'s phase table and 2026-07-04 changelog entry). The routines-schema-expansion row (§5) was deliberately left out of that batch and is still open debt.
