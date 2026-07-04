@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
 import { CommandBar } from '../features/command-bar/CommandBar'
+import { ToastHost } from './ToastHost'
 
 const navItems = [
   { to: '/today', label: 'Today' },
@@ -42,6 +43,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <CommandBar />
+      <ToastHost />
     </div>
   )
 }

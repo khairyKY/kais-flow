@@ -3,11 +3,13 @@ import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { createTask } from '../tasks/api'
 import { captureText } from '../inbox/api'
+import { captureWithAI } from '../capture/api'
 import { parseCommand } from './parseCommand'
 
 export function CommandBar() {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
@@ -48,6 +50,14 @@ export function CommandBar() {
     setOpen(false)
   }
 
+  function submitWithAI() {
+    const trimmed = text.trim()
+    if (!trimmed || aiBusy) return
+    setAiBusy(true)
+    setOpen(false)
+    void captureWithAI(trimmed, 'text').finally(() => setAiBusy(false))
+  }
+
   if (!open) return null
 
   return (
@@ -64,13 +74,18 @@ export function CommandBar() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') submit()
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault()
+              submitWithAI()
+            } else if (e.key === 'Enter') {
+              submit()
+            }
           }}
           placeholder="Call Omar tomorrow 3pm #shaheen"
           className="w-full border-b pb-2 text-lg outline-none"
         />
         {text.trim() && (
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             {parsed.dueAt && (
               <span className="rounded bg-slate-100 px-2 py-1">
                 {new Date(parsed.dueAt).toLocaleString()}
@@ -85,6 +100,7 @@ export function CommandBar() {
             {!parsed.dueAt && !parsed.domainId && !parsed.projectId && (
               <span className="rounded bg-amber-100 px-2 py-1 text-amber-700">→ Inbox (unfiled)</span>
             )}
+            <span className="ml-auto text-slate-400">Enter = quick add · Ctrl+Enter = AI capture</span>
           </div>
         )}
       </div>

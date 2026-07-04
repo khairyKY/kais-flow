@@ -1,4 +1,5 @@
 import { useTasks, completeTask, toggleTop3 } from '../tasks/api'
+import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import type { Task } from '../../lib/types'
 
 function startOfToday(): Date {
@@ -48,7 +49,10 @@ export function TodayPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold">Today</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Today</h1>
+        <VoiceCaptureButton />
+      </div>
 
       <section>
         <h2 className="mb-1 text-sm font-semibold text-slate-500">Top 3</h2>
