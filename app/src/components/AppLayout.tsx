@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 import { supabase } from '../lib/supabase'
+import { useRealtimeSync } from '../lib/realtime'
+import { CommandBar } from '../features/command-bar/CommandBar'
 
 const navItems = [
   { to: '/today', label: 'Today' },
@@ -9,6 +11,8 @@ const navItems = [
 ]
 
 export function AppLayout() {
+  useRealtimeSync()
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <nav className="flex shrink-0 border-b md:w-48 md:flex-col md:border-b-0 md:border-r">
@@ -37,6 +41,7 @@ export function AppLayout() {
       <main className="flex-1 p-4">
         <Outlet />
       </main>
+      <CommandBar />
     </div>
   )
 }

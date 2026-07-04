@@ -2,15 +2,15 @@
 
 > **Single source of truth for "where are we".** Update the status column after every working session. Parity rows refer to the feature parity matrix in `PLAN.md` §3.
 
-## ➤ Current phase: **P1 — Task core + sync engine** (not started)
+## ➤ Current phase: **P2 — AI capture** (not started)
 
-**P0 is done.** Live at **https://kais-flow.kaidagoat.workers.dev** (Cloudflare Workers static assets, git-connected to `master`, `kaidagoat` account subdomain registered). Supabase linked, migration 0001 applied, Groq key stored server-side, auth working end-to-end (login → `/today`, session survives a full reload) verified directly in-browser, not just via API. See `phases/P0-foundation.md` Notes for the full story and what's verified vs. inferred from config (Lighthouse/offline-toggle weren't literally run, PWA manifest+SW correctness was).
+**P0 and P1 are done.** Live at **https://kais-flow.kaidagoat.workers.dev**. P1 shipped the full sync engine (outbox + realtime + activity log), domains/projects/tasks CRUD with cheap restructuring (merge domains, re-parent projects), Today (Top-3/due-today/overdue/snooze), manual Inbox triage, and the `Ctrl+K` command bar with local NL parsing (`chrono-node` dates + `#tag` fuzzy domain/project matching). Every acceptance item was verified against the **live** Supabase project (not mocks) — see `phases/P1-task-core.md` Notes, including a real race-condition bug found and fixed in the outbox (a slow in-flight flush could clobber a concurrent enqueue; now everything serializes through one chain, with a regression test).
 
 | Phase | Name | Status | Depends on | Spec | Parity rows |
 |---|---|---|---|---|---|
 | P0 | Foundation | **done** ✅ | — | [P0-foundation.md](phases/P0-foundation.md) | — (infrastructure) |
-| P1 | Task core + sync engine | **not started (current)** | P0 | [P1-task-core.md](phases/P1-task-core.md) | 1–5 |
-| P2 | AI capture | not started | P1 | [P2-ai-capture.md](phases/P2-ai-capture.md) | 6–8 |
+| P1 | Task core + sync engine | **done** ✅ | P0 | [P1-task-core.md](phases/P1-task-core.md) | 1–5 |
+| P2 | AI capture | **not started (current)** | P1 | [P2-ai-capture.md](phases/P2-ai-capture.md) | 6–8 |
 | P3 | Calendar & time-blocking | not started | P1 | [P3-calendar.md](phases/P3-calendar.md) | 9–11 |
 | P4 | Routines & rhythm | not started | P1 (P2 useful) | [P4-routines.md](phases/P4-routines.md) | 12–18 |
 | P5 | AI chat + resurfacing | not started | P2, P4 | [P5-ai-chat.md](phases/P5-ai-chat.md) | 19–20 |

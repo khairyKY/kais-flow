@@ -1,0 +1,103 @@
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
+import { writeRow } from '../../lib/outbox'
+import { logActivity } from '../../lib/activity'
+import type { Task } from '../../lib/types'
+
+const MAX_TOP3 = 3
+
+export function useTasks() {
+  return useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tasks').select('*').order('due_at', { nullsFirst: false })
+      if (error) throw error
+      return data as Task[]
+    },
+  })
+}
+
+function nowIso() {
+  return new Date().toISOString()
+}
+
+export interface CreateTaskInput {
+  title: string
+  domainId?: string | null
+  projectId?: string | null
+  dueAt?: string | null
+}
+
+export function createTask(input: CreateTaskInput): Task {
+  const task: Task = {
+    id: crypto.randomUUID(),
+    project_id: input.projectId ?? null,
+    domain_id: input.domainId ?? null,
+    title: input.title,
+    notes: null,
+    status: 'todo',
+    due_at: input.dueAt ?? null,
+    scheduled_start: null,
+    scheduled_end: null,
+    top3: false,
+    snoozed_until: null,
+    recurrence_rule: null,
+    labels: [],
+    priority: null,
+    completed_at: null,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  }
+  writeRow('tasks', task)
+  logActivity('task.created', 'task', task.id, { title: input.title })
+  return task
+}
+
+export function completeTask(task: Task): void {
+  writeRow('tasks', { ...task, status: 'done', completed_at: nowIso(), top3: false })
+  logActivity('task.completed', 'task', task.id, {})
+}
+
+export function uncompleteTask(task: Task): void {
+  writeRow('tasks', { ...task, status: 'todo', completed_at: null })
+  logActivity('task.reopened', 'task', task.id, {})
+}
+
+export function deleteTask(task: Task): void {
+  writeRow('tasks', task, 'delete')
+  logActivity('task.deleted', 'task', task.id, {})
+}
+
+export function snoozeTask(task: Task, until: string): void {
+  writeRow('tasks', { ...task, snoozed_until: until })
+  logActivity('task.snoozed', 'task', task.id, { until })
+}
+
+export function setLabels(task: Task, labels: string[]): void {
+  writeRow('tasks', { ...task, labels })
+}
+
+export function setPriority(task: Task, priority: number | null): void {
+  writeRow('tasks', { ...task, priority })
+}
+
+/** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. */
+export function toggleTop3(task: Task): void {
+  if (!task.top3) {
+    const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+    const currentTop3Count = tasks.filter((t) => t.top3 && t.id !== task.id).length
+    if (currentTop3Count >= MAX_TOP3) return
+  }
+  writeRow('tasks', { ...task, top3: !task.top3 })
+  logActivity(task.top3 ? 'task.unstarred' : 'task.starred', 'task', task.id, {})
+}
+
+export function renameTask(task: Task, title: string): void {
+  writeRow('tasks', { ...task, title })
+}
+
+export function rescheduleDue(task: Task, dueAt: string | null): void {
+  writeRow('tasks', { ...task, due_at: dueAt })
+  logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+}
