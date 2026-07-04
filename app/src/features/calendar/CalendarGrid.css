@@ -1,0 +1,23 @@
+/* Strip FullCalendar's default look to something plain/neutral until the design phase. */
+.fc {
+  --fc-border-color: #e2e8f0;
+  --fc-today-bg-color: #f8fafc;
+  --fc-now-indicator-color: #0f172a;
+  --fc-event-bg-color: #0f172a;
+  --fc-event-border-color: #0f172a;
+  --fc-button-bg-color: #0f172a;
+  --fc-button-border-color: #0f172a;
+  --fc-button-hover-bg-color: #1e293b;
+  --fc-button-active-bg-color: #1e293b;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fc-event {
+  cursor: pointer;
+}

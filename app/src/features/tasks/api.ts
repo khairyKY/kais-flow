@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { deleteEventsForTask } from '../calendar/api'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -64,7 +65,9 @@ export function uncompleteTask(task: Task): void {
   logActivity('task.reopened', 'task', task.id, {})
 }
 
+/** Deletes the task and any calendar block scheduled for it (caller should confirm first). */
 export function deleteTask(task: Task): void {
+  deleteEventsForTask(task.id)
   writeRow('tasks', task, 'delete')
   logActivity('task.deleted', 'task', task.id, {})
 }

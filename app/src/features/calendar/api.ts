@@ -1,0 +1,91 @@
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
+import { writeRow } from '../../lib/outbox'
+import { logActivity } from '../../lib/activity'
+import type { CalendarEvent, Task } from '../../lib/types'
+
+export function useCalendarEvents() {
+  return useQuery({
+    queryKey: ['calendar_events'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('calendar_events').select('*').order('starts_at')
+      if (error) throw error
+      return data as CalendarEvent[]
+    },
+  })
+}
+
+function nowIso() {
+  return new Date().toISOString()
+}
+
+function touchTaskSchedule(taskId: string, start: string | null, end: string | null): void {
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const task = tasks.find((t) => t.id === taskId)
+  if (!task) return
+  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end })
+}
+
+/** Click-drag an empty grid slot -> a plain native event, no linked task. */
+export function createEvent(title: string, startsAt: string, endsAt: string): CalendarEvent {
+  const event: CalendarEvent = {
+    id: crypto.randomUUID(),
+    title,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    all_day: false,
+    task_id: null,
+    source: 'native',
+    gcal_id: null,
+    gcal_etag: null,
+    busy: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  }
+  writeRow('calendar_events', event)
+  logActivity('calendar_event.created', 'calendar_event', event.id, { title })
+  return event
+}
+
+/** Drag a task from the unscheduled sidebar onto the grid -> a block linked to that task. */
+export function scheduleTask(task: Task, startsAt: string, endsAt: string): CalendarEvent {
+  const event: CalendarEvent = {
+    id: crypto.randomUUID(),
+    title: task.title,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    all_day: false,
+    task_id: task.id,
+    source: 'native',
+    gcal_id: null,
+    gcal_etag: null,
+    busy: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  }
+  writeRow('calendar_events', event)
+  touchTaskSchedule(task.id, startsAt, endsAt)
+  logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
+  return event
+}
+
+export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): void {
+  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt })
+  if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
+}
+
+/** Deleting a block un-schedules its task but the task itself survives. */
+export function deleteEvent(event: CalendarEvent): void {
+  writeRow('calendar_events', event, 'delete')
+  if (event.task_id) touchTaskSchedule(event.task_id, null, null)
+  logActivity('calendar_event.deleted', 'calendar_event', event.id, {})
+}
+
+/** Deleting a task deletes its block too (called from the tasks feature after user confirms). */
+export function deleteEventsForTask(taskId: string): void {
+  const events = queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []
+  for (const event of events.filter((e) => e.task_id === taskId)) {
+    writeRow('calendar_events', event, 'delete')
+  }
+}

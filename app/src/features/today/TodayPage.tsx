@@ -1,4 +1,5 @@
 import { useTasks, completeTask, toggleTop3 } from '../tasks/api'
+import { useCalendarEvents } from '../calendar/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import type { Task } from '../../lib/types'
 
@@ -38,6 +39,7 @@ function TaskLine({ task }: { task: Task }) {
 
 export function TodayPage() {
   const { data: tasks = [] } = useTasks()
+  const { data: events = [] } = useCalendarEvents()
   const now = new Date()
   const visible = tasks.filter((t) => isVisible(t, now))
 
@@ -47,12 +49,34 @@ export function TodayPage() {
   )
   const overdue = visible.filter((t) => !t.top3 && t.due_at && new Date(t.due_at) < startOfToday())
 
+  const todaysEvents = events
+    .filter((e) => new Date(e.starts_at) >= startOfToday() && new Date(e.starts_at) <= endOfToday())
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Today</h1>
         <VoiceCaptureButton />
       </div>
+
+      {todaysEvents.length > 0 && (
+        <section>
+          <h2 className="mb-1 text-sm font-semibold text-slate-500">Timeline</h2>
+          <ul className="space-y-1">
+            {todaysEvents.map((e) => (
+              <li key={e.id} className="flex items-center gap-2 rounded border px-2 py-1 text-sm">
+                <span className="w-32 shrink-0 text-xs text-slate-400">
+                  {new Date(e.starts_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                  {' – '}
+                  {new Date(e.ends_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                </span>
+                <span>{e.title}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-1 text-sm font-semibold text-slate-500">Top 3</h2>

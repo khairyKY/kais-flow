@@ -140,14 +140,35 @@ function TaskRow({ task }: { task: Task }) {
         checked={task.status === 'done'}
         onChange={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
       />
-      <span className={task.status === 'done' ? 'flex-1 line-through text-slate-400' : 'flex-1'}>{task.title}</span>
+      <span className={task.status === 'done' ? 'flex-1 line-through text-slate-400' : 'flex-1'}>
+        {task.title}
+        {task.scheduled_start && (
+          <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+            {new Date(task.scheduled_start).toLocaleString([], {
+              weekday: 'short',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
+          </span>
+        )}
+      </span>
       <button type="button" onClick={() => toggleTop3(task)} title="Top-3" className={task.top3 ? 'text-amber-500' : 'text-slate-300'}>
         ★
       </button>
       <button type="button" onClick={() => snoozeTask(task, addDays(1))} className="text-xs text-slate-500">
         snooze 1d
       </button>
-      <button type="button" onClick={() => deleteTask(task)} className="text-xs text-red-500">
+      <button
+        type="button"
+        onClick={() => {
+          const hasBlock = Boolean(task.scheduled_start)
+          const message = hasBlock
+            ? `Delete "${task.title}"? This also removes its scheduled calendar block.`
+            : `Delete "${task.title}"?`
+          if (window.confirm(message)) deleteTask(task)
+        }}
+        className="text-xs text-red-500"
+      >
         delete
       </button>
     </li>

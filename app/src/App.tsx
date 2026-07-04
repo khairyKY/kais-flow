@@ -8,6 +8,7 @@ import { AppLayout } from './components/AppLayout'
 import { TodayPage } from './features/today/TodayPage'
 import { InboxPage } from './features/inbox/InboxPage'
 import { TasksPage } from './features/tasks/TasksPage'
+import { CalendarPage } from './features/calendar/CalendarPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 
 const router = createBrowserRouter([
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'today', element: <TodayPage /> },
       { path: 'inbox', element: <InboxPage /> },
       { path: 'tasks', element: <TasksPage /> },
+      { path: 'calendar', element: <CalendarPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

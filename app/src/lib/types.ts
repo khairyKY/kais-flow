@@ -64,3 +64,20 @@ export interface ActivityLogEntry {
   payload: Record<string, unknown> | null
   created_at: string
 }
+
+export type CalendarEventSource = 'native' | 'gcal'
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  starts_at: string
+  ends_at: string
+  all_day: boolean
+  task_id: string | null
+  source: CalendarEventSource
+  gcal_id: string | null
+  gcal_etag: string | null
+  busy: boolean
+  created_at: string
+  updated_at: string
+}

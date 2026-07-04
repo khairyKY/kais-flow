@@ -8,6 +8,7 @@ const navItems = [
   { to: '/today', label: 'Today' },
   { to: '/inbox', label: 'Inbox' },
   { to: '/tasks', label: 'Tasks' },
+  { to: '/calendar', label: 'Calendar' },
   { to: '/settings', label: 'Settings' },
 ]
 

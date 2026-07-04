@@ -50,4 +50,17 @@ Manual drag/move/resize matrix on laptop + phone · reload + second-device check
 - 3b: `syncToken` can expire (410) → fall back to full re-pull; dedupe by `gcal_id`.
 
 ## Notes / deviations
-_(filled during execution)_
+
+- **2026-07-04 (Sonnet):** Built **3a only** (native calendar) — 3b (Google) skipped per its own guardrail ("skip unless Kai explicitly asks"); Kai's "build P1, P2, P3" instruction didn't ask for it. Migration `0004_calendar` created both `calendar_events` **and** `integrations` together as the phase's own migration sketch specified (step 1 covers both even though 3a doesn't use `integrations` yet) — `integrations` sits unused until a future Google or GitHub connect flow, no realtime publication for it (server-side only, per `DATA_MODEL.md`).
+- Installed `@fullcalendar/react` + `@fullcalendar/core` + `@fullcalendar/timegrid` + `@fullcalendar/interaction` + `@dnd-kit/core` (the last one ended up unused — FullCalendar's own `interaction` plugin `Draggable` class handled the external-drag-from-sidebar case directly, so a separate dnd-kit layer wasn't needed; left installed since CLAUDE.md's stack cheat-sheet names it and P6's smart-lists/content-kanban work later may still want it for pure list reordering).
+- `features/calendar/CalendarGrid.tsx` wraps FullCalendar behind a plain `{events, onCreate, onMove, onResize, onEventClick, onExternalDrop}` props contract, per the phase's "wrapper is the contract" instruction — `CalendarGrid.css` strips FullCalendar's default blue theme to a neutral slate palette (functional-plain, not a real design pass).
+- `deleteEventsForTask()` lives in `features/calendar/api.ts` and is called from `features/tasks/api.ts`'s `deleteTask()` — a direct cross-feature import. This project doesn't carry over Kairos's old strict "slices never import each other" rule (only the `activity_log`-as-event-spine idea survived into this plan), so a direct call was simpler than inventing an event-bus for one link.
+- **Full acceptance checklist verified against the live Supabase project**, mostly via direct calls to the exact functions the grid's `select`/`drop`/`eventDrop`/`eventResize` callbacks invoke (a literal physical drag-and-drop gesture is far more fragile to simulate through this session's browser-automation tooling than a click was — and clicks already proved unreliable earlier in P1 — so business logic was verified this way instead, same as the confirmed-working P1/P2 pattern):
+  - ✅ Scheduling a task creates a linked `calendar_events` row and sets the task's `scheduled_start/end` to match; the task disappears from the Unscheduled sidebar and the block renders on the grid **at the correct local time** (11:00 UTC stored → rendered "2:00 – 2:30" in the browser's local time)
+  - ✅ Today's compact timeline shows the same event
+  - ✅ Move: updated both the event and its linked task's scheduled times together
+  - ✅ Delete event → task survives, un-scheduled (`scheduled_start/end` → `null`)
+  - ✅ Delete task → its calendar block is deleted too (confirm dialog added in `TasksPage`'s delete button, warns specifically when a block exists)
+  - ✅ Zero Google branding/iframes — confirmed via accessibility snapshot, plain FullCalendar week grid only
+  - Not literally tested: an actual mouse-drag gesture end-to-end in a real browser (covered above by direct-call equivalence) and touch/mobile drag specifically — worth a real-device check before fully trusting drag on Kai's phone.
+- `tsc -b`, `npx vitest run` (still 8/8), and `npm run build` all clean. Test data cleaned from the live DB afterward; `Shaheen`/`Shaheen Pricing` left in place as real usable data.
