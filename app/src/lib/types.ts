@@ -132,3 +132,35 @@ export interface SlippingRow {
   last_touch: string
   days_since: number
 }
+
+export type SearchEntityType = 'task' | 'inbox_item'
+
+export interface SearchHit {
+  entity_type: SearchEntityType
+  entity_id: string
+  title: string
+  snippet: string | null
+  score: number
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface Citation {
+  entity_type: SearchEntityType
+  entity_id: string
+  title: string
+}
+
+export type ResurfaceAction = 'pending' | 'converted' | 'review_later' | 'dismissed'
+
+export interface ResurfacedLogRow {
+  id: string
+  entity_type: SearchEntityType
+  entity_id: string
+  shown_on: string
+  action: ResurfaceAction
+  created_at: string
+}

@@ -102,6 +102,7 @@ His modules (full extraction in Appendix A): Domains → Projects → Tasks hier
 | 18 | Morning / evening / weekly ritual flows | Akiflow | **P4** |
 | 19 | AI chat over all your data (RAG: FTS + vectors) | Jerad | **P5** |
 | 20 | Resurfacing (daily rotation of old entries/quotes) | Jerad | **P5** |
+| 41 | Dedicated keyword/semantic Search UI (non-AI, over `search_hybrid`) | Jerad + gap-fill | **P5** |
 | 21 | **GitHub issues → inbox + AI prioritization** | **Kai** | **P6** |
 | 22 | Smart lists (saved filters) | Akiflow | **P6** |
 | 23 | Email-forwarding capture (optional) | Akiflow | **P6** |

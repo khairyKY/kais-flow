@@ -102,11 +102,16 @@ export function writeRow<T extends { id: string }>(
     copy[idx] = row
     return copy
   })
+  // `search_tsv` (P5) is a `generated always as (...) stored` column on tasks/inbox_items — it
+  // comes back on every `select('*')`, and this app's whole write pattern is "spread a fetched
+  // row, change a field, upsert the full object" — so it must never be sent back, or Postgres
+  // 400s on every write to those tables ("cannot insert/update a generated column").
+  const { search_tsv: _searchTsv, ...payload } = row as unknown as Record<string, unknown>
   void enqueue({
     id: row.id,
     table,
     op,
-    payload: row as unknown as Record<string, unknown>,
+    payload,
     queuedAt: Date.now(),
   }).then(() => void flushOutbox())
 }

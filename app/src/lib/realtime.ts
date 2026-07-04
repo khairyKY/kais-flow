@@ -10,6 +10,7 @@ const SYNCED_TABLES = [
   'calendar_events',
   'routines',
   'routine_completions',
+  'resurfaced_log',
 ] as const
 
 /** Subscribes once to realtime changes on every synced table and invalidates the matching query cache. */

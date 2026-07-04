@@ -7,6 +7,7 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
+import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
 import type { Task } from '../../lib/types'
 
 function startOfToday(): Date {
@@ -127,6 +128,8 @@ export function TodayPage() {
 
         {ritual === 'morning' && <MorningRitual onClose={() => setRitual(null)} />}
         {ritual === 'evening' && <EveningRitual onClose={() => setRitual(null)} />}
+
+        <ResurfaceCard />
 
         {todaysEvents.length > 0 && (
           <section>

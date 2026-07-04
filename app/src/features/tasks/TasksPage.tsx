@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useDomains, createDomain, renameDomain, mergeDomain } from '../domains/api'
 import { useProjects, createProject } from '../projects/api'
 import {
@@ -141,9 +142,12 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
   )
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({ task, highlighted }: { task: Task; highlighted?: boolean }) {
   return (
-    <li className="flex items-center gap-2 rounded border px-2 py-1 text-sm">
+    <li
+      id={`task-${task.id}`}
+      className={`flex items-center gap-2 rounded border px-2 py-1 text-sm ${highlighted ? 'ring-2 ring-indigo-400' : ''}`}
+    >
       <input
         type="checkbox"
         checked={task.status === 'done'}
@@ -199,8 +203,15 @@ export function TasksPage() {
   const { data: domains = [] } = useDomains()
   const { data: tasks = [] } = useTasks()
   const [title, setTitle] = useState('')
+  const [searchParams] = useSearchParams()
+  const focusId = searchParams.get('focus')
 
   const active = tasks.filter((t) => t.status !== 'cancelled')
+
+  useEffect(() => {
+    if (!focusId) return
+    document.getElementById(`task-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusId, tasks])
 
   return (
     <div className="space-y-4">
@@ -229,7 +240,7 @@ export function TasksPage() {
       </form>
       <ul className="space-y-1">
         {active.map((t) => (
-          <TaskRow key={t.id} task={t} />
+          <TaskRow key={t.id} task={t} highlighted={t.id === focusId} />
         ))}
       </ul>
     </div>

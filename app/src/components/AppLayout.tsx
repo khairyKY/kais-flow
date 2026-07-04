@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
 import { CommandBar } from '../features/command-bar/CommandBar'
+import { ChatPanel } from '../features/chat/ChatPanel'
+import { SearchOverlay } from '../features/search/SearchOverlay'
 import { ToastHost } from './ToastHost'
 
 const navItems = [
@@ -16,6 +19,19 @@ const navItems = [
 
 export function AppLayout() {
   useRealtimeSync()
+  const [chatOpen, setChatOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  useEffect(() => {
+    function onKeydown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault()
+        setSearchOpen((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', onKeydown)
+    return () => window.removeEventListener('keydown', onKeydown)
+  }, [])
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -33,6 +49,12 @@ export function AppLayout() {
               {item.label}
             </NavLink>
           ))}
+          <button type="button" onClick={() => setSearchOpen(true)} className="px-3 py-3 text-left text-sm text-slate-500 md:rounded md:py-2">
+            Search
+          </button>
+          <button type="button" onClick={() => setChatOpen(true)} className="px-3 py-3 text-left text-sm text-slate-500 md:rounded md:py-2">
+            Chat
+          </button>
         </div>
         <button
           type="button"
@@ -46,6 +68,8 @@ export function AppLayout() {
         <Outlet />
       </main>
       <CommandBar />
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
       <ToastHost />
     </div>
   )

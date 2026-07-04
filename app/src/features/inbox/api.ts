@@ -5,18 +5,26 @@ import { logActivity } from '../../lib/activity'
 import { createTask } from '../tasks/api'
 import type { InboxItem } from '../../lib/types'
 
+async function fetchInboxItems(): Promise<InboxItem[]> {
+  const { data, error } = await supabase.from('inbox_items').select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return data as InboxItem[]
+}
+
 export function usePendingInboxItems() {
   return useQuery({
     queryKey: ['inbox_items'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('inbox_items')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      return data as InboxItem[]
-    },
+    queryFn: fetchInboxItems,
     select: (items) => items.filter((i) => i.status === 'pending'),
+  })
+}
+
+// Unfiltered — shares the same cached query as usePendingInboxItems (same key+queryFn, no
+// `select`), used by citation deep-links and resurfacing which need items of any status.
+export function useAllInboxItems() {
+  return useQuery({
+    queryKey: ['inbox_items'],
+    queryFn: fetchInboxItems,
   })
 }
 

@@ -40,8 +40,10 @@
 **View `slipping`** — last `activity_log` touch per domain/project vs threshold → rows that are going stale.
 
 ### P5 — search & chat
-- `tsvector` generated columns + `embedding vector(384)` (gte-small) added to `tasks`, `inbox_items` (and P7 content tables as they land).
-- `embed_queue` — `entity_type`, `entity_id`, `content text`, `status` — filled by triggers on searchable tables, drained by the `embed` edge function on a cron.
+- `tsvector` generated columns (`search_tsv`) + `embedding vector(384)` (gte-small) added to `tasks` (title+notes), `inbox_items` (raw_text) — GIN index on `search_tsv`, HNSW (`vector_cosine_ops`) on `embedding`. `search_tsv` is `generated always as (...) stored` — **never include it in a client upsert payload** (`lib/outbox.ts`'s `writeRow` strips it automatically; Postgres 400s if a write tries to set it).
+- `embed_queue` — `entity_type`, `entity_id`, `content text`, `status text ('pending'|'done'|'error')`, unique `(entity_type, entity_id)` — filled by insert/update triggers on `tasks`/`inbox_items` (update triggers are WHEN-guarded on the actual searchable columns so the `embed` function's own `embedding`-only writes don't loop), drained by the `embed` edge function (cron every 5 min via pg_net, same Vault-secret pattern as `notify`).
+- `search_hybrid(query_text, query_embedding, match_limit)` — SQL function (`security invoker`, so RLS on `tasks`/`inbox_items` scopes it per-user automatically): FTS (`websearch_to_tsquery`) + vector (cosine, capped at distance < 0.6 to keep unrelated matches out) each ranked and capped at 40, merged via Reciprocal Rank Fusion (`1/(60+rank)`), top `match_limit` (default 20) returned.
+- `resurfaced_log` — `entity_type`, `entity_id`, `shown_on date`, `action text ('pending'|'converted'|'review_later'|'dismissed')`, unique `(user_id, shown_on)` — one pick per day. `do_resurface()` (SQL function, `security definer`, called directly by pg_cron daily — pure DB work, no HTTP hop needed) does a weighted-random pick (weight = days since the entity's last `activity_log` touch, +20 boost if previously `review_later`, excludes anything shown in the last 14 days) over `tasks`/`inbox_items` older than 3 days.
 
 ### P7 — life-OS
 | Table | Columns |
@@ -63,6 +65,7 @@
 | `transcribe` | P2 | audio blob → text (Groq Whisper) |
 | `gcal-sync` | P3b | incremental Google Calendar pull/push (optional) |
 | `notify` | P4 | Web Push sender — digests, missed routines, overdue (called by pg_cron via pg_net) |
-| `embed` | P5 | drain `embed_queue` → gte-small embeddings (Supabase.ai) |
-| `chat` | P5 | hybrid retrieval (FTS + pgvector RRF) → Groq streaming SSE |
+| `embed` | P5 | drain `embed_queue` → gte-small embeddings (Supabase.ai); `{backfill:true}` one-off mode |
+| `chat` | P5 | hybrid retrieval (FTS + pgvector RRF) → Groq streaming SSE, citations |
+| `search` | P5 | same hybrid retrieval as `chat`, no Groq round-trip — powers the Search UI |
 | `github-sync` | P6 | poll assigned issues → `inbox_items` + AI priority ranking |
