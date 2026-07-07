@@ -1,0 +1,17 @@
+<!-- @dsCard group="Colors" viewport="700x220" subtitle="Night garden — dark theme" name="Night sky" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>
+body{margin:0;padding:20px;font-family:var(--font-ui);background:var(--sky-deep);color:var(--moon-primary)}
+body{background:radial-gradient(ellipse at 30% 20%,#1F2D5C 0%,#142147 40%,#0B1330 100%)}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sw{border:1px solid rgba(220,214,190,0.14);border-radius:var(--radius-sharp);overflow:hidden;background:rgba(240,236,220,0.05)}
+.chip{height:56px}
+.meta{padding:8px 10px;border-top:1px dashed rgba(220,214,190,0.22);font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(220,214,190,0.42)}
+.meta b{display:block;color:rgba(245,240,220,0.92);font-family:var(--font-ui);font-size:11.5px;letter-spacing:0;text-transform:none;font-weight:500;margin-bottom:2px}
+</style></head><body data-theme="night">
+<div class="row">
+  <div class="sw"><div class="chip" style="background:#0B1330"></div><div class="meta"><b>Sky deep</b>#0B1330</div></div>
+  <div class="sw"><div class="chip" style="background:#142147"></div><div class="meta"><b>Sky mid</b>#142147</div></div>
+  <div class="sw"><div class="chip" style="background:#1F2D5C"></div><div class="meta"><b>Horizon</b>#1F2D5C</div></div>
+  <div class="sw"><div class="chip" style="background:#F6E28C;box-shadow:inset 0 0 20px rgba(246,226,140,0.6)"></div><div class="meta"><b>Firefly</b>#F6E28C · glow</div></div>
+</div>
+</body></html>

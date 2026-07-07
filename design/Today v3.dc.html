@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#EFE9DB;color:#2a2420;font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d4cdb9;border-radius:6px;border:3px solid #EFE9DB}
+@keyframes cloverSway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+</style>
+</helmet>
+<div style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:#EFE9DB;position:relative">
+
+  <aside style="width:238px;flex:none;background:#EAE3D2;border-right:1px dashed #c9c1aa;display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:#2a2420">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8b8471">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:#7a745f;transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(181,101,74,0.32);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;font-weight:600;color:#2a2420">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;position:relative">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><path d="M11.5 4.6c.8 1.2 2.4 1.2 3.2.2.5 1.4 2 1.8 3.1 1-.1 1.5 1 2.6 2.2 2.5-.8 1.2-.4 2.7.8 3.3" fill="none" stroke="none"></path><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Routines</span>
+        <sc-if value="{{ showInRoutinesNav }}" hint-placeholder-val="{{ false }}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-left:auto;flex:none;opacity:0.9"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.6" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.6" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+        </sc-if>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:#6b6455">Review</span>
+      </a>
+
+      <a href="#" onClick="{{ toggleSettings }}" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;cursor:pointer">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;color:#6b6455">Settings</span>
+      </a>
+    </nav>
+
+    <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="settings-overlay" style="position:absolute;left:226px;top:310px;width:300px;background:#FBF6E9;border:1px solid #ddd5be;border-radius:4px;box-shadow:0 2px 3px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.22);padding:18px 18px 16px;z-index:60;transform:rotate(0.4deg)">
+        <span style="position:absolute;top:-8px;left:50%;width:64px;height:16px;margin-left:-32px;background:rgba(154,180,190,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8b8471">Settings · Garden</span>
+          <button onClick="{{ closeSettings }}" style="border:none;background:none;color:#8b8471;font-size:14px;cursor:pointer;padding:2px 4px;line-height:1">✕</button>
+        </div>
+        <div style="font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:#2a2420;margin:6px 0 14px">The Terrarium</div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed #d5cdb5">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:#2a2420">Enable The Terrarium</div>
+            <div style="font-size:11.5px;color:#8b8471;margin-top:2px;line-height:1.35">Grow a living garden from your activity.</div>
+          </div>
+          <div onClick="{{ toggleOn }}" style="{{ trackOnStyle }}"><div style="{{ knobOnStyle }}"></div></div>
+        </div>
+
+        <div style="{{ rowTodayStyle }}">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:#2a2420">Show in Today view</div>
+            <div style="font-size:11.5px;color:#8b8471;margin-top:2px;line-height:1.35">Off — the garden lives in Routines instead.</div>
+          </div>
+          <div onClick="{{ toggleInToday }}" style="{{ trackTodayStyle }}"><div style="{{ knobTodayStyle }}"></div></div>
+        </div>
+
+        <div style="border-top:1px dashed #d5cdb5;padding-top:10px;font-family:'Caveat',cursive;font-size:16px;color:#7a745f;line-height:1.3">{{ settingsHint }}</div>
+      </div>
+    </sc-if>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed #c9c1aa;display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:#6b6455">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b8471">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:#6b6455">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b8471">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:#8b8471">Sign out</span></a>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed #cfc7b0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Sun 05 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:#8A9A7E;display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div><div style="padding:30px 40px 64px">
+
+      <sc-if value="{{ showTerrariumInToday }}" hint-placeholder-val="{{ true }}">
+      <section style="position:relative;border-radius:4px;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.14),0 10px 26px rgba(60,52,38,0.1);margin-bottom:34px;padding:22px 28px 18px;transform:rotate(-0.25deg)">
+        <span style="position:absolute;top:-9px;left:38px;width:72px;height:18px;background:rgba(138,154,126,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.12)"></span>
+        <span style="position:absolute;top:-9px;right:52px;width:72px;height:18px;background:rgba(168,160,190,0.35);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(2.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.12)"></span>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+          <div style="display:flex;align-items:baseline;gap:14px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6455">The Terrarium</span>
+            <span style="font-family:'Caveat',cursive;font-size:18px;color:#7a745f;transform:rotate(-1deg);display:inline-block">pressed &amp; kept, one day at a time</span>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8b8471">Day 42 · 6-day streak</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:18px;margin-top:18px;align-items:end">
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(-0.8deg)">
+            <img src="assets/clover/awake.png" alt="Clover — chat" style="height:104px;width:auto;max-width:100%;object-fit:contain;transform-origin:50% 100%;animation:cloverSway 5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 80px; left: 81px; width: 40px; height: 11px; margin-left: -20px; background: rgba(201,160,160,0.32); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(-4deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Trifolium · Chat</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">leaves up — someone wrote</div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(0.6deg)">
+            <img src="assets/hydrangea/light.png" alt="Hydrangea — inbox" style="height:100px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 81px; left: 76px; width: 40px; height: 11px; margin-left: -20px; background: rgba(154,180,190,0.35); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(3deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Hydrangea · Inbox</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">three letters waiting</div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(-0.5deg)">
+            <img src="{{ daisySrc }}" alt="Daisy — calendar" style="height:102px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 65px; left: 81px; width: 40px; height: 11px; margin-left: -20px; background: rgba(168,160,190,0.32); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(-3deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Bellis · Calendar</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">{{ daisyNote }}</div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(0.7deg)">
+            <img src="assets/cherry/bloom.png" alt="Cherry blossom — tasks" style="height:96px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 79px; left: 77px; width: 49px; height: 11px; margin-left: -20px; background: rgba(212,168,176,0.38); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(4deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Prunus · Tasks</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">petals ready to fall</div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(-0.6deg)">
+            <img src="assets/wisteria/p60.png" alt="Wisteria — projects" style="height:108px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 4px; left: 90px; width: 44px; height: 8px; margin-left: -20px; background: rgba(168,160,190,0.35); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(2deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Wisteria · Projects</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">mid-climb, still blooming</div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;transform:rotate(0.5deg)">
+            <img src="assets/fern/unfurl2.png" alt="Fern — docs" style="height:104px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+            <span style="position: absolute; top: 79px; left: 78px; width: 38px; height: 10px; margin-left: -20px; background: rgba(212,199,138,0.4); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(15deg); border-radius: 1px"></span>
+            <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">Osmunda · Docs</div><div style="font-family:'Caveat',cursive;font-size:15px;color:#6b6455;margin-top:1px">half unfurled already</div></div>
+          <span style="position: absolute; top: 81px; left: 75px; width: 44px; height: 8px; margin-left: -20px; background: rgba(168,160,190,0.35); background-image: repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px); transform: rotate(-15deg); border-radius: 1px"></span></div>
+
+        </div>
+      </section>
+      </sc-if>
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#8b8471;margin-bottom:9px">Today</div>
+          <h1 style="margin:0;font-family:'Source Serif 4',serif;font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:#2a2420">Sunday, July 5</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button style="border:1px solid #cfc7b0;background:#F6F0E1;color:#2a2420;font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:0 1px 2px rgba(60,52,38,0.1)">Morning ritual</button>
+          <button style="border:1px solid #cfc7b0;background:#F6F0E1;color:#2a2420;font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:0 1px 2px rgba(60,52,38,0.1)">Evening ritual</button>
+          <button style="border:none;background:#B5654A;color:#fff;font-family:inherit;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 4px rgba(120,60,40,0.3)"><span style="width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block"></span>Voice capture</button>
+        </div>
+      </div>
+
+      <div style="height:1px;border-bottom:1px dashed #cfc7b0;margin:26px 0 32px"></div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 272px;gap:52px;align-items:start">
+
+        <div style="max-width:720px;display:flex;flex-direction:column;gap:40px">
+
+          <section>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Top 3 for today</span>
+              <span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span>
+            </div>
+
+            <div style="position:relative;margin:14px 0 16px;background:#F8EFD3;border:1px solid #dcc48e;box-shadow:0 1px 2px rgba(60,52,38,0.14),0 8px 20px rgba(154,123,58,0.14);padding:16px 18px 15px 16px;display:flex;align-items:flex-start;gap:14px;transform:rotate(-0.4deg);border-radius:3px">
+              <span style="position:absolute;top:-9px;left:50%;width:76px;height:18px;margin-left:-38px;background:rgba(201,165,90,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.12)"></span>
+              <span style="position:absolute;top:-7px;left:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;background:#9a7b3a;color:#FBF4E0;padding:3px 9px;border-radius:2px;transform:rotate(-1deg)">✶ Goal of the day</span>
+              <span style="width:19px;height:19px;border:1.5px solid #9a7b3a;border-radius:5px;flex:none;margin-top:5px;background:rgba(255,255,255,0.5)"></span>
+              <div style="flex:1;min-width:0;padding-top:3px">
+                <div style="font-family:'Source Serif 4',serif;font-size:18px;font-weight:600;color:#4a3a1e;line-height:1.3">Goal of the day placeholder</div>
+                <div style="margin-top:6px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9a7b3a"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B5654A"></span>Project</span><span>One thing that makes today a win</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none">
+                <img src="assets/clover/four_leaf.png" alt="" style="width:38px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(74,58,30,0.22))">
+                <span style="font-family:'Caveat',cursive;font-size:14px;color:#9a7b3a;transform:rotate(-2deg)">for luck</span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0">
+              <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;color:#2a2420">Second priority placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#7A946E"></span>Domain</span><span>Due today</span></div></div>
+              <span style="color:#B5654A;font-size:16px;line-height:1">★</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0">
+              <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;color:#2a2420">Third priority placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span>Due today</span></div></div>
+              <span style="color:#B5654A;font-size:16px;line-height:1">★</span>
+            </div>
+            <p style="margin:6px 0 0;font-size:12.5px;color:#8b8471">Mark one starred task as your goal — it becomes the day's headline.</p>
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Up next</span>
+              <span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span>
+              <a href="#" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#8b8471;text-decoration:none;white-space:nowrap">View all →</a>
+            </div>
+            <div style="display:flex;gap:18px;padding:10px 0;align-items:baseline"><span style="width:96px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8b8471">2:30 PM</span><div><div style="font-size:15px;color:#2a2420">Meeting placeholder</div></div></div>
+            <div style="display:flex;gap:18px;padding:10px 0;align-items:baseline"><span style="width:96px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8b8471">Fri 7:00 PM</span><div><div style="font-size:15px;color:#2a2420">Dinner placeholder</div><div style="font-size:12.5px;color:#6b6455;margin-top:3px">Location placeholder</div></div></div>
+            <div style="display:flex;gap:18px;padding:10px 0;align-items:baseline"><span style="width:96px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8b8471">Sun 11:00 AM</span><div><div style="font-size:15px;color:#2a2420">Event placeholder</div><div style="font-size:12.5px;color:#6b6455;margin-top:3px">Location placeholder</div></div></div>
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">All open · 14</span>
+              <span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:14.5px;color:#2a2420">Open task placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#8A9A7E"></span>Home</span><span style="color:#B5654A">Overdue 3d</span><span>↻ Monthly</span></div></div><span style="color:#B5654A;font-size:16px;line-height:1">★</span></div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:14.5px;color:#2a2420">Open task placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B5654A"></span>Project</span><span>Due today</span></div></div><span style="color:#d0c9b6;font-size:16px;line-height:1">☆</span></div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:14.5px;color:#2a2420">Open task placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B5654A"></span>Project</span><span>Due today</span><span>↻ Weekly</span></div></div><span style="color:#d0c9b6;font-size:16px;line-height:1">☆</span></div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:14.5px;color:#2a2420">Open task placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span>Due today</span></div></div><span style="color:#d0c9b6;font-size:16px;line-height:1">☆</span></div>
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:14.5px;color:#2a2420">Open task placeholder</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8b8471"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#8A9A7E"></span>Home</span><span>Due tomorrow</span></div></div><span style="color:#d0c9b6;font-size:16px;line-height:1">☆</span></div>
+          </section>
+
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:30px">
+
+          <section>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Slipping</span><span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span></div><div style="position:relative;border:1px solid #dcc48e;background:#F8F1DC;padding:12px 14px;transform:rotate(0.4deg);box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px">
+              <img src="assets/wisteria/p20.png" alt="" style="position: absolute; top: 7px; height: 69px; width: 35px; opacity: 0.75; left: 230px">
+              <div style="font-size:13.5px;color:#2a2420;font-weight:500;padding-right:44px">Project placeholder</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9a7b3a;margin-top:5px">7 days untouched</div>
+              <button style="margin-top:9px;background:none;border:none;color:#B5654A;font-family:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0">reviewed</button>
+            </div>
+            
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Routines · 5/8</span><span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span><a href="#" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:#8b8471;text-decoration:none;white-space:nowrap">View all →</a></div>
+
+            <sc-if value="{{ showTerrariumInRoutines }}" hint-placeholder-val="{{ false }}">
+              <div style="position:relative;border:1px solid #e0d8c2;background:#FBF6E9;margin-bottom:16px;padding:12px 14px 10px;display:flex;align-items:center;gap:12px;transform:rotate(-0.5deg);box-shadow:0 1px 2px rgba(60,52,38,0.12),0 6px 14px rgba(60,52,38,0.09);border-radius:3px">
+                <span style="position:absolute;top:-8px;left:50%;width:52px;height:14px;margin-left:-26px;background:rgba(138,154,126,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px"></span>
+                <img src="assets/clover/awake.png" alt="Terrarium" style="height:54px;width:auto;flex:none;transform-origin:50% 100%;animation:cloverSway 5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.16))">
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#6b6455">The Terrarium</div>
+                  <div style="font-family:'Caveat',cursive;font-size:16px;color:#7a745f;margin-top:2px">day 42 — six days strong</div>
+                  <a href="#" style="font-size:11.5px;color:#B5654A;text-decoration:underline">Open garden →</a>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:#a49d87;margin:2px 0 6px">Morning</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="width:17px;height:17px;border-radius:5px;background:#2a2420;display:inline-flex;align-items:center;justify-content:center;color:#F4F1EA;font-size:11px;flex:none">✓</span><span style="flex:1;font-size:13.5px;color:#a49d87;text-decoration:line-through">Routine placeholder</span><span style="display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A"><svg width="9" height="11" viewBox="0 0 9 11"><path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="#B5654A"></path></svg>5</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="flex:1;font-size:13.5px;color:#2a2420">Routine placeholder</span><span style="display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A"><svg width="9" height="11" viewBox="0 0 9 11"><path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="#B5654A"></path></svg>4</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:#a49d87;margin:10px 0 6px">Afternoon</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="width:17px;height:17px;border-radius:5px;background:#2a2420;display:inline-flex;align-items:center;justify-content:center;color:#F4F1EA;font-size:11px;flex:none">✓</span><span style="flex:1;font-size:13.5px;color:#a49d87;text-decoration:line-through">Routine placeholder</span><span style="display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A"><svg width="9" height="11" viewBox="0 0 9 11"><path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="#B5654A"></path></svg>5</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:#a49d87;margin:10px 0 6px">Evening</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="flex:1;font-size:13.5px;color:#2a2420">Routine placeholder</span><span style="display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A"><svg width="9" height="11" viewBox="0 0 9 11"><path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="#B5654A"></path></svg>4</span></div>
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Resurfacing</span><span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span></div>
+            <div style="position:relative;border:1px solid #e0d8c2;background:#FBF6E9;padding:13px 14px;transform:rotate(0.3deg);box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px">
+              <span style="position:absolute;top:-8px;right:16px;width:44px;height:13px;background:rgba(212,168,176,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#8b8471">From a while ago</div>
+              <div style="font-family:'Source Serif 4',serif;font-style:italic;font-size:14.5px;color:#2a2420;margin-top:7px;line-height:1.4">Resurfaced note placeholder.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+                <span style="background:#B5654A;color:#fff;font-size:11px;padding:5px 9px;border-radius:999px">Still relevant → task</span>
+                <span style="border:1px solid #cfc7b0;color:#6b6455;font-size:11px;padding:5px 9px;border-radius:999px">Review later</span>
+                <span style="color:#8b8471;font-size:11px;padding:5px 4px">Dismiss</span>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Needs review · 2</span><span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span><a href="#" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:#8b8471;text-decoration:none;white-space:nowrap">View all →</a></div>
+            <div style="border:1px solid #e0d8c2;background:#FBF6E9;padding:13px 14px;margin-bottom:12px;transform:rotate(-0.3deg);box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px">
+              <div style="font-family:'Source Serif 4',serif;font-size:14.5px;color:#2a2420;line-height:1.35">Review item placeholder.</div>
+              <div style="font-size:12.5px;color:#6b6455;margin-top:5px;line-height:1.4">Short description placeholder.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Own</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Reading</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Meeting</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Brainstorm</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#8b8471;padding:4px 5px">✓ Clear</span></div>
+            </div>
+            <div style="border:1px solid #e0d8c2;background:#FBF6E9;padding:13px 14px;transform:rotate(0.35deg);box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px">
+              <div style="font-family:'Source Serif 4',serif;font-size:14.5px;color:#2a2420;line-height:1.35">Review item placeholder.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Own</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Reading</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6455;border:1px solid #cfc7b0;border-radius:3px;padding:4px 7px">Meeting</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#8b8471;padding:4px 5px">✓ Clear</span></div>
+            </div>
+          </section>
+
+          <section>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471;white-space:nowrap">Notifications · 2</span><span style="flex:1;height:1px;border-bottom:1px dashed #d5cdb5"></span></div>
+            <div style="padding:7px 0"><div style="font-size:13px;color:#2a2420">Notification placeholder</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8b8471;margin-top:3px">4m ago</div></div>
+            <div style="padding:7px 0"><div style="font-size:13px;color:#2a2420">Notification placeholder</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8b8471;margin-top:3px">9m ago</div></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:#a49d87;margin-top:6px">✓ 1 done today</div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}">
+class Component extends DCLogic {
+  state = {
+    on: (typeof localStorage !== 'undefined' && localStorage.getItem('kf_terrarium_on')) !== '0',
+    inToday: (typeof localStorage !== 'undefined' && localStorage.getItem('kf_terrarium_today')) !== '0',
+    settingsOpen: false
+  };
+
+  renderVals() {
+    const { on, inToday, settingsOpen } = this.state;
+
+    // Daisy is clock-driven (Floral Logic: calendar responds to time of day)
+    const hour = new Date().getHours();
+    let daisySrc, daisyNote;
+    if (hour < 7) { daisySrc = 'assets/daisy/past.png'; daisyNote = 'still asleep'; }
+    else if (hour < 12) { daisySrc = 'assets/daisy/morning.png'; daisyNote = 'opening with the morning'; }
+    else if (hour < 17) { daisySrc = 'assets/daisy/midday.png'; daisyNote = 'wide awake at midday'; }
+    else if (hour < 21) { daisySrc = 'assets/daisy/evening.png'; daisyNote = 'closing with the light'; }
+    else { daisySrc = 'assets/daisy/past.png'; daisyNote = 'the day is folded away'; }
+
+    const track = (active, disabled) => ({
+      position: 'relative', width: 38, height: 22, borderRadius: 999, flex: 'none',
+      cursor: disabled ? 'default' : 'pointer',
+      background: active ? '#7A946E' : '#cfc7b0',
+      opacity: disabled ? 0.4 : 1,
+      transition: 'background 0.2s'
+    });
+    const knob = (active) => ({
+      position: 'absolute', top: 2, left: active ? 18 : 2, width: 18, height: 18,
+      borderRadius: '50%', background: '#FBF6E9',
+      boxShadow: '0 1px 3px rgba(60,52,38,0.3)', transition: 'left 0.2s'
+    });
+
+    let hint;
+    if (!on) hint = 'the terrarium is resting — your streak is pressed safely between the pages.';
+    else if (inToday) hint = 'the garden greets you at the top of today.';
+    else hint = 'the garden lives in the routines panel — today stays compact.';
+
+    return {
+      settingsOpen,
+      daisySrc, daisyNote,
+      showTerrariumInToday: on && inToday,
+      showTerrariumInRoutines: on && !inToday,
+      showInRoutinesNav: on && !inToday,
+      settingsHint: hint,
+      trackOnStyle: track(on, false),
+      knobOnStyle: knob(on),
+      trackTodayStyle: track(on && inToday, !on),
+      knobTodayStyle: knob(on && inToday),
+      rowTodayStyle: {
+        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+        borderTop: '1px dashed #d5cdb5', borderBottom: '1px dashed #d5cdb5',
+        marginBottom: 10, opacity: on ? 1 : 0.45, transition: 'opacity 0.2s'
+      },
+      toggleSettings: (e) => { if (e) e.preventDefault(); this.setState(s => ({ settingsOpen: !s.settingsOpen })); },
+      closeSettings: () => this.setState({ settingsOpen: false }),
+      toggleOn: () => {
+        const v = !this.state.on;
+        try { localStorage.setItem('kf_terrarium_on', v ? '1' : '0'); } catch (e) {}
+        this.setState({ on: v });
+      },
+      toggleInToday: () => {
+        if (!this.state.on) return;
+        const v = !this.state.inToday;
+        try { localStorage.setItem('kf_terrarium_today', v ? '1' : '0'); } catch (e) {}
+        this.setState({ inToday: v });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-solid);border-radius:6px;border:3px solid var(--paper-linen)}
+
+.tape {
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 58px;
+  height: 14px;
+  background: var(--acc-gold-warm);
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0 3px, transparent 3px 6px);
+  transform: rotate(-1.5deg);
+  border-radius: 1px;
+}
+
+.detail-card {
+  position: relative;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 3px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--acc-moss);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed var(--line-dashed);
+}
+
+.label-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input-text {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink-body);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--line-dashed);
+  padding: 6px 2px;
+  outline: none;
+  transition: border-bottom-color 0.2s;
+}
+.input-text:focus {
+  border-bottom-color: var(--acc-moss);
+}
+
+.input-select, .input-date, .input-time {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--ink-body);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-select:focus, .input-date:focus, .input-time:focus {
+  border-color: var(--acc-moss);
+}
+
+.btn-terracotta {
+  border: none;
+  background: var(--acc-terra);
+  color: var(--paper-parchment);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-terracotta:hover {
+  background: color-mix(in oklch, var(--acc-terra) 88%, black);
+}
+.btn-terracotta:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  border: 1px solid var(--line-solid);
+  background: var(--paper-bone);
+  color: var(--ink-body);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-secondary:hover {
+  background: var(--paper-parchment);
+  border-color: var(--acc-moss);
+}
+
+.btn-secondary-ghost {
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+.btn-secondary-ghost:hover {
+  color: var(--ink-body);
+}
+
+/* Swatch Color Picker */
+.swatch-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.swatch-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.swatch-circle:hover {
+  transform: scale(1.15);
+}
+.swatch-circle.active {
+  border-color: var(--ink-body);
+}
+
+/* Checkbox Row Styling */
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px dashed var(--line-dashed);
+  gap: 16px;
+}
+.row-item:first-of-type {
+  border-top: none;
+}
+
+.row-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.checkbox-custom {
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--line-solid);
+  border-radius: 3px;
+  cursor: pointer;
+  flex: none;
+  background: var(--paper-bone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.checkbox-custom.checked {
+  background: var(--acc-moss);
+  border-color: var(--acc-moss);
+}
+.checkbox-custom.checked::after {
+  content: '✓';
+  color: var(--paper-parchment);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.row-title-text {
+  font-size: 14.5px;
+  color: var(--ink-body);
+}
+.row-title-text.checked {
+  text-decoration: line-through;
+  color: var(--ink-hairline);
+}
+
+.meta-mono-faint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Progress Vine Layout */
+.milestones-grid {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .milestones-grid {
+    grid-template-columns: 1fr;
+  }
+  .vine-column {
+    display: none;
+  }
+}
+
+.vine-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  height: 100%;
+}
+.vine-stem {
+  width: 2px;
+  background: var(--line-solid);
+  flex: 1;
+  min-height: 120px;
+}
+.vine-leaf-img {
+  width: 56px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(60,52,38,0.18));
+  transition: opacity 0.3s;
+}
+
+/* Tabs */
+.tabs-header {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px dashed var(--line-dashed);
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn:hover {
+  background: var(--paper-bone);
+  color: var(--ink-body);
+}
+.tab-btn.active {
+  background: var(--paper-bone);
+  color: var(--ink-body);
+  border: 1px solid var(--line-solid);
+}
+
+@media (max-width: 580px) {
+  .field-row-two-up {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+</style>
+</helmet>
+
+<div data-screen-label="Project Detail" style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:var(--paper-linen);position:relative">
+
+  <!-- Navigation Sidebar -->
+  <aside data-od-id="sidebar" style="width:238px;flex:none;background:var(--paper-sidebar);border-right:1px dashed var(--line-sidebar);display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--acc-terra)">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Routines</span>
+      </a>
+
+      <a href="projects.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(122,148,110,0.35);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round" fill="none"><path d="M12 12c1.7-.6 3.1-.3 4 1-1.2 1.6-3 1-4-1Z" fill="#7A946E"></path><path d="M12 12c-1.5-1.5-1.5-3.5 0-4 .6 2 0 3.7.1 4.1Z" fill="#8A9A7E"></path><path d="M12 12c.5-2.2 2-3.1 3.5-2-.6 1.8-2 2-3.5 2Z" fill="#9DAB8B"></path></g><circle cx="12" cy="12" r="1.5" fill="#C9A55A" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;font-weight:600;color:var(--ink-body)">Projects</span>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Review</span>
+      </a>
+
+      <a href="#" onClick="{{ toggleSettings }}" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;cursor:pointer">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Settings</span>
+      </a>
+    </nav>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed var(--line-sidebar);display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:var(--ink-faint)">Sign out</span></a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <!-- Top Sync Status bar -->
+    <div data-od-id="top-metadata-strip" style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Mon 06 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div style="padding:30px 40px 64px;max-width:920px;width:100%">
+
+      <!-- Breadcrumb link -->
+      <div style="margin-bottom:16px;">
+        <a href="projects.html" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:var(--ink-muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          ← ALL INITIATIVES
+        </a>
+      </div>
+
+      <!-- Header Band -->
+      <div data-od-id="main-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap;">
+        <div style="min-width:0;flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span class="meta-mono-faint" style="letter-spacing:0.18em;">Domain: {{ domain }}</span>
+            <span class="meta-mono-faint" style="background:var(--paper-bone);border:1px solid var(--line-solid);padding:1px 5px;border-radius:3px;font-size:9px;">{{ type }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <span class="color-dot" style="background:{{ color }};width:14px;height:14px;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+            <input type="text" value="{{ title }}" onChange="{{ updateTitle }}" class="input-text" style="font-size:32px;font-weight:600;letter-spacing:-0.01em;font-family:var(--font-display);line-height:1.2;border-bottom-style:dashed;">
+          </div>
+        </div>
+
+        <div style="text-align:right;flex:none;align-self:flex-end;">
+          <sc-if value="{{ type === 'PROJECT' }}">
+            <div class="meta-mono-faint" style="color:var(--ink-muted);">Target completion</div>
+            <div style="font-family:var(--font-display);font-size:18px;color:var(--ink-body);font-weight:500;margin-top:2px;">{{ targetDate }}</div>
+          </sc-if>
+          <sc-if value="{{ type === 'AREA' }}">
+            <div class="meta-mono-faint" style="color:var(--ink-muted);">Ongoing context</div>
+            <div style="font-family:var(--font-display);font-size:16px;color:var(--acc-moss);font-style:italic;margin-top:2px;">Area Container ✿</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="height:1px;border-bottom:1px dashed var(--line-solid);margin-bottom:34px;"></div>
+
+      <!-- Color Swatch Card -->
+      <div class="detail-card" style="transform:rotate(-0.25deg);">
+        <div class="tape" style="top:-7px;left:40px;background:var(--acc-gold-warm);"></div>
+        <label class="label-mono">INITIATIVE COLOR THEME</label>
+        <div class="swatch-picker">
+          <div onClick="{{ () => changeColor('#B5654A') }}" class="swatch-circle {{ color === '#B5654A' ? 'active' : '' }}" style="background:#B5654A;"></div>
+          <div onClick="{{ () => changeColor('#7A946E') }}" class="swatch-circle {{ color === '#7A946E' ? 'active' : '' }}" style="background:#7A946E;"></div>
+          <div onClick="{{ () => changeColor('#2d3d82') }}" class="swatch-circle {{ color === '#2d3d82' ? 'active' : '' }}" style="background:#2d3d82;"></div>
+          <div onClick="{{ () => changeColor('#C9A55A') }}" class="swatch-circle {{ color === '#C9A55A' ? 'active' : '' }}" style="background:#C9A55A;"></div>
+          <div onClick="{{ () => changeColor('#8A3A4A') }}" class="swatch-circle {{ color === '#8A3A4A' ? 'active' : '' }}" style="background:#8A3A4A;"></div>
+          <div onClick="{{ () => changeColor('#4A8A8A') }}" class="swatch-circle {{ color === '#4A8A8A' ? 'active' : '' }}" style="background:#4A8A8A;"></div>
+          <div onClick="{{ () => changeColor('#A8A0BE') }}" class="swatch-circle {{ color === '#A8A0BE' ? 'active' : '' }}" style="background:#A8A0BE;"></div>
+          <div onClick="{{ () => changeColor('#8A9A7E') }}" class="swatch-circle {{ color === '#8A9A7E' ? 'active' : '' }}" style="background:#8A9A7E;"></div>
+          <div onClick="{{ () => changeColor('#4A4440') }}" class="swatch-circle {{ color === '#4A4440' ? 'active' : '' }}" style="background:#4A4440;"></div>
+          <div onClick="{{ () => changeColor('#EAE3D2') }}" class="swatch-circle {{ color === '#EAE3D2' ? 'active' : '' }}" style="background:#EAE3D2;"></div>
+        </div>
+        <span class="mono-helper" style="margin-top:10px;">Select a desaturated tone to bind color highlights for this container</span>
+      </div>
+
+      <!-- Two Column Overview: Hours Logged & Milestones progress -->
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:24px;margin-bottom:4px;" class="field-row-two-up">
+        <!-- Logged Hours Card -->
+        <div class="detail-card" style="transform:rotate(0.4deg);display:flex;flex-direction:column;justify-content:center;margin-bottom:28px;">
+          <label class="label-mono" style="margin-bottom:4px;">Logged Hours</label>
+          <div style="font-family:var(--font-display);font-size:46px;font-weight:600;color:var(--ink-body);line-height:1;">
+            {{ hours }}<span style="font-size:20px;font-weight:400;color:var(--ink-faint);margin-left:4px;">hrs</span>
+          </div>
+          <span class="mono-helper" style="margin-top:8px;">Cumulative record of logged logs</span>
+        </div>
+
+        <!-- Milestones Section (Projects Only) -->
+        <sc-if value="{{ type === 'PROJECT' }}">
+          <div class="detail-card" style="transform:rotate(-0.15deg);margin-bottom:28px;">
+            <div class="section-label" style="margin-bottom:14px;color:var(--acc-moss);">
+              Milestones · <span style="background:var(--acc-terra);color:var(--paper-parchment);padding:1px 6px;border-radius:999px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;font-weight:600;">{{ percentComplete }}%</span>
+            </div>
+
+            <div class="milestones-grid">
+              <!-- Progress vine left column -->
+              <div class="vine-column">
+                <img src="{{ vineImg }}" class="vine-leaf-img" alt="Wisteria Progress Vine">
+                <div class="vine-stem"></div>
+                <div style="font-family:'Caveat',cursive;font-size:13.5px;color:var(--ink-muted);text-align:center;margin-top:6px;line-height:1.2;transform:rotate(-3deg)">
+                  {{ vineNote }}
+                </div>
+              </div>
+
+              <!-- Milestones list -->
+              <div style="display:flex;flex-direction:column;">
+                <sc-if value="{{ milestones.length === 0 }}">
+                  <div style="font-style:italic;color:var(--ink-muted);padding:12px 0;">No milestones yet.</div>
+                </sc-if>
+                <div style="display:flex;flex-direction:column;">
+                  <div class="row-item" style="display: {{ milestones.length > 0 ? 'flex' : 'none' }}">
+                    <!-- Loop placeholder since DC template handles loops by duplicating tags or direct states -->
+                  </div>
+                  
+                  <!-- Render milestones from state -->
+                  <div id="milestone-list-render"></div>
+                </div>
+
+                <!-- Add Milestone inline Form -->
+                <div style="display:flex;align-items:center;gap:12px;margin-top:16px;border-top:1px dashed var(--line-dashed);padding-top:16px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:180px;">
+                    <input type="text" placeholder="+ Add milestone..." value="{{ newMilestoneName }}" onChange="{{ updateNewMilestoneName }}" class="input-select" style="background:var(--paper-bone);height:36px;border-color:var(--line-solid);">
+                  </div>
+                  <div style="width:90px;flex:none;">
+                    <select value="{{ newMilestoneWeight }}" onChange="{{ updateNewMilestoneWeight }}" class="input-select" style="background:var(--paper-bone);height:36px;border-color:var(--line-solid);">
+                      <option value="1">Wt: 1</option>
+                      <option value="2">Wt: 2</option>
+                      <option value="3">Wt: 3</option>
+                      <option value="5">Wt: 5</option>
+                    </select>
+                  </div>
+                  <button onClick="{{ addMilestone }}" class="btn-secondary" style="height:36px;display:flex;align-items:center;justify-content:center;background:var(--paper-bone);">ADD</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- Area Overview Info (Areas Only) -->
+        <sc-if value="{{ type === 'AREA' }}">
+          <div class="detail-card" style="transform:rotate(-0.15deg);margin-bottom:28px;background:color-mix(in srgb, var(--acc-sage) 4%, var(--paper-parchment));">
+            <div class="section-label" style="margin-bottom:14px;color:var(--acc-moss);">Area Scope</div>
+            <div style="font-family:'Caveat',cursive;font-size:18px;color:var(--ink-muted);line-height:1.4;margin-bottom:14px;padding:2px 6px;">
+              "Ongoing context for organizational review. This area represents continuous life domains, supporting task allocations and journal logs without the pressure of fixed due dates or milestones."
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-muted);display:flex;gap:16px;">
+              <span>● NO TARGET DATE</span>
+              <span>● RECURRING RITUALS ALIGNED</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Open Tasks Section -->
+      <div class="detail-card" style="transform:rotate(-0.2deg);">
+        <div class="section-label" style="color:var(--acc-blossom);">
+          Open Tasks · {{ tasks.length }}
+        </div>
+
+        <div style="display:flex;flex-direction:column;">
+          <sc-if value="{{ tasks.length === 0 }}">
+            <div style="font-style:italic;color:var(--ink-muted);padding:14px 6px;text-align:center;">No open tasks. All clear! ✿</div>
+          </sc-if>
+          
+          <div id="tasks-list-render"></div>
+
+          <!-- Add Task Inline Form -->
+          <div style="display:flex;align-items:center;gap:12px;margin-top:16px;border-top:1px dashed var(--line-dashed);padding-top:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <input type="text" placeholder="+ Add a task to this initiative..." value="{{ newTaskName }}" onChange="{{ updateNewTaskName }}" class="input-select" style="background:var(--paper-bone);height:36px;">
+            </div>
+            <div style="width:130px;flex:none;">
+              <input type="date" value="{{ newTaskDue }}" onChange="{{ updateNewTaskDue }}" class="input-select" style="background:var(--paper-bone);height:36px;font-size:12px;padding:6px 8px;">
+            </div>
+            <div style="width:110px;flex:none;">
+              <select value="{{ newTaskPriority }}" onChange="{{ updateNewTaskPriority }}" class="input-select" style="background:var(--paper-bone);height:36px;font-size:12.5px;">
+                <option value="1">Critical</option>
+                <option value="2">High</option>
+                <option value="3" selected>Medium</option>
+                <option value="4">Low</option>
+              </select>
+            </div>
+            <button onClick="{{ addTask }}" class="btn-secondary" style="height:36px;background:var(--paper-bone);">ADD TASK</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checklist Section -->
+      <div class="detail-card" style="transform:rotate(0.15deg);">
+        <div class="section-label" style="color:var(--acc-buttercream);">Checklist</div>
+        
+        <div style="display:flex;flex-direction:column;">
+          <sc-if value="{{ checklist.length === 0 }}">
+            <div style="font-style:italic;color:var(--ink-muted);padding:14px 6px;line-height:1.45;">
+              No checklist yet. Use this for granular sub-steps that don't warrant a full task or milestone. Recurring items (weekly status report, monthly invoice…) live well here too.
+            </div>
+          </sc-if>
+
+          <div id="checklist-list-render"></div>
+
+          <!-- Add Checklist Item Form -->
+          <div style="display:flex;align-items:center;gap:12px;margin-top:16px;border-top:1px dashed var(--line-dashed);padding-top:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <input type="text" placeholder="+ Add a checklist item..." value="{{ newChecklistName }}" onChange="{{ updateNewChecklistName }}" class="input-select" style="background:var(--paper-bone);height:36px;">
+            </div>
+            <div style="width:160px;flex:none;">
+              <select value="{{ newChecklistType }}" onChange="{{ updateNewChecklistType }}" class="input-select" style="background:var(--paper-bone);height:36px;">
+                <option value="ONE-SHOT">ONE-SHOT (DEFAULT)</option>
+                <option value="TASK-LINKED">TASK-LINKED</option>
+              </select>
+            </div>
+            <button onClick="{{ addChecklistItem }}" class="btn-secondary" style="height:36px;background:var(--paper-bone);">ADD ITEM</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity & Log Section -->
+      <div class="detail-card" style="transform:rotate(-0.1deg);">
+        <div class="section-label" style="color:var(--acc-gold);">Activity Log</div>
+
+        <!-- Activity tab strip -->
+        <div class="tabs-header">
+          <button onClick="{{ () => changeActivityTab('WORK') }}" class="tab-btn {{ activeActivityTab === 'WORK' ? 'active' : '' }}">WORK LOG</button>
+          <button onClick="{{ () => changeActivityTab('UPDATE') }}" class="tab-btn {{ activeActivityTab === 'UPDATE' ? 'active' : '' }}">📌 UPDATES</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;">
+          <!-- Logging form -->
+          <div style="background:var(--paper-bone);border:1px solid var(--line-solid);border-radius:4px;padding:16px;margin-bottom:20px;">
+            <sc-if value="{{ activeActivityTab === 'WORK' }}">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;">LOG NEW TIME BLOCK</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                  <div style="flex:1;min-width:220px;">
+                    <input type="text" placeholder="What did you work on?" value="{{ newActivityDesc }}" onChange="{{ updateNewActivityDesc }}" class="input-select" style="background:var(--paper-parchment);height:36px;">
+                  </div>
+                  <div style="width:100px;flex:none;">
+                    <input type="text" placeholder="1h 30m" value="{{ newActivityHours }}" onChange="{{ updateNewActivityHours }}" class="input-select" style="background:var(--paper-parchment);height:36px;text-align:center;">
+                  </div>
+                  <button onClick="{{ logActivity }}" class="btn-terracotta" style="height:36px;font-size:12.5px;padding:0 20px;">LOG WORK</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ activeActivityTab === 'UPDATE' }}">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;">POST STATUS UPDATE</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                  <div style="flex:1;min-width:220px;">
+                    <input type="text" placeholder="Add status checkpoint (e.g. Completed V3 schemas, review needed)..." value="{{ newActivityDesc }}" onChange="{{ updateNewActivityDesc }}" class="input-select" style="background:var(--paper-parchment);height:36px;">
+                  </div>
+                  <button onClick="{{ logActivity }}" class="btn-terracotta" style="height:36px;font-size:12.5px;padding:0 20px;background:var(--acc-moss);">POST UPDATE</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- Activity Entries -->
+          <div style="display:flex;flex-direction:column;">
+            <sc-if value="{{ activity.length === 0 }}">
+              <div style="font-style:italic;color:var(--ink-muted);padding:14px 6px;text-align:center;">No activity logged yet.</div>
+            </sc-if>
+            
+            <div id="activity-list-render"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Settings Modal Drawer -->
+<sc-if value="{{ settingsOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:90;" onClick="{{ closeSettings }}"></div>
+  <div class="settings-overlay" style="position:absolute;left:226px;top:310px;width:300px;background:#FBF6E9;border:1px solid #ddd5be;border-radius:4px;box-shadow:0 2px 3px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.22);padding:18px 18px 16px;z-index:100;transform:rotate(0.4deg)">
+    <span style="position:absolute;top:-8px;left:50%;width:64px;height:16px;margin-left:-32px;background:rgba(154,180,190,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8b8471">Settings · Garden</span>
+      <button onClick="{{ closeSettings }}" style="border:none;background:none;color:#8b8471;font-size:14px;cursor:pointer;padding:2px 4px;line-height:1">✕</button>
+    </div>
+    <div style="font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:#2a2420;margin:6px 0 14px">The Terrarium</div>
+    <div style="font-size:13.5px;color:#2a2420;border-top:1px dashed #d5cdb5;padding:12px 0 6px;">Settings can be adjusted inside the Today view or Settings dashboard.</div>
+    <button onClick="{{ closeSettings }}" class="btn-secondary" style="width:100%;margin-top:10px;">Close Panel</button>
+  </div>
+</sc-if>
+
+<!-- Toast message system -->
+<sc-if value="{{ toastMsg }}">
+  <div class="toast">
+    <span style="color:var(--acc-moss);font-size:16px;">✿</span>
+    <span style="font-weight:500;color:var(--ink-body);">{{ toastMsg }}</span>
+  </div>
+</sc-if>
+
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}">
+const rawProjectData = {
+  "kais-flow": {
+    type: "PROJECT",
+    title: "Kai's Flow",
+    domain: "Personal",
+    color: "#B5654A",
+    hours: 42,
+    targetDate: "15 Jul 2026",
+    milestones: [
+      { name: "Database schema and local storage outbox", weight: 3, completed: true },
+      { name: "Today v3 dashboard with Terrarium integration", weight: 2, completed: true },
+      { name: "Inbox voice capture parsing", weight: 1, completed: true },
+      { name: "Projects and Areas tracking dashboard", weight: 2, completed: false },
+      { name: "Routines v2 with 7-day completion sparklines", weight: 2, completed: false },
+      { name: "Calendar drag-and-drop scheduling", weight: 3, completed: false }
+    ],
+    tasks: [
+      { title: "Refactor AppLayout navigation shell", due: "07 Jul", priority: "2", completed: false },
+      { title: "Design settings timezone select", due: "08 Jul", priority: "3", completed: false },
+      { title: "Write outbox synchronization middleware", due: "10 Jul", priority: "1", completed: false },
+      { title: "Draft Focus Timer UI flow", due: "12 Jul", priority: "4", completed: false }
+    ],
+    checklist: [
+      { name: "Verify offline sync queue behavior", type: "TASK-LINKED", completed: true },
+      { name: "Audit color contrast in night theme", type: "ONE-SHOT", completed: false }
+    ],
+    activity: [
+      { time: "16:24 · Mon 06 Jul", desc: "Designed project detail layout and milestones progress vine", hours: "2h 15m", type: "WORK" },
+      { time: "14:15 · Sun 05 Jul", desc: "Wired search and domain filters to Projects list page", hours: "1h 30m", type: "WORK" },
+      { time: "09:30 · Fri 03 Jul", desc: "📌 Completed database V3 migration specs and updated outbox models.", hours: "", type: "UPDATE" }
+    ]
+  },
+  "botanical-workspace": {
+    type: "PROJECT",
+    title: "Botanical Workspace",
+    domain: "Work",
+    color: "#8A9A7E",
+    hours: 88,
+    targetDate: "30 Jul 2026",
+    milestones: [
+      { name: "Define tokens and typography CSS files", weight: 1, completed: true },
+      { name: "Draft light paper background grain and noise", weight: 1, completed: true },
+      { name: "Design Clover, Hydrangea, and Daisy illustrations", weight: 3, completed: true },
+      { name: "Design Cherry, Wisteria, Fern, and Vine growth states", weight: 3, completed: true },
+      { name: "Build reusable core components (CoreCard, Tape, Chip)", weight: 2, completed: true },
+      { name: "Build Garden page and Night theme backdrops", weight: 3, completed: false },
+      { name: "Write usage guidelines in SKILL.md", weight: 1, completed: false },
+      { name: "Establish packaging for design system distribution", weight: 2, completed: false }
+    ],
+    tasks: [
+      { title: "Design pressed flower illustration set", due: "14 Jul", priority: "2", completed: false },
+      { title: "Export high-resolution blossom sprites", due: "16 Jul", priority: "2", completed: false }
+    ],
+    checklist: [
+      { name: "Format markdown file layouts", type: "ONE-SHOT", completed: true }
+    ],
+    activity: [
+      { time: "11:20 · Sun 05 Jul", desc: "Exported wisteria p0-p100 PNGs to assets folder", hours: "4h 0m", type: "WORK" },
+      { time: "15:00 · Sat 04 Jul", desc: "Wrote wisteria progress metaphor specifications", hours: "1h 30m", type: "WORK" }
+    ]
+  },
+  "personal-garden": {
+    type: "PROJECT",
+    title: "Personal Garden",
+    domain: "Personal",
+    color: "#D4A8B0",
+    hours: 14,
+    targetDate: "22 Jul 2026",
+    milestones: [
+      { name: "Measure balcony space and sunlight coverage", weight: 1, completed: true },
+      { name: "Purchase soil, compost, and organic fertilizer", weight: 1, completed: false },
+      { name: "Build vertical trellis for wisteria vine support", weight: 2, completed: false },
+      { name: "Set up automatic drip irrigation system", weight: 3, completed: false }
+    ],
+    tasks: [
+      { title: "Repot wisteria vine to larger terracotta pot", due: "12 Jul", priority: "3", completed: false }
+    ],
+    checklist: [],
+    activity: [
+      { time: "10:00 · Fri 03 Jul", desc: "Cleaned balcony floor and arranged existing pots", hours: "2h 0m", type: "WORK" }
+    ]
+  },
+  "system-admin": {
+    type: "PROJECT", // Retainer behaves similarly to project but target is ongoing
+    title: "System Admin & Ops",
+    domain: "Work",
+    color: "#A8A0BE",
+    hours: 12,
+    targetDate: "Ongoing retainer",
+    milestones: [],
+    tasks: [
+      { title: "Upgrade Docker containers to latest LTS versions", due: "10 Jul", priority: "2", completed: false },
+      { title: "Renew server security SSL certificates", due: "15 Jul", priority: "1", completed: false }
+    ],
+    checklist: [
+      { name: "Perform automated database backups checks", type: "TASK-LINKED", completed: true }
+    ],
+    activity: [
+      { time: "18:00 · Sat 04 Jul", desc: "Configured webhook alerts for security audits", hours: "3h 0m", type: "WORK" }
+    ]
+  },
+  "home-life": {
+    type: "AREA",
+    title: "Home & Life",
+    domain: "Home",
+    color: "#C9A0A0",
+    hours: 0,
+    targetDate: "Ongoing",
+    milestones: [],
+    tasks: [
+      { title: "Clean kitchen pantry and inventory spices", due: "09 Jul", priority: "3", completed: false },
+      { title: "Organize storage closet under stairs", due: "18 Jul", priority: "4", completed: false }
+    ],
+    checklist: [
+      { name: "Water living room plants and wipe dust off leaves", type: "ONE-SHOT", completed: false }
+    ],
+    activity: [
+      { time: "12:00 · Sat 04 Jul", desc: "📌 Domain area set up. Connected tasks feed to Home and Family lists.", type: "UPDATE", hours: "" }
+    ]
+  },
+  "health-mind": {
+    type: "AREA",
+    title: "Health & Mind",
+    domain: "Health",
+    color: "#9AB4BE",
+    hours: 0,
+    targetDate: "Ongoing",
+    milestones: [],
+    tasks: [
+      { title: "Schedule annual dental checkup", due: "12 Jul", priority: "2", completed: false },
+      { title: "Meditation: complete 10-day mindfulness course", due: "20 Jul", priority: "3", completed: false }
+    ],
+    checklist: [],
+    activity: []
+  },
+  "financial-log": {
+    type: "AREA",
+    title: "Financial Log",
+    domain: "Personal",
+    color: "#D4C78A",
+    hours: 0,
+    targetDate: "Ongoing",
+    milestones: [],
+    tasks: [
+      { title: "Reconcile June bank statement records", due: "08 Jul", priority: "2", completed: false },
+      { title: "Review auto-renewal subscriptions and cancel unused", due: "14 Jul", priority: "1", completed: false }
+    ],
+    checklist: [],
+    activity: []
+  }
+};
+
+class Component extends DCLogic {
+  state = {
+    id: "kais-flow",
+    title: "Kai's Flow",
+    domain: "Personal",
+    color: "#B5654A",
+    hours: 42,
+    targetDate: "15 Jul 2026",
+    milestones: [],
+    tasks: [],
+    checklist: [],
+    activity: [],
+    type: "PROJECT",
+
+    // UI state
+    activeActivityTab: "WORK", // WORK or UPDATE
+    newMilestoneName: "",
+    newMilestoneWeight: "1",
+    newChecklistName: "",
+    newChecklistType: "ONE-SHOT",
+    newTaskName: "",
+    newTaskDue: "",
+    newTaskPriority: "3",
+    newActivityDesc: "",
+    newActivityHours: "1h 30m",
+    toastMsg: "",
+    settingsOpen: false
+  };
+
+  componentDidMount() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || 'kais-flow';
+    this.loadProject(id);
+    this.renderCustomLists();
+  }
+
+  componentDidUpdate(prevProps) {
+    // If the state changes, we make sure to update lists in the DOM helper
+    this.renderCustomLists();
+  }
+
+  loadProject(id) {
+    const data = rawProjectData[id] || rawProjectData['kais-flow'];
+    this.setState({
+      id: id,
+      title: data.title,
+      domain: data.domain,
+      color: data.color,
+      hours: data.hours,
+      targetDate: data.targetDate,
+      milestones: [...data.milestones],
+      tasks: [...data.tasks],
+      checklist: [...data.checklist],
+      activity: [...data.activity],
+      type: data.type
+    });
+  }
+
+  // Calculate percentage of milestones completed
+  getCompletionPercentage() {
+    const { milestones } = this.state;
+    if (milestones.length === 0) return 0;
+    
+    let totalWeight = 0;
+    let completedWeight = 0;
+    
+    milestones.forEach(m => {
+      const weight = parseInt(m.weight) || 1;
+      totalWeight += weight;
+      if (m.completed) {
+        completedWeight += weight;
+      }
+    });
+    
+    return Math.round((completedWeight / totalWeight) * 100);
+  }
+
+  renderCustomLists() {
+    // Custom renderer for checklists and logs to enable robust dynamic DOM creation in DCLogic
+    const mContainer = document.getElementById("milestone-list-render");
+    if (mContainer) {
+      mContainer.innerHTML = "";
+      this.state.milestones.forEach((m, idx) => {
+        const row = document.createElement("div");
+        row.className = "row-item";
+        row.style.transform = `rotate(${(idx % 2 === 0 ? -0.15 : 0.15)}deg)`;
+
+        const left = document.createElement("div");
+        left.className = "row-left";
+        
+        const cb = document.createElement("div");
+        cb.className = `checkbox-custom ${m.completed ? 'checked' : ''}`;
+        cb.onclick = () => this.toggleMilestone(idx);
+        
+        const titleSpan = document.createElement("span");
+        titleSpan.className = `row-title-text ${m.completed ? 'checked' : ''}`;
+        titleSpan.textContent = m.name;
+
+        left.appendChild(cb);
+        left.appendChild(titleSpan);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "12px";
+
+        const weight = document.createElement("span");
+        weight.className = "meta-mono-faint";
+        weight.textContent = `WEIGHT ${m.weight}`;
+
+        const del = document.createElement("button");
+        del.className = "btn-secondary-ghost";
+        del.style.color = "var(--acc-terra)";
+        del.style.textDecoration = "none";
+        del.textContent = "✕";
+        del.onclick = () => this.removeMilestone(idx);
+
+        right.appendChild(weight);
+        right.appendChild(del);
+        
+        row.appendChild(left);
+        row.appendChild(right);
+        mContainer.appendChild(row);
+      });
+    }
+
+    const tContainer = document.getElementById("tasks-list-render");
+    if (tContainer) {
+      tContainer.innerHTML = "";
+      this.state.tasks.forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "row-item";
+        row.style.transform = `rotate(${(idx % 2 === 0 ? 0.2 : -0.2)}deg)`;
+
+        const left = document.createElement("div");
+        left.className = "row-left";
+        
+        const cb = document.createElement("div");
+        cb.className = `checkbox-custom ${t.completed ? 'checked' : ''}`;
+        cb.onclick = () => this.toggleTask(idx);
+
+        const textDiv = document.createElement("div");
+        
+        const titleSpan = document.createElement("span");
+        titleSpan.className = `row-title-text ${t.completed ? 'checked' : ''}`;
+        titleSpan.style.fontWeight = "500";
+        titleSpan.textContent = t.title;
+        
+        textDiv.appendChild(titleSpan);
+
+        // Priority Badge
+        const priorityLabels = { "1": "CRITICAL", "2": "HIGH", "3": "MEDIUM", "4": "LOW" };
+        const priorityColors = { "1": "var(--acc-terra)", "2": "var(--acc-gold-warm)", "3": "var(--ink-muted)", "4": "var(--ink-hairline)" };
+        const pLabel = priorityLabels[t.priority] || "MEDIUM";
+        
+        const pBadge = document.createElement("span");
+        pBadge.className = "meta-mono-faint";
+        pBadge.style.fontSize = "8px";
+        pBadge.style.marginLeft = "8px";
+        pBadge.style.border = `1px solid ${priorityColors[t.priority]}`;
+        pBadge.style.color = priorityColors[t.priority];
+        pBadge.style.padding = "0px 4px";
+        pBadge.style.borderRadius = "2px";
+        pBadge.textContent = pLabel;
+        textDiv.appendChild(pBadge);
+
+        left.appendChild(cb);
+        left.appendChild(textDiv);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "12px";
+
+        if (t.due) {
+          const due = document.createElement("span");
+          due.className = "meta-mono-faint";
+          due.textContent = `DUE ${t.due}`;
+          right.appendChild(due);
+        }
+
+        const del = document.createElement("button");
+        del.className = "btn-secondary-ghost";
+        del.style.color = "var(--acc-terra)";
+        del.style.textDecoration = "none";
+        del.textContent = "✕";
+        del.onclick = () => this.removeTask(idx);
+
+        right.appendChild(del);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        tContainer.appendChild(row);
+      });
+    }
+
+    const cContainer = document.getElementById("checklist-list-render");
+    if (cContainer) {
+      cContainer.innerHTML = "";
+      this.state.checklist.forEach((c, idx) => {
+        const row = document.createElement("div");
+        row.className = "row-item";
+        row.style.transform = `rotate(${(idx % 2 === 0 ? -0.1 : 0.1)}deg)`;
+
+        const left = document.createElement("div");
+        left.className = "row-left";
+        
+        const cb = document.createElement("div");
+        cb.className = `checkbox-custom ${c.completed ? 'checked' : ''}`;
+        cb.onclick = () => this.toggleChecklist(idx);
+        
+        const titleSpan = document.createElement("span");
+        titleSpan.className = `row-title-text ${c.completed ? 'checked' : ''}`;
+        titleSpan.textContent = c.name;
+
+        left.appendChild(cb);
+        left.appendChild(titleSpan);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "12px";
+
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "meta-mono-faint";
+        typeBadge.style.fontSize = "8px";
+        typeBadge.style.opacity = "0.75";
+        typeBadge.textContent = c.type;
+        right.appendChild(typeBadge);
+
+        const del = document.createElement("button");
+        del.className = "btn-secondary-ghost";
+        del.style.color = "var(--acc-terra)";
+        del.style.textDecoration = "none";
+        del.textContent = "✕";
+        del.onclick = () => this.removeChecklist(idx);
+
+        right.appendChild(del);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        cContainer.appendChild(row);
+      });
+    }
+
+    const aContainer = document.getElementById("activity-list-render");
+    if (aContainer) {
+      aContainer.innerHTML = "";
+      
+      // Filter activities based on active tab
+      const filtered = this.state.activity.filter(a => a.type === this.state.activeActivityTab);
+      
+      filtered.forEach((act, idx) => {
+        const row = document.createElement("div");
+        row.style.padding = "12px 6px";
+        row.style.borderTop = idx === 0 ? "none" : "1px dashed var(--line-dashed)";
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "flex-start";
+        row.style.gap = "16px";
+
+        const left = document.createElement("div");
+        left.style.display = "flex";
+        left.style.flexDirection = "column";
+        left.style.gap = "4px";
+
+        const time = document.createElement("span");
+        time.className = "meta-mono-faint";
+        time.style.fontSize = "9px";
+        time.textContent = act.time;
+
+        const desc = document.createElement("span");
+        desc.style.fontSize = "14px";
+        desc.style.color = "var(--ink-body)";
+        desc.textContent = act.desc;
+
+        left.appendChild(time);
+        left.appendChild(desc);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "8px";
+
+        if (act.hours) {
+          const hoursBadge = document.createElement("span");
+          hoursBadge.className = "meta-mono-faint";
+          hoursBadge.style.background = "var(--paper-bone)";
+          hoursBadge.style.border = "1px solid var(--line-solid)";
+          hoursBadge.style.padding = "2px 8px";
+          hoursBadge.style.borderRadius = "999px";
+          hoursBadge.style.fontSize = "9.5px";
+          hoursBadge.textContent = act.hours;
+          right.appendChild(hoursBadge);
+        }
+
+        const sourceBadge = document.createElement("span");
+        sourceBadge.className = "meta-mono-faint";
+        sourceBadge.style.fontSize = "8px";
+        sourceBadge.style.opacity = "0.75";
+        sourceBadge.textContent = "MANUAL";
+        right.appendChild(sourceBadge);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        aContainer.appendChild(row);
+      });
+    }
+  }
+
+  // Interactivity handlers
+  toggleMilestone(idx) {
+    const list = [...this.state.milestones];
+    list[idx].completed = !list[idx].completed;
+    this.setState({ milestones: list });
+    this.showToast("Milestone updated.");
+  }
+
+  removeMilestone(idx) {
+    const list = [...this.state.milestones];
+    list.splice(idx, 1);
+    this.setState({ milestones: list });
+    this.showToast("Milestone removed.");
+  }
+
+  addMilestone() {
+    const { newMilestoneName, newMilestoneWeight, milestones } = this.state;
+    if (!newMilestoneName.trim()) return;
+
+    const newM = {
+      name: newMilestoneName,
+      weight: parseInt(newMilestoneWeight) || 1,
+      completed: false
+    };
+
+    this.setState({
+      milestones: [...milestones, newM],
+      newMilestoneName: "",
+      newMilestoneWeight: "1"
+    });
+    this.showToast("✿ Milestone added successfully.");
+  }
+
+  toggleTask(idx) {
+    const list = [...this.state.tasks];
+    list[idx].completed = !list[idx].completed;
+    this.setState({ tasks: list });
+    this.showToast("Task status updated.");
+  }
+
+  removeTask(idx) {
+    const list = [...this.state.tasks];
+    list.splice(idx, 1);
+    this.setState({ tasks: list });
+    this.showToast("Task deleted.");
+  }
+
+  addTask() {
+    const { newTaskName, newTaskDue, newTaskPriority, tasks } = this.state;
+    if (!newTaskName.trim()) return;
+
+    let formattedDate = "";
+    if (newTaskDue) {
+      const dateParts = newTaskDue.split("-");
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const day = dateParts[2];
+      const month = months[parseInt(dateParts[1]) - 1];
+      formattedDate = `${day} ${month}`;
+    }
+
+    const newT = {
+      title: newTaskName,
+      due: formattedDate,
+      priority: newTaskPriority,
+      completed: false
+    };
+
+    this.setState({
+      tasks: [...tasks, newT],
+      newTaskName: "",
+      newTaskDue: "",
+      newTaskPriority: "3"
+    });
+    this.showToast("✿ Task allocated to this initiative.");
+  }
+
+  toggleChecklist(idx) {
+    const list = [...this.state.checklist];
+    list[idx].completed = !list[idx].completed;
+    this.setState({ checklist: list });
+    this.showToast("Checklist item updated.");
+  }
+
+  removeChecklist(idx) {
+    const list = [...this.state.checklist];
+    list.splice(idx, 1);
+    this.setState({ checklist: list });
+    this.showToast("Checklist item removed.");
+  }
+
+  addChecklistItem() {
+    const { newChecklistName, newChecklistType, checklist } = this.state;
+    if (!newChecklistName.trim()) return;
+
+    const newC = {
+      name: newChecklistName,
+      type: newChecklistType,
+      completed: false
+    };
+
+    this.setState({
+      checklist: [...checklist, newC],
+      newChecklistName: "",
+      newChecklistType: "ONE-SHOT"
+    });
+    this.showToast("✿ Checklist item added.");
+  }
+
+  logActivity() {
+    const { newActivityDesc, newActivityHours, activity, activeActivityTab, hours } = this.state;
+    if (!newActivityDesc.trim()) return;
+
+    const date = new Date();
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+    const formattedTime = `${date.getHours()}:${minutes} · ${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+
+    const newAct = {
+      time: formattedTime,
+      desc: activeActivityTab === 'UPDATE' ? `📌 ${newActivityDesc}` : newActivityDesc,
+      hours: activeActivityTab === 'WORK' ? newActivityHours : "",
+      type: activeActivityTab
+    };
+
+    let updatedHours = hours;
+    if (activeActivityTab === 'WORK' && newActivityHours) {
+      // Simple parse hours (e.g. 1h 30m -> 1.5)
+      const hoursMatch = newActivityHours.match(/(\d+)h/);
+      const minutesMatch = newActivityHours.match(/(\d+)m/);
+      let parsed = 0;
+      if (hoursMatch) parsed += parseFloat(hoursMatch[1]);
+      if (minutesMatch) parsed += parseFloat(minutesMatch[1]) / 60;
+      if (!hoursMatch && !minutesMatch) parsed += parseFloat(newActivityHours) || 0;
+      updatedHours = Math.round((hours + parsed) * 10) / 10;
+    }
+
+    this.setState({
+      activity: [newAct, ...activity],
+      newActivityDesc: "",
+      newActivityHours: "1h 30m",
+      hours: updatedHours
+    });
+    this.showToast(activeActivityTab === 'WORK' ? "Work logged successfully." : "📌 Update posted.");
+  }
+
+  // Helper bindings
+  changeColor(newColor) {
+    this.setState({ color: newColor });
+    this.showToast("Initiative accent color updated.");
+  }
+
+  changeActivityTab(tab) {
+    this.setState({ activeActivityTab: tab, newActivityDesc: "" });
+  }
+
+  updateTitle(e) {
+    this.setState({ title: e.target.value });
+  }
+  
+  updateNewMilestoneName(e) { this.setState({ newMilestoneName: e.target.value }); }
+  updateNewMilestoneWeight(e) { this.setState({ newMilestoneWeight: e.target.value }); }
+  updateNewTaskName(e) { this.setState({ newTaskName: e.target.value }); }
+  updateNewTaskDue(e) { this.setState({ newTaskDue: e.target.value }); }
+  updateNewTaskPriority(e) { this.setState({ newTaskPriority: e.target.value }); }
+  updateNewChecklistName(e) { this.setState({ newChecklistName: e.target.value }); }
+  updateNewChecklistType(e) { this.setState({ newChecklistType: e.target.value }); }
+  updateNewActivityDesc(e) { this.setState({ newActivityDesc: e.target.value }); }
+  updateNewActivityHours(e) { this.setState({ newActivityHours: e.target.value }); }
+
+  showToast(msg) {
+    this.setState({ toastMsg: msg });
+    setTimeout(() => {
+      this.setState({ toastMsg: "" });
+    }, 1500);
+  }
+
+  toggleSettings(e) {
+    if (e) e.preventDefault();
+    this.setState(s => ({ settingsOpen: !s.settingsOpen }));
+  }
+
+  closeSettings() {
+    this.setState({ settingsOpen: false });
+  }
+
+  renderVals() {
+    const { title, domain, color, hours, targetDate, type, activeActivityTab, newMilestoneName, newMilestoneWeight, newChecklistName, newChecklistType, newTaskName, newTaskDue, newTaskPriority, newActivityDesc, newActivityHours, toastMsg, settingsOpen } = this.state;
+    const percentComplete = this.getCompletionPercentage();
+
+    // Select correct wisteria progress image
+    let vineImg = "assets/flowers/wisteria/p0.png";
+    let vineNote = "bare vines dormant";
+    if (percentComplete >= 100) {
+      vineImg = "assets/flowers/wisteria/p100.png";
+      vineNote = "wisteria in full cascade bloom ✿";
+    } else if (percentComplete >= 80) {
+      vineImg = "assets/flowers/wisteria/p80.png";
+      vineNote = "blooms cluster and weight";
+    } else if (percentComplete >= 60) {
+      vineImg = "assets/flowers/wisteria/p60.png";
+      vineNote = "buds open into clusters";
+    } else if (percentComplete >= 40) {
+      vineImg = "assets/flowers/wisteria/p40.png";
+      vineNote = "shoots stretching up";
+    } else if (percentComplete >= 20) {
+      vineImg = "assets/flowers/wisteria/p20.png";
+      vineNote = "small buds sprouting";
+    }
+
+    return {
+      title, domain, color, hours, targetDate, type, percentComplete, vineImg, vineNote,
+      activeActivityTab, newMilestoneName, newMilestoneWeight, newChecklistName, newChecklistType, 
+      newTaskName, newTaskDue, newTaskPriority, newActivityDesc, newActivityHours, toastMsg, settingsOpen
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,23 +1,124 @@
-/* Strip FullCalendar's default look to something plain/neutral until the design phase. */
+/* Botanical skin for FullCalendar — CSS overrides only, CalendarGrid.tsx stays the contract.
+   See docs/phases/P-DESIGN.md §5.1 for the full interaction-state checklist this covers. */
 .fc {
-  --fc-border-color: #e2e8f0;
-  --fc-today-bg-color: #f8fafc;
-  --fc-now-indicator-color: #0f172a;
-  --fc-event-bg-color: #0f172a;
-  --fc-event-border-color: #0f172a;
-  --fc-button-bg-color: #0f172a;
-  --fc-button-border-color: #0f172a;
-  --fc-button-hover-bg-color: #1e293b;
-  --fc-button-active-bg-color: #1e293b;
-  font-family: inherit;
-  font-size: 0.875rem;
+  --fc-border-color: var(--line-dashed);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--bg-input);
+  --fc-today-bg-color: rgba(168, 160, 190, 0.1);
+  --fc-now-indicator-color: var(--acc-terra);
+  --fc-event-bg-color: var(--paper-event);
+  --fc-event-border-color: var(--line-solid);
+  --fc-event-text-color: var(--text-primary);
+  --fc-button-bg-color: var(--bg-input);
+  --fc-button-border-color: var(--border-default);
+  --fc-button-hover-bg-color: var(--bg-surface);
+  --fc-button-active-bg-color: var(--bg-surface);
+  --fc-button-text-color: var(--text-primary);
+  --fc-highlight-color: rgba(168, 160, 190, 0.16);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body-s);
 }
 
+/* Toolbar */
+.fc .fc-toolbar { padding: 16px 20px 12px; margin: 0; }
 .fc .fc-toolbar-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: 19px;
+  color: var(--text-primary);
+}
+.fc .fc-button {
+  text-transform: capitalize;
+  box-shadow: none !important;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background: var(--acc-terra);
+  border-color: var(--acc-terra);
+  color: var(--text-on-accent);
 }
 
-.fc-event {
-  cursor: pointer;
+/* Column headers — two-line mono weekday / serif date, per dayHeaderContent in CalendarGrid.tsx */
+.fc .fc-col-header-cell { border-color: var(--line-dashed); padding: 0; }
+.fc .fc-col-header-cell-cushion { padding: 0; text-decoration: none; }
+.cal-day-header { padding: 10px 8px 8px; text-align: center; }
+.cal-day-header-name {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: var(--ls-mono-tight);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
+.cal-day-header-num {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text-primary);
+  margin-top: 1px;
+}
+.fc .fc-day-today .cal-day-header-name { color: var(--acc-lavender-deep); }
+.fc .fc-day-today .cal-day-header-num { font-weight: var(--fw-semibold); }
+
+/* Axis + slot labels */
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-timegrid-slot-label-cushion {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-hairline);
+}
+.fc .fc-timegrid-slot { border-color: var(--line-dashed); height: 44px; }
+.fc .fc-timegrid-slot-minor { border-color: transparent; }
+.fc .fc-timegrid-divider { display: none; }
+
+/* Past/future day dimming */
+.fc .fc-timegrid-col.fc-day-past { background: rgba(60, 52, 38, 0.045); }
+
+/* Now indicator — terra, per P-DESIGN §5.1 (a deliberate departure from the static mockup's
+   lavender reference line: terra reads as "this moment", consistent with SKILL.md's "terra is a
+   moment, not a texture"). */
+.fc .fc-timegrid-now-indicator-line { border-color: var(--acc-terra); border-width: 1px 0 0; }
+.fc .fc-timegrid-now-indicator-arrow { border-color: var(--acc-terra); background: var(--acc-terra); }
+
+/* Selection / external-drag drop target ghost */
+.fc .fc-highlight { background: var(--fc-highlight-color); border: 1px dashed var(--acc-lavender); }
+
+/* Event chips */
+.fc .fc-timegrid-event {
+  border-radius: var(--radius-sharp);
+  border-left: 3px solid var(--acc-lavender);
+  box-shadow: var(--shadow-crisp);
+  padding: 4px 7px;
+}
+.fc .fc-timegrid-event .fc-event-main { padding: 0; }
+.fc .fc-event-title {
+  font-size: 10.5px;
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+.fc .fc-event-time {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-tertiary);
+}
+/* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
+.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5), var(--shadow-crisp); }
+
+/* All-day row */
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
+.fc .fc-daygrid-day-frame { min-height: 26px; }
+.fc .fc-daygrid-event {
+  border-radius: 2px;
+  border-left: 3px solid var(--acc-lavender);
+  background: rgba(168, 160, 190, 0.2);
+  border-color: rgba(168, 160, 190, 0.5);
+  font-size: 10.5px;
+  color: var(--acc-lavender-text);
+}
+
+/* Drag mirror + resize handle */
+.fc .fc-event-mirror { box-shadow: var(--shadow-card); opacity: 0.85; }
+.fc .fc-event-resizer { border-color: var(--line-solid); }
+.fc .fc-event-resizer-end { border-width: 4px; }

@@ -1,7 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  color-scheme: light dark;
+/* Canonical design-system tokens — copied verbatim from the Open Design system
+   (design source: c31c5e70…/working_pages/tokens). Edit there → re-copy here.
+   See docs/phases/P-DESIGN.md for the full execution guide. */
+@import "./styles/tokens/colors.css";
+@import "./styles/tokens/colors.dark.css";
+@import "./styles/tokens/typography.css";
+@import "./styles/tokens/spacing.css";
+@import "./styles/tokens/motion.css";
+@import "./styles/tokens/effects.css";
+/* Fonts load via <link> in index.html, not tokens/fonts.css. */
+
+/* DEPRECATED legacy aliases — pre-design-system names still used by existing
+   components. They point at the semantic tokens so night theme flips them for
+   free. New code reaches for the real tokens; migrate usages, then delete. */
+:root,
+[data-theme="night"] {
+  color-scheme: light;
+
+  --bg-base: var(--bg-app);
+  --bg-hover: var(--bg-input);
+  --paper-card: var(--bg-surface);
+  --sidebar-bg: var(--bg-sidebar);
+  --text-ink: var(--text-primary);
+  --text-muted: var(--text-secondary);
+  --text-faint: var(--text-tertiary);
+  --accent-sage: var(--acc-sage);
+  --accent-terra: var(--acc-terra);
+  --border: var(--border-default);
+  --border-faint: rgba(21, 20, 15, 0.08);
+}
+
+[data-theme="night"] {
+  color-scheme: dark;
+  --border-faint: rgba(220, 214, 190, 0.1);
 }
 
 html,
@@ -12,5 +44,30 @@ body,
 
 body {
   margin: 0;
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Paper grain overlay — felt, not seen */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--noise-url);
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4cdb9;
+  border-radius: 6px;
+  border: 3px solid var(--bg-app);
 }

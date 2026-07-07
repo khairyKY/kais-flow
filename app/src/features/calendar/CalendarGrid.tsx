@@ -10,6 +10,8 @@ export interface CalendarGridEvent {
   title: string
   start: string
   end: string
+  /** Task-linked blocks get a blush "from a task" edge treatment — see CalendarGrid.css. */
+  linked?: boolean
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -39,12 +41,18 @@ export function CalendarGrid({
       initialView={initialView}
       headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' }}
       height="auto"
+      dayHeaderContent={(arg) => (
+        <div className="cal-day-header">
+          <div className="cal-day-header-name">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+          <div className="cal-day-header-num">{arg.date.getDate()}</div>
+        </div>
+      )}
       nowIndicator
       selectable
       selectMirror
       editable
       droppable
-      events={events.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end }))}
+      events={events.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, classNames: e.linked ? ['fc-event-linked'] : [] }))}
       select={(info) => {
         onCreate(info.startStr, info.endStr)
       }}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#EFE9DB;color:#2a2420;font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d4cdb9;border-radius:6px;border:3px solid #EFE9DB}
+</style>
+</helmet>
+<div data-screen-label="Settings" style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:#EFE9DB;position:relative">
+
+  <aside style="width:238px;flex:none;background:#EAE3D2;border-right:1px dashed #c9c1aa;display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:#2a2420">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8b8471">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:#7a745f;transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:#6b6455">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B5654A">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:#6b6455">Routines</span>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:#6b6455">Review</span>
+      </a>
+
+      <a href="Settings.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(201,185,143,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;font-weight:600;color:#2a2420">Settings</span>
+      </a>
+    </nav>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed #c9c1aa;display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:#6b6455">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b8471">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:#6b6455">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b8471">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:#8b8471">Sign out</span></a>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed #cfc7b0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Mon 06 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:#8A9A7E;display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div>
+
+    <div style="padding:30px 40px 64px;max-width:820px">
+
+      <div style="display:flex;align-items:flex-end;gap:18px">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#8b8471;margin-bottom:9px">Settings</div>
+          <h1 style="margin:0;font-family:'Source Serif 4',serif;font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:#2a2420">Settings</h1>
+        </div>
+        <img src="assets/clover/seedling.png" alt="" style="height:52px;width:auto;object-fit:contain;margin-bottom:2px;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.15))">
+      </div>
+
+      <div style="height:1px;border-bottom:1px dashed #cfc7b0;margin:26px 0 30px"></div>
+
+      <div style="display:flex;flex-direction:column;gap:24px;max-width:640px">
+
+        <div style="position:relative;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px;padding:18px 20px;transform:rotate(-0.25deg)">
+          <span style="position:absolute;top:-8px;left:22px;width:52px;height:14px;background:rgba(138,154,126,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+            <img src="assets/clover/awake.png" alt="" style="height:36px;width:auto;object-fit:contain">
+            <div style="font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:#2a2420">The Terrarium</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px dashed #d5cdb5">
+            <div style="flex:1"><div style="font-size:13.5px;color:#2a2420">Enable The Terrarium</div><div style="font-size:11.5px;color:#8b8471;margin-top:2px">Grow a living garden from your activity.</div></div>
+            <div style="position:relative;width:38px;height:22px;border-radius:999px;flex:none;background:#7A946E;cursor:pointer"><div style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#FBF6E9;box-shadow:0 1px 3px rgba(60,52,38,0.3)"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px dashed #d5cdb5">
+            <div style="flex:1"><div style="font-size:13.5px;color:#2a2420">Show in Today view</div><div style="font-size:11.5px;color:#8b8471;margin-top:2px">Off — the garden lives in Routines instead.</div></div>
+            <div style="position:relative;width:38px;height:22px;border-radius:999px;flex:none;background:#7A946E;cursor:pointer"><div style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#FBF6E9;box-shadow:0 1px 3px rgba(60,52,38,0.3)"></div></div>
+          </div>
+        </div>
+
+        <div style="position:relative;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px;padding:18px 20px;transform:rotate(0.3deg)">
+          <span style="position:absolute;top:-8px;right:28px;width:48px;height:13px;background:rgba(168,160,190,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(2deg);border-radius:1px"></span>
+          <div style="font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:#2a2420;margin-bottom:4px">Appearance</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px dashed #d5cdb5">
+            <div style="flex:1;font-size:13.5px;color:#2a2420">Theme</div>
+            <div style="display:flex;border:1px solid #cfc7b0;border-radius:999px;overflow:hidden">
+              <span style="font-size:11.5px;padding:6px 14px;background:#2a2420;color:#F4F1EA">Light</span>
+              <span style="font-size:11.5px;padding:6px 14px;color:#6b6455;cursor:pointer">Dark</span>
+              <span style="font-size:11.5px;padding:6px 14px;color:#6b6455;cursor:pointer;border-left:1px solid #e0d8c2">Auto</span>
+            </div>
+          </div>
+          <div style="padding:11px 0;border-top:1px dashed #d5cdb5">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="flex:1;font-size:13.5px;color:#2a2420">Paper texture</div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8b8471">60%</span>
+            </div>
+            <div style="position:relative;height:5px;background:#e6dfc8;border-radius:3px;margin-top:10px">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:60%;background:#8A9A7E;border-radius:3px"></div>
+              <div style="position:absolute;left:60%;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:#FBF6E9;border:1.5px solid #8A9A7E;box-shadow:0 1px 3px rgba(60,52,38,0.25);cursor:pointer"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0 2px;border-top:1px dashed #d5cdb5">
+            <div style="flex:1"><div style="font-size:13.5px;color:#2a2420">Botanical animations</div><div style="font-size:11.5px;color:#8b8471;margin-top:2px">Honours reduced-motion automatically.</div></div>
+            <div style="position:relative;width:38px;height:22px;border-radius:999px;flex:none;background:#7A946E;cursor:pointer"><div style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#FBF6E9;box-shadow:0 1px 3px rgba(60,52,38,0.3)"></div></div>
+          </div>
+        </div>
+
+        <div style="position:relative;background:#FBF6E9;border:1px solid #e0d8c2;box-shadow:0 1px 2px rgba(60,52,38,0.12),0 5px 12px rgba(60,52,38,0.08);border-radius:3px;padding:18px 20px;transform:rotate(-0.2deg)">
+          <span style="position:absolute;top:-8px;left:50%;width:52px;height:13px;margin-left:-26px;background:rgba(181,101,74,0.32);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-1.5deg);border-radius:1px"></span>
+          <div style="font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:#2a2420;margin-bottom:4px">Push notifications</div>
+          <div style="padding:11px 0 2px;border-top:1px dashed #d5cdb5">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8b8471">2 devices subscribed.</div>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+              <button style="border:1px solid #cfc7b0;background:#F6F0E1;color:#2a2420;font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;cursor:pointer">Unsubscribe this device</button>
+              <button style="border:none;background:none;color:#B5654A;font-family:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer;padding:8px 4px">Send test push</button>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin:0;font-family:'Caveat',cursive;font-size:17px;color:#8b8471;transform:rotate(-0.6deg)">more integrations and preferences land here in later phases…</p>
+
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>

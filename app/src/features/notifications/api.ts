@@ -2,7 +2,25 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
-import type { PushSubscriptionRow } from '../../lib/types'
+import type { ActivityLogEntry, PushSubscriptionRow } from '../../lib/types'
+
+// activity_log is excluded from realtime, but logActivity()'s writeRow updates this cache
+// optimistically on every domain action, so new notifications appear as you work.
+export function useRecentActivity() {
+  return useQuery({
+    queryKey: ['activity_log'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      return data as ActivityLogEntry[]
+    },
+    refetchInterval: 60_000,
+  })
+}
 
 export function isPushSupported(): boolean {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window

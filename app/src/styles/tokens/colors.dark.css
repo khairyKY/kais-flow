@@ -1,0 +1,51 @@
+/* Dark mode — "Night Garden". Deep midnight-blue sky rather than warm black,
+   because the light-mode paper world becomes an outdoor evening garden here.
+   Applied by setting data-theme="night" on the root of a screen or subtree. */
+[data-theme="night"] {
+  /* Sky ground — deep navy with a hint of violet, never true black */
+  --sky-deep:           #0B1330;   /* page background — midnight */
+  --sky-mid:            #142147;   /* mid sky */
+  --sky-horizon:        #1F2D5C;   /* horizon glow */
+  --sky-panel:          rgba(240, 236, 220, 0.05);  /* frosted moonlit paper */
+  --sky-panel-strong:   rgba(240, 236, 220, 0.09);
+  --sky-input:          rgba(255, 250, 235, 0.04);
+
+  /* Moonlight text — soft cream on navy, never pure white */
+  --moon-primary:       rgba(245, 240, 220, 0.92);
+  --moon-muted:         rgba(230, 224, 200, 0.62);
+  --moon-faint:         rgba(220, 214, 190, 0.42);
+
+  /* Glowing accents — botanical colors shifted for luminance on dark */
+  --acc-sage:           #8FB098;   /* leaves catch moonlight */
+  --acc-moss:           #7CA084;
+  --acc-terra:          #E29473;   /* firefly-warm, softer than daytime terra */
+  --acc-blossom:        #E9BFC5;
+  --acc-lavender:       #C0B7E0;
+  --acc-hydrangea:      #A9C5D3;
+  --acc-buttercream:    #E8DCA0;
+  --acc-clover:         #DDB3B3;
+  --acc-gold:           #E4C36B;
+  --acc-gold-warm:      #E6C982;
+  --firefly:            #F6E28C;   /* signature firefly glow */
+  --star:               rgba(255, 250, 230, 0.9);
+
+  /* Lines — dashed silver, more transparent */
+  --line-solid:         rgba(220, 214, 190, 0.18);
+  --line-dashed:        rgba(220, 214, 190, 0.22);
+  --line-sidebar:       rgba(220, 214, 190, 0.16);
+  --line-card:          rgba(220, 214, 190, 0.14);
+  --line-goal:          rgba(228, 195, 107, 0.5);
+
+  /* Semantic aliases */
+  --bg-app:             var(--sky-deep);
+  --bg-surface:         var(--sky-panel);
+  --bg-input:           var(--sky-input);
+  --bg-sidebar:         var(--sky-mid);
+  --text-primary:       var(--moon-primary);
+  --text-secondary:     var(--moon-muted);
+  --text-tertiary:      var(--moon-faint);
+  --border-default:     var(--line-solid);
+  --border-dashed:      var(--line-dashed);
+  --accent-primary:     var(--acc-terra);
+  --accent-plant:       var(--acc-sage);
+}

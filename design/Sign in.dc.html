@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#EFE9DB;color:#2a2420;font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");mix-blend-mode:multiply;opacity:0.6}
+</style>
+</helmet>
+<div data-screen-label="Sign in" style="width:1440px;height:1024px;margin:0 auto;position:relative;background:#EFE9DB;display:flex;align-items:center;justify-content:center;overflow:hidden">
+
+  <img src="assets/fern/full.png" alt="" style="position:absolute;left:120px;top:120px;height:640px;width:auto;opacity:0.16;transform:rotate(-6deg);pointer-events:none">
+  <img src="assets/cherry/opening.png" alt="" style="position:absolute;right:150px;bottom:110px;height:420px;width:auto;opacity:0.13;transform:rotate(7deg);pointer-events:none">
+  <img src="assets/clover/dewdrop.png" alt="" style="position:absolute;right:280px;top:130px;height:180px;width:auto;opacity:0.14;transform:rotate(-4deg);pointer-events:none">
+
+  <div style="position:relative;width:384px;background:#FBF6E9;border:1px solid #e0d8c2;border-radius:4px;box-shadow:0 2px 3px rgba(60,52,38,0.12),0 24px 60px rgba(60,52,38,0.2);padding:34px 34px 30px;transform:rotate(-0.4deg)">
+    <span style="position:absolute;top:-10px;left:50%;width:78px;height:18px;margin-left:-39px;background:rgba(138,154,126,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.12)"></span>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/clover/seedling.png" alt="" style="height:34px;width:auto;object-fit:contain">
+      <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;letter-spacing:-0.01em;color:#2a2420">Kai's Flow</div>
+    </div>
+    <div style="margin-top:6px;font-family:'Caveat',cursive;font-size:17px;color:#7a745f;transform:rotate(-0.8deg)">welcome back to the garden</div>
+
+    <div style="margin-top:26px;display:flex;flex-direction:column;gap:16px">
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471">Email</span>
+        <input type="email" placeholder="you@example.com" style="font-family:'Inter Tight',sans-serif;font-size:14px;background:#F6F0E1;border:1px solid #cfc7b0;border-radius:6px;padding:11px 13px;outline:none;color:#2a2420">
+      </label>
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#8b8471">Password</span>
+        <input type="password" placeholder="••••••••" style="font-family:'Inter Tight',sans-serif;font-size:14px;background:#F6F0E1;border:1px solid #cfc7b0;border-radius:6px;padding:11px 13px;outline:none;color:#2a2420">
+      </label>
+    </div>
+
+    <button style="margin-top:24px;width:100%;border:none;background:#B5654A;color:#fff;font-family:inherit;font-size:14px;font-weight:500;padding:13px 0;border-radius:999px;cursor:pointer;box-shadow:0 2px 4px rgba(120,60,40,0.3)">Sign in</button>
+
+    <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:baseline">
+      <a href="#" style="font-size:12px;color:#8b8471;text-decoration:underline">Send reset link</a>
+      <a href="#" style="font-size:12px;color:#B5654A;text-decoration:underline">Create your workspace</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>

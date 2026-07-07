@@ -58,11 +58,24 @@ export function VoiceCaptureButton() {
       type="button"
       onClick={() => (recording ? stop() : void start())}
       disabled={busy}
-      className={`rounded-full px-4 py-2 text-sm text-white disabled:opacity-50 ${
-        recording ? 'bg-red-500' : 'bg-slate-900'
-      }`}
+      style={{
+        border: 'none',
+        background: recording ? 'color-mix(in srgb, var(--acc-terra) 80%, black)' : 'var(--acc-terra)',
+        color: 'var(--text-on-accent)',
+        fontFamily: 'inherit',
+        fontSize: 13,
+        padding: '10px 18px',
+        borderRadius: 999,
+        cursor: busy ? 'default' : 'pointer',
+        opacity: busy ? 0.5 : 1,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        boxShadow: 'var(--shadow-cta)',
+      }}
     >
-      {busy ? 'Transcribing…' : recording ? '● Stop' : '🎤 Voice capture'}
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-on-accent)', display: 'inline-block' }} />
+      {busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture'}
     </button>
   )
 }

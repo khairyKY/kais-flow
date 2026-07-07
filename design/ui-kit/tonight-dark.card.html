@@ -1,0 +1,256 @@
+<!-- @dsCard group="UI Kit" viewport="1440x1024" subtitle="Tonight — Night Garden with fireflies & stars" name="Tonight (Night)" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{color:rgba(245,240,220,0.92);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;min-height:1024px;background:#0B1330;overflow:hidden}
+.sky{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 78% 8%,#2a3a70 0%,#1F2D5C 20%,#142147 50%,#0B1330 100%)}
+.hills{position:fixed;left:0;right:0;bottom:0;height:220px;z-index:1;background:radial-gradient(ellipse at 20% 100%,#0d1a3e 0%,#0B1330 60%,transparent 100%),radial-gradient(ellipse at 75% 100%,#0d1a3e 0%,transparent 60%);pointer-events:none}
+.moon{position:fixed;left:80%;top:6%;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,245,210,0.45) 0%,rgba(255,245,210,0.18) 35%,transparent 68%);filter:blur(2px);z-index:1;pointer-events:none}
+.moon::after{content:'';position:absolute;left:20px;top:20px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,225,0.85) 0%,rgba(255,248,225,0.3) 55%,transparent 80%)}
+.star{position:fixed;border-radius:50%;background:rgba(255,250,230,0.9);z-index:1;animation:twinkle 4s ease-in-out infinite;pointer-events:none}
+.star.lg{box-shadow:0 0 4px rgba(255,250,230,0.7)}
+.ff{position:fixed;width:5px;height:5px;border-radius:50%;background:#F6E28C;box-shadow:0 0 10px rgba(246,226,140,0.95),0 0 22px rgba(246,226,140,0.5),0 0 40px rgba(246,226,140,0.2);z-index:2;pointer-events:none;animation:fireflyDrift 8s ease-in-out infinite}
+.app{position:relative;z-index:3;display:flex;width:1440px;margin:0 auto;min-height:1024px}
+
+/* Sidebar — moonlit */
+aside{width:238px;flex:none;background:rgba(20,33,71,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-right:1px dashed rgba(220,214,190,0.16);display:flex;flex-direction:column;padding:26px 0 20px}
+.brand{padding:0 24px 24px}
+.brand h1{margin:0;font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em;color:rgba(250,244,220,0.95)}
+.brand .sub{margin-top:5px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(220,214,190,0.55)}
+.brand .hand{margin-top:8px;font-family:var(--font-hand);font-size:16px;color:rgba(228,195,107,0.8);transform:rotate(-1.2deg);display:inline-block}
+nav.rail{padding:0 16px;display:flex;flex-direction:column;gap:3px}
+nav.rail a{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;color:rgba(230,224,200,0.65);font-size:14.5px;position:relative}
+nav.rail a.active{color:rgba(250,244,220,0.98);font-weight:600;background:rgba(240,236,220,0.08);border:1px solid rgba(220,214,190,0.22);box-shadow:inset 0 1px 0 rgba(255,245,210,0.12),0 0 24px rgba(246,226,140,0.12);transform:rotate(-0.5deg)}
+nav.rail a.active::before{content:'';position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(246,226,140,0.35);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px;box-shadow:0 0 8px rgba(246,226,140,0.3)}
+nav.rail img{width:23px;height:23px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(246,226,140,0.15))}
+nav.rail .cnt{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:rgba(226,148,115,0.9)}
+.section-lbl{padding:16px 24px 6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(220,214,190,0.45)}
+.footer-me{margin-top:auto;padding:14px 20px;display:flex;align-items:center;gap:12px;border-top:1px dashed rgba(220,214,190,0.16)}
+.footer-me img{width:32px;height:32px;filter:drop-shadow(0 0 6px rgba(246,226,140,0.15))}
+.footer-me .nm{font-size:13px;color:rgba(240,232,205,0.9)}
+.footer-me .st{font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(220,214,190,0.45)}
+
+/* Main */
+main{flex:1;padding:36px 56px 60px;position:relative}
+.head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.head h2{margin:0;font-family:var(--font-display);font-size:44px;font-weight:500;letter-spacing:-0.015em;line-height:1;color:rgba(250,244,220,0.95)}
+.head h2 em{font-style:normal;color:rgba(228,195,107,0.85);text-shadow:0 0 20px rgba(228,195,107,0.4)}
+.head .meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(220,214,190,0.55);text-align:right}
+.head .meta b{color:rgba(250,244,220,0.9);font-family:var(--font-ui);font-weight:500;letter-spacing:0;text-transform:none;font-size:13px;display:block;margin-bottom:2px}
+
+.sl{display:flex;align-items:center;gap:14px;margin:28px 0 10px}
+.sl-lbl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(220,214,190,0.5);white-space:nowrap}
+.sl-rule{flex:1;height:1px;border-bottom:1px dashed rgba(220,214,190,0.22)}
+.sl-act{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(228,195,107,0.75);text-decoration:none}
+
+.mc{position:relative;background:linear-gradient(180deg,rgba(240,236,220,0.09) 0%,rgba(240,236,220,0.05) 100%);border:1px solid rgba(220,214,190,0.18);border-radius:3px;padding:22px 26px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:inset 0 1px 0 rgba(255,245,210,0.09),0 12px 40px rgba(0,0,0,0.35)}
+.mc.tilt-a{transform:rotate(-0.3deg)}
+.mc.tilt-b{transform:rotate(0.4deg)}
+
+/* Moonlit goal card */
+.goal{position:relative;background:linear-gradient(180deg,rgba(246,226,140,0.14) 0%,rgba(246,226,140,0.06) 100%);border:1px solid rgba(228,195,107,0.45);border-radius:3px;padding:26px 30px;transform:rotate(-0.3deg);box-shadow:inset 0 1px 0 rgba(255,245,210,0.2),0 0 60px rgba(228,195,107,0.12),0 12px 40px rgba(0,0,0,0.4)}
+.goal::after{content:'';position:absolute;top:-4px;right:24px;width:6px;height:6px;border-radius:50%;background:#F6E28C;box-shadow:0 0 12px rgba(246,226,140,0.95),0 0 24px rgba(246,226,140,0.5);animation:fireflyDrift 6s ease-in-out infinite}
+.goal .tape{position:absolute;top:-9px;left:50%;margin-left:-40px;width:80px;height:16px;background:rgba(228,195,107,0.55);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(2deg);border-radius:1px;box-shadow:0 0 12px rgba(228,195,107,0.4)}
+.goal .eye{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(228,195,107,0.9);margin-bottom:12px}
+.goal .row{display:flex;align-items:flex-start;gap:16px}
+.goal .cbg{margin-top:6px;width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid rgba(228,195,107,0.8);background:rgba(20,33,71,0.4)}
+.goal h3{margin:0;font-family:var(--font-display);font-size:26px;font-weight:500;color:rgba(255,248,220,0.98);line-height:1.2;letter-spacing:-0.01em}
+.goal .why{font-family:var(--font-hand);font-size:19px;color:rgba(228,195,107,0.85);transform:rotate(-0.5deg);margin-top:10px}
+.goal .meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(228,195,107,0.85);flex:none;margin-top:6px}
+
+.cols{display:grid;grid-template-columns:1.35fr 1fr;gap:36px;margin-top:8px}
+
+.trow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed rgba(220,214,190,0.22)}
+.trow:last-child{border-bottom:none}
+.cb{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px solid rgba(220,214,190,0.35);background:transparent;color:transparent;font-size:11px}
+.cb.on{background:rgba(246,226,140,0.9);border-color:rgba(246,226,140,0.9);color:#1a1533;box-shadow:0 0 10px rgba(246,226,140,0.5)}
+.ttl{flex:1;font-size:14.5px;color:rgba(240,232,205,0.9)}
+.ttl.done{color:rgba(220,214,190,0.42);text-decoration:line-through}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:3px;border:1px solid rgba(220,214,190,0.28);color:rgba(230,224,200,0.7)}
+.chip .cdot{width:6px;height:6px;border-radius:50%}
+.st{font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(220,214,190,0.5)}
+.st.warm{color:rgba(226,148,115,0.95)}
+.note{font-family:var(--font-hand);font-size:16px;color:rgba(228,195,107,0.75);transform:rotate(-1.5deg)}
+
+.season{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.season img{width:44px;height:44px;filter:drop-shadow(0 0 8px rgba(246,226,140,0.25))}
+.season .lb{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(220,214,190,0.5)}
+.season .val{font-family:var(--font-display);font-size:20px;font-weight:500;color:rgba(250,244,220,0.95)}
+.vine-row{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.vine-row .day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:4px;border:1px solid transparent}
+.vine-row .day.today{background:rgba(246,226,140,0.09);border:1px dashed rgba(228,195,107,0.45);box-shadow:0 0 20px rgba(228,195,107,0.08) inset}
+.vine-row img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(246,226,140,0.15))}
+.vine-row .dl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(220,214,190,0.5)}
+.vine-row .today .dl{color:rgba(250,244,220,0.9)}
+
+.capture{margin-top:36px;display:flex;align-items:center;gap:14px}
+.capture .field{flex:1;padding:14px 18px;background:rgba(240,236,220,0.05);border:1px solid rgba(220,214,190,0.22);border-radius:var(--radius-md);font-size:14px;color:rgba(220,214,190,0.6);backdrop-filter:blur(6px)}
+.btn{font-family:inherit;font-size:13px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;line-height:1;padding:12px 20px;border:none;background:rgba(246,226,140,0.9);color:#1a1533;font-weight:500;box-shadow:0 0 24px rgba(246,226,140,0.35),0 2px 6px rgba(0,0,0,0.4)}
+.btn .dot{width:7px;height:7px;border-radius:50%;background:#1a1533;display:inline-block}
+.btn.ghost{background:rgba(240,236,220,0.06);color:rgba(240,232,205,0.9);border:1px solid rgba(220,214,190,0.28);box-shadow:none}
+</style></head><body data-theme="night">
+<div class="sky"></div>
+<div class="moon"></div>
+<div class="hills"></div>
+<!-- stars -->
+<span class="star" style="left:6%;top:9%;width:1.4px;height:1.4px;animation-delay:-1s"></span>
+<span class="star lg" style="left:14%;top:5%;width:2.4px;height:2.4px"></span>
+<span class="star" style="left:22%;top:12%;width:1.2px;height:1.2px;animation-delay:-3s"></span>
+<span class="star" style="left:30%;top:6%;width:1.6px;height:1.6px;animation-delay:-2s"></span>
+<span class="star" style="left:38%;top:16%;width:1.2px;height:1.2px;animation-delay:-4s"></span>
+<span class="star lg" style="left:46%;top:4%;width:2.3px;height:2.3px;animation-delay:-0.5s"></span>
+<span class="star" style="left:54%;top:14%;width:1.4px;height:1.4px;animation-delay:-1.5s"></span>
+<span class="star" style="left:62%;top:8%;width:1.5px;height:1.5px;animation-delay:-2.5s"></span>
+<span class="star lg" style="left:70%;top:20%;width:2.2px;height:2.2px;animation-delay:-3.5s"></span>
+<span class="star" style="left:92%;top:22%;width:1.6px;height:1.6px;animation-delay:-0.8s"></span>
+<span class="star" style="left:9%;top:26%;width:1.2px;height:1.2px;animation-delay:-2.8s"></span>
+<span class="star" style="left:27%;top:29%;width:1.4px;height:1.4px;animation-delay:-1.8s"></span>
+<span class="star" style="left:44%;top:32%;width:1.2px;height:1.2px;animation-delay:-3.2s"></span>
+<span class="star lg" style="left:56%;top:35%;width:2px;height:2px;animation-delay:-1.1s"></span>
+<span class="star" style="left:66%;top:28%;width:1.3px;height:1.3px;animation-delay:-4.5s"></span>
+<span class="star" style="left:74%;top:42%;width:1.2px;height:1.2px;animation-delay:-2.3s"></span>
+<span class="star" style="left:88%;top:38%;width:1.4px;height:1.4px;animation-delay:-3.7s"></span>
+<span class="star" style="left:20%;top:44%;width:1.2px;height:1.2px;animation-delay:-1.4s"></span>
+
+<!-- fireflies -->
+<span class="ff" style="left:5%;top:62%;animation-delay:-1s"></span>
+<span class="ff" style="left:14%;top:78%;animation-delay:-3s"></span>
+<span class="ff" style="left:26%;top:70%;animation-delay:-5s"></span>
+<span class="ff" style="left:38%;top:85%;animation-delay:-2s;background:#F9D57A"></span>
+<span class="ff" style="left:52%;top:74%;animation-delay:-4s"></span>
+<span class="ff" style="left:68%;top:82%;animation-delay:-6s"></span>
+<span class="ff" style="left:80%;top:66%;animation-delay:-0.5s"></span>
+<span class="ff" style="left:90%;top:78%;animation-delay:-3.5s"></span>
+<span class="ff" style="left:60%;top:58%;animation-delay:-2.5s;width:4px;height:4px"></span>
+<span class="ff" style="left:34%;top:56%;animation-delay:-5.5s;width:4px;height:4px"></span>
+
+<div class="app">
+  <aside>
+    <div class="brand">
+      <h1>Kai's Flow</h1>
+      <div class="sub">Personal · Cairo · Night</div>
+      <div class="hand">the garden after dark ✿</div>
+    </div>
+    <nav class="rail">
+      <a class="active" href="#"><img src="../assets/flowers/clover/resting.png"><span>Tonight</span></a>
+      <a href="#"><img src="../assets/flowers/hydrangea/zero.png"><span>Inbox</span></a>
+      <a href="#"><img src="../assets/flowers/cherry/fallen.png"><span>Tasks</span></a>
+      <a href="#"><img src="../assets/flowers/daisy/evening.png"><span>Calendar</span></a>
+      <a href="#"><img src="../assets/flowers/wisteria/p80.png"><span>Projects</span></a>
+      <a href="#"><img src="../assets/flowers/fern/full.png"><span>Docs</span></a>
+    </nav>
+    <div class="section-lbl">Rituals</div>
+    <nav class="rail">
+      <a href="#"><img src="../assets/flowers/daisy/evening.png"><span>Evening wind-down</span></a>
+      <a href="#"><img src="../assets/flowers/vine/lush.png"><span>Streaks</span></a>
+      <a href="#"><img src="../assets/flowers/clover/dewdrop.png"><span>Dreamlog</span></a>
+    </nav>
+    <div class="footer-me">
+      <img src="../assets/flowers/clover/four_leaf.png">
+      <div><div class="nm">Kai Ahmed</div><div class="st">Winding down · 22:41</div></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="head">
+      <h2>Sunday <em>night</em>, July 5</h2>
+      <div class="meta"><b>Warm night · 24°</b>Cairo · Moon 62% · Rise 21:14</div>
+    </div>
+
+    <div class="goal">
+      <span class="tape"></span>
+      <div class="eye">Goal for tomorrow</div>
+      <div class="row">
+        <span class="cbg"></span>
+        <div style="flex:1">
+          <h3>Rest first. Everything else follows from that.</h3>
+          <div class="why">the field journal will still be here in the morning</div>
+        </div>
+        <span class="meta">Sleep · 23:30</span>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="sl"><span class="sl-lbl">Evening wind-down</span><span class="sl-rule"></span><a class="sl-act" href="#">Skip tonight →</a></div>
+        <div class="mc tilt-a">
+          <div class="trow">
+            <span class="cb on">✓</span>
+            <span class="ttl done">Close open loops from today</span>
+            <span class="st">Done · 21:40</span>
+          </div>
+          <div class="trow">
+            <span class="cb on">✓</span>
+            <span class="ttl done">Read 20 minutes (paper only)</span>
+            <span class="st">Done · 22:15</span>
+          </div>
+          <div class="trow">
+            <span class="cb"></span>
+            <span class="ttl">Set tomorrow's one thing</span>
+            <span class="chip">Ritual · 3m</span>
+            <span class="st warm">up next</span>
+          </div>
+          <div class="trow">
+            <span class="cb"></span>
+            <span class="ttl">Lights out, phone in the other room</span>
+            <span class="st">23:30</span>
+            <span class="note">no more screens ✿</span>
+          </div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">Left open on purpose</span><span class="sl-rule"></span></div>
+        <div class="mc tilt-b">
+          <div class="trow"><span class="cb"></span><span class="ttl">Read Nadia's reply properly</span><span class="chip">Inbox</span><span class="st">Tomorrow · morning</span></div>
+          <div class="trow"><span class="cb"></span><span class="ttl">Studio move — Farah's floor plan</span><span class="chip"><span class="cdot" style="background:#7CA084"></span>Wisteria</span><span class="st">Wed</span></div>
+          <div class="trow"><span class="cb"></span><span class="ttl">Book pass 2 — Chapter 4</span><span class="chip"><span class="cdot" style="background:#E8DCA0"></span>Docs</span><span class="st">This week</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sl"><span class="sl-lbl">The week bloomed</span><span class="sl-rule"></span></div>
+        <div class="mc">
+          <div class="season">
+            <img src="../assets/flowers/daisy/evening.png">
+            <div>
+              <div class="lb">Day count</div>
+              <div class="val">Day 5 · closing</div>
+            </div>
+          </div>
+          <div class="vine-row">
+            <div class="day"><img src="../assets/flowers/vine/lush.png"><span class="dl">M</span></div>
+            <div class="day"><img src="../assets/flowers/vine/lush.png"><span class="dl">T</span></div>
+            <div class="day"><img src="../assets/flowers/vine/flowering.png"><span class="dl">W</span></div>
+            <div class="day"><img src="../assets/flowers/vine/flowering.png"><span class="dl">T</span></div>
+            <div class="day today"><img src="../assets/flowers/vine/flowering.png"><span class="dl">F</span></div>
+            <div class="day"><img src="../assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+            <div class="day"><img src="../assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+          </div>
+          <div style="margin-top:14px;font-family:var(--font-hand);font-size:17px;color:rgba(228,195,107,0.75);transform:rotate(-0.6deg)">a good honest week. sleep well.</div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">Softly in the dark</span><span class="sl-rule"></span></div>
+        <div class="mc" style="padding:18px 22px">
+          <div style="font-family:var(--font-display);font-style:italic;font-size:17px;line-height:1.4;color:rgba(250,244,220,0.9)">"Sleep is the best meditation."</div>
+          <div class="st" style="margin-top:8px">Dalai Lama · pinned last Thursday</div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">Dream log</span><span class="sl-rule"></span><a class="sl-act" href="#">Open →</a></div>
+        <div class="mc" style="padding:16px 20px;display:flex;align-items:center;gap:14px">
+          <img src="../assets/flowers/clover/dewdrop.png" style="width:36px;height:36px;filter:drop-shadow(0 0 6px rgba(246,226,140,0.2))">
+          <div style="flex:1">
+            <div style="font-size:14px;color:rgba(240,232,205,0.9)">3 entries this week</div>
+            <div class="st">most recent · Tue 03:14</div>
+          </div>
+          <span class="chip">whisper</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="capture">
+      <div class="field">Any last thought before the lights go out?</div>
+      <button class="btn"><span class="dot"></span>Whisper capture</button>
+      <button class="btn ghost">Save for morning</button>
+    </div>
+  </main>
+</div>
+</body></html>
