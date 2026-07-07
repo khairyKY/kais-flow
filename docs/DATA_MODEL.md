@@ -26,7 +26,7 @@
 ### P3 — calendar
 | Table | Columns |
 |---|---|
-| `calendar_events` | `title text`, `starts_at timestamptz`, `ends_at timestamptz`, `all_day bool`, `task_id uuid?` (time block for that task), `source text check in ('native','gcal')`, `gcal_id text?`, `gcal_etag text?`, `busy bool default true` |
+| `calendar_events` | `title text`, `starts_at timestamptz`, `ends_at timestamptz`, `all_day bool`, `task_id uuid?` (time block for that task), `source text check in ('native','gcal')`, `gcal_id text?`, `gcal_etag text?`, `busy bool default true`, `type text check ('time_block','event','task') default 'event'`, `color text?` (hex accent) |
 | `integrations` | `provider text` ('google','github'), `data jsonb` (tokens, cursors, syncToken) — **server-side only; never selected by the client beyond connection status** |
 
 ### P4 — routines & notifications

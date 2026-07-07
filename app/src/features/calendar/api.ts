@@ -28,7 +28,7 @@ function touchTaskSchedule(taskId: string, start: string | null, end: string | n
 }
 
 /** Click-drag an empty grid slot -> a plain native event, no linked task. */
-export function createEvent(title: string, startsAt: string, endsAt: string): CalendarEvent {
+export function createEvent(title: string, startsAt: string, endsAt: string, type?: CalendarEvent['type'], color?: string | null): CalendarEvent {
   const event: CalendarEvent = {
     id: crypto.randomUUID(),
     title,
@@ -40,11 +40,13 @@ export function createEvent(title: string, startsAt: string, endsAt: string): Ca
     gcal_id: null,
     gcal_etag: null,
     busy: true,
+    type: type ?? 'event',
+    color: color ?? null,
     created_at: nowIso(),
     updated_at: nowIso(),
   }
   writeRow('calendar_events', event)
-  logActivity('calendar_event.created', 'calendar_event', event.id, { title })
+  logActivity('calendar_event.created', 'calendar_event', event.id, { title, type: event.type })
   return event
 }
 
@@ -61,6 +63,8 @@ export function scheduleTask(task: Task, startsAt: string, endsAt: string): Cale
     gcal_id: null,
     gcal_etag: null,
     busy: true,
+    type: 'task',
+    color: null,
     created_at: nowIso(),
     updated_at: nowIso(),
   }

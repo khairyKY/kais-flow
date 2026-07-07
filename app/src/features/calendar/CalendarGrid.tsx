@@ -13,6 +13,8 @@ export interface CalendarGridEvent {
   /** Task-linked blocks get a blush "from a task" edge treatment — see CalendarGrid.css. */
   linked?: boolean
   allDay?: boolean
+  type: 'time_block' | 'event' | 'task'
+  color?: string | null
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -25,6 +27,7 @@ interface CalendarGridProps {
   onResize: (id: string, start: string, end: string) => void
   onEventClick: (id: string) => void
   onExternalDrop: (taskId: string, start: string, end: string) => void
+  conflictedIds?: string[]
 }
 
 export function CalendarGrid({
@@ -35,6 +38,7 @@ export function CalendarGrid({
   onResize,
   onEventClick,
   onExternalDrop,
+  conflictedIds,
 }: CalendarGridProps) {
   return (
     <FullCalendar
@@ -53,7 +57,17 @@ export function CalendarGrid({
       selectMirror
       editable
       droppable
-      events={events.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: e.linked ? ['fc-event-linked'] : [] }))}
+      events={events.map((e) => {
+        const classes = ['fc-event-type-' + e.type]
+        if (e.linked) classes.push('fc-event-linked')
+        if (conflictedIds?.includes(e.id)) classes.push('fc-event-conflict')
+        const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
+        if (e.color) {
+          ev.backgroundColor = e.color + '22'
+          ev.borderColor = 'transparent'
+        }
+        return ev
+      })}
       select={(info) => {
         onCreate(info.startStr, info.endStr)
       }}
