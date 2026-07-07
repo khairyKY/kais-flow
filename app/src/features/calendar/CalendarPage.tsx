@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid } from './CalendarGrid'
-import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask } from './api'
-import { useTasks } from '../tasks/api'
+import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask, deleteEvent } from './api'
+import { useTasks, completeTask } from '../tasks/api'
 import { daisyAsset } from '../../lib/gardenAssets'
 import { EventDetailsPanel } from './EventDetailsPanel'
+import { ContextMenu } from '../../components/ContextMenu'
+import type { ContextMenuItem } from '../../components/ContextMenu'
 import type { CalendarEvent } from '../../lib/types'
 
 function weekOfLabel(): string {
@@ -37,6 +39,7 @@ export function CalendarPage() {
   const { data: tasks = [] } = useTasks()
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
 
   const unscheduled = tasks.filter((t) => t.status === 'todo' && !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
@@ -52,8 +55,45 @@ export function CalendarPage() {
   }, [unscheduled.length])
 
   function handleEventClick(id: string) {
+    setContextMenu(null)
     const event = events.find((e) => e.id === id)
     if (event) setSelectedEvent(event)
+  }
+
+  function handleEventContextMenu(id: string, x: number, y: number) {
+    setContextMenu(null)
+    const event = events.find((e) => e.id === id)
+    if (!event) return
+    const items: ContextMenuItem[] = []
+    if (event.type === 'task') {
+      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTask(t) } })
+      items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); deleteEvent(event) } })
+      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
+    } else if (event.type === 'time_block') {
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
+    } else {
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
+    }
+    setContextMenu({ items, x, y })
+  }
+
+  function handleCalendarContextMenu(e: React.MouseEvent) {
+    const target = e.target as HTMLElement
+    if (target.closest('.fc-event')) return
+    e.preventDefault()
+    setContextMenu({
+      items: [
+        { label: 'New Event', onClick: () => { setContextMenu(null) } },
+        { label: 'New Time Block', onClick: () => { setContextMenu(null) } },
+      ],
+      x: e.clientX,
+      y: e.clientY,
+    })
   }
 
   function handleExternalDrop(taskId: string, start: string, end: string) {
@@ -205,21 +245,24 @@ export function CalendarPage() {
               boxShadow: 'var(--shadow-crisp)',
             }}
           />
-          <CalendarGrid
-            events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id) }))}
-            onCreate={(start, end) => createEvent('Block', start, end)}
-            onMove={(id, start, end) => {
-              const event = events.find((e) => e.id === id)
-              if (event) moveOrResizeEvent(event, start, end)
-            }}
-            onResize={(id, start, end) => {
-              const event = events.find((e) => e.id === id)
-              if (event) moveOrResizeEvent(event, start, end)
-            }}
-            onEventClick={handleEventClick}
-            onExternalDrop={handleExternalDrop}
-            conflictedIds={Array.from(conflicts.keys())}
-          />
+          <div onContextMenu={handleCalendarContextMenu}>
+            <CalendarGrid
+              events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id) }))}
+              onCreate={(start, end) => createEvent('Block', start, end)}
+              onMove={(id, start, end) => {
+                const event = events.find((e) => e.id === id)
+                if (event) moveOrResizeEvent(event, start, end)
+              }}
+              onResize={(id, start, end) => {
+                const event = events.find((e) => e.id === id)
+                if (event) moveOrResizeEvent(event, start, end)
+              }}
+              onEventClick={handleEventClick}
+              onExternalDrop={handleExternalDrop}
+              onEventContextMenu={handleEventContextMenu}
+              conflictedIds={Array.from(conflicts.keys())}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -228,6 +271,13 @@ export function CalendarPage() {
           event={selectedEvent}
           conflicts={conflicts.get(selectedEvent.id) ?? []}
           onClose={() => setSelectedEvent(null)}
+        />
+      )}
+      {contextMenu && (
+        <ContextMenu
+          items={contextMenu.items}
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
         />
       )}
     </>
