@@ -70,6 +70,18 @@ export function scheduleTask(task: Task, startsAt: string, endsAt: string): Cale
   return event
 }
 
+/** Save any field edits (title, dates, toggles) on an event. */
+export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>): void {
+  writeRow('calendar_events', { ...event, ...patch })
+  if (event.task_id) {
+    const newStart = patch.starts_at ?? event.starts_at
+    const newEnd = patch.ends_at ?? event.ends_at
+    if (newStart !== event.starts_at || newEnd !== event.ends_at) {
+      touchTaskSchedule(event.task_id, newStart, newEnd)
+    }
+  }
+}
+
 export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): void {
   writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt })
   if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)

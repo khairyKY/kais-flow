@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid } from './CalendarGrid'
-import { useCalendarEvents, createEvent, moveOrResizeEvent, deleteEvent, scheduleTask } from './api'
+import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask } from './api'
 import { useTasks } from '../tasks/api'
 import { daisyAsset } from '../../lib/gardenAssets'
+import { EventDetailsPanel } from './EventDetailsPanel'
+import type { CalendarEvent } from '../../lib/types'
 
 function weekOfLabel(): string {
   const d = new Date()
@@ -16,6 +18,7 @@ export function CalendarPage() {
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [] } = useTasks()
   const sidebarRef = useRef<HTMLDivElement>(null)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
   const unscheduled = tasks.filter((t) => t.status === 'todo' && !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
@@ -31,10 +34,7 @@ export function CalendarPage() {
 
   function handleEventClick(id: string) {
     const event = events.find((e) => e.id === id)
-    if (!event) return
-    if (window.confirm(`Delete "${event.title}" from the calendar? The task itself stays.`)) {
-      deleteEvent(event)
-    }
+    if (event) setSelectedEvent(event)
   }
 
   function handleExternalDrop(taskId: string, start: string, end: string) {
@@ -50,7 +50,7 @@ export function CalendarPage() {
   ]
 
   return (
-    <div>
+    <><div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 9 }}>
@@ -187,7 +187,7 @@ export function CalendarPage() {
             }}
           />
           <CalendarGrid
-            events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, linked: Boolean(e.task_id) }))}
+            events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, linked: Boolean(e.task_id) }))}
             onCreate={(start, end) => createEvent('Block', start, end)}
             onMove={(id, start, end) => {
               const event = events.find((e) => e.id === id)
@@ -203,5 +203,12 @@ export function CalendarPage() {
         </div>
       </div>
     </div>
+      {selectedEvent && (
+        <EventDetailsPanel
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
+      )}
+    </>
   )
 }

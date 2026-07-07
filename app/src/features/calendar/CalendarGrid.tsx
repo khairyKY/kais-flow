@@ -12,6 +12,7 @@ export interface CalendarGridEvent {
   end: string
   /** Task-linked blocks get a blush "from a task" edge treatment — see CalendarGrid.css. */
   linked?: boolean
+  allDay?: boolean
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -52,7 +53,7 @@ export function CalendarGrid({
       selectMirror
       editable
       droppable
-      events={events.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, classNames: e.linked ? ['fc-event-linked'] : [] }))}
+      events={events.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: e.linked ? ['fc-event-linked'] : [] }))}
       select={(info) => {
         onCreate(info.startStr, info.endStr)
       }}
