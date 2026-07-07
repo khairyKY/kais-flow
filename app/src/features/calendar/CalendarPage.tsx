@@ -3,6 +3,7 @@ import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid } from './CalendarGrid'
 import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask, deleteEvent } from './api'
 import { useTasks, completeTask } from '../tasks/api'
+import { useAppSettings } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { ContextMenu } from '../../components/ContextMenu'
@@ -37,6 +38,7 @@ function computeConflicts(events: CalendarEvent[]): Map<string, string[]> {
 export function CalendarPage() {
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [] } = useTasks()
+  const { data: settings } = useAppSettings()
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
@@ -259,6 +261,7 @@ export function CalendarPage() {
               }}
               onEventClick={handleEventClick}
               onExternalDrop={handleExternalDrop}
+              dayCount={settings?.calendar_day_count ?? 7}
               onEventContextMenu={handleEventContextMenu}
               conflictedIds={Array.from(conflicts.keys())}
             />

@@ -119,11 +119,12 @@ export interface PushSubscriptionRow {
 }
 
 export interface AppSettings {
-  id: true
+  id: string
   timezone: string
   confidence_threshold: number
   digest_hour: number
   slipping_default_days: number
+  calendar_day_count: number
   created_at: string
   updated_at: string
 }
