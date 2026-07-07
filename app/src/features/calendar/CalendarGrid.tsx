@@ -27,6 +27,7 @@ interface CalendarGridProps {
   onResize: (id: string, start: string, end: string) => void
   onEventClick: (id: string) => void
   onExternalDrop: (taskId: string, start: string, end: string) => void
+  onEventContextMenu?: (eventId: string, x: number, y: number) => void
   conflictedIds?: string[]
 }
 
@@ -38,6 +39,7 @@ export function CalendarGrid({
   onResize,
   onEventClick,
   onExternalDrop,
+  onEventContextMenu,
   conflictedIds,
 }: CalendarGridProps) {
   return (
@@ -68,6 +70,13 @@ export function CalendarGrid({
         }
         return ev
       })}
+      eventDidMount={(info) => {
+        if (!onEventContextMenu) return
+        info.el.addEventListener('contextmenu', (e: MouseEvent) => {
+          e.preventDefault()
+          onEventContextMenu(info.event.id, e.clientX, e.clientY)
+        })
+      }}
       select={(info) => {
         onCreate(info.startStr, info.endStr)
       }}
