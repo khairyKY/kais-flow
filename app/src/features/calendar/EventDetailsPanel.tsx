@@ -3,14 +3,28 @@ import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent } from './api'
 import { completeTask } from '../tasks/api'
-import type { CalendarEvent, Task } from '../../lib/types'
+import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 
 interface EventDetailsPanelProps {
   event: CalendarEvent
+  conflicts: string[]
   onClose: () => void
 }
 
-export function EventDetailsPanel({ event, onClose }: EventDetailsPanelProps) {
+const ACCENT_COLORS = [
+  { name: 'None', value: null },
+  { name: 'Sage', value: '#8A9A7E' },
+  { name: 'Moss', value: '#7A946E' },
+  { name: 'Terra', value: '#B5654A' },
+  { name: 'Blossom', value: '#D4A8B0' },
+  { name: 'Lavender', value: '#A8A0BE' },
+  { name: 'Hydrangea', value: '#9AB4BE' },
+  { name: 'Buttercream', value: '#D4C78A' },
+  { name: 'Clover', value: '#C9A0A0' },
+  { name: 'Gold', value: '#9A7B3A' },
+]
+
+export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPanelProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [title, setTitle] = useState(event.title)
@@ -19,6 +33,8 @@ export function EventDetailsPanel({ event, onClose }: EventDetailsPanelProps) {
   const [endTime, setEndTime] = useState(event.all_day ? '' : event.ends_at.slice(11, 16))
   const [allDay, setAllDay] = useState(event.all_day)
   const [busy, setBusy] = useState(event.busy)
+  const [eventType, setEventType] = useState<CalendarEventType>(event.type ?? 'event')
+  const [eventColor, setEventColor] = useState<string | null>(event.color ?? null)
   const [dirty, setDirty] = useState(false)
   const [deleting, setDeleting] = useState<'idle' | 'confirm'>('idle')
   const titleRef = useRef<HTMLInputElement>(null)
@@ -48,13 +64,21 @@ export function EventDetailsPanel({ event, onClose }: EventDetailsPanelProps) {
 
   function handleSave() {
     const startsAt = `${date}T00:00:00.000Z`
+    let endsAt: string
     if (allDay) {
-      const endsAt = nextDay(date)
-      updateEvent(event, { title, starts_at: startsAt, ends_at: endsAt + 'T00:00:00.000Z', all_day: true, busy })
+      endsAt = nextDay(date) + 'T00:00:00.000Z'
     } else {
-      const endsAt = `${date}T${endTime}:00.000Z`
-      updateEvent(event, { title, starts_at: `${date}T${startTime}:00.000Z`, ends_at: endsAt, all_day: false, busy })
+      endsAt = `${date}T${endTime}:00.000Z`
     }
+    updateEvent(event, {
+      title,
+      starts_at: allDay ? startsAt : `${date}T${startTime}:00.000Z`,
+      ends_at: endsAt,
+      all_day: allDay,
+      busy,
+      type: eventType,
+      color: eventColor,
+    })
     onClose()
   }
 
@@ -75,325 +99,364 @@ export function EventDetailsPanel({ event, onClose }: EventDetailsPanelProps) {
     }
   }
 
-  const panelId = 'ev-panel-scoped'
+  const TYPES: { key: CalendarEventType; label: string }[] = [
+    { key: 'event', label: 'Event' },
+    { key: 'time_block', label: 'Time Block' },
+    { key: 'task', label: 'Task' },
+  ]
 
   return (
     <>
       <div
-        className={`${panelId}-scrim`}
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(11, 10, 8, 0.25)',
+          background: 'rgba(11, 10, 8, 0.3)',
           zIndex: 998,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         onClick={onClose}
-      />
-      <div
-        className={`${panelId}-card`}
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 420,
-          maxWidth: '100vw',
-          zIndex: 999,
-          background: 'var(--bg-surface)',
-          backdropFilter: 'blur(9px)',
-          boxShadow: 'var(--shadow-popover)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          fontFamily: 'var(--font-ui)',
-          color: 'var(--text-primary)',
-        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 0' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: event.source === 'native' ? 'var(--acc-sage)' : 'var(--text-faint)',
-            }}
-          >
-            {event.source === 'native' ? 'NATIVE' : 'GOOGLE'}
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              border: 'none',
-              background: 'none',
-              color: 'var(--text-tertiary)',
-              fontSize: 18,
-              cursor: 'pointer',
-              padding: 0,
-              lineHeight: 1,
-            }}
-          >
-            &times;
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, padding: '6px 20px 0' }}>
-          <img
-            src="assets/daisy/bud.png"
-            alt=""
-            style={{ height: 16, width: 'auto', objectFit: 'contain', opacity: 0.6 }}
-          />
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <input
-            ref={titleRef}
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); markDirty() }}
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 22,
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '1px solid var(--border-faint)',
-              outline: 'none',
-              padding: '4px 0',
-              width: '100%',
-            }}
-          />
-
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>DATE</div>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => { setDate(e.target.value); markDirty() }}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: 'var(--bg-surface)',
+            backdropFilter: 'blur(9px)',
+            boxShadow: 'var(--shadow-popover)',
+            borderRadius: 'var(--radius-sharp)',
+            width: 480,
+            maxWidth: 'calc(100vw - 32px)',
+            maxHeight: 'calc(100vh - 48px)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            fontFamily: 'var(--font-ui)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          {conflicts.length > 0 && (
+            <div
               style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: 13,
+                padding: '8px 24px',
+                background: 'var(--sig-overdue)',
+                fontSize: 10.5,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-on-accent)',
+                letterSpacing: '0.08em',
+              }}
+            >
+              OVERLAPS: {conflicts.join(', ')}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {TYPES.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => { setEventType(t.key); markDirty() }}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 9.5,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    padding: '4px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: eventType === t.key ? '1px solid var(--border-default)' : '1px solid transparent',
+                    background: eventType === t.key ? 'var(--bg-surface)' : 'transparent',
+                    color: eventType === t.key ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                border: 'none',
+                background: 'none',
+                color: 'var(--text-tertiary)',
+                fontSize: 18,
+                cursor: 'pointer',
+                padding: 0,
+                lineHeight: 1,
+              }}
+            >
+              &times;
+            </button>
+          </div>
+
+          <div style={{ padding: '16px 24px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <input
+              ref={titleRef}
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); markDirty() }}
+              placeholder="Add title"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 22,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-default)',
-                borderRadius: 'var(--radius-input)',
-                padding: '8px 10px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '1px solid var(--border-faint)',
+                outline: 'none',
+                padding: '4px 0',
                 width: '100%',
               }}
             />
-          </div>
 
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>ALL DAY</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>DATE</div>
               <input
-                type="checkbox"
-                checked={allDay}
-                onChange={(e) => { setAllDay(e.target.checked); markDirty() }}
-                style={{ accentColor: 'var(--acc-lavender)' }}
-              />
-              SHOW AS ALL DAY
-            </label>
-          </div>
-
-          {!allDay && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>STARTS</div>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => { setStartTime(e.target.value); markDirty() }}
-                  style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'var(--bg-input)',
-                    border: '1px solid var(--border-default)',
-                    borderRadius: 'var(--radius-input)',
-                    padding: '8px 10px',
-                    width: '100%',
-                  }}
-                />
-              </div>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>ENDS</div>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => { setEndTime(e.target.value); markDirty() }}
-                  style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'var(--bg-input)',
-                    border: '1px solid var(--border-default)',
-                    borderRadius: 'var(--radius-input)',
-                    padding: '8px 10px',
-                    width: '100%',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>SHOW AS BUSY</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
-              <input
-                type="checkbox"
-                checked={busy}
-                onChange={(e) => { setBusy(e.target.checked); markDirty() }}
-                style={{ accentColor: 'var(--acc-lavender)' }}
-              />
-              BLOCK TIME AS BUSY
-            </label>
-          </div>
-
-          {linkedTask && (
-            <div
-              style={{
-                background: 'var(--paper-event)',
-                border: '1px solid var(--line-card)',
-                borderRadius: 'var(--radius-sharp)',
-                padding: 14,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-                FROM TASK
-              </div>
-              <div style={{ fontSize: 13.5, color: 'var(--text-primary)', fontWeight: 500 }}>{linkedTask.title}</div>
-              {linkedTask.due_at && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)' }}>
-                  due {new Date(linkedTask.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={handleOpenTask}
-                  style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: 11.5,
-                    color: 'var(--acc-lavender-deep)',
-                    background: 'none',
-                    border: '1px solid var(--line-solid)',
-                    borderRadius: 'var(--radius-pill)',
-                    padding: '5px 12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Edit Task
-                </button>
-                <button
-                  onClick={handleComplete}
-                  style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: 11.5,
-                    color: 'var(--text-primary)',
-                    background: 'none',
-                    border: '1px solid var(--line-solid)',
-                    borderRadius: 'var(--radius-pill)',
-                    padding: '5px 12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Complete
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={{ flex: 1 }} />
-
-          <button
-            onClick={handleSave}
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--text-on-accent)',
-              background: 'var(--acc-terra)',
-              border: 'none',
-              borderRadius: 'var(--radius-pill)',
-              padding: '10px 0',
-              cursor: 'pointer',
-              width: '100%',
-              opacity: dirty ? 1 : 0.6,
-            }}
-          >
-            SAVE
-          </button>
-
-          <div style={{ textAlign: 'center', marginTop: 4 }}>
-            {deleting === 'idle' ? (
-              <button
-                onClick={() => setDeleting('confirm')}
+                type="date"
+                value={date}
+                onChange={(e) => { setDate(e.target.value); markDirty() }}
                 style={{
                   fontFamily: 'var(--font-ui)',
-                  fontSize: 11.5,
-                  color: 'var(--text-muted)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  textDecoration: 'underline',
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-input)',
+                  padding: '8px 10px',
+                  width: '100%',
                 }}
-              >
-                Delete event&hellip;
-              </button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--text-secondary)' }}>
-                  {linkedTask
-                    ? `Delete this time block? "${linkedTask.title}" stays on your task list, unscheduled.`
-                    : `Delete "${title}"? This can't be undone.`
-                  }
-                </span>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button
-                    onClick={handleDelete}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={allDay}
+                  onChange={(e) => { setAllDay(e.target.checked); markDirty() }}
+                  style={{ accentColor: 'var(--acc-lavender)' }}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', color: 'var(--text-faint)' }}>ALL DAY</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={busy}
+                  onChange={(e) => { setBusy(e.target.checked); markDirty() }}
+                  style={{ accentColor: 'var(--acc-lavender)' }}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', color: 'var(--text-faint)' }}>BUSY</span>
+              </label>
+            </div>
+
+            {!allDay && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>STARTS</div>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => { setStartTime(e.target.value); markDirty() }}
                     style={{
                       fontFamily: 'var(--font-ui)',
-                      fontSize: 11.5,
-                      color: 'var(--text-on-accent)',
-                      background: 'var(--sig-overdue)',
-                      border: 'none',
-                      borderRadius: 'var(--radius-pill)',
-                      padding: '5px 16px',
+                      fontSize: 13,
+                      color: 'var(--text-primary)',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 'var(--radius-input)',
+                      padding: '8px 10px',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>ENDS</div>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => { setEndTime(e.target.value); markDirty() }}
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontSize: 13,
+                      color: 'var(--text-primary)',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 'var(--radius-input)',
+                      padding: '8px 10px',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>COLOR</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {ACCENT_COLORS.map((c) => (
+                  <button
+                    key={c.value ?? 'none'}
+                    onClick={() => { setEventColor(c.value); markDirty() }}
+                    title={c.name}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      border: eventColor === c.value ? '2px solid var(--text-primary)' : '2px solid transparent',
+                      background: c.value ?? 'var(--bg-input)',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    Delete
+                    {!c.value ? <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>&#8212;</span> : null}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {linkedTask && (
+              <div
+                style={{
+                  background: 'var(--paper-event)',
+                  border: '1px solid var(--line-card)',
+                  borderRadius: 'var(--radius-sharp)',
+                  padding: 14,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+                  FROM TASK
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--text-primary)', fontWeight: 500 }}>{linkedTask.title}</div>
+                {linkedTask.due_at && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)' }}>
+                    due {new Date(linkedTask.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
                   <button
-                    onClick={() => setDeleting('idle')}
+                    onClick={handleOpenTask}
                     style={{
                       fontFamily: 'var(--font-ui)',
                       fontSize: 11.5,
-                      color: 'var(--text-muted)',
+                      color: 'var(--acc-lavender-deep)',
                       background: 'none',
                       border: '1px solid var(--line-solid)',
                       borderRadius: 'var(--radius-pill)',
-                      padding: '5px 16px',
+                      padding: '5px 12px',
                       cursor: 'pointer',
                     }}
                   >
-                    Cancel
+                    Edit Task
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontSize: 11.5,
+                      color: 'var(--text-primary)',
+                      background: 'none',
+                      border: '1px solid var(--line-solid)',
+                      borderRadius: 'var(--radius-pill)',
+                      padding: '5px 12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Complete
                   </button>
                 </div>
               </div>
             )}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                onClick={handleSave}
+                style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--text-on-accent)',
+                  background: 'var(--acc-terra)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '10px 0',
+                  cursor: 'pointer',
+                  flex: 1,
+                  opacity: dirty ? 1 : 0.6,
+                }}
+              >
+                SAVE
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 2 }}>
+              {deleting === 'idle' ? (
+                <button
+                  onClick={() => setDeleting('confirm')}
+                  style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 11.5,
+                    color: 'var(--text-muted)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Delete event&hellip;
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--text-secondary)' }}>
+                    {linkedTask
+                      ? `Delete this time block? "${linkedTask.title}" stays on your task list, unscheduled.`
+                      : `Delete "${title}"? This can't be undone.`
+                    }
+                  </span>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      onClick={handleDelete}
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: 11.5,
+                        color: 'var(--text-on-accent)',
+                        background: 'var(--sig-overdue)',
+                        border: 'none',
+                        borderRadius: 'var(--radius-pill)',
+                        padding: '5px 16px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => setDeleting('idle')}
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: 11.5,
+                        color: 'var(--text-muted)',
+                        background: 'none',
+                        border: '1px solid var(--line-solid)',
+                        borderRadius: 'var(--radius-pill)',
+                        padding: '5px 16px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      <style>{`
-        @media (max-width: 767px) {
-          .${panelId}-card { width: 100% !important; top: auto !important; bottom: 0 !important; max-height: 90vh; border-radius: var(--radius-sharp) var(--radius-sharp) 0 0; }
-        }
-      `}</style>
     </>
   )
 }

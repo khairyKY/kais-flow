@@ -66,6 +66,7 @@ export interface ActivityLogEntry {
 }
 
 export type CalendarEventSource = 'native' | 'gcal'
+export type CalendarEventType = 'time_block' | 'event' | 'task'
 
 export interface CalendarEvent {
   id: string
@@ -78,6 +79,8 @@ export interface CalendarEvent {
   gcal_id: string | null
   gcal_etag: string | null
   busy: boolean
+  type: CalendarEventType
+  color: string | null
   created_at: string
   updated_at: string
 }

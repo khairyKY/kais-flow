@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid } from './CalendarGrid'
 import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask } from './api'
@@ -14,6 +14,24 @@ function weekOfLabel(): string {
   return `Week of ${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
+/** Client-side conflict detection: only standalone Events get flagged. Time blocks and task-linked blocks are excluded. */
+function computeConflicts(events: CalendarEvent[]): Map<string, string[]> {
+  const eventType = events.filter((e) => e.type === 'event' && !e.all_day)
+  const map = new Map<string, string[]>()
+  for (let i = 0; i < eventType.length; i++) {
+    for (let j = i + 1; j < eventType.length; j++) {
+      const a = eventType[i], b = eventType[j]
+      if (a.starts_at < b.ends_at && a.ends_at > b.starts_at) {
+        if (!map.has(a.id)) map.set(a.id, [])
+        if (!map.has(b.id)) map.set(b.id, [])
+        map.get(a.id)!.push(b.title)
+        map.get(b.id)!.push(a.title)
+      }
+    }
+  }
+  return map
+}
+
 export function CalendarPage() {
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [] } = useTasks()
@@ -22,6 +40,7 @@ export function CalendarPage() {
 
   const unscheduled = tasks.filter((t) => t.status === 'todo' && !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
+  const conflicts = useMemo(() => computeConflicts(events), [events])
 
   useEffect(() => {
     if (!sidebarRef.current) return
@@ -187,7 +206,7 @@ export function CalendarPage() {
             }}
           />
           <CalendarGrid
-            events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, linked: Boolean(e.task_id) }))}
+            events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id) }))}
             onCreate={(start, end) => createEvent('Block', start, end)}
             onMove={(id, start, end) => {
               const event = events.find((e) => e.id === id)
@@ -199,6 +218,7 @@ export function CalendarPage() {
             }}
             onEventClick={handleEventClick}
             onExternalDrop={handleExternalDrop}
+            conflictedIds={Array.from(conflicts.keys())}
           />
         </div>
       </div>
@@ -206,6 +226,7 @@ export function CalendarPage() {
       {selectedEvent && (
         <EventDetailsPanel
           event={selectedEvent}
+          conflicts={conflicts.get(selectedEvent.id) ?? []}
           onClose={() => setSelectedEvent(null)}
         />
       )}
