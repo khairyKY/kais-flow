@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-solid);border-radius:6px;border:3px solid var(--paper-linen)}
+
+/* Custom Scroll Easing and Entrance Animations (emilkowalski-motion) */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Clover sway animation on hover */
+.clover-hover-sway {
+  transition: transform 0.25s ease;
+  transform-origin: 50% 90%;
+}
+.row-item:hover .clover-hover-sway {
+  animation: cloverSway 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes cloverSway {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.05); }
+  55% { transform: rotate(6deg) scale(1.03); }
+  80% { transform: rotate(-3deg) scale(1.01); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* Clover Sprout growth animation for new contacts */
+.clover-sprout {
+  animation: cloverSprout 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes cloverSprout {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  65% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Prefers-reduced-motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up {
+    animation: fadeInOnly 0.35s ease forwards;
+  }
+  .row-item:hover .clover-hover-sway {
+    animation: none;
+  }
+  .clover-sprout {
+    animation: fadeInOnly 0.25s ease forwards;
+  }
+  @keyframes fadeInOnly {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.tape {
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 58px;
+  height: 14px;
+  background: var(--acc-clover);
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0 3px, transparent 3px 6px);
+  transform: rotate(-1.5deg);
+  border-radius: 1px;
+}
+
+.search-input {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 999px;
+  padding: 10px 18px 10px 38px;
+  color: var(--ink-body);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input:focus {
+  border-color: var(--acc-clover);
+  box-shadow: 0 0 0 3px rgba(201, 160, 160, 0.18);
+}
+
+.btn-secondary {
+  border: 1px solid var(--line-solid);
+  background: var(--paper-bone);
+  color: var(--ink-body);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-secondary:hover {
+  background: var(--paper-parchment);
+  border-color: var(--acc-clover);
+}
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.tab-pill {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-muted);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tab-pill.active {
+  background: var(--paper-parchment);
+  border-color: var(--line-card);
+  color: var(--ink-body);
+  box-shadow: 0 1px 2px rgba(60,52,38,0.08);
+}
+.tab-pill:hover:not(.active) {
+  color: var(--ink-body);
+  background: rgba(60,52,38,0.04);
+}
+
+.group-section {
+  position: relative;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 3px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  transition: box-shadow 0.2s ease;
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--acc-clover);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed var(--line-dashed);
+}
+
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px dashed var(--line-dashed);
+  gap: 20px;
+  transition: background-color 0.15s ease;
+  border-radius: 4px;
+}
+.row-item:first-of-type {
+  border-top: none;
+  padding-top: 4px;
+}
+.row-item:last-of-type {
+  padding-bottom: 4px;
+}
+
+.row-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.clover-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.clover-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(60,52,38,0.15));
+}
+
+.row-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-body);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.row-title:hover {
+  color: var(--acc-clover);
+}
+
+.row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  border: 1px solid var(--line-solid);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--paper-bone);
+}
+.meta-chip.highlight {
+  color: var(--acc-terra);
+  border-color: var(--acc-blossom);
+}
+
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-solid);
+  border-radius: 3px;
+  box-shadow: var(--shadow-popover);
+  padding: 12px 28px;
+  z-index: 1000;
+  font-size: 14.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: rotate(-0.5deg);
+  animation: toastPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes toastPop {
+  0% { transform: translate(-50%, -20px) scale(0.9); opacity: 0; }
+  100% { transform: translate(-50%, 0) scale(1) rotate(-0.5deg); opacity: 1; }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 52, 38, 0.25);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-sheet {
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: 4px;
+  box-shadow: var(--shadow-popover);
+  width: 90%;
+  max-width: 480px;
+  padding: 24px 28px;
+  position: relative;
+  transform: rotate(-0.5deg);
+  animation: sheetOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes sheetOpen {
+  0% { transform: scale(0.9) translateY(20px) rotate(-2deg); opacity: 0; }
+  100% { transform: scale(1) translateY(0) rotate(-0.5deg); opacity: 1; }
+}
+
+.input-underline {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink-body);
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px dashed var(--line-solid);
+  padding: 6px 2px;
+  outline: none;
+  transition: border-bottom-color 0.2s;
+}
+.input-underline:focus {
+  border-bottom-color: var(--acc-clover);
+}
+
+.input-select, .input-date, .textarea-field {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 4px;
+  padding: 9px 12px;
+  color: var(--ink-body);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-select:focus, .input-date:focus, .textarea-field:focus {
+  border-color: var(--acc-clover);
+}
+
+.textarea-field {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-custom-box {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--line-solid);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--paper-linen);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.checkbox-custom-box.checked {
+  background: var(--acc-clover);
+  border-color: var(--acc-clover);
+  color: var(--paper-linen);
+}
+
+.btn-primary {
+  border: none;
+  background: var(--acc-clover);
+  color: var(--paper-parchment);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: color-mix(in oklch, var(--acc-clover) 85%, black);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+  .row-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .row-right {
+    margin-left: 46px;
+  }
+}
+</style>
+</helmet>
+
+<div data-screen-label="People" style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:var(--paper-linen);position:relative">
+
+  <!-- Navigation Sidebar -->
+  <aside data-od-id="sidebar" style="width:238px;flex:none;background:var(--paper-sidebar);border-right:1px dashed var(--line-sidebar);display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--acc-terra)">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Routines</span>
+      </a>
+
+      <a href="Projects.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Projects</span>
+      </a>
+
+      <!-- People: Active nav item highlighted with clover accent -->
+      <a href="People.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(201,160,160,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none">
+          <path d="M12 21.5c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path>
+          <path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#C9A0A0" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#C9A0A0" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path>
+        </svg>
+        <span style="font-size:14.5px;font-weight:600;color:var(--ink-body)">People</span>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Review</span>
+      </a>
+
+      <a href="#" onClick="{{ toggleSettings }}" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;cursor:pointer">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Settings</span>
+      </a>
+    </nav>
+
+    <!-- Settings Overlay Drawer -->
+    <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="settings-overlay" style="position:absolute;left:226px;top:310px;width:300px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:4px;box-shadow:var(--shadow-popover);padding:18px 18px 16px;z-index:60;transform:rotate(0.4deg)">
+        <span style="position:absolute;top:-8px;left:50%;width:64px;height:16px;margin-left:-32px;background:rgba(154,180,190,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Settings · Garden</span>
+          <button onClick="{{ closeSettings }}" style="border:none;background:none;color:var(--ink-faint);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1">✕</button>
+        </div>
+        <div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body);margin:6px 0 14px">The Terrarium</div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed var(--line-dashed)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:var(--ink-body)">Enable The Terrarium</div>
+            <div style="font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.35">Grow a living garden from your activity.</div>
+          </div>
+          <div onClick="{{ toggleOn }}" style="{{ trackOnStyle }}"><div style="{{ knobOnStyle }}"></div></div>
+        </div>
+
+        <div style="{{ rowTodayStyle }}">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:var(--ink-body)">Show in Today view</div>
+            <div style="font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.35">Off — the garden lives in Routines instead.</div>
+          </div>
+          <div onClick="{{ toggleInToday }}" style="{{ trackTodayStyle }}"><div style="{{ knobTodayStyle }}"></div></div>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-faint);line-height:1.45;border-top:1px dashed var(--line-dashed);padding-top:10px;margin-top:6px">{{ settingsHint }}</div>
+      </div>
+    </sc-if>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed var(--line-sidebar);display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:var(--ink-faint)">Sign out</span></a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <!-- Top Sync Status bar -->
+    <div data-od-id="top-metadata-strip" style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Mon 06 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div>
+
+    <!-- Main Container -->
+    <div style="padding:30px 40px 64px;max-width:1000px;width:100%">
+
+      <!-- Header Section -->
+      <div data-od-id="main-header" class="fade-in-up" style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;animation-delay:0s;">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:9px;font-weight:500;">People · CRM List</div>
+          <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">People & Contacts</h1>
+        </div>
+        
+        <!-- Botanical Clover Patch Illustration (Interactive) -->
+        <div class="clover-hover-sway" style="display:flex;flex-direction:column;align-items:center;position:relative;transform:rotate(-1deg);margin-right:20px;cursor:pointer;">
+          <img src="assets/clover/awake.png" alt="Clover plant patch" style="height:82px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(60,52,38,0.18))">
+          <span style="position:absolute;top:40px;left:50%;width:38px;height:11px;margin-left:-19px;background:rgba(201,160,160,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+          <span style="font-family:'Caveat',cursive;font-size:15px;color:var(--ink-muted);margin-top:4px">clovers bloom for active relationships</span>
+        </div>
+      </div>
+
+      <div style="height:1px;border-bottom:1px dashed var(--line-solid);margin:26px 0 30px"></div>
+
+      <!-- Search & Filter Action Row -->
+      <div data-od-id="actions-row" class="fade-in-up" style="display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px;flex-wrap:wrap;animation-delay:0.05s;">
+        <!-- Add Person Trigger & Domain Tabs -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <button onClick="{{ openCreatePanel }}" class="btn-secondary">
+            <span style="color:var(--acc-clover);font-weight:600;font-size:16px;">+</span> NEW PERSON
+          </button>
+          
+          <div style="display:flex;gap:4px;background:rgba(60,52,38,0.03);padding:3px;border-radius:999px;border:1px solid var(--line-solid);">
+            <button onClick="{{ () => selectDomain('ALL') }}" class="tab-pill {{ selectedDomain === 'ALL' ? 'active' : '' }}">ALL</button>
+            <button onClick="{{ () => selectDomain('FAMILY') }}" class="tab-pill {{ selectedDomain === 'FAMILY' ? 'active' : '' }}">FAMILY</button>
+            <button onClick="{{ () => selectDomain('WORK') }}" class="tab-pill {{ selectedDomain === 'WORK' ? 'active' : '' }}">WORK</button>
+            <button onClick="{{ () => selectDomain('FRIENDS') }}" class="tab-pill {{ selectedDomain === 'FRIENDS' ? 'active' : '' }}">FRIENDS</button>
+          </div>
+        </div>
+        
+        <!-- Search Input -->
+        <div style="width:280px;position:relative">
+          <svg style="position:absolute;left:14px;top:12.5px;color:var(--ink-faint)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" onChange="{{ handleSearch }}" placeholder="Search relationships..." class="search-input" value="{{ searchQuery }}">
+        </div>
+      </div>
+
+      <!-- Empty State Card -->
+      <sc-if value="{{ showEmptyState }}">
+        <div class="group-section fade-in-up" style="text-align:center;padding:52px 34px;border:1px dashed var(--line-solid);background:transparent;animation-delay:0.1s;">
+          <span style="font-size:26px;color:var(--acc-clover);display:block;margin-bottom:10px;animation:cloverSway 2s ease-in-out infinite;">✿</span>
+          <span style="font-family:var(--font-display);font-size:16.5px;color:var(--ink-muted);font-style:italic">No people yet. Add someone to start tracking your relationships.</span>
+        </div>
+      </sc-if>
+
+      <!-- People CRM Categories container -->
+      <div style="max-width:920px;">
+        
+        <!-- Family Card Section -->
+        <div id="family-section-container" class="fade-in-up" style="display: {{ showFamilySection ? 'block' : 'none' }}; animation-delay: 0.1s;">
+          <div class="group-section" style="transform: rotate(0.1deg)">
+            <div class="tape" style="top: -7px; left: 40px;"></div>
+            <div class="section-label">Family · {{ familyCount }}</div>
+            <div id="family-list-render"></div>
+          </div>
+        </div>
+
+        <!-- Work Card Section -->
+        <div id="work-section-container" class="fade-in-up" style="display: {{ showWorkSection ? 'block' : 'none' }}; animation-delay: 0.15s;">
+          <div class="group-section" style="transform: rotate(-0.15deg)">
+            <div class="section-label">Work · {{ workCount }}</div>
+            <div id="work-list-render"></div>
+          </div>
+        </div>
+
+        <!-- Friends Card Section -->
+        <div id="friends-section-container" class="fade-in-up" style="display: {{ showFriendsSection ? 'block' : 'none' }}; animation-delay: 0.2s;">
+          <div class="group-section" style="transform: rotate(0.05deg)">
+            <div class="tape" style="top: -6px; left: calc(100% - 100px); background: var(--acc-sage)"></div>
+            <div class="section-label">Friends · {{ friendsCount }}</div>
+            <div id="friends-list-render"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal Dialog Sheet: New Person Form -->
+<sc-if value="{{ showCreatePanel }}">
+  <div class="modal-backdrop" onClick="{{ closeCreatePanel }}">
+    <div class="modal-sheet" onClick="{{ (e) => e.stopPropagation() }}">
+      <span style="position:absolute;top:-8px;left:50%;width:64px;height:16px;margin-left:-32px;background:rgba(201,160,160,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+      
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">New Contact · Soil Entry</span>
+        <button onClick="{{ closeCreatePanel }}" style="border:none;background:none;color:var(--ink-faint);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1">✕</button>
+      </div>
+      
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--ink-body);margin-bottom:18px">Add to relationship CRM</div>
+
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <!-- Name Input -->
+        <div>
+          <label class="label-mono">Name (Required)</label>
+          <input type="text" placeholder="Sarah Jones" value="{{ newName }}" onChange="{{ updateNewName }}" class="input-underline" autofocus>
+        </div>
+
+        <!-- Relationship Category and Date -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <label class="label-mono">Category</label>
+            <select value="{{ newGroup }}" onChange="{{ updateNewGroup }}" class="input-select">
+              <option value="FAMILY">Family</option>
+              <option value="WORK">Work</option>
+              <option value="FRIENDS">Friends</option>
+            </select>
+          </div>
+          <div>
+            <label class="label-mono">Last Contacted</label>
+            <input type="date" value="{{ newLastContactDate }}" onChange="{{ updateNewLastContactDate }}" class="input-date">
+          </div>
+        </div>
+
+        <!-- Last Interaction Notes -->
+        <div>
+          <label class="label-mono">Last Interaction Summary</label>
+          <textarea placeholder="e.g. Lunch at Cafe, caught up on plans..." value="{{ newLastInteraction }}" onChange="{{ updateNewLastInteraction }}" class="textarea-field"></textarea>
+        </div>
+
+        <!-- VIP/Special Flag -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--line-dashed);padding-top:14px;margin-top:4px;">
+          <label class="checkbox-label" onClick="{{ toggleNewSpecial }}">
+            <span class="checkbox-custom-box {{ newIsSpecial ? 'checked' : '' }}">
+              {{ newIsSpecial ? '✓' : '' }}
+            </span>
+            <span>Mark as VIP / Special Contact</span>
+          </label>
+          <span style="font-family:'Caveat',cursive;font-size:15px;color:var(--acc-clover);transform:rotate(-1.5deg);">gives a four-leaf clover ✿</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button onClick="{{ submitNewPerson }}" class="btn-primary" style="width:100%;margin-top:10px;height:42px;font-size:14.5px;">REGISTER CONTACT</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- Toast Notifications -->
+<sc-if value="{{ toastMsg }}">
+  <div class="toast">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--acc-clover)"></span>
+    <span style="font-weight:500;color:var(--ink-body);">{{ toastMsg }}</span>
+  </div>
+</sc-if>
+
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}">
+class Component extends DCLogic {
+  state = {
+    // Navigation / settings state
+    settingsOpen: false,
+    on: true,
+    inToday: true,
+
+    // Core list filters
+    searchQuery: "",
+    selectedDomain: "ALL",
+
+    // Seeding lists
+    people: [],
+
+    // Toast and Modal controls
+    toastMsg: "",
+    showCreatePanel: false,
+
+    // Add Form states
+    newName: "",
+    newGroup: "FRIENDS",
+    newLastInteraction: "",
+    newLastContactDate: "2026-07-06",
+    newIsSpecial: false,
+    newSproutId: null // tracks recently added ID to animate the sprout effect
+  };
+
+  componentDidMount() {
+    this.loadPeopleData();
+    this.renderCustomLists();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    this.renderCustomLists();
+  }
+
+  loadPeopleData() {
+    let saved = null;
+    try {
+      saved = localStorage.getItem("kai_people");
+    } catch(e) {}
+
+    if (saved) {
+      try {
+        this.setState({ people: JSON.parse(saved) });
+        return;
+      } catch(e) {}
+    }
+
+    // Default Seed Contacts relative to Mon 06 Jul 2026
+    const DEFAULT_PEOPLE = [
+      {
+        id: "mal",
+        name: "Mal",
+        group: "FAMILY",
+        lastInteraction: "Sunday dinner, discussed upcoming travel plans",
+        lastContactDate: "2026-07-05", // 1 day ago
+        factsCount: 5,
+        isSpecial: true
+      },
+      {
+        id: "mom",
+        name: "Mom",
+        group: "FAMILY",
+        lastInteraction: "Weekly phone call, talked about garden growth",
+        lastContactDate: "2026-07-03", // 3 days ago
+        factsCount: 2,
+        isSpecial: false
+      },
+      {
+        id: "sarah-jones",
+        name: "Sarah Jones",
+        group: "WORK",
+        lastInteraction: "Open Design review, aligned on Phase 5 goals",
+        lastContactDate: "2026-06-29", // 7 days ago
+        factsCount: 3,
+        isSpecial: false
+      },
+      {
+        id: "marcus-chen",
+        name: "Marcus Chen",
+        group: "WORK",
+        lastInteraction: "Tech discussion on support.js compilation engine",
+        lastContactDate: "2026-06-22", // 14 days ago (2 weeks)
+        factsCount: 4,
+        isSpecial: false
+      },
+      {
+        id: "youssef-hassan",
+        name: "Youssef Hassan",
+        group: "FRIENDS",
+        lastInteraction: "Coffee at Cafe Cairo, talked about Akiflow migration",
+        lastContactDate: "2026-07-01", // 5 days ago
+        factsCount: 2,
+        isSpecial: false
+      },
+      {
+        id: "layla-mahmoud",
+        name: "Layla Mahmoud",
+        group: "FRIENDS",
+        lastInteraction: "Book club discussion, borrowed 'Soul Care' book",
+        lastContactDate: "2026-06-12", // 24 days ago
+        factsCount: 3,
+        isSpecial: false
+      },
+      {
+        id: "amina-sosa",
+        name: "Amina Sosa",
+        group: "FRIENDS",
+        lastInteraction: "No recent interaction logged",
+        lastContactDate: "2026-06-05", // 31 days ago (overdue!)
+        factsCount: 1,
+        isSpecial: false
+      }
+    ];
+
+    try {
+      localStorage.setItem("kai_people", JSON.stringify(DEFAULT_PEOPLE));
+    } catch(e) {}
+    this.setState({ people: DEFAULT_PEOPLE });
+  }
+
+  // Calculate relative time relative to 2026-07-06
+  getRelativeTime(dateStr) {
+    if (!dateStr) return "never";
+    const current = new Date("2026-07-06");
+    const past = new Date(dateStr);
+    const diffTime = current - past;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) return "today";
+    if (diffDays === 1) return "1d ago";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks}w ago`;
+    }
+    return `${diffDays}d ago`; // fallback to exact days
+  }
+
+  // Clover plants mapping: seedling, resting, awake, dewdrop, four_leaf
+  getCloverImage(person, daysDiff) {
+    if (person.isNewContact) {
+      return "assets/clover/seedling.png";
+    }
+    if (person.isSpecial) {
+      return "assets/clover/four_leaf.png";
+    }
+    if (daysDiff > 30) {
+      return "assets/clover/dewdrop.png"; // alerts!
+    }
+    if (daysDiff > 20) {
+      return "assets/clover/resting.png"; // inactive
+    }
+    return "assets/clover/awake.png"; // active recently
+  }
+
+  renderCustomLists() {
+    const categories = ["FAMILY", "WORK", "FRIENDS"];
+    const q = this.state.searchQuery.toLowerCase().trim();
+    const currentMockDate = new Date("2026-07-06");
+
+    categories.forEach(cat => {
+      const container = document.getElementById(`${cat.toLowerCase()}-list-render`);
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      // Filter people in this specific category
+      const list = this.state.people.filter(p => {
+        const matchCat = p.group === cat;
+        const matchDomainFilter = this.state.selectedDomain === "ALL" || this.state.selectedDomain === cat;
+        const matchSearch = q === "" || 
+                            p.name.toLowerCase().includes(q) || 
+                            p.lastInteraction.toLowerCase().includes(q);
+        return matchCat && matchDomainFilter && matchSearch;
+      });
+
+      list.forEach((p, idx) => {
+        const row = document.createElement("div");
+        row.className = "row-item";
+        
+        // Tactile slightly rotated scraps of paper effect
+        row.style.transform = `rotate(${(idx % 2 === 0 ? 0.15 : -0.15)}deg)`;
+
+        // Calculate days since contact for botanical states
+        const contactDate = new Date(p.lastContactDate || "2026-07-06");
+        const daysDiff = Math.floor((currentMockDate - contactDate) / (1000 * 60 * 60 * 24));
+        const relativeTimeStr = this.getRelativeTime(p.lastContactDate);
+        const cloverSrc = this.getCloverImage(p, daysDiff);
+
+        // Check if recently added for sprout animation
+        const isSprouting = this.state.newSproutId === p.id;
+        const cloverClass = `clover-icon-img ${isSprouting ? 'clover-sprout' : 'clover-hover-sway'}`;
+
+        row.innerHTML = `
+          <div class="row-left">
+            <div class="clover-icon-wrapper">
+              <img src="${cloverSrc}" class="${cloverClass}" alt="Clover status icon">
+            </div>
+            <div>
+              <a href="Person Detail.dc.html?id=${p.id}" class="row-title">${p.name}</a>
+              <span style="font-family:'Caveat',cursive;font-size:14.5px;color:var(--ink-muted);margin-left:10px;">
+                ${p.lastInteraction}
+              </span>
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="meta-chip">${p.factsCount} facts</span>
+            <span class="meta-chip ${daysDiff > 30 ? 'highlight' : ''}">${relativeTimeStr}</span>
+            <button class="btn-secondary-ghost" style="color:var(--acc-terra);text-decoration:none;border:none;background:none;cursor:pointer;font-size:13px;padding:0 4px;" data-id="${p.id}">✕</button>
+          </div>
+        `;
+
+        // Wire event listeners in raw DOM because support.js executes compiled renderCustomLists
+        const delBtn = row.querySelector("button");
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.removePerson(p.id);
+        };
+
+        container.appendChild(row);
+      });
+    });
+  }
+
+  // Handle Search Input updates
+  handleSearch = (e) => {
+    this.setState({ searchQuery: e.target.value });
+  };
+
+  // select Domain/Group tab filter
+  selectDomain(domain) {
+    this.setState({ selectedDomain: domain });
+  }
+
+  // Open modal create panel
+  openCreatePanel = () => {
+    this.setState({
+      showCreatePanel: true,
+      newName: "",
+      newGroup: "FRIENDS",
+      newLastInteraction: "",
+      newLastContactDate: "2026-07-06",
+      newIsSpecial: false
+    });
+  };
+
+  closeCreatePanel = () => {
+    this.setState({ showCreatePanel: false });
+  };
+
+  updateNewName = (e) => this.setState({ newName: e.target.value });
+  updateNewGroup = (e) => this.setState({ newGroup: e.target.value });
+  updateNewLastInteraction = (e) => this.setState({ newLastInteraction: e.target.value });
+  updateNewLastContactDate = (e) => this.setState({ newLastContactDate: e.target.value });
+  toggleNewSpecial = () => this.setState(s => ({ newIsSpecial: !s.newIsSpecial }));
+
+  submitNewPerson = () => {
+    const { newName, newGroup, newLastInteraction, newLastContactDate, newIsSpecial } = this.state;
+    
+    if (!newName.trim()) {
+      this.showToast("✕ Contact name is required.");
+      return;
+    }
+
+    const newId = newName.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now();
+    const newPerson = {
+      id: newId,
+      name: newName.trim(),
+      group: newGroup,
+      lastInteraction: newLastInteraction.trim() || "Contact registered in CRM list",
+      lastContactDate: newLastContactDate,
+      factsCount: 0,
+      isSpecial: newIsSpecial,
+      isNewContact: true // markers for seedling icon
+    };
+
+    const updatedPeople = [...this.state.people, newPerson];
+    
+    try {
+      localStorage.setItem("kai_people", JSON.stringify(updatedPeople));
+    } catch(e) {}
+
+    // Animate seedling sprout growth
+    this.setState({
+      people: updatedPeople,
+      showCreatePanel: false,
+      newSproutId: newId
+    });
+
+    this.showToast(`✿ Registered ${newName} to the clover garden.`);
+
+    // After sprout animation completed, clear sprout state and demark new contact
+    setTimeout(() => {
+      const resetPeople = this.state.people.map(p => {
+        if (p.id === newId) {
+          return { ...p, isNewContact: false };
+        }
+        return p;
+      });
+      this.setState({ people: resetPeople, newSproutId: null });
+      try {
+        localStorage.setItem("kai_people", JSON.stringify(resetPeople));
+      } catch(e) {}
+    }, 1800);
+  };
+
+  removePerson(id) {
+    const person = this.state.people.find(p => p.id === id);
+    if (!person) return;
+    
+    if (confirm(`Remove ${person.name} from your CRM folder?`)) {
+      const updated = this.state.people.filter(p => p.id !== id);
+      try {
+        localStorage.setItem("kai_people", JSON.stringify(updated));
+      } catch(e) {}
+      this.setState({ people: updated });
+      this.showToast(`✕ Removed ${person.name} from records.`);
+    }
+  }
+
+  showToast(msg) {
+    this.setState({ toastMsg: msg });
+    setTimeout(() => {
+      this.setState({ toastMsg: "" });
+    }, 2200);
+  }
+
+  // Sidebar settings togglers
+  toggleSettings = (e) => {
+    if (e) e.preventDefault();
+    this.setState(s => ({ settingsOpen: !s.settingsOpen }));
+  };
+
+  closeSettings = () => {
+    this.setState({ settingsOpen: false });
+  };
+
+  toggleOn = () => {
+    const v = !this.state.on;
+    try { localStorage.setItem('kf_terrarium_on', v ? '1' : '0'); } catch (e) {}
+    this.setState({ on: v });
+  };
+
+  toggleInToday = () => {
+    if (!this.state.on) return;
+    const v = !this.state.inToday;
+    try { localStorage.setItem('kf_terrarium_today', v ? '1' : '0'); } catch (e) {}
+    this.setState({ inToday: v });
+  };
+
+  renderVals() {
+    const { searchQuery, selectedDomain, on, inToday, settingsOpen, toastMsg, showCreatePanel, people } = this.state;
+    const q = searchQuery.toLowerCase().trim();
+
+    // Check count totals
+    const getCount = (cat) => {
+      return people.filter(p => {
+        const matchCat = p.group === cat;
+        const matchSearch = q === "" || 
+                            p.name.toLowerCase().includes(q) || 
+                            p.lastInteraction.toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      }).length;
+    };
+
+    const familyCount = getCount("FAMILY");
+    const workCount = getCount("WORK");
+    const friendsCount = getCount("FRIENDS");
+
+    // Sections visibility
+    const showFamilySection = (selectedDomain === "ALL" || selectedDomain === "FAMILY") && familyCount > 0;
+    const showWorkSection = (selectedDomain === "ALL" || selectedDomain === "WORK") && workCount > 0;
+    const showFriendsSection = (selectedDomain === "ALL" || selectedDomain === "FRIENDS") && friendsCount > 0;
+    const showEmptyState = (familyCount + workCount + friendsCount) === 0;
+
+    // Settings elements style helpers
+    const track = (active, disabled) => ({
+      position: 'relative', width: 38, height: 22, borderRadius: 999, flex: 'none',
+      cursor: disabled ? 'default' : 'pointer',
+      background: active ? 'var(--acc-clover)' : 'var(--line-solid)',
+      opacity: disabled ? 0.4 : 1,
+      transition: 'background 0.2s'
+    });
+    const knob = (active) => ({
+      position: 'absolute', top: 2, left: active ? 18 : 2, width: 18, height: 18,
+      borderRadius: '50%', background: 'var(--paper-parchment)',
+      boxShadow: '0 1px 3px rgba(60,52,38,0.3)', transition: 'left 0.2s'
+    });
+
+    let hint;
+    if (!on) hint = 'the terrarium is resting — your streak is pressed safely between the pages.';
+    else if (inToday) hint = 'the garden greets you at the top of today.';
+    else hint = 'the garden lives in the routines panel — today stays compact.';
+
+    return {
+      searchQuery,
+      selectedDomain,
+      toastMsg,
+      showCreatePanel,
+      familyCount,
+      workCount,
+      friendsCount,
+      showFamilySection,
+      showWorkSection,
+      showFriendsSection,
+      showEmptyState,
+      settingsOpen,
+      settingsHint: hint,
+      trackOnStyle: track(on, false),
+      knobOnStyle: knob(on),
+      trackTodayStyle: track(on && inToday, !on),
+      knobTodayStyle: knob(on && inToday),
+      rowTodayStyle: {
+        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+        borderTop: '1px dashed var(--line-dashed)', borderBottom: '1px dashed var(--line-dashed)',
+        marginBottom: 10, opacity: on ? 1 : 0.45, transition: 'opacity 0.2s'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

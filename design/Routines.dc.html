@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-solid);border-radius:6px;border:3px solid var(--paper-linen)}
+
+.tape {
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 58px;
+  height: 14px;
+  background: var(--acc-gold-warm);
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0 3px, transparent 3px 6px);
+  transform: rotate(-1.5deg);
+  border-radius: 1px;
+}
+
+.search-input {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 999px;
+  padding: 10px 18px 10px 38px;
+  color: var(--ink-body);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input:focus {
+  border-color: var(--acc-moss);
+  box-shadow: 0 0 0 3px rgba(122, 148, 110, 0.15);
+}
+
+.btn-secondary {
+  border: 1px solid var(--line-solid);
+  background: var(--paper-bone);
+  color: var(--ink-body);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-secondary:hover {
+  background: var(--paper-parchment);
+  border-color: var(--acc-moss);
+}
+
+/* Sparkline Leaf SVG dynamic styling */
+.sparkline-container {
+  display: flex;
+  align-items: center;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 3px;
+  padding: 16px 20px;
+  transform: rotate(-0.2deg);
+}
+
+.stats-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 24px;
+}
+
+.rate-num {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 500;
+  color: var(--ink-body);
+  line-height: 1;
+}
+
+.history-cell {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.history-cell.done {
+  background: var(--acc-moss);
+  border: 1px solid var(--acc-moss);
+}
+.history-cell.missed {
+  background: color-mix(in oklch, var(--acc-terra) 15%, var(--paper-bone));
+  border: 1px solid var(--acc-terra);
+}
+.history-cell.not-scheduled {
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+}
+
+.routine-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px dashed var(--line-dashed);
+  gap: 20px;
+  transition: opacity 0.3s ease;
+}
+.routine-row:first-of-type {
+  border-top: none;
+}
+
+.checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--line-solid);
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  transition: background-color 0.2s, border-color 0.2s;
+  user-select: none;
+  font-size: 11px;
+  color: var(--paper-linen);
+  font-weight: bold;
+}
+.checkbox-custom.checked {
+  background: var(--ink-body);
+  border-color: var(--ink-body);
+  color: var(--paper-linen);
+}
+
+.routine-title-text {
+  font-size: 14.5px;
+  color: var(--ink-body);
+  transition: color 0.2s, text-decoration 0.2s;
+}
+.routine-title-text.line-through {
+  color: var(--ink-hairline);
+  text-decoration: line-through;
+}
+
+.inline-form {
+  position: relative;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 3px;
+  padding: 14px 16px;
+  transform: rotate(-0.3deg);
+  margin-bottom: 28px;
+}
+
+.inline-input {
+  flex: 1;
+  min-width: 200px;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 6px;
+  padding: 8px 12px;
+  outline: none;
+  color: var(--ink-body);
+  transition: border-color 0.2s;
+}
+.inline-input:focus {
+  border-color: var(--acc-moss);
+}
+
+.inline-select {
+  font-family: inherit;
+  font-size: 12.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--ink-body);
+  outline: none;
+}
+
+.btn-terracotta {
+  border: none;
+  background: var(--acc-terra);
+  color: var(--paper-parchment);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-terracotta:hover {
+  background: color-mix(in oklch, var(--acc-terra) 88%, black);
+}
+
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-solid);
+  border-radius: 3px;
+  box-shadow: var(--shadow-popover);
+  padding: 12px 28px;
+  z-index: 1000;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: rotate(-0.5deg);
+  transition: opacity 0.3s;
+}
+
+@media (max-width: 920px) {
+  .stats-grid {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .sparkline-container svg {
+    width: 100%;
+  }
+}
+</style>
+</helmet>
+<div data-screen-label="Routines" style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:var(--paper-linen);position:relative">
+
+  <!-- Navigation Sidebar -->
+  <aside data-od-id="sidebar" style="width:238px;flex:none;background:var(--paper-sidebar);border-right:1px dashed var(--line-sidebar);display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--acc-terra)">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-card);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(122,148,110,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;font-weight:600;color:var(--ink-body)">Routines</span>
+      </a>
+
+      <a href="Projects.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#7A946E"></path></g></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Projects</span>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Review</span>
+      </a>
+
+      <a href="Settings.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Settings</span>
+      </a>
+    </nav>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed var(--line-dashed);display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:var(--ink-faint)">Sign out</span></a>
+    </div>
+  </aside>
+
+  <!-- Main Content View -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-dashed);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span id="top-date-string">SAT 04 JUL</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div>
+
+    <div style="padding:30px 40px 64px;max-width:900px">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px">Routines · the streak vine</div>
+          <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Routines</h1>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;position:relative;transform:rotate(-1deg)">
+          <img id="streak-vine-img" src="./assets/vine/flowering.png" alt="Vine" style="height:96px;width:auto;object-fit:contain;filter:var(--shadow-drop-sm);transition:transform 0.3s ease;">
+          <span class="tape"></span>
+          <span style="font-family:'Caveat',cursive;font-size:15px;color:var(--ink-muted);margin-top:4px">leaves grow along the streak</span>
+        </div>
+      </div>
+
+      <!-- Stats Band -->
+      <div class="sparkline-container" style="margin-bottom:28px">
+        <div class="stats-grid">
+          <div style="display:flex;align-items:center;gap:20px">
+            <div>
+              <div class="rate-num" id="overall-rate-display">82%</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px">30-DAY RATE</div>
+            </div>
+            <div style="border-left:1px dashed var(--line-dashed);padding-left:18px">
+              <div style="font-family:var(--font-display);font-size:22px;color:var(--ink-body);font-weight:500;" id="seven-day-display">78%</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px">7-DAY RATE</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Climber Vine Sparkline -->
+          <div style="flex:1;max-width:320px;display:flex;flex-direction:column;gap:4px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);">30-Day Vine Sparkline</div>
+            <svg id="vine-sparkline" width="220" height="50" viewBox="0 0 220 50" style="overflow:visible;background:var(--paper-bone);border-radius:4px;border:1px solid var(--line-solid)"></svg>
+          </div>
+
+          <!-- Streak metrics -->
+          <div style="text-align:right">
+            <div style="font-size:24px;color:var(--acc-terra);font-weight:600;display:inline-flex;align-items:center;gap:4px" id="longest-streak-display">🔥 14 days</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px" id="streak-warning-label">Streak Risk: Keep it up!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Action Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);" id="count-heading">6/8 completed today</span>
+        <a href="New Routine.dc.html" class="btn-secondary" style="font-size:12.5px;padding:6px 14px;">+ ADD ROUTINE</a>
+      </div>
+
+      <!-- Quick Add Form -->
+      <div class="inline-form">
+        <span style="position:absolute;top:-8px;left:20px;width:48px;height:13px;background:rgba(122,148,110,0.38);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-2deg);border-radius:1px"></span>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="quick-routine-name" placeholder="Quick add routine..." class="inline-input">
+          <select id="quick-routine-time" class="inline-select">
+            <option value="morning">Morning</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="evening">Evening</option>
+            <option value="anytime">Any Time</option>
+          </select>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-muted);cursor:pointer;user-select:none">
+            <input type="checkbox" id="quick-routine-challenge" style="cursor:pointer">
+            Challenge
+          </label>
+          <button class="btn-terracotta" onclick="addNewRoutine()">Add</button>
+        </div>
+      </div>
+
+      <!-- Routines List Containers -->
+      <div style="max-width:720px;">
+        
+        <!-- MORNING SECTION -->
+        <div style="margin-bottom:28px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:12px;display:flex;align-items:center;gap:12px">
+            <span>Morning</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          </div>
+          <div id="morning-list"></div>
+        </div>
+
+        <!-- AFTERNOON SECTION -->
+        <div style="margin-bottom:28px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:12px;display:flex;align-items:center;gap:12px">
+            <span>Afternoon</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          </div>
+          <div id="afternoon-list"></div>
+        </div>
+
+        <!-- EVENING SECTION -->
+        <div style="margin-bottom:28px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:12px;display:flex;align-items:center;gap:12px">
+            <span>Evening</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          </div>
+          <div id="evening-list"></div>
+        </div>
+
+        <!-- ANY TIME SECTION -->
+        <div style="margin-bottom:28px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:12px;display:flex;align-items:center;gap:12px">
+            <span>Any Time</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          </div>
+          <div id="anytime-list"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Dynamic Toast system -->
+<div id="toast-container" style="display:contents"></div>
+
+<script>
+// Seed Data for Routines Page
+const DEFAULT_ROUTINES = [
+  {
+    id: 1,
+    name: "Morning Meditation & Breathing",
+    category: "morning",
+    streak: 12,
+    bestStreak: 21,
+    history: [1, 1, 1, 1, 1, 1, 0], // Last 7 days. Index 6 is today.
+    isChallenge: false,
+    challengeProgress: null
+  },
+  {
+    id: 2,
+    name: "Read 10 Pages (Bible / Philosophy)",
+    category: "morning",
+    streak: 3,
+    bestStreak: 14,
+    history: [1, 0, 1, 1, 0, 1, 1],
+    isChallenge: false,
+    challengeProgress: null
+  },
+  {
+    id: 3,
+    name: "Daily Coding & Open Design review",
+    category: "afternoon",
+    streak: 8,
+    bestStreak: 30,
+    history: [1, 1, 1, 1, 1, 1, 0],
+    isChallenge: false,
+    challengeProgress: null
+  },
+  {
+    id: 4,
+    name: "Balcony Garden watering & fern checking",
+    category: "afternoon",
+    streak: 5,
+    bestStreak: 8,
+    history: [0, 1, 1, 0, 1, 1, 1],
+    isChallenge: false,
+    challengeProgress: null
+  },
+  {
+    id: 5,
+    name: "Evening Wind Down & Journaling",
+    category: "evening",
+    streak: 0,
+    bestStreak: 15,
+    history: [1, 0, 0, 1, 0, 1, 0],
+    isChallenge: false,
+    challengeProgress: null
+  },
+  {
+    id: 6,
+    name: "30-Day Strength Challenge",
+    category: "anytime",
+    streak: 14,
+    bestStreak: 14,
+    history: [1, 1, 1, 1, 1, 1, 1],
+    isChallenge: true,
+    challengeProgress: { current: 14, target: 30 }
+  }
+];
+
+// 30-Day overall completion history (percentages from 0 to 1)
+const DEFAULT_30DAY_HISTORY = [
+  0.8, 0.72, 0.9, 0.65, 0.5, 0.8, 0.7, 0.9, 0.85, 0.9, 
+  0.6, 0.55, 0.7, 0.8, 0.9, 0.8, 0.75, 0.85, 0.9, 0.7, 
+  0.65, 0.8, 0.85, 0.9, 0.75, 0.8, 0.85, 0.9, 0.8, 0.78
+];
+
+// Initialize State from LocalStorage
+let routines = JSON.parse(localStorage.getItem("kai_routines")) || DEFAULT_ROUTINES;
+let global30DayHistory = JSON.parse(localStorage.getItem("kai_routines_30day_history")) || DEFAULT_30DAY_HISTORY;
+
+// Initialize Date String
+function initDates() {
+  const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const now = new Date();
+  document.getElementById("top-date-string").textContent = `${daysOfWeek[now.getDay()]} ${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]}`;
+}
+
+// Render Lists based on category
+function renderRoutines() {
+  const categories = ["morning", "afternoon", "evening", "anytime"];
+  
+  categories.forEach(cat => {
+    const listDiv = document.getElementById(`${cat}-list`);
+    listDiv.innerHTML = "";
+    
+    const catRoutines = routines.filter(r => r.category === cat);
+    
+    if (catRoutines.length === 0) {
+      listDiv.innerHTML = `<div style="font-style:italic;color:var(--ink-faint);font-size:13.5px;padding:8px 0;">Nothing scheduled here.</div>`;
+      return;
+    }
+    
+    catRoutines.forEach(r => {
+      const isChecked = r.history[6] === 1;
+      const progressBadge = r.isChallenge 
+        ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--acc-gold);background:color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment));border:1px solid var(--acc-gold-warm);padding:2px 8px;border-radius:999px;margin-left:8px;">${r.challengeProgress.current}/${r.challengeProgress.target} days</span>`
+        : "";
+      
+      const row = document.createElement("div");
+      row.className = "routine-row";
+      row.id = `routine-row-${r.id}`;
+      
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+          <div class="checkbox-custom ${isChecked ? 'checked' : ''}" onclick="toggleRoutine(${r.id})">
+            ${isChecked ? '✓' : ''}
+          </div>
+          <span class="routine-title-text ${isChecked ? 'line-through' : ''}">${r.name}</span>
+          ${progressBadge}
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap">
+          <div style="display:flex;gap:3px;align-items:center">
+            ${r.history.map((h, i) => {
+              let stateClass = "not-scheduled";
+              if (h === 1) stateClass = "done";
+              else if (h === 0) stateClass = "missed";
+              return `<span class="history-cell ${stateClass}" title="${i === 6 ? 'Today' : (6 - i) + ' days ago'}"></span>`;
+            }).join("")}
+          </div>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--acc-terra);font-weight:500;min-width:70px;justify-content:flex-end">
+            <svg width="9" height="11" viewBox="0 0 9 11"><path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="var(--acc-terra)"></path></svg>
+            ${r.streak} <span style="font-size:9.5px;color:var(--ink-faint)">/ ${r.bestStreak}</span>
+          </span>
+          <button style="border:none;background:none;color:var(--ink-faint);font-family:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:0;" onclick="archiveRoutine(${r.id})">archive</button>
+        </div>
+      `;
+      listDiv.appendChild(row);
+    });
+  });
+  
+  updateGlobalStats();
+}
+
+// Toggle Routine Checked state
+function toggleRoutine(id) {
+  const r = routines.find(x => x.id === id);
+  if (!r) return;
+  
+  const wasChecked = r.history[6] === 1;
+  r.history[6] = wasChecked ? 0 : 1;
+  
+  if (!wasChecked) {
+    // Increment Streak
+    r.streak += 1;
+    if (r.streak > r.bestStreak) {
+      r.bestStreak = r.streak;
+    }
+    if (r.isChallenge) {
+      r.challengeProgress.current = Math.min(r.challengeProgress.target, r.challengeProgress.current + 1);
+    }
+    showToast("Routine completed! Keep growing ✿");
+  } else {
+    // Decrement Streak
+    r.streak = Math.max(0, r.streak - 1);
+    if (r.isChallenge) {
+      r.challengeProgress.current = Math.max(0, r.challengeProgress.current - 1);
+    }
+  }
+  
+  saveState();
+  renderRoutines();
+}
+
+// Archive a routine
+function archiveRoutine(id) {
+  const row = document.getElementById(`routine-row-${id}`);
+  if (row) {
+    row.style.opacity = "0";
+  }
+  
+  setTimeout(() => {
+    routines = routines.filter(r => r.id !== id);
+    saveState();
+    renderRoutines();
+    showToast("Routine archived successfully.");
+  }, 300);
+}
+
+// Add New Routine
+function addNewRoutine() {
+  const nameInput = document.getElementById("quick-routine-name");
+  const name = nameInput.value.trim();
+  if (!name) return;
+  
+  const category = document.getElementById("quick-routine-time").value;
+  const isChallenge = document.getElementById("quick-routine-challenge").checked;
+  
+  const newR = {
+    id: Date.now(),
+    name: name,
+    category: category,
+    streak: 0,
+    bestStreak: 0,
+    history: [0, 0, 0, 0, 0, 0, 0],
+    isChallenge: isChallenge,
+    challengeProgress: isChallenge ? { current: 0, target: 30 } : null
+  };
+  
+  routines.push(newR);
+  saveState();
+  
+  nameInput.value = "";
+  document.getElementById("quick-routine-challenge").checked = false;
+  
+  renderRoutines();
+  showToast("New routine registered in the soil.");
+}
+
+// Recalculate and Draw Stats
+function updateGlobalStats() {
+  const totalRoutines = routines.length;
+  if (totalRoutines === 0) return;
+  
+  const completedToday = routines.filter(r => r.history[6] === 1).length;
+  document.getElementById("count-heading").textContent = `${completedToday}/${totalRoutines} completed today`;
+  
+  // Today's completion rate
+  const todayRate = completedToday / totalRoutines;
+  global30DayHistory[29] = todayRate;
+  
+  // Overall 30-Day Rate
+  const overallRate = Math.round((global30DayHistory.reduce((a, b) => a + b, 0) / 30) * 100);
+  document.getElementById("overall-rate-display").textContent = `${overallRate}%`;
+  
+  // 7-Day Rate
+  const last7Days = global30DayHistory.slice(23, 30);
+  const sevenDayRate = Math.round((last7Days.reduce((a, b) => a + b, 0) / 7) * 100);
+  document.getElementById("seven-day-display").textContent = `${sevenDayRate}%`;
+  
+  // Streak calculations
+  const longestStreak = Math.max(...routines.map(r => r.streak), 0);
+  document.getElementById("longest-streak-display").textContent = `🔥 ${longestStreak} days`;
+  
+  const warningLabel = document.getElementById("streak-warning-label");
+  if (completedToday === totalRoutines) {
+    warningLabel.textContent = "All routines done today!";
+    warningLabel.style.color = "var(--acc-moss)";
+  } else {
+    warningLabel.textContent = "Streak Risk: Complete today's list!";
+    warningLabel.style.color = "var(--acc-terra)";
+  }
+  
+  // Update Header Streak Vine Image
+  const vineImg = document.getElementById("streak-vine-img");
+  if (longestStreak === 0) {
+    vineImg.src = "./assets/vine/bare.png";
+  } else if (longestStreak <= 3) {
+    vineImg.src = "./assets/vine/sprouting.png";
+  } else if (longestStreak <= 7) {
+    vineImg.src = "./assets/vine/flowering.png";
+  } else {
+    vineImg.src = "./assets/vine/lush.png";
+  }
+  
+  drawVineSparkline();
+}
+
+// Generate the Custom SVG Climbing Vine
+function drawVineSparkline() {
+  const svg = document.getElementById("vine-sparkline");
+  if (!svg) return;
+  
+  const width = 220;
+  const height = 50;
+  const days = 30;
+  const dx = (width - 15) / (days - 1);
+  const points = [];
+  
+  for (let i = 0; i < days; i++) {
+    const rate = global30DayHistory[i];
+    const x = 7 + i * dx;
+    // High rate (e.g. 0.9) maps to high Y peak (low coordinate e.g. 15)
+    // Low rate (e.g. 0.4) maps to flat/low Y (e.g. 38)
+    const y = 38 - (rate * 25);
+    points.push({ x, y, completed: rate > 0.6 });
+  }
+  
+  // Main stem path
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const xc = (points[i-1].x + points[i].x) / 2;
+    const yc = (points[i-1].y + points[i].y) / 2;
+    d += ` Q ${points[i-1].x} ${points[i-1].y}, ${xc} ${yc}`;
+  }
+  d += ` L ${points[points.length-1].x} ${points[points.length-1].y}`;
+  
+  let html = `<path d="${d}" fill="none" stroke="var(--acc-moss)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>`;
+  
+  // Overlay leaf nodes or missed buds
+  points.forEach((p, idx) => {
+    if (p.completed) {
+      const angle = (idx % 2 === 0) ? -28 : 28;
+      html += `
+        <g transform="translate(${p.x}, ${p.y}) rotate(${angle})">
+          <path d="M 0,0 C 2,-5 7,-7 9,-3 C 10,1 6,5 0,0" fill="var(--acc-moss)" stroke="var(--ink-body)" stroke-width="0.8" />
+          <path d="M 0,0 L 5,-2" fill="none" stroke="var(--ink-body)" stroke-width="0.5" opacity="0.6" />
+        </g>
+      `;
+    } else {
+      // Small bud circle
+      html += `<circle cx="${p.x}" cy="${p.y}" r="1.5" fill="var(--acc-terra)" stroke="var(--ink-body)" stroke-width="0.5" />`;
+    }
+  });
+  
+  // Area backdrop
+  const areaD = d + ` L ${points[points.length-1].x} 48 L ${points[0].x} 48 Z`;
+  const areaHtml = `<path d="${areaD}" fill="var(--acc-moss)" opacity="0.08" />`;
+  
+  svg.innerHTML = areaHtml + html;
+}
+
+// Show standard tactile toast notifications
+function showToast(msg) {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span>
+    <span>${msg}</span>
+  `;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 2200);
+}
+
+// Save LocalStorage state
+function saveState() {
+  localStorage.setItem("kai_routines", JSON.stringify(routines));
+  localStorage.setItem("kai_routines_30day_history", JSON.stringify(global30DayHistory));
+}
+
+// Run Initializations
+initDates();
+renderRoutines();
+</script>
+</body>
+</html>

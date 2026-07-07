@@ -46,49 +46,91 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const tasks = results.filter((r) => r.entity_type === 'task')
   const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
 
+  function ResultGroup({ label, hits }: { label: string; hits: SearchHit[] }) {
+    return (
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>
+          {label}
+        </div>
+        {hits.map((hit) => (
+          <button
+            key={`${hit.entity_type}-${hit.entity_id}`}
+            type="button"
+            onClick={() => goTo(hit)}
+            className="search-result-row"
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              background: 'none',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              font: 'inherit',
+            }}
+          >
+            <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{hit.title}</div>
+            {hit.snippet && (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--text-tertiary)', marginTop: 3 }}>{hit.snippet}</div>
+            )}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 pt-24" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-lg bg-white p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Escape' && onClose()}
-          placeholder="Search tasks and inbox…"
-          className="w-full border-b pb-2 text-lg outline-none"
-        />
-        {loading && <p className="mt-3 text-xs text-slate-400">Searching…</p>}
-        {!loading && query.trim() && results.length === 0 && (
-          <p className="mt-3 text-sm text-slate-400">No matches.</p>
-        )}
-        {tasks.length > 0 && (
-          <div className="mt-3">
-            <h3 className="mb-1 text-xs font-semibold text-slate-500">Tasks</h3>
-            <ul className="space-y-1">
-              {tasks.map((hit) => (
-                <li key={`task-${hit.entity_id}`}>
-                  <button type="button" onClick={() => goTo(hit)} className="w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100">
-                    {hit.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {inboxItems.length > 0 && (
-          <div className="mt-3">
-            <h3 className="mb-1 text-xs font-semibold text-slate-500">Inbox</h3>
-            <ul className="space-y-1">
-              {inboxItems.map((hit) => (
-                <li key={`inbox_item-${hit.entity_id}`}>
-                  <button type="button" onClick={() => goTo(hit)} className="w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100">
-                    {hit.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }} onClick={onClose}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 560,
+          margin: '0 16px',
+          background: 'rgba(251,246,233,0.8)',
+          backdropFilter: 'blur(9px)',
+          border: '1px solid rgba(224,216,194,0.9)',
+          borderRadius: 16,
+          boxShadow: '0 2px 4px rgba(40,32,20,0.15), 0 30px 70px rgba(40,32,20,0.35)',
+          padding: '22px 24px 16px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <style>{'.search-result-row:hover{background:rgba(60,52,38,0.06)}'}</style>
+
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 12 }}>
+          Search · ⌘/
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--line-sidebar)', paddingBottom: 12 }}>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+            <circle cx="7" cy="7" r="5.2" stroke="var(--text-tertiary)" strokeWidth="1.6" />
+            <path d="M11 11l4 4" stroke="var(--text-tertiary)" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && onClose()}
+            placeholder="Search tasks and inbox…"
+            style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--text-primary)', background: 'transparent', border: 'none', outline: 'none' }}
+          />
+        </div>
+
+        {loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-tertiary)' }}>Searching…</p>}
+        {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontSize: 13.5, color: 'var(--text-tertiary)' }}>No matches.</p>}
+
+        {tasks.length > 0 && <ResultGroup label="Tasks" hits={tasks} />}
+        {inboxItems.length > 0 && <ResultGroup label="Inbox" hits={inboxItems} />}
+
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+            click a result · esc close
+          </span>
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-tertiary)', transform: 'rotate(-1deg)', display: 'inline-block' }}>
+            no LLM — just fast recall
+          </span>
+        </div>
       </div>
     </div>
   )

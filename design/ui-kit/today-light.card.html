@@ -1,0 +1,226 @@
+<!-- @dsCard group="UI Kit" viewport="1440x1024" subtitle="Today — the primary landing surface" name="Today (Light)" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;min-height:1024px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.app{display:flex;width:1440px;margin:0 auto;min-height:1024px;position:relative;z-index:2}
+
+/* Sidebar */
+aside{width:238px;flex:none;background:var(--paper-sidebar);border-right:1px dashed var(--line-sidebar);display:flex;flex-direction:column;padding:26px 0 20px}
+.brand{padding:0 24px 24px}
+.brand h1{margin:0;font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em}
+.brand .sub{margin-top:5px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)}
+.brand .hand{margin-top:8px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1.2deg);display:inline-block}
+nav.rail{padding:0 16px;display:flex;flex-direction:column;gap:3px}
+nav.rail a{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink-muted);font-size:14.5px;position:relative}
+nav.rail a.active{color:var(--ink-body);font-weight:600;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-card);transform:rotate(-0.5deg)}
+nav.rail a.active::before{content:'';position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(181,101,74,0.32);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px}
+nav.rail img{width:23px;height:23px;object-fit:contain;flex:none;filter:var(--shadow-drop-sm)}
+nav.rail .cnt{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)}
+.section-lbl{padding:16px 24px 6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
+.footer-me{margin-top:auto;padding:14px 20px;display:flex;align-items:center;gap:12px;border-top:1px dashed var(--line-sidebar)}
+.footer-me img{width:32px;height:32px}
+.footer-me .nm{font-size:13px}
+.footer-me .st{font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+
+/* Main */
+main{flex:1;padding:36px 56px 60px;position:relative}
+.head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.head h2{margin:0;font-family:var(--font-display);font-size:44px;font-weight:500;letter-spacing:-0.015em;line-height:1}
+.head .meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);text-align:right}
+.head .meta b{color:var(--ink-body);font-family:var(--font-ui);font-weight:500;letter-spacing:0;text-transform:none;font-size:13px;display:block;margin-bottom:2px}
+
+.sl{display:flex;align-items:center;gap:14px;margin:28px 0 10px}
+.sl-lbl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.sl-rule{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+.sl-act{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none}
+
+/* Goal */
+.goal{position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:3px;padding:24px 28px;transform:rotate(-0.3deg);box-shadow:var(--shadow-goal)}
+.goal .tape{position:absolute;top:-9px;left:50%;margin-left:-40px;width:80px;height:16px;background:rgba(201,165,90,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(2deg);border-radius:1px}
+.goal .eye{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc-gold);margin-bottom:12px}
+.goal .row{display:flex;align-items:flex-start;gap:16px}
+.goal .cbg{margin-top:6px;width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid var(--acc-gold);background:rgba(255,255,255,0.5)}
+.goal h3{margin:0;font-family:var(--font-display);font-size:26px;font-weight:500;color:#3d2f1a;line-height:1.2;letter-spacing:-0.01em}
+.goal .why{font-family:var(--font-hand);font-size:19px;color:#7a5f2a;transform:rotate(-0.5deg);margin-top:10px}
+.goal .meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-gold);flex:none;margin-top:6px}
+
+/* Two-col */
+.cols{display:grid;grid-template-columns:1.35fr 1fr;gap:36px;margin-top:8px}
+.card{position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:20px 22px;box-shadow:var(--shadow-card)}
+.card.tilt-a{transform:rotate(-0.3deg)}
+.card.tilt-b{transform:rotate(0.4deg)}
+.card .tape{position:absolute;top:-9px;left:22px;width:66px;height:15px;background:rgba(138,154,126,0.45);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-3deg);border-radius:1px}
+.card.blossom .tape{background-color:rgba(212,168,176,0.4);transform:rotate(3deg);left:auto;right:24px}
+.card.lav .tape{background-color:rgba(168,160,190,0.45);transform:rotate(-2deg)}
+.trow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed var(--line-dashed)}
+.trow:last-child{border-bottom:none}
+.cb{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px solid var(--line-solid);background:transparent;color:transparent;font-size:11px}
+.cb.on{background:#2a2420;border-color:#2a2420;color:#F4F1EA}
+.ttl{flex:1;font-size:14.5px}
+.ttl.done{color:var(--ink-hairline);text-decoration:line-through}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:3px;border:1px solid var(--line-solid);color:var(--ink-muted)}
+.chip .cdot{width:6px;height:6px;border-radius:50%}
+.st{font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+.st.overdue{color:var(--acc-terra)}
+.note{font-family:var(--font-hand);font-size:16px;color:var(--ink-muted);transform:rotate(-1.5deg)}
+
+/* Weather / vine card */
+.season{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.season img{width:44px;height:44px}
+.season .lb{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
+.season .val{font-family:var(--font-display);font-size:20px;font-weight:500}
+.vine-row{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.vine-row .day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:4px;border:1px solid transparent}
+.vine-row .day.today{background:rgba(154,123,58,0.1);border:1px dashed var(--line-goal)}
+.vine-row img{width:34px;height:34px;object-fit:contain;filter:var(--shadow-drop-sm)}
+.vine-row .dl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+
+/* Capture */
+.capture{margin-top:36px;display:flex;align-items:center;gap:14px}
+.capture .field{flex:1;padding:14px 18px;background:var(--paper-bone);border:1px solid var(--line-solid);border-radius:var(--radius-md);font-size:14px;color:var(--ink-muted)}
+.btn{font-family:inherit;font-size:13px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;line-height:1;padding:12px 20px;border:none;background:var(--acc-terra);color:#fff;box-shadow:var(--shadow-cta)}
+.btn .dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block}
+
+/* Handwritten margin */
+.margin-note{position:absolute;font-family:var(--font-hand);color:#7a745f;font-size:17px}
+</style></head><body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <h1>Kai's Flow</h1>
+      <div class="sub">Personal · Cairo</div>
+      <div class="hand">a field journal of days ✿</div>
+    </div>
+    <nav class="rail">
+      <a class="active" href="#"><img src="../assets/flowers/clover/awake.png"><span>Today</span></a>
+      <a href="#"><img src="../assets/flowers/hydrangea/light.png"><span>Inbox</span><span class="cnt">3</span></a>
+      <a href="#"><img src="../assets/flowers/cherry/bloom.png"><span>Tasks</span></a>
+      <a href="#"><img src="../assets/flowers/daisy/midday.png"><span>Calendar</span></a>
+      <a href="#"><img src="../assets/flowers/wisteria/p60.png"><span>Projects</span></a>
+      <a href="#"><img src="../assets/flowers/fern/unfurl2.png"><span>Docs</span></a>
+    </nav>
+    <div class="section-lbl">Rituals</div>
+    <nav class="rail">
+      <a href="#"><img src="../assets/flowers/daisy/morning.png"><span>Morning</span></a>
+      <a href="#"><img src="../assets/flowers/daisy/evening.png"><span>Evening</span></a>
+      <a href="#"><img src="../assets/flowers/vine/lush.png"><span>Streaks</span></a>
+    </nav>
+    <div class="footer-me">
+      <img src="../assets/flowers/clover/four_leaf.png">
+      <div><div class="nm">Kai Ahmed</div><div class="st">Synced · 08:12</div></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="head">
+      <h2>Sunday, July 5</h2>
+      <div class="meta"><b>Cool morning · 22°</b>Cairo · Sun ↑ 05:14 · ↓ 19:02</div>
+    </div>
+
+    <div class="goal">
+      <span class="tape"></span>
+      <div class="eye">Goal of the day</div>
+      <div class="row">
+        <span class="cbg"></span>
+        <div style="flex:1">
+          <h3>Finish the transfer paperwork with Nadia.</h3>
+          <div class="why">unstucks two other people — worth an uninterrupted morning</div>
+        </div>
+        <span class="meta">90 min</span>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="sl"><span class="sl-lbl">Top 3 for today</span><span class="sl-rule"></span><a class="sl-act" href="#">Reprioritise →</a></div>
+        <div class="card tilt-a">
+          <span class="tape"></span>
+          <div class="trow">
+            <span class="cb"></span>
+            <span class="ttl">Call Nadia about the transfer</span>
+            <span class="chip"><span class="cdot" style="background:var(--acc-sage)"></span>Home</span>
+            <span class="chip">Call · 15m</span>
+            <span class="st overdue">Overdue 3d</span>
+          </div>
+          <div class="trow">
+            <span class="cb"></span>
+            <span class="ttl">Draft the July field notes</span>
+            <span class="chip"><span class="cdot" style="background:var(--acc-buttercream)"></span>Docs</span>
+            <span class="st">Deep work · 90m</span>
+          </div>
+          <div class="trow">
+            <span class="cb"></span>
+            <span class="ttl">Rooftop lease renewal</span>
+            <span class="chip">Own</span>
+            <span class="st">↻ Weekly</span>
+            <span class="note">leaves up ✿</span>
+          </div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">Up next</span><span class="sl-rule"></span></div>
+        <div class="card blossom tilt-b">
+          <span class="tape"></span>
+          <div class="trow"><span class="cb on">✓</span><span class="ttl done">Water the balcony plants</span><span class="st">Done · 7:20</span></div>
+          <div class="trow"><span class="cb"></span><span class="ttl">Pick up the seed packets</span><span class="chip">Errand</span><span class="st">14:30</span></div>
+          <div class="trow"><span class="cb"></span><span class="ttl">Reply to Mahmoud (studio move)</span><span class="chip"><span class="cdot" style="background:var(--acc-hydrangea)"></span>Inbox</span></div>
+          <div class="trow"><span class="cb"></span><span class="ttl">Tea with Farah</span><span class="chip">Life</span><span class="st">17:00 · Zamalek</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sl"><span class="sl-lbl">This week</span><span class="sl-rule"></span></div>
+        <div class="card lav">
+          <span class="tape"></span>
+          <div class="season">
+            <img src="../assets/flowers/daisy/midday.png">
+            <div>
+              <div class="lb">Day count</div>
+              <div class="val">Day 5 of 7</div>
+            </div>
+          </div>
+          <div class="vine-row">
+            <div class="day"><img src="../assets/flowers/vine/lush.png"><span class="dl">M</span></div>
+            <div class="day"><img src="../assets/flowers/vine/lush.png"><span class="dl">T</span></div>
+            <div class="day"><img src="../assets/flowers/vine/flowering.png"><span class="dl">W</span></div>
+            <div class="day"><img src="../assets/flowers/vine/flowering.png"><span class="dl">T</span></div>
+            <div class="day today"><img src="../assets/flowers/vine/sprouting.png"><span class="dl">F</span></div>
+            <div class="day"><img src="../assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+            <div class="day"><img src="../assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+          </div>
+          <div style="margin-top:14px;font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-0.6deg)">the vine remembers your Wednesdays.</div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">In the wings</span><span class="sl-rule"></span></div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:14px;padding:8px 0 12px;border-bottom:1px dashed var(--line-dashed)">
+            <img src="../assets/flowers/wisteria/p60.png" style="width:36px;height:36px;filter:var(--shadow-drop-sm)">
+            <div style="flex:1"><div style="font-size:14.5px;font-weight:500">Studio move</div><div class="st">6 of 10 threads closed</div></div>
+            <span class="chip"><span class="cdot" style="background:var(--acc-moss)"></span>Wisteria</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 0 8px">
+            <img src="../assets/flowers/wisteria/p20.png" style="width:36px;height:36px;filter:var(--shadow-drop-sm)">
+            <div style="flex:1"><div style="font-size:14.5px;font-weight:500">Book manuscript · pass 2</div><div class="st">Just sprouting</div></div>
+            <span class="chip"><span class="cdot" style="background:var(--acc-moss)"></span>Wisteria</span>
+          </div>
+        </div>
+
+        <div class="sl"><span class="sl-lbl">Somebody said</span><span class="sl-rule"></span></div>
+        <div class="card" style="padding:18px 22px">
+          <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--ink-body);line-height:1.4">"You do not rise to the level of your goals. You fall to the level of your systems."</div>
+          <div class="st" style="margin-top:8px">James Clear · noted last Tuesday</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="capture">
+      <div class="field">What's arriving in your head right now?</div>
+      <button class="btn"><span class="dot"></span>Voice capture</button>
+      <button class="btn" style="background:var(--paper-bone);color:var(--ink-body);border:1px solid var(--line-solid);box-shadow:var(--shadow-crisp)">Add task</button>
+    </div>
+
+    <div class="margin-note" style="right:56px;top:340px;transform:rotate(-4deg)">plant one thing.<br>tend it.</div>
+  </main>
+</div>
+</body></html>

@@ -1,0 +1,113 @@
+<!-- @dsCard group="Components" viewport="960x520" subtitle="NavItem · FlowerBadge · TaskRow · GoalCard · StreakVine" name="Garden" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><style>
+body{margin:0;padding:22px;font-family:var(--font-ui);background:var(--paper-linen);color:var(--ink-body)}
+.grid{display:grid;grid-template-columns:280px 1fr;gap:22px}
+.block{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:18px 20px;box-shadow:var(--shadow-card);position:relative}
+.rail{background:var(--paper-sidebar);border:1px solid var(--line-sidebar);border-radius:3px;padding:14px}
+.lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav a{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink-muted);font-size:14.5px;position:relative}
+.nav a.active{color:var(--ink-body);font-weight:600;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);transform:rotate(-0.5deg)}
+.nav a.active::before{content:'';position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(181,101,74,0.32);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px}
+.nav img{width:23px;height:23px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))}
+.nav .cnt{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)}
+
+/* Task row */
+.trow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px dashed var(--line-dashed)}
+.trow:last-child{border-bottom:none}
+.cb{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px solid var(--line-solid);background:transparent;color:transparent;font-size:11px}
+.cb.on{background:#2a2420;border-color:#2a2420;color:#F4F1EA}
+.ttl{flex:1;font-size:14.5px}
+.ttl.done{color:var(--ink-hairline);text-decoration:line-through}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:3px;border:1px solid var(--line-solid);color:var(--ink-muted)}
+.chip .cdot{width:6px;height:6px;border-radius:50%}
+.st{font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+.st.overdue{color:var(--acc-terra)}
+.note{font-family:var(--font-hand);font-size:16px;color:var(--ink-muted);transform:rotate(-1.5deg)}
+
+/* Goal card */
+.goal{position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:3px;padding:22px 26px;transform:rotate(-0.4deg);box-shadow:var(--shadow-goal)}
+.goal .tape{position:absolute;top:-9px;left:50%;margin-left:-38px;width:76px;height:16px;background:rgba(201,165,90,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(2deg);border-radius:1px}
+.goal .eye{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc-gold);margin-bottom:10px}
+.goal .row{display:flex;align-items:flex-start;gap:14px}
+.goal .cbg{margin-top:4px;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--acc-gold);background:rgba(255,255,255,0.5);flex:none}
+.goal h3{margin:0;font-family:var(--font-display);font-size:22px;font-weight:500;color:#3d2f1a;line-height:1.25;letter-spacing:-0.01em}
+.goal .why{font-family:var(--font-hand);font-size:18px;color:#7a5f2a;transform:rotate(-0.6deg);margin-top:10px}
+.goal .meta{font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-gold);flex:none}
+
+/* Vine */
+.vine{display:flex;gap:8px;align-items:flex-end}
+.vine .day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:4px;border:1px solid transparent}
+.vine .day.today{background:rgba(154,123,58,0.1);border:1px dashed var(--line-goal)}
+.vine img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))}
+.vine .dl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+.vine .today .dl{color:var(--ink-body)}
+</style></head><body>
+<div class="grid">
+  <div class="rail">
+    <div class="lbl">Nav</div>
+    <nav class="nav">
+      <a class="active" href="#"><img src="../../ds/assets/flowers/clover/awake.png"><span>Today</span></a>
+      <a href="#"><img src="../../ds/assets/flowers/hydrangea/light.png"><span>Inbox</span><span class="cnt">3</span></a>
+      <a href="#"><img src="../../ds/assets/flowers/cherry/bloom.png"><span>Tasks</span></a>
+      <a href="#"><img src="../../ds/assets/flowers/daisy/midday.png"><span>Calendar</span></a>
+      <a href="#"><img src="../../ds/assets/flowers/wisteria/p60.png"><span>Projects</span></a>
+      <a href="#"><img src="../../ds/assets/flowers/fern/unfurl2.png"><span>Docs</span></a>
+    </nav>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div class="block">
+      <div class="lbl">GoalCard — hero</div>
+      <div class="goal">
+        <span class="tape"></span>
+        <div class="eye">Goal of the day</div>
+        <div class="row">
+          <span class="cbg"></span>
+          <div style="flex:1">
+            <h3>Finish the transfer paperwork with Nadia.</h3>
+            <div class="why">unstucks two other people — worth an uninterrupted morning</div>
+          </div>
+          <span class="meta">90m</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="lbl">TaskRow — states</div>
+      <div class="trow">
+        <span class="cb"></span>
+        <span class="ttl">Call Nadia about the transfer</span>
+        <span class="chip"><span class="cdot" style="background:#8A9A7E"></span>Home</span>
+        <span class="chip">Call</span>
+        <span class="st overdue">Overdue 3d</span>
+      </div>
+      <div class="trow">
+        <span class="cb on">✓</span>
+        <span class="ttl done">Water the balcony plants</span>
+        <span class="st">Done · 7:20</span>
+      </div>
+      <div class="trow">
+        <img src="../../ds/assets/flowers/cherry/opening.png" style="width:22px;height:22px;filter:drop-shadow(0 2px 2px rgba(60,52,38,0.18))">
+        <span class="ttl">Rooftop lease renewal</span>
+        <span class="chip">Own</span>
+        <span class="st">↻ weekly</span>
+        <span class="note">leaves up ✿</span>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="lbl">StreakVine — this week</div>
+      <div class="vine">
+        <div class="day"><img src="../../ds/assets/flowers/vine/lush.png"><span class="dl">M</span></div>
+        <div class="day"><img src="../../ds/assets/flowers/vine/lush.png"><span class="dl">T</span></div>
+        <div class="day"><img src="../../ds/assets/flowers/vine/flowering.png"><span class="dl">W</span></div>
+        <div class="day"><img src="../../ds/assets/flowers/vine/flowering.png"><span class="dl">T</span></div>
+        <div class="day today"><img src="../../ds/assets/flowers/vine/sprouting.png"><span class="dl">F</span></div>
+        <div class="day"><img src="../../ds/assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+        <div class="day"><img src="../../ds/assets/flowers/vine/bare.png"><span class="dl">S</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -20,6 +20,35 @@ function addDays(days: number): string {
   return d.toISOString()
 }
 
+const FIELD_STYLE = {
+  fontFamily: 'var(--font-ui)',
+  fontSize: 12.5,
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-default)',
+  borderRadius: 6,
+  padding: '7px 10px',
+  color: 'var(--text-primary)',
+  outline: 'none',
+}
+
+function Tape({ top, side, offset, tint, rotate }: { top: number; side: 'left' | 'right'; offset: number; tint: string; rotate: number }) {
+  return (
+    <span
+      style={{
+        position: 'absolute',
+        top,
+        [side]: offset,
+        width: 44,
+        height: 13,
+        background: tint,
+        backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+        transform: `rotate(${rotate}deg)`,
+        borderRadius: 1,
+      }}
+    />
+  )
+}
+
 function DomainsPanel() {
   const { data: domains = [] } = useDomains()
   const [name, setName] = useState('')
@@ -27,43 +56,65 @@ function DomainsPanel() {
   const [mergeInto, setMergeInto] = useState('')
 
   return (
-    <div className="space-y-2 rounded border p-3">
-      <h2 className="text-sm font-semibold">Domains</h2>
-      <ul className="space-y-1 text-sm">
+    <div
+      style={{
+        position: 'relative',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--line-card)',
+        boxShadow: 'var(--shadow-card)',
+        borderRadius: 'var(--radius-sharp)',
+        padding: '14px 16px',
+        transform: 'rotate(-0.35deg)',
+      }}
+    >
+      <Tape top={-8} side="left" offset={18} tint="rgba(138,154,126,0.36)" rotate={-2} />
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>
+        Domains
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {domains.map((d) => (
-          <li key={d.id} className="flex items-center gap-2">
-            <input
-              defaultValue={d.name}
-              onBlur={(e) => {
-                if (e.target.value.trim() && e.target.value !== d.name) renameDomain(d, e.target.value.trim())
-              }}
-              className="w-full rounded border px-2 py-1"
-            />
-          </li>
+          <input
+            key={d.id}
+            defaultValue={d.name}
+            onBlur={(e) => {
+              if (e.target.value.trim() && e.target.value !== d.name) renameDomain(d, e.target.value.trim())
+            }}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 14,
+              color: 'var(--text-primary)',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px dashed var(--border-dashed)',
+              padding: '4px 2px',
+              outline: 'none',
+            }}
+          />
         ))}
-      </ul>
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
           if (name.trim()) createDomain(name.trim())
           setName('')
         }}
-        className="flex gap-2"
+        style={{ display: 'flex', gap: 8, marginTop: 12 }}
       >
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="New domain"
-          className="w-full rounded border px-2 py-1 text-sm"
+          style={{ ...FIELD_STYLE, flex: 1, minWidth: 0 }}
         />
-        <button type="submit" className="rounded bg-slate-900 px-2 py-1 text-sm text-white">
+        <button type="submit" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 14px', borderRadius: 999, cursor: 'pointer' }}>
           Add
         </button>
       </form>
       {domains.length > 1 && (
-        <div className="flex items-center gap-2 text-xs">
-          <select value={mergeFrom} onChange={(e) => setMergeFrom(e.target.value)} className="rounded border px-1 py-1">
-            <option value="">merge…</option>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 11.5, color: 'var(--text-tertiary)', flexWrap: 'wrap' }}>
+          <span>merge</span>
+          <select value={mergeFrom} onChange={(e) => setMergeFrom(e.target.value)} style={FIELD_STYLE}>
+            <option value="">…</option>
             {domains.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
@@ -71,7 +122,7 @@ function DomainsPanel() {
             ))}
           </select>
           <span>into</span>
-          <select value={mergeInto} onChange={(e) => setMergeInto(e.target.value)} className="rounded border px-1 py-1">
+          <select value={mergeInto} onChange={(e) => setMergeInto(e.target.value)} style={FIELD_STYLE}>
             <option value="">…</option>
             {domains.map((d) => (
               <option key={d.id} value={d.id}>
@@ -87,7 +138,7 @@ function DomainsPanel() {
               setMergeFrom('')
               setMergeInto('')
             }}
-            className="rounded bg-slate-200 px-2 py-1 disabled:opacity-40"
+            style={{ border: 'none', background: 'none', color: 'var(--acc-terra)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0, opacity: !mergeFrom || !mergeInto || mergeFrom === mergeInto ? 0.4 : 1 }}
           >
             Merge
           </button>
@@ -103,30 +154,44 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
   const [domainId, setDomainId] = useState('')
 
   return (
-    <div className="space-y-2 rounded border p-3">
-      <h2 className="text-sm font-semibold">Projects</h2>
-      <ul className="space-y-1 text-sm">
+    <div
+      style={{
+        position: 'relative',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--line-card)',
+        boxShadow: 'var(--shadow-card)',
+        borderRadius: 'var(--radius-sharp)',
+        padding: '14px 16px',
+        transform: 'rotate(0.3deg)',
+      }}
+    >
+      <Tape top={-8} side="right" offset={20} tint="rgba(212,168,176,0.38)" rotate={2} />
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>
+        Projects
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {projects.map((p) => (
-          <li key={p.id}>
-            {p.name} <span className="text-slate-400">— {domains.find((d) => d.id === p.domain_id)?.name ?? 'no domain'}</span>
-          </li>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--text-primary)' }}>{p.name}</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-hairline)' }}>{domains.find((d) => d.id === p.domain_id)?.name ?? 'no domain'}</span>
+          </div>
         ))}
-      </ul>
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
           if (name.trim()) createProject(name.trim(), domainId || null)
           setName('')
         }}
-        className="flex gap-2"
+        style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}
       >
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="New project"
-          className="w-full rounded border px-2 py-1 text-sm"
+          style={{ ...FIELD_STYLE, flex: 1, minWidth: 120 }}
         />
-        <select value={domainId} onChange={(e) => setDomainId(e.target.value)} className="rounded border px-1 py-1 text-sm">
+        <select value={domainId} onChange={(e) => setDomainId(e.target.value)} style={FIELD_STYLE}>
           <option value="">no domain</option>
           {domains.map((d) => (
             <option key={d.id} value={d.id}>
@@ -134,7 +199,7 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
             </option>
           ))}
         </select>
-        <button type="submit" className="rounded bg-slate-900 px-2 py-1 text-sm text-white">
+        <button type="submit" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 14px', borderRadius: 999, cursor: 'pointer' }}>
           Add
         </button>
       </form>
@@ -143,59 +208,112 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
 }
 
 function TaskRow({ task, highlighted }: { task: Task; highlighted?: boolean }) {
+  const done = task.status === 'done'
   return (
-    <li
+    <div
       id={`task-${task.id}`}
-      className={`flex items-center gap-2 rounded border px-2 py-1 text-sm ${highlighted ? 'ring-2 ring-indigo-400' : ''}`}
+      className="task-row"
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 14,
+        padding: '12px 0',
+        borderBottom: '1px dashed var(--line-dashed)',
+        boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+        opacity: done ? 0.55 : 1,
+      }}
     >
-      <input
-        type="checkbox"
-        checked={task.status === 'done'}
-        onChange={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
-      />
-      <span className={task.status === 'done' ? 'flex-1 line-through text-slate-400' : 'flex-1'}>
-        {task.title}
-        {task.scheduled_start && (
-          <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-            {new Date(task.scheduled_start).toLocaleString([], {
-              weekday: 'short',
-              hour: 'numeric',
-              minute: '2-digit',
-            })}
+      {done ? (
+        <span
+          style={{
+            width: 17,
+            height: 17,
+            borderRadius: 5,
+            background: 'var(--text-primary)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-on-accent)',
+            fontSize: 11,
+            flex: 'none',
+            marginTop: 2,
+            cursor: 'pointer',
+          }}
+          onClick={() => uncompleteTask(task)}
+        >
+          ✓
+        </span>
+      ) : (
+        <span
+          onClick={() => completeTask(task)}
+          style={{ width: 17, height: 17, border: '1.5px solid var(--line-sidebar)', borderRadius: 5, flex: 'none', marginTop: 2, cursor: 'pointer' }}
+        />
+      )}
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 15, color: done ? 'var(--ink-hairline)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : 'none' }}>
+            {task.title}
           </span>
-        )}
-      </span>
-      <button type="button" onClick={() => toggleTop3(task)} title="Top-3" className={task.top3 ? 'text-amber-500' : 'text-slate-300'}>
-        ★
-      </button>
-      <select
-        value={task.recurrence_rule ?? ''}
-        onChange={(e) => setRecurrence(task, e.target.value || null)}
-        title="Repeat"
-        className="rounded border px-1 py-0.5 text-xs text-slate-500"
-      >
-        <option value="">no repeat</option>
-        <option value="FREQ=DAILY">daily</option>
-        <option value="FREQ=WEEKLY">weekly</option>
-        <option value="FREQ=MONTHLY">monthly</option>
-      </select>
-      <button type="button" onClick={() => snoozeTask(task, addDays(1))} className="text-xs text-slate-500">
-        snooze 1d
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          const hasBlock = Boolean(task.scheduled_start)
-          const message = hasBlock
-            ? `Delete "${task.title}"? This also removes its scheduled calendar block.`
-            : `Delete "${task.title}"?`
-          if (window.confirm(message)) deleteTask(task)
-        }}
-        className="text-xs text-red-500"
-      >
-        delete
-      </button>
-    </li>
+          {!done && task.scheduled_start && (
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                color: 'var(--acc-lavender-deep)',
+                background: 'rgba(168,160,190,0.18)',
+                border: '1px solid rgba(168,160,190,0.5)',
+                padding: '2px 8px',
+                borderRadius: 999,
+              }}
+            >
+              {new Date(task.scheduled_start).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+            </span>
+          )}
+          {!done && task.recurrence_rule && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)' }}>↻</span>}
+        </div>
+      </div>
+
+      {done ? (
+        <div className="task-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
+          <img src="assets/cherry/fallen.png" alt="" style={{ height: 22, width: 'auto', opacity: 0.7 }} />
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hairline)' }}>a petal fell</span>
+        </div>
+      ) : (
+        <div className="task-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
+          <span onClick={() => toggleTop3(task)} title="Top-3" style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-sidebar)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
+            {task.top3 ? '★' : '☆'}
+          </span>
+          <select
+            value={task.recurrence_rule ?? ''}
+            onChange={(e) => setRecurrence(task, e.target.value || null)}
+            title="Repeat"
+            style={{ fontFamily: 'inherit', fontSize: 11, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '3px 6px', color: 'var(--text-secondary)' }}
+          >
+            <option value="">no repeat</option>
+            <option value="FREQ=DAILY">daily</option>
+            <option value="FREQ=WEEKLY">weekly</option>
+            <option value="FREQ=MONTHLY">monthly</option>
+          </select>
+          <button type="button" onClick={() => snoozeTask(task, addDays(1))} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+            snooze 1d
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const hasBlock = Boolean(task.scheduled_start)
+              const message = hasBlock
+                ? `Delete "${task.title}"? This also removes its scheduled calendar block.`
+                : `Delete "${task.title}"?`
+              if (window.confirm(message)) deleteTask(task)
+            }}
+            style={{ border: 'none', background: 'none', color: 'var(--acc-terra)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+          >
+            delete
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -214,35 +332,89 @@ export function TasksPage() {
   }, [focusId, tasks])
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Tasks</h1>
-      <div className="grid gap-4 md:grid-cols-2">
+    <div style={{ maxWidth: 1000 }}>
+      <style>{`
+        .tasks-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 760px; }
+        @media (max-width: 767px) {
+          .tasks-panels { grid-template-columns: 1fr; }
+          .task-row { flex-wrap: wrap; }
+          .task-row-controls { flex-basis: 100%; padding-left: 31px; margin-top: 6px; }
+        }
+      `}</style>
+
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 9 }}>
+            Tasks · Prunus
+          </div>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Tasks</h1>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', transform: 'rotate(-1deg)' }}>
+          <img src="assets/cherry/bloom.png" alt="Cherry blossom" style={{ height: 86, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+          <span
+            style={{
+              position: 'absolute',
+              top: 40,
+              left: '50%',
+              width: 38,
+              height: 11,
+              marginLeft: -19,
+              background: 'rgba(212,168,176,0.4)',
+              backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+              transform: 'rotate(3deg)',
+              borderRadius: 1,
+            }}
+          />
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>one petal falls per task done</span>
+        </div>
+      </div>
+
+      <div style={{ height: 1, borderBottom: '1px dashed var(--border-default)', margin: '26px 0 30px' }} />
+
+      <div className="tasks-panels">
         <DomainsPanel />
         <ProjectsPanel domains={domains} />
       </div>
+
       <form
         onSubmit={(e) => {
           e.preventDefault()
           if (title.trim()) createTask({ title: title.trim() })
           setTitle('')
         }}
-        className="flex gap-2"
+        style={{ display: 'flex', gap: 10, margin: '24px 0 8px', maxWidth: 760 }}
       >
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Quick add task…"
-          className="w-full rounded border px-2 py-1"
+          style={{
+            flex: 1,
+            fontFamily: 'var(--font-ui)',
+            fontSize: 14,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--line-card)',
+            borderRadius: 999,
+            padding: '11px 18px',
+            outline: 'none',
+            color: 'var(--text-primary)',
+            boxShadow: 'inset 0 1px 2px rgba(60,52,38,0.08)',
+          }}
         />
-        <button type="submit" className="rounded bg-slate-900 px-3 py-1 text-white">
+        <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
           Add
         </button>
       </form>
-      <ul className="space-y-1">
-        {active.map((t) => (
-          <TaskRow key={t.id} task={t} highlighted={t.id === focusId} />
-        ))}
-      </ul>
+
+      <div style={{ maxWidth: 760 }}>
+        {active.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>
+            No tasks yet. Type one above, or press ⌘K and just say what's on your mind.
+          </p>
+        ) : (
+          active.map((t) => <TaskRow key={t.id} task={t} highlighted={t.id === focusId} />)
+        )}
+      </div>
     </div>
   )
 }

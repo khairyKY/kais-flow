@@ -1,0 +1,98 @@
+<!-- @dsCard group="UI Kit" viewport="1440x900" subtitle="Routines — habit stacking" name="Routines (Light)" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);min-height:900px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.wrap{width:1440px;margin:0 auto;padding:44px 88px;position:relative;z-index:2}
+.head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px}
+.head h2{margin:0;font-family:var(--font-display);font-size:44px;font-weight:500;letter-spacing:-0.015em;line-height:1}
+.head p{margin:6px 0 0;color:var(--ink-muted);font-size:15px}
+.head .meta{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);text-align:right}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.rit{position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:26px 30px;box-shadow:var(--shadow-card)}
+.rit.morn{transform:rotate(-0.4deg)}
+.rit.eve{transform:rotate(0.4deg)}
+.rit .tape{position:absolute;top:-9px;width:82px;height:16px;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);border-radius:1px}
+.rit.morn .tape{left:32px;background-color:rgba(212,199,138,0.55);transform:rotate(-3deg)}
+.rit.eve .tape{right:32px;background-color:rgba(168,160,190,0.5);transform:rotate(3deg)}
+.rit-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.rit-head img{width:44px;height:44px;filter:var(--shadow-drop-sm)}
+.rit-head h3{margin:0;font-family:var(--font-display);font-size:22px;font-weight:600}
+.rit-head .sub{font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+.trow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed var(--line-dashed)}
+.trow:last-child{border-bottom:none}
+.cb{width:17px;height:17px;flex:none;border-radius:5px;border:1.5px solid var(--line-solid);background:transparent;display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:11px}
+.cb.on{background:#2a2420;border-color:#2a2420;color:#F4F1EA}
+.ttl{flex:1;font-size:14.5px}
+.ttl.done{color:var(--ink-hairline);text-decoration:line-through}
+.dur{font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)}
+
+.foot{display:flex;justify-content:space-between;padding-top:16px;margin-top:14px;border-top:1px dashed var(--line-dashed);font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.foot b{color:var(--ink-body);font-family:var(--font-ui);letter-spacing:0;text-transform:none;font-size:13px;font-weight:500}
+.hand{font-family:var(--font-hand);font-size:18px;color:#7a745f;transform:rotate(-1deg);display:inline-block;margin-top:10px}
+
+.streaks{margin-top:44px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:24px 30px;box-shadow:var(--shadow-card)}
+.streak-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.streak-head h3{margin:0;font-family:var(--font-display);font-size:20px;font-weight:600}
+.grid30{display:grid;grid-template-columns:repeat(30,1fr);gap:5px}
+.grid30 img{width:100%;height:auto;object-fit:contain;filter:var(--shadow-drop-sm)}
+.day-lbl{display:grid;grid-template-columns:repeat(30,1fr);gap:5px;margin-top:8px}
+.day-lbl span{font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);text-align:center}
+
+</style></head><body>
+<div class="wrap">
+  <div class="head">
+    <div><h2>Rituals &amp; rhythms</h2><p>Two anchors a day. Everything else is weather.</p></div>
+    <div class="meta">Week 27 · Q3<br><span style="color:var(--ink-body);font-family:var(--font-ui);letter-spacing:0;text-transform:none;font-size:13px">42 mornings tended · 38 evenings closed</span></div>
+  </div>
+  <div class="cols">
+    <div class="rit morn">
+      <span class="tape"></span>
+      <div class="rit-head">
+        <img src="../assets/flowers/daisy/morning.png">
+        <div><h3>Morning ritual</h3><div class="sub">Anchor · 25 min · 05:45</div></div>
+      </div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl done">Glass of water, no phone</span><span class="dur">1m</span></div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl done">Ten slow breaths on the balcony</span><span class="dur">3m</span></div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl done">Write three lines in the field journal</span><span class="dur">6m</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Choose one thing that matters today</span><span class="dur">4m</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Coffee &amp; the daily verse</span><span class="dur">10m</span></div>
+      <div class="foot"><span>Streak</span><b style="color:var(--acc-terra)">18 days ↑</b></div>
+      <div class="hand">— the vine notices when you skip. ✿</div>
+    </div>
+
+    <div class="rit eve">
+      <span class="tape"></span>
+      <div class="rit-head">
+        <img src="../assets/flowers/daisy/evening.png">
+        <div><h3>Evening ritual</h3><div class="sub">Wind-down · 20 min · 22:30</div></div>
+      </div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl done">Close every open tab, one by one</span><span class="dur">3m</span></div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl done">Set tomorrow's one thing</span><span class="dur">3m</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Read paper only (no screens)</span><span class="dur">10m</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Water the balcony plants</span><span class="dur">2m</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Phone in the other room</span><span class="dur">1m</span></div>
+      <div class="foot"><span>Streak</span><b>11 days</b></div>
+      <div class="hand">— sleep well; the garden closes with you.</div>
+    </div>
+  </div>
+
+  <div class="streaks">
+    <div class="streak-head"><img src="../assets/flowers/vine/lush.png" style="width:34px;height:34px;filter:var(--shadow-drop-sm)"><h3>The last 30 mornings</h3><span class="dur" style="margin-left:auto">30-day vine · mornings only</span></div>
+    <div class="grid30">
+      <img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/flowering.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/bare.png">
+      <img src="../assets/flowers/vine/sprouting.png"><img src="../assets/flowers/vine/flowering.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/flowering.png"><img src="../assets/flowers/vine/bare.png">
+      <img src="../assets/flowers/vine/sprouting.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/flowering.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png">
+      <img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/flowering.png"><img src="../assets/flowers/vine/lush.png">
+      <img src="../assets/flowers/vine/lush.png"><img src="../assets/flowers/vine/sprouting.png">
+    </div>
+    <div class="day-lbl">
+      <span>1</span><span></span><span></span><span></span><span></span><span></span><span>7</span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span>14</span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span>21</span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span>28</span>
+      <span></span><span>30</span>
+    </div>
+  </div>
+</div>
+</body></html>

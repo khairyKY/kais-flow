@@ -1,0 +1,63 @@
+<!-- @dsCard group="Components" viewport="960x540" subtitle="StarField · FireflyField · MoonlitCard" name="Night" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><style>
+html,body{margin:0;height:100%;font-family:var(--font-ui)}
+body{background:#0B1330;color:rgba(245,240,220,0.92);min-height:540px;padding:22px;box-sizing:border-box;overflow:hidden}
+.stage{position:relative;height:496px;border-radius:6px;overflow:hidden;background:radial-gradient(ellipse at 30% 0%,#1F2D5C 0%,#142147 40%,#0B1330 100%)}
+.moon{position:absolute;left:78%;top:10%;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(255,245,210,0.28) 0%,rgba(255,245,210,0.12) 40%,transparent 70%);filter:blur(2px)}
+.star{position:absolute;border-radius:50%;background:rgba(255,250,230,0.9);animation:twinkle 4s ease-in-out infinite}
+.star.lg{box-shadow:0 0 4px rgba(255,250,230,0.7)}
+.ff{position:absolute;width:5px;height:5px;border-radius:50%;background:#F6E28C;box-shadow:0 0 10px rgba(246,226,140,0.9),0 0 22px rgba(246,226,140,0.45);animation:fireflyDrift 8s ease-in-out infinite}
+.panel-wrap{position:relative;z-index:2;padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:20px;height:100%;box-sizing:border-box}
+.mc{position:relative;border-radius:3px;padding:22px 26px;background:linear-gradient(180deg,rgba(240,236,220,0.09) 0%,rgba(240,236,220,0.05) 100%);border:1px solid rgba(220,214,190,0.18);box-shadow:inset 0 1px 0 rgba(255,245,210,0.09),0 12px 40px rgba(0,0,0,0.35);backdrop-filter:blur(6px)}
+.mc.tilt{transform:rotate(-0.4deg)}
+.eye{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(228,195,107,0.75);margin-bottom:10px}
+.mc h3{margin:0;font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:-0.01em;color:rgba(250,244,220,0.95)}
+.mc .why{font-family:var(--font-hand);font-size:18px;color:rgba(228,195,107,0.85);transform:rotate(-0.6deg);margin-top:10px}
+.mc .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(220,214,190,0.5);margin-bottom:10px}
+.trow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed rgba(220,214,190,0.22)}
+.trow:last-child{border-bottom:none}
+.cb{width:16px;height:16px;flex:none;border-radius:5px;border:1.5px solid rgba(220,214,190,0.35);background:transparent}
+.cb.on{background:rgba(246,226,140,0.85);border-color:rgba(246,226,140,0.85);color:#1a1533;display:flex;align-items:center;justify-content:center;font-size:11px}
+.trow span.ttl{flex:1;font-size:14px;color:rgba(240,232,205,0.9)}
+.mc .fflight{position:absolute;top:-3px;right:20px}
+</style></head><body data-theme="night">
+<div class="stage">
+  <div class="moon"></div>
+  <!-- stars -->
+  <span class="star" style="left:8%;top:12%;width:1.6px;height:1.6px;animation-delay:-1s"></span>
+  <span class="star lg" style="left:22%;top:6%;width:2.5px;height:2.5px"></span>
+  <span class="star" style="left:34%;top:18%;width:1.2px;height:1.2px;animation-delay:-3s"></span>
+  <span class="star" style="left:46%;top:9%;width:1.4px;height:1.4px;animation-delay:-2s"></span>
+  <span class="star lg" style="left:58%;top:22%;width:2.4px;height:2.4px;animation-delay:-0.5s"></span>
+  <span class="star" style="left:66%;top:5%;width:1.4px;height:1.4px;animation-delay:-4s"></span>
+  <span class="star" style="left:88%;top:30%;width:1.6px;height:1.6px;animation-delay:-1.5s"></span>
+  <span class="star" style="left:12%;top:32%;width:1.2px;height:1.2px;animation-delay:-2.5s"></span>
+  <span class="star" style="left:74%;top:44%;width:1.4px;height:1.4px;animation-delay:-3.5s"></span>
+  <span class="star lg" style="left:40%;top:38%;width:2.1px;height:2.1px;animation-delay:-1.2s"></span>
+  <span class="star" style="left:92%;top:52%;width:1.2px;height:1.2px;animation-delay:-2.2s"></span>
+  <!-- fireflies -->
+  <span class="ff" style="left:15%;top:58%;animation-delay:-1s"></span>
+  <span class="ff" style="left:32%;top:70%;animation-delay:-3s"></span>
+  <span class="ff" style="left:52%;top:64%;animation-delay:-5s"></span>
+  <span class="ff" style="left:70%;top:72%;animation-delay:-2s"></span>
+  <span class="ff" style="left:82%;top:60%;animation-delay:-4s"></span>
+  <span class="ff" style="left:24%;top:82%;animation-delay:-6s"></span>
+  <span class="ff" style="left:62%;top:86%;animation-delay:-0.5s"></span>
+
+  <div class="panel-wrap">
+    <div class="mc tilt">
+      <span class="ff fflight" style="animation-delay:-3s"></span>
+      <div class="eye">Goal for tomorrow</div>
+      <h3>Rest first. Everything else follows from that.</h3>
+      <div class="why">the field journal will still be here in the morning</div>
+    </div>
+    <div class="mc">
+      <div class="lbl">Winding down</div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl">Close open loops</span></div>
+      <div class="trow"><span class="cb on">✓</span><span class="ttl">Read for 20 minutes</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Set tomorrow's goal</span></div>
+      <div class="trow"><span class="cb"></span><span class="ttl">Lights out by 23:30</span></div>
+    </div>
+  </div>
+</div>
+</body></html>

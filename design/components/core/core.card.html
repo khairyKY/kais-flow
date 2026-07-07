@@ -1,0 +1,77 @@
+<!-- @dsCard group="Components" viewport="960x420" subtitle="Buttons · Checkboxes · Chips · SectionLabel · Tape · Card" name="Core" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><style>
+body{margin:0;padding:22px;font-family:var(--font-ui);background:var(--paper-linen);color:var(--ink-body)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.block{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:18px 20px;box-shadow:var(--shadow-card);position:relative}
+.lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* Button */
+.btn{font-family:inherit;font-size:13px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;line-height:1;transition:transform 120ms}
+.btn-primary{border:none;background:var(--acc-terra);color:#fff;padding:10px 18px;box-shadow:var(--shadow-cta)}
+.btn-secondary{border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);padding:9px 16px;box-shadow:var(--shadow-crisp)}
+.btn-ghost{border:none;background:transparent;color:var(--ink-muted);padding:9px 12px}
+.dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block}
+
+/* Checkbox */
+.cb{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px solid var(--line-solid);background:transparent;color:transparent;font-size:11px}
+.cb.on{background:var(--sig-done);border-color:var(--sig-done);color:#F4F1EA}
+.cb.goal{width:19px;height:19px;border:1.5px solid var(--acc-gold);background:rgba(255,255,255,0.5)}
+
+/* Chip */
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 7px;border-radius:3px;line-height:1.2;border:1px solid var(--line-solid);color:var(--ink-muted)}
+.chip.filled{background:var(--acc-terra);color:#fff;border:none;font-family:var(--font-ui);font-size:11px;padding:5px 9px;border-radius:999px;letter-spacing:0;text-transform:none}
+.chip .cdot{width:7px;height:7px;border-radius:50%;background:var(--acc-sage);display:inline-block}
+
+/* Section label */
+.sl{display:flex;align-items:center;gap:14px;margin:0 0 8px}
+.sl-lbl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.sl-rule{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+.sl-act{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;white-space:nowrap}
+
+/* Tape */
+.tape{position:absolute;top:-9px;left:50%;margin-left:-36px;width:72px;height:16px;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp)}
+.tape.sage{background-color:rgba(138,154,126,0.4);transform:rotate(-2deg)}
+.tape.gold{background-color:rgba(201,165,90,0.5);transform:rotate(2deg)}
+
+/* Card demo */
+.demo-cards{display:flex;gap:16px;flex-wrap:wrap;padding-top:18px}
+.dcard{position:relative;width:200px;padding:16px 18px;border-radius:3px}
+.dcard.parchment{background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-card);transform:rotate(-0.4deg)}
+.dcard.goal{background:var(--paper-goal);border:1px solid var(--line-goal);box-shadow:var(--shadow-goal);transform:rotate(0.4deg)}
+.dcard.bone{background:var(--paper-bone);border:1px solid var(--line-solid);box-shadow:var(--shadow-crisp)}
+.dcard h4{margin:0;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)}
+.dcard .cap{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:6px}
+.dcard.goal h4{color:#4a3a1e}
+.dcard.goal .cap{color:var(--acc-gold)}
+</style></head><body>
+<div class="grid">
+  <div class="block">
+    <div class="lbl">Buttons</div>
+    <div class="row">
+      <button class="btn btn-primary"><span class="dot"></span>Voice capture</button>
+      <button class="btn btn-secondary">Morning ritual</button>
+      <button class="btn btn-ghost">Dismiss</button>
+    </div>
+  </div>
+  <div class="block">
+    <div class="lbl">Checkbox · Chip</div>
+    <div class="row">
+      <span class="cb"></span>
+      <span class="cb on">✓</span>
+      <span class="cb goal"></span>
+      <span class="chip"><span class="cdot"></span>Home</span>
+      <span class="chip">Meeting</span>
+      <span class="chip filled">Still relevant → task</span>
+    </div>
+  </div>
+  <div class="block" style="grid-column:1 / -1">
+    <div class="sl"><span class="sl-lbl">Section label · with trailing action</span><span class="sl-rule"></span><a class="sl-act" href="#">View all →</a></div>
+    <div class="demo-cards">
+      <div class="dcard parchment"><span class="tape sage"></span><h4>Parchment card</h4><div class="cap">with sage tape</div></div>
+      <div class="dcard goal"><span class="tape gold"></span><h4>Goal of the day</h4><div class="cap">gold surface</div></div>
+      <div class="dcard bone"><h4 style="font-family:var(--font-ui);font-size:14.5px;font-weight:500">Bone card · no tilt</h4><div class="cap">quiet surface</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.6}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-solid);border-radius:6px;border:3px solid var(--paper-linen)}
+
+.petal {
+  position: absolute;
+  width: 10px;
+  height: 8px;
+  background: var(--acc-blossom);
+  border-radius: 50% 0 50% 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.petal.fall-1 {
+  animation: petalFall 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+.petal.fall-2 {
+  animation: petalFall 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.2s;
+}
+.petal.fall-3 {
+  animation: petalFall 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.05s;
+}
+
+@keyframes petalFall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  50%  { transform: translateY(40px) translateX(-10px) rotate(60deg) scale(0.9); opacity: 0.8; }
+  100% { transform: translateY(90px) translateX(-20px) rotate(140deg) scale(0.8); opacity: 0; }
+}
+
+.tape {
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 54px;
+  height: 14px;
+  background: var(--acc-blossom);
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0 3px, transparent 3px 6px);
+  transform: rotate(-1.5deg);
+  border-radius: 1px;
+}
+
+.card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 30px;
+  max-width: 760px;
+}
+
+.detail-card {
+  position: relative;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 3px;
+  padding: 20px 24px;
+}
+
+.label-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.field-row {
+  display: flex;
+  gap: 24px;
+}
+.field-row > div {
+  flex: 1;
+}
+
+.input-text {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink-body);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--line-dashed);
+  padding: 6px 2px;
+  outline: none;
+  transition: border-bottom-color 0.2s;
+}
+.input-text:focus {
+  border-bottom-color: var(--acc-terra);
+}
+
+.textarea-notes {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-body);
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 6px;
+  padding: 12px 14px;
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+  transition: border-color 0.2s;
+}
+.textarea-notes:focus {
+  border-color: var(--acc-terra);
+}
+
+.input-select, .input-date, .input-time {
+  width: 100%;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13.5px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-solid);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--ink-body);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-select:focus, .input-date:focus, .input-time:focus {
+  border-color: var(--acc-terra);
+}
+
+.mono-helper {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-top: 4px;
+  display: block;
+}
+
+.btn-terracotta {
+  border: none;
+  background: var(--acc-terra);
+  color: var(--paper-parchment);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-terracotta:hover {
+  background: color-mix(in oklch, var(--acc-terra) 88%, black);
+  outline: 2px solid var(--acc-blossom);
+}
+.btn-terracotta:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary-ghost {
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+.btn-secondary-ghost:hover {
+  color: var(--ink-body);
+}
+
+@media (max-width: 580px) {
+  .field-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+</style>
+</helmet>
+<div data-screen-label="Task Detail" style="width:1440px;margin:0 auto;min-height:1024px;display:flex;background:var(--paper-linen);position:relative">
+
+  <aside style="width:238px;flex:none;background:var(--paper-sidebar);border-right:1px dashed var(--line-sidebar);display:flex;flex-direction:column;padding:26px 0 20px;position:relative;z-index:5">
+    <div style="padding:0 24px 24px">
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+      <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+      <div style="margin-top:8px;font-family:'Caveat',cursive;font-size:16px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+    </div>
+
+    <nav style="position:relative;padding:0 16px;display:flex;flex-direction:column;gap:3px">
+      <a href="Today v3.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Today</span>
+      </a>
+
+      <a href="Inbox.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3-.4-5-1.6-6.8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"><path d="M9.2 7.2c1-1.4 3-1.4 3.8.2 1.7-.6 3.2.8 2.8 2.4 1.5.9 1.3 3-.3 3.6.2 1.7-1.5 2.9-3 2.2-1 1.3-3 1-3.6-.6-1.7 0-2.7-1.8-1.8-3.2-1.2-1.2-.6-3.2 1-3.5 0-.4.4-.9 1.1-1.1Z" fill="#9AB4BE"></path></g><circle cx="10.6" cy="9.6" r="1" fill="#F2EEDF"></circle><circle cx="13.8" cy="10.8" r="1" fill="#F2EEDF"></circle><circle cx="11.6" cy="12.8" r="1" fill="#F2EEDF"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Inbox</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--acc-terra)">3</span>
+      </a>
+
+      <a href="Tasks.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:0 1px 2px rgba(60,52,38,0.14),0 4px 10px rgba(60,52,38,0.08);text-decoration:none;position:relative;transform:rotate(-0.5deg)">
+        <span style="position:absolute;top:-6px;right:14px;width:34px;height:11px;background:rgba(212,168,176,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.25) 0 3px,transparent 3px 6px);transform:rotate(3deg);border-radius:1px"></span>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c.3-3.2-.2-5.6-1.4-7.6" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"><ellipse cx="12" cy="6.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-8 12 6.2)"></ellipse><ellipse cx="15.6" cy="8.2" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(58 15.6 8.2)"></ellipse><ellipse cx="14.4" cy="12.1" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(128 14.4 12.1)"></ellipse><ellipse cx="9.6" cy="12.1" rx="1.9" ry="2.4" fill="#D4A8B0" transform="rotate(-128 9.6 12.1)"></ellipse><ellipse cx="8.4" cy="8.2" rx="1.9" ry="2.4" fill="#E5B8C0" transform="rotate(-58 8.4 8.2)"></ellipse></g><circle cx="12" cy="9.4" r="1.7" fill="#C98A4B" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;font-weight:600;color:var(--ink-body)">Tasks</span>
+      </a>
+
+      <a href="Calendar.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5c0-3.4-.3-6-1-8.4" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><g stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round" fill="#F3EEDC"><ellipse cx="11" cy="4.9" rx="1.3" ry="2.6"></ellipse><ellipse cx="11" cy="12.1" rx="1.3" ry="2.6"></ellipse><ellipse cx="7.4" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="14.6" cy="8.5" rx="2.6" ry="1.3"></ellipse><ellipse cx="8.5" cy="6" rx="1.2" ry="2.2" transform="rotate(-45 8.5 6)"></ellipse><ellipse cx="13.5" cy="6" rx="1.2" ry="2.2" transform="rotate(45 13.5 6)"></ellipse><ellipse cx="13.5" cy="11" rx="1.2" ry="2.2" transform="rotate(-45 13.5 11)"></ellipse><ellipse cx="8.5" cy="11" rx="1.2" ry="2.2" transform="rotate(45 8.5 11)"></ellipse></g><circle cx="11" cy="8.5" r="2.2" fill="#D9B65C" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Calendar</span>
+      </a>
+
+      <a href="Routines.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M10.5 21.5C10.5 17 13.5 15 13 11.5 12.5 8 9.5 7.5 10 4.5" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M13 12c2.6-.9 3.9-2.9 3.8-5.1-2.3.3-3.7 2.3-3.8 5.1Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M11.4 8.4C8.9 8 7.5 6.2 7.3 4c2.3 0 3.8 1.8 4.1 4.4Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><path d="M12.6 16.6c2.4-.4 3.8.4 4.4 2-2 .8-3.7 0-4.4-2Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="10" cy="3.6" r="1.6" fill="#D4A8B0" stroke="#5C5140" stroke-width="1.2"></circle></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Routines</span>
+      </a>
+
+      <a href="Review.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M11 21.5c0-6 .4-10.5 3.6-14.4" stroke="#5C5140" stroke-width="1.5" fill="none" stroke-linecap="round"></path><path d="M14.9 6.5c1.4-.3 2.3-1.3 2.4-2.7-1.5 0-2.4 1.1-2.4 2.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M13.2 9.1c-1.5.2-2.8-.5-3.3-1.9 1.6-.4 2.9.5 3.3 1.9Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M12.2 11.7c1.5.3 2.9-.3 3.5-1.6-1.5-.5-2.9.2-3.5 1.6Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11.4 14.6c-1.6.2-2.9-.5-3.5-2 1.7-.4 3 .5 3.5 2Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path><path d="M11 17.4c1.6.3 3-.3 3.7-1.7-1.6-.5-3 .2-3.7 1.7Z" fill="#7A946E" stroke="#5C5140" stroke-width="1.1" stroke-linejoin="round"></path></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Review</span>
+      </a>
+
+      <a href="#" onClick="{{ toggleSettings }}" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none;cursor:pointer">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 21.5V10.5" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.8C11.5 9.3 9 7.7 6.3 8.2c.3 3 2.7 4.9 5.7 4.6Z" fill="#8A9A7E" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><path d="M12 10.6c.3-3.5 2.7-5.3 5.5-5-.2 3.1-2.6 5.2-5.5 5Z" fill="#9DAB8B" stroke="#5C5140" stroke-width="1.3" stroke-linejoin="round"></path><ellipse cx="12" cy="20.6" rx="4.6" ry="1.4" fill="#C9B98F" stroke="#5C5140" stroke-width="1.1"></ellipse></svg>
+        <span style="font-size:14.5px;color:var(--ink-muted)">Settings</span>
+      </a>
+    </nav>
+
+    <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="settings-overlay" style="position:absolute;left:226px;top:310px;width:300px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:4px;box-shadow:var(--shadow-popover);padding:18px 18px 16px;z-index:60;transform:rotate(0.4deg)">
+        <span style="position:absolute;top:-8px;left:50%;width:64px;height:16px;margin-left:-32px;background:rgba(154,180,190,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:0 1px 2px rgba(60,52,38,0.1)"></span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Settings · Garden</span>
+          <button onClick="{{ closeSettings }}" style="border:none;background:none;color:var(--ink-faint);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1">✕</button>
+        </div>
+        <div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body);margin:6px 0 14px">The Terrarium</div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed var(--line-dashed)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:var(--ink-body)">Enable The Terrarium</div>
+            <div style="font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.35">Grow a living garden from your activity.</div>
+          </div>
+          <div onClick="{{ toggleOn }}" style="{{ trackOnStyle }}"><div style="{{ knobOnStyle }}"></div></div>
+        </div>
+
+        <div style="{{ rowTodayStyle }}">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;color:var(--ink-body)">Show in Today view</div>
+            <div style="font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.35">Off — the garden lives in Routines instead.</div>
+          </div>
+          <div onClick="{{ toggleInToday }}" style="{{ trackTodayStyle }}"><div style="{{ knobTodayStyle }}"></div></div>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-faint);line-height:1.45;border-top:1px dashed var(--line-dashed);padding-top:10px;margin-top:6px">{{ settingsHint }}</div>
+      </div>
+    </sc-if>
+
+    <div style="flex:1"></div>
+
+    <div style="padding:14px 14px 0;margin:0 14px;border-top:1px dashed var(--line-sidebar);display:flex;flex-direction:column;gap:2px">
+      <a href="Search.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none"><span style="width:22px"></span><span style="font-size:14px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘K</span></a>
+      <a href="Chat.dc.html" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;text-decoration:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;opacity:0.85"><path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" stroke-width="1.5" stroke-linecap="round"></path><path d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c-1-3.3.7-6.2 3-6.2 2.2 0 3.5 2.6 2 4.8-1 1.6-3.1 2.1-5 1.4Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path><path d="M12 12.2c3.4-.8 6 1.4 5.6 3.6-.4 2.2-3.3 2.9-4.9 1.1-1.2-1.3-1.3-3.1-.7-4.7Z" fill="none" stroke="#5C5140" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="font-size:14px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint)">⌘J</span></a>
+      <a href="Sign in.dc.html" style="display:flex;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;margin-top:2px"><span style="width:22px"></span><span style="font-size:13px;color:var(--ink-faint)">Sign out</span></a>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+      <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Mon 06 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);display:inline-block"></span></span></div>
+      <div>Africa/Cairo</div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div style="padding:30px 40px 64px;max-width:1000px;width:100%">
+      
+      <!-- Breadcrumb -->
+      <div style="margin-bottom:20px">
+        <a href="Tasks.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--ink-faint);text-decoration:none;font-weight:500">← TASKS</a>
+      </div>
+
+      <!-- Header Band -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <!-- Status & Source Pills -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span onClick="{{ completeTask }}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;font-weight:600;padding:3px 10px;border-radius:999px;cursor:pointer;transition:all 0.25s;
+              background: {{ status === 'DONE' ? 'color-mix(in srgb, var(--ink-faint) 12%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)' }};
+              color: {{ status === 'DONE' ? 'var(--ink-faint)' : 'var(--acc-sage)' }};
+              border: 1px solid {{ status === 'DONE' ? 'var(--line-solid)' : 'color-mix(in srgb, var(--acc-sage) 40%, transparent)' }};
+              text-decoration: {{ status === 'DONE' ? 'line-through' : 'none' }};">
+              {{ status }}
+            </span>
+            <sc-if value="{{ source !== '(none)' }}">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:var(--ink-faint);background:color-mix(in srgb, var(--acc-blossom) 15%, transparent);border:1px solid color-mix(in srgb, var(--acc-blossom) 40%, transparent);padding:3px 10px;border-radius:999px">
+                {{ source }}
+              </span>
+            </sc-if>
+          </div>
+
+          <!-- Inline Editable Title -->
+          <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:38px;line-height:1.2;letter-spacing:-0.015em;color:var(--ink-body);
+            text-decoration: {{ status === 'DONE' ? 'line-through' : 'none' }};
+            opacity: {{ status === 'DONE' ? 0.6 : 1 }};
+            transition: all 0.3s;">
+            {{ title }}
+          </h1>
+        </div>
+
+        <!-- Botanical branch / animation container -->
+        <div style="display:flex;flex-direction:column;align-items:center;position:relative;margin-top:8px">
+          <div style="position:relative;width:96px;height:96px;display:grid;place-items:center;">
+            <img src="{{ cherryImg }}" alt="Cherry blossom" style="height:86px;width:auto;object-fit:contain;filter:var(--shadow-drop-sm);transition:opacity 0.4s;
+              opacity: {{ animating ? 0.5 : 1 }};">
+            <sc-if value="{{ animating }}">
+              <div class="petal fall-1" style="top: 25px; left: 35px;"></div>
+              <div class="petal fall-2" style="top: 40px; left: 50px; transform: rotate(45deg);"></div>
+              <div class="petal fall-3" style="top: 20px; left: 60px; transform: rotate(-30deg);"></div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ status === 'DONE' }}">
+            <span style="font-family:'Caveat',cursive;font-size:14px;color:var(--ink-hairline);margin-top:4px;transform:rotate(-1deg)">a petal fell ✿</span>
+          </sc-if>
+          <sc-if value="{{ status === 'OPEN' }}">
+            <span style="font-family:'Caveat',cursive;font-size:14px;color:var(--ink-muted);margin-top:4px;transform:rotate(1deg)">cherry blossom branch</span>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- Created Date Strip -->
+      <div style="margin-top:16px;text-align:right">
+        <span class="label-mono" style="font-size:9.5px;display:inline-block">Created · {{ createdDate }}</span>
+      </div>
+
+      <div style="height:1px;border-bottom:1px dashed var(--line-dashed);margin:16px 0 24px"></div>
+
+      <!-- Detail Form Cards Stack -->
+      <div class="card-container">
+        
+        <!-- Card 1: Title Input -->
+        <div class="detail-card" style="transform: rotate(-0.25deg);">
+          <span class="tape"></span>
+          <div class="field">
+            <label class="label-mono">TITLE (REQUIRED)</label>
+            <input type="text" value="{{ title }}" onInput="{{ updateTitle }}" placeholder="Task Title" class="input-text" required>
+          </div>
+        </div>
+
+        <!-- Card 2: Notes Area -->
+        <div class="detail-card" style="transform: rotate(0.2deg);">
+          <div class="field">
+            <label class="label-mono">NOTES</label>
+            <textarea onInput="{{ updateNotes }}" placeholder="Write context, links, thoughts..." class="textarea-notes">{{ notes }}</textarea>
+          </div>
+        </div>
+
+        <!-- Card 3: Due Schedule (Two-Up Row) -->
+        <div class="detail-card" style="transform: rotate(-0.3deg);">
+          <div class="field-row">
+            <div>
+              <label class="label-mono">DUE DATE</label>
+              <input type="date" value="{{ dueDate }}" onInput="{{ updateDueDate }}" class="input-date">
+              <span class="mono-helper">Parsed: {{ dueDate }}</span>
+            </div>
+            <div>
+              <label class="label-mono">DUE TIME</label>
+              <input type="time" value="{{ dueTime }}" onInput="{{ updateDueTime }}" class="input-time">
+              <span class="mono-helper">Parsed: {{ dueTime }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Priority & Project (Two-Up Row) -->
+        <div class="detail-card" style="transform: rotate(0.15deg); border-left: {{ isHighPriority ? '2px solid var(--acc-terra)' : '1px solid var(--line-card)' }}">
+          <div class="field-row">
+            <div>
+              <label class="label-mono">PRIORITY</label>
+              <select onChange="{{ updatePriority }}" class="input-select">
+                <option value="1" selected="{{ priority === '1' }}">1 · Critical</option>
+                <option value="2" selected="{{ priority === '2' }}">2 · High</option>
+                <option value="3" selected="{{ priority === '3' }}">3 · Medium</option>
+                <option value="4" selected="{{ priority === '4' }}">4 · Low (default)</option>
+              </select>
+              <span class="mono-helper" style="color: {{ isHighPriority ? 'var(--acc-terra)' : 'var(--ink-faint)' }}">
+                {{ isHighPriority ? '★ HIGH ATTENTION IN THE GARDEN' : 'Muted focus' }}
+              </span>
+            </div>
+            <div>
+              <label class="label-mono">PROJECT</label>
+              <select onChange="{{ updateProject }}" class="input-select">
+                <option value="Kai's Flow" selected="{{ project === 'Kai\'s Flow' }}">Kai's Flow</option>
+                <option value="Botanical Workspace" selected="{{ project === 'Botanical Workspace' }}">Botanical Workspace</option>
+                <option value="Personal Garden" selected="{{ project === 'Personal Garden' }}">Personal Garden</option>
+                <option value="(none)" selected="{{ project === '(none)' }}">(none)</option>
+              </select>
+              <span class="mono-helper">Active container</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Area & Content (Conditional/Optional) -->
+        <div class="detail-card" style="transform: rotate(-0.15deg);">
+          <div class="field-row">
+            <div>
+              <label class="label-mono">AREA</label>
+              <select onChange="{{ updateArea }}" class="input-select" disabled="{{ project !== '(none)' }}">
+                <option value="Work" selected="{{ area === 'Work' }}">Work</option>
+                <option value="Home" selected="{{ area === 'Home' }}">Home</option>
+                <option value="Health" selected="{{ area === 'Health' }}">Health</option>
+                <option value="(none)" selected="{{ area === '(none)' }}">(none)</option>
+              </select>
+              <sc-if value="{{ project !== '(none)' }}">
+                <span class="mono-helper" style="opacity: 0.7">Cleared by project setting</span>
+              </sc-if>
+              <sc-if value="{{ project === '(none)' }}">
+                <span class="mono-helper">Ongoing context container</span>
+              </sc-if>
+            </div>
+            <div>
+              <label class="label-mono">CONTENT ITEM (OPTIONAL)</label>
+              <select onChange="{{ updateContentItem }}" class="input-select">
+                <option value="(none)" selected="{{ contentItem === '(none)' }}">(none)</option>
+                <option value="Terrarium styling guide (article)" selected="{{ contentItem === 'Terrarium styling guide (article)' }}">Terrarium styling guide (article)</option>
+                <option value="Personal task-keeping workflows (video)" selected="{{ contentItem === 'Personal task-keeping workflows (video)' }}">Personal task-keeping workflows (video)</option>
+                <option value="Clover growth mechanics (note)" selected="{{ contentItem === 'Clover growth mechanics (note)' }}">Clover growth mechanics (note)</option>
+              </select>
+              <span class="mono-helper">From pipeline queue</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Reminder & Repeat -->
+        <div class="detail-card" style="transform: rotate(0.25deg);">
+          <div class="field-row">
+            <div>
+              <label class="label-mono">REMIND ME (PUSHOVER)</label>
+              <select onChange="{{ updateReminder }}" class="input-select" disabled="{{ !dueTime }}">
+                <option value="No reminder" selected="{{ reminder === 'No reminder' }}">No reminder</option>
+                <option value="At due time" selected="{{ reminder === 'At due time' }}">At due time</option>
+                <option value="5 min before" selected="{{ reminder === '5 min before' }}">5 min before</option>
+                <option value="15 min before" selected="{{ reminder === '15 min before' }}">15 min before</option>
+                <option value="30 min before" selected="{{ reminder === '30 min before' }}">30 min before</option>
+                <option value="1 hour before" selected="{{ reminder === '1 hour before' }}">1 hour before</option>
+              </select>
+              <span class="mono-helper">{{ dueTime ? 'Pushover alert set' : 'REQUIRES DUE TIME TO ENABLE' }}</span>
+            </div>
+            <div>
+              <label class="label-mono">REPEAT (RECURRING)</label>
+              <select onChange="{{ updateRepeat }}" class="input-select">
+                <option value="no repeat" selected="{{ repeat === 'no repeat' }}">Doesn't repeat</option>
+                <option value="daily" selected="{{ repeat === 'daily' }}">Daily</option>
+                <option value="weekly" selected="{{ repeat === 'weekly' }}">Weekly</option>
+                <option value="monthly" selected="{{ repeat === 'monthly' }}">Monthly</option>
+              </select>
+              <span class="mono-helper">Will roll forward on completion</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 var(--gap-lg);margin-top:10px;flex-wrap:wrap;gap:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button onClick="{{ saveTask }}" class="btn-terracotta btn-save-full">SAVE</button>
+            <a href="Tasks.dc.html" class="btn-secondary-ghost" style="text-decoration:none;border:1px solid var(--line-solid);border-radius:999px;padding:10px 22px;background:var(--paper-bone);color:var(--ink-body);font-size:13.5px;">Cancel</a>
+          </div>
+          <div>
+            <button onClick="{{ completeTask }}" class="btn-secondary-ghost" style="border: 1px dashed var(--line-solid); border-radius: 999px; padding: 10px 20px; background: transparent; font-size:13.5px; color: var(--acc-sage);">
+              {{ status === 'DONE' ? 'Re-open Task' : '✓ Complete Task' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Delete Zone Card -->
+        <div class="detail-card" style="border-color: var(--acc-blossom); background: color-mix(in srgb, var(--acc-blossom) 6%, transparent); transform: rotate(-0.2deg); margin-top:20px;">
+          <sc-if value="{{ !showDeleteConfirm }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-family:'Caveat',cursive;font-size:15px;color:var(--ink-hairline)">Warning: this action is permanent</span>
+              <button onClick="{{ showDelete }}" class="btn-secondary-ghost" style="color:var(--acc-terra);text-decoration:underline;font-size:13px;padding:0;">Delete task…</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showDeleteConfirm }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <span style="font-size:14px;color:var(--acc-terra);font-weight:600;">Delete task "{{ title }}"? This also removes its scheduled calendar block.</span>
+              <div style="display:flex;gap:12px;">
+                <button onClick="{{ confirmDelete }}" class="btn-terracotta" style="background:var(--acc-terra);padding:6px 16px;font-size:12.5px;">Yes, delete permanently</button>
+                <button onClick="{{ cancelDelete }}" class="btn-secondary-ghost" style="padding:6px 12px;font-size:12.5px;border:1px solid var(--line-solid);border-radius:6px;background:var(--paper-bone);">Cancel</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Toast message system -->
+<sc-if value="{{ toastMsg }}">
+  <div style="position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background: var(--paper-parchment); border: 1px solid var(--line-solid); border-radius: 3px; box-shadow: var(--shadow-popover); padding: 12px 28px; z-index: 1000; font-size: 14.5px; display: flex; align-items: center; gap: 10px; transform: rotate(-0.5deg)">
+    <span style="color: var(--acc-sage); font-size:16px;">✿</span>
+    <span style="font-weight:500;color:var(--ink-body);">{{ toastMsg }}</span>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}">
+class Component extends DCLogic {
+  state = {
+    title: "Refactor AppLayout navigation shell",
+    notes: "Update navigation links to include Projects, People, Library, and Domains. Ensure the bottom row layout is responsive and works well on mobile. Add standard keyboard shortcuts (cmd+K for Search, cmd+J for Chat).",
+    status: "OPEN",
+    source: "VIA VOICE",
+    createdDate: "Mon 06 Jul 2026",
+    dueDate: "2026-07-07",
+    dueTime: "16:00",
+    priority: "2",
+    project: "Kai's Flow",
+    area: "(none)",
+    contentItem: "(none)",
+    reminder: "15 min before",
+    repeat: "no repeat",
+    showDeleteConfirm: false,
+    animating: false,
+    toastMsg: "",
+    on: true,
+    inToday: true,
+    settingsOpen: false
+  };
+
+  renderVals() {
+    const { title, notes, status, source, createdDate, dueDate, dueTime, priority, project, area, contentItem, reminder, repeat, showDeleteConfirm, animating, toastMsg, on, inToday, settingsOpen } = this.state;
+
+    const cherryImg = status === "DONE" ? "assets/flowers/cherry/fallen.png" : "assets/flowers/cherry/bloom.png";
+
+    const isHighPriority = priority === "1" || priority === "2";
+    
+    // Toggle settings panel same as Today page
+    const track = (active, disabled) => ({
+      position: 'relative', width: 38, height: 22, borderRadius: 999, flex: 'none',
+      cursor: disabled ? 'default' : 'pointer',
+      background: active ? 'var(--acc-moss)' : 'var(--line-solid)',
+      opacity: disabled ? 0.4 : 1,
+      transition: 'background 0.2s'
+    });
+    const knob = (active) => ({
+      position: 'absolute', top: 2, left: active ? 18 : 2, width: 18, height: 18,
+      borderRadius: '50%', background: 'var(--paper-parchment)',
+      boxShadow: '0 1px 3px rgba(60,52,38,0.3)', transition: 'left 0.2s'
+    });
+
+    let hint;
+    if (!on) hint = 'the terrarium is resting — your streak is pressed safely between the pages.';
+    else if (inToday) hint = 'the garden greets you at the top of today.';
+    else hint = 'the garden lives in the routines panel — today stays compact.';
+
+    return {
+      title, notes, status, source, createdDate, dueDate, dueTime, priority, project, area, contentItem, reminder, repeat,
+      showDeleteConfirm, animating, toastMsg,
+      cherryImg,
+      isHighPriority,
+      settingsOpen,
+      settingsHint: hint,
+      trackOnStyle: track(on, false),
+      knobOnStyle: knob(on),
+      trackTodayStyle: track(on && inToday, !on),
+      knobTodayStyle: knob(on && inToday),
+      rowTodayStyle: {
+        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+        borderTop: '1px dashed var(--line-dashed)', borderBottom: '1px dashed var(--line-dashed)',
+        marginBottom: 10, opacity: on ? 1 : 0.45, transition: 'opacity 0.2s'
+      },
+      toggleSettings: (e) => { if (e) e.preventDefault(); this.setState(s => ({ settingsOpen: !s.settingsOpen })); },
+      closeSettings: () => this.setState({ settingsOpen: false }),
+      toggleOn: () => {
+        const v = !this.state.on;
+        try { localStorage.setItem('kf_terrarium_on', v ? '1' : '0'); } catch (e) {}
+        this.setState({ on: v });
+      },
+      toggleInToday: () => {
+        if (!this.state.on) return;
+        const v = !this.state.inToday;
+        try { localStorage.setItem('kf_terrarium_today', v ? '1' : '0'); } catch (e) {}
+        this.setState({ inToday: v });
+      },
+      updateTitle: (e) => {
+        this.setState({ title: e.target.value });
+      },
+      updateNotes: (e) => {
+        this.setState({ notes: e.target.value });
+      },
+      updateDueDate: (e) => {
+        this.setState({ dueDate: e.target.value });
+      },
+      updateDueTime: (e) => {
+        this.setState({ dueTime: e.target.value });
+      },
+      updatePriority: (e) => {
+        this.setState({ priority: e.target.value });
+      },
+      updateProject: (e) => {
+        const proj = e.target.value;
+        this.setState({ project: proj, area: proj !== "(none)" ? "(none)" : this.state.area });
+      },
+      updateArea: (e) => {
+        const ar = e.target.value;
+        this.setState({ area: ar, project: ar !== "(none)" ? "(none)" : this.state.project });
+      },
+      updateContentItem: (e) => {
+        this.setState({ contentItem: e.target.value });
+      },
+      updateReminder: (e) => {
+        this.setState({ reminder: e.target.value });
+      },
+      updateRepeat: (e) => {
+        this.setState({ repeat: e.target.value });
+      },
+      completeTask: () => {
+        if (status === "DONE") {
+          this.setState({ status: "OPEN", toastMsg: "Task marked as open." });
+          setTimeout(() => this.setState({ toastMsg: "" }), 1500);
+        } else {
+          this.setState({ animating: true });
+          setTimeout(() => {
+            this.setState({ status: "DONE", animating: false, toastMsg: "✿ A petal fell. Task completed! Redirecting..." });
+            setTimeout(() => {
+              window.location.href = "Tasks.dc.html";
+            }, 1800);
+          }, 900);
+        }
+      },
+      saveTask: () => {
+        this.setState({ toastMsg: "✿ Task saved successfully!" });
+        setTimeout(() => this.setState({ toastMsg: "" }), 1500);
+      },
+      showDelete: () => {
+        this.setState({ showDeleteConfirm: true });
+      },
+      cancelDelete: () => {
+        this.setState({ showDeleteConfirm: false });
+      },
+      confirmDelete: () => {
+        this.setState({ toastMsg: "Task deleted. Returning to Tasks list..." });
+        setTimeout(() => {
+          window.location.href = "Tasks.dc.html";
+        }, 1500);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
