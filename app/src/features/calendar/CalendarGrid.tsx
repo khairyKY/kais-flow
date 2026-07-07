@@ -21,7 +21,7 @@ export interface CalendarGridEvent {
 // grid can be restyled or swapped for a hand-rolled one in the design phase without changes here.
 interface CalendarGridProps {
   events: CalendarGridEvent[]
-  initialView?: 'timeGridWeek' | 'timeGridDay'
+  dayCount?: number
   onCreate: (start: string, end: string) => void
   onMove: (id: string, start: string, end: string) => void
   onResize: (id: string, start: string, end: string) => void
@@ -33,7 +33,7 @@ interface CalendarGridProps {
 
 export function CalendarGrid({
   events,
-  initialView = 'timeGridWeek',
+  dayCount = 7,
   onCreate,
   onMove,
   onResize,
@@ -42,11 +42,20 @@ export function CalendarGrid({
   onEventContextMenu,
   conflictedIds,
 }: CalendarGridProps) {
+  const customView = 'customDayCount'
   return (
     <FullCalendar
+      key={dayCount}
       plugins={[timeGridPlugin, interactionPlugin]}
-      initialView={initialView}
-      headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' }}
+      initialView={dayCount === 7 ? 'timeGridWeek' : customView}
+      views={{
+        [customView]: {
+          type: 'timeGrid',
+          duration: { days: dayCount },
+          buttonText: `${dayCount}d`,
+        },
+      }}
+      headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,' + (dayCount === 7 ? 'timeGridWeek' : customView) }}
       height="auto"
       dayHeaderContent={(arg) => (
         <div className="cal-day-header">

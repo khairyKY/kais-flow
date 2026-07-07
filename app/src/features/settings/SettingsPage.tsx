@@ -6,6 +6,7 @@ import {
   unsubscribeThisDevice,
   sendTestNotification,
 } from '../notifications/api'
+import { useAppSettings, updateAppSetting } from '../../lib/settings'
 
 function Card({ tapeSide, tapeTint, rotate, children }: { tapeSide: 'left' | 'right' | 'center'; tapeTint: string; rotate: number; children: ReactNode }) {
   return (
@@ -36,6 +37,42 @@ function Card({ tapeSide, tapeTint, rotate, children }: { tapeSide: 'left' | 'ri
       />
       {children}
     </div>
+  )
+}
+
+function CalendarSettings() {
+  const { data: settings } = useAppSettings()
+
+  if (!settings) return null
+
+  return (
+    <Card tapeSide="center" tapeTint="rgba(168,160,190,0.35)" rotate={0.15}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 'var(--fw-semibold)', color: 'var(--text-primary)', marginBottom: 12 }}>
+        Calendar
+      </div>
+      <div style={{ padding: '11px 0 2px', borderTop: '1px dashed var(--line-dashed)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13.5, color: 'var(--text-secondary)' }}>
+          <span>Days shown at once</span>
+          <select
+            value={settings.calendar_day_count}
+            onChange={(e) => updateAppSetting('calendar_day_count', Number(e.target.value))}
+            style={{
+              border: '1px solid var(--border-default)',
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              fontFamily: 'inherit',
+              fontSize: 12.5,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sharp)',
+            }}
+          >
+            {[1, 3, 5, 7, 14].map((n) => (
+              <option key={n} value={n}>{n} day{n === 1 ? '' : 's'}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </Card>
   )
 }
 
@@ -134,6 +171,7 @@ export function SettingsPage() {
       <div style={{ height: 1, borderBottom: '1px dashed var(--border-default)', margin: '26px 0 30px' }} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 640 }}>
+        <CalendarSettings />
         <PushSettings />
         <p style={{ margin: 0, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--text-tertiary)', transform: 'rotate(-0.6deg)' }}>
           more integrations and preferences land here in later phases…
