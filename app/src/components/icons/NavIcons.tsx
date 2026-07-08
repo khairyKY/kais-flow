@@ -214,6 +214,15 @@ export function ChatIcon({ size = 22 }: { size?: number }) {
   )
 }
 
+export function BellIcon() {
+  return (
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+      <path d="M12 4.5a6 6 0 0 0-6 6c0 3-.8 5.5-2 7h16c-1.2-1.5-2-4-2-7a6 6 0 0 0-6-6Z" stroke="#5C5140" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M9 17.5a3 3 0 0 0 6 0" stroke="#5C5140" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function MiniCloverIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 'auto', flex: 'none', opacity: 0.9 }}>

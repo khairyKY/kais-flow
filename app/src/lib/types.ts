@@ -23,6 +23,7 @@ export interface Task {
   id: string
   project_id: string | null
   domain_id: string | null
+  area_id: string | null
   title: string
   notes: string | null
   status: TaskStatus
@@ -34,6 +35,8 @@ export interface Task {
   recurrence_rule: string | null
   labels: string[]
   priority: number | null
+  reminder_at: string | null
+  reminder_sent: boolean
   completed_at: string | null
   created_at: string
   updated_at: string
@@ -110,6 +113,17 @@ export interface RoutineCompletion {
   created_at: string
 }
 
+export interface Area {
+  id: string
+  domain_id: string | null
+  name: string
+  description: string | null
+  color: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export interface PushSubscriptionRow {
   id: string
   endpoint: string
@@ -125,6 +139,7 @@ export interface AppSettings {
   digest_hour: number
   slipping_default_days: number
   calendar_day_count: number
+  notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
 }

@@ -29,9 +29,14 @@ export interface CreateTaskInput {
   domainId?: string | null
   projectId?: string | null
   dueAt?: string | null
+  reminderOffsetMin?: number | null
 }
 
 export function createTask(input: CreateTaskInput): Task {
+  const base = input.dueAt || input.reminderOffsetMin ? (input.dueAt ?? null) : null
+  const reminderAt = base && input.reminderOffsetMin
+    ? new Date(new Date(base).getTime() - input.reminderOffsetMin * 60 * 1000).toISOString()
+    : null
   const task: Task = {
     id: crypto.randomUUID(),
     project_id: input.projectId ?? null,
@@ -47,6 +52,9 @@ export function createTask(input: CreateTaskInput): Task {
     recurrence_rule: null,
     labels: [],
     priority: null,
+    area_id: null,
+    reminder_at: reminderAt,
+    reminder_sent: false,
     completed_at: null,
     created_at: nowIso(),
     updated_at: nowIso(),
@@ -130,4 +138,9 @@ export function rescheduleDue(task: Task, dueAt: string | null): void {
 export function setRecurrence(task: Task, rule: string | null): void {
   writeRow('tasks', { ...task, recurrence_rule: rule })
   logActivity('task.recurrence_set', 'task', task.id, { rule })
+}
+
+export function setReminder(task: Task, reminderAt: string | null): void {
+  writeRow('tasks', { ...task, reminder_at: reminderAt, reminder_sent: false })
+  logActivity('task.reminder_set', 'task', task.id, { reminder_at: reminderAt })
 }

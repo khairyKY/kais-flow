@@ -33,17 +33,19 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
     }
   }, [onClose])
 
-  const maxY = window.innerHeight - 20
+  const itemHeight = 34
+  const maxY = window.innerHeight - 12
   const left = Math.min(position.x, window.innerWidth - 220)
-  const top = Math.min(position.y, maxY - items.length * 36)
+  const top = Math.min(position.y, maxY - items.length * itemHeight)
 
   return (
     <div
       ref={ref}
+      role="menu"
       style={{
         position: 'fixed',
-        top,
-        left,
+        top: Math.max(12, top),
+        left: Math.max(8, left),
         zIndex: 1000,
         background: 'var(--bg-surface)',
         border: '1px solid var(--line-card)',
@@ -60,6 +62,7 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
             <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
           )}
           <button
+            role="menuitem"
             onClick={() => { item.onClick(); onClose() }}
             disabled={item.disabled}
             style={{
@@ -71,9 +74,10 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
               color: item.danger ? 'var(--sig-overdue)' : 'var(--text-primary)',
               background: 'none',
               border: 'none',
-              padding: '7px 16px',
+              padding: '6px 16px',
               cursor: item.disabled ? 'default' : 'pointer',
-              opacity: item.disabled ? 0.4 : 1,
+              opacity: item.disabled ? 0.35 : 1,
+              transition: 'background 0.12s',
             }}
             onMouseEnter={(e) => { if (!item.disabled) e.currentTarget.style.background = 'var(--bg-input)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}

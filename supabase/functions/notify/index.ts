@@ -14,7 +14,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type NotifyKind = 'morning_digest' | 'evening_nudge' | 'overdue' | 'test'
+type NotifyKind = 'morning_digest' | 'evening_nudge' | 'overdue' | 'task_reminder' | 'test'
 
 interface PushPayload {
   title: string
@@ -52,6 +52,31 @@ async function buildPayload(
     return missed.length === 0
       ? null // nothing missed — don't send a nudge
       : { title: 'Evening check-in', body: `Missed today: ${missed.map((r) => r.name as string).join(', ')}` }
+  }
+
+  if (kind === 'task_reminder') {
+    const now = new Date().toISOString()
+    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { data: due } = await supabase
+      .from('tasks')
+      .select('id, title')
+      .eq('status', 'todo')
+      .eq('reminder_sent', false)
+      .lte('reminder_at', now)
+      .gte('reminder_at', windowStart)
+    if (!due || due.length === 0) return null
+    for (const task of due) {
+      await supabase.from('tasks').update({ reminder_sent: true }).eq('id', task.id)
+      await supabase.from('activity_log').insert({
+        id: crypto.randomUUID(),
+        user_id: (await supabase.from('tasks').select('user_id').eq('id', task.id).single()).data?.user_id,
+        event_type: 'task.reminder_sent',
+        entity_type: 'task',
+        entity_id: task.id,
+        payload: { title: task.title },
+      })
+    }
+    return { title: 'Task reminder', body: `${due.length} reminder(s): ${due.map((t) => t.title as string).join(', ')}` }
   }
 
   // overdue

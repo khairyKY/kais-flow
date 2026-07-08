@@ -31,6 +31,7 @@ export const ParseResultSchema = z.object({
   due_at: z.string().nullable().optional(),
   duration_min: z.number().nullable().optional(),
   priority: z.number().nullable().optional(),
+  reminder_offset_min: z.number().int().min(0).nullable().optional(),
   confidence: z.number().min(0).max(1),
 })
 
@@ -58,8 +59,9 @@ Rules:
 - kind is one of: task, event, routine_idea, note, unknown.
 - domain_id/project_id: ONLY set these to an id from the lists above if you are genuinely confident it belongs there. Prefer null over guessing.
 - due_at: an ISO 8601 datetime in UTC if a date/time is mentioned, else null.
+- reminder_offset_min: if the user says something like "remind me 10 min before", output the number of minutes (e.g. 10). Prefer null over guessing — only set this if the user explicitly mentions a reminder time offset. Leave null if no reminder is mentioned.
 - confidence (0 to 1): your honest confidence that kind + domain_id/project_id are correct. If unsure of placement, LOWER your confidence — the user strongly prefers triaging an item in their inbox over finding something misfiled later. Do not inflate confidence to seem helpful.
-- Respond with ONLY a JSON object with exactly these keys: kind, cleaned_text, title, domain_id, project_id, due_at, duration_min, priority, confidence. Use null for unknown/inapplicable optional fields.`
+- Respond with ONLY a JSON object with exactly these keys: kind, cleaned_text, title, domain_id, project_id, due_at, duration_min, priority, reminder_offset_min, confidence. Use null for unknown/inapplicable optional fields.`
 }
 
 async function callGroq(rawText: string, systemPrompt: string): Promise<unknown> {
@@ -96,6 +98,7 @@ function fallbackResult(rawText: string) {
     due_at: null,
     duration_min: null,
     priority: null,
+    reminder_offset_min: null,
     confidence: 0,
   }
 }

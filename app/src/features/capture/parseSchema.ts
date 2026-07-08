@@ -10,6 +10,7 @@ export const ParseResultSchema = z.object({
   due_at: z.string().nullable().optional(),
   duration_min: z.number().nullable().optional(),
   priority: z.number().nullable().optional(),
+  reminder_offset_min: z.number().int().min(0).nullable().optional(),
   confidence: z.number().min(0).max(1),
 })
 

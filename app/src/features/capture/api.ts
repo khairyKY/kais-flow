@@ -99,6 +99,7 @@ export async function captureWithAI(
       domainId: parse.domain_id ?? null,
       projectId: parse.project_id ?? null,
       dueAt: parse.due_at ?? null,
+      reminderOffsetMin: parse.reminder_offset_min ?? null,
     })
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
     useToastStore.getState().push({
@@ -136,6 +137,7 @@ export async function processQueuedCaptures(): Promise<void> {
           domainId: parse.domain_id ?? null,
           projectId: parse.project_id ?? null,
           dueAt: parse.due_at ?? null,
+          reminderOffsetMin: parse.reminder_offset_min ?? null,
         })
         writeRow('inbox_items', {
           ...item,

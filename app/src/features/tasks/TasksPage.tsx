@@ -11,8 +11,10 @@ import {
   snoozeTask,
   deleteTask,
   setRecurrence,
+  setReminder,
 } from './api'
 import type { Domain, Task } from '../../lib/types'
+import { useAreas, createArea, renameArea } from '../areas/api'
 
 function addDays(days: number): string {
   const d = new Date()
@@ -144,6 +146,92 @@ function DomainsPanel() {
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+function AreasPanel({ domains }: { domains: Domain[] }) {
+  const { data: areas = [] } = useAreas()
+  const [name, setName] = useState('')
+  const [domainId, setDomainId] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--line-card)',
+        boxShadow: 'var(--shadow-card)',
+        borderRadius: 'var(--radius-sharp)',
+        padding: '14px 16px',
+        transform: 'rotate(-0.2deg)',
+      }}
+    >
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>
+        Areas
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        {areas.length === 0 && (
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No areas yet</span>
+        )}
+        {areas.map((a) => (
+          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {editingId === a.id ? (
+              <form
+                onSubmit={(e) => { e.preventDefault(); if (editName.trim()) renameArea(a, editName.trim()); setEditingId(null) }}
+                style={{ display: 'flex', gap: 4, flex: 1 }}
+              >
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  autoFocus
+                  style={{ flex: 1, border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '3px 6px', borderRadius: 'var(--radius-input)' }}
+                />
+                <button type="submit" style={{ border: 'none', background: 'none', color: 'var(--acc-sage)', fontSize: 11.5, cursor: 'pointer', padding: 0 }}>save</button>
+                <button type="button" onClick={() => setEditingId(null)} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: 11.5, cursor: 'pointer', padding: 0 }}>x</button>
+              </form>
+            ) : (
+              <>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: a.color || 'var(--ink-hairline)', flex: 'none' }} />
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--text-primary)', flex: 1 }}>{a.name}</span>
+                <span style={{ fontSize: 11, color: 'var(--ink-hairline)' }}>{domains.find((d) => d.id === a.domain_id)?.name ?? ''}</span>
+                <button
+                  onClick={() => { setEditingId(a.id); setEditName(a.name) }}
+                  style={{ border: 'none', background: 'none', color: 'var(--acc-terra)', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >
+                  rename
+                </button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (name.trim()) createArea(name.trim(), domainId || null)
+          setName('')
+        }}
+        style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+      >
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="New area"
+          style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 10px', borderRadius: 'var(--radius-input)', flex: 1, minWidth: 120 }}
+        />
+        <select value={domainId} onChange={(e) => setDomainId(e.target.value)} style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 10px', borderRadius: 'var(--radius-input)' }}>
+          <option value="">no domain</option>
+          {domains.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+        <button type="submit" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 14px', borderRadius: 999, cursor: 'pointer' }}>
+          Add
+        </button>
+      </form>
     </div>
   )
 }
@@ -295,6 +383,29 @@ function TaskRow({ task, highlighted }: { task: Task; highlighted?: boolean }) {
             <option value="FREQ=WEEKLY">weekly</option>
             <option value="FREQ=MONTHLY">monthly</option>
           </select>
+          {!done && (
+            <select
+              value={task.reminder_at || ''}
+              onChange={(e) => {
+                const val = e.target.value
+                if (!val) { setReminder(task, null); return }
+                const base = task.due_at || task.scheduled_start
+                if (!base) return
+                const offset = parseInt(val, 10)
+                const reminderAt = new Date(new Date(base).getTime() - offset * 60 * 1000).toISOString()
+                setReminder(task, reminderAt)
+              }}
+              title="Remind me"
+              style={{ fontFamily: 'inherit', fontSize: 11, background: task.reminder_at ? 'rgba(181,101,74,0.12)' : 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '3px 6px', color: 'var(--text-secondary)', maxWidth: 100 }}
+            >
+              <option value="">no reminder</option>
+              <option value="0" disabled={!task.due_at && !task.scheduled_start}>at due time</option>
+              <option value="5" disabled={!task.due_at && !task.scheduled_start}>5 min before</option>
+              <option value="15" disabled={!task.due_at && !task.scheduled_start}>15 min before</option>
+              <option value="30" disabled={!task.due_at && !task.scheduled_start}>30 min before</option>
+              <option value="60" disabled={!task.due_at && !task.scheduled_start}>1 hr before</option>
+            </select>
+          )}
           <button type="button" onClick={() => snoozeTask(task, addDays(1))} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
             snooze 1d
           </button>
@@ -373,6 +484,7 @@ export function TasksPage() {
 
       <div className="tasks-panels">
         <DomainsPanel />
+        <AreasPanel domains={domains} />
         <ProjectsPanel domains={domains} />
       </div>
 

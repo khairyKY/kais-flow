@@ -12,6 +12,7 @@ import { CalendarPage } from './features/calendar/CalendarPage'
 import { RoutinesPage } from './features/routines/RoutinesPage'
 import { WeeklyReviewPage } from './features/rituals/WeeklyReviewPage'
 import { SettingsPage } from './features/settings/SettingsPage'
+import { NotificationsPage } from './features/notifications/NotificationsPage'
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
       { path: 'tasks', element: <TasksPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'routines', element: <RoutinesPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],

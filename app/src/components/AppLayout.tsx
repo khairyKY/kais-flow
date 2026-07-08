@@ -9,6 +9,7 @@ import { usePendingInboxItems } from '../features/inbox/api'
 import { useTerrariumStore } from '../features/today/terrariumStore'
 import { ToastHost } from './ToastHost'
 import {
+  BellIcon,
   CalendarIcon,
   ChatIcon,
   InboxIcon,
@@ -26,6 +27,7 @@ const navItems = [
   { to: '/tasks', label: 'Tasks', Icon: TasksIcon },
   { to: '/calendar', label: 'Calendar', Icon: CalendarIcon },
   { to: '/routines', label: 'Routines', Icon: RoutinesIcon, badge: 'routinesGarden' as const },
+  { to: '/notifications', label: 'Activity', Icon: BellIcon },
   { to: '/weekly-review', label: 'Review', Icon: ReviewIcon },
 ]
 

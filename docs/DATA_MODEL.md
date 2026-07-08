@@ -19,9 +19,15 @@
 |---|---|
 | `domains` | `name text`, `color text`, `sort_order int` — must survive rename/merge/re-parent cheaply (Jerad's lesson) |
 | `projects` | `domain_id uuid FK`, `name`, `type text check in ('standard','retainer')`, `status text` |
-| `tasks` | `project_id uuid?`, `domain_id uuid?`, `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `completed_at timestamptz?` — indexes: `(status, due_at)`, `(domain_id)`, `(top3) where top3` |
+| `tasks` | `project_id uuid?`, `domain_id uuid?`, `area_id uuid?` (FK areas, P1–P4 retrofit), `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `reminder_at timestamptz?` (per-task reminder, P1–P4 retrofit), `reminder_sent bool default false`, `completed_at timestamptz?` — indexes: `(status, due_at)`, `(domain_id)`, `(area_id)`, `(top3) where top3`, `(reminder_sent, reminder_at)` for notify sweep |
 | `inbox_items` | `kind text check in ('text','voice','github_issue','email')`, `raw_text text`, `transcript text?`, `ai_parse jsonb?`, `confidence real?`, `status text check in ('pending','filed','dismissed')`, `filed_task_id uuid?`, `payload jsonb?` (source metadata, e.g. GitHub issue url/repo/node_id) |
 | `activity_log` | `event_type text` (e.g. `task.created`, `task.completed`, `routine.checked`, `journal.created`, `entity.reviewed`), `entity_type text`, `entity_id uuid`, `payload jsonb` — **append-only; the spine.** Slipping, streaks, digests, resurfacing only read this. Index `(entity_type, entity_id, created_at)` |
+
+### P1–P4 retrofit — areas, reminders, notification history
+| Table | Columns |
+|---|---|
+| `areas` | `name text`, `domain_id uuid? FK`, `sort_order int` — named life areas (e.g. Work, Health) that tag tasks independently of domain/project |
+| `notification_history` | `event_type text`, `entity_type text`, `entity_id uuid`, `payload jsonb`, `notified_at timestamptz default now()` — records push notifications sent, separate from `activity_log` (which is user-initiated) |
 
 ### P3 — calendar
 | Table | Columns |
@@ -37,7 +43,7 @@
 | `push_subscriptions` | `endpoint text`, `keys jsonb`, `device_label text` |
 | `app_settings` | single row: `timezone text default 'Africa/Cairo'`, `digest_hour int`, `confidence_threshold real default 0.75`, `slipping_default_days int default 7` |
 
-**View `slipping`** — last `activity_log` touch per domain/project vs threshold → rows that are going stale.
+**View `slipping`** — last `activity_log` touch per domain/project/area vs threshold → rows that are going stale. (`slipping_areas` migration 0013 added the `area_id` variant).
 
 ### P5 — search & chat
 - `tsvector` generated columns (`search_tsv`) + `embedding vector(384)` (gte-small) added to `tasks` (title+notes), `inbox_items` (raw_text) — GIN index on `search_tsv`, HNSW (`vector_cosine_ops`) on `embedding`. `search_tsv` is `generated always as (...) stored` — **never include it in a client upsert payload** (`lib/outbox.ts`'s `writeRow` strips it automatically; Postgres 400s if a write tries to set it).
@@ -64,7 +70,7 @@
 | `parse-capture` | P2 | text (+ domain/project context) → structured JSON parse + confidence (Groq, schema-constrained) |
 | `transcribe` | P2 | audio blob → text (Groq Whisper) |
 | `gcal-sync` | P3b | incremental Google Calendar pull/push (optional) |
-| `notify` | P4 | Web Push sender — digests, missed routines, overdue (called by pg_cron via pg_net) |
+| `notify` | P4 | Web Push sender — digests, missed routines, overdue, task_reminder (called by pg_cron via pg_net; task_reminder added in P1–P4 retrofit) |
 | `embed` | P5 | drain `embed_queue` → gte-small embeddings (Supabase.ai); `{backfill:true}` one-off mode |
 | `chat` | P5 | hybrid retrieval (FTS + pgvector RRF) → Groq streaming SSE, citations |
 | `search` | P5 | same hybrid retrieval as `chat`, no Groq round-trip — powers the Search UI |
