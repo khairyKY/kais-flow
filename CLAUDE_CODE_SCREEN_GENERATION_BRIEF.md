@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-07-12)** — replaced by the design-export integration. Do NOT build from this file (stale tokens/mockups). See `design-integration/PLAN.md` + `design-export/`. Kept for history only.
+
 # Botanical Workspace — Screen Generation Brief for Claude Code
 
 > **Project:** `D:\Coding\kais-flow` · Product name: **Kai's Flow**

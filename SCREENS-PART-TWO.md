@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-07-12)** — replaced by the design-export integration. Do NOT build from this file (stale tokens/mockups). See `design-integration/PLAN.md` + `design-export/`. Kept for history only.
+
 # Kai's Flow — Screen Specifications, Part Two
 
 > Continuation of `SCREENS.md`. Generated from the Jerad Hill reference screenshots (`Materials/Screenshots-inspo/`) cross-referenced against `BOTANICAL_WORKSPACE_DESIGN_SYSTEM.md`, `PLAN_ADDENDUM.md`, `ROADMAP-V2.md`, and `DATA_MODEL.md`. Covers screens not in Part One: detail pages, CRUD forms, the expanded Library system, Projects/Areas, People CRM, Domains, the Eisenhower Matrix, and the Focus Timer.

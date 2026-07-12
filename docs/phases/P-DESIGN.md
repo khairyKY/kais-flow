@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-07-12)** — replaced by the design-export integration. Do NOT build from this file (stale tokens/mockups). See `design-integration/PLAN.md` + `design-export/`. Kept for history only.
+
 # P-DESIGN — Botanical skin execution plan
 
 > **Status: not started.** Runs alongside the feature roadmap — it re-skins screens that already exist and defines the skin for screens that don't yet. It never adds/changes behavior, schema, or routes.

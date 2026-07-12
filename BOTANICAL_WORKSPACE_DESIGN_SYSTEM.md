@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-07-12)** — replaced by the design-export integration. Do NOT build from this file (stale tokens/mockups). See `design-integration/PLAN.md` + `design-export/`. Kept for history only.
+
 # Botanical Workspace — Design System Brief
 
 > Handoff document for Claude Design. This defines the visual identity for an all-in-one productivity workspace app.

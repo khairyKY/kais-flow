@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-07-12)** — replaced by the design-export integration. Do NOT build from this file (stale tokens/mockups). See `design-integration/PLAN.md` + `design-export/`. Kept for history only.
+
 # Kai's Flow — Design System
 
 > **The single entry point for building any new screen, component, or concept.** The mockups in `design/` cover 19 screens; everything built after them (smart lists, snooze menus, planning boards, whatever Kai dreams up next) is built **from this system directly** — no mockup needed, no mockup made.
