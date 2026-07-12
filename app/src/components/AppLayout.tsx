@@ -1,33 +1,52 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
+import { useTheme } from '../lib/theme'
 import { CommandBar } from '../features/command-bar/CommandBar'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { ChatPanel } from '../features/chat/ChatPanel'
 import { SearchOverlay } from '../features/search/SearchOverlay'
 import { usePendingInboxItems } from '../features/inbox/api'
-import { useTerrariumStore } from '../features/today/terrariumStore'
 import { useTasks } from '../features/tasks/api'
 import { filterByList, type SmartList } from '../features/tasks/grouping'
+import { useRoutines, useRoutineCompletions } from '../features/routines/api'
+import { computeStreak } from '../features/routines/streaks'
 import { ToastHost } from './ToastHost'
 import { ShortcutOverlay } from './ShortcutOverlay'
-import {
-  BellIcon,
-  CalendarIcon,
-  ChatIcon,
-  FernCoilIcon,
-  InboxIcon,
-  MiniCloverIcon,
-  PlanningBoardIcon,
-  ReviewIcon,
-  RoutinesIcon,
-  SearchGlyphIcon,
-  SettingsIcon,
-  SproutIcon,
-  TasksIcon,
-  TodayIcon,
-} from './icons/NavIcons'
+
+// ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
+// 1g (Plan folded / rail collapsed). Sidebar groups Plan (drawer) · Tend ·
+// Cultivate; later surfaces (Projects, People, Activity) placed per the newer
+// files' sidebars (Projects/People/Activity.dc.html). Colored dot per surface
+// accent when inactive; the species PNG the design shows when active. ──
+
+const A = '/ds/assets'
+
+type NavItem = {
+  to: string
+  label: string
+  dot: string // accent CSS var for the resting dot
+  img?: string // always-shown species PNG (design shows Journal's fern this way)
+  activeImg?: string // species PNG shown only when the row is active
+  badge?: 'inbox'
+}
+
+const TEND: NavItem[] = [
+  { to: '/today', label: 'Today', dot: '--acc-sage', activeImg: `${A}/clover/awake.png` },
+  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox' },
+  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeImg: `${A}/cherry/bloom.png` },
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender' },
+  { to: '/projects', label: 'Projects', dot: '--acc-moss' },
+]
+
+const CULTIVATE: NavItem[] = [
+  { to: '/routines', label: 'Routines', dot: '--acc-moss' },
+  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream' },
+  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png` },
+  { to: '/people', label: 'People', dot: '--acc-clover' },
+  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
+]
 
 const smartLists: { list: SmartList; label: string }[] = [
   { list: 'today', label: 'Due Today' },
@@ -36,20 +55,20 @@ const smartLists: { list: SmartList; label: string }[] = [
   { list: 'upcoming', label: 'Upcoming' },
 ]
 
-function SmartListNav() {
+// The Plan drawer — Editor 1a. Foldable; count keeps whispering when folded (1g).
+function PlanDrawer() {
   const { data: tasks = [] } = useTasks()
   const [params] = useSearchParams()
   const { pathname } = useLocation()
   const activeList = pathname === '/tasks' ? params.get('list') : null
   const [open, setOpen] = useState(() => localStorage.getItem('kf.planOpen') !== '0')
-
   useEffect(() => {
     localStorage.setItem('kf.planOpen', open ? '1' : '0')
   }, [open])
 
   const todayCount = filterByList(tasks, 'today').length
 
-  const navRow = (to: string, label: string, active: boolean, icon?: React.ReactNode, count?: number) => (
+  const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode) => (
     <Link
       key={to}
       to={to}
@@ -57,267 +76,246 @@ function SmartListNav() {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        padding: '6px 10px',
-        borderRadius: 'var(--radius-input)',
+        gap: 11,
+        padding: '6px 11px',
+        borderRadius: 6,
         textDecoration: 'none',
-        background: active ? 'var(--bg-surface)' : 'none',
+        background: active ? 'var(--paper-parchment)' : 'none',
         border: active ? '1px solid var(--line-card)' : '1px solid transparent',
-        boxShadow: active ? 'var(--shadow-card)' : 'none',
       }}
     >
-      {icon ?? <span style={{ width: 23, flex: 'none' }} />}
-      <span className="app-nav-label" style={{ fontSize: 'var(--fs-body-s)', fontWeight: active ? 'var(--fw-semibold)' : 'var(--fw-regular)', color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-        {label}
-      </span>
-      {!!count && count > 0 && (
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', letterSpacing: 'var(--ls-mono)', color: 'var(--text-tertiary)' }}>
-          {count}
-        </span>
+      <span style={{ width: 16, flex: 'none', display: 'flex', justifyContent: 'center' }}>{icon}</span>
+      <span style={{ fontSize: 13, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{label}</span>
+      {count != null && (
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{count}</span>
       )}
     </Link>
   )
 
-  const row = (list: SmartList, label: string, icon?: React.ReactNode) =>
-    navRow(`/tasks?list=${list}`, label, activeList === list, icon, filterByList(tasks, list).length)
-
   return (
-    <div className="app-smartlist" style={{ padding: '0 16px 14px', margin: '0 0 6px', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div
+      className="app-smartlist"
+      style={{ padding: '0 14px 12px', margin: '0 0 10px', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 1 }}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="app-nav-label kf-side-row"
+        aria-expanded={open}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 9,
           width: '100%',
-          padding: '6px 10px',
-          marginBottom: 4,
-          borderRadius: 'var(--radius-input)',
-          background: 'var(--bg-app)',
+          padding: '7px 11px',
+          marginBottom: 3,
+          borderRadius: 6,
+          background: 'var(--paper-linen)',
           border: '1px solid var(--line-sidebar)',
           cursor: 'pointer',
           font: 'inherit',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 'var(--fs-mono-s)',
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          color: 'var(--text-secondary)',
         }}
-        aria-expanded={open}
       >
-        <SproutIcon />
-        <span>Plan</span>
+        <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: 15, width: 'auto' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Plan</span>
         <span
           aria-hidden="true"
           className="kf-plan-chevron"
-          style={{ display: 'inline-block', fontSize: 12, transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+          style={{ fontSize: 10, color: 'var(--ink-faint)', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform var(--dur-quick) var(--ease-spring)' }}
         >
-          &gt;
+          ›
         </span>
         {!open && todayCount > 0 && (
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', letterSpacing: 'var(--ls-mono)', color: 'var(--text-tertiary)' }}>
-            {todayCount}
-          </span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
       {open && (
         <>
-          {smartLists.map(({ list, label }) => row(list, label))}
-          <div style={{ height: 1, margin: '4px 10px', borderTop: '1px dashed var(--border-dashed)' }} />
-          {row('someday', 'Someday', <FernCoilIcon />)}
-          {navRow('/planning', 'Planning board', pathname === '/planning', <PlanningBoardIcon />)}
+          {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length))}
+          <div style={{ height: 1, borderTop: '1px dashed var(--line-sidebar)', margin: '4px 11px' }} />
+          {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
+            <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
+          ))}
+          {row('/planning', 'Planning board', pathname === '/planning', undefined, (
+            <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>▦</span>
+          ))}
         </>
       )}
     </div>
   )
 }
 
-const navItems = [
-  { to: '/today', label: 'Today', Icon: TodayIcon },
-  { to: '/inbox', label: 'Inbox', Icon: InboxIcon, badge: 'inbox' as const },
-  { to: '/tasks', label: 'Tasks', Icon: TasksIcon },
-  { to: '/calendar', label: 'Calendar', Icon: CalendarIcon },
-  { to: '/routines', label: 'Routines', Icon: RoutinesIcon, badge: 'routinesGarden' as const },
-  { to: '/notifications', label: 'Activity', Icon: BellIcon },
-  { to: '/weekly-review', label: 'Review', Icon: ReviewIcon },
-  { to: '/settings', label: 'Settings', Icon: SettingsIcon },
-]
+function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number }) {
+  const icon = (active: boolean) => {
+    if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: 0.85 }} />
+    if (active && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16 }} />
+    return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
+  }
+  return (
+    <NavLink
+      to={item.to}
+      className={({ isActive }) => `kf-side-row${isActive ? ' kf-active' : ''}`}
+      style={({ isActive }) => ({
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 11,
+        padding: '8px 12px',
+        borderRadius: 6,
+        textDecoration: 'none',
+        background: isActive ? 'var(--paper-parchment)' : 'none',
+        border: isActive ? '1px solid var(--line-card)' : '1px solid transparent',
+        boxShadow: isActive ? 'var(--shadow-crisp)' : 'none',
+        transform: isActive ? 'rotate(-0.5deg)' : 'none',
+      })}
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: -6,
+                left: 16,
+                width: 30,
+                height: 9,
+                background: 'rgba(138,154,126,0.5)',
+                backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+                transform: 'rotate(-3deg)',
+                borderRadius: 1,
+              }}
+            />
+          )}
+          <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none' }}>{icon(isActive)}</span>
+          <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
+            {item.label}
+          </span>
+          {item.badge === 'inbox' && pendingInbox > 0 && (
+            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+          )}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-nav-label" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '12px 12px 5px' }}>
+      {children}
+    </div>
+  )
+}
+
+// Overall streak across active routines — Editor 1a footer widget, real data.
+// Vine stage by streak length: bare / sprouting / flowering / lush (growth system).
+function StreakWidget() {
+  const { data: routines = [] } = useRoutines()
+  const { data: completions = [] } = useRoutineCompletions()
+
+  const { current, best } = useMemo(() => {
+    const byRoutine = new Map<string, string[]>()
+    for (const c of completions) {
+      const arr = byRoutine.get(c.routine_id) ?? []
+      arr.push(c.completed_on)
+      byRoutine.set(c.routine_id, arr)
+    }
+    let current = 0
+    let best = 0
+    for (const r of routines) {
+      if (!r.active) continue
+      const s = computeStreak(byRoutine.get(r.id) ?? [], r.cadence)
+      current = Math.max(current, s.current)
+      best = Math.max(best, s.best)
+    }
+    return { current, best }
+  }, [routines, completions])
+
+  const stage = current >= 30 ? 'lush' : current >= 7 ? 'flowering' : current >= 1 ? 'sprouting' : 'bare'
+
+  return (
+    <div
+      className="app-vine"
+      style={{ margin: '0 22px 12px', padding: '12px 0', borderTop: '1px dashed var(--line-sidebar)', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', alignItems: 'center', gap: 10 }}
+    >
+      <img src={`${A}/vine/${stage}.png`} alt="" style={{ height: 40, width: 'auto', filter: 'var(--shadow-drop-sm)' }} />
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Streak</div>
+        <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 1 }}>
+          {current} {current === 1 ? 'day' : 'days'} · best {best}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Footer utility icons — inline verbatim from Editor 1a.
+const PlusGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+)
+const SearchGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="11" cy="11" r="6.4" /><path d="M19.5 19.5 16 16" /></svg>
+)
+const ChatGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z" /></svg>
+)
+const GearGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.1" /><path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2" /></svg>
+)
+const SignOutGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9" /></svg>
+)
+
+function footerRow(icon: React.ReactNode, label: string, shortcut: string | undefined, onClick: () => void, faint = false) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="kf-side-row"
+      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 6, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
+    >
+      <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
+      <span className="app-footer-label" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>
+      {shortcut && <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>{shortcut}</span>}
+    </button>
+  )
+}
 
 function useOnline(): boolean {
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   useEffect(() => {
-    const goOnline = () => setOnline(true)
-    const goOffline = () => setOnline(false)
-    window.addEventListener('online', goOnline)
-    window.addEventListener('offline', goOffline)
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
     return () => {
-      window.removeEventListener('online', goOnline)
-      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
     }
   }, [])
   return online
 }
 
+// Topbar sync strip — States.dc.html 2a. Synced ● (sage) / Offline ◌.
+// ponytail: live "Syncing ↻ N" / "N saved here" needs a reactive outbox pending
+// count the queue doesn't yet expose; wired in the States pass (X5).
 function TopBar() {
   const online = useOnline()
-  const today = new Date()
-  const dateLabel = today.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
-
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
   return (
     <div
       className="app-topbar"
-      style={{
-        minHeight: 44,
-        flex: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        padding: '0 34px',
-        borderBottom: '1px dashed var(--border-default)',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 'var(--fs-mono)',
-        letterSpacing: 'var(--ls-mono)',
-        textTransform: 'uppercase',
-        color: 'var(--text-tertiary)',
-      }}
+      style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        <span>Kai's Flow</span>
-        <span>·</span>
-        <span>{dateLabel}</span>
-        <span>·</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          {online ? 'Synced' : 'Offline'}
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: online ? 'var(--acc-sage)' : 'var(--text-tertiary)',
-              display: 'inline-block',
-              flex: 'none',
-            }}
-          />
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        <span>Kai's Flow · {dateLabel} · {online ? 'Synced' : 'Offline'}</span>
+        {online ? (
+          <span style={{ color: 'var(--acc-sage)' }}>●</span>
+        ) : (
+          <span style={{ color: 'var(--ink-faint)' }}>◌</span>
+        )}
       </div>
       <div style={{ flex: 'none' }}>Africa/Cairo</div>
-    </div>
-  )
-}
-
-function SettingsPopover({ onClose }: { onClose: () => void }) {
-  const { on, inToday, toggleOn, toggleInToday } = useTerrariumStore()
-
-  const track = (active: boolean, disabled: boolean): CSSProperties => ({
-    position: 'relative',
-    width: 38,
-    height: 22,
-    borderRadius: 'var(--radius-pill)',
-    flex: 'none',
-    cursor: disabled ? 'default' : 'pointer',
-    background: active ? 'var(--acc-sage)' : 'var(--border-default)',
-    opacity: disabled ? 0.4 : 1,
-    transition: 'background 0.2s',
-  })
-  const knob = (active: boolean): CSSProperties => ({
-    position: 'absolute',
-    top: 2,
-    left: active ? 18 : 2,
-    width: 18,
-    height: 18,
-    borderRadius: '50%',
-    background: 'var(--bg-surface)',
-    boxShadow: '0 1px 3px rgba(60,52,38,0.3)',
-    transition: 'left 0.2s',
-  })
-
-  let hint: string
-  if (!on) hint = 'the terrarium is resting — your streak is pressed safely between the pages.'
-  else if (inToday) hint = 'the garden greets you at the top of today.'
-  else hint = 'the garden lives in the routines panel — today stays compact.'
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 226,
-        top: 310,
-        width: 300,
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--line-card)',
-        borderRadius: 'var(--radius-sharp)',
-        boxShadow: 'var(--shadow-popover)',
-        padding: '18px 18px 16px',
-        zIndex: 60,
-        transform: 'rotate(0.4deg)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-mono-s)',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--text-tertiary)',
-          }}
-        >
-          Settings · Garden
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: 14, cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}
-        >
-          ✕
-        </button>
-      </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 'var(--fw-semibold)', color: 'var(--text-primary)', margin: '6px 0 14px' }}>
-        The Terrarium
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px dashed var(--border-dashed)' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--text-primary)' }}>Enable The Terrarium</div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2, lineHeight: 1.35 }}>
-            Grow a living garden from your activity.
-          </div>
-        </div>
-        <div onClick={toggleOn} style={track(on, false)}>
-          <div style={knob(on)} />
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '10px 0',
-          borderTop: '1px dashed var(--border-dashed)',
-          borderBottom: '1px dashed var(--border-dashed)',
-          marginBottom: 10,
-          opacity: on ? 1 : 0.45,
-          transition: 'opacity 0.2s',
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--text-primary)' }}>Show in Today view</div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2, lineHeight: 1.35 }}>
-            Off — the garden lives in Routines instead.
-          </div>
-        </div>
-        <div onClick={toggleInToday} style={track(on && inToday, !on)}>
-          <div style={knob(on && inToday)} />
-        </div>
-      </div>
-
-      <div style={{ borderTop: '1px dashed var(--border-dashed)', paddingTop: 10, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--text-secondary)', lineHeight: 'var(--lh-snug)' }}>
-        {hint}
-      </div>
     </div>
   )
 }
@@ -331,16 +329,16 @@ export function AppLayout() {
   useRealtimeSync()
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('kf.sidebarCollapsed') === '1')
-
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
+
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const { data: pendingInbox = [] } = usePendingInboxItems()
-  const { on: terrariumOn, inToday: terrariumInToday } = useTerrariumStore()
+  const theme = useTheme((s) => s.theme)
+  const toggleTheme = useTheme((s) => s.toggle)
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -366,15 +364,13 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onKeydown)
   }, [setCommandBarOpen])
 
-  const showInRoutinesNav = terrariumOn && !terrariumInToday
-
   return (
-    <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-app)', position: 'relative' }}>
+    <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         @media (max-width: 767px) {
           .app-sidebar { width: 64px !important; padding-top: 14px !important; }
           .app-sidebar-header, .app-nav-label, .app-footer-label, .app-vine, .app-smartlist { display: none !important; }
-          .app-topbar { padding: 0 14px !important; }
+          .app-topbar { padding: 0 16px !important; }
           .app-main-content { padding: 20px 16px 40px !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
@@ -389,200 +385,70 @@ export function AppLayout() {
                       background-color var(--dur-normal) var(--ease-natural),
                       color var(--dur-normal) var(--ease-natural);
         }
-        .kf-side-row:hover { background: var(--bg-input) !important; transform: translateX(3px); }
+        .kf-side-row:hover { background: var(--paper-bone) !important; transform: translateX(3px); }
         .kf-side-row:active { transform: translateX(1px); }
-        .kf-side-row.kf-active:hover { background: var(--bg-surface) !important; }
-        .kf-side-row:hover svg { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
-
-        .kf-plan-chevron { transition: transform var(--dur-quick) var(--ease-spring); }
+        .kf-side-row.kf-active:hover { background: var(--paper-parchment) !important; }
+        .kf-side-row:hover .kf-nav-icon { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
 
         .kf-collapse-btn {
           transition: transform var(--dur-quick) var(--ease-spring),
-                      color var(--dur-normal) var(--ease-natural),
-                      box-shadow var(--dur-normal) var(--ease-natural);
+                      color var(--dur-normal) var(--ease-natural);
         }
-        .kf-collapse-btn:hover { transform: scale(1.15); color: var(--text-secondary); }
+        .kf-collapse-btn:hover { transform: scale(1.15); color: var(--ink-muted); }
         .kf-collapse-btn:active { transform: scale(0.97); }
       `}</style>
+
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
-        style={{
-          width: 238,
-          flex: 'none',
-          background: 'var(--bg-sidebar)',
-          borderRight: '1px dashed var(--line-sidebar)',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '26px 0 20px',
-          position: 'relative',
-          zIndex: 5,
-        }}
+        style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', padding: '24px 0 18px', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="kf-collapse-btn"
-          style={{
-            position: 'absolute',
-            top: 18,
-            right: -12,
-            width: 24,
-            height: 24,
-            borderRadius: '50%',
-            border: '1px solid var(--line-card)',
-            background: 'var(--bg-surface)',
-            boxShadow: 'var(--shadow-card)',
-            color: 'var(--text-tertiary)',
-            fontSize: 12,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 6,
-          }}
+          style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 45 }}
         >
           {collapsed ? '›' : '‹'}
         </button>
-        <div className="app-sidebar-header" style={{ padding: '0 24px 24px' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>
-            Kai's Flow
-          </div>
-          <div style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-            Personal · Cairo
-          </div>
-          <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--text-secondary)', transform: 'rotate(-1.2deg)' }}>
-            a field journal of days ✿
-          </div>
+
+        <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>
+          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Personal · Cairo</div>
+          <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
-        <SmartListNav />
+        <PlanDrawer />
 
-        <nav style={{ position: 'relative', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <span
-            aria-hidden="true"
-            className="app-vine"
-            style={{ position: 'absolute', left: 37, top: 20, bottom: 20, width: 0, borderLeft: '1px dashed var(--line-sidebar)', opacity: 0.55 }}
-          />
-          {navItems.map(({ to, label, Icon, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) => `kf-side-row${isActive ? ' kf-active' : ''}`}
-              style={({ isActive }) =>
-                isActive
-                  ? {
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-input)',
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--line-card)',
-                      boxShadow: 'var(--shadow-card)',
-                      textDecoration: 'none',
-                      position: 'relative',
-                      transform: 'rotate(-0.5deg)',
-                    }
-                  : { display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 'var(--radius-input)', textDecoration: 'none', position: 'relative' }
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: -6,
-                        right: 14,
-                        width: 34,
-                        height: 11,
-                        background: 'rgba(181,101,74,0.32)',
-                        backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 6px)',
-                        transform: 'rotate(3deg)',
-                        borderRadius: 1,
-                      }}
-                    />
-                  )}
-                  <Icon />
-                  <span className="app-nav-label" style={{ fontSize: 'var(--fs-body)', fontWeight: isActive ? 'var(--fw-semibold)' : 'var(--fw-regular)', color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                    {label}
-                  </span>
-                  {badge === 'inbox' && pendingInbox.length > 0 && (
-                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--acc-terra)' }}>
-                      {pendingInbox.length}
-                    </span>
-                  )}
-                  {badge === 'routinesGarden' && showInRoutinesNav && (
-                    <span style={{ marginLeft: 'auto', display: 'flex' }}>
-                      <MiniCloverIcon />
-                    </span>
-                  )}
-                </>
-              )}
-            </NavLink>
+        <nav style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <GroupLabel>Tend</GroupLabel>
+          {TEND.map((item) => (
+            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} />
           ))}
-
-          <button
-            type="button"
-            onClick={() => setSettingsOpen((v) => !v)}
-            className="kf-side-row"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 12,
-              padding: '8px 10px',
-              borderRadius: 'var(--radius-input)',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              background: 'none',
-              border: 'none',
-              textAlign: 'left',
-              font: 'inherit',
-            }}
-          >
-            <MiniCloverIcon />
-            <span className="app-nav-label" style={{ fontSize: 'var(--fs-body)', color: 'var(--text-secondary)' }}>Garden</span>
-          </button>
+          <GroupLabel>Cultivate</GroupLabel>
+          {CULTIVATE.map((item) => (
+            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} />
+          ))}
         </nav>
-
-        {settingsOpen && <SettingsPopover onClose={() => setSettingsOpen(false)} />}
 
         <div style={{ flex: 1 }} />
 
-        <div style={{ padding: '14px 14px 0', margin: '0 14px', borderTop: '1px dashed var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
+        <StreakWidget />
+
+        <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {footerRow(PlusGlyph, 'Capture', '⌘K', () => setCommandBarOpen(true))}
+          {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
+          {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
+          <NavLink
+            to="/settings"
             className="kf-side-row"
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
           >
-            <span style={{ width: 22, display: 'flex', justifyContent: 'center' }}>
-              <SearchGlyphIcon />
-            </span>
-            <span className="app-footer-label" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Search</span>
-            <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>⌘/</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setChatOpen(true)}
-            className="kf-side-row"
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
-          >
-            <ChatIcon />
-            <span className="app-footer-label" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Chat</span>
-            <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>⌘J</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => void supabase.auth.signOut()}
-            className="kf-side-row"
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 10px', borderRadius: 'var(--radius-input)', marginTop: 2, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
-          >
-            <span style={{ width: 22 }} />
-            <span className="app-footer-label" style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Sign out</span>
-          </button>
+            <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
+            <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
+          </NavLink>
+          {footerRow(theme === 'night' ? SunGlyph : MoonGlyph, theme === 'night' ? 'Day' : 'Night', undefined, toggleTheme, true)}
+          {footerRow(SignOutGlyph, 'Sign out', undefined, () => void supabase.auth.signOut(), true)}
         </div>
       </aside>
 
@@ -601,3 +467,12 @@ export function AppLayout() {
     </div>
   )
 }
+
+// Day/Night toggle glyphs (footer). ponytail: interim home; W7 Settings appearance
+// gets the canonical control per the export — both bind the same useTheme store.
+const MoonGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.2 6.2 0 0 0 10.5 10.5Z" /></svg>
+)
+const SunGlyph = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></svg>
+)
