@@ -4,7 +4,7 @@
 :root {
   --font-display:  'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   --font-ui:       'Inter Tight', system-ui, -apple-system, sans-serif;
-  --font-mono:     'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-mono:     'Courier Prime', ui-monospace, 'Courier New', monospace;
   --font-hand:     'Caveat', 'Segoe Script', cursive;
 
   /* Sizes */

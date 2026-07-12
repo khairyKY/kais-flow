@@ -44,6 +44,13 @@
   --sig-streak:         #B5654A;   /* streak flame */
   --sig-done:           #2a2420;   /* filled check chip */
 
+  /* Task checkboxes */
+  --check-border:       #b3ac95;
+  --check-bg:           var(--paper-bone);
+  --check-fill:         var(--acc-sage);   /* checked square */
+  --check-mark:         #FBF6E9;           /* the ✓ glyph */
+  --check-glow:         none;              /* night mode adds a moonlit glow */
+
   /* Semantic aliases (what components should reach for) */
   --bg-app:             var(--paper-linen);
   --bg-surface:         var(--paper-parchment);
