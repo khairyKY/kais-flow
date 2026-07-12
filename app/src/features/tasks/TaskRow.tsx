@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import './TaskRow.css'
 import {
   completeTask,
@@ -19,16 +19,18 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag } from './taskDisplay'
 import { shortcutHint } from './listShortcuts'
+import { scheduleToday } from '../../lib/dateShortcuts'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { Checkbox } from '../../components/kit'
+import { useMotionEnabled } from '../../lib/motion'
 import {
   BellMenuIcon,
   CheckMenuIcon,
   ClockMenuIcon,
   DurationMenuIcon,
-  FlagMenuIcon,
   FolderMenuIcon,
   RepeatMenuIcon,
   ScheduleMenuIcon,
@@ -37,24 +39,33 @@ import {
 } from '../../components/icons/MenuIcons'
 import type { Task } from '../../lib/types'
 
-function chip(label: string, color: string, extra?: React.CSSProperties) {
+// ── Shared task row — pixel contract: Tasks.dc.html 1a/1b (open), 2a/2c (done),
+// 2b (someday). W1 Today and W3 Planning import this; keep the prop surface additive. ──
+
+const A = '/ds/assets'
+const SWIPE_RIGHT = 156 // Resched · Project · Snooze, 52px each
+const SWIPE_LEFT = 88 // Delete
+
+function PriorityFlag({ color }: { color: string }) {
   return (
-    <span
-      style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 10,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color,
-        border: '1px solid var(--border-default)',
-        borderRadius: 'var(--radius-pill)',
-        padding: '2px 8px',
-        ...extra,
-      }}
-    >
-      {label}
-    </span>
+    <svg width="9" height="11" viewBox="0 0 12 14" fill="none" style={{ flex: 'none' }}>
+      <path d="M2.4 1v12.4" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M2.4 1.7h7.2L7.9 4l1.7 2.3H2.4z" fill={color} />
+    </svg>
   )
+}
+
+const metaStyle: React.CSSProperties = {
+  marginTop: 6,
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-faint)',
+  display: 'flex',
+  gap: 14,
+  alignItems: 'center',
+  flexWrap: 'wrap',
 }
 
 export interface BulkActions {
@@ -67,14 +78,7 @@ export interface BulkActions {
   onDelete: () => void
 }
 
-export function TaskRow({
-  task,
-  highlighted,
-  selected,
-  onToggleSelect,
-  bulk,
-  hideCheckbox,
-}: {
+export interface TaskRowProps {
   task: Task
   highlighted?: boolean
   selected?: boolean
@@ -84,16 +88,75 @@ export function TaskRow({
   /** Selection still works (right-click/⋯ selects the row, bulk actions in the menu) — this only
    * hides the visible checkbox, for surfaces (the Planning board) that select without one. */
   hideCheckbox?: boolean
-}) {
+  /** Dashed bottom hairline — off for the last row in a group. Default true. */
+  border?: boolean
+  /** Today's "goal of the day" task id — shows the ✶ Goal chip + a solid star. */
+  goalTaskId?: string | null
+  /** Most recently completed task id this session — shows "just now ✿" + a loose petal instead of a time. */
+  justCompletedId?: string | null
+  /** Defaults to `completeTask`. TasksPage supplies one that also tracks the grace window
+   * a just-checked row needs to stay visible in its group so the check/petal animation can play. */
+  onComplete?: (task: Task) => void
+}
+
+function useRowSwipe() {
+  const [x, setX] = useState(0)
+  const dragging = useRef(false)
+  const startClientX = useRef(0)
+  const startX = useRef(0)
+
+  return {
+    x,
+    reset: () => setX(0),
+    handlers: {
+      onPointerDown(e: React.PointerEvent) {
+        dragging.current = true
+        startClientX.current = e.clientX
+        startX.current = x
+        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      },
+      onPointerMove(e: React.PointerEvent) {
+        if (!dragging.current) return
+        const next = startX.current + (e.clientX - startClientX.current)
+        setX(Math.max(-SWIPE_LEFT, Math.min(SWIPE_RIGHT, next)))
+      },
+      onPointerUp() {
+        dragging.current = false
+        setX((cur) => (cur > SWIPE_RIGHT / 2 ? SWIPE_RIGHT : cur < -SWIPE_LEFT / 2 ? -SWIPE_LEFT : 0))
+      },
+    },
+  }
+}
+
+export function TaskRow({
+  task,
+  highlighted,
+  selected,
+  onToggleSelect,
+  bulk,
+  hideCheckbox,
+  border = true,
+  goalTaskId,
+  justCompletedId,
+  onComplete = completeTask,
+}: TaskRowProps) {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const [popover, setPopover] = useState<{ kind: 'snooze' | 'schedule' | 'project'; x: number; y: number } | null>(null)
+  const [checking, setChecking] = useState(false)
+  const motionOn = useMotionEnabled()
+  const swipe = useRowSwipe()
 
   const done = task.status === 'done'
+  const someday = task.someday && !done
   const tag = resolveTag(task, domains, projects, areas)
   const overdueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : 0
   const overdue = overdueDays > 0
+  const inProgress = !done && !!task.scheduled_start
+  const isGoal = task.top3 && !!goalTaskId && task.id === goalTaskId
+  const justCompleted = done && !!justCompletedId && task.id === justCompletedId
   // Right-clicking (or opening the ⋯ menu on) an unselected row selects it, so it's always clear
   // which task(s) the menu is about to act on — an already-multi-selected row is left as-is.
   const bulkActive = !!bulk && !!selected
@@ -102,6 +165,12 @@ export function TaskRow({
     e.preventDefault()
     if (!selected) onToggleSelect?.()
     setMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  function handleCheck() {
+    setChecking(true)
+    onComplete(task)
+    swipe.reset()
   }
 
   const menuItems: ContextMenuItem[] = done
@@ -114,7 +183,7 @@ export function TaskRow({
           label: bulkActive ? `Complete (${bulk!.count})` : 'Complete',
           icon: <CheckMenuIcon />,
           shortcut: shortcutHint('complete'),
-          onClick: () => (bulkActive ? bulk!.onComplete() : completeTask(task)),
+          onClick: () => (bulkActive ? bulk!.onComplete() : handleCheck()),
         },
         {
           label: 'Snooze…',
@@ -187,16 +256,16 @@ export function TaskRow({
         },
         {
           label: 'Priority',
-          icon: <FlagMenuIcon />,
+          icon: <PriorityFlag color="currentColor" />,
           submenu: ({ position, onClose, closeAll }) => (
             <ContextMenu
               position={position}
               onClose={onClose}
               items={[
                 { label: 'None', onClick: () => { setPriority(task, null); closeAll() } },
-                { label: '! Low', labelColor: priorityColor(3) ?? undefined, onClick: () => { setPriority(task, 3); closeAll() } },
-                { label: '!! Medium', labelColor: priorityColor(2) ?? undefined, onClick: () => { setPriority(task, 2); closeAll() } },
-                { label: '!!! Urgent', labelColor: priorityColor(1) ?? undefined, onClick: () => { setPriority(task, 1); closeAll() } },
+                { label: '! Medium', labelColor: priorityColor(3) ?? undefined, onClick: () => { setPriority(task, 3); closeAll() } },
+                { label: '!! High', labelColor: priorityColor(2) ?? undefined, onClick: () => { setPriority(task, 2); closeAll() } },
+                { label: '!!! Critical', labelColor: priorityColor(1) ?? undefined, onClick: () => { setPriority(task, 1); closeAll() } },
               ]}
             />
           ),
@@ -248,138 +317,206 @@ export function TaskRow({
         },
       ]
 
-  return (
-    <div
-      id={`task-${task.id}`}
-      className="task-row"
-      tabIndex={highlighted ? 0 : -1}
-      onContextMenu={openMenu}
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 14,
-        padding: '12px 12px',
-        margin: '0 -6px',
-        borderRadius: selected ? 'var(--radius-input)' : undefined,
-        borderBottom: '1px dashed var(--line-dashed)',
-        boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
-        background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
-        opacity: done ? 0.55 : 1,
-        outline: 'none',
-      }}
-    >
-      {onToggleSelect && !done && !hideCheckbox && (
+  const rowStyle: React.CSSProperties = {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 14,
+    padding: '13px 2px',
+    borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
+    boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+    background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
+    outline: 'none',
+  }
+
+  // ── Done — fallen petals (2a / 2c) ──
+  if (done) {
+    return (
+      <div
+        id={`task-${task.id}`}
+        className="task-row"
+        tabIndex={highlighted ? 0 : -1}
+        onContextMenu={openMenu}
+        style={{ ...rowStyle, alignItems: 'center', padding: '11px 2px', opacity: justCompleted ? 0.55 : 1 }}
+      >
         <span
-          onClick={onToggleSelect}
-          className={selected ? undefined : 'task-row-hover'}
-          style={{
-            width: 15,
-            height: 15,
-            marginTop: 3,
-            flex: 'none',
-            borderRadius: 4,
-            border: '1.5px solid var(--acc-sage)',
-            background: selected ? 'var(--acc-sage)' : 'transparent',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--bg-app)',
-            fontSize: 10,
-            lineHeight: 1,
-            cursor: 'pointer',
-          }}
-        >
-          {selected ? '✓' : ''}
-        </span>
-      )}
-      {done ? (
-        <span
-          style={{
-            width: 17,
-            height: 17,
-            borderRadius: 5,
-            background: 'var(--text-primary)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-on-accent)',
-            fontSize: 11,
-            flex: 'none',
-            marginTop: 2,
-            cursor: 'pointer',
-          }}
           onClick={() => uncompleteTask(task)}
+          style={{ width: 18, height: 18, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 11, flex: 'none', cursor: 'pointer' }}
         >
           ✓
         </span>
-      ) : (
+        <span style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}>{task.title}</span>
+        {justCompleted ? (
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>just now ✿</span>
+        ) : (
+          <>
+            {tag && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
+                {tag.label}
+              </span>
+            )}
+            {task.completed_at && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>
+                {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            )}
+          </>
+        )}
+        {justCompleted && <span className="tr-petal" style={{ left: 24, top: 4, transform: 'rotate(35deg)' }} />}
+        {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+      </div>
+    )
+  }
+
+  // ── Someday — the quiet shelf (2b) ──
+  if (someday) {
+    return (
+      <div
+        id={`task-${task.id}`}
+        className="task-row tr-someday"
+        tabIndex={highlighted ? 0 : -1}
+        onContextMenu={openMenu}
+        style={{ ...rowStyle, alignItems: 'center', padding: '12px 10px', margin: '0 -10px' }}
+      >
+        <Checkbox checked={false} size={18} onChange={handleCheck} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, color: 'var(--ink-body)' }}>{task.title}</div>
+          {tag && (
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
+              {tag.label}
+            </div>
+          )}
+        </div>
         <span
-          onClick={() => completeTask(task)}
-          style={{ width: 17, height: 17, border: '1.5px solid var(--line-sidebar)', borderRadius: 5, flex: 'none', marginTop: 2, cursor: 'pointer' }}
-        />
+          className="tr-someday-hover"
+          onClick={() => rescheduleDue(task, scheduleToday())}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+        >
+          → Today
+        </span>
+        <span
+          className="tr-someday-hover"
+          onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+        >
+          Schedule ▾
+        </span>
+        {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+        {popover?.kind === 'schedule' && (
+          <ScheduleMenu position={popover} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null) }} />
+        )}
+      </div>
+    )
+  }
+
+  // ── Open — the main list (1a / 1b) ──
+  return (
+    <div
+      id={`task-${task.id}`}
+      className={`task-row${checking ? ' tr-checking' : ''}`}
+      tabIndex={highlighted ? 0 : -1}
+      onContextMenu={openMenu}
+      style={{ ...rowStyle, overflow: 'hidden' }}
+    >
+      {swipe.x !== 0 && (
+        <div className="tr-swipe-actions" aria-hidden="true">
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(168,160,190,0.92)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}>
+            <ScheduleMenuIcon />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Resched</span>
+          </div>
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(122,148,110,0.94)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'project', x: e.clientX, y: e.clientY })}>
+            <FolderMenuIcon />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Project</span>
+          </div>
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(201,165,90,0.95)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'snooze', x: e.clientX, y: e.clientY })}>
+            <ClockMenuIcon />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Snooze</span>
+          </div>
+          <div style={{ flex: 1 }} />
+          <div style={{ width: 88, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--acc-terra)', pointerEvents: swipe.x < 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={() => { const message = task.scheduled_start ? `Delete "${task.title}"? This also removes its scheduled calendar block.` : `Delete "${task.title}"?`; if (window.confirm(message)) deleteTask(task) }}>
+            <TrashMenuIcon />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Delete</span>
+          </div>
+        </div>
       )}
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 15, color: done ? 'var(--ink-hairline)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : 'none' }}>
-            {task.title}
+      <div
+        className="tr-swipe-content"
+        {...swipe.handlers}
+        style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0, background: swipe.x !== 0 ? 'var(--paper-linen)' : undefined, transform: `translateX(${swipe.x}px)`, transition: swipe.x === 0 ? 'transform 200ms var(--ease-spring)' : undefined, boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : swipe.x < 0 ? '9px 0 12px rgba(60,52,38,0.14)' : undefined }}
+      >
+        {!hideCheckbox && onToggleSelect && (
+          <span
+            onClick={onToggleSelect}
+            className={selected ? undefined : 'task-row-hover'}
+            style={{ width: 14, height: 14, marginTop: 3, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
+          >
+            {selected ? '✓' : ''}
           </span>
-          {!done && task.scheduled_start && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                color: 'var(--acc-lavender-deep)',
-                background: 'rgba(168,160,190,0.18)',
-                border: '1px solid rgba(168,160,190,0.5)',
-                padding: '2px 8px',
-                borderRadius: 999,
-              }}
-            >
-              {new Date(task.scheduled_start).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
-            </span>
-          )}
-          {!done && task.duration_min != null && chip(formatDuration(task.duration_min), 'var(--text-tertiary)')}
-          {!done && tag && chip(tag.label, tag.color ?? 'var(--text-tertiary)', tag.color ? { borderColor: tag.color } : undefined)}
-          {!done && priorityFlag(task.priority) && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, color: priorityColor(task.priority) ?? 'var(--acc-terra)' }}>
-              {priorityFlag(task.priority)}
-            </span>
-          )}
-          {!done && task.recurrence_rule && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)' }}>↻</span>}
-          {overdue && chip(`${overdueDays}D AGO`, 'var(--acc-terra)', { borderColor: 'var(--acc-terra)' })}
-        </div>
-      </div>
+        )}
+        <span style={{ position: 'relative', marginTop: 2 }}>
+          <Checkbox
+            checked={checking}
+            size={18}
+            onChange={handleCheck}
+            style={checking ? { background: 'var(--sig-done)', boxShadow: 'none' } : overdue ? { borderColor: 'var(--acc-terra)' } : undefined}
+          />
+          {checking && motionOn && <span className="tr-petal tr-petal-live" style={{ right: -5, bottom: -3, transform: 'rotate(40deg)' }} />}
+        </span>
 
-      {!done && (
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className={checking ? 'tr-title-strike' : undefined} style={{ fontSize: 15.5, color: 'var(--ink-body)' }}>{task.title}</span>
+            {inProgress && <img src={`${A}/cherry/opening.png`} alt="in progress" style={{ height: 19, filter: 'var(--shadow-drop-sm)' }} />}
+          </div>
+          <div style={metaStyle}>
+            {tag && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
+                {tag.label}
+              </span>
+            )}
+            {overdue && <span style={{ color: 'var(--acc-terra)' }}>Overdue {overdueDays}d</span>}
+            {inProgress && <span style={{ color: '#8A4A58' }}>In progress</span>}
+            {inProgress && task.scheduled_start && (
+              <span>
+                {new Date(task.scheduled_start).toLocaleDateString([], { weekday: 'short' })}{' '}
+                {new Date(task.scheduled_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            )}
+            {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}
+            {priorityFlag(task.priority) && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: priorityColor(task.priority) ?? 'var(--acc-terra)' }}>
+                <PriorityFlag color={priorityColor(task.priority) ?? 'var(--acc-terra)'} />
+                {`P${task.priority}`}
+              </span>
+            )}
+            {task.recurrence_rule && <span>↻</span>}
+            {isGoal && <span style={{ color: 'var(--acc-gold)' }}>✶ Goal</span>}
+          </div>
+        </div>
+
         <span
           onClick={() => toggleTop3(task)}
           title={task.top3 ? 'Remove from Top 3' : 'Add to Top 3'}
-          style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-solid)', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}
+          style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}
         >
           {task.top3 ? '★' : '☆'}
         </span>
-      )}
-
-      {done ? (
-        <div className="task-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
-          <img src="assets/cherry/fallen.png" alt="" style={{ height: 22, width: 'auto', opacity: 0.7 }} />
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hairline)' }}>a petal fell</span>
-        </div>
-      ) : (
-        <div className="task-row-controls task-row-hover" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
-          <button
-            type="button"
-            onClick={openMenu}
-            title="More actions"
-            style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 16, letterSpacing: '0.1em', cursor: 'pointer', padding: '0 4px' }}
-          >
-            ⋯
-          </button>
-        </div>
-      )}
+      </div>
 
       {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+      {popover?.kind === 'snooze' && (
+        <SnoozeMenu position={popover} onClose={() => setPopover(null)} onSnooze={(until) => { snoozeTask(task, until); setPopover(null); swipe.reset() }} onSomeday={() => { setSomeday(task, true); setPopover(null); swipe.reset() }} />
+      )}
+      {popover?.kind === 'schedule' && (
+        <ScheduleMenu position={popover} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null); swipe.reset() }} />
+      )}
+      {popover?.kind === 'project' && (
+        <ProjectPicker position={popover} projects={projects} domains={domains} currentProjectId={task.project_id} onSelect={(projectId, domainId) => { setProject(task, projectId, domainId); setPopover(null); swipe.reset() }} onClose={() => setPopover(null)} />
+      )}
     </div>
   )
 }
