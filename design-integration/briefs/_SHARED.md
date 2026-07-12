@@ -10,6 +10,15 @@ Reproduce the design export **exactly**. Nothing invented, nothing skipped. The
 styles, copy strings, layout numbers, colors, tilts come from it verbatim. When
 your memory of "how an app usually works" conflicts with the file, the file wins.
 
+**Transcribe, don't interpret (binding, per TEARDOWN.md).** Port the `.dc.html`
+markup **node-for-node**: same element tree, same inline style values, same numbers,
+same copy. The ONLY allowed substitutions: sample text → real data · static markup →
+handlers/loops · `ds/assets/…` → `/ds/assets/…` · the canvas's embedded sidebar/topbar →
+omitted (the shell owns them). Restructuring a layout "because React" is a defect.
+
+**Demolition DoD:** delete every file your surface replaces **in the same commit** —
+no dead components, no old-skin fallbacks left importable.
+
 ## The old UI is dead
 Do **not** read, copy, or adapt the pre-existing visual code of the screen you're
 rebuilding, and do **not** read any of these superseded docs (they carry stale
@@ -51,6 +60,8 @@ stop and ask the orchestrator for a foundation patch.
   `app/src/lib/activity.ts`, `app/src/lib/types.ts` (types are **additive-only** — never edit existing shapes)
 - Shared overlays you don't own: `ContextMenu`, `Select`, `Snooze/ScheduleMenu`,
   `ProjectPicker`, `BulkBar`, `ShortcutOverlay`, `useListKeys`, `overlayStack`.
+  (Exception: the **R1 overlay-demolition agent** owns the visual rebuild of these
+  per TEARDOWN.md; after R1 merges they refreeze. Behavior contracts stay.)
 
 ## Your sandbox
 You own exactly **your feature folder** (`app/src/features/<feature>/**`) and the files

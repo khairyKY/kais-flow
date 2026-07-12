@@ -25,11 +25,23 @@ build green + commit on `ws/<name>` + don't push + report). Don't add anything.
 
 ---
 
+## R1 — Overlay demolition (run FIRST — see TEARDOWN.md)
+
+The old skin bleeds over every page through the shared menus/popovers/toasts. This wave
+kills that. It is the ONE wave allowed to edit the frozen overlay files (they refreeze after).
+
+```
+Build R1 (overlay demolition) of the Kai's Flow botanical integration. Read design-integration/briefs/_SHARED.md and design-integration/TEARDOWN.md §R1, then rebuild the ENTIRE shared overlay layer as node-for-node transcriptions of design-export/Overlays.dc.html: §01 (Snooze, Schedule, Project picker, Priority, Repeat, Toast — SnoozeMenu/ScheduleMenu/ProjectPicker/ToastHost), §02 (Command bar ⌘K, Search ⌘/, Chat ⌘J slide-over, Confirm, Bulk bar, Notifications slide-over), §04 (Bulk actions, Keyboard shortcuts ?), §05 (Go to G, Calendar/Board view options, Label picker + manager). Files you own for this wave ONLY: app/src/components/{ContextMenu,Select,SnoozeMenu,ScheduleMenu,ProjectPicker,BulkBar,ShortcutOverlay,ToastHost}.tsx, app/src/features/command-bar/**, app/src/features/search/SearchOverlay.tsx, app/src/features/chat/ChatPanel.tsx. PRESERVE every behavior contract: component props/APIs, overlayStack Escape handling, body portals, keyboard shortcuts, useListKeys. Visuals come 100% from Overlays.dc.html; delete old icon usages as they fall out. Transcribe, don't interpret. Build green, commit on ws/overlays, don't push, report.
+```
+
 ## Reskin waves (backends already exist)
+
+> Every wave below now also carries the TEARDOWN rules: **transcribe node-for-node** and
+> **delete every file your surface replaces in the same commit** (see _SHARED.md).
 
 ### W1 — Today  ✅ desktop done (14bf759); remaining: mobile 1b + empty states
 ```
-Build W1 (Today), remaining scope, of the Kai's Flow botanical integration. Read design-integration/briefs/_SHARED.md then design-integration/briefs/W1-today.md. Desktop 1a is already built in app/src/features/today/TodayPage.tsx — ADD: the iPhone variant 1b (phone width ≤767px) and the States.dc.html empty/done vignettes (1a Empty Today, 1b Done Today) as real reachable states. Pixel contract Today.dc.html 1b + States.dc.html 1a/1b. Own only app/src/features/today/**. Build green, commit on ws/today-mobile, don't push, report.
+Build W1 (Today), remaining scope, of the Kai's Flow botanical integration. Read design-integration/briefs/_SHARED.md then design-integration/briefs/W1-today.md. Desktop 1a is already built in app/src/features/today/TodayPage.tsx — ADD: the iPhone variant 1b (phone width ≤767px), the States.dc.html empty/done vignettes (1a Empty Today, 1b Done Today) as real reachable states, AND rebuild the three old-skin stragglers whose designs live inside Today.dc.html 1a: features/resurfacing/ResurfaceCard.tsx ("From a while ago" card), features/capture/VoiceCaptureButton.tsx (the header CTA), features/today/Terrarium.tsx (delete it if the 1a terrarium band fully replaces it — demolition DoD). Pixel contract Today.dc.html 1a/1b + States.dc.html 1a/1b. Transcribe node-for-node. Own app/src/features/today/**, features/resurfacing/ResurfaceCard.tsx, features/capture/VoiceCaptureButton.tsx. Build green, commit on ws/today-mobile, don't push, report.
 ```
 
 ### W2 — Tasks  (also builds the shared TaskRow that W1/W3 import)
@@ -116,3 +128,8 @@ fresh session with the branch fully merged.
 - **X3 Night** — sweep every surface on `data-theme="night"`; zero daylight fallbacks; match the 6 Night.dc.html studies.
 - **X4 Mobile** — every iPhone variant at phone widths; safe-areas, `dvh`, touch counterparts for hover/keyboard-only interactions.
 - **X5 States** — every empty state matches States.dc.html t1; wire the topbar sync states to a real outbox pending-count (add the reactive count to lib/outbox); "error" appears nowhere.
+
+## Teardown passes (TEARDOWN.md — after R1 + waves merge)
+- **R3 Legacy purge** — delete the index.css legacy-alias block + old public/assets tree + unused icon exports; migrate stragglers; grep gates (alias names, `IBM Plex`, `src="assets/`) must return zero with a green build.
+- **R4 Exactness audit** — Kai logged in; served .dc.html canvas beside each live route, day+night, desktop+phone; already-rebuilt surfaces first (shell, Today, Tasks, Calendar/Editor — they predate the transcription rule); every flagged deviation = a fix commit.
+- **No-contract stragglers** (only surfaces with no .dc.html): PlanningBoard, SignInPage — restyle quietly with kit + tokens + house rules; explicitly flag for Kai's eye.
