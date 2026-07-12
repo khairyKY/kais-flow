@@ -1,20 +1,65 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
+import { Link } from 'react-router'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid } from './CalendarGrid'
-import { useCalendarEvents, createEvent, moveOrResizeEvent, scheduleTask, deleteEvent } from './api'
+import { useCalendarEvents, createEvent, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent } from './api'
 import { useTasks, completeTask } from '../tasks/api'
-import { useAppSettings } from '../../lib/settings'
+import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
+import { useDomains } from '../domains/api'
+import { useProjects } from '../projects/api'
+import { useAreas } from '../areas/api'
+import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { ContextMenu } from '../../components/ContextMenu'
+import { Select } from '../../components/Select'
 import type { ContextMenuItem } from '../../components/ContextMenu'
-import type { CalendarEvent } from '../../lib/types'
+import type { CalendarEvent, CalendarEventType } from '../../lib/types'
+
+const SCOPE_KIND_OPTIONS: { value: RailScopeKind; label: string }[] = [
+  { value: 'smart', label: 'Smart list' },
+  { value: 'project', label: 'Project' },
+  { value: 'area', label: 'Area' },
+  { value: 'domain', label: 'Domain' },
+]
+
+const SMART_LIST_OPTIONS = [
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'someday', label: 'Someday' },
+]
 
 function weekOfLabel(): string {
   const d = new Date()
   const monday = new Date(d)
   monday.setDate(d.getDate() - ((d.getDay() + 6) % 7))
   return `Week of ${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
+
+/** An unsaved draft for the right-click "New Event"/"New Time Block" flow — Save (via updateEvent's
+ * upsert) is what actually inserts it; closing without saving just discards it, nothing written. */
+function draftEvent(startIso: string, allDay: boolean, type: CalendarEventType): CalendarEvent {
+  const start = new Date(startIso)
+  const end = new Date(start.getTime() + (allDay ? 24 * 60 : 30) * 60000)
+  const now = new Date().toISOString()
+  return {
+    id: crypto.randomUUID(),
+    title: type === 'time_block' ? 'New Time Block' : 'New Event',
+    starts_at: start.toISOString(),
+    ends_at: end.toISOString(),
+    all_day: allDay,
+    task_id: null,
+    source: 'native',
+    gcal_id: null,
+    gcal_etag: null,
+    busy: true,
+    type,
+    color: null,
+    created_at: now,
+    updated_at: now,
+  }
 }
 
 /** Client-side conflict detection: only standalone Events get flagged. Time blocks and task-linked blocks are excluded. */
@@ -39,27 +84,62 @@ export function CalendarPage() {
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [] } = useTasks()
   const { data: settings } = useAppSettings()
+  const { data: domains = [] } = useDomains()
+  const { data: projects = [] } = useProjects()
+  const { data: areas = [] } = useAreas()
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [isNewEvent, setIsNewEvent] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
+  const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'today' })
 
-  const unscheduled = tasks.filter((t) => t.status === 'todo' && !t.scheduled_start)
+  // Any task in any scope can be dragged onto the grid — already-scheduled tasks stay out of
+  // the rail so dropping never creates a duplicate block for the same task.
+  const railTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
   const conflicts = useMemo(() => computeConflicts(events), [events])
+  const dayCount = settings?.calendar_day_count ?? 7
+  // 2–6 plus whatever's currently stored (e.g. 7/14 from the Settings page) so the picker never hides the active value.
+  const dayCountOptions = Array.from(new Set([2, 3, 4, 5, 6, dayCount])).sort((a, b) => a - b)
+
+  const scopeValueOptions =
+    scope.kind === 'smart'
+      ? SMART_LIST_OPTIONS
+      : scope.kind === 'project'
+        ? projects.map((p) => ({ value: p.id, label: p.name }))
+        : scope.kind === 'area'
+          ? areas.map((a) => ({ value: a.id, label: a.name }))
+          : domains.map((d) => ({ value: d.id, label: d.name }))
+
+  function onScopeKindChange(kind: RailScopeKind) {
+    if (kind === 'smart') { setScope({ kind, id: 'today' }); return }
+    const options = kind === 'project' ? projects : kind === 'area' ? areas : domains
+    setScope({ kind, id: options[0]?.id ?? '' })
+  }
 
   useEffect(() => {
     if (!sidebarRef.current) return
     const draggable = new Draggable(sidebarRef.current, {
       itemSelector: '.unscheduled-task',
-      eventData: (el) => ({ title: el.dataset.title ?? '', duration: '00:30' }),
+      eventData: (el) => {
+        const min = Number(el.dataset.duration) || 30
+        const hh = String(Math.floor(min / 60)).padStart(2, '0')
+        const mm = String(min % 60).padStart(2, '0')
+        return { title: el.dataset.title ?? '', duration: `${hh}:${mm}` }
+      },
     })
     return () => draggable.destroy()
-  }, [unscheduled.length])
+  }, [railTasks.length])
+
+  function openExisting(event: CalendarEvent) {
+    setIsNewEvent(false)
+    setSelectedEvent(event)
+  }
 
   function handleEventClick(id: string) {
     setContextMenu(null)
     const event = events.find((e) => e.id === id)
-    if (event) setSelectedEvent(event)
+    if (event) openExisting(event)
   }
 
   function handleEventContextMenu(id: string, x: number, y: number) {
@@ -68,39 +148,43 @@ export function CalendarPage() {
     if (!event) return
     const items: ContextMenuItem[] = []
     if (event.type === 'task') {
-      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
       items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTask(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); deleteEvent(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
     } else if (event.type === 'time_block') {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
-      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); openExisting(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
     } else {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
-      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); setSelectedEvent(event) } })
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Change color', onClick: () => { setContextMenu(null); openExisting(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
     }
     setContextMenu({ items, x, y })
   }
 
-  function handleCalendarContextMenu(e: React.MouseEvent) {
-    const target = e.target as HTMLElement
-    if (target.closest('.fc-event')) return
-    e.preventDefault()
+  function handleGridContextMenu(iso: string, allDay: boolean, x: number, y: number) {
+    function openDraft(type: CalendarEventType) {
+      setContextMenu(null)
+      setIsNewEvent(true)
+      setSelectedEvent(draftEvent(iso, allDay, type))
+    }
     setContextMenu({
       items: [
-        { label: 'New Event', onClick: () => { setContextMenu(null) } },
-        { label: 'New Time Block', onClick: () => { setContextMenu(null) } },
+        { label: 'New Event', onClick: () => openDraft('event') },
+        { label: 'New Time Block', onClick: () => openDraft('time_block') },
       ],
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
     })
   }
 
-  function handleExternalDrop(taskId: string, start: string, end: string) {
+  function handleExternalDrop(taskId: string, start: string) {
     const task = tasks.find((t) => t.id === taskId)
-    if (task) scheduleTask(task, start, end)
+    if (!task) return
+    const end = new Date(new Date(start).getTime() + (task.duration_min ?? 30) * 60000).toISOString()
+    scheduleTask(task, start, end)
   }
 
   const railTilts = [-0.6, 0.5, -0.4, 0.55, -0.3]
@@ -118,6 +202,33 @@ export function CalendarPage() {
             Calendar · {weekOfLabel()}
           </div>
           <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Calendar</h1>
+          <Link
+            to="/planning"
+            style={{
+              display: 'inline-block',
+              marginTop: 10,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--text-tertiary)',
+              textDecoration: 'underline',
+            }}
+          >
+            → Planning board
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+              N-day view
+            </span>
+            <Select
+              value={String(dayCount)}
+              onChange={(v) => updateAppSetting('calendar_day_count', Number(v))}
+              options={dayCountOptions.map((n) => ({ value: String(n), label: `${n}d` }))}
+              ariaLabel="N-day view length"
+              style={{ fontSize: 11, padding: '4px 7px' }}
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', transform: 'rotate(1deg)' }}>
           <img src={`assets/daisy/${daisy.src}.png`} alt="Daisy" style={{ height: 84, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
@@ -152,17 +263,33 @@ export function CalendarPage() {
 
       <div className="calendar-columns">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-              Unscheduled
+              Scope
             </span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--border-dashed)' }} />
           </div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            <Select
+              value={scope.kind}
+              onChange={(v) => onScopeKindChange(v as RailScopeKind)}
+              options={SCOPE_KIND_OPTIONS}
+              ariaLabel="Rail scope type"
+              style={{ fontSize: 11, padding: '5px 7px', flex: 'none', maxWidth: 100 }}
+            />
+            <Select
+              value={scope.id}
+              onChange={(id) => setScope((s) => ({ ...s, id }))}
+              options={scopeValueOptions}
+              ariaLabel="Rail scope value"
+              style={{ fontSize: 11, padding: '5px 7px', flex: 1, minWidth: 0 }}
+            />
+          </div>
           <div ref={sidebarRef} className="calendar-rail" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {unscheduled.length === 0 ? (
-              <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', margin: 0 }}>Nothing waiting to be time-blocked.</p>
+            {railTasks.length === 0 ? (
+              <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', margin: 0 }}>Nothing here to block.</p>
             ) : (
-              unscheduled.map((t, i) => {
+              railTasks.map((t, i) => {
                 const tape = railTapes[i % railTapes.length]
                 return (
                   <div
@@ -170,6 +297,7 @@ export function CalendarPage() {
                     className="unscheduled-task"
                     data-task-id={t.id}
                     data-title={t.title}
+                    data-duration={t.duration_min ?? 30}
                     style={{
                       position: 'relative',
                       background: 'var(--bg-surface)',
@@ -195,13 +323,13 @@ export function CalendarPage() {
                       }}
                     />
                     <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{t.title}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--text-tertiary)', marginTop: 3 }}>drag to block · 30 min</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--text-tertiary)', marginTop: 3 }}>drag to block · {t.duration_min ?? 30} min</div>
                   </div>
                 )
               })
             )}
           </div>
-          {unscheduled.length > 0 && (
+          {railTasks.length > 0 && (
             <p style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--text-tertiary)', margin: '16px 0 0', transform: 'rotate(-0.8deg)' }}>
               each dropped chip opens one petal ↗
             </p>
@@ -247,7 +375,7 @@ export function CalendarPage() {
               boxShadow: 'var(--shadow-crisp)',
             }}
           />
-          <div onContextMenu={handleCalendarContextMenu}>
+          <div>
             <CalendarGrid
               events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id) }))}
               onCreate={(start, end) => createEvent('Block', start, end)}
@@ -257,12 +385,13 @@ export function CalendarPage() {
               }}
               onResize={(id, start, end) => {
                 const event = events.find((e) => e.id === id)
-                if (event) moveOrResizeEvent(event, start, end)
+                if (event) resizeEvent(event, start, end)
               }}
               onEventClick={handleEventClick}
               onExternalDrop={handleExternalDrop}
-              dayCount={settings?.calendar_day_count ?? 7}
+              dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
+              onGridContextMenu={handleGridContextMenu}
               conflictedIds={Array.from(conflicts.keys())}
             />
           </div>
@@ -274,6 +403,7 @@ export function CalendarPage() {
           event={selectedEvent}
           conflicts={conflicts.get(selectedEvent.id) ?? []}
           onClose={() => setSelectedEvent(null)}
+          isNew={isNewEvent}
         />
       )}
       {contextMenu && (

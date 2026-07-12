@@ -118,6 +118,24 @@
   color: var(--acc-lavender-text);
 }
 
+/* Month view (dayGridMonth) */
+.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
+.fc .fc-daygrid-day-number {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  padding: 5px 7px;
+}
+.fc .fc-day-today .fc-daygrid-day-number { color: var(--acc-lavender-deep); font-weight: var(--fw-semibold); }
+.fc .fc-daygrid-day.fc-day-past { background: rgba(60, 52, 38, 0.045); }
+.fc .fc-daygrid-more-link {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+}
+.fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5); }
+.fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
+
 /* Drag mirror + resize handle */
 .fc .fc-event-mirror { box-shadow: var(--shadow-card); opacity: 0.85; }
 .fc .fc-event-resizer { border-color: var(--line-solid); }

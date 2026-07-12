@@ -7,6 +7,7 @@ import {
   sendTestNotification,
 } from '../notifications/api'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
+import { Select } from '../../components/Select'
 
 function Card({ tapeSide, tapeTint, rotate, children }: { tapeSide: 'left' | 'right' | 'center'; tapeTint: string; rotate: number; children: ReactNode }) {
   return (
@@ -53,23 +54,13 @@ function CalendarSettings() {
       <div style={{ padding: '11px 0 2px', borderTop: '1px dashed var(--line-dashed)' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13.5, color: 'var(--text-secondary)' }}>
           <span>Days shown at once</span>
-          <select
-            value={settings.calendar_day_count}
-            onChange={(e) => updateAppSetting('calendar_day_count', Number(e.target.value))}
-            style={{
-              border: '1px solid var(--border-default)',
-              background: 'var(--bg-input)',
-              color: 'var(--text-primary)',
-              fontFamily: 'inherit',
-              fontSize: 12.5,
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sharp)',
-            }}
-          >
-            {[1, 3, 5, 7, 14].map((n) => (
-              <option key={n} value={n}>{n} day{n === 1 ? '' : 's'}</option>
-            ))}
-          </select>
+          <Select
+            value={String(settings.calendar_day_count)}
+            onChange={(v) => updateAppSetting('calendar_day_count', Number(v))}
+            ariaLabel="Days shown at once"
+            style={{ fontSize: 12.5, padding: '4px 8px', borderRadius: 'var(--radius-sharp)' }}
+            options={[1, 3, 5, 7, 14].map((n) => ({ value: String(n), label: `${n} day${n === 1 ? '' : 's'}` }))}
+          />
         </label>
       </div>
     </Card>

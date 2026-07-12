@@ -4,7 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { localDateKey } from './streaks'
-import type { Cadence, Routine, RoutineCompletion, TimeOfDay } from '../../lib/types'
+import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 export function useRoutines() {
   return useQuery({
@@ -34,11 +34,17 @@ function nowIso() {
 
 const DAILY_CADENCE: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
 
-export function createRoutine(name: string, timeOfDay: TimeOfDay, cadence: Cadence = DAILY_CADENCE): Routine {
+export function createRoutine(
+  name: string,
+  timeOfDay: string | null,
+  cadence: Cadence = DAILY_CADENCE,
+  clockTime: string | null = null,
+): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
     name,
     time_of_day: timeOfDay,
+    clock_time: clockTime,
     cadence,
     challenge_start: null,
     challenge_end: null,
@@ -53,15 +59,17 @@ export function createRoutine(name: string, timeOfDay: TimeOfDay, cadence: Caden
 
 export function createChallenge(
   name: string,
-  timeOfDay: TimeOfDay,
+  timeOfDay: string | null,
   cadence: Cadence,
   startDate: string,
   endDate: string,
+  clockTime: string | null = null,
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
     name,
     time_of_day: timeOfDay,
+    clock_time: clockTime,
     cadence,
     challenge_start: startDate,
     challenge_end: endDate,

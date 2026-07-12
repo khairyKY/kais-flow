@@ -1,10 +1,17 @@
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
-import { useTasks, completeTask, toggleTop3 } from '../tasks/api'
+import { useTasks, completeTask, toggleTop3, snoozeTask, setSomeday, rescheduleDue, setProject, deleteTask } from '../tasks/api'
+import { type BulkActions } from '../tasks/TaskRow'
+import { buildListBindings } from '../tasks/listShortcuts'
+import { BulkBar } from '../../components/BulkBar'
+import { useEscapeStack } from '../../lib/overlayStack'
+import { useToastStore } from '../../lib/toastStore'
+import { useProjects } from '../projects/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
+import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems, dismissInboxItem, fileToTask } from '../inbox/api'
 import { useRecentActivity } from '../notifications/api'
@@ -16,7 +23,19 @@ import { Terrarium } from './Terrarium'
 import { useGoalStore } from './goalStore'
 import { useTerrariumStore } from './terrariumStore'
 import { PetalIcon } from '../../components/icons/NavIcons'
-import type { Domain, Task, TimeOfDay } from '../../lib/types'
+import { useListKeys } from '../../components/useListKeys'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { CheckMenuIcon, ClockMenuIcon, FolderMenuIcon, ScheduleMenuIcon, TrashMenuIcon } from '../../components/icons/MenuIcons'
+import { rowAnchor } from '../../lib/rowAnchor'
+import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import type { Domain, Task } from '../../lib/types'
+
+/** Anchored popover position — mouse-triggered menus carry explicit click coordinates,
+ * keyboard-triggered ones fall back to `rowAnchor` under the focused row. */
+type MenuAnchor = { task: Task; x: number; y: number }
 
 const DOMAIN_PALETTE = [
   'var(--acc-sage)',
@@ -45,6 +64,7 @@ function endOfToday(): Date {
 
 function isVisible(task: Task, now: Date): boolean {
   if (task.status !== 'todo') return false
+  if (task.someday) return false
   if (task.snoozed_until && new Date(task.snoozed_until) > now) return false
   return true
 }
@@ -128,12 +148,91 @@ function Checkbox({ checked, onClick, variant }: { checked: boolean; onClick: ()
   )
 }
 
-function TaskRow({ task, domain, domainIndex, showStar }: { task: Task; domain?: Domain; domainIndex: number; showStar?: boolean }) {
+/** The "⋯" mouse trigger for the shared actions menu (Snooze/Schedule/Move/Delete) — every Today
+ * row also opens the same menu on right-click; this is the discoverable, always-visible affordance. */
+function MenuTrigger({ onOpen }: { onOpen: (e: React.MouseEvent) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      title="More actions"
+      style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 16, letterSpacing: '0.1em', cursor: 'pointer', padding: '0 2px', flex: 'none' }}
+    >
+      ⋯
+    </button>
+  )
+}
+
+function TaskRow({
+  task,
+  domain,
+  domainIndex,
+  showStar,
+  highlighted,
+  onMenu,
+  selected,
+  onToggleSelect,
+}: {
+  task: Task
+  domain?: Domain
+  domainIndex: number
+  showStar?: boolean
+  highlighted?: boolean
+  onMenu: (task: Task, e: React.MouseEvent) => void
+  /** All Open is the one Today section selectable for bulk actions — opening the menu on an
+   * unselected row selects it first, same mechanism the Tasks page and Planning board use. */
+  selected?: boolean
+  onToggleSelect?: () => void
+}) {
   const now = new Date()
   const due = dueLabel(task, now)
   const recurrence = recurrenceLabel(task.recurrence_rule)
+  function openMenu(e: React.MouseEvent) {
+    if (!selected) onToggleSelect?.()
+    onMenu(task, e)
+  }
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 0' }}>
+    <div
+      id={`task-${task.id}`}
+      className="task-row"
+      tabIndex={highlighted ? 0 : -1}
+      onContextMenu={openMenu}
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 14,
+        padding: '10px 12px',
+        margin: '0 -6px',
+        borderRadius: selected ? 'var(--radius-input)' : undefined,
+        boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+        background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
+        outline: 'none',
+      }}
+    >
+      {onToggleSelect && (
+        <span
+          onClick={onToggleSelect}
+          className={selected ? undefined : 'task-row-hover'}
+          style={{
+            width: 15,
+            height: 15,
+            marginTop: 3,
+            flex: 'none',
+            borderRadius: 4,
+            border: '1.5px solid var(--acc-sage)',
+            background: selected ? 'var(--acc-sage)' : 'transparent',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--bg-app)',
+            fontSize: 10,
+            lineHeight: 1,
+            cursor: 'pointer',
+          }}
+        >
+          {selected ? '✓' : ''}
+        </span>
+      )}
       <Checkbox checked={false} onClick={() => completeTask(task)} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14.5, color: 'var(--text-primary)' }}>{task.title}</div>
@@ -153,11 +252,12 @@ function TaskRow({ task, domain, domainIndex, showStar }: { task: Task; domain?:
           {task.top3 ? '★' : '☆'}
         </span>
       )}
+      <MenuTrigger onOpen={openMenu} />
     </div>
   )
 }
 
-function Top3Section({ top3, domains }: { top3: Task[]; domains: Domain[] }) {
+function Top3Section({ top3, domains, focusedId, onMenu }: { top3: Task[]; domains: Domain[]; focusedId: string | null; onMenu: (task: Task, e: React.MouseEvent) => void }) {
   const { goalTaskId, setGoal } = useGoalStore()
   if (top3.length === 0) {
     return (
@@ -180,18 +280,24 @@ function Top3Section({ top3, domains }: { top3: Task[]; domains: Domain[] }) {
       <SectionHeader label="Top 3 for today" />
 
       <div
+        id={`task-${goal.id}`}
+        tabIndex={focusedId === goal.id ? 0 : -1}
+        onContextMenu={(e) => onMenu(goal, e)}
         style={{
           position: 'relative',
           margin: '14px 0 16px',
           background: 'var(--paper-goal)',
           border: '1px solid var(--line-goal)',
-          boxShadow: '0 1px 2px rgba(60,52,38,0.14), 0 8px 20px rgba(154,123,58,0.14)',
+          boxShadow: focusedId === goal.id
+            ? '0 0 0 3px rgba(138,154,126,0.28), 0 1px 2px rgba(60,52,38,0.14), 0 8px 20px rgba(154,123,58,0.14)'
+            : '0 1px 2px rgba(60,52,38,0.14), 0 8px 20px rgba(154,123,58,0.14)',
           padding: '16px 18px 15px 16px',
           display: 'flex',
           alignItems: 'flex-start',
           gap: 14,
           transform: 'rotate(-0.4deg)',
           borderRadius: 'var(--radius-sharp)',
+          outline: 'none',
         }}
       >
         <span
@@ -231,10 +337,19 @@ function Top3Section({ top3, domains }: { top3: Task[]; domains: Domain[] }) {
           <img src="assets/clover/four_leaf.png" alt="" style={{ width: 38, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 2px 3px rgba(74,58,30,0.22))' }} />
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--acc-gold)', transform: 'rotate(-2deg)' }}>for luck</span>
         </div>
+        <span style={{ position: 'absolute', top: 6, right: 8 }}>
+          <MenuTrigger onOpen={(e) => onMenu(goal, e)} />
+        </span>
       </div>
 
       {rest.map((t) => (
-        <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '11px 0' }}>
+        <div
+          key={t.id}
+          id={`task-${t.id}`}
+          tabIndex={focusedId === t.id ? 0 : -1}
+          onContextMenu={(e) => onMenu(t, e)}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '11px 0', boxShadow: focusedId === t.id ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined, outline: 'none' }}
+        >
           <Checkbox checked={false} onClick={() => completeTask(t)} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 15, color: 'var(--text-primary)' }}>{t.title}</div>
@@ -251,6 +366,7 @@ function Top3Section({ top3, domains }: { top3: Task[]; domains: Domain[] }) {
           <span onClick={() => setGoal(t.id)} title="Make this the goal" style={{ color: 'var(--acc-terra)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
             ★
           </span>
+          <MenuTrigger onOpen={(e) => onMenu(t, e)} />
         </div>
       ))}
       <p style={{ margin: '6px 0 0', fontSize: 12.5, color: 'var(--text-tertiary)' }}>
@@ -291,7 +407,21 @@ function UpNextSection({ events }: { events: { id: string; title: string; starts
   )
 }
 
-function AllOpenSection({ tasks, domains }: { tasks: Task[]; domains: Domain[] }) {
+function AllOpenSection({
+  tasks,
+  domains,
+  focusedId,
+  onMenu,
+  selected,
+  onToggleSelect,
+}: {
+  tasks: Task[]
+  domains: Domain[]
+  focusedId: string | null
+  onMenu: (task: Task, e: React.MouseEvent) => void
+  selected: Set<string>
+  onToggleSelect: (id: string) => void
+}) {
   return (
     <section>
       <SectionHeader label={`All open · ${tasks.length}`} />
@@ -301,7 +431,19 @@ function AllOpenSection({ tasks, domains }: { tasks: Task[]; domains: Domain[] }
         tasks.map((t) => {
           const domain = domains.find((d) => d.id === t.domain_id)
           const domainIndex = Math.max(0, domains.findIndex((d) => d.id === t.domain_id))
-          return <TaskRow key={t.id} task={t} domain={domain} domainIndex={domainIndex} showStar />
+          return (
+            <TaskRow
+              key={t.id}
+              task={t}
+              domain={domain}
+              domainIndex={domainIndex}
+              showStar
+              highlighted={t.id === focusedId}
+              onMenu={onMenu}
+              selected={selected.has(t.id)}
+              onToggleSelect={() => onToggleSelect(t.id)}
+            />
+          )
         })
       )}
     </section>
@@ -349,12 +491,6 @@ function SlippingSection() {
     </section>
   )
 }
-
-const TIME_GROUPS: { key: TimeOfDay; label: string }[] = [
-  { key: 'morning', label: 'Morning' },
-  { key: 'afternoon', label: 'Afternoon' },
-  { key: 'evening', label: 'Evening' },
-]
 
 function RoutinesSection() {
   const { data: routines = [] } = useRoutines()
@@ -409,8 +545,7 @@ function RoutinesSection() {
       {scheduledToday.length === 0 ? (
         <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--text-tertiary)' }}>Nothing scheduled today.</p>
       ) : (
-        TIME_GROUPS.map(({ key, label }) => {
-          const group = scheduledToday.filter((r) => r.time_of_day === key)
+        groupRoutinesByTime(scheduledToday).map(({ key, label, items: group }) => {
           if (group.length === 0) return null
           return (
             <div key={key}>
@@ -566,12 +701,167 @@ export function TodayPage() {
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: domains = [] } = useDomains()
+  const { data: projects = [] } = useProjects()
+  const { goalTaskId } = useGoalStore()
   const [ritual, setRitual] = useState<'morning' | 'evening' | null>(null)
   const now = new Date()
   const visible = tasks.filter((t) => isVisible(t, now))
 
   const top3 = visible.filter((t) => t.top3)
   const openOthers = visible.filter((t) => !t.top3)
+
+  // Mirrors Top3Section's own goal pick, purely to order the keyboard-nav list the same as the page renders.
+  const goal = top3.find((t) => t.id === goalTaskId) ?? top3[0]
+  const restTop3 = top3.filter((t) => t.id !== goal?.id)
+  const orderedVisible = [...(goal ? [goal] : []), ...restTop3, ...openOthers]
+
+  const [snoozeMenu, setSnoozeMenu] = useState<MenuAnchor | null>(null)
+  const [projectMenu, setProjectMenu] = useState<MenuAnchor | null>(null)
+  const [actionsMenu, setActionsMenu] = useState<MenuAnchor | null>(null)
+
+  function openRowMenu(task: Task, e: React.MouseEvent) {
+    e.preventDefault()
+    setActionsMenu({ task, x: e.clientX, y: e.clientY })
+  }
+
+  // Bulk selection — All Open is the only section that's selectable (its own TaskRow wires the
+  // checkbox + select-on-menu-open); Top 3/goal rows never populate `selected`, so bulk mode can
+  // only ever activate for a right-clicked All Open task, never a goal/rest-of-top3 one.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const selectedTasks = tasks.filter((t) => selected.has(t.id))
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+  function clearSelection() {
+    setSelected(new Set())
+  }
+  useEscapeStack(selected.size > 0, clearSelection)
+
+  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+
+  function bulkComplete() {
+    selectedTasks.forEach(completeTask)
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    clearSelection()
+  }
+  function bulkSnooze(until: string) {
+    selectedTasks.forEach((t) => snoozeTask(t, until))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} snoozed.` })
+    clearSelection()
+  }
+  function bulkSomeday() {
+    selectedTasks.forEach((t) => setSomeday(t, true))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
+    clearSelection()
+  }
+  function bulkSchedule(iso: string, when = '') {
+    selectedTasks.forEach((t) => rescheduleDue(t, iso))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled${when ? ' ' + when : ''}.` })
+    clearSelection()
+  }
+  function bulkMove(projectId: string | null, domainId: string | null) {
+    selectedTasks.forEach((t) => setProject(t, projectId, domainId))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
+    clearSelection()
+  }
+  function bulkDelete() {
+    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
+    selectedTasks.forEach(deleteTask)
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
+    clearSelection()
+  }
+
+  const bulkActions: BulkActions | undefined =
+    selected.size > 1
+      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      : undefined
+  const bulkActive = !!bulkActions && !!actionsMenu && selected.has(actionsMenu.task.id)
+
+  const actionsMenuItems: ContextMenuItem[] = actionsMenu
+    ? [
+        {
+          label: bulkActive ? `Complete (${bulkActions!.count})` : 'Complete',
+          icon: <CheckMenuIcon />,
+          onClick: () => (bulkActive ? bulkActions!.onComplete() : completeTask(actionsMenu.task)),
+        },
+        {
+          label: 'Snooze…',
+          icon: <ClockMenuIcon />,
+          submenu: ({ position, onClose, closeAll }) => (
+            <SnoozeMenu
+              position={position}
+              onClose={onClose}
+              onSnooze={(until) => { bulkActive ? bulkActions!.onSnooze(until) : snoozeTask(actionsMenu.task, until); closeAll() }}
+              onSomeday={() => { bulkActive ? bulkActions!.onSomeday() : setSomeday(actionsMenu.task, true); closeAll() }}
+            />
+          ),
+        },
+        {
+          label: 'Schedule',
+          icon: <ScheduleMenuIcon />,
+          submenu: ({ position, onClose, closeAll }) => (
+            <ScheduleMenu
+              position={position}
+              onClose={onClose}
+              onSchedule={(iso) => { bulkActive ? bulkActions!.onSchedule(iso) : rescheduleDue(actionsMenu.task, iso); closeAll() }}
+            />
+          ),
+        },
+        {
+          label: 'Move to project',
+          icon: <FolderMenuIcon />,
+          submenu: ({ position, onClose, closeAll }) => (
+            <ProjectPicker
+              position={position}
+              projects={projects}
+              domains={domains}
+              currentProjectId={bulkActive ? null : actionsMenu.task.project_id}
+              onSelect={(projectId, domainId) => { bulkActive ? bulkActions!.onMove(projectId, domainId) : setProject(actionsMenu.task, projectId, domainId); closeAll() }}
+              onClose={onClose}
+            />
+          ),
+        },
+        {
+          label: bulkActive ? `Delete (${bulkActions!.count})` : 'Delete',
+          danger: true,
+          icon: <TrashMenuIcon />,
+          onClick: () => {
+            if (bulkActive) { bulkActions!.onDelete(); return }
+            const message = actionsMenu.task.scheduled_start
+              ? `Delete "${actionsMenu.task.title}"? This also removes its scheduled calendar block.`
+              : `Delete "${actionsMenu.task.title}"?`
+            if (window.confirm(message)) deleteTask(actionsMenu.task)
+          },
+        },
+      ]
+    : []
+
+  const bindings = buildListBindings({
+    complete: (t) => completeTask(t),
+    snooze: (t) => setSnoozeMenu({ task: t, ...rowAnchor('task-', t.id) }),
+    today: (t) => rescheduleDue(t, scheduleToday()),
+    tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
+    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    top3: (t) => toggleTop3(t),
+    project: (t) => setProjectMenu({ task: t, ...rowAnchor('task-', t.id) }),
+    delete: (t) => {
+      const message = t.scheduled_start ? `Delete "${t.title}"? This also removes its scheduled calendar block.` : `Delete "${t.title}"?`
+      if (window.confirm(message)) deleteTask(t)
+    },
+  })
+  const menuOpen = !!(snoozeMenu || projectMenu || actionsMenu || bulkSnoozePos || bulkProjectPos)
+  // Only All Open rows are selectable (see the `selected` state comment above) — Ctrl/Cmd+A
+  // selects that subset, not the goal/top3 rows mixed into `orderedVisible`.
+  const { focusedId } = useListKeys(orderedVisible, bindings, {
+    active: !menuOpen,
+    sectionLabel: 'Lists',
+    onSelectAll: () => setSelected(new Set(openOthers.map((t) => t.id))),
+  })
 
   const dateHeading = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
@@ -607,9 +897,9 @@ export function TodayPage() {
       <style>{'.today-columns{display:grid;grid-template-columns:minmax(0,1fr) 272px;gap:52px;align-items:start}@media (max-width:767px){.today-columns{grid-template-columns:minmax(0,1fr);gap:32px}}'}</style>
       <div className="today-columns">
         <div style={{ minWidth: 0, maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <Top3Section top3={top3} domains={domains} />
+          <Top3Section top3={top3} domains={domains} focusedId={focusedId} onMenu={openRowMenu} />
           <UpNextSection events={events} />
-          <AllOpenSection tasks={openOthers} domains={domains} />
+          <AllOpenSection tasks={openOthers} domains={domains} focusedId={focusedId} onMenu={openRowMenu} selected={selected} onToggleSelect={toggleSelected} />
         </div>
 
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 30 }}>
@@ -620,6 +910,57 @@ export function TodayPage() {
           <NotificationsSection />
         </div>
       </div>
+
+      {actionsMenu && <ContextMenu position={actionsMenu} onClose={() => setActionsMenu(null)} items={actionsMenuItems} />}
+      {snoozeMenu && (
+        <SnoozeMenu
+          position={snoozeMenu}
+          onClose={() => setSnoozeMenu(null)}
+          onSnooze={(until) => snoozeTask(snoozeMenu.task, until)}
+          onSomeday={() => setSomeday(snoozeMenu.task, true)}
+        />
+      )}
+      {projectMenu && (
+        <ProjectPicker
+          position={projectMenu}
+          projects={projects}
+          domains={domains}
+          currentProjectId={projectMenu.task.project_id}
+          onSelect={(projectId, domainId) => setProject(projectMenu.task, projectId, domainId)}
+          onClose={() => setProjectMenu(null)}
+        />
+      )}
+
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onComplete={bulkComplete}
+          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onToday={() => bulkSchedule(scheduleToday(), 'today')}
+          onTomorrow={() => bulkSchedule(scheduleTomorrow(), 'tomorrow')}
+          onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
+        />
+      )}
+      {bulkSnoozePos && (
+        <SnoozeMenu
+          position={bulkSnoozePos}
+          onClose={() => setBulkSnoozePos(null)}
+          onSnooze={bulkSnooze}
+          onSomeday={bulkSomeday}
+        />
+      )}
+      {bulkProjectPos && (
+        <ProjectPicker
+          position={bulkProjectPos}
+          projects={projects}
+          domains={domains}
+          currentProjectId={null}
+          onSelect={bulkMove}
+          onClose={() => setBulkProjectPos(null)}
+        />
+      )}
     </div>
   )
 }

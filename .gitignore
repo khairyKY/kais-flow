@@ -24,3 +24,8 @@ supabase/.temp/
 *.sw?
 c31c5e70-e6cc-4904-a394-527339238822/
 Kairos_V2.zip
+
+# Large design-reference screenshot dumps — kept on disk, out of git
+akiflow-screenshots/
+Kai's Audit Frame by frame/
+kai's flow Design system and UI improvements.zip

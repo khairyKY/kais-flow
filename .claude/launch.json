@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kais-flow",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5195"],
+      "cwd": "app",
+      "port": 5195
+    },
+    {
+      "name": "kais-flow-audit",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5199", "--strictPort"],
+      "cwd": "app",
+      "port": 5199
+    }
+  ]
+}

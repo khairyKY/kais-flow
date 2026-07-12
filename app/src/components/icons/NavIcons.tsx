@@ -225,7 +225,7 @@ export function BellIcon() {
 
 export function MiniCloverIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 'auto', flex: 'none', opacity: 0.9 }}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flex: 'none', opacity: 0.9 }}>
       <path d="M12 21c.2-3.4-.4-6-2.6-8" stroke="#5C5140" strokeWidth="1.8" strokeLinecap="round" />
       <path
         d="M12 12.2C10.9 8.9 7.6 8 5.9 9.6c-1.6 1.5-1 4.4 1.7 5 1.9.5 3.6-.6 4.4-2.4Z"
@@ -248,6 +248,77 @@ export function MiniCloverIcon() {
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+// Fern crozier (fiddlehead) — the unhurried "someday" coil. Same fixed-species convention as the
+// other nav flowers: its own green regardless of active state.
+export function FernCoilIcon() {
+  return (
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+      <path
+        d="M12 21.5c0-4 .5-7 2.4-9.4 1.6-2 4-2.6 5.1-1.1 1 1.3.3 3.3-1.4 3.8-1.5.4-2.8-.6-2.8-2.1 0-1.7 1.5-3 3.3-2.6"
+        stroke="#5C5140"
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M11 16c-2.3-.3-3.8-1.9-4-4.2 2.3 0 3.8 1.7 4 4.2Z" fill="#8A9A7E" stroke="#5C5140" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M11.6 11.5c-1.8-1-2.5-3-1.7-5 1.8.9 2.5 3 1.7 5Z" fill="#9DAB8B" stroke="#5C5140" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Trellis — the planning board's grid of columns, read as a climbing-vine lattice.
+export function PlanningBoardIcon() {
+  return (
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+      <path d="M12 21.5V6.5" stroke="#5C5140" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6.5 21.5V9" stroke="#5C5140" strokeWidth="1.3" strokeLinecap="round" opacity="0.85" />
+      <path d="M17.5 21.5V9" stroke="#5C5140" strokeWidth="1.3" strokeLinecap="round" opacity="0.85" />
+      <path d="M4.5 12h15M4.5 16.5h15" stroke="#5C5140" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+      <path d="M12 6.5c-1.6-.2-2.7-1.4-2.8-3.1 1.9.1 2.9 1.4 2.8 3.1Z" fill="#8A9A7E" stroke="#5C5140" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M12 6.5c1.6-.2 2.7-1.4 2.8-3.1-1.9.1-2.9 1.4-2.8 3.1Z" fill="#9DAB8B" stroke="#5C5140" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M6.5 9c-1.3.1-2.2-.7-2.5-2 1.6-.1 2.4.8 2.5 2Z" fill="#D4A8B0" stroke="#5C5140" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M17.5 9c1.3.1 2.2-.7 2.5-2-1.6-.1-2.4.8-2.5 2Z" fill="#D4A8B0" stroke="#5C5140" strokeWidth="1" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Same plain glyph as the search input's own icon (SearchOverlay.tsx) — reused, not reinvented,
+// so the sidebar's Search row finally carries an icon like every other footer/nav row.
+export function SearchGlyphIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ flex: 'none' }}>
+      <circle cx="7" cy="7" r="5.2" stroke="#5C5140" strokeWidth="1.6" />
+      <path d="M11 11l4 4" stroke="#5C5140" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// Sprout — the PLAN section header's own icon (a fixed species, same convention as every
+// other nav row), distinct from Today's clover: two leaves breaking ground, "the day ahead."
+export function SproutIcon() {
+  return (
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+      <path d="M12 21.5V11.5" stroke="#5C5140" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M12 12.2c-1.6-3-5-3.6-7-1.8 1 2.7 4.5 3.8 7 1.8Z"
+        fill="#8A9A7E"
+        stroke="#5C5140"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 12.2c1.6-3.6 5.3-4.2 7.3-2-1 3.1-4.8 4.2-7.3 2Z"
+        fill="#9DAB8B"
+        stroke="#5C5140"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <ellipse cx="12" cy="20.8" rx="3.4" ry="1.1" fill="#C9B98F" stroke="#5C5140" strokeWidth="1" />
     </svg>
   )
 }

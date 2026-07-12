@@ -65,19 +65,36 @@ function newInboxItem(
     status: 'pending',
     filed_task_id: null,
     payload: extraPayload,
+    snoozed_until: null,
     created_at: nowIso(),
     updated_at: nowIso(),
   }
 }
 
-/** Text or transcript -> AI parse -> confidence-gated auto-file, else Inbox for triage. */
+export interface CaptureOverrides {
+  priority?: number | null
+  durationMin?: number | null
+}
+
+/** Stashes non-null overrides on a pending inbox item's `payload` so a later manual `fileToTask`
+ * (see `inbox/api.ts`) can still apply them — the auto-file branch below applies them immediately
+ * instead, so neither path loses a locally-typed `!`/`30m` token. */
+function overridesPayload(overrides: CaptureOverrides): Record<string, unknown> | null {
+  if (overrides.priority == null && overrides.durationMin == null) return null
+  return { priority_override: overrides.priority ?? null, duration_override: overrides.durationMin ?? null }
+}
+
+/** Text or transcript -> AI parse -> confidence-gated auto-file, else Inbox for triage.
+ * `overrides` carries priority/duration already resolved client-side (e.g. the command bar's
+ * local `!`/`30m` syntax) that the AI parse doesn't need to (and won't) infer on its own. */
 export async function captureWithAI(
   rawText: string,
   kind: 'text' | 'voice' = 'text',
   transcript: string | null = null,
+  overrides: CaptureOverrides = {},
 ): Promise<void> {
   if (!navigator.onLine) {
-    const item = newInboxItem(rawText, kind, transcript, null, { needs_parse: true })
+    const item = newInboxItem(rawText, kind, transcript, null, { needs_parse: true, ...overridesPayload(overrides) })
     writeRow('inbox_items', item)
     logActivity('inbox.captured', 'inbox_item', item.id, { kind, offline: true })
     useToastStore.getState().push({ message: 'Offline — captured, will process when back online' })
@@ -100,6 +117,8 @@ export async function captureWithAI(
       projectId: parse.project_id ?? null,
       dueAt: parse.due_at ?? null,
       reminderOffsetMin: parse.reminder_offset_min ?? null,
+      durationMin: overrides.durationMin ?? parse.duration_min ?? null,
+      priority: overrides.priority ?? null,
     })
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
     useToastStore.getState().push({
@@ -115,7 +134,7 @@ export async function captureWithAI(
     return
   }
 
-  const item = newInboxItem(rawText, kind, transcript, parse)
+  const item = newInboxItem(rawText, kind, transcript, parse, overridesPayload(overrides))
   writeRow('inbox_items', item)
   logActivity('inbox.captured', 'inbox_item', item.id, { kind })
   useToastStore.getState().push({ message: 'Added to Inbox for review' })
@@ -138,6 +157,7 @@ export async function processQueuedCaptures(): Promise<void> {
           projectId: parse.project_id ?? null,
           dueAt: parse.due_at ?? null,
           reminderOffsetMin: parse.reminder_offset_min ?? null,
+          durationMin: parse.duration_min ?? null,
         })
         writeRow('inbox_items', {
           ...item,

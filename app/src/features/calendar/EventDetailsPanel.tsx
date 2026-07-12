@@ -2,13 +2,18 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent } from './api'
+import { localTimeKey, localToIso } from './eventTime'
 import { completeTask } from '../tasks/api'
+import { localDateKey } from '../routines/streaks'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 
 interface EventDetailsPanelProps {
   event: CalendarEvent
   conflicts: string[]
   onClose: () => void
+  /** Opened from a "New Event"/"New Time Block" draft, not yet written to the DB — Save should
+   * persist the pre-filled defaults even untouched, and there's nothing to delete yet. */
+  isNew?: boolean
 }
 
 const ACCENT_COLORS = [
@@ -24,18 +29,18 @@ const ACCENT_COLORS = [
   { name: 'Gold', value: '#9A7B3A' },
 ]
 
-export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPanelProps) {
+export function EventDetailsPanel({ event, conflicts, onClose, isNew }: EventDetailsPanelProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [title, setTitle] = useState(event.title)
-  const [date, setDate] = useState(event.starts_at.slice(0, 10))
-  const [startTime, setStartTime] = useState(event.all_day ? '' : event.starts_at.slice(11, 16))
-  const [endTime, setEndTime] = useState(event.all_day ? '' : event.ends_at.slice(11, 16))
+  const [date, setDate] = useState(localDateKey(new Date(event.starts_at)))
+  const [startTime, setStartTime] = useState(event.all_day ? '' : localTimeKey(new Date(event.starts_at)))
+  const [endTime, setEndTime] = useState(event.all_day ? '' : localTimeKey(new Date(event.ends_at)))
   const [allDay, setAllDay] = useState(event.all_day)
   const [busy, setBusy] = useState(event.busy)
   const [eventType, setEventType] = useState<CalendarEventType>(event.type ?? 'event')
   const [eventColor, setEventColor] = useState<string | null>(event.color ?? null)
-  const [dirty, setDirty] = useState(false)
+  const [dirty, setDirty] = useState(Boolean(isNew))
   const [deleting, setDeleting] = useState<'idle' | 'confirm'>('idle')
   const titleRef = useRef<HTMLInputElement>(null)
 
@@ -63,16 +68,19 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   }
 
   function handleSave() {
-    const startsAt = `${date}T00:00:00.000Z`
+    if (!dirty) { onClose(); return }
+    let startsAt: string
     let endsAt: string
     if (allDay) {
+      startsAt = `${date}T00:00:00.000Z`
       endsAt = nextDay(date) + 'T00:00:00.000Z'
     } else {
-      endsAt = `${date}T${endTime}:00.000Z`
+      startsAt = localToIso(date, startTime)
+      endsAt = localToIso(date, endTime)
     }
     updateEvent(event, {
       title,
-      starts_at: allDay ? startsAt : `${date}T${startTime}:00.000Z`,
+      starts_at: startsAt,
       ends_at: endsAt,
       all_day: allDay,
       busy,
@@ -156,6 +164,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               {TYPES.map((t) => (
                 <button
                   key={t.key}
+                  type="button"
                   onClick={() => { setEventType(t.key); markDirty() }}
                   style={{
                     fontFamily: 'var(--font-mono)',
@@ -175,6 +184,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               ))}
             </div>
             <button
+              type="button"
               onClick={onClose}
               style={{
                 border: 'none',
@@ -297,6 +307,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                 {ACCENT_COLORS.map((c) => (
                   <button
                     key={c.value ?? 'none'}
+                    type="button"
                     onClick={() => { setEventColor(c.value); markDirty() }}
                     title={c.name}
                     style={{
@@ -340,6 +351,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
+                    type="button"
                     onClick={handleOpenTask}
                     style={{
                       fontFamily: 'var(--font-ui)',
@@ -355,6 +367,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                     Edit Task
                   </button>
                   <button
+                    type="button"
                     onClick={handleComplete}
                     style={{
                       fontFamily: 'var(--font-ui)',
@@ -394,9 +407,11 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               </button>
             </div>
 
+            {!isNew && (
             <div style={{ textAlign: 'center', marginTop: 2 }}>
               {deleting === 'idle' ? (
                 <button
+                  type="button"
                   onClick={() => setDeleting('confirm')}
                   style={{
                     fontFamily: 'var(--font-ui)',
@@ -421,6 +436,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                   </span>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button
+                      type="button"
                       onClick={handleDelete}
                       style={{
                         fontFamily: 'var(--font-ui)',
@@ -436,6 +452,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                       Delete
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeleting('idle')}
                       style={{
                         fontFamily: 'var(--font-ui)',
@@ -454,6 +471,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
       </div>

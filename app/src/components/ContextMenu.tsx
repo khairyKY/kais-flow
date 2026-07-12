@@ -1,10 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useEscapeStack } from '../lib/overlayStack'
 
 export interface ContextMenuItem {
   label: string
-  onClick: () => void
+  onClick?: () => void
   danger?: boolean
   disabled?: boolean
+  icon?: React.ReactNode
+  /** Overrides the label's text color (e.g. a priority level's own red/gold/blue) — ignored when `danger` is set. */
+  labelColor?: string
+  /** Right-aligned mono hint (e.g. `"E"`, `"#"`) — the row's own keyboard shortcut, when it has one. */
+  shortcut?: string
+  /** Renders a child popover beside this item — opens on hover (short intent delay) or click,
+   *  parent stays open. `onClose` collapses just this submenu (Escape/outside-click, so Escape
+   *  closes child-first); wrap action callbacks with `closeAll` so picking something inside the
+   *  child collapses the whole menu stack. */
+  submenu?: (ctx: { position: { x: number; y: number }; onClose: () => void; closeAll: () => void }) => React.ReactNode
 }
 
 interface ContextMenuProps {
@@ -13,8 +24,16 @@ interface ContextMenuProps {
   onClose: () => void
 }
 
+const SUBMENU_OPEN_DELAY = 150
+const SUBMENU_WIDTH = 220
+
 export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const openTimer = useRef<number | null>(null)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  useEscapeStack(true, onClose)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -22,70 +41,116 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
         onClose()
       }
     }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
     document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
+
+  useEffect(() => () => { if (openTimer.current) window.clearTimeout(openTimer.current) }, [])
+
+  function clearOpenTimer() {
+    if (openTimer.current) { window.clearTimeout(openTimer.current); openTimer.current = null }
+  }
+
+  function closeAll() {
+    setOpenIndex(null)
+    onClose()
+  }
+
+  function handleItemHover(i: number, hasSubmenu: boolean) {
+    clearOpenTimer()
+    if (openIndex !== null && openIndex !== i) setOpenIndex(null)
+    if (!hasSubmenu || openIndex === i) return
+    openTimer.current = window.setTimeout(() => setOpenIndex(i), SUBMENU_OPEN_DELAY)
+  }
+
+  function submenuPosition(i: number): { x: number; y: number } {
+    const el = itemRefs.current[i]
+    if (!el) return position
+    const rect = el.getBoundingClientRect()
+    const flip = rect.right + SUBMENU_WIDTH > window.innerWidth
+    return { x: flip ? Math.max(8, rect.left - SUBMENU_WIDTH) : rect.right, y: rect.top }
+  }
 
   const itemHeight = 34
   const maxY = window.innerHeight - 12
   const left = Math.min(position.x, window.innerWidth - 220)
   const top = Math.min(position.y, maxY - items.length * itemHeight)
 
+  const openItem = openIndex !== null ? items[openIndex] : null
+
   return (
-    <div
-      ref={ref}
-      role="menu"
-      style={{
-        position: 'fixed',
-        top: Math.max(12, top),
-        left: Math.max(8, left),
-        zIndex: 1000,
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--line-card)',
-        boxShadow: 'var(--shadow-popover)',
-        borderRadius: 'var(--radius-sharp)',
-        padding: '4px 0',
-        minWidth: 180,
-        transform: 'rotate(-0.3deg)',
-      }}
-    >
-      {items.map((item, i) => (
-        <div key={i}>
-          {i > 0 && items[i - 1].danger !== item.danger && (
-            <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
-          )}
-          <button
-            role="menuitem"
-            onClick={() => { item.onClick(); onClose() }}
-            disabled={item.disabled}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              fontFamily: 'var(--font-ui)',
-              fontSize: 13,
-              color: item.danger ? 'var(--sig-overdue)' : 'var(--text-primary)',
-              background: 'none',
-              border: 'none',
-              padding: '6px 16px',
-              cursor: item.disabled ? 'default' : 'pointer',
-              opacity: item.disabled ? 0.35 : 1,
-              transition: 'background 0.12s',
-            }}
-            onMouseEnter={(e) => { if (!item.disabled) e.currentTarget.style.background = 'var(--bg-input)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-          >
-            {item.label}
-          </button>
-        </div>
-      ))}
+    // Plain wrapper (no transform of its own) so the submenu's `position: fixed` popover anchors to
+    // the viewport, not to this rotated menu's box — a `transform` on any ancestor turns it into the
+    // containing block for fixed descendants (same class of bug Select.tsx's portal works around).
+    <div ref={ref}>
+      <div
+        role="menu"
+        style={{
+          position: 'fixed',
+          top: Math.max(12, top),
+          left: Math.max(8, left),
+          zIndex: 1000,
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--line-card)',
+          boxShadow: 'var(--shadow-popover)',
+          borderRadius: 'var(--radius-sharp)',
+          padding: '4px 0',
+          minWidth: 180,
+          transform: 'rotate(-0.3deg)',
+        }}
+      >
+        {items.map((item, i) => (
+          <div key={i}>
+            {i > 0 && items[i - 1].danger !== item.danger && (
+              <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
+            )}
+            <button
+              ref={(el) => { itemRefs.current[i] = el }}
+              role="menuitem"
+              onClick={() => {
+                if (item.submenu) { clearOpenTimer(); setOpenIndex(i); return }
+                item.onClick?.()
+                onClose()
+              }}
+              disabled={item.disabled}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 9,
+                width: '100%',
+                textAlign: 'left',
+                fontFamily: 'var(--font-ui)',
+                fontSize: 13,
+                color: item.danger ? 'var(--sig-overdue)' : item.labelColor ?? 'var(--text-primary)',
+                background: 'none',
+                border: 'none',
+                padding: '6px 16px',
+                cursor: item.disabled ? 'default' : 'pointer',
+                opacity: item.disabled ? 0.35 : 1,
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={(e) => {
+                if (item.disabled) return
+                e.currentTarget.style.background = 'var(--bg-input)'
+                handleItemHover(i, !!item.submenu)
+              }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+            >
+              {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--text-tertiary)' }}>{item.icon}</span>}
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.shortcut && !item.submenu && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>{item.shortcut}</span>
+              )}
+              {item.submenu && <span aria-hidden="true" style={{ color: 'var(--text-tertiary)', fontSize: 11 }}>▸</span>}
+            </button>
+          </div>
+        ))}
+      </div>
+      {openItem?.submenu?.({
+        position: submenuPosition(openIndex as number),
+        onClose: () => setOpenIndex(null),
+        closeAll,
+      })}
     </div>
   )
 }

@@ -35,6 +35,8 @@ export interface Task {
   recurrence_rule: string | null
   labels: string[]
   priority: number | null
+  duration_min: number | null
+  someday: boolean
   reminder_at: string | null
   reminder_sent: boolean
   completed_at: string | null
@@ -55,6 +57,7 @@ export interface InboxItem {
   status: InboxStatus
   filed_task_id: string | null
   payload: Record<string, unknown> | null
+  snoozed_until: string | null
   created_at: string
   updated_at: string
 }
@@ -88,8 +91,6 @@ export interface CalendarEvent {
   updated_at: string
 }
 
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening'
-
 export interface Cadence {
   weekdays: number[] // 0=Sunday..6=Saturday
 }
@@ -97,7 +98,10 @@ export interface Cadence {
 export interface Routine {
   id: string
   name: string
-  time_of_day: TimeOfDay
+  /** One of the 3 named presets, a custom label (e.g. "dusk"), or null (no time at all) — migration 0019. */
+  time_of_day: string | null
+  /** Explicit clock time, `HH:MM` 24h — migration 0019. Independent of `time_of_day`. */
+  clock_time: string | null
   cadence: Cadence
   challenge_start: string | null
   challenge_end: string | null

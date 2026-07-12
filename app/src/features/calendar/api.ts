@@ -91,6 +91,19 @@ export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt
   if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
 }
 
+/** Resizing a task-linked block is the calendar's estimate editor: the new length writes back to duration_min. */
+export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): void {
+  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt })
+  if (!event.task_id) return
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const task = tasks.find((t) => t.id === event.task_id)
+  if (!task) return
+  const durationMin = Math.round((new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60000)
+  const patch: Partial<Task> = { scheduled_start: startsAt, scheduled_end: endsAt }
+  if (durationMin !== task.duration_min) patch.duration_min = durationMin
+  writeRow('tasks', { ...task, ...patch })
+}
+
 /** Deleting a block un-schedules its task but the task itself survives. */
 export function deleteEvent(event: CalendarEvent): void {
   writeRow('calendar_events', event, 'delete')

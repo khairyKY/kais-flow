@@ -1,25 +1,67 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useDomains, createDomain, renameDomain, mergeDomain } from '../domains/api'
 import { useProjects, createProject } from '../projects/api'
-import {
-  useTasks,
-  createTask,
-  completeTask,
-  uncompleteTask,
-  toggleTop3,
-  snoozeTask,
-  deleteTask,
-  setRecurrence,
-  setReminder,
-} from './api'
-import type { Domain, Task } from '../../lib/types'
+import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
+import { TaskRow, type BulkActions } from './TaskRow'
+import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
+import { buildListBindings } from './listShortcuts'
+import { useListKeys } from '../../components/useListKeys'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { BulkBar } from '../../components/BulkBar'
+import { Select } from '../../components/Select'
+import { rowAnchor } from '../../lib/rowAnchor'
+import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { useEscapeStack } from '../../lib/overlayStack'
+import { useToastStore } from '../../lib/toastStore'
+import type { Domain } from '../../lib/types'
 import { useAreas, createArea, renameArea } from '../areas/api'
 
-function addDays(days: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return d.toISOString()
+const LIST_META: Record<SmartList, { title: string; eyebrow: string; caption?: string; empty: string }> = {
+  today: { title: 'Today', eyebrow: 'Smart list · due & overdue', empty: 'Nothing due today. Enjoy the quiet.' },
+  week: { title: 'This Week', eyebrow: 'Smart list · next 7 days', empty: 'A clear week ahead.' },
+  month: { title: 'This Month', eyebrow: 'Smart list · through month-end', empty: 'Nothing scheduled this month.' },
+  upcoming: { title: 'Upcoming', eyebrow: 'Smart list · beyond this month', empty: 'The far horizon is empty.' },
+  someday: { title: 'Someday', eyebrow: 'Smart list · unscheduled', caption: 'no dates, no guilt', empty: 'Nothing parked for someday.' },
+}
+
+function parseList(raw: string | null): SmartList | null {
+  return SMART_LISTS.includes(raw as SmartList) ? (raw as SmartList) : null
+}
+
+function SectionHeader({ group }: { group: TaskGroup }) {
+  const terra = group.key === 'overdue'
+  const h = Math.floor(group.totalMinutes / 60)
+  const m = group.totalMinutes % 60
+  const time = group.totalMinutes > 0 ? [h ? `${h}H` : '', m ? `${m}M` : ''].filter(Boolean).join(' ') : null
+  const color = terra ? 'var(--acc-terra)' : 'var(--text-tertiary)'
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 8,
+        marginTop: 26,
+        marginBottom: 4,
+        fontFamily: 'var(--font-mono)',
+        fontSize: 10.5,
+        letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+        color,
+      }}
+    >
+      <span>{group.label}</span>
+      <span style={{ opacity: 0.6 }}>·</span>
+      <span>{group.tasks.length}</span>
+      {time && (
+        <>
+          <span style={{ opacity: 0.6 }}>·</span>
+          <span style={{ color: 'var(--text-tertiary)' }}>{time}</span>
+        </>
+      )}
+    </div>
+  )
 }
 
 const FIELD_STYLE = {
@@ -115,23 +157,21 @@ function DomainsPanel() {
       {domains.length > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 11.5, color: 'var(--text-tertiary)', flexWrap: 'wrap' }}>
           <span>merge</span>
-          <select value={mergeFrom} onChange={(e) => setMergeFrom(e.target.value)} style={FIELD_STYLE}>
-            <option value="">…</option>
-            {domains.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={mergeFrom}
+            onChange={setMergeFrom}
+            ariaLabel="Merge from domain"
+            style={FIELD_STYLE}
+            options={[{ value: '', label: '…' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+          />
           <span>into</span>
-          <select value={mergeInto} onChange={(e) => setMergeInto(e.target.value)} style={FIELD_STYLE}>
-            <option value="">…</option>
-            {domains.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={mergeInto}
+            onChange={setMergeInto}
+            ariaLabel="Merge into domain"
+            style={FIELD_STYLE}
+            options={[{ value: '', label: '…' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+          />
           <button
             type="button"
             disabled={!mergeFrom || !mergeInto || mergeFrom === mergeInto}
@@ -222,12 +262,13 @@ function AreasPanel({ domains }: { domains: Domain[] }) {
           placeholder="New area"
           style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 10px', borderRadius: 'var(--radius-input)', flex: 1, minWidth: 120 }}
         />
-        <select value={domainId} onChange={(e) => setDomainId(e.target.value)} style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 10px', borderRadius: 'var(--radius-input)' }}>
-          <option value="">no domain</option>
-          {domains.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
-        </select>
+        <Select
+          value={domainId}
+          onChange={setDomainId}
+          ariaLabel="Area domain"
+          style={{ fontSize: 12.5, padding: '7px 10px' }}
+          options={[{ value: '', label: 'no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+        />
         <button type="submit" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 14px', borderRadius: 999, cursor: 'pointer' }}>
           Add
         </button>
@@ -279,14 +320,13 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
           placeholder="New project"
           style={{ ...FIELD_STYLE, flex: 1, minWidth: 120 }}
         />
-        <select value={domainId} onChange={(e) => setDomainId(e.target.value)} style={FIELD_STYLE}>
-          <option value="">no domain</option>
-          {domains.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
+        <Select
+          value={domainId}
+          onChange={setDomainId}
+          ariaLabel="Project domain"
+          style={FIELD_STYLE}
+          options={[{ value: '', label: 'no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+        />
         <button type="submit" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 12.5, padding: '7px 14px', borderRadius: 999, cursor: 'pointer' }}>
           Add
         </button>
@@ -295,147 +335,104 @@ function ProjectsPanel({ domains }: { domains: Domain[] }) {
   )
 }
 
-function TaskRow({ task, highlighted }: { task: Task; highlighted?: boolean }) {
-  const done = task.status === 'done'
-  return (
-    <div
-      id={`task-${task.id}`}
-      className="task-row"
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 14,
-        padding: '12px 0',
-        borderBottom: '1px dashed var(--line-dashed)',
-        boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
-        opacity: done ? 0.55 : 1,
-      }}
-    >
-      {done ? (
-        <span
-          style={{
-            width: 17,
-            height: 17,
-            borderRadius: 5,
-            background: 'var(--text-primary)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-on-accent)',
-            fontSize: 11,
-            flex: 'none',
-            marginTop: 2,
-            cursor: 'pointer',
-          }}
-          onClick={() => uncompleteTask(task)}
-        >
-          ✓
-        </span>
-      ) : (
-        <span
-          onClick={() => completeTask(task)}
-          style={{ width: 17, height: 17, border: '1.5px solid var(--line-sidebar)', borderRadius: 5, flex: 'none', marginTop: 2, cursor: 'pointer' }}
-        />
-      )}
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 15, color: done ? 'var(--ink-hairline)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : 'none' }}>
-            {task.title}
-          </span>
-          {!done && task.scheduled_start && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                color: 'var(--acc-lavender-deep)',
-                background: 'rgba(168,160,190,0.18)',
-                border: '1px solid rgba(168,160,190,0.5)',
-                padding: '2px 8px',
-                borderRadius: 999,
-              }}
-            >
-              {new Date(task.scheduled_start).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
-            </span>
-          )}
-          {!done && task.recurrence_rule && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)' }}>↻</span>}
-        </div>
-      </div>
-
-      {done ? (
-        <div className="task-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
-          <img src="assets/cherry/fallen.png" alt="" style={{ height: 22, width: 'auto', opacity: 0.7 }} />
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hairline)' }}>a petal fell</span>
-        </div>
-      ) : (
-        <div className="task-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
-          <span onClick={() => toggleTop3(task)} title="Top-3" style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-sidebar)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
-            {task.top3 ? '★' : '☆'}
-          </span>
-          <select
-            value={task.recurrence_rule ?? ''}
-            onChange={(e) => setRecurrence(task, e.target.value || null)}
-            title="Repeat"
-            style={{ fontFamily: 'inherit', fontSize: 11, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '3px 6px', color: 'var(--text-secondary)' }}
-          >
-            <option value="">no repeat</option>
-            <option value="FREQ=DAILY">daily</option>
-            <option value="FREQ=WEEKLY">weekly</option>
-            <option value="FREQ=MONTHLY">monthly</option>
-          </select>
-          {!done && (
-            <select
-              value={task.reminder_at || ''}
-              onChange={(e) => {
-                const val = e.target.value
-                if (!val) { setReminder(task, null); return }
-                const base = task.due_at || task.scheduled_start
-                if (!base) return
-                const offset = parseInt(val, 10)
-                const reminderAt = new Date(new Date(base).getTime() - offset * 60 * 1000).toISOString()
-                setReminder(task, reminderAt)
-              }}
-              title="Remind me"
-              style={{ fontFamily: 'inherit', fontSize: 11, background: task.reminder_at ? 'rgba(181,101,74,0.12)' : 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '3px 6px', color: 'var(--text-secondary)', maxWidth: 100 }}
-            >
-              <option value="">no reminder</option>
-              <option value="0" disabled={!task.due_at && !task.scheduled_start}>at due time</option>
-              <option value="5" disabled={!task.due_at && !task.scheduled_start}>5 min before</option>
-              <option value="15" disabled={!task.due_at && !task.scheduled_start}>15 min before</option>
-              <option value="30" disabled={!task.due_at && !task.scheduled_start}>30 min before</option>
-              <option value="60" disabled={!task.due_at && !task.scheduled_start}>1 hr before</option>
-            </select>
-          )}
-          <button type="button" onClick={() => snoozeTask(task, addDays(1))} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
-            snooze 1d
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const hasBlock = Boolean(task.scheduled_start)
-              const message = hasBlock
-                ? `Delete "${task.title}"? This also removes its scheduled calendar block.`
-                : `Delete "${task.title}"?`
-              if (window.confirm(message)) deleteTask(task)
-            }}
-            style={{ border: 'none', background: 'none', color: 'var(--acc-terra)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
-          >
-            delete
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function TasksPage() {
   const { data: domains = [] } = useDomains()
+  const { data: projects = [] } = useProjects()
   const { data: tasks = [] } = useTasks()
   const [title, setTitle] = useState('')
   const [searchParams] = useSearchParams()
   const focusId = searchParams.get('focus')
+  const list = parseList(searchParams.get('list'))
+  const meta = list ? LIST_META[list] : null
 
-  const active = tasks.filter((t) => t.status !== 'cancelled')
+  const now = new Date()
+  const filtered = filterByList(tasks, list, now)
+  const groups = groupTasks(filtered, now)
+  const flatTasks = groups.flatMap((g) => g.tasks)
+  const emptyMessage = meta ? meta.empty : "No tasks yet. Type one above, or press ⌘K and just say what's on your mind."
+
+  const [kbSnoozeId, setKbSnoozeId] = useState<string | null>(null)
+  const [kbProjectId, setKbProjectId] = useState<string | null>(null)
+  const kbSnoozeTask = kbSnoozeId ? flatTasks.find((t) => t.id === kbSnoozeId) : null
+  const kbProjectTask = kbProjectId ? flatTasks.find((t) => t.id === kbProjectId) : null
+
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const selectedTasks = tasks.filter((t) => selected.has(t.id))
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+  function clearSelection() {
+    setSelected(new Set())
+  }
+  useEffect(() => clearSelection(), [list])
+  useEscapeStack(selected.size > 0, clearSelection)
+
+  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+
+  function bulkComplete() {
+    selectedTasks.forEach(completeTask)
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    clearSelection()
+  }
+  function bulkSnooze(until: string) {
+    selectedTasks.forEach((t) => snoozeTask(t, until))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} snoozed.` })
+    clearSelection()
+  }
+  function bulkSchedule(iso: string, when = '') {
+    selectedTasks.forEach((t) => rescheduleDue(t, iso))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled${when ? ' ' + when : ''}.` })
+    clearSelection()
+  }
+  function bulkMove(projectId: string | null, domainId: string | null) {
+    selectedTasks.forEach((t) => setProject(t, projectId, domainId))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
+    clearSelection()
+  }
+  function bulkSomeday() {
+    selectedTasks.forEach((t) => setSomeday(t, true))
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
+    clearSelection()
+  }
+  function bulkDelete() {
+    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
+    selectedTasks.forEach(deleteTask)
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
+    clearSelection()
+  }
+
+  // Passed into TaskRow's context menu when 2+ tasks are selected, so right-clicking any one of
+  // them acts on the whole selection instead of just that row (only built above this size — a
+  // solo selected row keeps the plain single-task menu, matching its pre-selection behavior).
+  const bulkActions: BulkActions | undefined =
+    selected.size > 1
+      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      : undefined
+
+  const bindings = buildListBindings({
+    complete: (t) => completeTask(t),
+    snooze: (t) => setKbSnoozeId(t.id),
+    today: (t) => rescheduleDue(t, scheduleToday()),
+    tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
+    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    top3: (t) => toggleTop3(t),
+    project: (t) => setKbProjectId(t.id),
+    toggleSelect: (t) => toggleSelected(t.id),
+    delete: (t) => {
+      const message = t.scheduled_start ? `Delete "${t.title}"? This also removes its scheduled calendar block.` : `Delete "${t.title}"?`
+      if (window.confirm(message)) deleteTask(t)
+    },
+  })
+  const { focusedId: kbFocusedId } = useListKeys(flatTasks, bindings, {
+    active: !kbSnoozeId && !kbProjectId,
+    sectionLabel: 'Lists',
+    onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
+  })
 
   useEffect(() => {
     if (!focusId) return
@@ -448,53 +445,82 @@ export function TasksPage() {
         .tasks-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 760px; }
         @media (max-width: 767px) {
           .tasks-panels { grid-template-columns: 1fr; }
-          .task-row { flex-wrap: wrap; }
-          .task-row-controls { flex-basis: 100%; padding-left: 31px; margin-top: 6px; }
         }
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 9 }}>
-            Tasks · Prunus
+            {meta ? meta.eyebrow : 'Tasks · Prunus'}
           </div>
-          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Tasks</h1>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>
+            {meta ? meta.title : 'Tasks'}
+          </h1>
+          {meta?.caption && (
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--text-secondary)', marginTop: 8, transform: 'rotate(-0.8deg)' }}>
+              {meta.caption}
+            </div>
+          )}
+          {list === 'upcoming' && (
+            <Link
+              to="/planning"
+              style={{
+                display: 'inline-block',
+                marginTop: 10,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--text-tertiary)',
+                textDecoration: 'underline',
+              }}
+            >
+              → Planning board
+            </Link>
+          )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', transform: 'rotate(-1deg)' }}>
-          <img src="assets/cherry/bloom.png" alt="Cherry blossom" style={{ height: 86, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
-          <span
-            style={{
-              position: 'absolute',
-              top: 40,
-              left: '50%',
-              width: 38,
-              height: 11,
-              marginLeft: -19,
-              background: 'rgba(212,168,176,0.4)',
-              backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
-              transform: 'rotate(3deg)',
-              borderRadius: 1,
-            }}
-          />
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>one petal falls per task done</span>
-        </div>
+        {!list && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', transform: 'rotate(-1deg)' }}>
+            <img src="assets/cherry/bloom.png" alt="Cherry blossom" style={{ height: 86, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+            <span
+              style={{
+                position: 'absolute',
+                top: 40,
+                left: '50%',
+                width: 38,
+                height: 11,
+                marginLeft: -19,
+                background: 'rgba(212,168,176,0.4)',
+                backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+                transform: 'rotate(3deg)',
+                borderRadius: 1,
+              }}
+            />
+            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>one petal falls per task done</span>
+          </div>
+        )}
       </div>
 
       <div style={{ height: 1, borderBottom: '1px dashed var(--border-default)', margin: '26px 0 30px' }} />
 
-      <div className="tasks-panels">
-        <DomainsPanel />
-        <AreasPanel domains={domains} />
-        <ProjectsPanel domains={domains} />
-      </div>
+      {!list && (
+        <div className="tasks-panels">
+          <DomainsPanel />
+          <AreasPanel domains={domains} />
+          <ProjectsPanel domains={domains} />
+        </div>
+      )}
 
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          if (title.trim()) createTask({ title: title.trim() })
+          if (title.trim()) {
+            const created = createTask({ title: title.trim(), dueAt: list === 'today' ? now.toISOString() : undefined })
+            if (list === 'someday') setSomeday(created, true)
+          }
           setTitle('')
         }}
-        style={{ display: 'flex', gap: 10, margin: '24px 0 8px', maxWidth: 760 }}
+        style={{ display: 'flex', gap: 10, margin: list ? '0 0 8px' : '24px 0 8px', maxWidth: 760 }}
       >
         <input
           value={title}
@@ -519,14 +545,76 @@ export function TasksPage() {
       </form>
 
       <div style={{ maxWidth: 760 }}>
-        {active.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>
-            No tasks yet. Type one above, or press ⌘K and just say what's on your mind.
-          </p>
+        {groups.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>{emptyMessage}</p>
         ) : (
-          active.map((t) => <TaskRow key={t.id} task={t} highlighted={t.id === focusId} />)
+          groups.map((group) => (
+            <div key={group.key}>
+              <SectionHeader group={group} />
+              {group.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  highlighted={t.id === focusId || t.id === kbFocusedId}
+                  selected={selected.has(t.id)}
+                  onToggleSelect={() => toggleSelected(t.id)}
+                  bulk={bulkActions}
+                />
+              ))}
+            </div>
+          ))
         )}
       </div>
+
+      {kbSnoozeTask && (
+        <SnoozeMenu
+          position={rowAnchor('task-', kbSnoozeTask.id)}
+          onClose={() => setKbSnoozeId(null)}
+          onSnooze={(until) => snoozeTask(kbSnoozeTask, until)}
+          onSomeday={() => setSomeday(kbSnoozeTask, true)}
+        />
+      )}
+      {kbProjectTask && (
+        <ProjectPicker
+          position={rowAnchor('task-', kbProjectTask.id)}
+          projects={projects}
+          domains={domains}
+          currentProjectId={kbProjectTask.project_id}
+          onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)}
+          onClose={() => setKbProjectId(null)}
+        />
+      )}
+
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onComplete={bulkComplete}
+          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onToday={() => bulkSchedule(scheduleToday(), 'today')}
+          onTomorrow={() => bulkSchedule(scheduleTomorrow(), 'tomorrow')}
+          onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
+        />
+      )}
+      {bulkSnoozePos && (
+        <SnoozeMenu
+          position={bulkSnoozePos}
+          onClose={() => setBulkSnoozePos(null)}
+          onSnooze={bulkSnooze}
+          onSomeday={bulkSomeday}
+        />
+      )}
+      {bulkProjectPos && (
+        <ProjectPicker
+          position={bulkProjectPos}
+          projects={projects}
+          domains={domains}
+          currentProjectId={null}
+          onSelect={bulkMove}
+          onClose={() => setBulkProjectPos(null)}
+        />
+      )}
     </div>
   )
 }

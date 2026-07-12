@@ -1,25 +1,138 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
 import { CommandBar } from '../features/command-bar/CommandBar'
+import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { ChatPanel } from '../features/chat/ChatPanel'
 import { SearchOverlay } from '../features/search/SearchOverlay'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTerrariumStore } from '../features/today/terrariumStore'
+import { useTasks } from '../features/tasks/api'
+import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { ToastHost } from './ToastHost'
+import { ShortcutOverlay } from './ShortcutOverlay'
 import {
   BellIcon,
   CalendarIcon,
   ChatIcon,
+  FernCoilIcon,
   InboxIcon,
   MiniCloverIcon,
+  PlanningBoardIcon,
   ReviewIcon,
   RoutinesIcon,
+  SearchGlyphIcon,
   SettingsIcon,
+  SproutIcon,
   TasksIcon,
   TodayIcon,
 } from './icons/NavIcons'
+
+const smartLists: { list: SmartList; label: string }[] = [
+  { list: 'today', label: 'Due Today' },
+  { list: 'week', label: 'This Week' },
+  { list: 'month', label: 'This Month' },
+  { list: 'upcoming', label: 'Upcoming' },
+]
+
+function SmartListNav() {
+  const { data: tasks = [] } = useTasks()
+  const [params] = useSearchParams()
+  const { pathname } = useLocation()
+  const activeList = pathname === '/tasks' ? params.get('list') : null
+  const [open, setOpen] = useState(() => localStorage.getItem('kf.planOpen') !== '0')
+
+  useEffect(() => {
+    localStorage.setItem('kf.planOpen', open ? '1' : '0')
+  }, [open])
+
+  const todayCount = filterByList(tasks, 'today').length
+
+  const navRow = (to: string, label: string, active: boolean, icon?: React.ReactNode, count?: number) => (
+    <Link
+      key={to}
+      to={to}
+      className={`kf-side-row${active ? ' kf-active' : ''}`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '6px 10px',
+        borderRadius: 'var(--radius-input)',
+        textDecoration: 'none',
+        background: active ? 'var(--bg-surface)' : 'none',
+        border: active ? '1px solid var(--line-card)' : '1px solid transparent',
+        boxShadow: active ? 'var(--shadow-card)' : 'none',
+      }}
+    >
+      {icon ?? <span style={{ width: 23, flex: 'none' }} />}
+      <span className="app-nav-label" style={{ fontSize: 'var(--fs-body-s)', fontWeight: active ? 'var(--fw-semibold)' : 'var(--fw-regular)', color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+        {label}
+      </span>
+      {!!count && count > 0 && (
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', letterSpacing: 'var(--ls-mono)', color: 'var(--text-tertiary)' }}>
+          {count}
+        </span>
+      )}
+    </Link>
+  )
+
+  const row = (list: SmartList, label: string, icon?: React.ReactNode) =>
+    navRow(`/tasks?list=${list}`, label, activeList === list, icon, filterByList(tasks, list).length)
+
+  return (
+    <div className="app-smartlist" style={{ padding: '0 16px 14px', margin: '0 0 6px', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="app-nav-label kf-side-row"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          width: '100%',
+          padding: '6px 10px',
+          marginBottom: 4,
+          borderRadius: 'var(--radius-input)',
+          background: 'var(--bg-app)',
+          border: '1px solid var(--line-sidebar)',
+          cursor: 'pointer',
+          font: 'inherit',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--fs-mono-s)',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+        }}
+        aria-expanded={open}
+      >
+        <SproutIcon />
+        <span>Plan</span>
+        <span
+          aria-hidden="true"
+          className="kf-plan-chevron"
+          style={{ display: 'inline-block', fontSize: 12, transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+        >
+          &gt;
+        </span>
+        {!open && todayCount > 0 && (
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', letterSpacing: 'var(--ls-mono)', color: 'var(--text-tertiary)' }}>
+            {todayCount}
+          </span>
+        )}
+      </button>
+      {open && (
+        <>
+          {smartLists.map(({ list, label }) => row(list, label))}
+          <div style={{ height: 1, margin: '4px 10px', borderTop: '1px dashed var(--border-dashed)' }} />
+          {row('someday', 'Someday', <FernCoilIcon />)}
+          {navRow('/planning', 'Planning board', pathname === '/planning', <PlanningBoardIcon />)}
+        </>
+      )}
+    </div>
+  )
+}
 
 const navItems = [
   { to: '/today', label: 'Today', Icon: TodayIcon },
@@ -29,6 +142,7 @@ const navItems = [
   { to: '/routines', label: 'Routines', Icon: RoutinesIcon, badge: 'routinesGarden' as const },
   { to: '/notifications', label: 'Activity', Icon: BellIcon },
   { to: '/weekly-review', label: 'Review', Icon: ReviewIcon },
+  { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ]
 
 function useOnline(): boolean {
@@ -208,17 +322,29 @@ function SettingsPopover({ onClose }: { onClose: () => void }) {
   )
 }
 
+function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+}
+
 export function AppLayout() {
   useRealtimeSync()
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('kf.sidebarCollapsed') === '1')
+
+  useEffect(() => {
+    localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
+  }, [collapsed])
+  const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const { data: pendingInbox = [] } = usePendingInboxItems()
   const { on: terrariumOn, inToday: terrariumInToday } = useTerrariumStore()
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && (e.key === '/' || e.key.toLowerCase() === 'k')) {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault()
         setSearchOpen((v) => !v)
       }
@@ -226,10 +352,19 @@ export function AppLayout() {
         e.preventDefault()
         setChatOpen((v) => !v)
       }
+      if (isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === 'n') {
+        e.preventDefault()
+        setCommandBarOpen(true)
+      }
+      if (e.key === '?') {
+        e.preventDefault()
+        setShortcutsOpen((v) => !v)
+      }
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [])
+  }, [setCommandBarOpen])
 
   const showInRoutinesNav = terrariumOn && !terrariumInToday
 
@@ -238,13 +373,39 @@ export function AppLayout() {
       <style>{`
         @media (max-width: 767px) {
           .app-sidebar { width: 64px !important; padding-top: 14px !important; }
-          .app-sidebar-header, .app-nav-label, .app-footer-label, .app-vine { display: none !important; }
+          .app-sidebar-header, .app-nav-label, .app-footer-label, .app-vine, .app-smartlist { display: none !important; }
           .app-topbar { padding: 0 14px !important; }
           .app-main-content { padding: 20px 16px 40px !important; }
         }
+        .app-sidebar.collapsed { width: 64px !important; }
+        .app-sidebar.collapsed .app-sidebar-header,
+        .app-sidebar.collapsed .app-nav-label,
+        .app-sidebar.collapsed .app-footer-label,
+        .app-sidebar.collapsed .app-vine,
+        .app-sidebar.collapsed .app-smartlist { display: none !important; }
+
+        .kf-side-row {
+          transition: transform var(--dur-quick) var(--ease-spring),
+                      background-color var(--dur-normal) var(--ease-natural),
+                      color var(--dur-normal) var(--ease-natural);
+        }
+        .kf-side-row:hover { background: var(--bg-input) !important; transform: translateX(3px); }
+        .kf-side-row:active { transform: translateX(1px); }
+        .kf-side-row.kf-active:hover { background: var(--bg-surface) !important; }
+        .kf-side-row:hover svg { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
+
+        .kf-plan-chevron { transition: transform var(--dur-quick) var(--ease-spring); }
+
+        .kf-collapse-btn {
+          transition: transform var(--dur-quick) var(--ease-spring),
+                      color var(--dur-normal) var(--ease-natural),
+                      box-shadow var(--dur-normal) var(--ease-natural);
+        }
+        .kf-collapse-btn:hover { transform: scale(1.15); color: var(--text-secondary); }
+        .kf-collapse-btn:active { transform: scale(0.97); }
       `}</style>
       <aside
-        className="app-sidebar"
+        className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
         style={{
           width: 238,
           flex: 'none',
@@ -257,6 +418,32 @@ export function AppLayout() {
           zIndex: 5,
         }}
       >
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="kf-collapse-btn"
+          style={{
+            position: 'absolute',
+            top: 18,
+            right: -12,
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            border: '1px solid var(--line-card)',
+            background: 'var(--bg-surface)',
+            boxShadow: 'var(--shadow-card)',
+            color: 'var(--text-tertiary)',
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 6,
+          }}
+        >
+          {collapsed ? '›' : '‹'}
+        </button>
         <div className="app-sidebar-header" style={{ padding: '0 24px 24px' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>
             Kai's Flow
@@ -269,6 +456,8 @@ export function AppLayout() {
           </div>
         </div>
 
+        <SmartListNav />
+
         <nav style={{ position: 'relative', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 3 }}>
           <span
             aria-hidden="true"
@@ -279,6 +468,7 @@ export function AppLayout() {
             <NavLink
               key={to}
               to={to}
+              className={({ isActive }) => `kf-side-row${isActive ? ' kf-active' : ''}`}
               style={({ isActive }) =>
                 isActive
                   ? {
@@ -323,7 +513,11 @@ export function AppLayout() {
                       {pendingInbox.length}
                     </span>
                   )}
-                  {badge === 'routinesGarden' && showInRoutinesNav && <MiniCloverIcon />}
+                  {badge === 'routinesGarden' && showInRoutinesNav && (
+                    <span style={{ marginLeft: 'auto', display: 'flex' }}>
+                      <MiniCloverIcon />
+                    </span>
+                  )}
                 </>
               )}
             </NavLink>
@@ -332,9 +526,11 @@ export function AppLayout() {
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
+            className="kf-side-row"
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               gap: 12,
               padding: '8px 10px',
               borderRadius: 'var(--radius-input)',
@@ -346,8 +542,8 @@ export function AppLayout() {
               font: 'inherit',
             }}
           >
-            <SettingsIcon />
-            <span className="app-nav-label" style={{ fontSize: 'var(--fs-body)', color: 'var(--text-secondary)' }}>Settings</span>
+            <MiniCloverIcon />
+            <span className="app-nav-label" style={{ fontSize: 'var(--fs-body)', color: 'var(--text-secondary)' }}>Garden</span>
           </button>
         </nav>
 
@@ -359,15 +555,19 @@ export function AppLayout() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 10px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
+            className="kf-side-row"
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
           >
-            <span style={{ width: 22 }} />
+            <span style={{ width: 22, display: 'flex', justifyContent: 'center' }}>
+              <SearchGlyphIcon />
+            </span>
             <span className="app-footer-label" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Search</span>
-            <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>⌘K</span>
+            <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>⌘/</span>
           </button>
           <button
             type="button"
             onClick={() => setChatOpen(true)}
+            className="kf-side-row"
             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
           >
             <ChatIcon />
@@ -377,6 +577,7 @@ export function AppLayout() {
           <button
             type="button"
             onClick={() => void supabase.auth.signOut()}
+            className="kf-side-row"
             style={{ display: 'flex', alignItems: 'center', padding: '8px 10px', borderRadius: 'var(--radius-input)', marginTop: 2, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
           >
             <span style={{ width: 22 }} />
@@ -395,6 +596,7 @@ export function AppLayout() {
       <CommandBar />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
+      <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ToastHost />
     </div>
   )

@@ -1,0 +1,9 @@
+/* TaskRow's own hover-reveal chrome — colocated so every caller (TasksPage, PlanningBoard, …)
+   gets it for free just by importing the component, instead of each page redeclaring it. */
+.task-row-hover { opacity: 0; transition: opacity 120ms; }
+.task-row:hover .task-row-hover, .task-row:focus-within .task-row-hover { opacity: 1; }
+@media (max-width: 767px) {
+  .task-row { flex-wrap: wrap; }
+  .task-row-controls { flex-basis: 100%; padding-left: 31px; margin-top: 6px; }
+  .task-row-hover { opacity: 1; }
+}

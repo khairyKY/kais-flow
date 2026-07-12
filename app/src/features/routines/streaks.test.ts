@@ -1,8 +1,38 @@
 import { describe, expect, it } from 'vitest'
-import { computeStreak, localDateKey } from './streaks'
-import type { Cadence } from '../../lib/types'
+import { aggregateCompletionRate, completionRate, computeStreak, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
+import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
+const NEVER: Cadence = { weekdays: [] }
+// Fixed "now" for the rate/sparkline/risk tests below: Wed 2026-07-08, mid-afternoon local —
+// same fixed-date convention grouping.test.ts uses.
+const NOW = new Date('2026-07-08T15:00:00')
+
+function dayKey(offset: number): string {
+  const d = new Date(NOW)
+  d.setDate(d.getDate() + offset)
+  return localDateKey(d)
+}
+
+function routine(over: Partial<Routine>): Routine {
+  return {
+    id: over.id ?? crypto.randomUUID(),
+    name: 'Routine',
+    time_of_day: null,
+    clock_time: null,
+    cadence: DAILY,
+    challenge_start: null,
+    challenge_end: null,
+    active: true,
+    created_at: '',
+    updated_at: '',
+    ...over,
+  }
+}
+
+function completionsFor(routineId: string, dateKeys: string[]): RoutineCompletion[] {
+  return dateKeys.map((d) => ({ id: crypto.randomUUID(), routine_id: routineId, completed_on: d, created_at: '' }))
+}
 
 function addDays(d: Date, n: number): Date {
   const copy = new Date(d)
@@ -87,5 +117,81 @@ describe('computeStreak', () => {
   it('returns zeros for an empty history', () => {
     const today = new Date(2026, 6, 10, 9, 0, 0)
     expect(computeStreak([], DAILY, today)).toEqual({ current: 0, best: 0 })
+  })
+})
+
+describe('completionRate', () => {
+  it('rounds completed/scheduled over the trailing window, today inclusive', () => {
+    // 7-day window = offsets -6..0 (7 days). Complete 5, miss 2.
+    const completed = [dayKey(-6), dayKey(-5), dayKey(-4), dayKey(-3), dayKey(0)]
+    expect(completionRate(completed, DAILY, 7, NOW)).toBe(Math.round((5 / 7) * 100))
+  })
+
+  it('returns 0 (not NaN) when the cadence never schedules a day in the window', () => {
+    expect(completionRate([], NEVER, 7, NOW)).toBe(0)
+  })
+
+  it('returns 100 when every scheduled day in the window was completed', () => {
+    const completed = [dayKey(-6), dayKey(-5), dayKey(-4), dayKey(-3), dayKey(-2), dayKey(-1), dayKey(0)]
+    expect(completionRate(completed, DAILY, 7, NOW)).toBe(100)
+  })
+})
+
+describe('aggregateCompletionRate', () => {
+  it('sums scheduled/done across routines before dividing (weighted, not averaged)', () => {
+    const daily = routine({ id: 'daily', cadence: DAILY })
+    const weekdayOnly = routine({ id: 'weekday', cadence: { weekdays: [1, 2, 3, 4, 5] } })
+    // daily: 7 scheduled days in window, complete all 7. weekdayOnly: fewer scheduled days,
+    // complete none. A naive average of the two routines' own rates would be 50%.
+    const completions = completionsFor('daily', [dayKey(-6), dayKey(-5), dayKey(-4), dayKey(-3), dayKey(-2), dayKey(-1), dayKey(0)])
+    const rate = aggregateCompletionRate([daily, weekdayOnly], completions, 7, NOW)
+    expect(rate).toBeGreaterThan(50)
+    expect(rate).toBeLessThan(100)
+  })
+
+  it('returns 0 for an empty routine list', () => {
+    expect(aggregateCompletionRate([], [], 7, NOW)).toBe(0)
+  })
+})
+
+describe('dailyCompletionRatios', () => {
+  it('returns one ratio per day, oldest first, fixed length', () => {
+    expect(dailyCompletionRatios([routine({ cadence: DAILY })], [], 14, NOW)).toHaveLength(14)
+  })
+
+  it('a day with nothing scheduled reads as 0, not skipped', () => {
+    expect(dailyCompletionRatios([routine({ cadence: NEVER })], [], 3, NOW)).toEqual([0, 0, 0])
+  })
+
+  it('computes the fraction of scheduled routines done on the most recent day', () => {
+    const r1 = routine({ id: 'r1', cadence: DAILY })
+    const r2 = routine({ id: 'r2', cadence: DAILY })
+    const completions = completionsFor('r1', [dayKey(0)])
+    expect(dailyCompletionRatios([r1, r2], completions, 1, NOW)).toEqual([0.5])
+  })
+})
+
+describe('streakRiskMessage', () => {
+  it('flags a scheduled-today routine with an active streak not yet done today', () => {
+    const r = routine({ name: 'Meditate', cadence: DAILY })
+    const completions = completionsFor(r.id, [dayKey(-1), dayKey(-2), dayKey(-3)])
+    const msg = streakRiskMessage([r], completions, NOW)
+    expect(msg).toContain('Meditate')
+    expect(msg).toContain('3-day')
+  })
+
+  it('returns null once the routine is already done today', () => {
+    const r = routine({ name: 'Meditate', cadence: DAILY })
+    const completions = completionsFor(r.id, [dayKey(-1), dayKey(0)])
+    expect(streakRiskMessage([r], completions, NOW)).toBeNull()
+  })
+
+  it('returns null when nothing is scheduled today', () => {
+    const r = routine({ name: 'Weekly review', cadence: { weekdays: [1] } }) // Monday only; NOW is Wednesday
+    expect(streakRiskMessage([r], [], NOW)).toBeNull()
+  })
+
+  it('returns null when there is no streak to lose', () => {
+    expect(streakRiskMessage([routine({ name: 'Fresh habit', cadence: DAILY })], [], NOW)).toBeNull()
   })
 })

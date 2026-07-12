@@ -93,8 +93,11 @@ export function writeRow<T extends { id: string }>(
   row: T,
   op: 'upsert' | 'delete' = 'upsert',
 ): void {
-  queryClient.setQueryData<T[]>([table], (old) => {
-    if (!old) return undefined // no cached list yet — nothing to update optimistically
+  queryClient.setQueryData<T[] | T>([table], (old) => {
+    if (!old) return undefined // no cached row/list yet — nothing to update optimistically
+    // Every table caches an array under its query key, except the `app_settings` singleton
+    // (cached as the row itself) — branch on shape rather than assuming `old` is always a list.
+    if (!Array.isArray(old)) return op === 'delete' ? undefined : row
     if (op === 'delete') return old.filter((r) => r.id !== row.id)
     const idx = old.findIndex((r) => r.id === row.id)
     if (idx === -1) return [...old, row]

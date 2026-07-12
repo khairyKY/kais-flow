@@ -9,6 +9,7 @@ import { TodayPage } from './features/today/TodayPage'
 import { InboxPage } from './features/inbox/InboxPage'
 import { TasksPage } from './features/tasks/TasksPage'
 import { CalendarPage } from './features/calendar/CalendarPage'
+import { PlanningBoard } from './features/calendar/PlanningBoard'
 import { RoutinesPage } from './features/routines/RoutinesPage'
 import { WeeklyReviewPage } from './features/rituals/WeeklyReviewPage'
 import { SettingsPage } from './features/settings/SettingsPage'
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
       { path: 'inbox', element: <InboxPage /> },
       { path: 'tasks', element: <TasksPage /> },
       { path: 'calendar', element: <CalendarPage /> },
+      { path: 'planning', element: <PlanningBoard /> },
       { path: 'routines', element: <RoutinesPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'weekly-review', element: <WeeklyReviewPage /> },

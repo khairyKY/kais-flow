@@ -30,6 +30,8 @@ export interface CreateTaskInput {
   projectId?: string | null
   dueAt?: string | null
   reminderOffsetMin?: number | null
+  durationMin?: number | null
+  priority?: number | null
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -51,7 +53,9 @@ export function createTask(input: CreateTaskInput): Task {
     snoozed_until: null,
     recurrence_rule: null,
     labels: [],
-    priority: null,
+    priority: input.priority ?? null,
+    duration_min: input.durationMin ?? null,
+    someday: false,
     area_id: null,
     reminder_at: reminderAt,
     reminder_sent: false,
@@ -102,9 +106,20 @@ export function deleteTask(task: Task): void {
   logActivity('task.deleted', 'task', task.id, {})
 }
 
+/** Hides the task from Today-style views until `until` — distinct from `due_at` (the deadline). Clears `someday` since picking a concrete re-surface time is the opposite of "no date, no guilt". */
 export function snoozeTask(task: Task, until: string): void {
-  writeRow('tasks', { ...task, snoozed_until: until })
+  writeRow('tasks', { ...task, snoozed_until: until, someday: false })
   logActivity('task.snoozed', 'task', task.id, { until })
+}
+
+export function setSomeday(task: Task, someday: boolean): void {
+  writeRow('tasks', { ...task, someday })
+  logActivity('task.someday_set', 'task', task.id, { someday })
+}
+
+export function setProject(task: Task, projectId: string | null, domainId: string | null): void {
+  writeRow('tasks', { ...task, project_id: projectId, domain_id: domainId })
+  logActivity('task.moved', 'task', task.id, { project_id: projectId })
 }
 
 export function setLabels(task: Task, labels: string[]): void {
@@ -115,6 +130,10 @@ export function setPriority(task: Task, priority: number | null): void {
   writeRow('tasks', { ...task, priority })
 }
 
+export function setDuration(task: Task, durationMin: number | null): void {
+  writeRow('tasks', { ...task, duration_min: durationMin })
+}
+
 /** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. */
 export function toggleTop3(task: Task): void {
   if (!task.top3) {
@@ -122,7 +141,7 @@ export function toggleTop3(task: Task): void {
     const currentTop3Count = tasks.filter((t) => t.top3 && t.id !== task.id).length
     if (currentTop3Count >= MAX_TOP3) return
   }
-  writeRow('tasks', { ...task, top3: !task.top3 })
+  writeRow('tasks', { ...task, top3: !task.top3, someday: task.top3 ? task.someday : false })
   logActivity(task.top3 ? 'task.unstarred' : 'task.starred', 'task', task.id, {})
 }
 
@@ -130,8 +149,9 @@ export function renameTask(task: Task, title: string): void {
   writeRow('tasks', { ...task, title })
 }
 
+/** Setting a real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3 all clear it). */
 export function rescheduleDue(task: Task, dueAt: string | null): void {
-  writeRow('tasks', { ...task, due_at: dueAt })
+  writeRow('tasks', { ...task, due_at: dueAt, someday: dueAt ? false : task.someday })
   logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
 }
 

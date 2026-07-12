@@ -7,23 +7,108 @@ import {
   archiveRoutine,
   toggleCompletion,
 } from './api'
-import { computeStreak, localDateKey } from './streaks'
+import { aggregateCompletionRate, computeStreak, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
+import { groupRoutinesByTime, NAMED_TIMES, type NamedTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
-import type { Routine, RoutineCompletion, TimeOfDay } from '../../lib/types'
-
-const SECTIONS: { key: TimeOfDay; label: string }[] = [
-  { key: 'morning', label: 'Morning' },
-  { key: 'afternoon', label: 'Afternoon' },
-  { key: 'evening', label: 'Evening' },
-]
+import { Select } from '../../components/Select'
+import type { Routine, RoutineCompletion } from '../../lib/types'
 
 const HISTORY_DAYS = 14
 
-function vineAsset(longestStreak: number): string {
-  if (longestStreak === 0) return 'bare'
-  if (longestStreak <= 3) return 'sprouting'
-  if (longestStreak <= 7) return 'flowering'
+type TimeMode = NamedTime | 'clock' | 'custom' | 'none'
+
+function vineDayState(done: number, scheduled: number): 'bare' | 'sprouting' | 'flowering' | 'lush' {
+  if (scheduled === 0 || done === 0) return 'bare'
+  const ratio = done / scheduled
+  if (ratio < 0.5) return 'sprouting'
+  if (ratio < 1) return 'flowering'
   return 'lush'
+}
+
+/** The page-header "streak vine" — a horizontal row of the last 7 days, per Kai's audit item 5
+ * ("I want the vine to be horizontal ... and resemble the streak"). Each cell reuses the same 4
+ * fixed vine PNGs, picked per-day by how much of that day's scheduled routines got done. Growth/
+ * flame choreography is deliberately deferred to the Motion Retrofit — this is layout only. */
+function StreakVine({ routines, completions }: { routines: Routine[]; completions: RoutineCompletion[] }) {
+  const today = new Date()
+  const cells = []
+  for (let n = 6; n >= 0; n--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - n)
+    const key = localDateKey(d)
+    const scheduled = routines.filter((r) => r.cadence.weekdays.includes(d.getDay()))
+    const done = scheduled.filter((r) => completions.some((c) => c.routine_id === r.id && c.completed_on === key))
+    cells.push({ key, label: d.toLocaleDateString('en-US', { weekday: 'narrow' }), state: vineDayState(done.length, scheduled.length), isToday: n === 0 })
+  }
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      {cells.map((c) => (
+        <div
+          key={c.key}
+          title={c.key}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            padding: '6px 4px',
+            borderRadius: 4,
+            background: c.isToday ? 'color-mix(in oklch, var(--acc-gold-warm) 12%, transparent)' : 'transparent',
+            border: c.isToday ? '1px dashed var(--acc-gold-warm)' : '1px solid transparent',
+          }}
+        >
+          <img src={`assets/vine/${c.state}.png`} alt="" style={{ width: 28, height: 28, objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: c.isToday ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            }}
+          >
+            {c.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** A simple polyline sparkline over the last `HISTORY_DAYS` of aggregate completion — per the
+ * phase's own "keep the SVG simple" guidance, just a `<polyline>`, no chart library. */
+function Sparkline({ ratios }: { ratios: number[] }) {
+  const w = 90
+  const h = 20
+  const points = ratios
+    .map((r, i) => `${((i / (ratios.length - 1)) * w).toFixed(1)},${(h - r * h).toFixed(1)}`)
+    .join(' ')
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ flex: 'none' }}>
+      <polyline points={points} fill="none" stroke="var(--acc-sage)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** Real 7/30-day completion rates + a 14-day sparkline + a streak-risk nudge — all computed
+ * from `routine_completions`, replacing what used to be a hardcoded 82%/78% (P4/P5.5 debt). */
+function RateSummary({ routines, completions }: { routines: Routine[]; completions: RoutineCompletion[] }) {
+  const rate7 = aggregateCompletionRate(routines, completions, 7)
+  const rate30 = aggregateCompletionRate(routines, completions, 30)
+  const ratios = dailyCompletionRatios(routines, completions, HISTORY_DAYS)
+  const risk = streakRiskMessage(routines, completions)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', marginBottom: 16 }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+        7D <span style={{ color: 'var(--text-primary)', fontWeight: 'var(--fw-semibold)' }}>{rate7}%</span>
+      </span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+        30D <span style={{ color: 'var(--text-primary)', fontWeight: 'var(--fw-semibold)' }}>{rate30}%</span>
+      </span>
+      <Sparkline ratios={ratios} />
+      {risk && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--acc-terra)' }}>{risk}</span>}
+    </div>
+  )
 }
 
 function History({ routine, completions }: { routine: Routine; completions: RoutineCompletion[] }) {
@@ -113,6 +198,11 @@ function RoutineRow({ routine, completions }: { routine: Routine; completions: R
         <span style={{ fontSize: 14.5, color: doneToday ? 'var(--ink-hairline)' : 'var(--text-primary)', textDecoration: doneToday ? 'line-through' : 'none' }}>
           {routine.name}
         </span>
+        {(routine.clock_time || (routine.time_of_day && !NAMED_TIMES.includes(routine.time_of_day as NamedTime))) && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>
+            {routine.clock_time ?? routine.time_of_day}
+          </span>
+        )}
         {isChallenge && (
           <span
             style={{
@@ -142,9 +232,19 @@ function RoutineRow({ routine, completions }: { routine: Routine; completions: R
   )
 }
 
+/** Resolves the form's time picker into the two columns `createRoutine`/`createChallenge` write. */
+function resolveTime(mode: TimeMode, customLabel: string, clockTime: string): { timeOfDay: string | null; clockTime: string | null } {
+  if (mode === 'morning' || mode === 'afternoon' || mode === 'evening') return { timeOfDay: mode, clockTime: null }
+  if (mode === 'clock') return { timeOfDay: null, clockTime: clockTime || null }
+  if (mode === 'custom') return { timeOfDay: customLabel.trim() || null, clockTime: null }
+  return { timeOfDay: null, clockTime: null }
+}
+
 function AddRoutineForm() {
   const [name, setName] = useState('')
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+  const [timeMode, setTimeMode] = useState<TimeMode>('morning')
+  const [customLabel, setCustomLabel] = useState('')
+  const [clockTime, setClockTime] = useState('')
   const [isChallenge, setIsChallenge] = useState(false)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
@@ -168,14 +268,17 @@ function AddRoutineForm() {
         onSubmit={(e) => {
           e.preventDefault()
           if (!name.trim()) return
+          const { timeOfDay, clockTime: resolvedClock } = resolveTime(timeMode, customLabel, clockTime)
           if (isChallenge && start && end) {
-            createChallenge(name.trim(), timeOfDay, { weekdays: [0, 1, 2, 3, 4, 5, 6] }, start, end)
+            createChallenge(name.trim(), timeOfDay, { weekdays: [0, 1, 2, 3, 4, 5, 6] }, start, end, resolvedClock)
             useToastStore.getState().push({ message: 'New challenge registered in the soil.' })
           } else {
-            createRoutine(name.trim(), timeOfDay)
+            createRoutine(name.trim(), timeOfDay, undefined, resolvedClock)
             useToastStore.getState().push({ message: 'New routine registered in the soil.' })
           }
           setName('')
+          setCustomLabel('')
+          setClockTime('')
           setStart('')
           setEnd('')
         }}
@@ -187,17 +290,61 @@ function AddRoutineForm() {
           placeholder="Quick add routine…"
           style={{ flex: 1, minWidth: 200, fontFamily: 'var(--font-ui)', fontSize: 13.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '8px 12px', outline: 'none', color: 'var(--text-primary)' }}
         />
-        <select
-          value={timeOfDay}
-          onChange={(e) => setTimeOfDay(e.target.value as TimeOfDay)}
-          style={{ fontFamily: 'inherit', fontSize: 12.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '8px 10px', color: 'var(--text-primary)' }}
+        <Select
+          value={timeMode}
+          onChange={(v) => setTimeMode(v as TimeMode)}
+          ariaLabel="Routine time"
+          style={{ fontSize: 12.5, padding: '8px 10px' }}
+          options={[
+            { value: 'morning', label: 'Morning' },
+            { value: 'afternoon', label: 'Afternoon' },
+            { value: 'evening', label: 'Evening' },
+            { value: 'clock', label: 'Pick a time…' },
+            { value: 'custom', label: 'Custom label…' },
+            { value: 'none', label: 'No time' },
+          ]}
+        />
+        {timeMode === 'clock' && (
+          <input
+            type="time"
+            value={clockTime}
+            onChange={(e) => setClockTime(e.target.value)}
+            style={{ fontFamily: 'inherit', fontSize: 12.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', color: 'var(--text-primary)' }}
+          />
+        )}
+        {timeMode === 'custom' && (
+          <input
+            value={customLabel}
+            onChange={(e) => setCustomLabel(e.target.value)}
+            placeholder="e.g. dusk"
+            style={{ width: 100, fontFamily: 'var(--font-ui)', fontSize: 12.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', outline: 'none', color: 'var(--text-primary)' }}
+          />
+        )}
+        <span
+          role="checkbox"
+          aria-checked={isChallenge}
+          tabIndex={0}
+          onClick={() => setIsChallenge((v) => !v)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsChallenge((v) => !v) } }}
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 4,
+            border: '1.5px solid var(--line-solid)',
+            background: isChallenge ? 'var(--text-primary)' : 'transparent',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flex: 'none',
+          }}
         >
-          <option value="morning">Morning</option>
-          <option value="afternoon">Afternoon</option>
-          <option value="evening">Evening</option>
-        </select>
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
-          <input type="checkbox" checked={isChallenge} onChange={(e) => setIsChallenge(e.target.checked)} style={{ cursor: 'pointer' }} />
+          {isChallenge && <span style={{ color: 'var(--bg-app)', fontSize: 10, lineHeight: 1 }}>✓</span>}
+        </span>
+        <label
+          onClick={() => setIsChallenge((v) => !v)}
+          style={{ fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}
+        >
           Challenge
         </label>
         {isChallenge && (
@@ -232,12 +379,6 @@ export function RoutinesPage() {
   const todayKey = localDateKey(new Date())
   const doneToday = active.filter((r) => completions.some((c) => c.routine_id === r.id && c.completed_on === todayKey)).length
 
-  const longestStreak = Math.max(
-    0,
-    ...active.map((r) => computeStreak(completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on), r.cadence).current),
-  )
-  const vine = vineAsset(longestStreak)
-
   return (
     <div style={{ maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -247,25 +388,13 @@ export function RoutinesPage() {
           </div>
           <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Routines</h1>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', transform: 'rotate(-1deg)' }}>
-          <img src={`assets/vine/${vine}.png`} alt="Vine" style={{ height: 96, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
-          <span
-            style={{
-              position: 'absolute',
-              top: -8,
-              left: 24,
-              width: 58,
-              height: 14,
-              background: 'var(--acc-gold-warm)',
-              opacity: 0.35,
-              backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 6px)',
-              transform: 'rotate(-1.5deg)',
-              borderRadius: 1,
-            }}
-          />
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>leaves grow along the streak</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <StreakVine routines={active} completions={completions} />
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--text-secondary)', transform: 'rotate(-0.6deg)' }}>this week's growth</span>
         </div>
       </div>
+
+      <RateSummary routines={active} completions={completions} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
@@ -276,22 +405,19 @@ export function RoutinesPage() {
       <AddRoutineForm />
 
       <div style={{ maxWidth: 720 }}>
-        {SECTIONS.map((section) => {
-          const items = active.filter((r) => r.time_of_day === section.key)
-          return (
-            <div key={section.key} style={{ marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-                <span>{section.label}</span>
-                <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              </div>
-              {items.length === 0 ? (
-                <p style={{ fontStyle: 'italic', color: 'var(--text-tertiary)', fontSize: 13.5, padding: '8px 0', margin: 0 }}>Nothing scheduled here.</p>
-              ) : (
-                items.map((r) => <RoutineRow key={r.id} routine={r} completions={completions} />)
-              )}
+        {groupRoutinesByTime(active).map((section) => (
+          <div key={section.key} style={{ marginBottom: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <span>{section.label}</span>
+              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
-          )
-        })}
+            {section.items.length === 0 ? (
+              <p style={{ fontStyle: 'italic', color: 'var(--text-tertiary)', fontSize: 13.5, padding: '8px 0', margin: 0 }}>Nothing scheduled here.</p>
+            ) : (
+              section.items.map((r) => <RoutineRow key={r.id} routine={r} completions={completions} />)
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

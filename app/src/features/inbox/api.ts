@@ -15,7 +15,7 @@ export function usePendingInboxItems() {
   return useQuery({
     queryKey: ['inbox_items'],
     queryFn: fetchInboxItems,
-    select: (items) => items.filter((i) => i.status === 'pending'),
+    select: (items) => items.filter((i) => i.status === 'pending' && (!i.snoozed_until || new Date(i.snoozed_until) <= new Date())),
   })
 }
 
@@ -43,6 +43,7 @@ export function captureText(rawText: string): InboxItem {
     status: 'pending',
     filed_task_id: null,
     payload: null,
+    snoozed_until: null,
     created_at: nowIso(),
     updated_at: nowIso(),
   }
@@ -51,16 +52,30 @@ export function captureText(rawText: string): InboxItem {
   return item
 }
 
-/** Manual triage: file a pending inbox item into a task under the chosen domain/project. */
+/** Hides the item from the triage queue until `until` — a lighter cousin of `tasks.snoozeTask`,
+ * no push reminder (that half of SPECS.md's "Snooze" backlog item stays future-phase). */
+export function snoozeInboxItem(item: InboxItem, until: string): void {
+  writeRow('inbox_items', { ...item, snoozed_until: until })
+  logActivity('inbox.snoozed', 'inbox_item', item.id, { until })
+}
+
+/** Manual triage: file a pending inbox item into a task under the chosen domain/project.
+ * `title` lets the caller file the AI-cleaned/edited title instead of the raw capture
+ * (the AI's `cleaned_text` used to be shown but never actually filed). Priority/duration typed
+ * locally at capture time (command bar `!`/`30m` syntax) ride along on `item.payload` when the
+ * item didn't auto-file — applied here so a deferred manual filing doesn't lose them either. */
 export function fileToTask(
   item: InboxItem,
-  opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null } = {},
+  opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null; title?: string } = {},
 ): void {
+  const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
   const task = createTask({
-    title: item.raw_text,
+    title: opts.title?.trim() || item.raw_text,
     domainId: opts.domainId ?? null,
     projectId: opts.projectId ?? null,
     dueAt: opts.dueAt ?? null,
+    priority: overrides?.priority_override ?? null,
+    durationMin: overrides?.duration_override ?? null,
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })

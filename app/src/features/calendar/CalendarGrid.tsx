@@ -1,5 +1,6 @@
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
+import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
@@ -26,9 +27,25 @@ interface CalendarGridProps {
   onMove: (id: string, start: string, end: string) => void
   onResize: (id: string, start: string, end: string) => void
   onEventClick: (id: string) => void
-  onExternalDrop: (taskId: string, start: string, end: string) => void
+  onExternalDrop: (taskId: string, start: string) => void
   onEventContextMenu?: (eventId: string, x: number, y: number) => void
+  /** Right-click on empty grid space (not an existing event) — resolves the exact slot under the cursor. */
+  onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
   conflictedIds?: string[]
+}
+
+/** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
+ * subtrees that only line up visually — elementsFromPoint sees both at a given pixel. */
+function resolveGridDateTime(x: number, y: number): { iso: string; allDay: boolean } | null {
+  const stack = document.elementsFromPoint(x, y)
+  const dateEl = stack.find((el) => el.hasAttribute('data-date'))
+  if (!dateEl) return null
+  const [y0, mo, d] = dateEl.getAttribute('data-date')!.split('-').map(Number)
+  const timeEl = stack.find((el) => el.hasAttribute('data-time'))
+  const timeStr = timeEl?.getAttribute('data-time') ?? null
+  if (!timeStr) return { iso: new Date(y0, mo - 1, d).toISOString(), allDay: true }
+  const [hh, mm] = timeStr.split(':').map(Number)
+  return { iso: new Date(y0, mo - 1, d, hh, mm).toISOString(), allDay: false }
 }
 
 export function CalendarGrid({
@@ -40,29 +57,51 @@ export function CalendarGrid({
   onEventClick,
   onExternalDrop,
   onEventContextMenu,
+  onGridContextMenu,
   conflictedIds,
 }: CalendarGridProps) {
   const customView = 'customDayCount'
+
+  function handleGridContextMenu(e: React.MouseEvent) {
+    if (!onGridContextMenu) return
+    const target = e.target as HTMLElement
+    if (target.closest('.fc-event')) return
+    const resolved = resolveGridDateTime(e.clientX, e.clientY)
+    if (!resolved) return
+    e.preventDefault()
+    onGridContextMenu(resolved.iso, resolved.allDay, e.clientX, e.clientY)
+  }
+
   return (
+    <div onContextMenu={handleGridContextMenu} style={{ display: 'contents' }}>
     <FullCalendar
       key={dayCount}
-      plugins={[timeGridPlugin, interactionPlugin]}
-      initialView={dayCount === 7 ? 'timeGridWeek' : customView}
+      plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+      initialView="timeGridWeek"
       views={{
         [customView]: {
           type: 'timeGrid',
           duration: { days: dayCount },
+          // dayCount defaults to 7, same span as Week — harmless, just a redundant button.
           buttonText: `${dayCount}d`,
         },
       }}
-      headerToolbar={{ left: 'prev,next today', center: 'title', right: 'timeGridDay,' + (dayCount === 7 ? 'timeGridWeek' : customView) }}
+      headerToolbar={{ left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
       height="auto"
-      dayHeaderContent={(arg) => (
-        <div className="cal-day-header">
-          <div className="cal-day-header-name">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-          <div className="cal-day-header-num">{arg.date.getDate()}</div>
-        </div>
-      )}
+      dayMaxEvents
+      dayHeaderContent={(arg) => {
+        // Month view's header row is one cell per weekday, not per date — the two-line
+        // day-number header only makes sense in the timeGrid views.
+        if (arg.view.type === 'dayGridMonth') {
+          return <div className="cal-day-header cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+        }
+        return (
+          <div className="cal-day-header">
+            <div className="cal-day-header-name">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+            <div className="cal-day-header-num">{arg.date.getDate()}</div>
+          </div>
+        )
+      }}
       nowIndicator
       selectable
       selectMirror
@@ -103,9 +142,9 @@ export function CalendarGrid({
       drop={(info: DropArg) => {
         const taskId = info.draggedEl.dataset.taskId
         if (!taskId || !info.date) return
-        const end = new Date(info.date.getTime() + 30 * 60 * 1000)
-        onExternalDrop(taskId, info.date.toISOString(), end.toISOString())
+        onExternalDrop(taskId, info.date.toISOString())
       }}
     />
+    </div>
   )
 }

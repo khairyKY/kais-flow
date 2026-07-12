@@ -2,30 +2,42 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { createTask } from '../tasks/api'
+import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { captureText } from '../inbox/api'
 import { captureWithAI } from '../capture/api'
-import { parseCommand } from './parseCommand'
+import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCommand'
+import { useCommandBarStore } from './commandBarStore'
+import { useEscapeStack } from '../../lib/overlayStack'
+
+const CHIP_BASE: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10.5,
+  padding: '4px 10px',
+  borderRadius: 999,
+}
 
 export function CommandBar() {
-  const [open, setOpen] = useState(false)
+  const open = useCommandBarStore((s) => s.open)
+  const setOpen = useCommandBarStore((s) => s.setOpen)
+  const toggle = useCommandBarStore((s) => s.toggle)
   const [text, setText] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
 
+  useEscapeStack(open, () => setOpen(false))
+
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setOpen((v) => !v)
-      } else if (e.key === 'Escape') {
-        setOpen(false)
+        toggle()
       }
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [])
+  }, [toggle])
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
@@ -37,12 +49,14 @@ export function CommandBar() {
   function submit() {
     const trimmed = text.trim()
     if (!trimmed) return
-    if (parsed.dueAt || parsed.domainId || parsed.projectId) {
+    if (hasStructure(parsed)) {
       createTask({
         title: parsed.title || trimmed,
         domainId: parsed.domainId,
         projectId: parsed.projectId,
         dueAt: parsed.dueAt,
+        durationMin: parsed.durationMin,
+        priority: parsed.priority,
       })
     } else {
       captureText(trimmed)
@@ -53,15 +67,21 @@ export function CommandBar() {
   function submitWithAI() {
     const trimmed = text.trim()
     if (!trimmed || aiBusy) return
+    // Strip just the local `!`/`30m` tokens before the AI sees the text — date/#tag parsing
+    // stays the AI's own job, so only these two get resolved client-side here.
+    const { text: stripped, priority, durationMin } = stripPriorityAndDuration(trimmed)
     setAiBusy(true)
     setOpen(false)
-    void captureWithAI(trimmed, 'text').finally(() => setAiBusy(false))
+    void captureWithAI(stripped || trimmed, 'text', null, { priority, durationMin }).finally(() => setAiBusy(false))
   }
 
   if (!open) return null
 
   const matchChip = parsed.projectMatch ?? parsed.domainMatch
-  const unmatched = !parsed.dueAt && !parsed.domainId && !parsed.projectId
+  // Same condition `submit()`'s gate uses — this chip promises what Enter will actually do,
+  // so a priority/duration-only command (which now creates a task directly) can't still say
+  // "→ Inbox (unfiled)" underneath it.
+  const unmatched = !hasStructure(parsed)
 
   return (
     <div
@@ -136,6 +156,19 @@ export function CommandBar() {
                 {new Date(parsed.dueAt).toLocaleString()}
               </span>
             )}
+            {parsed.durationMin != null && (
+              <span style={{ ...CHIP_BASE, color: 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-default)' }}>
+                {formatDuration(parsed.durationMin)}
+              </span>
+            )}
+            {parsed.priority != null && (() => {
+              const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
+              return (
+                <span style={{ ...CHIP_BASE, color, background: `color-mix(in oklch, ${color} 12%, var(--paper-parchment))`, border: `1px solid ${color}`, fontWeight: 600 }}>
+                  {priorityFlag(parsed.priority)} priority
+                </span>
+              )
+            })()}
             {matchChip && (
               <span
                 style={{

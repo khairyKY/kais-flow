@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { searchHybrid } from './api'
+import { useEscapeStack } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
 
 const DEBOUNCE_MS = 250
@@ -11,6 +12,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+
+  useEscapeStack(open, onClose)
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
@@ -111,7 +114,6 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && onClose()}
             placeholder="Search tasks and inbox…"
             style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--text-primary)', background: 'transparent', border: 'none', outline: 'none' }}
           />
