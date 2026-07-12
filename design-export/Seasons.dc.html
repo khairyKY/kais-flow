@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.45}
+.mono{font-family:var(--font-mono)}
+.hstage{position:relative;height:210px;overflow:hidden}
+.hband{position:absolute;left:20px;right:20px;bottom:18px;z-index:5}
+.hlabel{position:absolute;left:14px;top:12px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);z-index:6}
+.petal{position:absolute;top:-14px;width:10px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:pFall 8s linear infinite}
+.aleaf{position:absolute;top:-14px;width:12px;height:8px;background:linear-gradient(135deg,#C9A55A,#a9803f);border-radius:80% 20% 70% 30%;animation:pFall 10s linear infinite}
+.wleaf{position:absolute;width:12px;height:8px;background:linear-gradient(135deg,#C9A55A,#a9803f);border-radius:80% 20% 70% 30%;animation:sideDrift 6.5s ease-in infinite}
+.rain{position:absolute;top:-20px;width:1.5px;height:16px;background:linear-gradient(rgba(154,180,190,0),rgba(154,180,190,0.7));animation:rainFall 1.4s linear infinite}
+@keyframes pFall{0%{transform:translate(0,-16px) rotate(0deg);opacity:0}10%{opacity:0.95}55%{transform:translate(18px,110px) rotate(200deg);opacity:0.9}100%{transform:translate(4px,230px) rotate(380deg);opacity:0}}
+@keyframes sideDrift{0%{transform:translate(-20px,0) rotate(0deg);opacity:0}12%{opacity:0.9}100%{transform:translate(340px,44px) rotate(300deg);opacity:0}}
+@keyframes rainFall{0%{transform:translateY(0)}100%{transform:translateY(240px)}}
+@keyframes shimmerY{0%,100%{opacity:0.14;transform:scaleY(1)}50%{opacity:0.3;transform:scaleY(1.06)}}
+@media (prefers-reduced-motion: reduce){.petal,.aleaf,.wleaf,.rain{animation:none !important;opacity:0 !important}}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Seasons &amp; weather — year-phases and sky over the Today header. The layer sits behind; text never fogs.</span></div>
+  <div class="dv-opts">
+
+    <!-- 1A — THE SEASONS ROW -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>The seasons row — from the Cairo calendar</div>
+      <div class="dv-card" style="width:1240px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr">
+
+          <!-- SPRING -->
+          <div class="hstage" style="background:#F0EBD8;border-right:1px solid var(--line-card)">
+            <div class="grain"></div>
+            <span class="hlabel">Spring · blossom density</span>
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 50% at 50% 0%,rgba(216,229,205,0.55),rgba(216,229,205,0) 70%)"></span>
+            <span class="petal" style="left:20%"></span>
+            <span class="petal" style="left:44%;animation-delay:2.6s;width:8px;height:7px"></span>
+            <span class="petal" style="left:66%;animation-delay:5s"></span>
+            <span class="petal" style="left:84%;animation-delay:1.4s;width:9px;height:7px"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Tuesday · 14 April</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <img src="ds/assets/cherry/bloom.png" alt="" style="height:56px;filter:var(--shadow-drop-sm)">
+              </div>
+            </div>
+          </div>
+
+          <!-- SUMMER -->
+          <div class="hstage" style="background:#F3EBD2;border-right:1px solid var(--line-card)">
+            <div class="grain"></div>
+            <span class="hlabel">Summer · high warm light</span>
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 100% 60% at 50% 0%,rgba(232,217,160,0.6),rgba(232,217,160,0) 72%)"></span>
+            <span style="position:absolute;left:14%;right:14%;bottom:70px;height:14px;background:linear-gradient(rgba(232,217,160,0),rgba(232,217,160,0.55),rgba(232,217,160,0));animation:shimmerY 3.5s ease-in-out infinite;transform-origin:50% 100%"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Friday · 10 July</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <img src="ds/assets/daisy/midday.png" alt="" style="height:56px;filter:var(--shadow-drop-sm)">
+              </div>
+            </div>
+          </div>
+
+          <!-- AUTUMN -->
+          <div class="hstage" style="background:#EDE2CC;border-right:1px solid var(--line-card)">
+            <div class="grain"></div>
+            <span class="hlabel">Autumn · leaf tint</span>
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 50% at 50% 0%,rgba(201,165,90,0.28),rgba(201,165,90,0) 70%)"></span>
+            <span class="aleaf" style="left:38%"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Monday · 19 October</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <img src="ds/assets/vine/lush.png" alt="" style="height:56px;filter:var(--shadow-drop-sm) sepia(0.3) saturate(0.85)">
+              </div>
+            </div>
+          </div>
+
+          <!-- WINTER -->
+          <div class="hstage" style="background:#EAE8E0">
+            <div class="grain" style="opacity:0.35"></div>
+            <span class="hlabel">Winter · damp light, dew</span>
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 55% at 50% 0%,rgba(190,200,205,0.4),rgba(190,200,205,0) 70%)"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Thursday · 15 January</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <span style="position:relative"><img src="ds/assets/clover/dewdrop.png" alt="" style="height:56px;filter:var(--shadow-drop-sm) saturate(0.8)"><span style="position:absolute;right:10px;top:12px;width:7px;height:7px;background:radial-gradient(circle at 40% 40%,#fff,rgba(255,255,255,0) 65%);border-radius:50%"></span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 1B — COMPOSITES -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Three composites — season × live weather, enough to prove the matrix</div>
+      <div class="dv-card" style="width:1240px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
+
+          <!-- RAINY SUMMER DAY -->
+          <div class="hstage" style="background:#EBE5CE;border-right:1px solid var(--line-card)">
+            <div class="grain"></div>
+            <span class="hlabel">Rainy summer day</span>
+            <span style="position:absolute;inset:0;background:linear-gradient(rgba(154,180,190,0.18),rgba(154,180,190,0) 60%)"></span>
+            <span class="rain" style="left:16%"></span><span class="rain" style="left:28%;animation-delay:0.5s"></span><span class="rain" style="left:41%;animation-delay:0.2s"></span><span class="rain" style="left:55%;animation-delay:0.8s"></span><span class="rain" style="left:68%;animation-delay:0.35s"></span><span class="rain" style="left:81%;animation-delay:0.65s"></span><span class="rain" style="left:91%;animation-delay:0.1s"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Friday · 10 July · rain</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <span style="position:relative"><img src="ds/assets/daisy/midday.png" alt="" style="height:56px;filter:var(--shadow-drop-sm) brightness(1.04)"><span style="position:absolute;right:14px;top:10px;width:6px;height:6px;background:radial-gradient(circle at 40% 40%,#fff,rgba(255,255,255,0) 65%);border-radius:50%"></span><span style="position:absolute;left:12px;top:22px;width:5px;height:5px;background:radial-gradient(circle at 40% 40%,#fff,rgba(255,255,255,0) 65%);border-radius:50%"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLEAR WINTER MORNING -->
+          <div class="hstage" style="background:#ECEAE1;border-right:1px solid var(--line-card)">
+            <div class="grain" style="opacity:0.35"></div>
+            <span class="hlabel">Clear winter morning</span>
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 30% 0%,rgba(232,222,190,0.5),rgba(232,222,190,0) 70%)"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Thursday · 15 January · clear</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good morning, Kai</div>
+                <img src="ds/assets/daisy/morning.png" alt="" style="height:56px;filter:var(--shadow-drop-sm) saturate(0.85)">
+              </div>
+            </div>
+          </div>
+
+          <!-- WINDY AUTUMN EVENING -->
+          <div class="hstage" style="background:#E9DDC6">
+            <div class="grain"></div>
+            <span class="hlabel">Windy autumn evening</span>
+            <span style="position:absolute;inset:0;background:linear-gradient(rgba(90,74,96,0.16),rgba(201,165,90,0.12) 70%)"></span>
+            <span class="wleaf" style="left:4%;top:36px"></span>
+            <span class="wleaf" style="left:-4%;top:70px;animation-delay:2.8s;width:10px;height:7px"></span>
+            <div class="hband">
+              <div class="mono" style="font-size:8.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Monday · 19 October · wind</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);margin-top:3px">Good evening, Kai</div>
+                <img src="ds/assets/vine/lush.png" alt="" style="height:56px;filter:var(--shadow-drop-sm) sepia(0.3) saturate(0.8);transform:rotate(2.5deg);transform-origin:50% 100%">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 1C — TOPBAR ECHO + TOGGLE -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Topbar echo — and what remains with effects off</div>
+      <div class="dv-card" style="width:640px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen)">
+          <div style="height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+            <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Fri 10 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage)"></span></span><span>·</span><span style="color:var(--ink-muted)">Cairo · 34° clear</span></div>
+            <div>Africa/Cairo</div>
+          </div>
+          <div style="padding:16px 26px 20px;display:flex;align-items:center;gap:14px">
+            <span style="width:34px;height:20px;border-radius:999px;background:var(--line-solid);flex:none;position:relative"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span>
+            <div style="font-size:12.5px;color:var(--ink-muted);line-height:1.55">Effects off → the whole layer folds away; only this topbar segment remains. The layer always sits <em>behind</em> content and never fogs text.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Primary home: the Today header/terrarium; quiet echoes on the garden view. Season from the Cairo calendar, weather from live local conditions. Rain pairs with the Rain patter sound when the <a href="Settings">Sound catalog</a> is on.</p>
+</section>
+</x-dc>
+</body>
+</html>

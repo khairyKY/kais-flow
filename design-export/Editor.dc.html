@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--acc-terra)}
+a:hover{color:#8f4f39}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.phone{width:398px;height:838px;background:#211d18;border-radius:56px;padding:11px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 30px 60px rgba(60,52,38,0.28);position:relative;flex:none}
+.phone-screen{width:100%;height:100%;background:var(--paper-linen);border-radius:46px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:33px;background:#0d0b09;border-radius:20px;z-index:60}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline);margin-top:5px}
+.finput{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:9px 12px;font-size:13.5px;color:var(--ink-body);display:flex;align-items:center;gap:8px}
+.fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--ink-body);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fsel .car{color:var(--ink-hairline);font-size:10px}
+.seg{display:flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:7px;padding:3px;gap:3px}
+.seg span{flex:1;text-align:center;padding:6px 4px;border-radius:5px;font-size:12px;color:var(--ink-muted);white-space:nowrap}
+.seg .on{background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);color:var(--ink-body);font-weight:600}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Quick create — click the calendar, choose a kind; a sheet slides up on the phone</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 2A — CALENDAR QUICK-CREATE POPOVER ============ -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Desktop — click / drag an empty slot → the quick-create popover (Event)</div>
+      <div class="dv-card" style="width:760px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="position:relative;height:560px;overflow:hidden">
+          <!-- calendar fragment behind -->
+          <div style="position:absolute;inset:18px 22px;background:var(--paper-parchment);border:1px solid var(--line-solid);border-radius:4px;box-shadow:var(--shadow-panel);overflow:hidden">
+            <div style="display:flex;border-bottom:1.5px solid var(--line-solid);background:var(--paper-bone)">
+              <div style="width:52px;flex:none;border-right:1px solid var(--line-card)"></div>
+              <div style="flex:1;border-right:1px solid var(--line-card);padding:8px 12px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Mon</span> <span style="font-family:var(--font-display);font-size:16px;color:var(--ink-body);margin-left:5px">13</span></div>
+              <div style="flex:1;padding:8px 12px;background:rgba(168,160,190,0.07)"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--acc-lavender-deep)">Tue</span> <span style="font-family:var(--font-display);font-size:16px;color:var(--ink-body);margin-left:5px">14</span></div>
+            </div>
+            <div style="position:relative;height:470px">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+                <div style="height:78px;border-bottom:1px solid var(--line-card)"></div><div style="height:78px;border-bottom:1px solid var(--line-card)"></div><div style="height:78px;border-bottom:1px solid var(--line-card)"></div><div style="height:78px;border-bottom:1px solid var(--line-card)"></div><div style="height:78px;border-bottom:1px solid var(--line-card)"></div>
+              </div>
+              <div style="position:absolute;inset:0;display:flex">
+                <div style="width:52px;flex:none;border-right:1px solid var(--line-card);position:relative">
+                  <span style="position:absolute;top:-6px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">12 PM</span>
+                  <span style="position:absolute;top:72px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">1 PM</span>
+                  <span style="position:absolute;top:150px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">2 PM</span>
+                  <span style="position:absolute;top:228px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">3 PM</span>
+                  <span style="position:absolute;top:306px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">4 PM</span>
+                  <span style="position:absolute;top:384px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">5 PM</span>
+                </div>
+                <div style="flex:1;border-right:1px solid var(--line-card);position:relative">
+                  <div style="position:absolute;top:16px;left:5px;right:5px;height:96px;background:var(--paper-event, rgba(168,160,190,0.13));border-left:3px solid var(--acc-lavender);border-radius:2px;padding:7px 10px"><div style="font-size:12px;color:var(--ink-body)">Standup + triage</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);margin-top:3px">12:15 – 1:30</div></div>
+                </div>
+                <div style="flex:1;position:relative;background:rgba(168,160,190,0.05)">
+                  <!-- drag ghost -->
+                  <div style="position:absolute;top:156px;left:5px;right:5px;height:78px;border:1.5px dashed var(--acc-lavender);background:rgba(168,160,190,0.14);border-radius:3px;padding:6px 10px">
+                    <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-deep)">2:00 – 3:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- popover -->
+          <div style="position:absolute;top:120px;right:44px;width:330px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:5px;box-shadow:var(--shadow-popover);padding:15px 16px;transform:rotate(-0.3deg);z-index:20">
+            <div class="seg" style="margin-bottom:13px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><img src="ds/assets/cherry/bud.png" alt="" style="height:13px;opacity:0.75">Task</span>
+              <span class="on" style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><img src="ds/assets/daisy/midday.png" alt="" style="height:13px">Event</span>
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><span style="width:11px;height:11px;border-left:2.5px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span>Block</span>
+            </div>
+            <div style="font-family:var(--font-display);font-size:17px;color:var(--ink-body);padding-bottom:9px;border-bottom:1px dashed var(--line-dashed)">Lunch w/ Omar — pricing<span style="display:inline-block;width:1.5px;height:17px;background:var(--acc-terra);vertical-align:-3px;margin-left:1px"></span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+              <div class="finput" style="font-size:12px;padding:7px 10px">Tue 14 Jul</div>
+              <div class="finput" style="font-size:12px;padding:7px 10px">14:00</div>
+              <span style="color:var(--ink-hairline);font-size:11px">–</span>
+              <div class="finput" style="font-size:12px;padding:7px 10px">15:00</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:12px">
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-lavender);outline:1.5px solid var(--paper-parchment);box-shadow:0 0 0 2.5px var(--acc-lavender)"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-sage)"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-terra)"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-blossom)"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-buttercream)"></span>
+              <span style="width:16px;height:16px;border-radius:50%;background:var(--acc-clover)"></span>
+              <span style="margin-left:auto"></span>
+              <div class="seg" style="padding:2px"><span class="on" style="flex:none;padding:4px 9px;font-size:10.5px">Busy</span><span style="flex:none;padding:4px 9px;font-size:10.5px">Free</span></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:11px;border-top:1px dashed var(--line-dashed)">
+              <a href="#1c" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">More options ↗</a>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">esc</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Create ⏎</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2B — POPOVER, KIND: TASK ============ -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Same popover, kind flipped to Task — the slot becomes its block</div>
+      <div class="dv-card" style="width:394px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:28px 30px;display:flex;justify-content:center">
+          <div style="width:330px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:5px;box-shadow:var(--shadow-popover);padding:15px 16px;transform:rotate(0.3deg)">
+            <div class="seg" style="margin-bottom:13px">
+              <span class="on" style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><img src="ds/assets/cherry/bud.png" alt="" style="height:13px">Task</span>
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><img src="ds/assets/daisy/midday.png" alt="" style="height:13px;opacity:0.75">Event</span>
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px"><span style="width:11px;height:11px;border-left:2.5px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span>Block</span>
+            </div>
+            <div style="font-family:var(--font-display);font-size:17px;color:var(--ink-body);padding-bottom:9px;border-bottom:1px dashed var(--line-dashed)">Prep pricing one-pager<span style="display:inline-block;width:1.5px;height:17px;background:var(--acc-terra);vertical-align:-3px;margin-left:1px"></span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+              <div class="finput" style="font-size:12px;padding:7px 10px">Tue 14 Jul</div>
+              <div class="finput" style="font-size:12px;padding:7px 10px">14:00 – 15:00</div>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);flex:none">1h</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+              <div class="fsel" style="flex:1;font-size:12px;padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting App</span><span class="car">▾</span></div>
+              <div class="seg" style="padding:2px"><span style="flex:none;padding:4px 7px;font-size:10.5px">–</span><span style="flex:none;padding:4px 7px;font-size:10.5px;color:var(--acc-hydrangea-deep)">!</span><span class="on" style="flex:none;padding:4px 7px;font-size:10.5px;color:var(--acc-gold)">!!</span><span style="flex:none;padding:4px 7px;font-size:10.5px;color:var(--acc-terra)">!!!</span></div>
+            </div>
+            <div class="fhelp" style="margin-top:9px">lands in Tasks · this slot becomes its time block, blush-edged</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:13px;padding-top:11px;border-top:1px dashed var(--line-dashed)">
+              <a href="#1b" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">More options ↗</a>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">esc</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Create ⏎</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2C — PHONE, QUICK-CREATE SHEET ============ -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>iPhone — tap a slot → the sheet rises from the bottom</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <!-- dimmed day view behind -->
+          <div style="position:absolute;inset:0;z-index:5">
+            <div style="height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body)">
+              <span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span>
+            </div>
+            <div style="padding:8px 20px 0">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Calendar</div>
+              <div style="font-family:var(--font-display);font-size:24px;font-weight:500;color:var(--ink-body);margin-top:2px">Tue, July 14</div>
+            </div>
+            <div style="position:relative;margin-top:14px;height:420px">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column"><div style="height:70px;border-bottom:1px solid var(--line-card)"></div><div style="height:70px;border-bottom:1px solid var(--line-card)"></div><div style="height:70px;border-bottom:1px solid var(--line-card)"></div><div style="height:70px;border-bottom:1px solid var(--line-card)"></div><div style="height:70px;border-bottom:1px solid var(--line-card)"></div></div>
+              <span style="position:absolute;top:-6px;left:14px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">12 PM</span>
+              <span style="position:absolute;top:64px;left:14px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">1 PM</span>
+              <span style="position:absolute;top:134px;left:14px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">2 PM</span>
+              <span style="position:absolute;top:204px;left:14px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">3 PM</span>
+              <div style="position:absolute;top:6px;left:58px;right:16px;height:88px;background:rgba(168,160,190,0.13);border-left:3px solid var(--acc-lavender);border-radius:2px;padding:7px 10px"><div style="font-size:12px;color:var(--ink-body)">Standup + triage</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);margin-top:3px">12:15 – 1:30</div></div>
+              <div style="position:absolute;top:140px;left:58px;right:16px;height:70px;border:1.5px dashed var(--acc-lavender);background:rgba(168,160,190,0.14);border-radius:3px;padding:6px 10px"><span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-deep)">2:00 – 3:00</span></div>
+            </div>
+          </div>
+          <!-- dim scrim -->
+          <div style="position:absolute;inset:0;background:rgba(42,36,32,0.30);z-index:8"></div>
+          <!-- bottom sheet -->
+          <div style="position:absolute;left:0;right:0;bottom:0;z-index:10;background:var(--paper-parchment);border:1px solid var(--line-card);border-bottom:none;border-radius:22px 22px 0 0;box-shadow:0 -8px 40px rgba(60,52,38,0.28);padding:10px 20px 8px">
+            <div style="display:flex;justify-content:center;padding:2px 0 10px"><span style="width:38px;height:4.5px;border-radius:3px;background:var(--line-solid)"></span></div>
+            <div class="seg" style="margin-bottom:13px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 4px"><img src="ds/assets/cherry/bud.png" alt="" style="height:13px;opacity:0.75">Task</span>
+              <span class="on" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 4px"><img src="ds/assets/daisy/midday.png" alt="" style="height:13px">Event</span>
+              <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 4px"><span style="width:11px;height:11px;border-left:2.5px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span>Block</span>
+            </div>
+            <div style="font-family:var(--font-display);font-size:18px;color:var(--ink-body);padding-bottom:10px;border-bottom:1px dashed var(--line-dashed)">Lunch w/ Omar — pricing<span style="display:inline-block;width:1.5px;height:18px;background:var(--acc-terra);vertical-align:-3px;margin-left:1px"></span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+              <div class="finput" style="font-size:12.5px;padding:9px 11px;flex:1">Tue 14 Jul</div>
+              <div class="finput" style="font-size:12.5px;padding:9px 11px">14:00</div>
+              <span style="color:var(--ink-hairline);font-size:11px">–</span>
+              <div class="finput" style="font-size:12.5px;padding:9px 11px">15:00</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:13px">
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-lavender);outline:1.5px solid var(--paper-parchment);box-shadow:0 0 0 2.5px var(--acc-lavender)"></span>
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-sage)"></span>
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-terra)"></span>
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-blossom)"></span>
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-buttercream)"></span>
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--acc-clover)"></span>
+              <span style="margin-left:auto"></span>
+              <div class="seg" style="padding:2px"><span class="on" style="flex:none;padding:5px 10px;font-size:11px">Busy</span><span style="flex:none;padding:5px 10px;font-size:11px">Free</span></div>
+            </div>
+            <button style="width:100%;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta);margin-top:16px">Create event</button>
+            <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:10px;padding-bottom:2px">
+              <a href="#1e" style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">Full editor ↗</a>
+              <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-hairline)">swipe down to dismiss</span>
+            </div>
+            <div style="height:18px;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Create &amp; edit, in full — task detail page, the three-kind creator, mobile, and the expanded sidebar</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — TASK DETAIL, FULL PAGE ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Task detail — the expanded page (popover's "Open full ↗" lands here)</div>
+      <div class="dv-card" style="width:1360px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:920px;background:var(--paper-linen)">
+
+          <!-- SIDEBAR — expanded, Plan open -->
+          <aside style="width:242px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;padding:24px 0 18px;position:relative">
+            <span style="position:absolute;top:20px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">‹</span>
+            <div style="padding:0 22px 14px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+              <div style="margin-top:7px;font-family:var(--font-hand);font-size:15px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+            </div>
+            <div style="padding:0 14px 12px;margin-bottom:10px;border-bottom:1px dashed var(--line-sidebar);display:flex;flex-direction:column;gap:1px">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 11px;margin-bottom:3px;border-radius:6px;background:var(--paper-linen);border:1px solid var(--line-sidebar)">
+                <img src="ds/assets/vine/sprouting.png" alt="" style="height:15px;width:auto">
+                <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted)">Plan</span>
+                <span style="margin-left:auto;font-size:10px;color:var(--ink-faint);transform:rotate(90deg)">›</span>
+              </div>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none"></span><span style="font-size:13px;color:var(--ink-muted)">Due Today</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">6</span></a>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none"></span><span style="font-size:13px;color:var(--ink-muted)">This Week</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">14</span></a>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none"></span><span style="font-size:13px;color:var(--ink-muted)">This Month</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">23</span></a>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none"></span><span style="font-size:13px;color:var(--ink-muted)">Upcoming</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">31</span></a>
+              <div style="height:1px;border-top:1px dashed var(--line-sidebar);margin:4px 11px"></div>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none;display:flex;justify-content:center"><img src="ds/assets/fern/coil.png" alt="" style="height:14px;opacity:0.8"></span><span style="font-size:13px;color:var(--ink-muted)">Someday</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">12</span></a>
+              <a href="#1a" style="display:flex;align-items:center;gap:11px;padding:6px 11px;border-radius:6px;text-decoration:none"><span style="width:16px;flex:none;text-align:center;font-size:11px;color:var(--ink-faint)">▦</span><span style="font-size:13px;color:var(--ink-muted)">Planning board</span></a>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:2px 12px 5px">Tend</div>
+              <a href="Today" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Today</span></a>
+              <a href="Inbox" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" style="position:relative;display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);transform:rotate(-0.5deg)">
+                <span style="position:absolute;top:-6px;left:16px;width:30px;height:9px;background:rgba(212,168,176,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-3deg);border-radius:1px"></span>
+                <span style="width:18px;display:flex;justify-content:center;flex:none"><img src="ds/assets/cherry/bloom.png" alt="" style="height:16px"></span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink-body)">Tasks</span>
+              </a>
+              <a href="Calendar" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:12px 12px 5px">Cultivate</div>
+              <a href="Routines" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+              <a href="Journal" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><img src="ds/assets/fern/full.png" alt="" style="height:16px;opacity:0.85"></span><span style="font-size:14px;color:var(--ink-muted)">Journal</span></a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 12px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Streak</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">6 days · best 21</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="#1b" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Capture</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="Search" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M19.5 19.5 16 16"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘/</span></a>
+              <a href="Chat" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘J</span></a>
+              <a href="Settings" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+              <a href="Screens" style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9"/></svg></span><span style="font-size:12.5px;color:var(--ink-faint)">Sign out</span></a>
+            </div>
+          </aside>
+
+          <!-- MAIN -->
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">
+              <span>Kai's Flow · Fri 10 Jul · Synced <span style="color:var(--acc-sage)">●</span></span><span>Africa/Cairo</span>
+            </div>
+            <div style="flex:1;padding:30px 48px 44px;max-width:1010px">
+
+              <!-- breadcrumb row -->
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <a href="Tasks" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">← Tasks</a>
+                <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">Created Sun 6 Jul · edited today 11:42</span>
+              </div>
+
+              <!-- header band -->
+              <div style="display:flex;align-items:flex-start;gap:16px;margin-top:24px">
+                <span style="width:22px;height:22px;border:1.5px solid #bfb8a3;border-radius:6px;flex:none;margin-top:9px"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span class="chip" style="background:rgba(138,154,126,0.18);color:var(--acc-sage-text)">Open</span>
+                    <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-faint)">via voice</span>
+                    <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+                  </div>
+                  <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:34px;line-height:1.15;letter-spacing:-0.01em;color:var(--ink-body)">Plan &amp; implement forecasting logic</h1>
+                  <div style="margin-top:6px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">click title to edit · saves on blur</div>
+                </div>
+                <img src="ds/assets/cherry/opening.png" alt="" style="height:52px;flex:none;filter:var(--shadow-drop-sm);margin-top:2px">
+                <span style="color:var(--acc-terra);font-size:22px;flex:none;margin-top:6px">★</span>
+              </div>
+
+              <!-- body: main + rail -->
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:36px;margin-top:26px">
+
+                <!-- left column -->
+                <div style="min-width:0">
+                  <div class="flabel">Notes</div>
+                  <div style="margin-top:8px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:14px 16px;min-height:150px;font-size:13.5px;line-height:1.65;color:var(--ink-body)">
+                    Start with the cohort model, then wire the RRULE engine for recurring revenue rows.
+                    <br><br>Omar's spreadsheet has the Q2 actuals — reconcile before projecting. Keep the first pass rough; the point is a believable shape by Friday's call.
+                  </div>
+                  <div class="fhelp">plain text · autosaves on blur</div>
+
+                  <div style="display:flex;align-items:center;gap:12px;margin:26px 0 10px"><span class="flabel">Subtasks · 1 of 3</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="display:flex;flex-direction:column">
+                    <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span style="width:16px;height:16px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;flex:none"><span style="color:var(--paper-parchment);font-size:9px">✓</span></span>
+                      <span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Pull Q2 actuals from Omar's sheet</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span>
+                      <span style="font-size:13.5px;color:var(--ink-body)">Draft the cohort model</span>
+                      <span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">45m</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span>
+                      <span style="font-size:13.5px;color:var(--ink-body)">Wire the RRULE engine to revenue rows</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:10px 2px">
+                      <span style="width:16px;height:16px;border:1.5px dashed var(--ink-hairline);border-radius:4px;flex:none;opacity:0.6"></span>
+                      <span style="font-size:13px;color:var(--ink-faint)">Add a subtask…</span>
+                      <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline)">enter to add</span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:12px;margin:26px 0 10px"><span class="flabel">Linked</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="display:flex;flex-wrap:wrap;gap:10px">
+                    <span style="display:inline-flex;align-items:center;gap:9px;background:rgba(168,160,190,0.16);border-left:3px solid var(--acc-lavender);border-radius:3px;padding:9px 13px">
+                      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-text)">Block · Fri 9:00 – 11:00</span>
+                      <a href="Calendar" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-deep);text-decoration:none">view on calendar →</a>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:9px;background:rgba(154,180,190,0.14);border-left:3px solid var(--acc-hydrangea);border-radius:3px;padding:9px 13px">
+                      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-hydrangea-deep)">Capture · voice, Sun 6 Jul</span>
+                      <a href="Inbox" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-hydrangea-deep);text-decoration:none">open in inbox →</a>
+                    </span>
+                  </div>
+
+                  <!-- footer actions -->
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:44px;padding-top:16px;border-top:1px dashed var(--line-dashed)">
+                    <div>
+                      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">Delete task…</span>
+                      <div class="fhelp">also removes its calendar block</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px">
+                      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-hairline)">⌘⏎</span>
+                      <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Save</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- right rail -->
+                <div style="display:flex;flex-direction:column;gap:20px">
+                  <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 17px 15px;transform:rotate(0.4deg)">
+                    <span style="position:absolute;top:-9px;left:24px;width:56px;height:16px;background:rgba(122,148,110,0.4);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px"></span>
+                    <div class="flabel" style="margin-bottom:12px">Organize</div>
+                    <div class="flabel" style="font-size:8.5px;margin-bottom:6px;color:var(--ink-hairline)">Project</div>
+                    <div class="fsel"><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting App</span><span class="car">▾</span></div>
+                    <div class="flabel" style="font-size:8.5px;margin:12px 0 6px;color:var(--ink-hairline)">Area</div>
+                    <div class="fsel" style="opacity:0.5"><span>—</span><span class="car">▾</span></div>
+                    <div class="fhelp">a task lives in a project or an area, not both</div>
+                    <div class="flabel" style="font-size:8.5px;margin:12px 0 6px;color:var(--ink-hairline)">Labels</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*deep-work ✕</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*q3 ✕</span>
+                      <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">+ label</span>
+                    </div>
+                  </div>
+
+                  <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 17px 15px;transform:rotate(-0.4deg)">
+                    <span style="position:absolute;top:-9px;right:26px;width:52px;height:16px;background:rgba(168,160,190,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(2deg);border-radius:1px"></span>
+                    <div class="flabel" style="margin-bottom:12px">Schedule</div>
+                    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+                      <div><div class="flabel" style="font-size:8.5px;margin-bottom:6px;color:var(--ink-hairline)">Due date</div><div class="finput">Fri 10 Jul</div></div>
+                      <div><div class="flabel" style="font-size:8.5px;margin-bottom:6px;color:var(--ink-hairline)">Due time</div><div class="finput">15:00</div></div>
+                    </div>
+                    <div class="flabel" style="font-size:8.5px;margin:12px 0 6px;color:var(--ink-hairline)">Duration</div>
+                    <div style="display:flex;gap:6px">
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">30m</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">45m</span>
+                      <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">1h 30m</span>
+                      <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">custom</span>
+                    </div>
+                    <div class="flabel" style="font-size:8.5px;margin:12px 0 6px;color:var(--ink-hairline)">Reminder</div>
+                    <div class="fsel"><span>30 min before due</span><span class="car">▾</span></div>
+                    <div class="fhelp">sends a push · needs a due time ✓</div>
+                    <div class="flabel" style="font-size:8.5px;margin:12px 0 6px;color:var(--ink-hairline)">Repeat</div>
+                    <div class="fsel"><span>↻ Weekly</span><span class="car">▾</span></div>
+                    <div class="fhelp">recurring tasks roll forward on done</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-dashed)">
+                      <div><div style="font-size:13px;color:var(--ink-body)">Someday</div><div class="fhelp" style="margin-top:2px">rests in the fern · leaves every list</div></div>
+                      <span style="width:34px;height:20px;border-radius:999px;background:var(--line-solid);flex:none;position:relative"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:10px;border-top:1px dashed var(--line-dashed)">
+                      <div><div style="font-size:13px;color:var(--ink-body)">Snoozed</div><div class="fhelp" style="margin-top:2px">—</div></div>
+                      <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">snooze…</span>
+                    </div>
+                  </div>
+
+                  <div style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg);padding:0 6px">every field saves quietly — no dialog unless something gets deleted ✿</div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ============ 1B — CREATE, KIND: TASK ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Create — full page, kind chooser on Task (sidebar folds to the rail)</div>
+      <div class="dv-card" style="width:1160px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:880px;background:var(--paper-linen)">
+
+          <!-- SIDEBAR — collapsed rail -->
+          <aside style="width:64px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;align-items:center;padding:22px 0 18px;position:relative">
+            <span style="position:absolute;top:54px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">›</span>
+            <div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body)">K</div>
+            <div style="margin:16px 0 10px;width:30px;height:30px;border-radius:7px;background:var(--paper-linen);border:1px solid var(--line-sidebar);display:flex;align-items:center;justify-content:center"><img src="ds/assets/vine/sprouting.png" alt="" style="height:14px"></div>
+            <div style="display:flex;flex-direction:column;gap:13px;align-items:center;margin-top:6px">
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-sage)"></span>
+              <span style="position:relative;width:9px;height:9px;border-radius:50%;background:var(--acc-hydrangea)"><span style="position:absolute;top:-4px;right:-5px;width:6px;height:6px;border-radius:50%;background:var(--acc-terra)"></span></span>
+              <span style="width:26px;height:26px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center"><img src="ds/assets/cherry/bloom.png" alt="" style="height:14px"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-lavender)"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-moss)"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-buttercream)"></span>
+              <img src="ds/assets/fern/full.png" alt="" style="height:15px;opacity:0.85">
+            </div>
+            <div style="flex:1"></div>
+            <img src="ds/assets/vine/sprouting.png" alt="" style="height:30px;opacity:0.8;margin-bottom:14px">
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:center;padding-top:12px;border-top:1px dashed var(--line-sidebar);width:36px">
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M19.5 19.5 16 16"/></svg></span>
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z"/></svg></span>
+            </div>
+          </aside>
+
+          <!-- MAIN -->
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">
+              <span>Kai's Flow · Fri 10 Jul · Synced <span style="color:var(--acc-sage)">●</span></span><span>Africa/Cairo</span>
+            </div>
+            <div style="flex:1;display:flex;justify-content:center;padding:34px 40px 48px">
+              <div style="width:680px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <a href="Tasks" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">← Back</a>
+                  <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">esc closes · nothing saved until create</span>
+                </div>
+                <h1 style="margin:18px 0 0;font-family:var(--font-display);font-weight:500;font-size:32px;letter-spacing:-0.01em;color:var(--ink-body)">Something new</h1>
+
+                <!-- kind chooser -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:18px">
+                  <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:13px 14px;transform:rotate(-0.5deg)">
+                    <span style="position:absolute;top:-8px;left:20px;width:44px;height:14px;background:rgba(212,168,176,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-2deg);border-radius:1px"></span>
+                    <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/cherry/bud.png" alt="" style="height:20px"><span style="font-size:14px;font-weight:600;color:var(--ink-body)">Task</span></div>
+                    <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-muted)">something to do — lives in your lists</div>
+                  </div>
+                  <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+                    <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/daisy/midday.png" alt="" style="height:20px;opacity:0.8"><span style="font-size:14px;color:var(--ink-muted)">Event</span></div>
+                    <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">a moment in time — lives on the calendar</div>
+                  </div>
+                  <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+                    <div style="display:flex;align-items:center;gap:9px"><span style="width:16px;height:16px;border-left:3px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span><span style="font-size:14px;color:var(--ink-muted)">Time block</span></div>
+                    <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">reserved focus — usually holds a task</div>
+                  </div>
+                </div>
+
+                <!-- NL title -->
+                <div style="margin-top:22px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:16px 18px">
+                  <div style="font-family:var(--font-display);font-size:19px;color:var(--ink-body)">Call Omar re: pricing friday 3pm #forecasting !! *deep-work<span style="display:inline-block;width:1.5px;height:20px;background:var(--acc-terra);vertical-align:-4px;margin-left:1px"></span></div>
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line-dashed)">
+                    <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">→ Fri 3:00 PM</span>
+                    <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">→ Forecasting App</span>
+                    <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+                    <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*deep-work</span>
+                    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline)">the title types it, the fields catch it</span>
+                  </div>
+                </div>
+
+                <!-- notes -->
+                <div class="flabel" style="margin:20px 0 8px">Notes</div>
+                <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:13px 15px;min-height:74px;font-size:13.5px;color:var(--ink-faint);font-style:italic">Anything worth remembering when you sit down to do it…</div>
+
+                <!-- fields -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:20px">
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Due</div>
+                    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:8px"><div class="finput">Fri 10 Jul</div><div class="finput">15:00</div></div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Priority</div>
+                    <div class="seg">
+                      <span>none</span>
+                      <span style="color:var(--acc-hydrangea-deep)">!</span>
+                      <span class="on" style="color:var(--acc-gold)">!!</span>
+                      <span style="color:var(--acc-terra)">!!!</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Project or area</div>
+                    <div class="fsel"><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting App</span><span class="car">▾</span></div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Duration</div>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">15m</span>
+                      <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">30m</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">1h</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">2h</span>
+                      <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">custom</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Reminder</div>
+                    <div class="fsel"><span>30 min before due</span><span class="car">▾</span></div>
+                    <div class="fhelp">sends a push · needs a due time ✓</div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Repeat</div>
+                    <div class="fsel"><span>Doesn't repeat</span><span class="car">▾</span></div>
+                    <div class="fhelp">daily · weekly · monthly · custom rule</div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Labels</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*deep-work ✕</span>
+                      <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">+ label</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flabel" style="margin-bottom:6px">Starts as</div>
+                    <div style="display:flex;align-items:center;gap:14px;padding:8px 2px">
+                      <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-body)"><span style="color:var(--acc-terra);font-size:15px">★</span> Top-3 today</span>
+                      <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-faint)"><img src="ds/assets/fern/coil.png" alt="" style="height:13px;opacity:0.7"> Someday</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CTA -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:30px;padding-top:16px;border-top:1px dashed var(--line-dashed)">
+                  <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">plant it — the blossom grows a bud ✿</span>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer">Cancel</button>
+                    <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Create task ⏎</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1C — CREATE, KIND: EVENT ============ -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Create — kind flips to Event (the sheet only; chrome as in <a href="#1b">1b</a>)</div>
+      <div class="dv-card" style="width:700px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:30px 34px 34px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+              <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/cherry/bud.png" alt="" style="height:20px;opacity:0.8"><span style="font-size:14px;color:var(--ink-muted)">Task</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">something to do — lives in your lists</div>
+            </div>
+            <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:13px 14px;transform:rotate(0.5deg)">
+              <span style="position:absolute;top:-8px;left:20px;width:44px;height:14px;background:rgba(168,160,190,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(2deg);border-radius:1px"></span>
+              <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/daisy/midday.png" alt="" style="height:20px"><span style="font-size:14px;font-weight:600;color:var(--ink-body)">Event</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-muted)">a moment in time — lives on the calendar</div>
+            </div>
+            <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+              <div style="display:flex;align-items:center;gap:9px"><span style="width:16px;height:16px;border-left:3px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span><span style="font-size:14px;color:var(--ink-muted)">Time block</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">reserved focus — usually holds a task</div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:16px 18px">
+            <div style="font-family:var(--font-display);font-size:19px;color:var(--ink-body)">Dinner with Salma &amp; the cousins<span style="display:inline-block;width:1.5px;height:20px;background:var(--acc-terra);vertical-align:-4px;margin-left:1px"></span></div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line-dashed)">
+              <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">→ Sat 8:00 PM</span>
+              <span style="margin-left:auto;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline)">"sat 8pm" caught from the title</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:20px">
+            <div>
+              <div class="flabel" style="margin-bottom:6px">Date</div>
+              <div class="finput">Sat 11 Jul</div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">From — to</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="finput">20:00</div><div class="finput">22:30</div></div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">All day</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:7px 2px">
+                <span style="width:34px;height:20px;border-radius:999px;background:var(--line-solid);flex:none;position:relative"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span>
+                <span style="font-size:12.5px;color:var(--ink-faint)">off — times shown</span>
+              </div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">Shows you as</div>
+              <div class="seg"><span class="on">Busy</span><span>Free</span></div>
+            </div>
+            <div style="grid-column:1 / -1">
+              <div class="flabel" style="margin-bottom:8px">Color</div>
+              <div style="display:flex;gap:7px;align-items:center">
+                <span style="width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--ink-hairline);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:var(--ink-hairline)">—</span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-sage)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-moss)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-terra)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-blossom)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-lavender);outline:2px solid var(--paper-linen);box-shadow:0 0 0 3.5px var(--acc-lavender)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-hydrangea)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-buttercream)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-clover)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-gold-warm)"></span>
+              </div>
+            </div>
+            <div style="grid-column:1 / -1;display:flex;align-items:center;gap:9px;background:rgba(154,180,190,0.12);border-radius:6px;padding:9px 12px">
+              <span style="width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span>
+              <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc-hydrangea-deep)">mirrors quietly to Google Calendar · never shown as its own UI</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:26px;padding-top:16px;border-top:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">the daisy opens a petal for it ✿</span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer">Cancel</button>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Create event ⏎</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1D — CREATE, KIND: TIME BLOCK ============ -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Create — kind flips to Time block (holds a task; completing it checks the task)</div>
+      <div class="dv-card" style="width:700px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:30px 34px 34px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+              <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/cherry/bud.png" alt="" style="height:20px;opacity:0.8"><span style="font-size:14px;color:var(--ink-muted)">Task</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">something to do — lives in your lists</div>
+            </div>
+            <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:13px 14px;opacity:0.75">
+              <div style="display:flex;align-items:center;gap:9px"><img src="ds/assets/daisy/midday.png" alt="" style="height:20px;opacity:0.8"><span style="font-size:14px;color:var(--ink-muted)">Event</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-faint)">a moment in time — lives on the calendar</div>
+            </div>
+            <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:13px 14px;transform:rotate(-0.5deg)">
+              <span style="position:absolute;top:-8px;left:20px;width:44px;height:14px;background:rgba(168,160,190,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-2deg);border-radius:1px"></span>
+              <div style="display:flex;align-items:center;gap:9px"><span style="width:16px;height:16px;border-left:3px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span><span style="font-size:14px;font-weight:600;color:var(--ink-body)">Time block</span></div>
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-muted)">reserved focus — usually holds a task</div>
+            </div>
+          </div>
+
+          <div class="flabel" style="margin:22px 0 8px">Holds</div>
+          <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:13px 15px">
+            <div style="display:flex;align-items:center;gap:11px">
+              <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span>
+              <span style="font-size:14px;color:var(--ink-body)">Plan &amp; implement forecasting logic</span>
+              <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">Forecasting</span>
+              <span style="margin-left:auto;color:var(--ink-hairline);font-size:13px;cursor:pointer">✕</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-dashed)">
+              <span style="font-size:11px;color:var(--ink-hairline)">⌕</span>
+              <span style="font-size:12.5px;color:var(--ink-faint);font-style:italic">swap for another task — or leave empty for pure focus time</span>
+            </div>
+          </div>
+          <div class="fhelp">finishing the block offers to check the task off</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:20px">
+            <div>
+              <div class="flabel" style="margin-bottom:6px">Date</div>
+              <div class="finput">Mon 13 Jul</div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">From — to</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="finput">9:00</div><div class="finput">10:30</div></div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">Length</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">30m</span>
+                <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">1h</span>
+                <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">1h 30m</span>
+                <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">2h</span>
+              </div>
+              <div class="fhelp">pre-filled from the task's duration</div>
+            </div>
+            <div>
+              <div class="flabel" style="margin-bottom:6px">Shows you as</div>
+              <div class="seg"><span class="on">Busy</span><span>Free</span></div>
+            </div>
+            <div style="grid-column:1 / -1">
+              <div class="flabel" style="margin-bottom:8px">Color</div>
+              <div style="display:flex;gap:7px;align-items:center">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-lavender);outline:2px solid var(--paper-linen);box-shadow:0 0 0 3.5px var(--acc-lavender)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-blossom)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-sage)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-moss)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-terra)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-hydrangea)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-buttercream)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-clover)"></span>
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--acc-gold-warm)"></span>
+                <span style="margin-left:4px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline)">lavender by default — a blush edge marks its task</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:26px;padding-top:16px;border-top:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">two hours fenced off, just for this ✿</span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer">Cancel</button>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Block time ⏎</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1E — PHONE, CREATE ============ -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>iPhone — create, same three kinds (full-screen sheet)</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10">
+            <span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:6px 18px 0;position:relative;z-index:10;min-height:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px">
+              <span style="font-family:var(--font-display);font-size:24px;font-weight:500;color:var(--ink-body)">Something new</span>
+              <span style="width:30px;height:30px;border-radius:999px;background:var(--paper-bone);border:1px solid var(--line-card);display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:13px">✕</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+              <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:9px 10px;transform:rotate(-0.6deg)">
+                <span style="position:absolute;top:-6px;left:12px;width:30px;height:10px;background:rgba(212,168,176,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-2deg);border-radius:1px"></span>
+                <div style="display:flex;align-items:center;gap:6px"><img src="ds/assets/cherry/bud.png" alt="" style="height:15px"><span style="font-size:12.5px;font-weight:600;color:var(--ink-body)">Task</span></div>
+              </div>
+              <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:9px 10px;opacity:0.75">
+                <div style="display:flex;align-items:center;gap:6px"><img src="ds/assets/daisy/midday.png" alt="" style="height:15px;opacity:0.8"><span style="font-size:12.5px;color:var(--ink-muted)">Event</span></div>
+              </div>
+              <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-radius:3px;padding:9px 10px;opacity:0.75">
+                <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-left:2.5px solid var(--acc-lavender);background:rgba(168,160,190,0.2);border-radius:2px"></span><span style="font-size:12.5px;color:var(--ink-muted)">Block</span></div>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:13px 14px">
+              <div style="font-family:var(--font-display);font-size:17px;color:var(--ink-body);line-height:1.35">Call Omar re: pricing friday 3pm !!<span style="display:inline-block;width:1.5px;height:17px;background:var(--acc-terra);vertical-align:-3px;margin-left:1px"></span></div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line-dashed)">
+                <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">→ Fri 3:00 PM</span>
+                <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;margin-top:12px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:10px 13px">
+              <span style="font-size:12.5px;color:var(--ink-faint);font-style:italic">Add notes…</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 10px;margin-top:14px">
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Due</div>
+                <div class="finput" style="font-size:12.5px;padding:8px 11px">Fri 10 Jul · 15:00</div>
+              </div>
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Priority</div>
+                <div class="seg" style="padding:2.5px">
+                  <span style="padding:5px 2px;font-size:11.5px">–</span>
+                  <span style="padding:5px 2px;font-size:11.5px;color:var(--acc-hydrangea-deep)">!</span>
+                  <span class="on" style="padding:5px 2px;font-size:11.5px;color:var(--acc-gold)">!!</span>
+                  <span style="padding:5px 2px;font-size:11.5px;color:var(--acc-terra)">!!!</span>
+                </div>
+              </div>
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Project</div>
+                <div class="fsel" style="font-size:12.5px;padding:8px 11px"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting</span><span class="car">▾</span></div>
+              </div>
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Duration</div>
+                <div class="fsel" style="font-size:12.5px;padding:8px 11px"><span>30m</span><span class="car">▾</span></div>
+              </div>
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Reminder</div>
+                <div class="fsel" style="font-size:12.5px;padding:8px 11px"><span>30 min before</span><span class="car">▾</span></div>
+              </div>
+              <div>
+                <div class="flabel" style="margin-bottom:5px">Repeat</div>
+                <div class="fsel" style="font-size:12.5px;padding:8px 11px"><span>Doesn't repeat</span><span class="car">▾</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:6px;margin-top:12px">
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*deep-work ✕</span>
+              <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint)">+ label</span>
+              <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-body)"><span style="color:var(--acc-terra);font-size:13px">★</span> Top-3</span>
+            </div>
+
+            <div style="flex:1"></div>
+            <div style="padding:12px 0 6px">
+              <button style="width:100%;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta)">Create task</button>
+              <div style="text-align:center;margin-top:9px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">or hold ● to speak it instead</div>
+            </div>
+            <div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1F — PHONE, TASK DETAIL ============ -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>iPhone — task detail, sheet dragged to full screen</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10">
+            <span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:2px 18px 0;position:relative;z-index:10;min-height:0">
+            <div style="display:flex;justify-content:center;padding:2px 0 8px"><span style="width:38px;height:4.5px;border-radius:3px;background:var(--line-solid)"></span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-muted)">‹ Tasks</span>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="chip" style="background:rgba(138,154,126,0.18);color:var(--acc-sage-text)">Open</span>
+                <span style="color:var(--acc-terra);font-size:18px">★</span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:11px;margin-top:12px">
+              <span style="width:20px;height:20px;border:1.5px solid #bfb8a3;border-radius:6px;flex:none;margin-top:4px"></span>
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:500;line-height:1.25;color:var(--ink-body)">Plan &amp; implement forecasting logic</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;margin-left:31px">
+              <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-faint)">via voice</span>
+            </div>
+
+            <div style="margin-top:14px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:11px 13px;font-size:12.5px;line-height:1.55;color:var(--ink-body)">Start with the cohort model, then wire the RRULE engine. Omar's sheet has the Q2 actuals…</div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin:14px 0 4px"><span class="flabel">Subtasks · 1 of 3</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span style="width:15px;height:15px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;flex:none"><span style="color:var(--paper-parchment);font-size:8px">✓</span></span>
+              <span style="font-size:12.5px;color:var(--ink-hairline);text-decoration:line-through">Pull Q2 actuals</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 2px">
+              <span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span>
+              <span style="font-size:12.5px;color:var(--ink-body)">Draft the cohort model</span>
+              <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">+ 1 more</span>
+            </div>
+
+            <div style="margin-top:12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-crisp)">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px dashed var(--line-dashed)"><span class="flabel" style="width:64px;flex:none">Project</span><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span><span style="font-size:12.5px;color:var(--ink-body)">Forecasting App</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px dashed var(--line-dashed)"><span class="flabel" style="width:64px;flex:none">Due</span><span style="font-size:12.5px;color:var(--ink-body)">Fri 10 Jul · 15:00</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px dashed var(--line-dashed)"><span class="flabel" style="width:64px;flex:none">Duration</span><span style="font-size:12.5px;color:var(--ink-body)">1h 30m</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px dashed var(--line-dashed)"><span class="flabel" style="width:64px;flex:none">Reminder</span><span style="font-size:12.5px;color:var(--ink-body)">30 min before</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px dashed var(--line-dashed)"><span class="flabel" style="width:64px;flex:none">Repeat</span><span style="font-size:12.5px;color:var(--ink-body)">↻ Weekly</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 13px"><span class="flabel" style="width:64px;flex:none">Labels</span><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);font-size:8.5px">*deep-work</span><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);font-size:8.5px">*q3</span><span style="margin-left:auto;color:var(--ink-hairline);font-size:11px">›</span></div>
+            </div>
+
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(168,160,190,0.16);border-left:3px solid var(--acc-lavender);border-radius:3px;padding:8px 11px;margin-top:12px">
+              <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-text)">Block · Fri 9:00 – 11:00 · view on calendar →</span>
+            </div>
+
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px">
+              <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra)">Delete…</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13.5px;padding:11px 26px;border-radius:999px;box-shadow:var(--shadow-cta)">Save</button>
+            </div>
+            <div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1G — SIDEBAR STATES ============ -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Sidebar states — Plan folded · rail collapsed (Plan open lives in <a href="#1a">1a</a>)</div>
+      <div style="display:flex;gap:26px;align-items:flex-start">
+
+        <!-- Plan folded -->
+        <div class="dv-card" style="width:242px;background:var(--paper-sidebar)">
+          <div class="grain"></div>
+          <div style="display:flex;flex-direction:column;padding:24px 0 18px;min-height:832px;position:relative">
+            <span style="position:absolute;top:20px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">‹</span>
+            <div style="padding:0 22px 14px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+              <div style="margin-top:7px;font-family:var(--font-hand);font-size:15px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+            </div>
+            <div style="padding:0 14px 12px;margin-bottom:10px;border-bottom:1px dashed var(--line-sidebar)">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:6px;background:var(--paper-linen);border:1px solid var(--line-sidebar)">
+                <img src="ds/assets/vine/sprouting.png" alt="" style="height:15px;width:auto">
+                <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted)">Plan</span>
+                <span style="font-size:10px;color:var(--ink-faint)">›</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">6</span>
+              </div>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:2px 12px 5px">Tend</div>
+              <a href="Today" style="position:relative;display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);transform:rotate(-0.5deg)">
+                <span style="position:absolute;top:-6px;left:16px;width:30px;height:9px;background:rgba(138,154,126,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-3deg);border-radius:1px"></span>
+                <span style="width:18px;display:flex;justify-content:center;flex:none"><img src="ds/assets/clover/awake.png" alt="" style="height:16px"></span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink-body)">Today</span>
+              </a>
+              <a href="Inbox" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Tasks</span></a>
+              <a href="Calendar" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:12px 12px 5px">Cultivate</div>
+              <a href="Routines" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+              <a href="Journal" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><img src="ds/assets/fern/full.png" alt="" style="height:16px;opacity:0.85"></span><span style="font-size:14px;color:var(--ink-muted)">Journal</span></a>
+              <a href="#1g" style="display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:8px 12px;border-radius:6px;text-decoration:none"><img src="ds/assets/clover/seedling.png" alt="" style="height:14px;opacity:0.8"><span style="font-size:13px;color:var(--ink-muted)">Garden</span></a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 12px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Streak</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">6 days · best 21</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="#1b" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Capture</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="Search" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M19.5 19.5 16 16"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘/</span></a>
+              <a href="Chat" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘J</span></a>
+              <a href="Settings" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+              <a href="Screens" style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9"/></svg></span><span style="font-size:12.5px;color:var(--ink-faint)">Sign out</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsed rail -->
+        <div class="dv-card" style="width:64px;background:var(--paper-sidebar);overflow:visible">
+          <div class="grain" style="border-radius:5px"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:22px 0 18px;min-height:832px;position:relative">
+            <span style="position:absolute;top:54px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">›</span>
+            <div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body)">K</div>
+            <div style="margin:16px 0 8px;width:30px;height:30px;border-radius:7px;background:var(--paper-linen);border:1px solid var(--line-sidebar);display:flex;align-items:center;justify-content:center"><img src="ds/assets/vine/sprouting.png" alt="" style="height:14px"></div>
+            <div style="display:flex;flex-direction:column;gap:13px;align-items:center;margin-top:8px">
+              <span style="width:26px;height:26px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center"><img src="ds/assets/clover/awake.png" alt="" style="height:14px"></span>
+              <span style="position:relative;width:9px;height:9px;border-radius:50%;background:var(--acc-hydrangea)"><span style="position:absolute;top:-4px;right:-5px;width:6px;height:6px;border-radius:50%;background:var(--acc-terra)"></span></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-blossom)"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-lavender)"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-moss)"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-buttercream)"></span>
+              <img src="ds/assets/fern/full.png" alt="" style="height:15px;opacity:0.85">
+            </div>
+            <div style="flex:1"></div>
+            <img src="ds/assets/vine/sprouting.png" alt="" style="height:30px;opacity:0.8;margin-bottom:14px">
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:center;padding-top:12px;border-top:1px dashed var(--line-sidebar);width:36px">
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M19.5 19.5 16 16"/></svg></span>
+              <span style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- annotations -->
+        <div style="width:230px;display:flex;flex-direction:column;gap:16px;padding-top:8px">
+          <div style="font-family:var(--font-hand);font-size:17px;line-height:1.45;color:#7a745f;transform:rotate(-0.8deg)">the Plan drawer folds to one pill — its count keeps whispering (6 due today)</div>
+          <div style="font-family:var(--font-hand);font-size:17px;line-height:1.45;color:#7a745f;transform:rotate(0.6deg)">collapsed, the garden becomes a bead string — flower dots, badge stays on inbox, vine at the foot</div>
+          <div style="font-family:var(--font-hand);font-size:17px;line-height:1.45;color:#7a745f;transform:rotate(-0.5deg)">the ‹ › toggle rides the edge, remembered across sessions</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "the schedule / snooze / label pickers as popovers on this page" · "the creation page seeded from calendar drag" · "detail-pass on Inbox / Settings / Review / People" · "Projects &amp; Project Detail".</p>
+</section>
+</x-dc>
+</body>
+</html>

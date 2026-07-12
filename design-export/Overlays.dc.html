@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.4}
+.board{position:relative;z-index:2;padding:48px 52px 100px;max-width:1500px;margin:0 auto}
+.sect{display:flex;align-items:center;gap:14px;margin:48px 0 26px}
+.sect span:first-child{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.sect .rule{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+.grid{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.cell{display:flex;flex-direction:column;gap:10px}
+.clabel{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-muted)}
+.clabel b{color:var(--ink-hairline);font-weight:400}
+.stage{background:rgba(42,36,32,0.05);border:1px solid var(--line-card);border-radius:8px;padding:26px;display:flex;align-items:center;justify-content:center}
+.pop{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:5px;box-shadow:var(--shadow-popover);padding:6px}
+.mi{display:flex;align-items:center;gap:11px;padding:7px 10px;border-radius:5px;font-size:13px;color:var(--ink-body)}
+.mi .g{margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-hairline)}
+.frost{background:rgba(251,246,233,0.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(220,214,190,0.6);border-radius:8px;box-shadow:var(--shadow-popover)}
+.phone{width:340px;height:710px;background:#211d18;border-radius:48px;padding:10px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 24px 50px rgba(60,52,38,0.26);position:relative;flex:none}
+.pscreen{width:100%;height:100%;background:var(--paper-linen);border-radius:39px;overflow:hidden;position:relative}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:104px;height:29px;background:#0d0b09;border-radius:18px;z-index:60}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+.kbd{font-family:var(--font-mono);font-size:10.5px;line-height:1;color:var(--ink-body);background:var(--paper-bone);border:1px solid var(--line-card);border-bottom-width:2px;border-radius:5px;padding:5px 7px;min-width:22px;text-align:center;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow-crisp)}
+.kcat{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--acc-terra);margin:0 0 3px}
+.krow{display:flex;align-items:center;gap:12px;padding:8px 4px;border-bottom:1px dashed var(--line-dashed)}
+.krow:last-child{border-bottom:none}
+.kkeys{display:flex;align-items:center;gap:5px;flex:none;width:104px}
+.klabel{font-size:13px;color:var(--ink-muted)}
+</style>
+</helmet>
+<div class="board">
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px dashed var(--line-dashed)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Interaction layer</div>
+      <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:46px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Overlays &amp; pop-ups</h1>
+    </div>
+    <p style="max-width:420px;margin:0;font-size:13.5px;line-height:1.6;color:var(--ink-muted)">Every menu, modal, panel and mobile sheet the app raises over a screen — one consistent language: parchment popovers, frosted command surfaces, botanical accents, and bottom sheets on the phone.</p>
+  </div>
+
+  <!-- ===================== GARDEN POSTCARD ===================== -->
+  <div class="sect"><span>00 — Garden Postcard · new</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <div class="cell" id="postcard">
+      <div class="clabel">Garden Postcard <b>· from Review or the garden view · exports the week</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.14);padding:34px">
+        <div style="width:640px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:0 24px 60px rgba(42,36,32,0.35);padding:22px 24px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink-body)">Send a postcard</span>
+            <span style="font-size:13px;color:var(--ink-faint);cursor:pointer">✕</span>
+          </div>
+
+          <!-- the postcard -->
+          <div style="position:relative;margin-top:16px;background:#F1EADA;border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);overflow:hidden;aspect-ratio:3/2">
+            <!-- garden artwork -->
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 55% at 50% 0%,rgba(232,217,160,0.4),rgba(232,217,160,0) 70%)"></span>
+            <div style="position:absolute;left:0;right:0;bottom:56px;display:flex;align-items:flex-end;justify-content:space-around;padding:0 60px">
+              <img src="ds/assets/cherry/bloom.png" alt="" style="height:96px;filter:var(--shadow-drop-sm)">
+              <img src="ds/assets/hydrangea/medium.png" alt="" style="height:78px;filter:var(--shadow-drop-sm)">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:104px;filter:var(--shadow-drop-sm)">
+              <img src="ds/assets/daisy/midday.png" alt="" style="height:82px;filter:var(--shadow-drop-sm)">
+              <img src="ds/assets/wisteria/p80.png" alt="" style="height:98px;filter:var(--shadow-drop-sm)">
+            </div>
+            <span style="position:absolute;left:40px;right:40px;bottom:54px;border-bottom:1.5px dashed rgba(107,100,85,0.35)"></span>
+            <!-- postmark -->
+            <div style="position:absolute;top:14px;right:16px;width:86px;height:86px;border:1.5px solid rgba(107,100,85,0.5);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(8deg)">
+              <span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.14em;color:var(--ink-faint)">WK 28</span>
+              <span style="font-family:var(--font-mono);font-size:7.5px;letter-spacing:0.1em;color:var(--ink-faint);margin-top:2px">6–12 JUL</span>
+              <span style="font-family:var(--font-mono);font-size:7.5px;letter-spacing:0.1em;color:var(--ink-faint)">2026</span>
+              <span style="position:absolute;inset:8px;border:1px dashed rgba(107,100,85,0.3);border-radius:50%"></span>
+            </div>
+            <!-- stat stamps -->
+            <div style="position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:7px">
+              <div style="background:var(--paper-parchment);border:1px solid var(--line-card);padding:5px 8px;font-family:var(--font-mono);font-size:7.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);box-shadow:var(--shadow-crisp);clip-path:polygon(0 4%,2% 0,98% 0,100% 4%,100% 96%,98% 100%,2% 100%,0 96%);transform:rotate(-2deg)">14 tasks bloomed</div>
+              <div style="background:var(--paper-parchment);border:1px solid var(--line-card);padding:5px 8px;font-family:var(--font-mono);font-size:7.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);box-shadow:var(--shadow-crisp);clip-path:polygon(0 4%,2% 0,98% 0,100% 4%,100% 96%,98% 100%,2% 100%,0 96%);transform:rotate(1.5deg)">6h focused</div>
+              <div style="background:var(--paper-parchment);border:1px solid var(--line-card);padding:5px 8px;font-family:var(--font-mono);font-size:7.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);box-shadow:var(--shadow-crisp);clip-path:polygon(0 4%,2% 0,98% 0,100% 4%,100% 96%,98% 100%,2% 100%,0 96%);transform:rotate(-1deg)">Vine: 23 days</div>
+            </div>
+            <!-- hand-script line -->
+            <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px">
+              <span style="font-family:var(--font-hand);font-size:20px;color:#5d5748;transform:rotate(-0.8deg)">the wisteria did most of the talking this week ✿</span>
+              <span style="width:20px;height:20px;border-radius:50%;border:1px solid var(--line-solid);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-faint);cursor:pointer;flex:none">↻</span>
+            </div>
+            <span style="position:absolute;inset:0;pointer-events:none;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.4"></span>
+          </div>
+
+          <!-- actions -->
+          <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+            <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 18px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Download PNG</button>
+            <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer">Copy image</button>
+            <span style="font-size:12.5px;color:var(--ink-faint);cursor:pointer">Cancel</span>
+            <span style="flex:1"></span>
+            <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">Postcards contain only what you see here.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== MENUS & POPOVERS ===================== -->
+  <div class="sect"><span>01 — Menus &amp; popovers</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <!-- Snooze -->
+    <div class="cell">
+      <div class="clabel">Snooze <b>· row · bulk · keyboard S</b></div>
+      <div class="stage">
+        <div class="pop" style="width:210px">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:4px 10px 6px">Snooze until…</div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea)"></span>Later today<span class="g">+3h</span></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-lavender)"></span>This evening<span class="g">18:00</span></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-blossom)"></span>Tomorrow<span class="g">09:00</span></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span>Next week<span class="g">Mon</span></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--ink-hairline)"></span>Someday</div>
+          <div style="height:1px;background:var(--line-dashed);margin:4px 8px"></div>
+          <div class="mi" style="color:var(--ink-muted)">Pick a date…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="cell">
+      <div class="clabel">Schedule <b>· keyboard 1·2·3</b></div>
+      <div class="stage">
+        <div class="pop" style="width:196px">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:4px 10px 6px">Schedule for…</div>
+          <div class="mi">Today<span class="g">1</span></div>
+          <div class="mi">Tomorrow<span class="g">2</span></div>
+          <div class="mi">Next week<span class="g">3</span></div>
+          <div style="height:1px;background:var(--line-dashed);margin:4px 8px"></div>
+          <div class="mi" style="color:var(--ink-muted)">Pick a date…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project picker -->
+    <div class="cell">
+      <div class="clabel">Project picker <b>· keyboard P</b></div>
+      <div class="stage">
+        <div class="pop" style="width:214px">
+          <div style="display:flex;align-items:center;gap:8px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:7px 10px;margin:2px 2px 6px"><span style="color:var(--ink-hairline);font-size:12px">⌕</span><span style="font-size:12.5px;color:var(--ink-faint)">Find project…</span></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting App</div>
+          <div class="mi" style="background:var(--paper-bone)"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-blossom)"></span>Shaheen Website<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-left:auto"><path d="M4 12.5l5 5L20 6" stroke="var(--acc-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea)"></span>Portfolio</div>
+          <div class="mi" style="color:var(--ink-muted)"><span style="width:7px;height:7px;border-radius:50%;border:1px solid var(--ink-hairline)"></span>(none)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="cell">
+      <div class="clabel">Priority <b>· !·!!·!!!</b></div>
+      <div class="stage">
+        <div class="pop" style="width:170px">
+          <div class="mi"><span style="font-family:var(--font-mono);width:26px;color:var(--ink-hairline)">—</span>None</div>
+          <div class="mi"><span style="font-family:var(--font-mono);width:26px;color:var(--acc-hydrangea-deep)">!</span>Medium</div>
+          <div class="mi"><span style="font-family:var(--font-mono);width:26px;color:var(--acc-gold)">!!</span>High</div>
+          <div class="mi"><span style="font-family:var(--font-mono);width:26px;color:var(--acc-terra)">!!!</span>Critical</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Repeat -->
+    <div class="cell">
+      <div class="clabel">Repeat</div>
+      <div class="stage">
+        <div class="pop" style="width:180px">
+          <div class="mi">No repeat</div>
+          <div class="mi" style="background:var(--paper-bone)">Daily<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-left:auto"><path d="M4 12.5l5 5L20 6" stroke="var(--acc-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <div class="mi">Weekly</div>
+          <div class="mi">Monthly</div>
+          <div class="mi" style="color:var(--ink-muted)">Custom…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="cell">
+      <div class="clabel">Toast <b>· undo 5s</b></div>
+      <div class="stage" style="padding:40px 26px">
+        <div style="display:inline-flex;align-items:center;gap:14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--acc-sage);border-radius:4px;box-shadow:var(--shadow-panel);padding:11px 16px">
+          <span style="font-size:13.5px;color:var(--ink-body)">Task completed</span>
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">Undo</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== MODALS & PANELS ===================== -->
+  <div class="sect"><span>02 — Modals &amp; panels</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <!-- Command bar -->
+    <div class="cell">
+      <div class="clabel">Command bar <b>· ⌘K · capture</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.14);padding:30px">
+        <div class="frost" style="width:440px;padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line-dashed);padding-bottom:12px">
+            <svg width="17" height="18" viewBox="0 0 24 24" fill="none" style="flex:none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--acc-terra)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--acc-terra)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--acc-terra)" stroke-width="1.8" stroke-linecap="round"></path></svg>
+            <span style="font-size:16px;color:var(--ink-body)">Call Omar tomorrow 3pm 1h !! #forecasting</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px">
+            <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">Tomorrow 3:00 PM</span>
+            <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">1h</span>
+            <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+            <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">→ Forecasting</span>
+          </div>
+          <div style="margin-top:12px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint)">Enter = quick add · ⌘Enter = AI capture</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="cell">
+      <div class="clabel">Search <b>· ⌘/</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.14);padding:30px">
+        <div class="frost" style="width:400px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-dashed);padding-bottom:11px"><span style="color:var(--ink-faint)">⌕</span><span style="font-size:15px;color:var(--ink-body)">forecast</span></div>
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);margin:12px 0 6px">Tasks</div>
+          <div class="mi" style="padding:8px 6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc-moss)"></span>Deliver the MVP of the forecasting app</div>
+          <div class="mi" style="padding:8px 6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc-moss)"></span>Plan &amp; implement forecasting logic</div>
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);margin:10px 0 6px">Journal</div>
+          <div class="mi" style="padding:8px 6px;color:var(--ink-muted)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc-buttercream)"></span>"…start with the Cairo cohort first."</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:9px 6px 2px;border-top:1px dashed var(--line-dashed)"><span style="font-size:12.5px;color:var(--ink-muted)">View all results</span><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">↵</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event details -->
+    <div class="cell">
+      <div class="clabel">Event details <b>· calendar</b></div>
+      <div class="stage">
+        <div class="pop" style="width:280px;padding:0;overflow:hidden">
+          <div style="height:6px;background:var(--acc-lavender)"></div>
+          <div style="padding:16px 18px">
+            <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Deep work — Forecasting</div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)">Fri 10 Jul · 9:00 – 11:00</div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+              <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">Time block</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">Forecasting</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:14px">
+              <span style="width:20px;height:20px;border-radius:50%;background:var(--acc-lavender);outline:2px solid var(--paper-parchment);box-shadow:0 0 0 1px var(--acc-lavender)"></span>
+              <span style="width:20px;height:20px;border-radius:50%;background:var(--acc-blossom)"></span>
+              <span style="width:20px;height:20px;border-radius:50%;background:var(--acc-sage)"></span>
+              <span style="width:20px;height:20px;border-radius:50%;background:var(--acc-buttercream)"></span>
+              <span style="width:20px;height:20px;border-radius:50%;background:var(--acc-terra)"></span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line-dashed)">
+              <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">Delete</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow-cta)">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task detail -->
+    <div class="cell">
+      <div class="clabel">Task detail <b>· Enter · expands</b></div>
+      <div class="stage">
+        <div class="pop" style="width:300px;padding:18px 20px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <span style="width:19px;height:19px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+            <div style="flex:1"><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body);line-height:1.3">Plan &amp; implement forecasting logic</div></div>
+            <span style="color:var(--acc-terra);font-size:16px">★</span>
+          </div>
+          <div style="margin-top:14px;font-size:13px;color:var(--ink-muted);line-height:1.5;font-style:italic">Start with the cohort model, then wire the RRULE engine…</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+            <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">Fri 9:00</span>
+            <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+            <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">Forecasting</span>
+            <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">30m</span>
+            <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">↻ Weekly</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line-dashed);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)"><span style="color:var(--acc-terra)">Delete</span><span>Open full ↗</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm delete -->
+    <div class="cell">
+      <div class="clabel">Confirm <b>· destructive only</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.14)">
+        <div class="pop" style="width:300px;padding:18px 20px;box-shadow:var(--shadow-popover)">
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Delete this task?</div>
+          <div style="margin-top:8px;font-size:13px;color:var(--ink-muted);line-height:1.45">It also removes the linked calendar block on Friday.</div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+            <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:12.5px;padding:8px 15px;border-radius:999px">Keep</button>
+            <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow-cta)">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk bar -->
+    <div class="cell">
+      <div class="clabel">Bulk bar <b>· multi-select</b></div>
+      <div class="stage" style="padding:40px 26px">
+        <div style="display:inline-flex;align-items:center;gap:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;box-shadow:var(--shadow-popover);padding:9px 10px 9px 18px;transform:rotate(-0.4deg)">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted)">3 selected</span>
+          <span style="font-size:12.5px;color:var(--ink-body)">Complete</span>
+          <span style="font-size:12.5px;color:var(--ink-body)">Snooze</span>
+          <span style="font-size:12.5px;color:var(--ink-body)">Move</span>
+          <span style="font-size:12.5px;color:var(--acc-terra)">Delete</span>
+          <span style="width:26px;height:26px;border-radius:999px;background:var(--paper-bone);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:12px">✕</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications slide-over -->
+    <div class="cell">
+      <div class="clabel">Notifications <b>· right slide-over</b></div>
+      <div class="stage" style="padding:0;background:none;border:none">
+        <div style="width:300px;height:400px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-panel);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px dashed var(--line-dashed)"><span style="font-family:var(--font-display);font-size:18px;font-weight:600">Notifications</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra)">Mark all read</span></div>
+          <div style="padding:14px 18px;overflow:hidden">
+            <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:8px">Today</div>
+            <div style="display:flex;gap:10px;padding:8px 0"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);margin-top:5px;flex:none"></span><div><div style="font-size:13px;color:var(--ink-body)">GitHub issue auto-filed to Inbox</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);margin-top:2px">4M AGO</div></div></div>
+            <div style="display:flex;gap:10px;padding:8px 0"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage);margin-top:5px;flex:none"></span><div><div style="font-size:13px;color:var(--ink-body)">Reminder — Sync with Omar in 15m</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);margin-top:2px">12M AGO</div></div></div>
+            <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);margin:12px 0 8px">Yesterday</div>
+            <div style="display:flex;gap:10px;padding:8px 0;opacity:0.7"><span style="width:6px;height:6px;border-radius:50%;background:var(--line-solid);margin-top:5px;flex:none"></span><div><div style="font-size:13px;color:var(--ink-muted)">Weekly review is ready</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);margin-top:2px">1D AGO</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat slide-over -->
+    <div class="cell">
+      <div class="clabel">Chat <b>· ⌘J · right slide-over</b></div>
+      <div class="stage" style="padding:0;background:none;border:none">
+        <div style="width:300px;height:400px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-panel);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px dashed var(--line-dashed)"><img src="ds/assets/clover/awake.png" alt="" style="height:26px;filter:var(--shadow-drop-sm)"><span style="font-family:var(--font-display);font-size:17px;font-weight:600">Chat</span><span style="margin-left:auto;color:var(--ink-faint)">✕</span></div>
+          <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+            <div style="align-self:flex-end;max-width:80%;background:var(--ink-body);color:var(--paper-parchment);font-size:13px;padding:9px 13px;border-radius:12px 12px 3px 12px">What did I capture about pricing last week?</div>
+            <div style="align-self:flex-start;max-width:85%;background:var(--paper-bone);color:var(--ink-body);font-size:13px;padding:9px 13px;border-radius:12px 12px 12px 3px;line-height:1.45">You noted trying the model on the Cairo cohort first. <span style="display:inline-block;margin-top:7px;background:rgba(201,160,160,0.22);color:var(--acc-clover-text);font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px">↗ Journal · Jul 3</span></div>
+          </div>
+          <div style="padding:12px 14px;border-top:1px dashed var(--line-dashed);display:flex;align-items:center;gap:10px"><span style="flex:1;font-size:12.5px;color:var(--ink-faint)">Ask your system…</span><span style="width:30px;height:30px;border-radius:999px;background:var(--acc-clover);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment)">↑</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== MOBILE SHEETS ===================== -->
+  <div class="sect"><span>03 — Mobile sheets</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <!-- More menu -->
+    <div class="cell">
+      <div class="clabel">The "More" sheet <b>· phone tab bar</b></div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="pscreen">
+          <div style="position:absolute;inset:0;background:rgba(42,36,32,0.32)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--paper-linen);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(60,52,38,0.2);padding:12px 20px 22px;z-index:10">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--line-solid);margin:0 auto 16px"></div>
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px">More</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><img src="ds/assets/vine/flowering.png" alt="" style="height:24px"><span style="font-size:14px;color:var(--ink-body)">Routines</span></div>
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><img src="ds/assets/fern/full.png" alt="" style="height:22px"><span style="font-size:14px;color:var(--ink-body)">Journal</span></div>
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-hydrangea)"></span><span style="font-size:14px;color:var(--ink-body)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></div>
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><img src="ds/assets/fern/unfurl2.png" alt="" style="height:22px"><span style="font-size:14px;color:var(--ink-body)">Review</span></div>
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-clover)"></span><span style="font-size:14px;color:var(--ink-body)">People</span></div>
+              <div style="display:flex;align-items:center;gap:11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;padding:13px 14px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-sage)"></span><span style="font-size:14px;color:var(--ink-body)">Settings</span></div>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-dashed)">
+              <span style="flex:1;text-align:center;font-size:13px;color:var(--ink-muted)">⌕ Search</span>
+              <span style="flex:1;text-align:center;font-size:13px;color:var(--ink-muted)">Chat</span>
+              <span style="flex:1;text-align:center;font-size:13px;color:var(--ink-faint)">Sign out</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snooze sheet -->
+    <div class="cell">
+      <div class="clabel">Snooze / schedule sheet</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="pscreen">
+          <div style="position:absolute;inset:0;background:rgba(42,36,32,0.32)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--paper-linen);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(60,52,38,0.2);padding:12px 20px 22px;z-index:10">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--line-solid);margin:0 auto 14px"></div>
+            <div style="font-size:15px;color:var(--ink-body);font-weight:500;margin-bottom:4px">Snooze "Emails for Shaheen"</div>
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px">Until…</div>
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 4px;border-bottom:1px dashed var(--line-dashed)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span><span style="flex:1;font-size:14.5px;color:var(--ink-body)">Later today</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">+3h</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 4px;border-bottom:1px dashed var(--line-dashed)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span><span style="flex:1;font-size:14.5px;color:var(--ink-body)">Tomorrow morning</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">09:00</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 4px;border-bottom:1px dashed var(--line-dashed)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span><span style="flex:1;font-size:14.5px;color:var(--ink-body)">Next week</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">Mon</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-hairline)"></span><span style="flex:1;font-size:14.5px;color:var(--ink-body)">Someday</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice capture recording -->
+    <div class="cell">
+      <div class="clabel">Voice capture <b>· recording</b></div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="pscreen">
+          <div style="position:absolute;inset:0;background:rgba(42,36,32,0.42)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--paper-linen);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(60,52,38,0.2);padding:22px 22px 30px;z-index:10;text-align:center">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--line-solid);margin:0 auto 22px"></div>
+            <div style="width:78px;height:78px;border-radius:999px;background:var(--acc-terra);display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 0 0 8px rgba(181,101,74,0.14),var(--shadow-cta)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+            <div style="display:flex;align-items:flex-end;justify-content:center;gap:3px;height:26px;margin-top:20px">
+              <span style="width:3px;height:10px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:20px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:14px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:26px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:12px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:22px;background:var(--acc-terra);border-radius:2px"></span><span style="width:3px;height:9px;background:var(--acc-terra);border-radius:2px"></span>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-muted);margin-top:16px">Listening · 0:07</div>
+            <div style="font-family:var(--font-hand);font-size:18px;color:#7a745f;margin-top:6px">say what's on your mind…</div>
+            <div style="display:flex;gap:12px;margin-top:22px"><span style="flex:1;padding:12px;border:1px solid var(--line-solid);border-radius:999px;font-size:13px;color:var(--ink-muted)">Cancel</span><span style="flex:1;padding:12px;background:var(--ink-body);color:var(--paper-parchment);border-radius:999px;font-size:13px">Stop &amp; file</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task detail sheet -->
+    <div class="cell">
+      <div class="clabel">Task detail sheet</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="pscreen">
+          <div style="position:absolute;inset:0;background:rgba(42,36,32,0.32)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--paper-linen);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(60,52,38,0.2);padding:12px 20px 24px;z-index:10">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--line-solid);margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px"><span style="width:20px;height:20px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink-body);line-height:1.3">Deliver the MVP of the forecasting app</div></div><span style="color:var(--acc-terra);font-size:18px">★</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+              <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">✶ Goal</span>
+              <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">Today</span>
+              <span class="chip" style="background:rgba(201,165,90,0.22);color:var(--acc-gold)">!! High</span>
+              <span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">Forecasting</span>
+            </div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px dashed var(--line-dashed)"><span style="font-size:14px;color:var(--ink-muted);flex:1">Schedule</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">Fri 9:00</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px dashed var(--line-dashed)"><span style="font-size:14px;color:var(--ink-muted);flex:1">Duration</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">2h</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 4px"><span style="font-size:14px;color:var(--ink-muted);flex:1">Notes</span><span style="font-size:13px;color:var(--ink-faint)">Add a note…</span></div>
+            </div>
+            <button style="width:100%;margin-top:16px;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14px;padding:13px;border-radius:999px;box-shadow:var(--shadow-cta)">Mark complete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== SELECTION & KEYBOARD ===================== -->
+  <div class="sect"><span>04 — Selection &amp; keyboard</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <!-- Bulk actions in context -->
+    <div class="cell">
+      <div class="clabel">Bulk actions <b>· multi-select in a list · X toggles</b></div>
+      <div class="stage" style="padding:0;background:none;border:none">
+        <div class="pop" style="width:560px;padding:0;overflow:hidden;position:relative;box-shadow:var(--shadow-panel)">
+          <!-- list header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px dashed var(--line-dashed)">
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink-body)">Due today</span><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">6 open</span></div>
+            <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">⚟ Filter</span>
+          </div>
+          <!-- rows -->
+          <div style="padding:6px 20px 82px">
+            <!-- selected row -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:7px;background:rgba(181,101,74,0.07);box-shadow:inset 2px 0 0 var(--acc-terra)">
+              <span style="width:18px;height:18px;border-radius:999px;background:var(--acc-terra);display:inline-flex;align-items:center;justify-content:center;flex:none;margin-top:1px;box-shadow:var(--shadow-crisp)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="var(--paper-parchment)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+              <span style="width:18px;height:18px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:1px"></span>
+              <div style="flex:1"><div style="font-size:14.5px;color:var(--ink-body)">Deliver the MVP of the forecasting app</div><div style="margin-top:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc-gold)">✶ Goal · Forecasting</div></div>
+            </div>
+            <!-- selected row -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:7px;background:rgba(181,101,74,0.07);box-shadow:inset 2px 0 0 var(--acc-terra)">
+              <span style="width:18px;height:18px;border-radius:999px;background:var(--acc-terra);display:inline-flex;align-items:center;justify-content:center;flex:none;margin-top:1px;box-shadow:var(--shadow-crisp)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="var(--paper-parchment)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+              <span style="width:18px;height:18px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:1px"></span>
+              <div style="flex:1"><div style="font-size:14.5px;color:var(--ink-body)">Create official emails for Shaheen</div><div style="margin-top:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint)">Shaheen · 30m · <span style="color:var(--acc-hydrangea-deep)">! P3</span></div></div>
+            </div>
+            <!-- unselected row -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:7px">
+              <span style="width:18px;height:18px;border:1.5px solid var(--ink-hairline);border-radius:999px;flex:none;margin-top:1px"></span>
+              <span style="width:18px;height:18px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:1px"></span>
+              <div style="flex:1"><div style="font-size:14.5px;color:var(--ink-body)">Plan &amp; implement forecasting logic</div><div style="margin-top:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#8A4A58">In progress · 9:00</div></div>
+            </div>
+            <!-- selected row -->
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:7px;background:rgba(181,101,74,0.07);box-shadow:inset 2px 0 0 var(--acc-terra)">
+              <span style="width:18px;height:18px;border-radius:999px;background:var(--acc-terra);display:inline-flex;align-items:center;justify-content:center;flex:none;margin-top:1px;box-shadow:var(--shadow-crisp)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="var(--paper-parchment)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+              <span style="width:18px;height:18px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:1px"></span>
+              <div style="flex:1"><div style="font-size:14.5px;color:var(--ink-body)">[BUG] Deactivating a vendor store</div><div style="margin-top:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint)">Shaheen website</div></div>
+            </div>
+          </div>
+          <!-- floating bulk bar -->
+          <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%) rotate(-0.4deg);display:inline-flex;align-items:center;gap:4px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;box-shadow:var(--shadow-popover);padding:7px 8px 7px 16px;white-space:nowrap">
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra)">3 selected</span>
+            <span style="width:1px;height:18px;background:var(--line-dashed);margin:0 6px"></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:12.5px;color:var(--ink-body)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="var(--ink-muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>Complete</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;font-size:12.5px;color:var(--ink-body)">Snooze<span style="color:var(--ink-hairline);font-size:10px">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;font-size:12.5px;color:var(--ink-body)">Schedule<span style="color:var(--ink-hairline);font-size:10px">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;font-size:12.5px;color:var(--ink-body)">Move<span style="color:var(--ink-hairline);font-size:10px">▾</span></span>
+            <span style="padding:6px 10px;border-radius:999px;font-size:12.5px;color:var(--acc-terra)">Delete</span>
+            <span style="width:28px;height:28px;border-radius:999px;background:var(--paper-bone);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:12px">✕</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts overlay -->
+    <div class="cell">
+      <div class="clabel">Keyboard shortcuts <b>· press ? · the whole keymap</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.16);padding:34px">
+        <div class="frost" style="width:660px;padding:0;overflow:hidden">
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line-dashed)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:30px;filter:var(--shadow-drop-sm)">
+              <div>
+                <div style="font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--ink-body);line-height:1">Keyboard shortcuts</div>
+                <div style="font-family:var(--font-hand);font-size:15px;color:#7a745f;margin-top:2px">plant a whole day without the mouse</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="kbd">?</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-hairline)">toggle · Esc closes</span></div>
+          </div>
+          <!-- three columns of categories -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+
+            <!-- col 1 -->
+            <div style="padding:18px 22px;border-right:1px dashed var(--line-dashed)">
+              <div class="kcat">Global</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">⌘</span><span class="kbd">K</span></span><span class="klabel">Command bar</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">⌘</span><span class="kbd">/</span></span><span class="klabel">Search</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">⌘</span><span class="kbd">J</span></span><span class="klabel">Chat</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">N</span></span><span class="klabel">New task</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">G</span></span><span class="klabel">Go to…</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">?</span></span><span class="klabel">This cheatsheet</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">Esc</span></span><span class="klabel">Close overlay</span></div>
+
+              <div class="kcat" style="margin-top:20px">Navigate</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">T</span></span><span class="klabel">Today</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">I</span></span><span class="klabel">Inbox</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">U</span></span><span class="klabel">Upcoming</span></div>
+            </div>
+
+            <!-- col 2 -->
+            <div style="padding:18px 22px;border-right:1px dashed var(--line-dashed)">
+              <div class="kcat">Task list</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">J</span><span class="kbd">K</span></span><span class="klabel">Move focus</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">E</span></span><span class="klabel">Complete</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">↵</span></span><span class="klabel">Open detail</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">S</span></span><span class="klabel">Snooze menu</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span></span><span class="klabel">Today · Tmrw · Next wk</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">P</span></span><span class="klabel">Move to project</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">X</span></span><span class="klabel">Select (multi)</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">#</span></span><span class="klabel">Delete</span></div>
+
+              <div class="kcat" style="margin-top:20px">Inbox triage</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">F</span></span><span class="klabel">File (AI guess)</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">D</span></span><span class="klabel">Pick domain &amp; file</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">X</span></span><span class="klabel">Dismiss</span></div>
+            </div>
+
+            <!-- col 3 -->
+            <div style="padding:18px 22px">
+              <div class="kcat">Calendar</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">D</span><span class="kbd">W</span><span class="kbd">M</span></span><span class="klabel">Day · Week · Month</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">←</span><span class="kbd">→</span></span><span class="klabel">Prev · next period</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">T</span></span><span class="klabel">Jump to today</span></div>
+
+              <div class="kcat" style="margin-top:20px">Command bar</div>
+              <div class="krow"><span class="kkeys"><span class="kbd">↵</span></span><span class="klabel">Quick add</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">⌘</span><span class="kbd">↵</span></span><span class="klabel">AI capture</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">!</span></span><span class="klabel">Priority (! !! !!!)</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">#</span></span><span class="klabel">Project</span></div>
+              <div class="krow"><span class="kkeys"><span class="kbd">//</span></span><span class="klabel">Add a note</span></div>
+
+              <div style="margin-top:22px;padding-top:14px;border-top:1px dashed var(--line-dashed);font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.5deg)">arrow → key → arrow → key. shovel through it ✿</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== JUMP, VIEWS & LABELS ===================== -->
+  <div class="sect"><span>05 — Jump, views &amp; labels</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <!-- Go-to palette -->
+    <div class="cell">
+      <div class="clabel">Go to <b>· G · jump to any view</b></div>
+      <div class="stage" style="background:rgba(42,36,32,0.14);padding:30px">
+        <div class="frost" style="width:452px;padding:0;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--line-dashed)">
+            <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra);border:1px solid rgba(181,101,74,0.4);border-radius:5px;padding:4px 7px;flex:none">Go to</span>
+            <span style="font-size:15px;color:var(--ink-faint)">a view, project or person…</span>
+            <span style="margin-left:auto;width:1.5px;height:17px;background:var(--acc-terra)"></span>
+          </div>
+          <div style="padding:8px">
+            <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:4px 10px 6px">Recent</div>
+            <div class="mi" style="background:var(--paper-bone)"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-sage)"></span>Today<span class="g">↵</span></div>
+            <div class="mi"><img src="ds/assets/wisteria/p60.png" alt="" style="height:17px">Forecasting App<span class="g" style="letter-spacing:0.08em;text-transform:uppercase">Project</span></div>
+            <div class="mi"><span style="width:19px;height:19px;border-radius:50%;background:rgba(201,160,160,0.32);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:10px;color:var(--acc-clover-text)">O</span>Omar Hassan<span class="g" style="letter-spacing:0.08em;text-transform:uppercase">Person</span></div>
+            <div style="height:1px;background:var(--line-dashed);margin:5px 8px"></div>
+            <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:4px 10px 6px">Views</div>
+            <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea)"></span>Inbox<span class="g">I</span></div>
+            <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-blossom)"></span>Tasks</div>
+            <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-lavender)"></span>Calendar</div>
+            <div class="mi"><img src="ds/assets/fern/unfurl2.png" alt="" style="height:15px">Journal</div>
+            <div class="mi"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-clover)"></span>People</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:11px 16px;border-top:1px solid var(--line-dashed);font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">
+            <span><b style="font-weight:400;color:var(--ink-faint)">↑↓</b> move</span>
+            <span><b style="font-weight:400;color:var(--ink-faint)">↵</b> open</span>
+            <span><b style="font-weight:400;color:var(--ink-faint)">esc</b> close</span>
+            <span style="margin-left:auto;font-family:var(--font-hand);font-size:14px;text-transform:none;letter-spacing:0;color:#7a745f">one hop to anywhere ✿</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar view options -->
+    <div class="cell">
+      <div class="clabel">Calendar view options <b>· ⚟ · density · toggles</b></div>
+      <div class="stage">
+        <div class="pop" style="width:256px;padding:6px">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:6px 10px 8px">View options</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px">
+            <span style="font-size:13px;color:var(--ink-body)">Density</span>
+            <span style="display:inline-flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:999px;overflow:hidden;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase"><span style="padding:5px 11px;color:var(--ink-muted)">S</span><span style="padding:5px 11px;background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)">M</span><span style="padding:5px 11px;color:var(--ink-muted)">L</span></span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px">
+            <span style="font-size:13px;color:var(--ink-body)">Week starts</span>
+            <span style="display:inline-flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:999px;overflow:hidden;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase"><span style="padding:5px 11px;background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)">Mon</span><span style="padding:5px 11px;color:var(--ink-muted)">Sun</span></span>
+          </div>
+          <div style="height:1px;background:var(--line-dashed);margin:5px 8px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">Show weekends</span><span style="width:38px;height:22px;border-radius:999px;background:var(--acc-moss);position:relative;flex:none"><span style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">Show completed</span><span style="width:38px;height:22px;border-radius:999px;background:var(--line-card);position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">Show declined</span><span style="width:38px;height:22px;border-radius:999px;background:var(--line-card);position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">24-hour time</span><span style="width:38px;height:22px;border-radius:999px;background:var(--acc-moss);position:relative;flex:none"><span style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Board view options -->
+    <div class="cell">
+      <div class="clabel">Board view options <b>· projects</b></div>
+      <div class="stage">
+        <div class="pop" style="width:256px;padding:6px">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline);padding:6px 10px 8px">Board · view</div>
+          <div style="padding:6px 10px 9px">
+            <div style="font-size:13px;color:var(--ink-body);margin-bottom:7px">Time frame</div>
+            <div style="display:flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:7px;overflow:hidden;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase"><span style="flex:1;text-align:center;padding:6px 0;background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)">Overview</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">D</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">W</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">M</span></div>
+          </div>
+          <div style="padding:6px 10px 9px">
+            <div style="font-size:13px;color:var(--ink-body);margin-bottom:7px">Group by</div>
+            <div style="display:flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:7px;overflow:hidden;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase"><span style="flex:1;text-align:center;padding:6px 0;background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)">Domain</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">Status</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">Due</span></div>
+          </div>
+          <div style="padding:6px 10px 9px">
+            <div style="font-size:13px;color:var(--ink-body);margin-bottom:7px">Sort</div>
+            <div style="display:flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:7px;overflow:hidden;font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase"><span style="flex:1;text-align:center;padding:6px 0;background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)">Manual</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">Progress</span><span style="flex:1;text-align:center;padding:6px 0;color:var(--ink-muted)">Recent</span></div>
+          </div>
+          <div style="height:1px;background:var(--line-dashed);margin:5px 8px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">Compact rows</span><span style="width:38px;height:22px;border-radius:999px;background:var(--line-card);position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px"><span style="font-size:13px;color:var(--ink-body)">Show archived</span><span style="width:38px;height:22px;border-radius:999px;background:var(--line-card);position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--paper-parchment);box-shadow:var(--shadow-crisp)"></span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label picker -->
+    <div class="cell">
+      <div class="clabel">Label picker <b>· assign · keyboard L</b></div>
+      <div class="stage">
+        <div class="pop" style="width:230px">
+          <div style="display:flex;align-items:center;gap:8px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:7px 10px;margin:2px 2px 6px"><span style="color:var(--ink-hairline);font-size:12px">⌕</span><span style="font-size:12.5px;color:var(--ink-faint)">Find or create…</span></div>
+          <div class="mi"><span style="width:10px;height:10px;border-radius:3px;background:var(--acc-terra)"></span>Urgent<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-left:auto"><path d="M4 12.5l5 5L20 6" stroke="var(--acc-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <div class="mi"><span style="width:10px;height:10px;border-radius:3px;background:var(--acc-lavender)"></span>Waiting on</div>
+          <div class="mi"><span style="width:10px;height:10px;border-radius:3px;background:var(--acc-sage)"></span>Quick win</div>
+          <div class="mi" style="background:var(--paper-bone)"><span style="width:10px;height:10px;border-radius:3px;background:var(--acc-hydrangea)"></span>Deep work<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-left:auto"><path d="M4 12.5l5 5L20 6" stroke="var(--acc-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <div class="mi"><span style="width:10px;height:10px;border-radius:3px;background:var(--acc-buttercream)"></span>Errand</div>
+          <div class="mi"><span style="width:10px;height:10px;border-radius:3px;background:var(--ink-hairline)"></span>Someday</div>
+          <div style="height:1px;background:var(--line-dashed);margin:4px 8px"></div>
+          <div class="mi" style="color:var(--acc-terra)"><span style="width:16px;text-align:center">＋</span>Create new label…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label manager -->
+    <div class="cell">
+      <div class="clabel">Labels <b>· manage · settings</b></div>
+      <div class="stage" style="padding:0;background:none;border:none">
+        <div style="width:344px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-panel);overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px dashed var(--line-dashed)">
+            <div style="display:flex;align-items:baseline;gap:9px"><span style="font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink-body)">Labels</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">6 total</span></div>
+            <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:11.5px;padding:7px 13px;border-radius:999px;box-shadow:var(--shadow-cta)">＋ New</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px dashed var(--line-dashed)"><span style="color:var(--ink-hairline);font-size:12px;flex:none">⠿</span><span style="width:12px;height:12px;border-radius:3px;background:var(--acc-terra);flex:none"></span><span style="flex:1;font-size:14px;color:var(--ink-body)">Urgent</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">6 tasks</span><span style="color:var(--ink-hairline);font-size:14px;letter-spacing:1px">⋯</span></div>
+          <!-- row in edit state -->
+          <div style="padding:12px 18px;border-bottom:1px dashed var(--line-dashed);background:var(--paper-bone)">
+            <div style="display:flex;align-items:center;gap:11px"><span style="color:var(--ink-hairline);font-size:12px;flex:none">⠿</span><span style="flex:1;display:flex;align-items:center;background:var(--paper-parchment);border:1px solid var(--acc-lavender);border-radius:6px;padding:6px 10px"><span style="font-size:14px;color:var(--ink-body)">Waiting on</span><span style="margin-left:auto;width:1.5px;height:15px;background:var(--acc-terra)"></span></span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:11px;padding-left:23px">
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-terra)"></span>
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-lavender);outline:2px solid var(--paper-parchment);box-shadow:0 0 0 1.5px var(--acc-lavender)"></span>
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-sage)"></span>
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-hydrangea)"></span>
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-buttercream)"></span>
+              <span style="width:18px;height:18px;border-radius:4px;background:var(--acc-clover)"></span>
+              <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-terra)">Save</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px dashed var(--line-dashed)"><span style="color:var(--ink-hairline);font-size:12px;flex:none">⠿</span><span style="width:12px;height:12px;border-radius:3px;background:var(--acc-sage);flex:none"></span><span style="flex:1;font-size:14px;color:var(--ink-body)">Quick win</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">8 tasks</span><span style="color:var(--ink-hairline);font-size:14px;letter-spacing:1px">⋯</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px dashed var(--line-dashed)"><span style="color:var(--ink-hairline);font-size:12px;flex:none">⠿</span><span style="width:12px;height:12px;border-radius:3px;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:14px;color:var(--ink-body)">Deep work</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">4 tasks</span><span style="color:var(--ink-hairline);font-size:14px;letter-spacing:1px">⋯</span></div>
+          <div style="padding:12px 18px;font-family:var(--font-hand);font-size:14px;color:#7a745f">drag to reorder · labels cut across every domain ✿</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

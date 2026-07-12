@@ -1,0 +1,65 @@
+/* Light mode — warm paper, botanical linen. This is the primary experience. */
+:root {
+  /* Paper ground */
+  --paper-linen:        #EFE9DB;   /* page background */
+  --paper-parchment:    #FBF6E9;   /* cards, panels, popovers */
+  --paper-bone:         #F6F0E1;   /* input fields, hover surfaces */
+  --paper-sidebar:      #EAE3D2;   /* left rail */
+  --paper-goal:         #F8EFD3;   /* gold card — goal of the day */
+
+  /* Ink */
+  --ink-body:           #2a2420;   /* primary text — bark brown */
+  --ink-muted:          #6b6455;   /* secondary text, metadata labels */
+  --ink-faint:          #8b8471;   /* hints, uppercase mono captions */
+  --ink-hairline:       #a49d87;   /* tertiary hint, "done" strike text */
+
+  /* Borders */
+  --line-solid:         #cfc7b0;
+  --line-dashed:        #d5cdb5;   /* dashed hairlines between sections */
+  --line-sidebar:       #c9c1aa;
+  --line-card:          #e0d8c2;
+  --line-goal:          #dcc48e;
+
+  /* Botanical accents — the six flower tabs */
+  --acc-sage:           #8A9A7E;   /* leaves, primary green */
+  --acc-moss:           #7A946E;   /* projects — deep moss */
+  --acc-terra:          #B5654A;   /* CTA, alerts, active states */
+  --acc-blossom:        #D4A8B0;   /* tasks — cherry blush */
+  --acc-lavender:       #A8A0BE;   /* calendar */
+  --acc-hydrangea:      #9AB4BE;   /* inbox */
+  --acc-buttercream:    #D4C78A;   /* docs — fern accent */
+  --acc-clover:         #C9A0A0;   /* chat — dusty rose */
+  --acc-gold:           #9a7b3a;   /* goal-of-day emphasis */
+  --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
+  --acc-lavender-deep:  #7c6a9a;   /* muted lavender links/labels */
+  --acc-lavender-text:  #5a5170;   /* darker text on lavender-tinted pills */
+  --acc-sage-text:      #4d6650;   /* darker text on sage-tinted pills */
+  --acc-hydrangea-deep: #4d6a75;   /* text on hydrangea-tinted chips */
+  --acc-clover-text:    #8a5a5a;   /* text on clover-tinted chips */
+  --acc-buttercream-text: #9a8b52; /* darker buttercream for Review headers */
+
+  /* Signal colors */
+  --sig-overdue:        #B5654A;   /* same as terra — overdue reads warm */
+  --sig-streak:         #B5654A;   /* streak flame */
+  --sig-done:           #2a2420;   /* filled check chip */
+
+  /* Task checkboxes */
+  --check-border:       #b3ac95;
+  --check-bg:           var(--paper-bone);
+  --check-fill:         var(--acc-sage);   /* checked square */
+  --check-mark:         #FBF6E9;           /* the ✓ glyph */
+  --check-glow:         none;              /* night mode adds a moonlit glow */
+
+  /* Semantic aliases (what components should reach for) */
+  --bg-app:             var(--paper-linen);
+  --bg-surface:         var(--paper-parchment);
+  --bg-input:           var(--paper-bone);
+  --bg-sidebar:         var(--paper-sidebar);
+  --text-primary:       var(--ink-body);
+  --text-secondary:     var(--ink-muted);
+  --text-tertiary:      var(--ink-faint);
+  --border-default:     var(--line-solid);
+  --border-dashed:      var(--line-dashed);
+  --accent-primary:     var(--acc-terra);
+  --accent-plant:       var(--acc-sage);
+}

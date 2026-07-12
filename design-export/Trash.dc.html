@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.mono{font-family:var(--font-mono)}
+.tbadge{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:rgba(42,36,32,0.07);color:var(--ink-faint);flex:none;width:58px;text-align:center}
+.trow{display:flex;align-items:center;gap:13px;padding:12px 2px;border-bottom:1px dashed var(--line-dashed)}
+.aghd{position:relative;display:flex;align-items:center;gap:12px;margin:26px 0 4px;padding:6px 10px;border-radius:5px;overflow:hidden}
+.aghd span.t{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap;position:relative}
+.aghd .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed);position:relative}
+.leafbg{position:absolute;width:16px;height:10px;border-radius:80% 20% 70% 30%;opacity:0.16}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Trash — deleted things rest here for 30 days before they compost.</span></div>
+  <div class="dv-opts">
+
+    <!-- 1A — THE LIST -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>/trash — age groups, restore toast, empty-trash confirm open</div>
+      <div class="dv-card" style="width:880px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);min-height:760px;position:relative">
+          <div style="height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+            <span>Kai's Flow · Settings · Trash</span><span>Africa/Cairo</span>
+          </div>
+          <div style="padding:28px 0 44px;display:flex;justify-content:center">
+            <div style="width:760px;max-width:100%;padding:0 34px">
+
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <svg width="42" height="40" viewBox="0 0 48 46"><path d="M8 30c0-4 4-9 10-10-2-4 1-9 6-9s8 5 6 9c6 1 10 6 10 10Z" fill="#a9a68f" opacity="0.5"/><path d="M4 30h40l-3 12H7L4 30Z" fill="none" stroke="#8b8471" stroke-width="2" stroke-linejoin="round"/><path d="M24 20v-6" stroke="#7A946E" stroke-width="2" stroke-linecap="round"/><path d="M24 15c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="#7A946E"/></svg>
+                  <div>
+                    <div class="mono" style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">14 items resting</div>
+                    <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:38px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Trash</h1>
+                  </div>
+                </div>
+                <span style="font-size:12.5px;color:var(--acc-terra);text-decoration:underline;cursor:pointer;padding-bottom:5px">Empty trash…</span>
+              </div>
+
+              <!-- empty confirm, expanded -->
+              <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-panel);padding:13px 17px;display:flex;align-items:center;gap:14px">
+                <span style="font-size:13.5px;color:var(--ink-body)">Empty everything? 14 items, no way back.</span>
+                <span style="flex:1"></span>
+                <span style="font-size:12.5px;color:var(--ink-faint);cursor:pointer">Cancel</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Empty</button>
+              </div>
+
+              <!-- TODAY -->
+              <div class="aghd">
+                <span class="leafbg" style="left:6%;top:4px;background:#C9A55A;transform:rotate(24deg)"></span>
+                <span class="leafbg" style="left:38%;top:12px;background:#a9803f;transform:rotate(-30deg)"></span>
+                <span class="leafbg" style="left:72%;top:2px;background:#C9A55A;transform:rotate(60deg)"></span>
+                <span class="t">Today</span><span class="r"></span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Task</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">Migrate the blog to the new stack</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted 2h ago</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Inbox</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">"screenshot — pricing table idea"</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted 5h ago</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+              <!-- inline delete-forever confirm -->
+              <div style="margin:8px 0 0 71px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-panel);padding:11px 15px;display:flex;align-items:center;gap:14px;max-width:440px">
+                <span style="font-size:12.5px;color:var(--ink-body)">Gone for good — compost now?</span>
+                <span style="flex:1"></span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Cancel</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12px;padding:6px 13px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Delete forever</button>
+              </div>
+
+              <!-- THIS WEEK -->
+              <div class="aghd">
+                <span class="leafbg" style="left:12%;top:8px;background:#a9803f;transform:rotate(-14deg)"></span>
+                <span class="leafbg" style="left:56%;top:3px;background:#C9A55A;transform:rotate(40deg)"></span>
+                <span class="t">This week</span><span class="r"></span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Event</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">Coffee — downtown studio tour</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted Tue</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Journal</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">"draft — didn't mean a word of it"</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted Mon</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Task</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">Compare CRM tools (again)</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted Mon</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+
+              <!-- auto-purge notice -->
+              <div style="margin:26px 0 0;padding:10px 14px;border:1px dashed var(--line-solid);border-radius:6px;background:rgba(169,166,143,0.08);font-size:12.5px;color:var(--ink-faint);text-align:center">Items compost after 30 days — gone for good, feeding nothing in particular.</div>
+
+              <!-- OLDER -->
+              <div class="aghd">
+                <span class="leafbg" style="left:22%;top:6px;background:#C9A55A;transform:rotate(10deg)"></span>
+                <span class="leafbg" style="left:80%;top:9px;background:#a9803f;transform:rotate(-48deg)"></span>
+                <span class="t">Older</span><span class="r"></span>
+              </div>
+              <div class="trow">
+                <span class="tbadge">Task</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">Learn Blender properly this time</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted 24 Jun · composts in 5d</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+              <div class="trow" style="border-bottom:none">
+                <span class="tbadge">Inbox</span>
+                <span style="flex:1;font-size:14px;color:var(--ink-faint);text-decoration:line-through">"voice note — unclear, 6 seconds"</span>
+                <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">deleted 21 Jun · composts in 2d</span>
+                <span style="font-size:12.5px;color:var(--ink-body);text-decoration:underline;cursor:pointer">Restore</span>
+                <span style="font-size:12px;color:var(--ink-faint);cursor:pointer">Delete forever</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- restore toast -->
+          <div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:#2a2420;color:#F4F1EA;border-radius:999px;padding:9px 16px;box-shadow:0 10px 26px rgba(42,36,32,0.3);white-space:nowrap;z-index:45">
+            <span style="font-size:12px">Restored to Tasks</span>
+            <span style="font-size:12px;font-weight:600;color:#C9A55A;cursor:pointer">Jump there →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1B — EMPTY -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Empty — the heap at rest</div>
+      <div class="dv-card" style="width:560px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:46px 40px 48px;display:flex;flex-direction:column;align-items:center">
+          <svg width="120" height="76" viewBox="0 0 120 76">
+            <ellipse cx="60" cy="62" rx="46" ry="12" fill="#b9a98a" opacity="0.55"></ellipse>
+            <path d="M22 60c4-14 18-24 38-24s34 10 38 24" fill="#a3937a" opacity="0.6"></path>
+            <path d="M34 52c8-8 40-10 52-2" stroke="#8b7a5e" stroke-width="1.5" fill="none" opacity="0.5"></path>
+            <path d="M60 38V22" stroke="#7A946E" stroke-width="2.5" stroke-linecap="round"></path>
+            <path d="M60 25c-4-.6-6-2.6-6.6-6.6 4 0 6.2 1.8 6.6 6.6Z" fill="#7A946E"></path>
+            <path d="M60 28c4-.6 6-2.6 6.6-6.6-4 0-6.2 1.8-6.6 6.6Z" fill="#8A9A7E"></path>
+          </svg>
+          <div style="margin-top:20px;font-family:var(--font-hand);font-size:19px;color:#7a745f;text-align:center;max-width:360px;line-height:1.45">The heap is empty. Deleted things rest here for 30 days before they compost.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Entries: a Settings nav row + a quiet "Trash" ghost link at the bottom of the sidebar overflow. Mobile: Restore / Delete forever collapse into each row's ⋯ menu.</p>
+</section>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start;margin-top:22px}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.45}
+.fx{width:340px}
+.fx-stage{position:relative;height:230px;overflow:hidden;background:var(--paper-linen)}
+.fx-meta{padding:14px 16px 15px;border-top:1px solid var(--line-card);background:var(--paper-parchment);position:relative;z-index:45}
+.fx-name{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)}
+.fx-use{margin-top:5px;font-size:11.5px;line-height:1.5;color:var(--ink-muted)}
+.fx-recipe{margin-top:8px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;line-height:1.6;color:var(--ink-hairline)}
+.petal{position:absolute;top:-18px;width:11px;height:9px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:petalFall 7s linear infinite;will-change:transform}
+.mote{position:absolute;bottom:-8px;width:4px;height:4px;border-radius:50%;background:#C9A55A;opacity:0;animation:moteRise 9s ease-in-out infinite;will-change:transform}
+.fly{position:absolute;width:5px;height:5px;border-radius:50%;background:#E8D9A0;box-shadow:0 0 8px 3px rgba(232,217,160,0.55);animation:fireflyPulse 4.5s ease-in-out infinite, fireflyDrift 13s ease-in-out infinite alternate;will-change:transform,opacity}
+.amberleaf{position:absolute;top:-16px;width:12px;height:8px;background:linear-gradient(135deg,#C9A55A,#a9803f);border-radius:80% 20% 70% 30%;animation:petalFall 9.5s linear infinite;will-change:transform}
+.floret{position:absolute;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #cfe0e6, #9AB4BE);animation:floretDrift 5.5s ease-in infinite;will-change:transform}
+@keyframes petalFall{0%{transform:translate(0,-20px) rotate(0deg);opacity:0}8%{opacity:0.95}30%{transform:translate(26px,70px) rotate(120deg)}55%{transform:translate(-8px,140px) rotate(220deg);opacity:0.9}80%{transform:translate(22px,205px) rotate(310deg)}100%{transform:translate(6px,260px) rotate(400deg);opacity:0}}
+@keyframes moteRise{0%{transform:translate(0,0);opacity:0}12%{opacity:0.7}45%{transform:translate(9px,-105px);opacity:0.45}75%{transform:translate(-6px,-185px);opacity:0.55}100%{transform:translate(4px,-250px);opacity:0}}
+@keyframes fireflyPulse{0%,100%{opacity:0.06}45%{opacity:0.95}60%{opacity:0.35}78%{opacity:0.8}}
+@keyframes fireflyDrift{0%{transform:translate(0,0)}100%{transform:translate(46px,-30px)}}
+@keyframes leafSway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+@keyframes bloomGlow{0%,100%{opacity:0.25;transform:scale(0.92)}50%{opacity:0.7;transform:scale(1.06)}}
+@keyframes dewGlint{0%,88%,100%{opacity:0.2;transform:scale(0.8)}92%{opacity:1;transform:scale(1.25)}96%{opacity:0.5;transform:scale(1)}}
+@keyframes floretDrift{0%{transform:translate(0,0) ;opacity:0}10%{opacity:1}60%{transform:translate(14px,88px);opacity:0.85}100%{transform:translate(4px,150px);opacity:0}}
+@keyframes settleIn{0%{transform:translateY(-26px) rotate(-6deg) scale(0.85);opacity:0}55%{transform:translateY(3px) rotate(1.5deg) scale(1.03);opacity:1}75%{transform:translateY(-1px) rotate(-0.6deg) scale(0.99)}100%{transform:translateY(0) rotate(0deg) scale(1)}}
+@keyframes settleLoop{0%{transform:translateY(-26px) rotate(-6deg) scale(0.85);opacity:0}18%{transform:translateY(3px) rotate(1.5deg) scale(1.03);opacity:1}25%{transform:translateY(-1px) rotate(-0.6deg) scale(0.99)}30%,82%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}92%,100%{transform:translateY(0);opacity:0}}
+@keyframes veilBreathe{0%,100%{opacity:0.75}50%{opacity:0.9}}
+/* t2 — ambient */
+@keyframes snowFall{0%{transform:translate(0,-16px);opacity:0}10%{opacity:0.9}50%{transform:translate(14px,120px)}90%{opacity:0.85}100%{transform:translate(2px,250px);opacity:0}}
+@keyframes summerShimmer{0%,100%{opacity:0.12}50%{opacity:0.3}}
+@keyframes dayPaper{0%,100%{background:#EFE3D3}30%{background:#F1EADA}55%{background:#EDE6D2}80%{background:#E4D9CF}}
+@keyframes daySun{0%,100%{opacity:0.35;transform:translate(0,10px)}30%{opacity:0.5;transform:translate(30px,-8px)}60%{opacity:0.3;transform:translate(70px,6px)}80%{opacity:0.42;transform:translate(96px,20px)}}
+@keyframes idleLeafDrop{0%,86%{transform:translate(0,-14px) rotate(0deg);opacity:0}88%{opacity:0.9}93%{transform:translate(8px,60px) rotate(120deg);opacity:0.85}97.5%{transform:translate(2px,118px) rotate(220deg);opacity:0.7}98.5%,100%{transform:translate(2px,124px) rotate(230deg);opacity:0}}
+@keyframes idleBird{0%,90%,100%{transform:translate(-14px,4px) scale(0.9);opacity:0}92%{transform:translate(0,0) scale(1);opacity:0.8}95%{transform:translate(16px,-3px) scale(1);opacity:0.8}98%{transform:translate(34px,-10px) scale(0.92);opacity:0}}
+/* t2 — reward */
+@keyframes burstPetal{0%,62%{transform:translate(0,0) rotate(0deg) scale(0.4);opacity:0}65%{opacity:1;transform:translate(var(--bx1),var(--by1)) rotate(80deg) scale(1)}78%{opacity:0.9;transform:translate(var(--bx2),var(--by2)) rotate(200deg) scale(0.95)}92%,100%{transform:translate(var(--bx3),var(--by3)) rotate(320deg) scale(0.85);opacity:0}}
+@keyframes dayBanner{0%,62%{opacity:0;transform:translateY(8px)}68%,94%{opacity:1;transform:translateY(0)}98%,100%{opacity:0}}
+@keyframes dayStrike{0%,58%{opacity:1}62%,100%{opacity:0.35}}
+@keyframes streakSwap1{0%,44%{opacity:1}48%,96%{opacity:0}100%{opacity:1}}
+@keyframes streakSwap2{0%,44%{opacity:0}48%,96%{opacity:1}100%{opacity:0}}
+@keyframes streakGlowUp{0%,40%{opacity:0;transform:translateX(-50%) scale(0.7)}52%{opacity:0.75;transform:translateX(-50%) scale(1.12)}62%,88%{opacity:0.4;transform:translateX(-50%) scale(1)}96%,100%{opacity:0}}
+@keyframes weekLine{0%,10%{stroke-dashoffset:220}55%,88%{stroke-dashoffset:0}96%,100%{stroke-dashoffset:220}}
+@keyframes weekDot{0%,100%{opacity:0;transform:scale(0)}12%{opacity:0;transform:scale(0)}18%{opacity:1;transform:scale(1.25)}24%,86%{opacity:1;transform:scale(1)}94%{opacity:0}}
+/* t2 — texture */
+@keyframes focusDimLoop{0%,22%,78%,100%{opacity:0}32%,68%{opacity:1}}
+@keyframes parasolScroll{0%,16%{transform:translateY(0)}42%,66%{transform:translateY(-64px)}88%,100%{transform:translateY(0)}}
+@keyframes inkBleed{0%,8%{opacity:0;filter:blur(4px);letter-spacing:0.04em}22%,84%{opacity:1;filter:blur(0);letter-spacing:0}94%,100%{opacity:0;filter:blur(3px)}}
+@keyframes inkBleed2{0%,16%{opacity:0;filter:blur(4px)}30%,84%{opacity:1;filter:blur(0)}94%,100%{opacity:0;filter:blur(3px)}}
+/* t2 — feedback edges */
+@keyframes softShake{0%,55%,100%{transform:translateX(0)}60%{transform:translateX(-4px)}66%{transform:translateX(3px)}72%{transform:translateX(-2px)}78%{transform:translateX(1px)}82%{transform:translateX(0)}}
+@keyframes shakeGhost{0%,18%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}24%{transform:translate(6px,-10px) rotate(2deg) scale(1.04);opacity:1}42%{transform:translate(14px,-46px) rotate(-2deg) scale(1.04)}55%{transform:translate(10px,-44px) rotate(1.5deg) scale(1.04)}62%{transform:translate(12px,-45px) rotate(-1deg) scale(1.04)}80%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}100%{transform:translate(0,0);opacity:1}}
+@keyframes rubberPull{0%,20%{transform:translateY(0)}45%{transform:translateY(34px)}55%{transform:translateY(38px)}65%{transform:translateY(-4px)}72%{transform:translateY(2px)}78%,100%{transform:translateY(0)}}
+@keyframes pressBloom{0%,14%{opacity:0;transform:scale(0.2)}20%{opacity:0.35;transform:scale(0.45)}40%{opacity:0.5;transform:scale(0.8)}52%{opacity:0.6;transform:scale(1)}56%{opacity:0.75;transform:scale(1.08)}60%,100%{opacity:0;transform:scale(1.15)}}
+@keyframes pressCard{0%,14%{transform:scale(1)}20%,52%{transform:scale(0.985)}56%{transform:scale(1.03) rotate(-0.6deg)}62%,100%{transform:scale(1)}}
+@keyframes pressReady{0%,54%{opacity:0}58%,80%{opacity:1}88%,100%{opacity:0}}
+.fdim:hover .fdim-card{opacity:0.45;filter:blur(0.6px)}
+.fdim:hover .fdim-card:hover{opacity:1;filter:none;transform:translateY(-1px);box-shadow:0 5px 14px rgba(60,52,38,0.16),0 1px 3px rgba(60,52,38,0.1)}
+@media (prefers-reduced-motion: reduce){
+  .m-anim{animation:none !important;opacity:1 !important;transform:none !important}
+  .m-hide{animation:none !important;opacity:0 !important}
+}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Round 2 — the feel layer. Twelve candidates in four clusters; each stays or goes on its own.</span></div>
+  <p style="max-width:760px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455">Ambient (<a href="#2a">2a</a>–<a href="#2c">2c</a>) · reward (<a href="#2d">2d</a>–<a href="#2f">2f</a>) · texture (<a href="#2g">2g</a>–<a href="#2i">2i</a>) · feedback edges (<a href="#2j">2j</a>–<a href="#2l">2l</a>). <a href="#2g">2g</a> is <strong>live</strong> — hover the cards. Everything else loops its one-shot so you can judge the beat.</p>
+  <div class="dv-opts">
+
+    <!-- 2A SEASONAL DRIFT -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Ambient · seasonal drift — one particle system, four skins</div>
+      <div class="dv-card" style="width:712px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr">
+          <div class="fx-stage" style="height:200px;border-right:1px solid var(--line-card)">
+            <div class="grain"></div>
+            <img src="ds/assets/cherry/bloom.png" alt="" style="position:absolute;left:50%;bottom:10px;height:110px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+            <span class="petal" style="left:22%;animation-delay:0s"></span>
+            <span class="petal" style="left:56%;animation-delay:2.6s;animation-duration:8s;width:9px;height:7px"></span>
+            <span class="petal" style="left:76%;animation-delay:4.9s;animation-duration:6.4s"></span>
+            <span style="position:absolute;left:10px;bottom:8px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">Spring · petals</span>
+          </div>
+          <div class="fx-stage" style="height:200px;border-right:1px solid var(--line-card);background:#F1EADA">
+            <div class="grain"></div>
+            <img src="ds/assets/daisy/midday.png" alt="" style="position:absolute;left:50%;bottom:10px;height:105px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+            <span style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 55% at 50% 0%,rgba(232,217,160,0.55),rgba(232,217,160,0) 70%);animation:summerShimmer 7s ease-in-out infinite"></span>
+            <span class="mote" style="left:28%;animation-delay:0s"></span>
+            <span class="mote" style="left:52%;animation-delay:3.1s;width:3px;height:3px"></span>
+            <span class="mote" style="left:72%;animation-delay:5.6s"></span>
+            <span style="position:absolute;left:10px;bottom:8px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">Summer · motes</span>
+          </div>
+          <div class="fx-stage" style="height:200px;border-right:1px solid var(--line-card);background:#EDE2CC">
+            <div class="grain"></div>
+            <img src="ds/assets/vine/lush.png" alt="" style="position:absolute;left:50%;bottom:10px;height:105px;transform:translateX(-50%);filter:var(--shadow-drop-sm) sepia(0.25) saturate(0.85)">
+            <span class="amberleaf" style="left:26%;animation-delay:0s"></span>
+            <span class="amberleaf" style="left:54%;animation-delay:3.4s;animation-duration:11s;width:10px;height:7px"></span>
+            <span class="amberleaf" style="left:76%;animation-delay:6.2s"></span>
+            <span style="position:absolute;left:10px;bottom:8px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">Autumn · leaves</span>
+          </div>
+          <div class="fx-stage" style="height:200px;background:#E9E7DE">
+            <div class="grain" style="opacity:0.3"></div>
+            <img src="ds/assets/fern/coil.png" alt="" style="position:absolute;left:50%;bottom:10px;height:90px;transform:translateX(-50%);filter:var(--shadow-drop-sm) saturate(0.7) brightness(1.05)">
+            <span style="position:absolute;top:-10px;left:24%;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 4px 1px rgba(255,255,255,0.8);animation:snowFall 10s linear infinite"></span>
+            <span style="position:absolute;top:-10px;left:48%;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 4px 1px rgba(255,255,255,0.8);animation:snowFall 12s linear infinite;animation-delay:3.4s"></span>
+            <span style="position:absolute;top:-10px;left:70%;width:4.5px;height:4.5px;border-radius:50%;background:#fff;box-shadow:0 0 4px 1px rgba(255,255,255,0.8);animation:snowFall 11s linear infinite;animation-delay:6.8s"></span>
+            <span style="position:absolute;left:10px;bottom:8px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">Winter · snow</span>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Seasonal drift</div>
+          <div class="fx-use">One particle system, reskinned by the real calendar: petals (Mar–May), sun motes (Jun–Aug), amber leaves (Sep–Nov), slow snow (Dec–Feb). Plays only in the garden view and only while idle.</div>
+          <div class="fx-recipe">petalFall / moteRise / snowFall · season picked from the system date · ≤4 particles · paper tint shifts ±2% warmth per season</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2B TIME-OF-DAY PAPER -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Ambient · time-of-day paper — the ground warms and cools with the clock (day compressed to 12s)</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="animation:dayPaper 12s ease-in-out infinite;background:#EFE3D3">
+          <div class="grain"></div>
+          <span style="position:absolute;left:40px;top:18px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(232,217,160,0.6),rgba(232,217,160,0) 70%);animation:daySun 12s ease-in-out infinite"></span>
+          <img src="ds/assets/daisy/morning.png" alt="" style="position:absolute;left:50%;bottom:12px;height:120px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <div style="position:absolute;left:14px;bottom:10px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">07:00 → 21:00</div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Time-of-day paper</div>
+          <div class="fx-use">The linen ground drifts from cool morning cream through warm midday to a rosy dusk — four anchor tints, hours apart, never visible as a change while you watch.</div>
+          <div class="fx-recipe">dayPaper · anchors 07/12/17/21h, lerped by the clock · ΔL ≤3, Δhue ≤6° · full-app background, not per-card</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2C IDLE LIFE -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Ambient · idle life — once a minute, something small (compressed to 14s)</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/fern/full.png" alt="" style="position:absolute;left:30%;bottom:10px;height:140px;transform:translateX(-50%);transform-origin:50% 100%;animation:leafSway 6.5s ease-in-out infinite;filter:var(--shadow-drop-sm)">
+          <img src="ds/assets/cherry/opening.png" alt="" style="position:absolute;left:68%;bottom:10px;height:120px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <span style="position:absolute;left:64%;top:36px;width:10px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:idleLeafDrop 14s linear infinite;will-change:transform"></span>
+          <span style="position:absolute;left:24%;top:34px;font-size:11px;color:#8b8471;animation:idleBird 14s ease-in-out infinite;opacity:0">‿</span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Idle life</div>
+          <div class="fx-use">When nothing has happened for a while, one small thing happens: a single petal lets go, or a wingbeat crosses the fern. Roughly once a minute, never twice the same way, never while you're typing.</div>
+          <div class="fx-recipe">idleLeafDrop / idleBird · trigger: 45–90s of no input, random pick · one element per event · suppressed during focus sessions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2D DAY COMPLETE -->
+    <div class="dv-opt" id="2d">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Reward · day complete — the last check earns a petal-burst and a quiet banner</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;padding:18px 20px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Today · 3 of 3</div>
+            <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line-dashed);margin-top:8px"><span style="width:14px;height:14px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:9px;flex:none">✓</span><span style="font-size:12px;color:var(--ink-hairline);text-decoration:line-through">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:14px;height:14px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:9px;flex:none">✓</span><span style="font-size:12px;color:var(--ink-hairline);text-decoration:line-through">Reply to Youssef</span></div>
+            <div class="m-anim" style="display:flex;align-items:center;gap:9px;padding:7px 0;animation:dayStrike 9s ease-in-out infinite"><span style="width:14px;height:14px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:9px;flex:none">✓</span><span style="font-size:12px;color:var(--ink-body)">Water the balcony plants</span></div>
+          </div>
+          <span style="position:absolute;left:50%;top:118px;--bx1:-46px;--by1:-30px;--bx2:-72px;--by2:6px;--bx3:-84px;--by3:52px;width:11px;height:9px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:burstPetal 9s ease-out infinite;opacity:0;z-index:6"></span>
+          <span style="position:absolute;left:50%;top:118px;--bx1:38px;--by1:-38px;--bx2:62px;--by2:-4px;--bx3:74px;--by3:44px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:burstPetal 9s ease-out infinite;opacity:0;z-index:6"></span>
+          <span style="position:absolute;left:50%;top:118px;--bx1:-12px;--by1:-50px;--bx2:-20px;--by2:-18px;--bx3:-26px;--by3:34px;width:10px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:burstPetal 9s ease-out infinite;opacity:0;z-index:6"></span>
+          <span style="position:absolute;left:50%;top:118px;--bx1:58px;--by1:-16px;--bx2:88px;--by2:14px;--bx3:98px;--by3:56px;width:8px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:burstPetal 9s ease-out infinite;opacity:0;z-index:6"></span>
+          <span style="position:absolute;left:50%;top:118px;--bx1:-58px;--by1:-6px;--bx2:-90px;--by2:22px;--bx3:-102px;--by3:60px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:burstPetal 9s ease-out infinite;opacity:0;z-index:6"></span>
+          <div class="m-hide" style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;padding:7px 16px;box-shadow:var(--shadow-crisp);animation:dayBanner 9s ease-out infinite;opacity:0;z-index:7;white-space:nowrap"><span style="font-family:var(--font-hand);font-size:15px;color:#7a745f">that's the day, gently done ✿</span></div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Day complete</div>
+          <div class="fx-use">Bigger than a single check, smaller than confetti: the last task's check releases a 5-petal burst from the checkbox and a handwritten banner rises once. Once per day, ever.</div>
+          <div class="fx-recipe">burstPetal · 5 petals, 900ms ease-out, radial from the last checkbox · banner 400ms in, 3s dwell · fires once per calendar day</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2E STREAK BLOOM -->
+    <div class="dv-opt" id="2e">
+      <div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Reward · milestone bloom — the glow grows the plant a stage</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px">
+          <div class="grain"></div>
+          <span style="position:absolute;left:50%;bottom:30px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(201,165,90,0.55),rgba(201,165,90,0) 70%);animation:streakGlowUp 10s ease-in-out infinite;opacity:0;transform:translateX(-50%)"></span>
+          <img src="ds/assets/wisteria/p60.png" alt="" style="position:absolute;left:50%;bottom:12px;height:175px;transform:translateX(-50%);filter:var(--shadow-drop-sm);animation:streakSwap1 10s ease-in-out infinite">
+          <img src="ds/assets/wisteria/p80.png" alt="" style="position:absolute;left:50%;bottom:12px;height:175px;transform:translateX(-50%);filter:var(--shadow-drop-sm);animation:streakSwap2 10s ease-in-out infinite;opacity:0">
+          <div style="position:absolute;left:14px;bottom:10px;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">Milestone 4 → 5 · 68% → 83%</div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Milestone bloom</div>
+          <div class="fx-use">Finishing a milestone is the one moment the plant visibly grows: the gold glow swells once and the wisteria crossfades to its next stage inside it. The growth is the reward — no badges, no numbers.</div>
+          <div class="fx-recipe">streakGlowUp 1.4s + stage crossfade 600ms at the glow's peak · one plant at a time · project 100% adds petal-burst (2d) on top</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2F WEEKLY FLOURISH -->
+    <div class="dv-opt" id="2f">
+      <div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Reward · weekly review flourish — the week draws itself closed</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;padding:20px 22px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Weekly review · Jul 6 – 12</div>
+            <div style="margin-top:4px;font-family:var(--font-display);font-size:20px;font-weight:500;color:var(--ink-body)">A week, pressed flat</div>
+            <svg viewBox="0 0 260 96" style="width:260px;height:96px;margin-top:14px;overflow:visible">
+              <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="#7A946E" stroke-width="1.5" stroke-dasharray="220" stroke-dashoffset="220" style="animation:weekLine 8s ease-in-out infinite"></path>
+              <circle cx="6" cy="74" r="3.5" fill="#D4A8B0" style="animation:weekDot 8s ease-in-out infinite;transform-origin:6px 74px"></circle>
+              <circle cx="76" cy="44" r="3.5" fill="#C9A55A" style="animation:weekDot 8s ease-in-out infinite;animation-delay:0.9s;transform-origin:76px 44px"></circle>
+              <circle cx="138" cy="60" r="3.5" fill="#9AB4BE" style="animation:weekDot 8s ease-in-out infinite;animation-delay:1.8s;transform-origin:138px 60px"></circle>
+              <circle cx="200" cy="30" r="3.5" fill="#A8A0BE" style="animation:weekDot 8s ease-in-out infinite;animation-delay:2.7s;transform-origin:200px 30px"></circle>
+              <circle cx="254" cy="16" r="3.5" fill="#7A946E" style="animation:weekDot 8s ease-in-out infinite;animation-delay:3.6s;transform-origin:254px 16px"></circle>
+            </svg>
+            <div style="margin-top:6px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">18 done · 2 carried · the vine keeps climbing ✿</div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Weekly flourish</div>
+          <div class="fx-use">Opening the weekly review, the week's line draws itself left to right — one vine stroke, a dot popping in per notable day. A summary that arrives like handwriting, then holds still.</div>
+          <div class="fx-recipe">weekLine · stroke-dash draw 2.2s ease-in-out · weekDot pop 200ms staggered 900ms · one-shot on review open</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2G FOCUS DIM (LIVE) -->
+    <div class="dv-opt" id="2g">
+      <div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>Texture · focus dim — live, hover a card · the rest of the room steps back</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;padding:18px 20px 0">
+          <div class="grain"></div>
+          <div class="fdim" style="position:relative;z-index:5;display:flex;flex-direction:column;gap:9px">
+            <div class="fdim-card" style="height:52px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);transition:opacity 260ms var(--ease-out),filter 260ms var(--ease-out),transform 260ms var(--ease-out);cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage);flex:none"></span><div style="flex:1"><div style="font-size:12.5px;color:var(--ink-body)">Plan the forecasting logic</div><div class="fhelp" style="margin-top:1px">Forecasting App</div></div></div>
+            <div class="fdim-card" style="height:52px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);transition:opacity 260ms var(--ease-out),filter 260ms var(--ease-out),transform 260ms var(--ease-out);cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><div style="flex:1"><div style="font-size:12.5px;color:var(--ink-body)">Reply to Youssef</div><div class="fhelp" style="margin-top:1px">Inbox · yesterday</div></div></div>
+            <div class="fdim-card" style="height:52px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);transition:opacity 260ms var(--ease-out),filter 260ms var(--ease-out),transform 260ms var(--ease-out);cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom);flex:none"></span><div style="flex:1"><div style="font-size:12.5px;color:var(--ink-body)">Water the balcony plants</div><div class="fhelp" style="margin-top:1px">Home</div></div></div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Focus dim</div>
+          <div class="fx-use">Hover (or keyboard-focus) a card and everything else recedes — 45% opacity, a touch of blur, half a breath slower coming back. The room goes quiet around what you're reading.</div>
+          <div class="fx-recipe">siblings → opacity 0.45 + blur 0.6px · 260ms in, 420ms out · hover &amp; :focus-within · only in list/garden views, never mid-drag</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2H PARASOL HEADER -->
+    <div class="dv-opt" id="2h">
+      <div class="dv-olabel"><a class="dv-oid" href="#2h">2h</a>Texture · parasol header — compresses as you scroll, content slides under (scroll simulated)</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px">
+          <div class="grain"></div>
+          <div class="m-anim" style="position:absolute;left:0;right:0;top:64px;padding:0 22px;animation:parasolScroll 9s ease-in-out infinite">
+            <div style="display:flex;align-items:center;gap:10px;margin:14px 0 6px"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Reply to Youssef</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Water the balcony plants</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Reconcile Q2 actuals</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0"><span style="width:15px;height:15px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Wireframe the charts view</span></div>
+          </div>
+          <div style="position:absolute;left:0;right:0;top:0;height:60px;background:linear-gradient(var(--paper-linen) 68%,rgba(239,232,216,0));z-index:6;padding:12px 22px 0">
+            <div class="m-anim" style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);animation:parasolScroll 9s ease-in-out infinite;animation-timing-function:ease-in-out;transform-origin:0 0;animation-name:none">Friday · 10 July</div>
+            <div style="font-family:var(--font-display);font-weight:500;font-size:22px;color:var(--ink-body);line-height:1.05;margin-top:2px">Good morning, Kai</div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Parasol header</div>
+          <div class="fx-use">The greeting stays pinned like a parasol while the list slides beneath it — the header's paper gradient feathers the rows out instead of clipping them. In the real view the title also eases from 30px to 20px over the first 80px of scroll.</div>
+          <div class="fx-recipe">position:sticky + linear feather mask · title 30→20px over 80px scroll (scroll-linked, no duration) · date line fades by 40px</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2I INK BLEED -->
+    <div class="dv-opt" id="2i">
+      <div class="dv-olabel"><a class="dv-oid" href="#2i">2i</a>Texture · ink bleed — text arrives like ink soaking into paper</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;padding:24px 24px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div class="m-anim" style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);animation:inkBleed 7s ease-out infinite;opacity:0">Journal · Friday</div>
+            <div class="m-anim" style="margin-top:6px;font-family:var(--font-display);font-size:24px;font-weight:500;color:var(--ink-body);line-height:1.15;animation:inkBleed 7s ease-out infinite;animation-delay:180ms;opacity:0">The week loosened its grip today.</div>
+            <div class="m-anim" style="margin-top:12px;font-size:13px;line-height:1.65;color:var(--ink-muted);animation:inkBleed2 7s ease-out infinite;animation-delay:400ms;opacity:0">Forecasting finally clicked over lunch — the projection curve wants to be logarithmic, not linear. Wrote it down before it escaped.</div>
+            <div class="m-anim" style="margin-top:12px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-0.8deg);animation:inkBleed2 7s ease-out infinite;animation-delay:650ms;opacity:0">— worth remembering ✿</div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Ink bleed</div>
+          <div class="fx-use">Reserved for written moments — journal entries, review prose, onboarding lines. Text sharpens from a soft blur as it fades in, like ink settling. Never on UI chrome or lists.</div>
+          <div class="fx-recipe">inkBleed · blur 4→0px + opacity, 480ms ease-out · stagger 180ms per block · prose surfaces only · reduced-motion → plain fade</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2J SOFT SHAKE -->
+    <div class="dv-opt" id="2j">
+      <div class="dv-olabel"><a class="dv-oid" href="#2j">2j</a>Feedback · the soft no — invalid drop shakes once, gently, and rides home</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;padding:18px 20px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Someday list · no dates allowed</div>
+            <div class="m-anim" style="margin-top:10px;height:46px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);animation:shakeGhost 7s ease-in-out infinite;will-change:transform"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Deep work · Tuesday 9:00</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-hairline);letter-spacing:2px">⋮⋮</span></div>
+            <div class="m-anim" style="margin-top:14px;height:64px;border:1.5px dashed rgba(181,101,74,0.4);border-radius:8px;display:flex;align-items:center;justify-content:center;animation:softShake 7s ease-in-out infinite">
+              <span style="font-size:11.5px;color:var(--ink-faint)">Someday — scheduled tasks can't rest here</span>
+            </div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Soft shake · invalid drop</div>
+          <div class="fx-use">The zone declines with one soft horizontal shake — 4px, decaying, done in a third of a second — and the ghost rides back to where it came from. A "no" with the voice kept low.</div>
+          <div class="fx-recipe">softShake · ±4px decaying, 320ms · zone border warms to terra 40% · ghost returns 380ms var(--ease-out) · no red, no flash</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2K RUBBER BAND -->
+    <div class="dv-opt" id="2k">
+      <div class="dv-olabel"><a class="dv-oid" href="#2k">2k</a>Feedback · boundary resistance — the list stretches past its end, then breathes back</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;overflow:hidden">
+          <div class="grain"></div>
+          <div class="m-anim" style="position:absolute;left:20px;right:20px;top:-38px;animation:rubberPull 6s cubic-bezier(0.25,0.9,0.35,1) infinite">
+            <div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-bottom:8px;opacity:0.55"><span style="flex:1;font-size:12px;color:var(--ink-body)">Reconcile Q2 actuals</span></div>
+            <div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-bottom:8px"><span style="flex:1;font-size:12px;color:var(--ink-body)">Wireframe the charts view</span></div>
+            <div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-bottom:8px"><span style="flex:1;font-size:12px;color:var(--ink-body)">Draft the retainer invoice</span></div>
+            <div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 13px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="flex:1;font-size:12px;color:var(--ink-body)">Water the balcony plants</span></div>
+            <div style="margin-top:12px;text-align:center;font-family:var(--font-hand);font-size:14px;color:#a39a82">that's everything ✿</div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Boundary resistance</div>
+          <div class="fx-use">Scroll or drag past the end and the list follows your hand at one-third speed, reveals the handwritten floor, and eases back with a single tiny overshoot. The edge feels like fabric, not a wall.</div>
+          <div class="fx-recipe">pull follows at 0.33× displacement, max 40px · release 420ms cubic-bezier(0.25,0.9,0.35,1), one −4px overshoot · same feel for drag-past-edge</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2L LONG-PRESS BLOOM -->
+    <div class="dv-opt" id="2l">
+      <div class="dv-olabel"><a class="dv-oid" href="#2l">2l</a>Feedback · long-press bloom — a radial hint fills under the finger, then the card lifts free</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="height:250px;display:flex;align-items:center;justify-content:center">
+          <div class="grain"></div>
+          <div style="position:relative;width:240px">
+            <div class="m-anim" style="position:relative;height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:9px;box-shadow:var(--shadow-crisp);animation:pressCard 6s ease-in-out infinite;overflow:hidden">
+              <span class="m-hide" style="position:absolute;left:38px;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;background:radial-gradient(circle,rgba(122,148,110,0.32),rgba(122,148,110,0) 65%);animation:pressBloom 6s ease-out infinite;opacity:0"></span>
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage);flex:none;position:relative"></span>
+              <span style="flex:1;font-size:13px;color:var(--ink-body);position:relative">Plan the forecasting logic</span>
+            </div>
+            <div class="m-hide" style="position:absolute;left:50%;top:-24px;transform:translateX(-50%);font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);animation:pressReady 6s ease-in-out infinite;opacity:0;white-space:nowrap">ready to move</div>
+            <div style="position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font-family:var(--font-hand);font-size:14px;color:#7a745f;white-space:nowrap">hold… and it comes loose ✿</div>
+          </div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Long-press bloom</div>
+          <div class="fx-use">On touch, drag starts with a hold: a sage bloom fills under the finger over 450ms while the card presses down slightly — then it pops loose into the wobbly ghost (<a href="Motion#2c">Motion 2c</a>). Cancel the hold and the bloom drains away.</div>
+          <div class="fx-recipe">pressBloom · radial fill 450ms from touch point · card 0.985 during hold · release → ghost pickup · lift-off at bloom complete · touch only</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Keep / kill each on sight — say the ids. Whatever stays gets wired into its real home (garden, journal, review, drag kit).</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Effects — the motion shelf. Ten reusable botanical effects, each a pure-CSS recipe.</span></div>
+  <p style="max-width:760px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455">Catalog only — nothing here is applied to existing screens. Each card is a living demo plus its recipe (keyframes name · duration · when to fire). All of them bow to <span style="font-family:var(--font-mono);font-size:12px">prefers-reduced-motion</span>: particles simply don't spawn, glows hold at their mid-state. First consumers: the <a href="Focus" style="color:var(--acc-terra)">Focus timer &amp; Garden view</a>.</p>
+  <div class="dv-opts">
+
+    <!-- 1A PETAL FALL -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Petal fall</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/cherry/bloom.png" alt="" style="position:absolute;left:50%;bottom:14px;height:150px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <span class="petal" style="left:18%;animation-delay:0s"></span>
+          <span class="petal" style="left:34%;animation-delay:2.3s;animation-duration:8s;width:9px;height:7px"></span>
+          <span class="petal" style="left:52%;animation-delay:4.6s;animation-duration:6.4s"></span>
+          <span class="petal" style="left:66%;animation-delay:1.2s;animation-duration:7.6s;width:10px;height:8px"></span>
+          <span class="petal" style="left:80%;animation-delay:3.4s;animation-duration:8.6s"></span>
+          <span class="petal" style="left:44%;animation-delay:5.8s;animation-duration:7.2s;width:8px;height:7px"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Petal fall</div>
+          <div class="fx-use">Completion ambience — a task checked, a day finished. Density scales with how much fell today.</div>
+          <div class="fx-recipe">petalFall · 6.4–8.6s linear, staggered delays · blush gradient petals, radius 70/30/60/40 · 4–8 petals max</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1B POLLEN DRIFT -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Pollen drift</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/daisy/midday.png" alt="" style="position:absolute;left:50%;bottom:12px;height:140px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <span class="mote" style="left:22%;animation-delay:0s"></span>
+          <span class="mote" style="left:38%;animation-delay:2.8s;width:3px;height:3px"></span>
+          <span class="mote" style="left:55%;animation-delay:1.4s"></span>
+          <span class="mote" style="left:68%;animation-delay:4.4s;width:3px;height:3px"></span>
+          <span class="mote" style="left:81%;animation-delay:6s"></span>
+          <span class="mote" style="left:47%;animation-delay:7.2s;width:3.5px;height:3.5px"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Pollen drift</div>
+          <div class="fx-use">Warm ambient life for long-lived scenes — focus mode, the garden window. Barely there, never busy.</div>
+          <div class="fx-recipe">moteRise · 9s ease-in-out, staggered · 3–4px gold dots, opacity ≤0.7 · ≤6 motes per scene</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1C FIREFLY DUSK -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Firefly dusk</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="background:linear-gradient(180deg,#2a2438,#181420)">
+          <div class="grain" style="opacity:0.3"></div>
+          <img src="ds/assets/clover/resting.png" alt="" style="position:absolute;left:50%;bottom:12px;height:110px;transform:translateX(-50%);opacity:0.85;filter:brightness(0.8)">
+          <span class="fly" style="left:20%;top:40%;animation-delay:0s,0s"></span>
+          <span class="fly" style="left:64%;top:28%;animation-delay:1.6s,2s;width:4px;height:4px"></span>
+          <span class="fly" style="left:44%;top:58%;animation-delay:3.1s,4.5s"></span>
+          <span class="fly" style="left:78%;top:52%;animation-delay:2.2s,1s;width:4px;height:4px"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Firefly dusk</div>
+          <div class="fx-use">The night garden — evening ritual, end-of-day garden view. Slow pulses, slower drift.</div>
+          <div class="fx-recipe">fireflyPulse 4.5s + fireflyDrift 13s alternate · warm #E8D9A0 glow, 8px halo · ≤5 flies</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1D LEAF SWAY -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Leaf sway</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/fern/full.png" alt="" style="position:absolute;left:50%;bottom:10px;height:170px;transform:translateX(-50%);transform-origin:50% 100%;animation:leafSway 5.5s ease-in-out infinite;filter:var(--shadow-drop-sm)">
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Leaf sway</div>
+          <div class="fx-use">Idle life on any standing plant — a breeze, not a wave. Origin pinned at the soil line.</div>
+          <div class="fx-recipe">leafSway · ±2.2° rotate, 5–6s ease-in-out · transform-origin bottom center · desync siblings by delay</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1E BLOOM GLOW -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Bloom glow</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <span style="position:absolute;left:50%;bottom:34px;width:150px;height:150px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(201,165,90,0.5),rgba(201,165,90,0) 70%);animation:bloomGlow 3.6s ease-in-out infinite"></span>
+          <img src="ds/assets/wisteria/p100.png" alt="" style="position:absolute;left:50%;bottom:12px;height:160px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Bloom glow</div>
+          <div class="fx-use">Milestone warmth — project hits 100%, streak record, all Top-3 done. One breath at a time.</div>
+          <div class="fx-recipe">bloomGlow · 3.6s ease-in-out · gold radial at ≤0.5 alpha behind the plant · never on more than one plant at once</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1F DEW GLINT -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Dew glint</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/clover/dewdrop.png" alt="" style="position:absolute;left:50%;bottom:16px;height:130px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <span style="position:absolute;left:calc(50% + 24px);top:74px;width:10px;height:10px;background:radial-gradient(circle at 40% 40%, #fff, rgba(255,255,255,0) 65%);border-radius:50%;animation:dewGlint 6s ease-in-out infinite"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Dew glint</div>
+          <div class="fx-use">Attention, politely — a mention, an urgent capture. One brief catchlight on the dewdrop, then quiet.</div>
+          <div class="fx-recipe">dewGlint · 6s cycle, glint lives in the last 12% · white radial 10px on the drop's highlight</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1G FLORET DRIFT -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Floret drift</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/hydrangea/medium.png" alt="" style="position:absolute;left:50%;bottom:16px;height:140px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+          <span class="floret" style="left:calc(50% - 18px);top:52px;animation-delay:0s"></span>
+          <span class="floret" style="left:calc(50% + 16px);top:44px;animation-delay:2.7s;width:6px;height:6px"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Floret drift</div>
+          <div class="fx-use">Filing an inbox item — one floret detaches and drifts down. Bulk clear = a small simultaneous shower.</div>
+          <div class="fx-recipe">floretDrift · 5.5s ease-in · 6–7px hydrangea-blue dots from the cluster's edge · one per filed item</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1H AMBER DRIFT -->
+    <div class="dv-opt" id="1h">
+      <div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Amber drift</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <img src="ds/assets/wisteria/p40.png" alt="" style="position:absolute;left:50%;bottom:12px;height:150px;transform:translateX(-50%);filter:var(--shadow-drop-sm) saturate(0.8)">
+          <span class="amberleaf" style="left:30%;animation-delay:0s"></span>
+          <span class="amberleaf" style="left:58%;animation-delay:3.8s;animation-duration:11s;width:10px;height:7px"></span>
+          <span class="amberleaf" style="left:72%;animation-delay:6.6s"></span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Amber drift</div>
+          <div class="fx-use">Slipping — a project going quiet. Sparse autumn leaves, slower than petal fall. Warning without alarm.</div>
+          <div class="fx-recipe">petalFall keyframes at 9.5–11s · amber gradient leaves · ≤3 at once, plant desaturated ~20%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1I SETTLE-IN -->
+    <div class="dv-opt" id="1i">
+      <div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Settle-in</div>
+      <div class="dv-card fx">
+        <div class="fx-stage">
+          <div class="grain"></div>
+          <span style="position:absolute;left:0;right:0;bottom:26px;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          <img src="ds/assets/cherry/bud.png" alt="" style="position:absolute;left:50%;bottom:26px;height:110px;transform:translateX(-50%);transform-origin:50% 100%;animation:settleLoop 4.5s ease-out infinite;filter:var(--shadow-drop-sm)">
+          <span style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-family:var(--font-hand);font-size:14px;color:#7a745f">planted ✿</span>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Settle-in</div>
+          <div class="fx-use">Drop feedback — a task lands on the calendar, a seed drops at onboarding. Falls, overshoots a breath, settles.</div>
+          <div class="fx-recipe">settleIn · 700ms ease-out, one-shot (looped here for demo) · -26px drop, 1.03 overshoot, ±1° wobble</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1J DUSK VEIL -->
+    <div class="dv-opt" id="1j">
+      <div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Dusk veil</div>
+      <div class="dv-card fx">
+        <div class="fx-stage" style="background:var(--paper-linen)">
+          <img src="ds/assets/vine/flowering.png" alt="" style="position:absolute;left:26%;bottom:10px;height:120px;filter:var(--shadow-drop-sm)">
+          <img src="ds/assets/daisy/evening.png" alt="" style="position:absolute;left:58%;bottom:10px;height:100px;filter:var(--shadow-drop-sm)">
+          <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(42,36,56,0.5),rgba(24,20,32,0.72) 80%);mix-blend-mode:multiply;animation:veilBreathe 8s ease-in-out infinite"></span>
+          <span style="position:absolute;inset:0;box-shadow:inset 0 0 70px rgba(20,16,28,0.55)"></span>
+          <span class="fly" style="left:70%;top:34%;animation-delay:1s,0s"></span>
+          <div class="grain" style="opacity:0.3"></div>
+        </div>
+        <div class="fx-meta">
+          <div class="fx-name">Dusk veil</div>
+          <div class="fx-use">Scene-level wash that turns any garden into its evening self — multiply gradient + soft vignette, breathing slowly.</div>
+          <div class="fx-recipe">veilBreathe · 8s · dusk gradient (multiply, 0.5→0.72) + inset vignette 70px · pair with firefly dusk</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">These ship first in the <a href="Focus">Focus timer &amp; Garden view</a>. Try next: "a rain effect for heavy days" · "petal-burst one-shot for checking the last task".</p>
+</section>
+
+</x-dc>
+</body>
+</html>

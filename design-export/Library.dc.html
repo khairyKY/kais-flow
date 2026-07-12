@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline)}
+.srow{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none}
+.sdot{width:18px;display:flex;justify-content:center;flex:none}
+.trow{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--ink-muted)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Library (P7) — the Journal's shelf: notes, quotes and books, each with a running commentary feed</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — LIBRARY + QUOTE READER ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop — shelf tree at left, a quote open in the reader</div>
+      <div class="dv-card" style="width:1360px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:900px;background:var(--paper-linen)">
+
+          <!-- SIDEBAR -->
+          <aside style="width:242px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;padding:24px 0 18px;position:relative">
+            <span style="position:absolute;top:54px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">‹</span>
+            <div style="padding:0 22px 14px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+              <div style="margin-top:7px;font-family:var(--font-hand);font-size:15px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+            </div>
+            <div style="padding:0 14px 12px;margin-bottom:10px;border-bottom:1px dashed var(--line-sidebar)">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:6px;background:var(--paper-linen);border:1px solid var(--line-sidebar)">
+                <img src="ds/assets/vine/sprouting.png" alt="" style="height:15px;width:auto">
+                <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted)">Plan</span>
+                <span style="font-size:10px;color:var(--ink-faint)">›</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">6</span>
+              </div>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:2px 12px 5px">Tend</div>
+              <a href="Today" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Today</span></a>
+              <a href="Inbox" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Tasks</span></a>
+              <a href="Calendar" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <a href="Projects" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Projects</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:12px 12px 5px">Cultivate</div>
+              <a href="Routines" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+              <a href="Journal" class="srow" style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);transform:rotate(-0.5deg)">
+                <span style="position:absolute;top:-6px;left:16px;width:30px;height:9px;background:rgba(212,199,138,0.55);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-3deg);border-radius:1px"></span>
+                <span class="sdot"><img src="ds/assets/fern/full.png" alt="" style="height:16px"></span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink-body)">Journal</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-buttercream-text)">library</span>
+              </a>
+              <a href="People" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-clover)"></span></span><span style="font-size:14px;color:var(--ink-muted)">People</span></a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 12px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div class="flabel">Streak</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">6 days · best 21</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="Editor" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Capture</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="Search" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"></circle><path d="M19.5 19.5 16 16"></path></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘/</span></a>
+              <a href="Settings" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"></circle><path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2"></path></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+            </div>
+          </aside>
+
+          <!-- MAIN -->
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">
+              <span>Kai's Flow · Journal · Library</span><span>Africa/Cairo</span>
+            </div>
+            <div style="flex:1;display:flex;min-height:0">
+
+              <!-- shelf tree -->
+              <div style="width:230px;flex:none;border-right:1px dashed var(--line-solid);padding:26px 16px;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 4px">
+                  <img src="ds/assets/fern/coil.png" alt="" style="height:24px;filter:var(--shadow-drop-sm)">
+                  <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--ink-body)">Library</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:7px 11px;margin-bottom:14px"><span style="display:flex;align-items:center;color:var(--ink-hairline)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"></circle><path d="M19.5 19.5 16 16"></path></svg></span><span style="font-size:12px;color:var(--ink-faint);font-style:italic">search the shelf…</span></div>
+                <div class="flabel" style="padding:0 6px;margin-bottom:5px">Journal</div>
+                <div class="trow"><span style="width:16px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1Z"></path><path d="M9 8.5h6M9 12h6M9 15.5h4"></path></svg></span>Daily pages<span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">42</span></div>
+                <div class="flabel" style="padding:0 6px;margin:12px 0 5px">Shelf</div>
+                <div class="trow"><span style="width:16px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10.5L19 8v11.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1Z"></path><path d="M15 4.5V8h4"></path></svg></span>Notes<span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">17</span></div>
+                <div class="trow" style="background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);color:var(--ink-body);font-weight:600"><span style="width:16px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--acc-buttercream-text)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 6.5c-3 .8-4.8 2.9-4.8 6v5h5.6v-5.6H8.3c.1-1.7 1-2.9 2.8-3.6l-.8-1.8Z"></path><path d="M19.3 6.5c-3 .8-4.8 2.9-4.8 6v5h5.6v-5.6h-2.8c.1-1.7 1-2.9 2.8-3.6l-.8-1.8Z"></path></svg></span>Quotes<span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">23</span></div>
+                <div class="trow"><span style="width:16px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.4 5.2 8 4.6 4.5 4.6v13.2c3.5 0 5.9.6 7.5 2.2 1.6-1.6 4-2.2 7.5-2.2V4.6c-3.5 0-5.9.6-7.5 2.2Z"></path><path d="M12 6.8V20"></path></svg></span>Books<span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">8</span></div>
+                <div class="flabel" style="padding:0 6px;margin:14px 0 5px">Recent</div>
+                <div class="trow" style="font-size:12px">Deep Work — ch. 4 notes</div>
+                <div class="trow" style="font-size:12px;background:var(--paper-bone)">"The garden does not hurry…"</div>
+                <div class="trow" style="font-size:12px">Balcony irrigation sketch</div>
+                <div style="flex:1"></div>
+                <div style="font-family:var(--font-hand);font-size:14.5px;color:#7a745f;transform:rotate(-1deg);padding:0 4px">kept things, growing commentary ✿</div>
+              </div>
+
+              <!-- reader -->
+              <div style="flex:1;min-width:0;display:flex">
+                <!-- unfurl gutter -->
+                <div style="width:44px;flex:none;display:flex;flex-direction:column;align-items:center;padding:30px 0;gap:0">
+                  <img src="ds/assets/fern/coil.png" alt="" style="height:22px;opacity:0.45">
+                  <span style="flex:1;width:0;border-left:1px dashed var(--acc-buttercream);opacity:0.6;margin:8px 0"></span>
+                  <img src="ds/assets/fern/unfurl1.png" alt="" style="height:26px;opacity:0.7">
+                  <span style="flex:1;width:0;border-left:1px dashed var(--line-dashed);margin:8px 0"></span>
+                  <img src="ds/assets/fern/unfurl2.png" alt="" style="height:28px;opacity:0.5">
+                </div>
+                <div style="flex:1;min-width:0;max-width:720px;padding:30px 40px 40px 6px">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span class="fhelp"><a href="#1a" style="color:var(--ink-muted)">Quotes</a> / from a book</span>
+                    <span class="fhelp">kept Sun 28 Jun · resurfaced twice</span>
+                  </div>
+
+                  <!-- the quote -->
+                  <div style="position:relative;margin-top:26px;padding:6px 0 6px 26px;border-left:2px solid var(--acc-buttercream)">
+                    <img src="ds/assets/cherry/fallen.png" alt="" style="position:absolute;left:-30px;top:-16px;height:44px;opacity:0.35;transform:rotate(-14deg)">
+                    <div style="font-family:var(--font-display);font-style:italic;font-size:27px;line-height:1.45;color:var(--ink-body)">"The garden does not hurry, and yet everything is accomplished in its season."</div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <a href="#1b" style="font-size:13px;color:var(--acc-buttercream-text)">Four Thousand Weeks — Oliver Burkeman</a>
+                      <span class="fhelp">p. 148</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*patience</span>
+                      <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">*pace</span>
+                    </div>
+                  </div>
+
+                  <!-- review-queue flag -->
+                  <div style="display:flex;align-items:center;gap:10px;background:rgba(212,199,138,0.16);border:1px solid rgba(212,199,138,0.4);border-radius:6px;padding:9px 13px;margin-top:22px">
+                    <span style="width:7px;height:7px;border-radius:50%;background:var(--acc-buttercream);flex:none"></span>
+                    <span style="font-size:12.5px;color:var(--ink-body)">Chat flagged this while you were planning the balcony rebuild — worth a thought?</span>
+                    <span style="margin-left:auto;display:flex;gap:8px"><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">keep</span><span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint);cursor:pointer">dismiss</span></span>
+                  </div>
+
+                  <!-- commentary -->
+                  <div style="display:flex;align-items:center;gap:12px;margin:26px 0 6px"><span class="flabel" style="color:var(--acc-buttercream-text)">Commentary · 3 thoughts</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="display:flex;flex-direction:column">
+                    <div style="display:flex;gap:14px;padding:13px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span class="fhelp" style="width:70px;flex:none;padding-top:2px">28 Jun</span>
+                      <span style="font-size:13.5px;line-height:1.6;color:var(--ink-body)">Kept this the week the forecasting deadline felt impossible. The trick isn't speed — it's refusing to plant more than the bed can hold.</span>
+                    </div>
+                    <div style="display:flex;gap:14px;padding:13px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span class="fhelp" style="width:70px;flex:none;padding-top:2px">4 Jul</span>
+                      <span style="font-size:13.5px;line-height:1.6;color:var(--ink-body)">Re-read after dropping two Top-3 days in a row. Season ≠ sprint. Moved "learn Kanban" to Someday without guilt.</span>
+                    </div>
+                    <div style="display:flex;gap:14px;padding:13px 2px;border-bottom:1px dashed var(--line-dashed)">
+                      <span class="fhelp" style="width:70px;flex:none;padding-top:2px">today</span>
+                      <span style="font-size:13.5px;line-height:1.6;color:var(--ink-body)">The garden view makes this literal now. Watching the wisteria climb at its own pace is the whole point.</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                    <span style="flex:1;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:10px 13px;font-size:13px;color:var(--ink-faint);font-style:italic">add a thought to this over time…</span>
+                    <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:9px 17px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Add</button>
+                  </div>
+                  <div class="fhelp" style="margin-top:8px">append-only — old thoughts stay as they were written</div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1B — BOOK DETAIL ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Book detail — progress as an unfurling frond, its kept quotes beneath</div>
+      <div class="dv-card" style="width:760px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:30px 40px 36px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <a href="#1a" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted)">← Library / Books</a>
+            <span class="fhelp">added May 2026 · via capture</span>
+          </div>
+
+          <div style="display:flex;gap:22px;margin-top:24px">
+            <!-- cover slot -->
+            <div style="width:118px;height:172px;flex:none;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transform:rotate(-1deg)">
+              <img src="ds/assets/fern/unfurl2.png" alt="" style="height:52px;opacity:0.6">
+              <span class="fhelp" style="text-align:center;padding:0 10px">cover<br>placeholder</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--acc-buttercream-text)">Book · reading</div>
+              <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:30px;line-height:1.15;color:var(--ink-body)">Four Thousand Weeks</h1>
+              <div style="font-size:13.5px;color:var(--ink-muted);margin-top:4px">Oliver Burkeman · 2021</div>
+              <!-- progress frond -->
+              <div style="display:flex;align-items:center;gap:12px;margin-top:18px">
+                <img src="ds/assets/fern/coil.png" alt="" style="height:20px;opacity:0.4">
+                <div style="flex:1;height:4px;border-radius:2px;background:var(--line-card);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:58%;border-radius:2px;background:var(--acc-buttercream)"></span></div>
+                <img src="ds/assets/fern/unfurl2.png" alt="" style="height:26px" title="unfurl2 — a little past halfway">
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">p. 168 / 288</span>
+              </div>
+              <div class="fhelp" style="margin-top:6px">the frond unfurls as you read — full at the last page</div>
+              <div style="display:flex;gap:8px;margin-top:14px">
+                <span class="chip" style="background:rgba(212,199,138,0.25);color:var(--acc-buttercream-text);cursor:pointer">log a session</span>
+                <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">+ quote</span>
+                <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">+ note</span>
+                <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint);cursor:pointer">mark finished</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- quotes kept -->
+          <div style="display:flex;align-items:center;gap:12px;margin:28px 0 6px"><span class="flabel" style="color:var(--acc-buttercream-text)">Quotes kept · 3</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+          <a href="#1a" style="display:flex;gap:14px;padding:12px 2px;border-bottom:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-display);font-size:17px;color:var(--acc-buttercream-text);flex:none">❝</span>
+            <span style="flex:1;font-family:var(--font-display);font-style:italic;font-size:14.5px;line-height:1.55;color:var(--ink-body)">"The garden does not hurry, and yet everything is accomplished in its season."</span>
+            <span class="fhelp" style="flex:none;padding-top:3px">p. 148 · 3 thoughts</span>
+          </a>
+          <a href="#1a" style="display:flex;gap:14px;padding:12px 2px;border-bottom:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-display);font-size:17px;color:var(--acc-buttercream-text);flex:none">❝</span>
+            <span style="flex:1;font-family:var(--font-display);font-style:italic;font-size:14.5px;line-height:1.55;color:var(--ink-body)">"Attention is the beginning of devotion."</span>
+            <span class="fhelp" style="flex:none;padding-top:3px">p. 91 · 1 thought</span>
+          </a>
+          <a href="#1a" style="display:flex;gap:14px;padding:12px 2px">
+            <span style="font-family:var(--font-display);font-size:17px;color:var(--acc-buttercream-text);flex:none">❝</span>
+            <span style="flex:1;font-family:var(--font-display);font-style:italic;font-size:14.5px;line-height:1.55;color:var(--ink-body)">"You need only do the next right thing."</span>
+            <span class="fhelp" style="flex:none;padding-top:3px">p. 203 · quiet so far</span>
+          </a>
+
+          <!-- notes -->
+          <div style="display:flex;align-items:center;gap:12px;margin:24px 0 6px"><span class="flabel">Notes · 1</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+          <div style="display:flex;gap:14px;padding:12px 2px">
+            <span class="fhelp" style="width:70px;flex:none;padding-top:2px">ch. 4</span>
+            <span style="flex:1;font-size:13.5px;line-height:1.6;color:var(--ink-body)">"Efficiency trap" maps exactly onto the inbox — clearing it faster just refills it faster. The fix is the Top-3, not a faster shovel.</span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:14px;border-top:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">Remove book…</span>
+            <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">finish it and the frond unfurls flat ✿</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "Notes list + a note open" · "the resurfacing card drawing from the shelf" · "mobile library".</p>
+</section>
+
+</x-dc>
+</body>
+</html>

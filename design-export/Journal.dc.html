@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.ruled{background-image:repeating-linear-gradient(transparent 0 26px, rgba(213,205,181,0.55) 26px 27px)}
+.phone{width:398px;height:838px;background:#211d18;border-radius:56px;padding:11px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 30px 60px rgba(60,52,38,0.28);position:relative;flex:none}
+.phone-screen{width:100%;height:100%;background:var(--paper-linen);border-radius:46px;overflow:hidden;position:relative}
+.island{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:33px;background:#0d0b09;border-radius:20px;z-index:60}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Journal — daily reflection + commonplace book (built on 1A)</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — DESKTOP ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop — write, gather, keep</div>
+      <div class="dv-card" style="width:1300px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:960px;background:var(--paper-linen)">
+
+          <!-- SIDEBAR -->
+          <aside style="width:230px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;padding:24px 0 18px">
+            <div style="padding:0 22px 18px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:6px 12px 5px">Plan</div>
+              <a href="Today" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Today</span></a>
+              <a href="Inbox" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Tasks</span></a>
+              <a href="Calendar" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:14px 12px 5px">Cultivate</div>
+              <a href="Routines" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none"><span style="width:18px;display:flex;justify-content:center;flex:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+              <a href="#" style="position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)">
+                <span style="position:absolute;top:-6px;left:16px;width:30px;height:9px;background:rgba(212,199,138,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-3deg);border-radius:1px"></span>
+                <span style="width:18px;display:flex;justify-content:center;flex:none"><img src="ds/assets/fern/full.png" alt="" style="height:20px;filter:var(--shadow-drop-sm)"></span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink-body)">Journal</span>
+              </a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 14px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/fern/unfurl2.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Journaling</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">12 days · kept</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="Search" style="display:flex;align-items:center;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="Chat" style="display:flex;align-items:center;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘J</span></a>
+              <a href="Settings" style="display:flex;align-items:center;padding:7px 12px;border-radius:6px;text-decoration:none"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+            </div>
+          </aside>
+
+          <!-- MAIN -->
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+              <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Fri 10 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage)"></span></span></div>
+              <div>Africa/Cairo</div>
+            </div>
+
+            <div style="flex:1;display:flex;min-height:0">
+
+              <!-- ENTRY TREE + fern gutter -->
+              <div style="width:230px;flex:none;border-right:1px dashed var(--line-solid);position:relative;padding:22px 18px;display:flex;flex-direction:column">
+                <!-- unfurling fern down the gutter -->
+                <img src="ds/assets/fern/coil.png" alt="" style="position:absolute;right:6px;top:78px;height:30px;opacity:0.45">
+                <img src="ds/assets/fern/unfurl1.png" alt="" style="position:absolute;right:4px;top:250px;height:38px;opacity:0.5">
+                <img src="ds/assets/fern/unfurl2.png" alt="" style="position:absolute;right:2px;top:470px;height:46px;opacity:0.55">
+                <img src="ds/assets/fern/full.png" alt="" style="position:absolute;right:0;bottom:26px;height:60px;opacity:0.6;filter:var(--shadow-drop-sm)">
+
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                  <button style="flex:1;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12.5px;padding:9px 12px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow-cta)">＋ New entry</button>
+                </div>
+
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:4px 0 8px">This week</div>
+                <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:9px 11px;margin-bottom:6px">
+                  <div style="font-size:13px;color:var(--ink-body);font-weight:500">Friday, Jul 10</div>
+                  <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc-buttercream-text);margin-top:3px">Grateful · writing…</div>
+                </div>
+                <a href="#" style="display:block;text-decoration:none;padding:8px 11px"><div style="font-size:13px;color:var(--ink-muted)">Thursday, Jul 9</div><div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline);margin-top:2px">Focused</div></a>
+                <a href="#" style="display:block;text-decoration:none;padding:8px 11px"><div style="font-size:13px;color:var(--ink-muted)">Wednesday, Jul 8</div><div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-hairline);margin-top:2px">Stretched</div></a>
+
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:16px 0 8px">Notes</div>
+                <a href="#" style="display:block;text-decoration:none;padding:6px 11px;font-size:13px;color:var(--ink-muted)">Pricing model ideas</a>
+                <a href="#" style="display:block;text-decoration:none;padding:6px 11px;font-size:13px;color:var(--ink-muted)">Book: Deep Work — notes</a>
+
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:16px 0 8px">Quotes</div>
+                <a href="#" style="display:block;text-decoration:none;padding:6px 11px;font-size:13px;color:var(--ink-muted)">On patience — Rilke</a>
+                <a href="#" style="display:block;text-decoration:none;padding:6px 11px;font-size:13px;color:var(--ink-muted)">Annie Dillard · days</a>
+              </div>
+
+              <!-- WRITING COLUMN -->
+              <div style="flex:1;min-width:0;display:flex;justify-content:center;padding:34px 40px 44px;overflow:hidden">
+                <div style="width:100%;max-width:660px">
+
+                  <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">Journal · Day 42</div>
+                  <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Friday, July 10</h1>
+                  <div style="font-family:var(--font-hand);font-size:19px;color:#7a745f;margin-top:8px">a quiet page, only for you ✿</div>
+
+                  <!-- prompt -->
+                  <div style="margin-top:26px;display:flex;align-items:center;gap:12px">
+                    <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--acc-buttercream-text)">Today's prompt</span>
+                    <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+                    <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline);cursor:pointer">↻ another</span>
+                  </div>
+                  <div style="font-family:var(--font-display);font-style:italic;font-size:20px;color:var(--ink-body);margin-top:12px;line-height:1.4">What felt alive in you today?</div>
+
+                  <!-- writing page -->
+                  <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 26px 26px;position:relative">
+                    <span style="position:absolute;top:-9px;left:40px;width:66px;height:17px;background:rgba(212,199,138,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px;box-shadow:var(--shadow-crisp)"></span>
+                    <div class="ruled" style="min-height:150px;font-size:15.5px;line-height:27px;color:var(--ink-body)">The forecasting build finally clicked this morning — two hours of real deep work before the house woke up. Omar's note about starting with the Cairo cohort keeps feeling right; smaller, kinder, easier to learn from. I want to protect these early mornings.</div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-dashed)">
+                      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline)">🎤 Talk it out</span>
+                      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline)">＋ Photo</span>
+                      <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-sage-text)">Saved · just now</span>
+                    </div>
+                  </div>
+
+                  <!-- mood -->
+                  <div style="margin-top:26px;display:flex;align-items:center;gap:14px">
+                    <span style="font-size:15px;color:var(--ink-muted)">Today felt —</span>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--line-solid);border-radius:999px;padding:6px 12px">Calm</span>
+                      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--line-solid);border-radius:999px;padding:6px 12px">Focused</span>
+                      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc-sage-text);background:rgba(138,154,126,0.2);border:1px solid var(--acc-sage);border-radius:999px;padding:6px 12px">✿ Grateful</span>
+                      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--line-solid);border-radius:999px;padding:6px 12px">Stretched</span>
+                    </div>
+                  </div>
+
+                  <!-- gratitude -->
+                  <div style="margin-top:26px">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--acc-buttercream-text)">Three small things</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                    <div style="display:flex;align-items:center;gap:11px;padding:7px 0"><span style="color:var(--acc-blossom);font-size:13px">✿</span><span style="font-size:15px;color:var(--ink-body)">First coffee, still dark outside</span></div>
+                    <div style="display:flex;align-items:center;gap:11px;padding:7px 0"><span style="color:var(--acc-blossom);font-size:13px">✿</span><span style="font-size:15px;color:var(--ink-body)">A working forecast, finally</span></div>
+                    <div style="display:flex;align-items:center;gap:11px;padding:7px 0"><span style="color:var(--acc-blossom);font-size:13px">✿</span><span style="font-size:15px;color:var(--ink-hairline)">Add a third…</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT RAIL -->
+              <div style="width:262px;flex:none;border-left:1px dashed var(--line-solid);padding:30px 22px;display:flex;flex-direction:column;gap:28px">
+                <!-- quote of the day (commonplace) -->
+                <section>
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Quote of the day</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 16px 14px;transform:rotate(-0.4deg)">
+                    <img src="ds/assets/cherry/fallen.png" alt="" style="position:absolute;top:-14px;right:10px;height:34px;filter:var(--shadow-drop-sm)">
+                    <div style="font-family:var(--font-display);font-style:italic;font-size:15.5px;line-height:1.5;color:var(--ink-body)">"How we spend our days is, of course, how we spend our lives."</div>
+                    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:10px">— Annie Dillard</div>
+                    <div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--line-dashed)">
+                      <div style="font-family:var(--font-hand);font-size:16px;color:#7a745f;line-height:1.35">keep coming back to this one. the mornings matter.</div>
+                      <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">＋ add a thought</div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- on this day -->
+                <section>
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">On this day</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--acc-buttercream-text)">One year ago</div>
+                  <div style="font-family:var(--font-display);font-style:italic;font-size:14.5px;color:var(--ink-body);margin-top:7px;line-height:1.45">"Started the freelance thing today. Terrified and a little thrilled."</div>
+                  <div style="margin-top:10px;font-size:12.5px;color:var(--ink-muted);line-height:1.4">Look how far the garden has grown.</div>
+                </section>
+
+                <!-- streak -->
+                <section>
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Kept</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <img src="ds/assets/fern/full.png" alt="" style="height:52px;filter:var(--shadow-drop-sm)">
+                    <div><div style="font-family:var(--font-display);font-size:22px;color:var(--ink-body);line-height:1">12 days</div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px">of showing up</div></div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1B — IPHONE ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>iPhone — the daily page</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:5"></div>
+
+          <div style="height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10">
+            <span style="font-weight:500">9:41</span><span style="font-size:11px">✦ ▪ ▮</span>
+          </div>
+
+          <!-- scroll area -->
+          <div style="position:absolute;top:52px;left:0;right:0;bottom:84px;overflow:hidden;z-index:10">
+            <div style="padding:8px 22px 24px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <img src="ds/assets/fern/full.png" alt="" style="height:44px;filter:var(--shadow-drop-sm)">
+                <div>
+                  <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Journal · Day 42</div>
+                  <h1 style="margin:2px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;line-height:1;color:var(--ink-body)">Friday, Jul 10</h1>
+                </div>
+              </div>
+
+              <!-- segmented -->
+              <div style="display:flex;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:999px;overflow:hidden;margin-top:16px">
+                <span style="flex:1;text-align:center;padding:8px 0;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-body);background:var(--paper-parchment)">Journal</span>
+                <span style="flex:1;text-align:center;padding:8px 0;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)">Notes</span>
+                <span style="flex:1;text-align:center;padding:8px 0;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)">Quotes</span>
+              </div>
+
+              <div style="font-family:var(--font-display);font-style:italic;font-size:18px;color:var(--ink-body);margin-top:20px;line-height:1.4">What felt alive in you today?</div>
+
+              <div style="margin-top:12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 16px 14px;position:relative">
+                <span style="position:absolute;top:-8px;left:30px;width:56px;height:15px;background:rgba(212,199,138,0.5);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px"></span>
+                <div class="ruled" style="min-height:104px;font-size:14.5px;line-height:26px;color:var(--ink-body)">The forecasting build finally clicked this morning — two real hours before the house woke up. I want to protect these mornings.</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line-dashed);font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-hairline)"><span>🎤 Talk</span><span>＋ Photo</span><span style="margin-left:auto;color:var(--acc-sage-text)">Saved</span></div>
+              </div>
+
+              <div style="margin-top:18px;font-size:13.5px;color:var(--ink-muted)">Today felt —</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">
+                <span style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--line-solid);border-radius:999px;padding:6px 11px">Calm</span>
+                <span style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--line-solid);border-radius:999px;padding:6px 11px">Focused</span>
+                <span style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--acc-sage-text);background:rgba(138,154,126,0.2);border:1px solid var(--acc-sage);border-radius:999px;padding:6px 11px">✿ Grateful</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:10px;margin:22px 0 10px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-buttercream-text)">Three small things</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:5px 0"><span style="color:var(--acc-blossom)">✿</span><span style="font-size:14.5px;color:var(--ink-body)">First coffee, still dark</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:5px 0"><span style="color:var(--acc-blossom)">✿</span><span style="font-size:14.5px;color:var(--ink-body)">A working forecast</span></div>
+
+              <!-- quote card -->
+              <div style="margin-top:22px;position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:15px 15px 13px;transform:rotate(-0.4deg)">
+                <img src="ds/assets/cherry/fallen.png" alt="" style="position:absolute;top:-13px;right:10px;height:30px;filter:var(--shadow-drop-sm)">
+                <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Quote of the day</div>
+                <div style="font-family:var(--font-display);font-style:italic;font-size:14.5px;line-height:1.5;color:var(--ink-body);margin-top:7px">"How we spend our days is how we spend our lives."</div>
+                <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:8px">— Annie Dillard</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- bottom tab bar -->
+          <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;background:var(--paper-sidebar);border-top:1px solid var(--line-sidebar);padding:12px 26px 30px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-sage)"></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Today</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-lavender)"></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Calendar</span></div>
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--acc-terra);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-cta);margin-top:-24px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-blossom)"></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Tasks</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><img src="ds/assets/fern/full.png" alt="" style="height:15px"><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-buttercream-text)">Journal</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "add a Notes / commonplace view for the middle tab" · "make the prompt rotate through a set" · "warmer entry typography" · "now the Tasks screen with the right rail"</p>
+</section>
+</x-dc>
+</body>
+</html>

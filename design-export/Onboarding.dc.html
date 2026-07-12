@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.45}
+.phone{width:398px;height:838px;background:#211d18;border-radius:56px;padding:11px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 30px 60px rgba(60,52,38,0.28);position:relative;flex:none}
+.phone-screen{width:100%;height:100%;background:var(--paper-linen);border-radius:46px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:33px;background:#0d0b09;border-radius:20px;z-index:60}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.finput{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:8px;padding:13px 15px;font-size:15px;color:var(--ink-body);width:100%}
+.ob{position:relative;width:780px;height:600px;display:flex;flex-direction:column;background:var(--paper-linen)}
+.ob-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 40px}
+.ob-col{width:460px;display:flex;flex-direction:column;align-items:center}
+.ob-h{font-family:var(--font-display);font-weight:500;font-size:32px;line-height:1.12;letter-spacing:-0.01em;color:var(--ink-body);margin:0}
+.ob-sub{margin:12px 0 0;font-size:14px;line-height:1.6;color:var(--ink-muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--line-sidebar)}
+.dot.on{background:var(--acc-terra);width:20px;border-radius:999px}
+.cta{border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14px;padding:12px 26px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer}
+.feat{display:flex;align-items:flex-start;gap:13px;text-align:left;width:100%}
+.feat-t{font-size:14.5px;color:var(--ink-body);font-weight:500}
+.feat-d{font-size:12.5px;color:var(--ink-muted);margin-top:2px;line-height:1.45}
+.seedchip{width:36px;height:36px;border-radius:10px;background:var(--paper-parchment);border:1px solid var(--line-card);display:flex;align-items:center;justify-content:center;flex:none}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Onboarding — first run, once. Germination story across seven quiet steps; the middle three walk the plan → tend → cultivate arc.</span></div>
+  <div class="dv-opts">
+
+    <!-- STEP 1 — NAME + AVATAR -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>1/7 — What should we call you?</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <img src="ds/assets/fern/full.png" alt="" style="position:absolute;left:-30px;bottom:-20px;height:300px;opacity:0.12;transform:rotate(-6deg)">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Your Flow</div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col">
+            <img src="ds/assets/clover/seedling.png" alt="" style="height:56px;filter:var(--shadow-drop-sm)">
+            <div style="margin-top:10px;font-family:var(--font-hand);font-size:19px;color:#7a745f;transform:rotate(-1deg)">let's plant something ✿</div>
+            <h1 class="ob-h" style="margin-top:14px">What should we call you?</h1>
+            <p class="ob-sub">Just a first name is plenty — it's your garden, after all.</p>
+            <div style="width:100%;margin-top:26px;text-align:left">
+              <div class="flabel" style="margin-bottom:7px">Your name</div>
+              <div class="finput" style="display:flex;align-items:center"><span>Kai</span><span style="display:inline-block;width:1.5px;height:18px;background:var(--acc-terra);margin-left:1px"></span></div>
+              <div class="flabel" style="margin:18px 0 9px">Pick a seed</div>
+              <div style="display:flex;gap:10px">
+                <span class="seedchip" style="outline:2px solid var(--paper-linen);box-shadow:0 0 0 3px var(--acc-terra)"><img src="ds/assets/cherry/bud.png" alt="" style="height:20px"></span>
+                <span class="seedchip"><img src="ds/assets/clover/awake.png" alt="" style="height:20px"></span>
+                <span class="seedchip"><img src="ds/assets/hydrangea/light.png" alt="" style="height:20px"></span>
+                <span class="seedchip"><img src="ds/assets/daisy/midday.png" alt="" style="height:20px"></span>
+                <span class="seedchip"><img src="ds/assets/vine/sprouting.png" alt="" style="height:20px"></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:24px;width:100%;background:var(--paper-parchment);border:1px dashed var(--line-solid);border-radius:8px;padding:12px 16px">
+                <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1.5deg);flex:1;text-align:left">type it, and the whole app takes your name —</span>
+                <svg width="42" height="20" viewBox="0 0 42 20" fill="none" style="flex:none"><path d="M2 11 C 13 4, 24 4, 34 9" stroke="#B5654A" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1 4.5"></path><path d="M29 5 L 35 9.5 L 28 12.5" stroke="#B5654A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span style="font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink-body);border-bottom:2px solid var(--acc-terra);padding-bottom:1px">Kai's Flow</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:flex-end;padding:0 40px 28px"><button class="cta">Continue →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 — WORKSPACE -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>2/7 — Name your workspace</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Kai's Flow</div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col">
+            <img src="ds/assets/vine/sprouting.png" alt="" style="height:52px;filter:var(--shadow-drop-sm)">
+            <h1 class="ob-h" style="margin-top:16px">Name your workspace</h1>
+            <p class="ob-sub">One place for your whole life — work, home, health. It shows up quietly at the top of every page.</p>
+            <div style="width:100%;margin-top:26px;text-align:left">
+              <div class="flabel" style="margin-bottom:7px">Workspace</div>
+              <div class="finput" style="display:flex;align-items:center"><span>Personal</span><span style="display:inline-block;width:1.5px;height:18px;background:var(--acc-terra);margin-left:1px"></span></div>
+            </div>
+            <!-- topbar preview -->
+            <div style="width:100%;margin-top:22px;border:1px solid var(--line-card);border-radius:8px;overflow:hidden;background:var(--paper-parchment)">
+              <div style="height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)"><span>Kai's Flow · <b style="color:var(--acc-terra);font-weight:600">Personal</b> · Cairo</span><span>preview</span></div>
+              <div style="padding:12px 16px;font-size:12px;color:var(--ink-faint);font-style:italic">…the strip you'll see everywhere</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><button class="cta">Continue →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — PLAN -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>3/7 — Plan · capture &amp; organize</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <img src="ds/assets/hydrangea/medium.png" alt="" style="position:absolute;right:-20px;top:-10px;height:180px;opacity:0.14;transform:rotate(8deg)">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="display:inline-flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;padding:5px 16px 5px 5px;box-shadow:var(--shadow-crisp)"><span style="width:22px;height:22px;border-radius:50%;background:rgba(154,180,190,0.28);color:var(--acc-hydrangea-deep);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px">1</span><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--acc-hydrangea-deep)">Plan</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col" style="width:500px">
+            <h1 class="ob-h">Get it out of your head</h1>
+            <p class="ob-sub" style="margin-bottom:24px">Everything that takes time belongs in one place. Capture fast, sort later.</p>
+            <div style="display:flex;flex-direction:column;gap:16px;width:100%">
+              <div class="feat"><span class="seedchip"><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">⌘K</span></span><div><div class="feat-t">Command bar &amp; voice</div><div class="feat-d">Type or speak a thought — "call Omar friday 3pm" — and it parses the date, project and priority for you.</div></div></div>
+              <div class="feat"><span class="seedchip"><img src="ds/assets/hydrangea/light.png" alt="" style="height:20px"></span><div><div class="feat-t">Universal inbox</div><div class="feat-d">Anything it can't place waits in one calm inbox. Clear it to zero, one keystroke each.</div></div></div>
+              <div class="feat"><span class="seedchip"><img src="ds/assets/wisteria/p60.png" alt="" style="height:20px"></span><div><div class="feat-t">Projects &amp; areas</div><div class="feat-d">Group work that finishes into projects, and the parts of life that just continue into areas.</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><button class="cta">Next: Tend →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 4 — TEND -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>4/7 — Tend · the daily loop</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <img src="ds/assets/cherry/bloom.png" alt="" style="position:absolute;right:-16px;bottom:-16px;height:190px;opacity:0.14;transform:rotate(-8deg)">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="display:inline-flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;padding:5px 16px 5px 5px;box-shadow:var(--shadow-crisp)"><span style="width:22px;height:22px;border-radius:50%;background:rgba(122,148,110,0.24);color:var(--acc-sage-text);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px">2</span><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--acc-sage-text)">Tend</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col" style="width:500px">
+            <h1 class="ob-h">Make each day a good one</h1>
+            <p class="ob-sub" style="margin-bottom:24px">Show up, pick what matters, give it a shape. Then just follow the day.</p>
+            <div style="display:flex;flex-direction:column;gap:16px;width:100%">
+              <div class="feat"><span class="seedchip"><img src="ds/assets/clover/four_leaf.png" alt="" style="height:20px"></span><div><div class="feat-t">Today &amp; your Top-3</div><div class="feat-d">One anchor screen. Choose the three things that would make today count — the rest can wait.</div></div></div>
+              <div class="feat"><span class="seedchip"><span style="width:13px;height:13px;border-left:3px solid var(--acc-lavender);background:rgba(168,160,190,0.25);border-radius:2px"></span></span><div><div class="feat-t">Calendar time-blocking</div><div class="feat-d">Drag a task onto the calendar to reserve real time for it. Syncs both ways with Google Calendar.</div></div></div>
+              <div class="feat"><span class="seedchip"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#C9A55A"></circle><g stroke="#9a7b3a" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></g></svg></span><div><div class="feat-t">Morning &amp; evening rituals</div><div class="feat-d">Two short guided flows — plan the day, then close its loops at night. Under five minutes each.</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><button class="cta">Next: Cultivate →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 5 — CULTIVATE -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>5/7 — Cultivate · grow over time</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <img src="ds/assets/fern/unfurl2.png" alt="" style="position:absolute;left:-20px;top:-10px;height:200px;opacity:0.13;transform:rotate(6deg)">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="display:inline-flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:999px;padding:5px 16px 5px 5px;box-shadow:var(--shadow-crisp)"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,199,138,0.32);color:var(--acc-buttercream-text);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px">3</span><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--acc-buttercream-text)">Cultivate</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col" style="width:500px">
+            <h1 class="ob-h">Watch it grow</h1>
+            <p class="ob-sub" style="margin-bottom:24px">The parts that pay off slowly — habits, reflection, the people and ideas you keep.</p>
+            <div style="display:flex;flex-direction:column;gap:14px;width:100%">
+              <div class="feat"><span class="seedchip"><img src="ds/assets/vine/flowering.png" alt="" style="height:20px"></span><div><div class="feat-t">Routines &amp; streaks</div><div class="feat-d">Daily habits, separate from tasks. The vine grows a leaf for every day you keep it.</div></div></div>
+              <div class="feat"><span class="seedchip"><img src="ds/assets/fern/unfurl1.png" alt="" style="height:20px"></span><div><div class="feat-t">Weekly review &amp; Slipping</div><div class="feat-d">A gentle sweep each week — and a nudge when a project's gone quiet too long.</div></div></div>
+              <div class="feat"><span class="seedchip"><img src="ds/assets/clover/four_leaf.png" alt="" style="height:20px"></span><div><div class="feat-t">Journal, people &amp; library</div><div class="feat-d">Write the day, remember the people, keep the quotes and notes worth returning to.</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><button class="cta">Continue →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 6 — INTEGRATIONS -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>6/7 — Connect what you already use</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Kai's Flow</div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col" style="width:480px">
+            <h1 class="ob-h">Connect what you already use</h1>
+            <p class="ob-sub" style="margin-bottom:24px">Optional — you can wire these up any time in Settings.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;width:100%">
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid var(--line-card);border-radius:10px;padding:13px 16px;background:var(--paper-parchment)">
+                <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-lavender);flex:none"></span>
+                <div style="flex:1;text-align:left"><div class="feat-t">Google Calendar</div><div class="feat-d">Two-way sync — your blocks and events, everywhere.</div></div>
+                <button class="cta" style="padding:8px 16px;font-size:12.5px">Connect</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid var(--line-card);border-radius:10px;padding:13px 16px;background:var(--paper-parchment)">
+                <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-moss);flex:none"></span>
+                <div style="flex:1;text-align:left"><div class="feat-t">GitHub</div><div class="feat-d">Ranked issues drop straight into your inbox.</div></div>
+                <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;cursor:pointer">Connect</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid var(--line-card);border-radius:10px;padding:13px 16px;background:var(--paper-parchment)">
+                <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span>
+                <div style="flex:1;text-align:left"><div class="feat-t">Push notifications</div><div class="feat-d">Ritual nudges &amp; reminders on this device.</div></div>
+                <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:12.5px;padding:8px 16px;border-radius:999px;cursor:pointer">Enable</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><span style="display:flex;align-items:center;gap:16px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">Skip for now</span><button class="cta">Continue →</button></span></div>
+      </div>
+    </div>
+
+    <!-- STEP 7 — PLANT THE SEEDS -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>7/7 — Let's plant your garden</div>
+      <div class="dv-card ob">
+        <div class="grain"></div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Kai's Flow</div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-col" style="width:520px">
+            <div class="flabel" style="color:var(--acc-sage-text)">Day 1</div>
+            <h1 class="ob-h" style="margin-top:8px">Let's plant your garden</h1>
+            <p class="ob-sub">One seed for each part of the app. They'll grow as you tend them — this is where your terrarium begins.</p>
+            <!-- terrarium: soil trough with seeds dropping -->
+            <div style="width:100%;margin-top:26px;position:relative;height:170px;background:linear-gradient(180deg,#F4EFE0,#EDE6D3);border:1px solid var(--line-card);border-radius:12px;overflow:hidden">
+              <div style="position:absolute;left:0;right:0;bottom:0;height:44px;background:linear-gradient(180deg,#b79f77,#8f7a54)"></div>
+              <div style="position:absolute;left:0;right:0;bottom:40px;display:flex;justify-content:space-around;align-items:flex-end;padding:0 26px">
+                <img src="ds/assets/cherry/bud.png" alt="Tasks" style="height:40px">
+                <img src="ds/assets/hydrangea/zero.png" alt="Inbox" style="height:38px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#5a4a30;margin-bottom:8px;opacity:0.7"></span>
+                <img src="ds/assets/clover/seedling.png" alt="Routines" style="height:36px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#5a4a30;margin-bottom:14px;opacity:0.7"></span>
+              </div>
+              <div style="position:absolute;top:12px;right:16px;font-family:var(--font-hand);font-size:16px;color:#8f7a54;transform:rotate(-2deg)">seeds settling in…</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px 28px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer">← Back</span><button class="cta" style="padding:12px 30px">Enter your garden ✿</button></div>
+      </div>
+    </div>
+
+    <!-- PHONE -->
+    <div class="dv-opt" id="1h">
+      <div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>iPhone — full-screen, CTA pinned</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10">
+            <span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 22px 0;position:relative;z-index:10">
+            <div style="display:flex;justify-content:center;gap:6px;align-items:center;margin-bottom:24px"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+              <div class="flabel" style="color:var(--acc-sage-text)">Day 1</div>
+              <h1 class="ob-h" style="font-size:27px;margin-top:8px">Let's plant your garden</h1>
+              <p class="ob-sub" style="font-size:13px">One seed for each part of the app — your terrarium starts here.</p>
+              <div style="width:100%;margin-top:22px;position:relative;height:180px;background:linear-gradient(180deg,#F4EFE0,#EDE6D3);border:1px solid var(--line-card);border-radius:12px;overflow:hidden">
+                <div style="position:absolute;left:0;right:0;bottom:0;height:44px;background:linear-gradient(180deg,#b79f77,#8f7a54)"></div>
+                <div style="position:absolute;left:0;right:0;bottom:40px;display:flex;justify-content:space-around;align-items:flex-end;padding:0 20px">
+                  <img src="ds/assets/cherry/bud.png" alt="" style="height:38px">
+                  <img src="ds/assets/hydrangea/zero.png" alt="" style="height:36px">
+                  <img src="ds/assets/clover/seedling.png" alt="" style="height:34px">
+                  <img src="ds/assets/vine/sprouting.png" alt="" style="height:34px">
+                </div>
+              </div>
+            </div>
+            <button class="cta" style="width:100%;padding:15px;font-size:15px;margin-bottom:6px">Enter your garden ✿</button>
+            <div style="text-align:center;padding-bottom:8px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">← Back</span></div>
+            <div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "the seed-drop animation frames for step 7" · "a returning-user welcome-back variant" · "dark / night-garden onboarding".</p>
+</section>
+
+</x-dc>
+</body>
+</html>

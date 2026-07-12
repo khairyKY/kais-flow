@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--acc-terra)}
+a:hover{color:#8f4f39}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;margin-top:22px}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.45}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline)}
+.srow{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:6px;text-decoration:none}
+.sdot{width:16px;display:flex;justify-content:center;flex:none}
+.mcap{padding:14px 17px 16px;border-top:1px solid var(--line-card);background:var(--paper-parchment);position:relative;z-index:45}
+.mname{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)}
+.muse{margin-top:5px;font-size:11.5px;line-height:1.5;color:var(--ink-muted)}
+.mrecipe{margin-top:8px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;line-height:1.6;color:var(--ink-hairline)}
+/* particles reused from the catalog */
+.petal{position:absolute;top:-18px;width:11px;height:9px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;animation:petalFall 7s linear infinite;will-change:transform}
+.mote{position:absolute;bottom:-8px;width:4px;height:4px;border-radius:50%;background:#C9A55A;opacity:0;animation:moteRise 9s ease-in-out infinite;will-change:transform}
+.amberleaf{position:absolute;top:-16px;width:12px;height:8px;background:linear-gradient(135deg,#C9A55A,#a9803f);border-radius:80% 20% 70% 30%;animation:petalFall 9.5s linear infinite;will-change:transform}
+.floret{position:absolute;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #cfe0e6, #9AB4BE);animation:floretDrift 5.5s ease-in infinite;will-change:transform}
+@keyframes petalFall{0%{transform:translate(0,-20px) rotate(0deg);opacity:0}8%{opacity:0.95}30%{transform:translate(26px,70px) rotate(120deg)}55%{transform:translate(-8px,140px) rotate(220deg);opacity:0.9}80%{transform:translate(22px,205px) rotate(310deg)}100%{transform:translate(6px,260px) rotate(400deg);opacity:0}}
+@keyframes moteRise{0%{transform:translate(0,0);opacity:0}12%{opacity:0.7}45%{transform:translate(9px,-105px);opacity:0.45}75%{transform:translate(-6px,-185px);opacity:0.55}100%{transform:translate(4px,-250px);opacity:0}}
+@keyframes leafSway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+@keyframes bloomGlow{0%,100%{opacity:0.25;transform:translateX(-50%) scale(0.92)}50%{opacity:0.7;transform:translateX(-50%) scale(1.06)}}
+@keyframes floretDrift{0%{transform:translate(0,0);opacity:0}10%{opacity:1}60%{transform:translate(14px,88px);opacity:0.85}100%{transform:translate(4px,150px);opacity:0}}
+/* route transitions — the new piece */
+@keyframes routeA{0%,6%{opacity:1;transform:translateY(0) scale(1)}44%,50%{opacity:0;transform:translateY(-10px) scale(0.985)}94%,100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes routeB{0%,6%{opacity:0;transform:translateY(12px) scale(0.985)}44%,50%{opacity:1;transform:translateY(0) scale(1)}94%,100%{opacity:0;transform:translateY(12px) scale(0.985)}}
+@keyframes railA{0%,44%{opacity:1}50%,94%{opacity:0}100%{opacity:1}}
+@keyframes railB{0%,44%{opacity:0}50%,94%{opacity:1}100%{opacity:0}}
+@keyframes seedPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.12)}}
+/* t2 — fast route cut */
+@keyframes swiftA{0%,44%{opacity:1;transform:translateY(0)}47%{opacity:0;transform:translateY(-6px)}47.4%,91%{opacity:0;transform:translateY(8px)}94.6%,100%{opacity:1;transform:translateY(0)}}
+@keyframes swiftB{0%,44%{opacity:0;transform:translateY(8px)}47.6%,91%{opacity:1;transform:translateY(0)}94.2%{opacity:0;transform:translateY(-6px)}94.6%,100%{opacity:0;transform:translateY(8px)}}
+@keyframes swiftRailA{0%,44%{opacity:1}47%,91%{opacity:0}94.5%,100%{opacity:1}}
+@keyframes swiftRailB{0%,44%{opacity:0}47.5%,91%{opacity:1}94%,100%{opacity:0}}
+/* t2 — vertical stack push/pop */
+@keyframes pushUp{0%,9%{transform:translateY(102%)}15%,55%{transform:translateY(0)}62%,100%{transform:translateY(102%)}}
+@keyframes pushBack{0%,9%{transform:translateY(0) scale(1)}15%,55%{transform:translateY(-26px) scale(0.98)}62%,100%{transform:translateY(0) scale(1)}}
+@keyframes pushDim{0%,9%{opacity:0}15%,55%{opacity:1}62%,100%{opacity:0}}
+/* t2 — drag & drop */
+@keyframes dragFloat{0%,100%{transform:rotate(-0.9deg) translateY(0)}50%{transform:rotate(1deg) translateY(-2.5px)}}
+@keyframes fileGhost{0%,8%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1;box-shadow:var(--shadow-crisp)}12%{transform:translate(4px,-8px) rotate(2.4deg) scale(1.05);box-shadow:0 16px 34px rgba(60,52,38,0.3),0 3px 9px rgba(60,52,38,0.2)}22%{transform:translate(120px,-26px) rotate(-2.4deg) scale(1.05);box-shadow:0 16px 34px rgba(60,52,38,0.3),0 3px 9px rgba(60,52,38,0.2)}30%{transform:translate(240px,-18px) rotate(2deg) scale(1.05);box-shadow:0 16px 34px rgba(60,52,38,0.3),0 3px 9px rgba(60,52,38,0.2)}37%{transform:translate(348px,-6px) rotate(-1.6deg) scale(1.05);box-shadow:0 16px 34px rgba(60,52,38,0.3),0 3px 9px rgba(60,52,38,0.2)}43%,72%{transform:translate(348px,0) rotate(0deg) scale(1);opacity:1;box-shadow:var(--shadow-crisp)}77%{transform:translate(348px,0);opacity:0;box-shadow:var(--shadow-crisp)}78%{transform:translate(0,0);opacity:0;box-shadow:var(--shadow-crisp)}92%,100%{transform:translate(0,0);opacity:1;box-shadow:var(--shadow-crisp)}}
+@keyframes fileSlot{0%,24%{opacity:0;transform:scale(0.97)}30%,40%{opacity:1;transform:scale(1)}46%,100%{opacity:0;transform:scale(1)}}
+@keyframes fileMakeRoom{0%,24%{transform:translateY(0)}31%,74%{transform:translateY(56px)}82%,100%{transform:translateY(0)}}
+@keyframes fileCloseGap{0%,14%{transform:translateY(0)}22%,76%{transform:translateY(-56px)}84%,100%{transform:translateY(0)}}
+/* t3 — mobile stack (horizontal) */
+@keyframes hPushIn{0%,9%{transform:translateX(103%)}15%,55%{transform:translateX(0)}62%,100%{transform:translateX(103%)}}
+@keyframes hPushBack{0%,9%{transform:translateX(0)}15%,55%{transform:translateX(-30%)}62%,100%{transform:translateX(0)}}
+/* t3 — task complete micro */
+@keyframes boxFill{0%,22%{background:rgba(122,148,110,0);border-color:#bfb8a3}30%,72%{background:var(--sig-done);border-color:var(--sig-done)}82%,100%{background:rgba(122,148,110,0);border-color:#bfb8a3}}
+@keyframes checkPop{0%,24%{transform:scale(0);opacity:0}31%{transform:scale(1.3);opacity:1}37%,72%{transform:scale(1);opacity:1}82%,100%{transform:scale(0);opacity:0}}
+@keyframes strikeGrow{0%,26%{width:0}38%,72%{width:100%}82%,100%{width:0}}
+@keyframes labelDim{0%,24%{color:var(--ink-body)}36%,72%{color:var(--ink-hairline)}82%,100%{color:var(--ink-body)}}
+@keyframes rowDip{0%,22%{transform:translateY(0)}27%{transform:translateY(1.5px)}33%,100%{transform:translateY(0)}}
+/* t3 — overlay, toast, list breathing */
+@keyframes overlayScrim{0%,8%{opacity:0}11%,55%{opacity:1}58%,100%{opacity:0}}
+@keyframes overlayCard{0%,8%{opacity:0;transform:translateY(10px) scale(0.98)}11.5%,55%{opacity:1;transform:translateY(0) scale(1)}58%,100%{opacity:0;transform:translateY(6px) scale(0.99)}}
+@keyframes toastIn{0%,10%{opacity:0;transform:translate(-50%,14px) scale(0.98)}16%,70%{opacity:1;transform:translate(-50%,0) scale(1)}76%,100%{opacity:0;transform:translate(-50%,8px) scale(0.99)}}
+@keyframes rowIn{0%,10%{height:0;opacity:0;transform:translateY(-6px)}18%,82%{height:56px;opacity:1;transform:translateY(0)}90%,100%{height:0;opacity:0;transform:translateY(-6px)}}
+@keyframes rowOut{0%,45%{height:56px;opacity:1;transform:translateX(0)}52%{height:56px;opacity:0;transform:translateX(26px)}56%,86%{height:0;opacity:0;transform:translateX(26px)}94%,100%{height:56px;opacity:1;transform:translateX(0)}}
+/* t4 — hover/press (live) */
+.hp{transition:transform var(--dur-quick) var(--ease-out),box-shadow var(--dur-quick) var(--ease-out)}
+.hp:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(60,52,38,0.16),0 1px 3px rgba(60,52,38,0.1)}
+.hp:active{transform:translateY(0) scale(0.97);box-shadow:var(--shadow-crisp);transition-duration:80ms}
+/* t4 — entry stagger */
+@keyframes enterUp{0%,6%{opacity:0;transform:translateY(8px)}12%,86%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(8px)}}
+/* t4 — calendar drags */
+@keyframes calGhost{0%,8%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}13%{opacity:1;transform:translate(2px,-4px) rotate(1.8deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}22%{opacity:1;transform:translate(3px,16px) rotate(-1.6deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}31%{opacity:1;transform:translate(2px,42px) rotate(1.4deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}38%{opacity:1;transform:translate(2px,62px) rotate(-1deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}46%,80%{opacity:1;transform:translate(0,56px) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}86%{opacity:0;transform:translate(0,56px) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}87%{opacity:0;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}93%,100%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}}
+@keyframes calSnap{0%,11%{opacity:0;transform:translateY(0)}14%,29%{opacity:1;transform:translateY(0)}30%,44%{opacity:1;transform:translateY(56px)}50%,100%{opacity:0;transform:translateY(56px)}}
+@keyframes calTimeA{0%,29%{opacity:1}32%,86%{opacity:0}93%,100%{opacity:1}}
+@keyframes calTimeB{0%,29%{opacity:0}32%,86%{opacity:1}93%,100%{opacity:0}}
+@keyframes calResize{0%,16%{height:52px}26%{height:82px}33%{height:98px}40%,72%{height:108px}82%,100%{height:52px}}
+@keyframes calSnapLine{0%,34%{opacity:0}39%,48%{opacity:1}56%,100%{opacity:0}}
+/* t4 — drag polish */
+@keyframes catchDrop{0%,12%{opacity:0;transform:translateY(-38px) rotate(0deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}18%{opacity:1;transform:translateY(-38px) rotate(-1.6deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}27%{opacity:1;transform:translateY(-36px) rotate(1.5deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}35%{opacity:1;transform:translateY(-35px) rotate(-1.2deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}42%,82%{opacity:1;transform:translateY(0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}90%,100%{opacity:0;transform:translateY(0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}}
+@keyframes catchDip{0%,41%{transform:translateY(0) scale(1)}45%{transform:translateY(2px) scale(0.996)}53%,100%{transform:translateY(0) scale(1)}}
+@keyframes catchSlot{0%,14%{opacity:0}18%,40%{opacity:1}44%,100%{opacity:0}}
+@keyframes autoScroll{0%,18%{transform:translateY(0)}62%,80%{transform:translateY(-86px)}90%,100%{transform:translateY(0)}}
+@keyframes edgePulse{0%,16%{opacity:0}24%,62%{opacity:0.9}72%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){
+  .petal,.mote,.amberleaf,.floret{animation:none !important;opacity:0 !important}
+  .m-anim{animation:none !important;opacity:1 !important;transform:none !important}
+  .m-hide{animation:none !important;opacity:0 !important}
+}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t5">
+  <div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Micro-interaction sheet — the app's moments, carded: trigger · storyboard · feel · sound. Every moment ≤600ms, interruptible, gone under reduced-motion.</span></div>
+  <div class="dv-opts">
+
+    <!-- 5A CHECKBOX BLOOM -->
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Checkbox bloom — checking a task</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px"><span style="width:18px;height:18px;border:1.5px solid #bfb8a3;border-radius:5px"></span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">1 · tap</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;position:relative">
+                <svg width="30" height="30" viewBox="0 0 24 24"><g fill="#D4A8B0"><ellipse cx="12" cy="6.4" rx="2.6" ry="3.4"/><ellipse cx="17" cy="10" rx="2.6" ry="3.4" transform="rotate(72 17 10)"/><ellipse cx="15" cy="16" rx="2.6" ry="3.4" transform="rotate(144 15 16)"/><ellipse cx="9" cy="16" rx="2.6" ry="3.4" transform="rotate(216 9 16)"/><ellipse cx="7" cy="10" rx="2.6" ry="3.4" transform="rotate(288 7 10)"/></g><circle cx="12" cy="11" r="2.6" fill="#C9A55A"/></svg>
+              </div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">2 · blooms a beat</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;position:relative">
+                <span style="width:18px;height:18px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px">✓</span>
+                <span style="position:absolute;right:20px;bottom:10px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(40deg)"></span>
+              </div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">3 · one petal falls · strike lands</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Checkbox bloom</div>
+          <div class="muse">Quick, and it never delays the strike-through — the bloom is decoration on top of an instant state change. Builds on the check pop (<a href="#3b">3b</a>).</div>
+          <div class="mrecipe">bloom 260ms · petal 400ms · sound: Paper rustle</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5B DRAG LIFT -->
+    <div class="dv-opt" id="5b">
+      <div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a>Drag lift — picking a leaf</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;padding:0 10px"><div style="width:100%;height:36px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;box-shadow:var(--shadow-crisp)"></div></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">1 · at rest</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;padding:0 10px"><div style="width:100%;height:36px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;box-shadow:0 14px 28px rgba(60,52,38,0.24);transform:rotate(-1.6deg) scale(1.05)"></div></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">2 · lifts, tilts to cursor</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;padding:0 10px"><div style="width:100%;height:36px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;box-shadow:var(--shadow-crisp);transform:translateY(1.5px)"></div></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">3 · drop · paper tap</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Drag lift</div>
+          <div class="muse">The one grammar for every draggable — full physics specced in <a href="#2c">2c</a>/<a href="#4d">4d</a>. Lift like a picked leaf; settle with a paper tap.</div>
+          <div class="mrecipe">lift 140ms · settle 320ms overshoot · sound: none in flight, Paper rustle on drop</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5C PULL-TO-REFRESH DEW -->
+    <div class="dv-opt" id="5c">
+      <div class="dv-olabel"><a class="dv-oid" href="#5c">5c</a>Pull-to-refresh dew — mobile lists</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px"><span style="width:7px;height:7px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 38% 32%,#dcebef,#9AB4BE)"></span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">1 · pull forms a drop</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:10px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px"><span style="width:13px;height:15px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:radial-gradient(circle at 38% 32%,#dcebef,#9AB4BE);box-shadow:0 2px 4px rgba(90,110,120,0.3)"></span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">2 · swells with the pull</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:8px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;position:relative"><span style="position:absolute;top:10px;left:50%;width:4px;height:8px;margin-left:-2px;border-radius:50%;background:#9AB4BE;opacity:0.5"></span><span style="width:16px;height:5px;border-radius:50%;background:rgba(154,180,190,0.4)"></span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">3 · drops · refresh fires</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Pull-to-refresh dew</div>
+          <div class="muse">Surface tension, not rubber-band: the drop clings, swells, and lets go at the threshold. The splash is the loading indicator.</div>
+          <div class="mrecipe">swell tracks pull 1:1 · release 200ms · sound: none</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5D HOVER LEAN -->
+    <div class="dv-opt" id="5d">
+      <div class="dv-olabel"><a class="dv-oid" href="#5d">5d</a>Hover lean — live · sprigs lean toward the cursor</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:flex;align-items:flex-end;justify-content:space-around;height:110px;padding-bottom:4px">
+            <img src="ds/assets/fern/unfurl2.png" alt="" style="height:86px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer" style-hover="transform:rotate(-4deg);height:86px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer">
+            <img src="ds/assets/clover/awake.png" alt="" style="height:66px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer" style-hover="transform:rotate(4deg);height:66px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer">
+            <img src="ds/assets/vine/sprouting.png" alt="" style="height:78px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer" style-hover="transform:rotate(-3.5deg);height:78px;filter:var(--shadow-drop-sm);transform-origin:50% 100%;transition:transform 420ms var(--ease-out);cursor:pointer">
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Hover lean</div>
+          <div class="muse">The chat sprig's behavior, generalized: small plants lean a few degrees toward the cursor, pinned at the soil line. Hover these three.</div>
+          <div class="mrecipe">±3–4° · 420ms var(--ease-out) · transform-origin bottom · sound: none</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5E TOAST PETAL-FALL -->
+    <div class="dv-opt" id="5e">
+      <div class="dv-olabel"><a class="dv-oid" href="#5e">5e</a>Toast petal-fall — dismissal sheds one petal</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center"><div style="position:relative;display:flex;align-items:center;gap:9px;background:#2a2420;color:#F4F1EA;border-radius:999px;padding:8px 14px;font-size:11px">Filed to Forecasting<svg width="13" height="13" viewBox="0 0 24 24" style="position:absolute;top:-7px;right:6px"><g fill="#D4A8B0"><ellipse cx="12" cy="7" rx="2.4" ry="3.2"/><ellipse cx="16.6" cy="10.4" rx="2.4" ry="3.2" transform="rotate(72 16.6 10.4)"/><ellipse cx="14.8" cy="15.8" rx="2.4" ry="3.2" transform="rotate(144 14.8 15.8)"/><ellipse cx="9.2" cy="15.8" rx="2.4" ry="3.2" transform="rotate(216 9.2 15.8)"/><ellipse cx="7.4" cy="10.4" rx="2.4" ry="3.2" transform="rotate(288 7.4 10.4)"/></g><circle cx="12" cy="11.5" r="2" fill="#C9A55A"/></svg></div></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">1 · toast wears its corner flower</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center;position:relative"><div style="display:flex;align-items:center;gap:9px;background:#2a2420;color:#F4F1EA;border-radius:999px;padding:8px 14px;font-size:11px;opacity:0.35;transform:translateY(6px)">Filed to Forecasting</div><span style="position:absolute;right:66px;top:14px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(50deg)"></span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">2 · leaves · one petal stays a beat</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Toast petal-fall</div>
+          <div class="muse">On dismiss the toast drops away and its corner flower releases a single petal that falls 30px and fades — the goodbye is smaller than the hello.</div>
+          <div class="mrecipe">exit 160ms + petal 500ms linear · sound: none</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5F SEED PLANT -->
+    <div class="dv-opt" id="5f">
+      <div class="dv-olabel"><a class="dv-oid" href="#5f">5f</a>Seed plant — creating anything</div>
+      <div class="dv-card" style="width:520px">
+        <div style="background:var(--paper-linen);padding:22px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:center;justify-content:center"><span style="display:inline-flex;align-items:center;gap:7px;background:var(--acc-terra);color:#fff;border-radius:999px;padding:8px 16px;font-size:11.5px;box-shadow:var(--shadow-cta)">Add task</span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">1 · submit</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="12" height="15" viewBox="0 0 14 18"><ellipse cx="7" cy="9" rx="4.6" ry="7" fill="#C9A55A" transform="rotate(14 7 9)"/></svg><span style="font-family:var(--font-mono);font-size:8px;color:var(--ink-hairline)">↓</span></div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">2 · a seed drops</div>
+            </div>
+            <div style="text-align:center">
+              <div style="height:70px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;position:relative">
+                <span style="width:34px;height:6px;border-radius:50%;background:#b9a98a;opacity:0.7"></span>
+                <span style="position:absolute;bottom:16px;left:50%;margin-left:-14px;width:8px;height:4px;border-radius:50%;background:rgba(163,147,122,0.5)"></span>
+                <span style="position:absolute;bottom:17px;left:50%;margin-left:8px;width:6px;height:3px;border-radius:50%;background:rgba(163,147,122,0.45)"></span>
+              </div>
+              <div class="flabel" style="margin-top:6px;font-size:8px">3 · lands · tiny soil puff</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Seed plant</div>
+          <div class="muse">Task, project, journal line — creation is planting. The seed drops from the submit affordance and puffs into the row it becomes.</div>
+          <div class="mrecipe">drop 260ms ease-in · puff 180ms · sound: Pencil scratch (journal) / none elsewhere</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Sheet rule: every moment ≤ ~600ms, all interruptible, all gone under reduced-motion. Sound pairings come from the <a href="Settings#3a">Sound Catalog</a> and respect its per-row toggles.</p>
+</section>
+
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Round 4 — the resting layer &amp; polish: hover/press, entry stagger, calendar drags, drag refinements, and a stack you can click.</span></div>
+  <p style="max-width:780px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455">The UI-design backlog from the round-3 audit. <a href="#4a">4a</a> and <a href="#4e">4e</a> are <strong>live</strong> — hover, press and click them. <a href="#4b">4b</a> is what a view does the instant the route cut (<a href="#2a">2a</a>) lands. <a href="#4c">4c</a> gives the calendar its own drag dialect (snap, not free placement) and <a href="#4d">4d</a> finishes the drag kit: the catch, the edge scroll, the stacked ghost.</p>
+  <div class="dv-opts">
+
+    <!-- ============ 4A — HOVER & PRESS, LIVE ============ -->
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Hover &amp; press — live · one pair of states under every surface</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:340px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Surface states · live</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Lift, then give</h1>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px;align-items:flex-start">
+              <div class="hp" style="display:inline-flex;align-items:center;gap:8px;background:var(--acc-terra);color:#fff;border-radius:8px;padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-crisp);user-select:none">Capture a thought</div>
+              <div class="hp" style="align-self:stretch;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);cursor:pointer;user-select:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Plan the forecasting logic</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-hairline)">›</span></div>
+              <div class="hp" style="align-self:stretch;display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);cursor:pointer;user-select:none"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--ink-body)">Forecasting App</div><div class="fhelp" style="margin-top:1px">Freelance · 4 open</div></div><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text);white-space:nowrap">68%</span></div>
+            </div>
+            <div style="margin-top:14px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">hover lifts a breath · press gives 3% ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Hover &amp; press · resting layer</div>
+          <div class="muse">Every interactive surface shares one pair: hover lifts 1px under a soft shadow; press gives to 0.97 in 80ms. No color swaps — depth does the talking.</div>
+          <div class="mrecipe">hover −1px + shadow · var(--dur-quick) var(--ease-out) · active scale 0.97 · 80ms · buttons, rows, cards, chips alike</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4B — ENTRY STAGGER ============ -->
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>View entry — content settles up in source order, 60ms apart</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:340px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div class="m-anim" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);opacity:0;animation:enterUp 6s var(--ease-out) infinite">Friday · 10 July</div>
+            <h1 class="m-anim" style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05;opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:60ms">Good morning, Kai</h1>
+            <div class="m-anim" style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:120ms"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div class="m-anim" style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed);opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:180ms"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+            <div class="m-anim" style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed);opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:240ms"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Reply to Youssef</span></div>
+            <div class="m-anim" style="display:flex;align-items:center;gap:11px;padding:9px 0;opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:300ms"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Water the balcony plants</span></div>
+            <div class="m-anim" style="margin-top:14px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg);opacity:0;animation:enterUp 6s var(--ease-out) infinite;animation-delay:360ms">the page takes a breath as it arrives ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Entry stagger · first paint</div>
+          <div class="muse">Runs once, the instant a view lands after the route cut (<a href="#2a">2a</a>): each block fades up 8px in source order, 60ms apart. The whole page is readable in under 400ms; nothing ever staggers twice.</div>
+          <div class="mrecipe">enterUp 240ms var(--ease-out) · stagger 60ms · header → divider → rows · one-shot on route land · reduced-motion → instant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4C — CALENDAR DRAGS ============ -->
+    <div class="dv-opt" id="4c">
+      <div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>Calendar — the ghost floats free, the placeholder snaps to the grid · resize snaps too</div>
+      <div class="dv-card" style="width:720px">
+        <div style="position:relative;height:330px;overflow:hidden;background:var(--paper-linen);padding:26px 36px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Calendar · move &amp; resize</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Loose hand, strict grid</h1>
+            <div style="position:relative;height:210px;margin-top:16px">
+              <!-- panel 1: move -->
+              <div class="flabel" style="position:absolute;left:0;top:0">Move · snaps to the hour</div>
+              <div style="position:absolute;left:0;top:26px;width:300px;height:180px">
+                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-5px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
+                <div style="position:absolute;left:36px;right:0;top:56px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:51px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
+                <div style="position:absolute;left:36px;right:0;top:112px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:107px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
+                <div style="position:absolute;left:36px;right:0;top:168px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:163px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
+                <div class="m-hide" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;border:1.5px dashed var(--acc-lavender-deep);background:rgba(168,160,190,0.1);opacity:0;animation:calSnap 8s ease-in-out infinite"></div>
+                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;background:rgba(168,160,190,0.24);border:1px solid rgba(124,106,154,0.35);padding:7px 10px;animation:calGhost 8s ease-in-out infinite;will-change:transform;z-index:3">
+                  <div style="font-size:12px;color:var(--ink-body)">Deep work · forecasting</div>
+                  <div style="position:relative;margin-top:2px;font-family:var(--font-mono);font-size:8.5px;color:var(--acc-lavender-text)">
+                    <span class="m-anim" style="animation:calTimeA 8s ease-in-out infinite">9:00 – 10:00</span>
+                    <span class="m-hide" style="position:absolute;left:0;top:0;opacity:0;animation:calTimeB 8s ease-in-out infinite">10:00 – 11:00</span>
+                  </div>
+                </div>
+              </div>
+              <!-- panel 2: resize -->
+              <div class="flabel" style="position:absolute;left:348px;top:0">Resize · handle snaps to the hour</div>
+              <div style="position:absolute;left:348px;top:26px;width:300px;height:180px">
+                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-5px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
+                <div style="position:absolute;left:36px;right:0;top:56px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:51px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
+                <div style="position:absolute;left:36px;right:0;top:112px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:107px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
+                <div style="position:absolute;left:36px;right:0;top:168px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:163px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
+                <div class="m-hide" style="position:absolute;left:36px;right:0;top:112px;border-top:1.5px solid var(--acc-lavender-deep);opacity:0;animation:calSnapLine 8s ease-in-out infinite"></div>
+                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;background:rgba(168,160,190,0.24);border:1px solid rgba(124,106,154,0.35);padding:7px 10px;overflow:hidden;animation:calResize 8s ease-in-out infinite;z-index:3">
+                  <div style="font-size:12px;color:var(--ink-body)">Deep work · forecasting</div>
+                  <div style="position:relative;margin-top:2px;font-family:var(--font-mono);font-size:8.5px;color:var(--acc-lavender-text)">
+                    <span class="m-anim" style="animation:calTimeA 8s ease-in-out infinite">9:00 – 10:00 · 1h</span>
+                    <span class="m-hide" style="position:absolute;left:0;top:0;opacity:0;animation:calTimeB 8s ease-in-out infinite">9:00 – 11:00 · 2h</span>
+                  </div>
+                  <div style="position:absolute;left:50%;bottom:3px;width:28px;height:3px;margin-left:-14px;border-radius:2px;background:rgba(124,106,154,0.5)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Calendar drag dialect · snap</div>
+          <div class="muse">Same wobbly ghost as <a href="#2c">2c</a>, but the placeholder doesn't trail it — it jumps hour to hour, so the hand stays loose while the outcome stays exact. The time label re-reads at each snap. Resize mirrors it: the block stretches freely, the handle commits to the grid line.</div>
+          <div class="mrecipe">ghost free + placeholder stepped (snap at slot midpoint) · snap flash 120ms · resize: free stretch, stepped commit · 30-min grid in the real view</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4D — DRAG POLISH TRIO ============ -->
+    <div class="dv-opt" id="4d">
+      <div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a>Drag polish — the catch, the edge scroll, the stacked ghost</div>
+      <div class="dv-card" style="width:720px">
+        <div style="position:relative;height:330px;overflow:hidden;background:var(--paper-linen);padding:26px 36px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Drag &amp; drop · refinements</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Finishing touches</h1>
+            <div style="position:relative;height:226px;margin-top:16px">
+              <!-- catch -->
+              <div class="flabel" style="position:absolute;left:0;top:0">Drop catch · the list dips</div>
+              <div class="m-anim" style="position:absolute;left:0;top:26px;width:200px;animation:catchDip 7s ease-in-out infinite">
+                <div style="height:40px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-sage);flex:none"></span><span style="flex:1;font-size:12px;color:var(--ink-body)">Reply to Youssef</span></div>
+                <div style="position:relative;height:40px;margin-top:8px">
+                  <div class="m-hide" style="position:absolute;inset:0;border-radius:8px;border:1.5px dashed rgba(107,100,85,0.55);background:rgba(122,148,110,0.08);opacity:0;animation:catchSlot 7s ease-in-out infinite"></div>
+                  <div class="m-anim" style="position:absolute;inset:0;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;animation:catchDrop 7s ease-in-out infinite;z-index:3"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:12px;color:var(--ink-body)">Oat milk run</span></div>
+                </div>
+                <div style="height:40px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-top:8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss);flex:none"></span><span style="flex:1;font-size:12px;color:var(--ink-body)">Water the plants</span></div>
+              </div>
+              <!-- edge auto-scroll -->
+              <div class="flabel" style="position:absolute;left:224px;top:0">Edge hold · auto-scroll</div>
+              <div style="position:absolute;left:224px;top:26px;width:200px;height:186px;overflow:hidden;border:1px dashed var(--line-dashed);border-radius:8px">
+                <div class="m-anim" style="padding:8px;animation:autoScroll 7s ease-in-out infinite">
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Reconcile Q2 actuals</span></div>
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Wireframe the charts</span></div>
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Retainer invoice</span></div>
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Dentist callback</span></div>
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Balcony plants</span></div>
+                  <div style="height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Q3 planning notes</span></div>
+                </div>
+                <div class="m-hide" style="position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(rgba(122,148,110,0),rgba(122,148,110,0.26));opacity:0;animation:edgePulse 7s ease-in-out infinite;pointer-events:none"></div>
+                <div class="m-anim" style="position:absolute;left:10px;right:10px;bottom:8px;height:36px;display:flex;align-items:center;gap:9px;padding:0 11px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:7px;box-shadow:0 12px 26px rgba(60,52,38,0.24);animation:dragFloat 2.4s ease-in-out infinite;z-index:3"><span style="flex:1;font-size:11.5px;color:var(--ink-body)">Q3 planning doc</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-hairline);letter-spacing:2px">⋮⋮</span></div>
+              </div>
+              <!-- stacked ghost -->
+              <div class="flabel" style="position:absolute;left:448px;top:0">Multi-select · one ghost, counted</div>
+              <div style="position:absolute;left:448px;top:26px;width:200px;height:186px">
+                <div style="position:absolute;left:10px;right:10px;top:64px">
+                  <div style="position:absolute;inset:0;height:44px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;transform:rotate(4deg) translate(6px,8px);opacity:0.65"></div>
+                  <div style="position:absolute;inset:0;height:44px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;transform:rotate(-3deg) translate(-5px,5px);opacity:0.82"></div>
+                  <div class="m-anim" style="position:relative;height:44px;display:flex;align-items:center;gap:9px;padding:0 12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:0 14px 30px rgba(60,52,38,0.26);animation:dragFloat 2.4s ease-in-out infinite"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-blossom);flex:none"></span><span style="flex:1;font-size:12px;color:var(--ink-body)">Reply to Youssef</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-hairline);letter-spacing:2px">⋮⋮</span></div>
+                  <div style="position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;background:#2a2420;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10.5px;font-weight:700;z-index:4">3</div>
+                </div>
+                <div style="position:absolute;left:0;right:0;bottom:14px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg);text-align:center">the rest ride along behind ✿</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Drag polish · three refinements</div>
+          <div class="muse">The receiving list gives a 2px dip when the ghost lands — a soft catch, not a bounce. Holding near a list edge scrolls it underneath at a gentle constant rate, with a sage wash marking the zone. Multi-select drags one wobbling ghost with the others fanned behind and a count.</div>
+          <div class="mrecipe">catch: 2px / 0.996 · 120ms · edge zone 40px, ~90px/s · stack: ±4° fan, ≤2 shown + count · all inherit the 2c ghost</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4E — STACK NAV, LIVE ============ -->
+    <div class="dv-opt" id="4e">
+      <div class="dv-olabel"><a class="dv-oid" href="#4e">4e</a>Stack navigation — live · click the project to push, back to pop</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:460px;overflow:hidden;background:var(--paper-linen)">
+          <div style="{{ stackParentStyle }}">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Projects · 3 active</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Growing things</h1>
+            <div onClick="{{ openStack }}" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line-dashed);margin-top:12px;cursor:pointer;user-select:none"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Forecasting App</div><div class="fhelp" style="margin-top:2px">Freelance · 4 open</div></div><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text);white-space:nowrap;flex:none">open ↑</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:11px;height:11px;border-radius:50%;background:#8b8471;flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Garage</div><div class="fhelp" style="margin-top:2px">Personal · 1 open</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-buttercream);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Kitchen deep-clean</div><div class="fhelp" style="margin-top:2px">Home · 2 open</div></div></div>
+            <div style="margin-top:16px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">click the project — then back ✿</div>
+          </div>
+          <div style="{{ stackDimStyle }}"></div>
+          <div style="{{ stackDetailStyle }}">
+            <div onClick="{{ closeStack }}" style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:11px">↓</span><span>Back · Projects</span></div>
+            <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Forecasting App</h1>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text);white-space:nowrap">4 / 6 milestones</span><span class="chip" style="background:rgba(201,165,90,0.2);color:#8a6a2f;white-space:nowrap">68%</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:20px 0 8px"><span class="flabel">Milestones</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px;flex:none">✓</span><span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Scope the data model</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Wireframe the charts view</span></div>
+          </div>
+          <div class="grain"></div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Stack push / pop · live</div>
+          <div class="muse">The <a href="#2b">2b</a> recipe wired to real clicks: the project pushes the detail up over the receding parent; back drops it away. Same 380ms curve both directions.</div>
+          <div class="mrecipe">transform + opacity transitions · 380ms cubic-bezier(0.32,0.72,0,1) · parent −26px · 0.98 · 14% dim · esc pops too in the real app</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">This closes the UI backlog from the round-3 audit. Remaining open threads are direction work: wiring recipes into the screen files, the haptics map, and the motion-budget rules.</p>
+</section>
+
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Round 3 — audit pass + the micro layer: mobile stack, check pop, overlay, toast, list breathing.</span></div>
+  <p style="max-width:780px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455">Audit: <a href="#1a">1a</a> is now marked superseded by <a href="#2a">2a</a>, and reduced-motion no longer double-exposes its two panels (same fix on the <a href="#1d">1d</a> glow). New: <a href="#3a">3a</a> gives the stack its horizontal form for touch — desktop keeps <a href="#2b">2b</a>'s vertical. <a href="#3b">3b</a>–<a href="#3e">3e</a> are the micro layer the retrofit was missing: completing a task, opening an overlay, the confirmation toast, and rows entering and leaving lists.</p>
+  <div class="dv-opts">
+
+    <!-- ============ 3A — MOBILE STACK, HORIZONTAL ============ -->
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Stack navigation · mobile — horizontal push/pop · desktop keeps <a href="#2b">2b</a></div>
+      <div class="dv-card" style="width:320px">
+        <div style="position:relative;height:470px;overflow:hidden;background:var(--paper-parchment);display:flex;align-items:center;justify-content:center">
+          <div class="grain"></div>
+          <div style="position:relative;width:250px;height:418px;border-radius:22px;border:1px solid var(--line-card);background:var(--paper-linen);overflow:hidden;box-shadow:var(--shadow-card)">
+            <!-- parent: Today (recedes left) -->
+            <div class="m-anim" style="position:absolute;inset:0;background:var(--paper-linen);animation:hPushBack 9s cubic-bezier(0.32,0.72,0,1) infinite;padding:20px 18px 0">
+              <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Friday · 10 July</div>
+              <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:22px;color:var(--ink-body);line-height:1.05">Today</h1>
+              <div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px"><span class="flabel" style="color:var(--acc-terra);font-size:8px">Top 3</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:14px;height:14px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Plan the forecasting logic</span><span style="margin-left:auto;font-size:11px;color:var(--ink-hairline)">›</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:14px;height:14px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Reply to Youssef</span><span style="margin-left:auto;font-size:11px;color:var(--ink-hairline)">›</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:8px 0"><span style="width:14px;height:14px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Water the balcony plants</span><span style="margin-left:auto;font-size:11px;color:var(--ink-hairline)">›</span></div>
+            </div>
+            <!-- dim -->
+            <div class="m-hide" style="position:absolute;inset:0;background:rgba(42,36,32,0.12);animation:pushDim 9s cubic-bezier(0.32,0.72,0,1) infinite;opacity:0;pointer-events:none"></div>
+            <!-- detail: slides in from the right -->
+            <div class="m-hide" style="position:absolute;inset:0;background:var(--paper-linen);box-shadow:-12px 0 30px rgba(60,52,38,0.22);animation:hPushIn 9s cubic-bezier(0.32,0.72,0,1) infinite;transform:translateX(103%);padding:20px 18px 0;will-change:transform">
+              <div style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)"><span style="font-size:11px">‹</span><span>Today</span></div>
+              <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:19px;color:var(--ink-body);line-height:1.15">Plan the forecasting logic</h1>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:9px"><span class="chip" style="background:rgba(124,106,154,0.16);color:var(--acc-lavender-text);white-space:nowrap">Forecasting App</span><span class="chip" style="background:rgba(181,101,74,0.14);color:var(--acc-terra);white-space:nowrap">Top 3</span></div>
+              <div style="display:flex;align-items:center;gap:8px;margin:16px 0 6px"><span class="flabel" style="font-size:8px">Subtasks</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:14px;height:14px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:9px;flex:none">✓</span><span style="font-size:12.5px;color:var(--ink-hairline);text-decoration:line-through">List the inputs</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:8px 0"><span style="width:14px;height:14px;border:1.5px solid #bfb8a3;border-radius:4px;flex:none"></span><span style="font-size:12.5px;color:var(--ink-body)">Sketch the projection curve</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Stack push / pop · mobile, horizontal</div>
+          <div class="muse">Same stack grammar as <a href="#2b">2b</a>, turned horizontal for touch: the detail slides in from the right while the parent recedes 30% behind a light dim; back — edge-swipe or ‹ — slides it away. Desktop stays vertical.</div>
+          <div class="mrecipe">hPushIn / hPushBack · 380ms cubic-bezier(0.32,0.72,0,1) · parent −30% + 12% dim · edge-swipe pops · reduced-motion → cut</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3B — TASK COMPLETE MICRO ============ -->
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Task complete — box fills, check pops, strike draws, row dips</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:310px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Today · micro-moment</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">The little yes</h1>
+            <div style="margin-top:16px">
+              <div class="m-anim" style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line-dashed);animation:rowDip 4.5s ease-in-out infinite">
+                <span class="m-anim" style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex:none;animation:boxFill 4.5s ease-in-out infinite">
+                  <span class="m-hide" style="display:block;color:var(--paper-parchment);font-size:10px;line-height:1;animation:checkPop 4.5s ease-in-out infinite;opacity:0">✓</span>
+                </span>
+                <span style="position:relative;font-size:13.5px">
+                  <span class="m-anim" style="color:var(--ink-body);animation:labelDim 4.5s ease-in-out infinite">Reply to Youssef</span>
+                  <span class="m-hide" style="position:absolute;left:0;top:50%;height:1.5px;width:0;background:var(--ink-hairline);animation:strikeGrow 4.5s ease-in-out infinite"></span>
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:10px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Water the balcony plants</span></div>
+            </div>
+            <div style="margin-top:14px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">each check is a tiny exhale ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Check pop · task complete</div>
+          <div class="muse">The box fills, the check overshoots in (1.3 → 1), the strike draws left-to-right, the row dips 1.5px. Petal-fall (<a href="#1b">1b</a>) stacks on top only when it's the last of the Top 3.</div>
+          <div class="mrecipe">boxFill 90ms · checkPop 180ms overshoot · strikeGrow 240ms · rowDip 1.5px 120ms · one-shot per check</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3C — OVERLAY IN/OUT ============ -->
+    <div class="dv-opt" id="3c">
+      <div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Overlay — quick capture arrives with the scrim, leaves faster than it came</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:380px;overflow:hidden;background:var(--paper-linen)">
+          <div class="grain"></div>
+          <!-- base content -->
+          <div style="position:absolute;inset:0;padding:26px 26px 0">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Friday · 10 July</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Good morning, Kai</h1>
+            <div style="display:flex;align-items:center;gap:10px;margin:16px 0 6px"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none"></span><span style="font-size:13.5px;color:var(--ink-body)">Reply to Youssef</span></div>
+          </div>
+          <!-- scrim -->
+          <div class="m-hide" style="position:absolute;inset:0;background:rgba(42,36,32,0.2);animation:overlayScrim 7s ease-in-out infinite;opacity:0;pointer-events:none"></div>
+          <!-- capture card -->
+          <div class="m-hide" style="position:absolute;left:26px;right:26px;top:118px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:10px;box-shadow:0 18px 44px rgba(60,52,38,0.24),0 3px 9px rgba(60,52,38,0.14);padding:16px 18px;animation:overlayCard 7s ease-in-out infinite;opacity:0">
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Quick capture</div>
+            <div style="margin-top:10px;padding-bottom:8px;border-bottom:1.5px dashed var(--line-dashed);font-size:14px;color:var(--ink-body)">oat milk in the cortado<span style="display:inline-block;width:1.5px;height:15px;background:var(--acc-terra);margin-left:2px;vertical-align:-2px"></span></div>
+            <div class="fhelp" style="margin-top:10px">↵ capture · esc close · it lands in the inbox</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Overlay in / out · quick capture</div>
+          <div class="muse">Scrim and card arrive together — 210ms up-and-settle from 10px, 0.98 → 1. Exit is faster than entry so dismissal feels obedient. Same recipe for the palette, dialogs and pickers.</div>
+          <div class="mrecipe">overlayCard 210ms in / 140ms out · scrim → 20% · esc obeys immediately · reduced-motion → instant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3D — TOAST ============ -->
+    <div class="dv-opt" id="3d">
+      <div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Toast — confirmation rises from the bottom edge, always with an undo</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:310px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Inbox · 1 left</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Filed away</h1>
+            <div style="margin-top:16px">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(154,180,190,0.28);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--acc-hydrangea-deep);flex:none">✎</span><div style="flex:1"><div style="font-size:13.5px;color:var(--ink-body)">Oat milk in the cortado</div><div class="fhelp" style="margin-top:2px">Voice · just now</div></div></div>
+            </div>
+          </div>
+          <div class="m-hide" style="position:absolute;left:50%;bottom:24px;transform:translate(-50%,14px);opacity:0;animation:toastIn 6s ease-in-out infinite;z-index:10;display:flex;align-items:center;gap:12px;background:#2a2420;color:#F4F1EA;border-radius:999px;padding:9px 16px;box-shadow:0 10px 26px rgba(42,36,32,0.3);white-space:nowrap">
+            <span style="font-size:12px">Filed to Forecasting App</span>
+            <span style="font-size:12px;font-weight:600;color:#C9A55A">Undo</span>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Toast · filed</div>
+          <div class="muse">Rises 14px from the bottom edge, waits, leaves downward. One at a time, never stacking, never blocking — and always carrying the undo.</div>
+          <div class="mrecipe">toastIn 220ms var(--ease-out) · dwell 4s · exit 160ms · single slot, bottom-center</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3E — LIST ENTER / EXIT ============ -->
+    <div class="dv-opt" id="3e">
+      <div class="dv-olabel"><a class="dv-oid" href="#3e">3e</a>List breathing — new rows grow in, removed rows slide out and the list heals</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:360px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Tasks · enter &amp; exit</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Rows that breathe</h1>
+            <div style="margin-top:18px">
+              <div style="height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-bottom:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+              <div class="m-hide" style="height:0;opacity:0;overflow:hidden;animation:rowIn 8s ease-in-out infinite">
+                <div style="height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Oat milk in the cortado</span><span class="chip" style="background:rgba(154,180,190,0.24);color:var(--acc-hydrangea-deep);white-space:nowrap">new</span></div>
+              </div>
+              <div style="height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);margin-bottom:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Reply to Youssef</span></div>
+              <div class="m-anim" style="height:56px;overflow:hidden;animation:rowOut 8s ease-in-out infinite">
+                <div style="height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Call the dentist back</span></div>
+              </div>
+            </div>
+            <div style="margin-top:10px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">in on a breath, out on a slide ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">List enter / exit</div>
+          <div class="muse">New rows breathe in — height and fade together with a 6px settle. Removed rows slide 26px toward their destination, fade, and the list heals underneath. Matches the filing drag's grammar (<a href="#2d">2d</a>).</div>
+          <div class="mrecipe">rowIn 240ms · rowOut 200ms slide + 180ms collapse · height + opacity + transform only</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">The kit now covers: routes, stack (both axes), drag &amp; drop, completion, overlays, toasts, list churn, plus the ambient layer from round 1.</p>
+</section>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Round 2 — faster route cut, vertical stack navigation, and the drag &amp; drop kit.</span></div>
+  <p style="max-width:780px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455"><a href="#2a">2a</a> replaces <a href="#1a">1a</a>: one fast cut, no choreography. <a href="#2b">2b</a> is the mobile back-gesture feel brought to desktop and turned vertical — drill-ins ride up over the parent, back drops them away. <a href="#2c">2c</a> is <strong>live</strong>: grab a row and drag it. <a href="#2d">2d</a> shows the same ghost crossing containers. One drag grammar everywhere: a wobbly, floaty ghost; a clean dashed placeholder marking where it lands; a springy settle.</p>
+  <div class="dv-opts">
+
+    <!-- ============ 2A — ROUTE CUT, FAST ============ -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Route cut — 160ms · opacity + 6px, nothing else</div>
+      <div class="dv-card" style="width:720px">
+        <div style="position:relative;height:460px;overflow:hidden;background:var(--paper-linen);display:flex">
+          <div class="grain"></div>
+          <aside style="width:184px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);padding:20px 0;position:relative;z-index:5">
+            <div style="padding:0 18px 14px"><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body)">Kai's Flow</div></div>
+            <nav style="padding:0 12px;display:flex;flex-direction:column;gap:1px">
+              <div style="position:relative">
+                <a href="#" class="srow" style="position:relative"><span class="m-anim" style="position:absolute;inset:0;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-crisp);animation:swiftRailA 5s var(--ease-out) infinite"></span><span class="sdot" style="position:relative"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:13.5px;color:var(--ink-body);position:relative">Today</span></a>
+              </div>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Inbox</span></a>
+              <div style="position:relative">
+                <a href="#" class="srow" style="position:relative"><span class="m-hide" style="position:absolute;inset:0;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-crisp);animation:swiftRailB 5s var(--ease-out) infinite;opacity:0"></span><span class="sdot" style="position:relative"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:13.5px;color:var(--ink-body);position:relative">Tasks</span></a>
+              </div>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Calendar</span></a>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Projects</span></a>
+            </nav>
+          </aside>
+          <main style="flex:1;min-width:0;position:relative">
+            <div style="height:38px;border-bottom:1px dashed var(--line-solid);display:flex;align-items:center;padding:0 24px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);position:relative;z-index:6">
+              <span class="m-anim" style="animation:swiftA 5s var(--ease-out) infinite">Kai's Flow · Today</span>
+              <span class="m-hide" style="position:absolute;left:24px;animation:swiftB 5s var(--ease-out) infinite;opacity:0">Kai's Flow · Tasks</span>
+            </div>
+            <div style="position:absolute;top:38px;left:0;right:0;bottom:0">
+              <div class="m-anim" style="position:absolute;inset:0;padding:24px 26px;animation:swiftA 5s var(--ease-out) infinite">
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Friday · 10 July</div>
+                <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:30px;color:var(--ink-body);line-height:1">Good morning, Kai</h1>
+                <div style="display:flex;align-items:center;gap:10px;margin:18px 0 8px"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Reply to Youssef</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Water the balcony plants</span></div>
+              </div>
+              <div class="m-hide" style="position:absolute;inset:0;padding:24px 26px;animation:swiftB 5s var(--ease-out) infinite;opacity:0">
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Tasks · 14 open</div>
+                <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:30px;color:var(--ink-body);line-height:1">Everything, sorted</h1>
+                <div style="display:flex;gap:16px;margin:18px 0 8px;border-bottom:1px solid var(--line-card)"><span style="padding-bottom:8px;font-size:13px;font-weight:600;color:var(--ink-body);border-bottom:2px solid var(--acc-blossom)">Today</span><span style="padding-bottom:8px;font-size:13px;color:var(--ink-faint)">Upcoming</span><span style="padding-bottom:8px;font-size:13px;color:var(--ink-faint)">Someday</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Reconcile Q2 actuals</span><span class="chip" style="margin-left:auto;background:rgba(122,148,110,0.18);color:var(--acc-sage-text)">Career</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Wireframe the charts view</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Draft the retainer invoice</span></div>
+              </div>
+            </div>
+          </main>
+        </div>
+        <div class="mcap">
+          <div class="mname">Route cut · fast</div>
+          <div class="muse">Replaces <a href="#1a">1a</a>. One quick crossfade: outgoing drops opacity over 90ms, incoming rises 6px over 160ms. No scale, no choreography — you're just <em>there</em>. The dwell in this loop is the demo; the cut itself is near-instant.</div>
+          <div class="mrecipe">swiftA / swiftB · 160ms var(--ease-out) one-shot (looped here) · opacity + 6px only · reduced-motion → instant cut</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2B — VERTICAL STACK PUSH / POP ============ -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Stack navigation — drill-in rides up · back drops it away, parent parallaxes</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:460px;overflow:hidden;background:var(--paper-linen)">
+          <!-- parent: Projects (parallax layer) -->
+          <div class="m-anim" style="position:absolute;inset:0;padding:24px 26px;background:var(--paper-linen);animation:pushBack 9s cubic-bezier(0.32,0.72,0,1) infinite;transform-origin:50% 20%">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Projects · 3 active</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Growing things</h1>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line-dashed);margin-top:12px"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Forecasting App</div><div class="fhelp" style="margin-top:2px">Freelance · 4 open</div></div><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text);white-space:nowrap;flex:none">open ↑</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:11px;height:11px;border-radius:50%;background:#8b8471;flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Garage</div><div class="fhelp" style="margin-top:2px">Personal · 1 open</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-buttercream);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Kitchen deep-clean</div><div class="fhelp" style="margin-top:2px">Home · 2 open</div></div></div>
+          </div>
+          <!-- dim under the pushed card -->
+          <div class="m-hide" style="position:absolute;inset:0;background:rgba(42,36,32,0.14);animation:pushDim 9s cubic-bezier(0.32,0.72,0,1) infinite;opacity:0;pointer-events:none"></div>
+          <!-- detail: rides up over the parent -->
+          <div class="m-hide" style="position:absolute;inset:0;padding:20px 26px;background:var(--paper-linen);box-shadow:0 -12px 34px rgba(60,52,38,0.25);animation:pushUp 9s cubic-bezier(0.32,0.72,0,1) infinite;transform:translateY(102%);will-change:transform">
+            <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)"><span style="font-size:11px">↓</span><span>Back · Projects</span></div>
+            <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Forecasting App</h1>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text)">4 / 6 milestones</span><span class="chip" style="background:rgba(201,165,90,0.2);color:#8a6a2f">68%</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:20px 0 8px"><span class="flabel">Milestones</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px">✓</span><span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Scope the data model</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Wireframe the charts view</span></div>
+          </div>
+          <div class="grain"></div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Stack push / pop · vertical</div>
+          <div class="muse">The mobile back-gesture, rotated for desktop. Drilling in, the detail rides up over the parent; the parent recedes 26px, scales to 0.98 and dims. Going back, the detail drops away while the parent eases forward from its parallax rest.</div>
+          <div class="mrecipe">pushUp / pushBack · 380ms cubic-bezier(0.32,0.72,0,1) · parent −26px · 0.98 · 14% dim · esc / back-click / swipe-down pops · reduced-motion → cut</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2C — DRAG & DROP, LIVE ============ -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Drag &amp; drop — live demo · grab a row: wobbly ghost + placeholder</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:400px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Tasks · drag to reorder</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Try it — grab a row</h1>
+            <div style="position:relative;height:230px;margin-top:18px">
+              <div style="{{ phStyle }}"></div>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+                <div style="{{ r.outerStyle }}" onPointerDown="{{ r.onDown }}">
+                  <div style="{{ r.innerStyle }}">
+                    <span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }};flex:none"></span>
+                    <span style="flex:1;font-size:13.5px;color:var(--ink-body)">{{ r.label }}</span>
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-hairline);letter-spacing:2px">⋮⋮</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">it hangs a little loose in your hand ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Drag ghost · wobbly &amp; floaty</div>
+          <div class="muse">The ghost trails the cursor by ~110ms, tilts with velocity (±6°), and idles with a slow float while held. A dashed placeholder tracks the slot it'll land in; release settles with a small overshoot. This is the one recipe for <em>every</em> drag: task reorder, Top-3, inbox filing, calendar blocks, project rows.</div>
+          <div class="mrecipe">pickup scale 1.04 + shadow lift · trail 110ms · tilt ±6° from velocity · dragFloat ±1° 2.1s while held · settle 320ms overshoot · placeholder: 1.5px dashed, sage tint</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2D — FILING DRAG, CROSS-LIST ============ -->
+    <div class="dv-opt" id="2d">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Filing drag — inbox → project · placeholder opens in the target, source heals</div>
+      <div class="dv-card" style="width:720px">
+        <div style="position:relative;height:380px;overflow:hidden;background:var(--paper-linen);padding:26px 36px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Inbox → project · filing</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body);line-height:1.05">Same ghost, new home</h1>
+            <div style="position:relative;height:220px;margin-top:18px">
+              <!-- left column: Inbox -->
+              <div class="flabel" style="position:absolute;left:0;top:0">Inbox</div>
+              <div style="position:absolute;left:0;top:36px;width:300px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Oat milk in the cortado</span></div>
+              <div class="m-anim" style="position:absolute;left:0;top:148px;width:300px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);animation:fileCloseGap 9s ease-in-out infinite"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Call the dentist back</span></div>
+              <!-- right column: Project -->
+              <div class="flabel" style="position:absolute;left:348px;top:0">Project · Forecasting App</div>
+              <div style="position:absolute;left:348px;top:36px;width:300px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp)"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+              <div class="m-hide" style="position:absolute;left:348px;top:92px;width:300px;height:48px;border-radius:8px;border:1.5px dashed rgba(107,100,85,0.55);background:rgba(122,148,110,0.08);animation:fileSlot 9s ease-in-out infinite;opacity:0"></div>
+              <div class="m-anim" style="position:absolute;left:348px;top:92px;width:300px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);animation:fileMakeRoom 9s ease-in-out infinite"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender-deep);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Wireframe the charts view</span></div>
+              <!-- the travelling ghost -->
+              <div class="m-anim" style="position:absolute;left:0;top:92px;width:300px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;animation:fileGhost 9s ease-in-out infinite;will-change:transform;z-index:8"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea);flex:none"></span><span style="flex:1;font-size:13px;color:var(--ink-body)">Draft the retainer invoice</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-hairline);letter-spacing:2px">⋮⋮</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Filing drag · cross-container</div>
+          <div class="muse">Identical ghost physics across lists. As it crosses into the project column the rows part, the dashed placeholder opens at the slot, and the source list heals behind it. Drop settles flat; shadow returns to rest.</div>
+          <div class="mrecipe">fileGhost 9s loop (real thing is pointer-driven) · placeholder + make-room 200ms · source heals 200ms · applies: inbox→project, task→day, event→slot</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Next: "wire the 2c ghost into the real <a href="Today">Today</a> and <a href="Tasks">Tasks</a> screens" · "give the receiving list a soft catch (1px dip) on drop" · "a hair of overshoot on the stack pop".</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Motion retrofit — the catalog, now applied. Route transitions + ambient &amp; feedback effects on real screens.</span></div>
+  <p style="max-width:780px;margin:0;font-size:13.5px;line-height:1.65;color:#6b6455">The <a href="Effects">Effects shelf</a> defined ten recipes in isolation; here they're wired into product surfaces. Route transitions carry you between views; petal-fall, floret-drift, amber-drift, bloom-glow and leaf-sway fire where the app already has meaning for them. Everything still bows to <span style="font-family:var(--font-mono);font-size:12px">prefers-reduced-motion</span> — particles don't spawn, transitions cut instead of slide.</p>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — ROUTE TRANSITION ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Route transition — view→view · outgoing lifts &amp; fades, incoming settles up from below</div>
+      <div class="dv-card" style="width:720px">
+        <div style="position:relative;height:460px;overflow:hidden;background:var(--paper-linen);display:flex">
+          <div class="grain"></div>
+
+          <!-- sidebar (persists; active dot crossfades) -->
+          <aside style="width:184px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);padding:20px 0;position:relative;z-index:5">
+            <div style="padding:0 18px 14px"><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink-body)">Kai's Flow</div></div>
+            <nav style="padding:0 12px;display:flex;flex-direction:column;gap:1px">
+              <div style="position:relative">
+                <a href="#" class="srow" style="position:relative"><span class="m-anim" style="position:absolute;inset:0;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-crisp);animation:railA 8s ease-in-out infinite"></span><span class="sdot" style="position:relative"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:13.5px;color:var(--ink-body);position:relative">Today</span></a>
+              </div>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Inbox</span></a>
+              <div style="position:relative">
+                <a href="#" class="srow" style="position:relative"><span class="m-hide" style="position:absolute;inset:0;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-crisp);animation:railB 8s ease-in-out infinite;opacity:0"></span><span class="sdot" style="position:relative"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:13.5px;color:var(--ink-body);position:relative">Tasks</span></a>
+              </div>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Calendar</span></a>
+              <a href="#" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Projects</span></a>
+            </nav>
+          </aside>
+
+          <!-- main: two stacked panels crossfading -->
+          <main style="flex:1;min-width:0;position:relative">
+            <div style="height:38px;border-bottom:1px dashed var(--line-solid);display:flex;align-items:center;padding:0 24px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);position:relative;z-index:6">
+              <span class="m-anim" style="animation:routeA 8s ease-in-out infinite">Kai's Flow · Today</span>
+              <span class="m-hide" style="position:absolute;left:24px;animation:routeB 8s ease-in-out infinite;opacity:0">Kai's Flow · Tasks</span>
+            </div>
+            <div style="position:absolute;top:38px;left:0;right:0;bottom:0">
+              <!-- Panel A: Today -->
+              <div class="m-anim" style="position:absolute;inset:0;padding:24px 26px;animation:routeA 8s ease-in-out infinite">
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Thursday · 9 July</div>
+                <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:30px;color:var(--ink-body);line-height:1">Good morning, Kai</h1>
+                <div style="display:flex;align-items:center;gap:10px;margin:18px 0 8px"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Plan the forecasting logic</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Reply to Youssef</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Water the balcony plants</span></div>
+              </div>
+              <!-- Panel B: Tasks -->
+              <div class="m-hide" style="position:absolute;inset:0;padding:24px 26px;animation:routeB 8s ease-in-out infinite;opacity:0">
+                <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Tasks · 14 open</div>
+                <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:30px;color:var(--ink-body);line-height:1">Everything, sorted</h1>
+                <div style="display:flex;gap:16px;margin:18px 0 8px;border-bottom:1px solid var(--line-card)"><span style="padding-bottom:8px;font-size:13px;font-weight:600;color:var(--ink-body);border-bottom:2px solid var(--acc-blossom)">Today</span><span style="padding-bottom:8px;font-size:13px;color:var(--ink-faint)">Upcoming</span><span style="padding-bottom:8px;font-size:13px;color:var(--ink-faint)">Someday</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Reconcile Q2 actuals</span><span class="chip" style="margin-left:auto;background:rgba(122,148,110,0.18);color:var(--acc-sage-text)">Career</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Wireframe the charts view</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border:1.5px solid #bfb8a3;border-radius:5px"></span><span style="font-size:13.5px;color:var(--ink-body)">Draft the retainer invoice</span></div>
+              </div>
+            </div>
+          </main>
+        </div>
+        <div class="mcap">
+          <div class="mname">Route transition</div>
+          <div class="muse">Superseded by <a href="#2a">2a</a> — kept for reference. Between any two views. The chrome (sidebar, top bar) stays put; only the content panel and the active-nav pill crossfade. Outgoing lifts 10px and fades; incoming rises 12px into place — a page turning, not a slide deck.</div>
+          <div class="mrecipe">routeA / routeB · 260ms ease-in-out one-shot (looped here) · content + active pill only · reduced-motion → instant cut</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1B — TODAY · PETAL FALL ON COMPLETE ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Today — petal fall as the last of the Top 3 is checked</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:440px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <span class="petal" style="left:16%;animation-delay:0s"></span>
+          <span class="petal" style="left:38%;animation-delay:2.3s;animation-duration:8s;width:9px;height:7px"></span>
+          <span class="petal" style="left:60%;animation-delay:4.6s;animation-duration:6.4s"></span>
+          <span class="petal" style="left:78%;animation-delay:1.2s;animation-duration:7.6s;width:10px;height:8px"></span>
+          <span class="petal" style="left:50%;animation-delay:5.8s;animation-duration:7.2s;width:8px;height:7px"></span>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Thursday · 9 July</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:27px;color:var(--ink-body);line-height:1.05">All three, done</h1>
+            <div style="display:flex;align-items:center;gap:10px;margin:18px 0 8px"><span class="flabel" style="color:var(--acc-terra)">Top 3 today</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px">✓</span><span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Plan the forecasting logic</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:16px;height:16px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px">✓</span><span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Reply to Youssef</span></div>
+            <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span style="width:16px;height:16px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px">✓</span><span style="font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Water the balcony plants</span></div>
+            <div style="margin-top:20px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">the day's petals fall ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Petal fall · on completion</div>
+          <div class="muse">Fires the moment the last Top-3 task is checked. A brief shower over the finished list, then quiet.</div>
+          <div class="mrecipe">petalFall · 6.4–8s, 4–5 petals · one-shot on the "all done" transition, not idle</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1C — INBOX · FLORET DRIFT ON FILE ============ -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Inbox — a floret drifts off the cluster as an item is filed</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:440px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="display:flex;align-items:center;gap:11px"><img src="ds/assets/hydrangea/medium.png" alt="" style="height:40px;filter:var(--shadow-drop-sm)"><div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Inbox · 2 left</div><h1 style="margin:2px 0 0;font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink-body);line-height:1">Sorting down</h1></div></div>
+            <!-- the cluster florets drift from here -->
+            <div style="position:relative;height:0">
+              <span class="floret" style="left:34px;top:-18px;animation-delay:0s"></span>
+              <span class="floret" style="left:20px;top:-24px;animation-delay:2.7s;width:6px;height:6px"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin:20px 0 8px"><span class="flabel">Waiting</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(154,180,190,0.28);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--acc-hydrangea-deep)">✎</span><div style="flex:1"><div style="font-size:13.5px;color:var(--ink-body)">Draft the retainer invoice</div><div class="fhelp" style="margin-top:2px">Typed · 1h ago</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0"><span style="width:20px;height:20px;border-radius:50%;background:rgba(181,101,74,0.14);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:var(--acc-terra)">🎙</span><div style="flex:1"><div style="font-size:13.5px;color:var(--ink-body)">Oat milk in the cortado</div><div class="fhelp" style="margin-top:2px">Voice · just now</div></div></div>
+            <div style="margin-top:20px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-0.8deg)">one floret per filed item ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Floret drift · on file</div>
+          <div class="muse">Each item sorted out of the inbox releases one hydrangea floret from the header cluster. A bulk-clear is a soft simultaneous shower.</div>
+          <div class="mrecipe">floretDrift · 5.5s ease-in · one floret per filed item, spawned at the cluster edge</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1D — PROJECT · BLOOM GLOW AT 100% ============ -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Project detail — bloom glow as the last milestone lands (100%)</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:440px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Freelance · complete</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:25px;color:var(--ink-body);line-height:1.05">Forecasting App</h1>
+            <div style="position:relative;height:190px;margin-top:14px">
+              <span class="m-hide" style="position:absolute;left:50%;bottom:16px;width:150px;height:150px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(201,165,90,0.5),rgba(201,165,90,0) 70%);animation:bloomGlow 3.6s ease-in-out infinite"></span>
+              <img src="ds/assets/wisteria/p100.png" alt="" style="position:absolute;left:50%;bottom:8px;height:170px;transform:translateX(-50%);filter:var(--shadow-drop-sm)">
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span class="chip" style="background:rgba(122,148,110,0.18);color:var(--acc-sage-text)">6 / 6 milestones</span><span class="chip" style="background:rgba(201,165,90,0.2);color:#8a6a2f">100%</span></div>
+            <div style="margin-top:16px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">full cascade — the wisteria bloomed ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Bloom glow · at 100%</div>
+          <div class="muse">A single warm breath behind the wisteria when a project reaches full milestone weight. Never on more than one plant at once.</div>
+          <div class="mrecipe">bloomGlow · 3.6s ease-in-out · gold radial ≤0.5 alpha · also: streak record, all Top-3 done</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1E — PROJECTS · AMBER DRIFT WHEN SLIPPING ============ -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Projects — amber drift over an area going quiet</div>
+      <div class="dv-card" style="width:360px">
+        <div style="position:relative;height:440px;overflow:hidden;background:var(--paper-linen);padding:26px 26px 0">
+          <div class="grain"></div>
+          <span class="amberleaf" style="left:24%;animation-delay:0s"></span>
+          <span class="amberleaf" style="left:52%;animation-delay:3.8s;animation-duration:11s;width:10px;height:7px"></span>
+          <span class="amberleaf" style="left:74%;animation-delay:6.6s"></span>
+          <div style="position:relative;z-index:5">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Projects · attention</div>
+            <h1 style="margin:4px 0 0;font-family:var(--font-display);font-weight:500;font-size:25px;color:var(--ink-body);line-height:1.05">Going quiet</h1>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line-dashed);margin-top:14px"><span style="width:11px;height:11px;border-radius:50%;background:#8b8471;flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Garage</div><div class="fhelp" style="margin-top:2px">Personal · 1 open</div></div><span class="chip" style="background:rgba(181,101,74,0.14);color:var(--acc-terra)">slipping · 21d</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--acc-buttercream);flex:none"></span><div style="flex:1"><div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink-body)">Kitchen deep-clean</div><div class="fhelp" style="margin-top:2px">Home · 2 open</div></div><span class="chip" style="background:rgba(181,101,74,0.1);color:var(--acc-terra)">slipping · 12d</span></div>
+            <div style="margin-top:18px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-0.8deg)">a warning without alarm ✿</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Amber drift · when slipping</div>
+          <div class="muse">Sparse autumn leaves fall over projects and areas untouched past their cadence. Slower than petal-fall; the plant desaturates ~20%.</div>
+          <div class="mrecipe">petalFall keyframes at 9.5–11s · amber leaves, ≤3 at once · triggered by "days since tended" threshold</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1F — SIDEBAR · LEAF SWAY + POLLEN (IDLE LIFE) ============ -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Sidebar — the streak plant idles: leaf sway + a little pollen</div>
+      <div class="dv-card" style="width:300px">
+        <div style="position:relative;height:440px;overflow:hidden;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar)">
+          <div class="grain"></div>
+          <div style="padding:22px 20px;position:relative;z-index:5">
+            <div style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Kai's Flow</div>
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:2px">
+              <div class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Today</span></div>
+              <div class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Inbox</span></div>
+              <div class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:13.5px;color:var(--ink-muted)">Tasks</span></div>
+            </div>
+          </div>
+          <!-- streak plant, idling -->
+          <span class="mote" style="left:38%;animation-delay:0s"></span>
+          <span class="mote" style="left:56%;animation-delay:3.2s;width:3px;height:3px"></span>
+          <span class="mote" style="left:48%;animation-delay:6s;width:3.5px;height:3.5px"></span>
+          <div style="position:absolute;left:0;right:0;bottom:26px;display:flex;flex-direction:column;align-items:center;z-index:5">
+            <img src="ds/assets/vine/flowering.png" alt="" class="m-anim" style="height:150px;transform-origin:50% 100%;animation:leafSway 5.8s ease-in-out infinite;filter:var(--shadow-drop-sm)">
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Streak · 6 days</div>
+          </div>
+        </div>
+        <div class="mcap">
+          <div class="mname">Leaf sway + pollen · idle</div>
+          <div class="muse">The only continuously-running motion in the app: the sidebar streak-plant breathes so a still screen never feels dead. Gentle, desynced, easy to ignore.</div>
+          <div class="mrecipe">leafSway ±2.2° 5.8s · moteRise ≤3 motes 9s · the sole persistent loop — everything else is event-fired</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Applied from the <a href="Effects">Effects</a> shelf. Try next: "petal-burst one-shot when the very last task of the day is checked" · "a rain wash for heavy days" · "wire these into the live screen files".</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { order: [0, 1, 2, 3], dragId: null, ghostY: 0, rot: 0, stackOpen: false };
+  tasks = [
+    { label: "Plan the forecasting logic", dot: "var(--acc-sage)" },
+    { label: "Reply to Youssef", dot: "var(--acc-hydrangea)" },
+    { label: "Draft the retainer invoice", dot: "var(--acc-blossom)" },
+    { label: "Water the balcony plants", dot: "var(--acc-moss)" },
+  ];
+  rowH = 56;
+  onDown(id, e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const originY = this.state.order.indexOf(id) * this.rowH;
+    let lastY = startY;
+    const maxY = (this.tasks.length - 1) * this.rowH;
+    const move = (ev) => {
+      const dy = ev.clientY - startY;
+      const v = ev.clientY - lastY;
+      lastY = ev.clientY;
+      const rot = Math.max(-6, Math.min(6, this.state.rot * 0.55 + v * 0.55));
+      const ghostY = Math.max(-12, Math.min(maxY + 12, originY + dy));
+      const target = Math.max(0, Math.min(this.tasks.length - 1, Math.round(ghostY / this.rowH)));
+      this.setState((s) => {
+        let order = s.order;
+        const cur = order.indexOf(id);
+        if (target !== cur) {
+          order = order.slice();
+          order.splice(cur, 1);
+          order.splice(target, 0, id);
+        }
+        return { order, ghostY, rot };
+      });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      this.setState({ dragId: null, rot: 0 });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    this.setState({ dragId: id, ghostY: originY, rot: 0 });
+  }
+  renderVals() {
+    const s = this.state;
+    const rows = this.tasks.map((t, i) => {
+      const dragging = s.dragId === i;
+      const slot = s.order.indexOf(i);
+      const y = dragging ? s.ghostY : slot * this.rowH;
+      const outerStyle =
+        "position:absolute;left:0;right:0;top:0;height:48px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:" +
+        (dragging ? "grabbing" : "grab") +
+        ";z-index:" + (dragging ? 20 : 5) +
+        ";transform:translateY(" + y + "px)" +
+        (dragging ? " rotate(" + s.rot.toFixed(2) + "deg) scale(1.04)" : "") +
+        ";transition:" +
+        (dragging
+          ? "transform 110ms cubic-bezier(0.2,0.8,0.3,1)"
+          : "transform 320ms cubic-bezier(0.3,1.3,0.45,1)");
+      const innerStyle =
+        "height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;" +
+        (dragging
+          ? "animation:dragFloat 2.1s ease-in-out infinite;box-shadow:0 16px 32px rgba(60,52,38,0.26),0 3px 8px rgba(60,52,38,0.16)"
+          : "box-shadow:var(--shadow-crisp)");
+      return {
+        label: t.label,
+        dot: t.dot,
+        outerStyle,
+        innerStyle,
+        onDown: (e) => this.onDown(i, e),
+      };
+    });
+    const phSlot = s.dragId != null ? s.order.indexOf(s.dragId) : 0;
+    const phStyle =
+      "position:absolute;left:0;right:0;top:0;height:48px;border-radius:8px;border:1.5px dashed rgba(107,100,85,0.55);background:rgba(122,148,110,0.08);pointer-events:none;" +
+      "transform:translateY(" + phSlot * this.rowH + "px);opacity:" +
+      (s.dragId != null ? 1 : 0) +
+      ";transition:transform 200ms cubic-bezier(0.3,1.2,0.5,1),opacity 140ms ease";
+    const so = s.stackOpen;
+    const stEase = "380ms cubic-bezier(0.32,0.72,0,1)";
+    const stackParentStyle =
+      "position:absolute;inset:0;padding:24px 26px;background:var(--paper-linen);transform:" +
+      (so ? "translateY(-26px) scale(0.98)" : "none") +
+      ";transition:transform " + stEase + ";transform-origin:50% 20%";
+    const stackDimStyle =
+      "position:absolute;inset:0;background:rgba(42,36,32,0.14);pointer-events:none;opacity:" +
+      (so ? 1 : 0) + ";transition:opacity " + stEase;
+    const stackDetailStyle =
+      "position:absolute;inset:0;padding:20px 26px;background:var(--paper-linen);box-shadow:0 -12px 34px rgba(60,52,38,0.25);transform:translateY(" +
+      (so ? "0%" : "102%") + ");transition:transform " + stEase;
+    return {
+      rows,
+      phStyle,
+      stackParentStyle,
+      stackDimStyle,
+      stackDetailStyle,
+      openStack: () => this.setState({ stackOpen: true }),
+      closeStack: () => this.setState({ stackOpen: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:#d4cdb9;border-radius:6px;border:3px solid var(--paper-linen)}
+@keyframes cloverSway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+</style>
+</helmet>
+<div style="position:relative;z-index:2;max-width:1160px;margin:0 auto;padding:64px 56px 120px">
+
+  <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap;padding-bottom:30px;border-bottom:1px dashed var(--line-dashed)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Design System</div>
+      <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:52px;line-height:0.98;letter-spacing:-0.015em;color:var(--ink-body)">A field journal<br>of days</h1>
+    </div>
+    <div style="max-width:430px">
+      <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-muted)">Warm linen paper with visible grain, near-square parchment cards pinned slightly crooked, washi tape on the important ones, and botanical illustrations pressed onto the page as living status indicators. A quiet serif for display, a wide-tracked mono for metadata, one line of handwriting per card at most.</p>
+      <p style="margin:14px 0 0;font-family:var(--font-hand);font-size:19px;color:#7a745f">Ring or whisper — never shout. ✿</p>
+    </div>
+  </header>
+
+  <!-- COLOR -->
+  <section style="margin-top:56px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">01 — Color</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:12px">Paper grounds</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px">
+      <sc-for list="{{ papers }}" as="s" hint-placeholder-count="6">
+        <div>
+          <div style="height:64px;border:1px solid var(--line-card);border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-crisp)"></div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin:30px 0 12px">Ink & line</div>
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:14px">
+      <sc-for list="{{ inks }}" as="s" hint-placeholder-count="8">
+        <div>
+          <div style="height:64px;border:1px solid var(--line-card);border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-crisp)"></div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin:30px 0 12px">Botanical accents — one per surface</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <sc-for list="{{ accents }}" as="s" hint-placeholder-count="10">
+        <div>
+          <div style="height:76px;border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-card);display:flex;align-items:flex-end;padding:9px 11px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.86)">{{ s.role }}</span>
+          </div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">02 — Typography</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:48px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px">
+          <div style="font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Sunday, July 5</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">SOURCE SERIF 4 · 500 · 44PX — PAGE TITLE</div>
+        </div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px">
+          <div style="font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink-body)">One thing that makes today a win</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">SOURCE SERIF 4 · 600 · 22PX — CARD TITLE</div>
+        </div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px">
+          <div style="font-size:16px;line-height:1.5;color:var(--ink-body)">Body copy is Inter Tight at a 14.5px baseline — quiet, legible, never competing with the serif. It carries the working text of every list and card.</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">INTER TIGHT · 400 · 14.5–16PX — BODY</div>
+        </div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px">
+          <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-muted)">Top 3 for today · 9:00 AM · Overdue 3d</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">COURIER PRIME · UPPER · TRACKED — ALL METADATA</div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-hand);font-size:22px;color:#7a745f">pressed &amp; kept, one day at a time</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">CAVEAT · MARGINALIA ONLY · ≤1 PER CARD</div>
+        </div>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">The rules</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:11px;font-size:13.5px;line-height:1.45;color:var(--ink-muted)">
+          <li>Big sizes are quiet weights. Never bold <em>and</em> huge.</li>
+          <li>Metadata is <span style="font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.14em;font-size:11px;color:var(--ink-body)">always</span> mono, uppercase, tracked wide.</li>
+          <li>Handwriting is an aside — never inside a button or a label.</li>
+          <li>No hard black; <span style="color:var(--ink-body)">#2a2420 bark</span> is as dark as text goes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOWERS -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">03 — The living species</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 26px;max-width:640px;font-size:13.5px;line-height:1.55;color:var(--ink-muted)">Seven botanical illustrations stand in for the app's surfaces. Each has a <em>state axis</em> — the flower's appearance <em>means</em> something (a count, a progress, a time of day). Never decoration, never invented.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px">
+      <sc-for list="{{ species }}" as="f" hint-placeholder-count="8">
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 16px 18px;display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="height:104px;display:flex;align-items:flex-end;justify-content:center">
+            <img src="{{ f.src }}" alt="{{ f.plant }}" style="max-height:104px;max-width:100%;object-fit:contain;filter:var(--shadow-drop-sm)">
+          </div>
+          <div style="margin-top:12px;display:inline-flex;align-items:center;gap:7px">
+            <span style="width:9px;height:9px;border-radius:50%;background:{{ f.accent }}"></span>
+            <span style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">{{ f.surface }}</span>
+          </div>
+          <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">{{ f.plant }}</div>
+          <div style="margin-top:9px;font-size:12px;line-height:1.4;color:var(--ink-muted)">{{ f.axis }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">04 — Components</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start">
+
+      <!-- Buttons -->
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Buttons — one terra CTA per view</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 17px 10px 15px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:var(--shadow-cta)"><svg width="15" height="16" viewBox="0 0 24 24" fill="none" style="flex:none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg>Voice capture</button>
+          <button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow-crisp)">Secondary</button>
+          <button style="border:none;background:none;color:var(--ink-muted);font-family:inherit;font-size:13px;padding:9px 6px;cursor:pointer">Ghost</button>
+        </div>
+      </div>
+
+      <!-- Chips -->
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Chips & tags — surface-tinted</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="background:rgba(212,168,176,0.16);color:#8A4A58;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Tasks</span>
+          <span style="background:rgba(154,180,190,0.2);color:var(--acc-hydrangea-deep);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Inbox</span>
+          <span style="background:rgba(138,154,126,0.18);color:var(--acc-sage-text);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Routed</span>
+          <span style="background:rgba(181,101,74,0.14);color:var(--acc-terra);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Overdue 3d</span>
+          <span style="border:1px solid var(--line-solid);color:var(--ink-muted);font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:5px 9px;border-radius:3px">Meeting</span>
+        </div>
+      </div>
+
+      <!-- Task rows -->
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">Task rows — flat in a list</div>
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line-dashed)">
+          <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Plan and implement the forecasting logic</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc-moss)"></span>Forecasting App</span><span>30m</span></div></div>
+          <span style="color:var(--acc-terra);font-size:16px;line-height:1">★</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0">
+          <span style="width:17px;height:17px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:11px;flex:none;margin-top:2px">✓</span>
+          <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-hairline);text-decoration:line-through">Fix your portfolio</div></div>
+        </div>
+      </div>
+
+      <!-- Section label -->
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Section label — ≤4 per screen</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Up next</span>
+          <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+          <a href="#" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;white-space:nowrap">View all →</a>
+        </div>
+        <div style="display:flex;gap:18px;padding:14px 0 4px;align-items:baseline"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">2:30 PM</span><div style="font-size:14.5px;color:var(--ink-body)">Jerad and Sam Josephson</div></div>
+      </div>
+    </div>
+
+    <!-- Goal card (feature) -->
+    <div style="margin-top:26px;display:grid;grid-template-columns:1.3fr 1fr;gap:26px;align-items:stretch">
+      <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);box-shadow:var(--shadow-goal);padding:22px 24px 20px 22px;display:flex;align-items:flex-start;gap:16px;border-radius:3px;transform:rotate(-0.4deg)">
+        <span style="position:absolute;top:-10px;left:50%;width:82px;height:19px;margin-left:-41px;background:rgba(201,165,90,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp)"></span>
+        <span style="position:absolute;top:14px;left:20px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;background:var(--acc-gold);color:#FBF4E0;padding:3px 9px;border-radius:2px">✶ Goal of the day</span>
+        <span style="width:20px;height:20px;border:1.5px solid var(--acc-gold);border-radius:5px;flex:none;margin-top:40px;background:rgba(255,255,255,0.5)"></span>
+        <div style="flex:1;min-width:0;padding-top:36px">
+          <div style="font-family:var(--font-display);font-size:19px;font-weight:600;color:#4a3a1e;line-height:1.3">Deliver the MVP of the forecasting app</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">The one thing that makes today a win</div>
+        </div>
+        <img src="ds/assets/clover/four_leaf.png" alt="" style="width:40px;height:auto;object-fit:contain;filter:var(--shadow-drop-sm);margin-top:34px">
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">Washi tape & tilt — the placed-note feel</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:11px;font-size:13.5px;line-height:1.45;color:var(--ink-muted)">
+          <li>Tape only on <em>placed</em> standalone cards — never plain list items.</li>
+          <li>Tape color matches the card's surface accent.</li>
+          <li>Card radius is <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">3px</span> — sharp, not modern-rounded.</li>
+          <li>Tilt is ±0.3–0.5°, applied sparingly. One gold Goal card per view.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPACING + MOTION -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">05 — Space, radii & motion</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Spacing — 4px base</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ spaces }}" as="sp" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);width:64px">{{ sp.name }}</span>
+              <span style="height:12px;background:var(--acc-sage);border-radius:2px;width:{{ sp.w }}"></span>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-muted)">{{ sp.px }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:24px 0 14px">Radii</div>
+        <div style="display:flex;gap:16px;align-items:flex-end">
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:3px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">3 · card</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:6px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">6 · nav</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:8px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">8 · input</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:999px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">pill · btn</div></div>
+        </div>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Motion — transform & opacity only</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ motions }}" as="m" hint-placeholder-count="6">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">{{ m.name }}</span>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">{{ m.val }}</span>
+              <span style="flex:1;font-size:12px;color:var(--ink-muted);text-align:right">{{ m.use }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <p style="margin:16px 0 0;font-size:12.5px;line-height:1.5;color:var(--ink-muted)">Hover lifts 1px, press scales to 0.97, entries fade up and stagger. Ambient budget: <em>≤2 continuous animations per screen</em>. All respect <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">prefers-reduced-motion</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DO / DON'T -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">06 — House rules</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--acc-sage);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage-text);margin-bottom:14px">Always</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.4;color:var(--ink-muted)">
+          <li>Semantic tokens only — never a hex literal in a component.</li>
+          <li>One terra CTA and at most one gold Goal card per view.</li>
+          <li>Each surface keeps its own accent flower color.</li>
+          <li>Metadata always mono, uppercase, tracked.</li>
+        </ul>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--acc-terra);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-terra);margin-bottom:14px">Never</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.4;color:var(--ink-muted)">
+          <li>No pure white or hard black. No bright saturated primaries.</li>
+          <li>No modern rounded-16 cards; no brutalist hard shadows.</li>
+          <li>No tape on plain list items; no invented flower species.</li>
+          <li>No emoji beyond the ✿ marker; no more than 4 section labels.</li>
+          <li>Never show a stage that contradicts the data — no zero bloom on a full inbox.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- GROWTH STAGES -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">07 — Growth stages · the floral logic</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="max-width:720px;margin:0 0 8px;font-size:13.5px;line-height:1.6;color:var(--ink-muted)">Every species answers three questions at once: <i>which surface is this, how is it going, does anything need me?</i> The stage shown must always match the data — a <b>zero</b> bloom on an inbox with items is a lie the garden never tells. Full logic lives in <span style="font-family:var(--font-mono);font-size:12px">Floral Logic.txt</span>.</p>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Hydrangea</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#9AB4BE">Inbox</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by pending count</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/hydrangea/zero.png" alt="zero" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">zero</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">inbox zero — the trophy bloom</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/hydrangea/light.png" alt="light" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">light</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">1–4 pending — loose spray</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/hydrangea/medium.png" alt="medium" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">medium</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">5–19 — cluster loosening</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/hydrangea/heavy.png" alt="heavy" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">heavy</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">20+ — packed and full</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Cherry blossom</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#D4A8B0">Tasks</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by completion</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/cherry/bud.png" alt="bud" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bud</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">not started — potential</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/cherry/opening.png" alt="opening" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">opening</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">in motion</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/cherry/bloom.png" alt="bloom" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bloom</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">the day’s work, waiting</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/cherry/fallen.png" alt="fallen" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">fallen</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">done — the petal falls</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Daisy</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#A8A0BE">Calendar</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by the clock, not data</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/daisy/morning.png" alt="morning" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">morning</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">before noon — mid-open</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/daisy/midday.png" alt="midday" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">midday</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">noon–3 — full face</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/daisy/evening.png" alt="evening" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">evening</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">after 5 — closing up</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/daisy/past.png" alt="past" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">past</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">yesterday — closed, muted</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/daisy/future.png" alt="future" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">future</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">tomorrow+ — tight green bud</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Fern</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#D4C78A">Review · Journal · Library</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by length / progress</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/fern/coil.png" alt="coil" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">coil</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">empty — all potential</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/fern/unfurl1.png" alt="unfurl1" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">unfurl1</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">just begun</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/fern/unfurl2.png" alt="unfurl2" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">unfurl2</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">halfway through</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/fern/full.png" alt="full" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">full</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">complete — fully unfurled</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Clover</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#C9A0A0">Chat · rituals · people</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by attention</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/clover/resting.png" alt="resting" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">resting</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">quiet — nothing unread</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/clover/awake.png" alt="awake" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">awake</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">unread — perked up</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/clover/dewdrop.png" alt="dewdrop" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">dewdrop</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">a mention — one bright drop</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/clover/seedling.png" alt="seedling" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">seedling</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">empty / first-run</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/clover/four_leaf.png" alt="four_leaf" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">four_leaf</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">milestone — rare luck</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Vine</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#7A946E">Routines</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by streak length</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/vine/bare.png" alt="bare" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bare</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">no streak yet</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/vine/sprouting.png" alt="sprouting" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">sprouting</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">a few days in</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/vine/flowering.png" alt="flowering" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">flowering</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">streak established</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/vine/lush.png" alt="lush" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">lush</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">30d+ — the long green run</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Wisteria</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#7A946E">Projects</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-hairline)">driven by weighted milestone %</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p0.png" alt="p0" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p0</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">new — bare tendril</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p20.png" alt="p20" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p20</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">early growth</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p40.png" alt="p40" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p40</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">leaves filling in</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p60.png" alt="p60" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p60</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">first clusters open</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p80.png" alt="p80" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p80</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">cascade forming</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/wisteria/p100.png" alt="p100" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p100</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">full cascade — done</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top:64px;padding-top:26px;border-top:1px dashed var(--line-dashed);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Extracted from app/src/styles/tokens · light theme</span>
+    <span style="font-family:var(--font-hand);font-size:18px;color:#7a745f">the whole system, pressed onto one page ✿</span>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      papers: [
+        { name: '--paper-linen', hex: '#EFE9DB', v: '#EFE9DB' },
+        { name: '--paper-parchment', hex: '#FBF6E9', v: '#FBF6E9' },
+        { name: '--paper-bone', hex: '#F6F0E1', v: '#F6F0E1' },
+        { name: '--paper-sidebar', hex: '#EAE3D2', v: '#EAE3D2' },
+        { name: '--paper-goal', hex: '#F8EFD3', v: '#F8EFD3' },
+        { name: '--paper-event', hex: '#F3EDDA', v: '#F3EDDA' },
+      ],
+      inks: [
+        { name: '--ink-body', hex: '#2a2420', v: '#2a2420' },
+        { name: '--ink-muted', hex: '#6b6455', v: '#6b6455' },
+        { name: '--ink-faint', hex: '#8b8471', v: '#8b8471' },
+        { name: '--ink-hairline', hex: '#a49d87', v: '#a49d87' },
+        { name: '--line-solid', hex: '#cfc7b0', v: '#cfc7b0' },
+        { name: '--line-dashed', hex: '#d5cdb5', v: '#d5cdb5' },
+        { name: '--line-card', hex: '#e0d8c2', v: '#e0d8c2' },
+        { name: '--line-goal', hex: '#dcc48e', v: '#dcc48e' },
+      ],
+      accents: [
+        { name: '--acc-sage', hex: '#8A9A7E', v: '#8A9A7E', role: 'Plant / green' },
+        { name: '--acc-moss', hex: '#7A946E', v: '#7A946E', role: 'Projects' },
+        { name: '--acc-terra', hex: '#B5654A', v: '#B5654A', role: 'CTA / alert' },
+        { name: '--acc-blossom', hex: '#D4A8B0', v: '#D4A8B0', role: 'Tasks' },
+        { name: '--acc-lavender', hex: '#A8A0BE', v: '#A8A0BE', role: 'Calendar' },
+        { name: '--acc-hydrangea', hex: '#9AB4BE', v: '#9AB4BE', role: 'Inbox' },
+        { name: '--acc-buttercream', hex: '#D4C78A', v: '#D4C78A', role: 'Docs / review' },
+        { name: '--acc-clover', hex: '#C9A0A0', v: '#C9A0A0', role: 'Chat' },
+        { name: '--acc-gold', hex: '#9a7b3a', v: '#9a7b3a', role: 'Goal' },
+        { name: '--acc-gold-warm', hex: '#C9A55A', v: '#C9A55A', role: 'Tape gold' },
+      ],
+      species: [
+        { surface: 'Today', plant: 'The terrarium', src: 'ds/assets/clover/four_leaf.png', accent: '#8A9A7E', axis: 'All plants together — the day\u2019s overall state' },
+        { surface: 'Inbox', plant: 'Hydrangea', src: 'ds/assets/hydrangea/medium.png', accent: '#9AB4BE', axis: 'Cluster shrinks as items clear \u2192 zero = one bloom' },
+        { surface: 'Tasks', plant: 'Cherry blossom', src: 'ds/assets/cherry/bloom.png', accent: '#D4A8B0', axis: 'One petal falls per completed task' },
+        { surface: 'Calendar', plant: 'Daisy', src: 'ds/assets/daisy/midday.png', accent: '#A8A0BE', axis: 'Petals open as the day fills with events' },
+        { surface: 'Routines', plant: 'Vine', src: 'ds/assets/vine/flowering.png', accent: '#7A946E', axis: 'Leaves grow along the streak; buds at 7+' },
+        { surface: 'Review', plant: 'Fern', src: 'ds/assets/fern/full.png', accent: '#D4C78A', axis: 'Frond unfurls as you sweep the week' },
+        { surface: 'Projects', plant: 'Wisteria', src: 'ds/assets/wisteria/p60.png', accent: '#7A946E', axis: 'Climbs p0 \u2192 p100 with progress' },
+        { surface: 'Chat', plant: 'Clover', src: 'ds/assets/clover/awake.png', accent: '#C9A0A0', axis: 'A small everyday sprig; leans on hover' },
+      ],
+      spaces: [
+        { name: '--sp-2', px: '8px', w: '8px' },
+        { name: '--sp-4', px: '16px', w: '16px' },
+        { name: '--sp-6', px: '24px', w: '24px' },
+        { name: '--gap-section', px: '40px', w: '40px' },
+        { name: '--gap-major', px: '64px', w: '64px' },
+        { name: '--sp-16', px: '64px', w: '64px' },
+      ],
+      motions: [
+        { name: 'instant', val: '120ms', use: 'hover / press' },
+        { name: 'quick', val: '150ms', use: 'chips, checks' },
+        { name: 'normal', val: '200ms', use: 'nav, overlays' },
+        { name: 'slow', val: '300ms', use: 'panels, toasts' },
+        { name: 'bloom', val: '600ms', use: 'flower crossfade' },
+        { name: 'grow', val: '800ms', use: 'vine / streak' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

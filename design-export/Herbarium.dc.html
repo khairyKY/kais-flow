@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.mono{font-family:var(--font-mono)}
+.pressed{filter:saturate(0.35) sepia(0.28) contrast(0.88) brightness(1.04)}
+.washi{position:absolute;width:52px;height:15px;background:rgba(138,154,126,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp);z-index:6}
+.spec{position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px 20px}
+.ledger{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);line-height:2}
+.seas{display:flex;align-items:center;gap:14px;margin:30px 0 18px}
+.seas span.t{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.seas .r{flex:1;height:1px;background:var(--line-solid)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">The Herbarium — completed projects, pressed into a field guide that only ever grows.</span></div>
+  <div class="dv-opts">
+
+    <!-- 1A — THE FIELD GUIDE -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>/herbarium — the spread · 2-up specimens · seasonal dividers</div>
+      <div class="dv-card" style="width:1000px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);min-height:900px">
+          <div style="height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+            <span>Kai's Flow · Projects · Herbarium</span><span>Africa/Cairo</span>
+          </div>
+          <div style="padding:32px 0 48px;display:flex;justify-content:center">
+            <div style="width:880px;max-width:100%;padding:0 34px">
+
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+                <div>
+                  <div class="mono" style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">7 specimens · since May 2026</div>
+                  <h1 style="margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">The Herbarium</h1>
+                  <div style="margin-top:8px;font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-0.6deg)">what bloomed, kept flat and forever ✿</div>
+                </div>
+                <a href="#1a" style="font-size:12.5px;color:var(--ink-muted);text-decoration:underline;padding-bottom:6px">see the garden as it was →</a>
+              </div>
+
+              <!-- SUMMER 2026 -->
+              <div class="seas"><span class="t">Summer 2026</span><span class="r"></span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+
+                <div class="spec">
+                  <span class="washi" style="top:-8px;left:22px;transform:rotate(-4deg)"></span>
+                  <span class="washi" style="top:-8px;right:22px;transform:rotate(3deg);background:rgba(201,165,90,0.4)"></span>
+                  <div style="height:170px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line-card);padding-bottom:14px">
+                    <img src="ds/assets/wisteria/p100.png" alt="" class="pressed" style="height:165px;transform:scaleY(0.94) rotate(-1.2deg)">
+                  </div>
+                  <div style="margin-top:14px;font-family:var(--font-hand);font-size:22px;color:var(--ink-body)">Forecasting App</div>
+                  <div class="ledger" style="margin-top:8px">Planted 12 May · Bloomed 03 Jul<br>46 hours · 6/6 milestones</div>
+                  <div style="margin-top:10px;font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.55">"It finally told me something true about August."</div>
+                </div>
+
+                <div class="spec">
+                  <span class="washi" style="top:-8px;left:30px;transform:rotate(2.5deg);background:rgba(212,168,176,0.42)"></span>
+                  <span class="washi" style="top:-8px;right:30px;transform:rotate(-3deg)"></span>
+                  <div style="height:170px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line-card);padding-bottom:14px">
+                    <img src="ds/assets/cherry/bloom.png" alt="" class="pressed" style="height:150px;transform:scaleY(0.93) rotate(1.6deg)">
+                  </div>
+                  <div style="margin-top:14px;font-family:var(--font-hand);font-size:22px;color:var(--ink-body)">Portfolio refresh</div>
+                  <div class="ledger" style="margin-top:8px">Planted 02 Jun · Bloomed 28 Jun<br>19 hours · 4/4 milestones</div>
+                  <div style="margin-top:10px;font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.55">"Shipped ugly on Tuesday, fixed it by Friday."</div>
+                </div>
+
+              </div>
+
+              <!-- SPRING 2026 -->
+              <div class="seas"><span class="t">Spring 2026</span><span class="r"></span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+
+                <div class="spec">
+                  <span class="washi" style="top:-8px;left:26px;transform:rotate(-3deg);background:rgba(154,180,190,0.42)"></span>
+                  <span class="washi" style="top:-8px;right:26px;transform:rotate(4deg)"></span>
+                  <div style="height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line-card);padding-bottom:14px">
+                    <img src="ds/assets/hydrangea/heavy.png" alt="" class="pressed" style="height:135px;transform:scaleY(0.94) rotate(-0.8deg)">
+                  </div>
+                  <div style="margin-top:14px;font-family:var(--font-hand);font-size:22px;color:var(--ink-body)">Tax season, survived</div>
+                  <div class="ledger" style="margin-top:8px">Planted 04 Apr · Bloomed 29 Apr<br>22 hours · 3/3 milestones</div>
+                  <div style="margin-top:10px;font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.55">"Never again in one weekend. (Again in one weekend.)"</div>
+                </div>
+
+                <div class="spec">
+                  <span class="washi" style="top:-8px;left:34px;transform:rotate(3deg)"></span>
+                  <span class="washi" style="top:-8px;right:34px;transform:rotate(-2deg);background:rgba(168,160,190,0.4)"></span>
+                  <div style="height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line-card);padding-bottom:14px">
+                    <img src="ds/assets/fern/full.png" alt="" class="pressed" style="height:140px;transform:scaleY(0.93) rotate(1.2deg)">
+                  </div>
+                  <div style="margin-top:14px;font-family:var(--font-hand);font-size:22px;color:var(--ink-body)">Reading habit, rebuilt</div>
+                  <div class="ledger" style="margin-top:8px">Planted 15 Mar · Bloomed 30 May<br>31 hours · 5/5 milestones</div>
+                  <div style="margin-top:10px;font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.55">"Twelve books. The phone lost, for once."</div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1B — SPECIMEN DETAIL -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Specimen detail — the full spread on click</div>
+      <div class="dv-card" style="width:760px">
+        <div class="grain"></div>
+        <div style="background:rgba(42,36,32,0.16);padding:38px;display:flex;justify-content:center">
+          <div style="position:relative;width:600px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:0 24px 60px rgba(42,36,32,0.35);padding:30px 34px 26px">
+            <span class="washi" style="top:-9px;left:44px;transform:rotate(-4deg)"></span>
+            <span class="washi" style="top:-9px;right:44px;transform:rotate(3deg);background:rgba(201,165,90,0.4)"></span>
+            <span style="position:absolute;top:14px;right:16px;font-size:13px;color:var(--ink-faint);cursor:pointer">✕</span>
+            <div style="display:flex;gap:30px">
+              <div style="flex:none;width:230px;height:280px;display:flex;align-items:flex-end;justify-content:center;border-right:1px solid var(--line-card);padding-right:26px">
+                <img src="ds/assets/wisteria/p100.png" alt="" class="pressed" style="height:265px;transform:scaleY(0.94) rotate(-1.2deg)">
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                <div class="mono" style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline)">Specimen 07 · Freelance</div>
+                <div style="margin-top:8px;font-family:var(--font-hand);font-size:30px;color:var(--ink-body)">Forecasting App</div>
+                <div class="ledger" style="margin-top:12px">Planted 12 May 2026<br>Bloomed 03 Jul 2026<br>46 hours · 6/6 milestones</div>
+                <div style="margin-top:16px;padding:12px 14px;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:5px;font-size:13.5px;font-style:italic;color:var(--ink-muted);line-height:1.6">"It finally told me something true about August."</div>
+                <span style="margin-top:8px;font-size:11.5px;color:var(--ink-faint);text-decoration:underline;cursor:pointer;align-self:flex-end">Edit the line…</span>
+                <div style="flex:1"></div>
+                <div style="border-top:1px dashed var(--line-dashed);padding-top:12px;margin-top:12px">
+                  <div class="mono" style="font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-hairline);margin-bottom:8px">A life in numbers</div>
+                  <div style="display:flex;gap:26px">
+                    <div><div style="font-family:var(--font-display);font-size:22px;color:var(--ink-body)">38</div><div class="mono" style="font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px">tasks bloomed</div></div>
+                    <div><div style="font-family:var(--font-display);font-size:22px;color:var(--ink-body)">5h 20m</div><div class="mono" style="font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px">longest focus day</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1C — PRESSING CEREMONY -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Pressing ceremony — three beats in one modal, on project completion</div>
+      <div class="dv-card" style="width:1240px">
+        <div class="grain"></div>
+        <div style="background:rgba(42,36,32,0.16);padding:34px;display:flex;gap:28px;justify-content:center;align-items:stretch">
+
+          <!-- beat 1: the press closes -->
+          <div style="width:360px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:0 20px 50px rgba(42,36,32,0.32);padding:24px 26px;display:flex;flex-direction:column">
+            <div class="mono" style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Ready for the press · 1 of 3</div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 0">
+              <div style="width:210px;height:10px;background:#8b7a5e;border-radius:2px;box-shadow:0 2px 4px rgba(60,52,38,0.3)"></div>
+              <div style="width:190px;height:150px;display:flex;align-items:flex-end;justify-content:center;background:var(--paper-bone);border-left:1px solid var(--line-card);border-right:1px solid var(--line-card);overflow:hidden">
+                <img src="ds/assets/wisteria/p100.png" alt="" style="height:140px;transform:scaleY(0.82);transform-origin:50% 100%;filter:saturate(0.7)">
+              </div>
+              <div style="width:210px;height:10px;background:#8b7a5e;border-radius:2px;box-shadow:0 2px 4px rgba(60,52,38,0.3)"></div>
+              <div style="margin-top:16px;font-family:var(--font-hand);font-size:15px;color:#7a745f">the press closes, gently</div>
+            </div>
+            <div class="mono" style="font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline);text-align:right">skip</div>
+          </div>
+
+          <!-- beat 2: the ledger stamps -->
+          <div style="width:360px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:0 20px 50px rgba(42,36,32,0.32);padding:24px 26px;display:flex;flex-direction:column">
+            <div class="mono" style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Ready for the press · 2 of 3</div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:22px 6px">
+              <div style="font-family:var(--font-hand);font-size:24px;color:var(--ink-body);text-align:center">Forecasting App</div>
+              <div style="margin-top:18px;border-top:1px dashed var(--line-dashed)">
+                <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)"><span class="mono" style="font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Planted</span><span class="mono" style="font-size:9.5px;letter-spacing:0.1em;color:var(--ink-body)">12 MAY</span></div>
+                <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)"><span class="mono" style="font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Bloomed</span><span class="mono" style="font-size:9.5px;letter-spacing:0.1em;color:var(--ink-body)">03 JUL</span></div>
+                <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)"><span class="mono" style="font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Hours</span><span class="mono" style="font-size:9.5px;letter-spacing:0.1em;color:var(--ink-body)">46</span></div>
+                <div style="display:flex;justify-content:space-between;padding:9px 2px"><span class="mono" style="font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Milestones</span><span class="mono" style="font-size:9.5px;letter-spacing:0.1em;color:var(--ink-body)">6/6</span></div>
+              </div>
+              <div style="margin-top:14px;font-family:var(--font-hand);font-size:15px;color:#7a745f;text-align:center">the ledger stamps itself, line by line</div>
+            </div>
+            <div class="mono" style="font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline);text-align:right">skip</div>
+          </div>
+
+          <!-- beat 3: one line -->
+          <div style="width:360px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:0 20px 50px rgba(42,36,32,0.32);padding:24px 26px;display:flex;flex-direction:column">
+            <div class="mono" style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Ready for the press · 3 of 3</div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:22px 0">
+              <div style="display:flex;align-items:flex-end;justify-content:center;height:110px">
+                <img src="ds/assets/wisteria/p100.png" alt="" class="pressed" style="height:100px;transform:scaleY(0.94)">
+              </div>
+              <div style="margin-top:20px;border-bottom:1.5px dashed var(--line-dashed);padding-bottom:8px;font-family:var(--font-hand);font-size:19px;color:var(--ink-hairline)">One line for the field guide…<span style="display:inline-block;width:1.5px;height:18px;background:var(--acc-terra);margin-left:3px;vertical-align:-3px"></span></div>
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:20px">
+                <span style="font-size:12.5px;color:var(--ink-faint);cursor:pointer">Skip</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 20px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Press it</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 1D — EMPTY -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Empty — the press is waiting</div>
+      <div class="dv-card" style="width:560px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:46px 40px 48px;display:flex;flex-direction:column;align-items:center">
+          <svg width="150" height="96" viewBox="0 0 150 96">
+            <rect x="20" y="70" width="110" height="9" rx="2" fill="#8b7a5e"></rect>
+            <rect x="30" y="34" width="90" height="36" fill="#EFE8D6" stroke="#cfc7b0" stroke-width="1.5"></rect>
+            <rect x="20" y="24" width="110" height="9" rx="2" fill="#8b7a5e" transform="rotate(-9 75 28)"></rect>
+            <circle cx="34" cy="75" r="3" fill="#6b5d45"></circle>
+            <circle cx="116" cy="75" r="3" fill="#6b5d45"></circle>
+            <path d="M34 20v55M116 20v55" stroke="#6b5d45" stroke-width="2.5"></path>
+            <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="#6b5d45" stroke-width="2.5" stroke-linecap="round"></path>
+          </svg>
+          <div style="margin-top:20px;font-family:var(--font-hand);font-size:19px;color:#7a745f;text-align:center;max-width:340px;line-height:1.45">The press is waiting. Finish a project and it lives here forever.</div>
+          <a href="Projects" style="margin-top:20px;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-body);border:1px solid var(--line-solid);border-radius:999px;padding:9px 18px">Back to the living garden →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Rule held throughout: pressed plants are permanently dried — desaturated, flattened 6%, never animated. Entry: a "Herbarium" link on <a href="Projects">Projects</a>' header; the ceremony's confirm lands here with the fresh specimen settling into the grid. Mobile: 1-up cards; the ceremony goes full-screen.</p>
+</section>
+</x-dc>
+</body>
+</html>

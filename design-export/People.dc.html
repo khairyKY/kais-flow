@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--acc-terra)}
+a:hover{color:#8f4f39}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.phone{width:398px;height:838px;background:#211d18;border-radius:56px;padding:11px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 30px 60px rgba(60,52,38,0.28);position:relative;flex:none}
+.phone-screen{width:100%;height:100%;background:var(--paper-linen);border-radius:46px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:33px;background:#0d0b09;border-radius:20px;z-index:60}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+.fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline)}
+.fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
+.fsel .car{color:var(--ink-hairline);font-size:10px}
+.srow{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:6px;text-decoration:none}
+.sdot{width:18px;display:flex;justify-content:center;flex:none}
+.slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
+.slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+.av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">People Moments — the clover finally blooms. Three touchpoints: list, detail, Today.</span></div>
+  <div class="dv-opts">
+
+    <!-- 2A — LIST ROW BADGE -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>People list — the bloom badge sits beside the hygiene metadata</div>
+      <div class="dv-card" style="width:720px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:26px 34px 30px">
+          <div class="slabel" style="margin:0 0 4px"><span>Work</span><span class="r"></span><span style="color:var(--ink-hairline)">6</span></div>
+          <div style="display:flex;flex-direction:column">
+            <a href="#2b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line-dashed);text-decoration:none">
+              <span class="av" style="background:rgba(154,180,190,0.3);position:relative">O<svg width="15" height="15" viewBox="0 0 24 24" style="position:absolute;top:-6px;right:-6px"><g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6"/><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)"/><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)"/></g><circle cx="12" cy="12" r="3.4" fill="#D4A8B0"/><circle cx="12" cy="12" r="1.5" fill="#C9A55A"/></svg></span>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Omar</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Pricing call — wants the one-pager before Tuesday</div></div>
+              <span class="chip" style="background:rgba(212,168,176,0.24);color:#a1707c">Birthday · in 3 days</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">4 facts</span>
+              <span class="fhelp" style="width:52px;text-align:right">today</span>
+            </a>
+            <a href="#2b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line-dashed);text-decoration:none">
+              <span class="av" style="background:rgba(212,168,176,0.32)">S</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Salma</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Dinner at the new Vietnamese place · balcony plants advice</div></div>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">6 facts</span>
+              <span class="fhelp" style="width:52px;text-align:right">2d ago</span>
+            </a>
+            <a href="#2b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;text-decoration:none">
+              <span class="av" style="background:rgba(201,160,160,0.3);position:relative">M<svg width="15" height="15" viewBox="0 0 24 24" style="position:absolute;top:-6px;right:-6px"><g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6"/><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)"/><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)"/></g><circle cx="12" cy="12" r="3.4" fill="#D4A8B0"/><circle cx="12" cy="12" r="1.5" fill="#C9A55A"/></svg></span>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Mom</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Sunday call — the garden, cousin's wedding plans</div></div>
+              <span class="chip" style="background:rgba(212,168,176,0.24);color:#a1707c">Birthday · in 12 days</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">9 facts</span>
+              <span class="fhelp" style="width:52px;text-align:right">3w ago</span>
+            </a>
+          </div>
+          <div style="margin-top:16px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">warmth next to hygiene — the clover only blooms for a moment ✿</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2B — PERSON DETAIL -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Person detail — the banner, and the Moments section</div>
+      <div class="dv-card" style="width:640px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:26px 32px 30px">
+
+          <!-- upcoming banner -->
+          <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:14px 18px;display:flex;align-items:center;gap:14px;transform:rotate(-0.3deg)">
+            <svg width="30" height="30" viewBox="0 0 24 24" style="flex:none"><g fill="#8A9A7E"><ellipse cx="12" cy="6.8" rx="3" ry="4.2"/><ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)"/><ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)"/></g><circle cx="12" cy="12" r="4" fill="#D4A8B0"/><circle cx="12" cy="12" r="1.8" fill="#C9A55A"/></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14.5px;color:var(--ink-body)">Omar turns a year older on Friday</div>
+              <div class="fhelp" style="margin-top:3px">Birthday · 17 Jul · repeats yearly</div>
+            </div>
+            <span style="font-size:12.5px;color:var(--ink-muted);text-decoration:underline;cursor:pointer;flex:none">Plan something →</span>
+          </div>
+
+          <!-- person header (compact) -->
+          <div style="display:flex;align-items:center;gap:13px;margin-top:22px">
+            <span class="av" style="width:40px;height:40px;font-size:16px;background:rgba(154,180,190,0.3)">O</span>
+            <div><h2 style="margin:0;font-family:var(--font-display);font-size:26px;font-weight:500;color:var(--ink-body)">Omar</h2><div class="fhelp" style="margin-top:2px">Work · last touch today</div></div>
+          </div>
+
+          <!-- moments section -->
+          <div class="slabel" style="margin:22px 0 6px"><span style="color:var(--acc-clover-text)">Moments</span><span class="r"></span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line-dashed)">
+            <svg width="15" height="15" viewBox="0 0 24 24" style="flex:none"><g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6"/><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)"/><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)"/></g><circle cx="12" cy="12" r="3.4" fill="#D4A8B0"/></svg>
+            <span style="font-size:13.5px;color:var(--ink-body)">Birthday</span>
+            <span class="fhelp">17 Jul</span>
+            <span style="flex:1"></span>
+            <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">yearly ✓</span>
+            <span style="font-size:11.5px;color:var(--ink-faint);text-decoration:underline;cursor:pointer">edit</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line-dashed)">
+            <svg width="15" height="15" viewBox="0 0 24 24" style="flex:none;opacity:0.7"><g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6"/><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)"/><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)"/></g><circle cx="12" cy="12.4" r="1.6" fill="#6f7f65"/></svg>
+            <span style="font-size:13.5px;color:var(--ink-body)">First project together</span>
+            <span class="fhelp">02 Jun</span>
+            <span style="flex:1"></span>
+            <span class="chip" style="border:1px dashed var(--line-solid);color:var(--ink-faint)">once</span>
+            <span style="font-size:11.5px;color:var(--ink-faint);text-decoration:underline;cursor:pointer">edit</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 2px">
+            <span style="width:15px;text-align:center;color:var(--ink-hairline);font-size:14px;flex:none">+</span>
+            <span style="font-size:13px;color:var(--ink-faint);font-style:italic">Add a moment… label · date · repeats yearly</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 2C — TODAY CARD -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Today — the quiet card, the day before · dismissible, never blocking</div>
+      <div class="dv-card" style="width:640px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:28px 34px 32px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover-text)">A moment coming</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+          <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:13px 16px;display:flex;align-items:center;gap:13px">
+            <svg width="26" height="26" viewBox="0 0 24 24" style="flex:none"><g fill="#8A9A7E"><ellipse cx="12" cy="6.8" rx="3" ry="4.2"/><ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)"/><ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)"/></g><circle cx="12" cy="12" r="4" fill="#D4A8B0"/><circle cx="12" cy="12" r="1.8" fill="#C9A55A"/></svg>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--ink-body)">Omar's birthday is tomorrow.</div></div>
+            <span style="font-size:12.5px;color:var(--ink-muted);text-decoration:underline;cursor:pointer;flex:none">Plan something →</span>
+            <span style="font-size:12px;color:var(--ink-hairline);cursor:pointer;flex:none;padding-left:2px">✕</span>
+          </div>
+          <div style="margin-top:12px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.8deg)">"Plan something" opens the command bar pre-filled: task: for Omar's birthday</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Rule kept: this is the only place the clover ever fully blooms. Copy is always human — "on Friday", "tomorrow", never EVENT: BIRTHDAY_OMAR. The Today card shows on the day and the day before, then folds away.</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">People — the detail pass: the clover patch, and one person up close</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — PEOPLE LIST ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop — nudges first, then everyone by circle</div>
+      <div class="dv-card" style="width:1360px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:920px;background:var(--paper-linen)">
+
+          <!-- SIDEBAR -->
+          <aside style="width:242px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;padding:24px 0 18px;position:relative">
+            <span style="position:absolute;top:54px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);z-index:45">‹</span>
+            <div style="padding:0 22px 14px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+              <div style="margin-top:7px;font-family:var(--font-hand);font-size:15px;color:var(--ink-muted);transform:rotate(-1.2deg)">a field journal of days ✿</div>
+            </div>
+            <div style="padding:0 14px 12px;margin-bottom:10px;border-bottom:1px dashed var(--line-sidebar)">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:6px;background:var(--paper-linen);border:1px solid var(--line-sidebar)">
+                <img src="ds/assets/vine/sprouting.png" alt="" style="height:15px;width:auto">
+                <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted)">Plan</span>
+                <span style="font-size:10px;color:var(--ink-faint)">›</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">6</span>
+              </div>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:2px 12px 5px">Tend</div>
+              <a href="Today" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Today</span></a>
+              <a href="Inbox" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Tasks</span></a>
+              <a href="Calendar" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <a href="Projects" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Projects</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:12px 12px 5px">Cultivate</div>
+              <a href="Routines" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" class="srow"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+              <a href="Journal" class="srow"><span class="sdot"><img src="ds/assets/fern/full.png" alt="" style="height:16px;opacity:0.85"></span><span style="font-size:14px;color:var(--ink-muted)">Journal</span></a>
+              <a href="People" class="srow" style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp);transform:rotate(-0.5deg)">
+                <span style="position:absolute;top:-6px;left:16px;width:30px;height:9px;background:rgba(201,160,160,0.55);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px);transform:rotate(-3deg);border-radius:1px"></span>
+                <span class="sdot"><img src="ds/assets/clover/four_leaf.png" alt="" style="height:16px"></span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink-body)">People</span>
+              </a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 12px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Streak</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">6 days · best 21</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="Editor" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Capture</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="Search" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M19.5 19.5 16 16"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘/</span></a>
+              <a href="Chat" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘J</span></a>
+              <a href="Settings" class="srow" style="padding:7px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2"/></svg></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+              <a href="Screens" class="srow" style="padding:6px 12px"><span style="width:18px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-faint)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9"/></svg></span><span style="font-size:12.5px;color:var(--ink-faint)">Sign out</span></a>
+            </div>
+          </aside>
+
+          <!-- MAIN -->
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">
+              <span>Kai's Flow · People</span><span>Africa/Cairo</span>
+            </div>
+            <div style="flex:1;padding:34px 48px 40px;max-width:900px">
+
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <img src="ds/assets/clover/four_leaf.png" alt="" style="height:50px;filter:var(--shadow-drop-sm)">
+                  <div>
+                    <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">People · kept close</div>
+                    <h1 style="margin:3px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">The clover patch</h1>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span class="fhelp">14 people · 41 facts kept</span>
+                  <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 17px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">+ New person</button>
+                </div>
+              </div>
+
+              <!-- nudges -->
+              <div class="slabel" style="margin:26px 0 10px"><span style="color:var(--acc-clover-text)">Say hi — it's been a while</span><span class="r"></span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:13px 15px;display:flex;align-items:center;gap:12px;transform:rotate(-0.3deg)">
+                  <span class="av" style="background:rgba(201,160,160,0.3)">M</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--ink-body)">Mom</div><div class="fhelp" style="margin-top:2px">3 weeks quiet · birthday in 12 days ↻</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">call</span>
+                  <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint);cursor:pointer">later</span>
+                </div>
+                <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:13px 15px;display:flex;align-items:center;gap:12px;transform:rotate(0.3deg)">
+                  <span class="av" style="background:rgba(154,180,190,0.3)">T</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--ink-body)">Tarek</div><div class="fhelp" style="margin-top:2px">6 weeks quiet · owes you the climbing plan</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">text</span>
+                  <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint);cursor:pointer">later</span>
+                </div>
+              </div>
+
+              <!-- family -->
+              <div class="slabel" style="margin:26px 0 4px"><span>Family</span><span class="r"></span><span style="color:var(--ink-hairline)">4</span></div>
+              <div style="display:flex;flex-direction:column">
+                <a href="#1b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line-dashed);text-decoration:none">
+                  <span class="av" style="background:rgba(212,168,176,0.32)">S</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Salma</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Dinner at the new Vietnamese place · balcony plants advice</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">6 facts</span>
+                  <span class="fhelp" style="width:52px;text-align:right">2d ago</span>
+                </a>
+                <a href="#1b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line-dashed);text-decoration:none">
+                  <span class="av" style="background:rgba(201,160,160,0.3)">M</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Mom</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Sunday call — the garden, cousin's wedding plans</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">9 facts</span>
+                  <span class="fhelp" style="width:52px;text-align:right">3w ago</span>
+                </a>
+                <a href="#1b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;text-decoration:none">
+                  <span class="av" style="background:rgba(212,199,138,0.35)">N</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Nour</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Sent her the forecasting article she asked about</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">3 facts</span>
+                  <span class="fhelp" style="width:52px;text-align:right">5d ago</span>
+                </a>
+              </div>
+
+              <!-- work -->
+              <div class="slabel" style="margin:24px 0 4px"><span>Work</span><span class="r"></span><span style="color:var(--ink-hairline)">6</span></div>
+              <div style="display:flex;flex-direction:column">
+                <a href="#1b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line-dashed);text-decoration:none">
+                  <span class="av" style="background:rgba(154,180,190,0.3)">O</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Omar</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Pricing call — wants the one-pager before Tuesday</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">4 facts</span>
+                  <span class="fhelp" style="width:52px;text-align:right">today</span>
+                </a>
+                <a href="#1b" style="display:flex;align-items:center;gap:13px;padding:11px 2px;text-decoration:none">
+                  <span class="av" style="background:rgba(122,148,110,0.28)">L</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Laila</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Shaheen retainer check-in · new gallery pages brief</div></div>
+                  <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">5 facts</span>
+                  <span class="fhelp" style="width:52px;text-align:right">1w ago</span>
+                </a>
+              </div>
+
+              <div style="margin-top:26px;font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-0.8deg)">a light CRM — facts so you remember, nudges so you reach out ✿</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1B — PERSON DETAIL ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Person detail — facts, the running log, and a quiet edit</div>
+      <div class="dv-card" style="width:760px;background:var(--paper-linen)">
+        <div class="grain"></div>
+        <div style="padding:30px 40px 36px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <a href="#1a" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);text-decoration:none">← People</a>
+            <span class="fhelp">added Mar 2026 · 6 facts · 12 interactions</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;margin-top:22px">
+            <span class="av" style="width:52px;height:52px;font-size:21px;background:rgba(212,168,176,0.32)">S</span>
+            <div style="flex:1">
+              <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--acc-clover-text)">Family</div>
+              <h1 style="margin:2px 0 0;font-family:var(--font-display);font-weight:500;font-size:34px;line-height:1.1;color:var(--ink-body)">Salma</h1>
+            </div>
+            <img src="ds/assets/clover/dewdrop.png" alt="" style="height:44px;filter:var(--shadow-drop-sm)">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <span class="chip" style="background:rgba(201,160,160,0.2);color:var(--acc-clover-text);cursor:pointer">log a call</span>
+            <span class="chip" style="background:rgba(201,160,160,0.2);color:var(--acc-clover-text);cursor:pointer">met in person</span>
+            <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);cursor:pointer">text</span>
+            <span style="flex:1"></span>
+            <span class="chip" style="border:1px dashed var(--ink-hairline);color:var(--ink-faint);cursor:pointer">edit person ▸</span>
+          </div>
+
+          <!-- facts -->
+          <div class="slabel" style="margin:26px 0 6px"><span>Facts · 6</span><span class="r"></span></div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span class="flabel" style="width:88px;flex:none">Birthday</span>
+              <span style="font-size:13.5px;color:var(--ink-body)">March 14</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-faint)">↻ recurs</span>
+              <span style="margin-left:auto" class="fhelp">nudges 2 weeks out</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span class="flabel" style="width:88px;flex:none">Interest</span>
+              <span style="font-size:13.5px;color:var(--ink-body)">Balcony gardening — the real expert in the family</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span class="flabel" style="width:88px;flex:none">Note</span>
+              <span style="font-size:13.5px;color:var(--ink-body)">Allergic to walnuts — matters for dinners</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;padding:10px 2px">
+              <span class="fsel">Interest <span class="car">▾</span></span>
+              <span style="flex:1;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-faint);font-style:italic">a thing worth remembering…</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">date?</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">↻</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12px;padding:7px 14px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Add fact</button>
+            </div>
+          </div>
+
+          <!-- interactions -->
+          <div class="slabel" style="margin:24px 0 6px"><span>Interactions · 12</span><span class="r"></span></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:2px 0 12px">
+            <span class="fsel">In person <span class="car">▾</span></span>
+            <span style="flex:1;background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-faint);font-style:italic">what did you talk about?</span>
+            <span class="fsel">today <span class="car">▾</span></span>
+            <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:12px;padding:7px 14px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Log</button>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span class="fhelp" style="width:74px;flex:none;padding-top:3px">Wed 8 Jul</span>
+              <span class="chip" style="background:rgba(181,101,74,0.14);color:var(--acc-terra);flex:none">in person</span>
+              <span style="font-size:13.5px;color:var(--ink-body);line-height:1.5">Dinner at the new Vietnamese place — she offered to help re-pot the balcony jasmine this weekend.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line-dashed)">
+              <span class="fhelp" style="width:74px;flex:none;padding-top:3px">Tue 30 Jun</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);flex:none">text</span>
+              <span style="font-size:13.5px;color:var(--ink-body);line-height:1.5">Sent photos of the wilting fern — verdict: too much sun, move it inside.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 2px">
+              <span class="fhelp" style="width:74px;flex:none;padding-top:3px">Sun 21 Jun</span>
+              <span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted);flex:none">call</span>
+              <span style="font-size:13.5px;color:var(--ink-body);line-height:1.5">Caught up on the cousin's wedding — she's handling the flowers, obviously.</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px;padding-top:14px;border-top:1px dashed var(--line-dashed)">
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-terra);cursor:pointer">Delete person…</span>
+            <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-1deg)">the log is the memory ✿</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1C — IPHONE ============ -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>iPhone — People</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10"><span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span></div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;position:relative;z-index:10">
+
+            <div style="flex:1;min-height:0;overflow:hidden;padding:8px 18px 0">
+              <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:11px"><img src="ds/assets/clover/four_leaf.png" alt="" style="height:36px;filter:var(--shadow-drop-sm)"><div style="font-family:var(--font-display);font-size:24px;font-weight:500;color:var(--ink-body)">People</div></div><span style="width:30px;height:30px;border-radius:999px;background:var(--acc-terra);box-shadow:var(--shadow-cta);color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-size:16px">+</span></div>
+              <!-- nudges -->
+              <div style="display:flex;align-items:center;gap:11px;margin:16px 0 8px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover-text)">Say hi</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-crisp);padding:11px 13px;display:flex;align-items:center;gap:11px;transform:rotate(-0.3deg)"><span style="width:30px;height:30px;border-radius:50%;background:rgba(201,160,160,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none">M</span><div style="flex:1"><div style="font-size:13.5px;color:var(--ink-body)">Mom</div><div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline);margin-top:2px">3 weeks quiet · bday 12d</div></div><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">call</span></div>
+              <!-- family -->
+              <div style="display:flex;align-items:center;gap:11px;margin:18px 0 4px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Family</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line-dashed)"><span style="width:30px;height:30px;border-radius:50%;background:rgba(212,168,176,0.32);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none">S</span><div style="flex:1"><div style="font-size:14px;color:var(--ink-body)">Salma</div><div style="font-size:11.5px;color:var(--ink-muted);margin-top:1px">Dinner · balcony plants</div></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">2d</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 2px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(212,199,138,0.35);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none">N</span><div style="flex:1"><div style="font-size:14px;color:var(--ink-body)">Nour</div><div style="font-size:11.5px;color:var(--ink-muted);margin-top:1px">Sent the forecasting article</div></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">5d</span></div>
+              <!-- work -->
+              <div style="display:flex;align-items:center;gap:11px;margin:18px 0 4px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Work</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 2px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(154,180,190,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none">O</span><div style="flex:1"><div style="font-size:14px;color:var(--ink-body)">Omar</div><div style="font-size:11.5px;color:var(--ink-muted);margin-top:1px">Pricing one-pager by Tue</div></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">today</span></div>
+            </div>
+            <div style="flex:1"></div>
+            <div style="flex:none;border-top:1px solid var(--line-card);background:var(--paper-sidebar);padding:9px 22px 4px;display:flex;align-items:flex-start;justify-content:space-between"><div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-sage);opacity:0.9"></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">Today</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="position:relative;width:9px;height:9px;border-radius:50%;background:var(--acc-hydrangea)"><span style="position:absolute;top:-4px;right:-5px;width:12px;height:12px;border-radius:50%;background:var(--acc-terra);color:#fff;font-size:7px;display:flex;align-items:center;justify-content:center">3</span></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">Inbox</span></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:-3px"><span style="width:38px;height:38px;border-radius:50%;background:var(--acc-terra);box-shadow:var(--shadow-cta);display:flex;align-items:center;justify-content:center"><svg width="16" height="17" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="#F4F1EA"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" stroke="#F4F1EA" stroke-width="2" stroke-linecap="round"></path></svg></span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc-lavender);opacity:0.9"></span><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">Cal</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px"><img src="ds/assets/vine/sprouting.png" alt="" style="height:11px"><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-body)">More</span></div></div>
+            <div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "new person form" · "birthday nudge on Today" · "mobile people".</p>
+</section>
+
+</x-dc>
+</body>
+</html>

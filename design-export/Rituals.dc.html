@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+@keyframes sunTurn{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes sunBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@media (prefers-reduced-motion: reduce){.sun-rays,.sun-core{animation:none !important}}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.45}
+.phone{width:398px;height:838px;background:#211d18;border-radius:56px;padding:11px;box-shadow:0 2px 6px rgba(60,52,38,0.2),0 30px 60px rgba(60,52,38,0.28);position:relative;flex:none}
+.phone-screen{width:100%;height:100%;background:var(--paper-linen);border-radius:46px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:33px;background:#0d0b09;border-radius:20px;z-index:60}
+.chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.pill{border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;padding:6px 11px;border-radius:999px;cursor:pointer}
+.rlink{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);cursor:pointer}
+.flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+/* the focused takeover scene */
+.scene{position:relative;width:680px;height:660px;border-radius:5px;overflow:hidden;background:var(--paper-linen)}
+.scene-dim{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%, rgba(42,36,32,0.10), rgba(42,36,32,0.34) 90%)}
+.panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:12px;box-shadow:0 30px 70px rgba(46,40,32,0.4);overflow:hidden}
+.dawn{height:7px;background:linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))}
+.dusk{height:7px;background:linear-gradient(90deg,var(--acc-lavender),#6f6790 55%,#4b4560)}
+.step-item{border:1px dashed var(--line-solid);border-radius:6px;padding:11px 14px;display:flex;align-items:center;gap:12px}
+.cbx{width:16px;height:16px;border:1.5px solid var(--line-sidebar);border-radius:4px;flex:none}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Closing Ritual, refined — a sun worth looking at, and the seeds actually plant: Tomorrow's three closes the morning's Top-3 step.</span></div>
+  <div class="dv-opts">
+
+    <!-- 3A — BEAT 1, SUN REDESIGNED -->
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>1 · The day's garden — the sun redrawn: rays, hour ring, dusk halo</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen" style="background:linear-gradient(180deg,#2e2840,#211d30)">
+          <div class="grain" style="opacity:0.25"></div>
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:64px 24px 0">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#a89fc0">Closing · 1 of 4</div>
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#8e88a0;cursor:pointer">skip</span>
+          </div>
+          <div style="flex:none;padding:18px 24px 0">
+            <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:30px;color:#f0ebdd;line-height:1.1">Today's garden</h1>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#b8b0c8">Today · 7 blooms · 3h focused · vine +1</div>
+          </div>
+          <div style="flex:1;position:relative;overflow:hidden">
+            <!-- THE SUN, redrawn -->
+            <div style="position:absolute;left:50%;top:28px;transform:translateX(-50%);width:190px;height:190px">
+              <span style="position:absolute;inset:-26px;border-radius:50%;background:radial-gradient(circle,rgba(228,195,107,0.22),rgba(228,195,107,0.07) 45%,transparent 68%)"></span>
+              <svg viewBox="0 0 160 160" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+                <!-- hour ring: 12 dots, one per waking hour -->
+                <g fill="rgba(240,235,221,0.28)">
+                  <circle cx="80" cy="8" r="1.6"></circle><circle cx="116" cy="17.6" r="1.6"></circle><circle cx="142.4" cy="44" r="1.6"></circle><circle cx="152" cy="80" r="1.6"></circle><circle cx="142.4" cy="116" r="1.6"></circle><circle cx="116" cy="142.4" r="1.6"></circle><circle cx="80" cy="152" r="1.6"></circle><circle cx="44" cy="142.4" r="1.6"></circle><circle cx="17.6" cy="116" r="1.6"></circle><circle cx="8" cy="80" r="1.6"></circle><circle cx="17.6" cy="44" r="1.6"></circle><circle cx="44" cy="17.6" r="1.6"></circle>
+                </g>
+                <!-- focused-hours arc: 3 of 12 marks lit -->
+                <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(240,235,221,0.1)" stroke-width="2.5"></circle>
+                <circle cx="80" cy="80" r="72" fill="none" stroke="#E4C36B" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="113 340" transform="rotate(-90 80 80)"></circle>
+                <circle cx="80" cy="8" r="3" fill="#E4C36B"></circle>
+                <circle cx="142.4" cy="44" r="3" fill="#E4C36B"></circle>
+                <!-- rays: 12 tapered petals, alternating long/short -->
+                <g class="sun-rays" style="transform-origin:80px 80px;animation:sunTurn 140s linear infinite">
+                  <g fill="#D9B65C">
+                    <path d="M80 30 L83 46 Q80 49 77 46 Z"></path>
+                    <path d="M80 130 L77 114 Q80 111 83 114 Z"></path>
+                    <path d="M30 80 L46 77 Q49 80 46 83 Z"></path>
+                    <path d="M130 80 L114 83 Q111 80 114 77 Z"></path>
+                  </g>
+                  <g fill="#C9A55A" opacity="0.85">
+                    <path d="M115.4 44.6 L106 58 Q102 57.5 102.5 53.5 Z"></path>
+                    <path d="M44.6 115.4 L54 102 Q58 102.5 57.5 106.5 Z"></path>
+                    <path d="M44.6 44.6 L58 54 Q57.5 58 53.5 57.5 Z"></path>
+                    <path d="M115.4 115.4 L102 106 Q102.5 102 106.5 102.5 Z"></path>
+                  </g>
+                  <g fill="#C9A55A" opacity="0.6">
+                    <path d="M97 33.2 L94.4 47 Q91 47.5 90 44 Z"></path><path d="M63 126.8 L65.6 113 Q69 112.5 70 116 Z"></path>
+                    <path d="M126.8 63 L113 65.6 Q112.5 69 116 70 Z"></path><path d="M33.2 97 L47 94.4 Q47.5 91 44 90 Z"></path>
+                    <path d="M126.8 97 L113 94.4 Q112.5 91 116 90 Z"></path><path d="M33.2 63 L47 65.6 Q47.5 69 44 70 Z"></path>
+                    <path d="M97 126.8 L94.4 113 Q91 112.5 90 116 Z"></path><path d="M63 33.2 L65.6 47 Q69 47.5 70 44 Z"></path>
+                  </g>
+                </g>
+                <!-- core: shaded disc with fine rim -->
+                <g class="sun-core" style="transform-origin:80px 80px;animation:sunBreathe 7s ease-in-out infinite">
+                  <circle cx="80" cy="80" r="26" fill="#D9B65C"></circle>
+                  <circle cx="80" cy="80" r="26" fill="url(#sunShade)"></circle>
+                  <circle cx="80" cy="80" r="26" fill="none" stroke="rgba(120,84,40,0.5)" stroke-width="1"></circle>
+                  <circle cx="80" cy="80" r="21.5" fill="none" stroke="rgba(255,244,214,0.35)" stroke-width="0.8" stroke-dasharray="1.5 3"></circle>
+                </g>
+                <defs>
+                  <radialGradient id="sunShade" cx="0.38" cy="0.32" r="0.9">
+                    <stop offset="0" stop-color="#F2DA96"></stop>
+                    <stop offset="0.55" stop-color="#D9B65C" stop-opacity="0"></stop>
+                    <stop offset="1" stop-color="#B78B44" stop-opacity="0.55"></stop>
+                  </radialGradient>
+                </defs>
+              </svg>
+              <div style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;pointer-events:none">
+                <div style="font-family:var(--font-display);font-size:21px;font-weight:600;color:#4a3416;line-height:1">3h</div>
+              </div>
+              <div style="position:absolute;left:0;right:0;top:100%;margin-top:2px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">of sun · 3 of 12 waking hours</div>
+            </div>
+            <!-- petal pile -->
+            <div style="position:absolute;left:34px;bottom:88px;width:110px;height:56px">
+              <span style="position:absolute;left:34px;bottom:6px;width:12px;height:9px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(14deg)"></span>
+              <span style="position:absolute;left:50px;bottom:2px;width:11px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(-32deg)"></span>
+              <span style="position:absolute;left:24px;bottom:0;width:10px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(56deg)"></span>
+              <span style="position:absolute;left:44px;bottom:12px;width:10px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(-8deg)"></span>
+              <span style="position:absolute;left:60px;bottom:8px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(80deg)"></span>
+              <span style="position:absolute;left:38px;bottom:20px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(120deg)"></span>
+              <span style="position:absolute;left:54px;bottom:18px;width:8px;height:6px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(-60deg)"></span>
+              <div style="position:absolute;left:0;right:0;bottom:-22px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">7 petals</div>
+            </div>
+            <!-- today's vine -->
+            <div style="position:absolute;right:30px;bottom:76px;width:120px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:122px;filter:brightness(0.85)">
+              <div style="margin-top:6px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">vine +1 leaf</div>
+            </div>
+            <span style="position:absolute;left:24px;right:24px;bottom:66px;border-bottom:1.5px dashed rgba(168,159,192,0.35)"></span>
+          </div>
+          <div style="flex:none;padding:0 24px 40px">
+            <button style="width:100%;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3B — MORNING STEP 2, CLOSED BY THE SEEDS -->
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Morning · 2/4 arrives already done — Tomorrow's three planted it last night</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <div style="position:absolute;inset:0;padding:34px 40px;opacity:0.5"><div style="font-family:var(--font-display);font-size:34px;font-weight:500;color:var(--ink-body)">Saturday, July 11</div></div>
+        <div class="scene-dim"></div>
+        <div class="panel">
+          <div class="dawn"></div>
+          <div style="padding:22px 26px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Morning ritual · step 2/4 · <span style="color:var(--acc-gold)">closed by last night's seeds</span></span>
+              <span class="rlink">skip</span>
+            </div>
+            <!-- the seed envelope, carried in -->
+            <div style="display:flex;align-items:center;gap:12px;margin-top:16px;background:var(--paper-goal);border:1.5px dashed var(--line-goal);border-radius:8px;padding:12px 15px;transform:rotate(-0.3deg)">
+              <svg width="30" height="22" viewBox="0 0 34 24" style="flex:none"><path d="M2 4h30v18H2V4Z" fill="#C8B48C" stroke="#9d8a63" stroke-width="1.5"></path><path d="M2 4l15 10L32 4" fill="none" stroke="#9d8a63" stroke-width="1.5"></path></svg>
+              <div style="flex:1">
+                <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--acc-gold)">Planted last night</div>
+                <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Tomorrow's three came in from the closing ritual — this step is already done.</div>
+              </div>
+              <span style="font-family:var(--font-hand);font-size:16px;color:var(--acc-gold);transform:rotate(-2deg);flex:none">✿ 3 seeds</span>
+            </div>
+            <h2 style="margin:16px 0 4px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Your Top-3 <span style="font-family:var(--font-mono);font-weight:400;font-size:13px;color:var(--ink-faint)">(3/3 · seeded)</span></h2>
+            <p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">Picked from bed, 11:40pm. Confirm them — or re-pick if the morning knows better.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:11px 14px;display:flex;align-items:center;gap:12px;transform:rotate(-0.3deg)">
+                <span style="color:var(--acc-terra);font-size:15px">★</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Ship the pricing one-pager</span>
+                <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">seeded</span>
+              </div>
+              <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:11px 14px;display:flex;align-items:center;gap:12px;transform:rotate(0.2deg)">
+                <span style="color:var(--acc-terra);font-size:15px">★</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Re-pot the jasmine</span>
+                <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">seeded</span>
+              </div>
+              <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:11px 14px;display:flex;align-items:center;gap:12px;transform:rotate(-0.2deg)">
+                <span style="color:var(--acc-terra);font-size:15px">★</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Call Mom</span>
+                <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">seeded</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">re-pick</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Keep &amp; continue →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">The rule: starring in <a href="#2d">2d</a> (Closing · Tomorrow's three) writes straight into Morning step 2 (<a href="#1b">1b</a>) — the step arrives closed and auto-advances after a beat unless touched. "Re-pick" reopens it as the normal picker; starring fewer than three last night opens it partially seeded (2/3). The sun in <a href="#3a">3a</a> replaces <a href="#2b">2b</a>'s flat dial: an hour ring (12 waking hours, focused ones lit), tapered rays turning imperceptibly, a shaded core with the count inside, and a dusk halo.</p>
+</section>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Closing Ritual — four beats, mobile-first, skippable at every step. Most likely used from bed.</span></div>
+  <div class="dv-opts">
+
+    <!-- 2A — ENTRY AFFORDANCE -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>The way in — Today after sunset grows a dusk-tinted button</div>
+      <div class="dv-card" style="width:640px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:28px 34px 32px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">Today · 21:14</div>
+              <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:34px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Friday, July 10</h1>
+            </div>
+            <button style="border:1px solid rgba(90,82,110,0.4);background:linear-gradient(180deg,#3b3450,#2c2740);color:#e8e2f0;font-family:inherit;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 4px 14px rgba(44,39,64,0.35)"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#C9C0D8"/></svg>Close the garden</button>
+          </div>
+          <div style="margin-top:12px;font-family:var(--font-hand);font-size:15px;color:#7a745f;transform:rotate(-0.7deg)">appears after Cairo sunset · gone by morning</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2B — BEAT 1 -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>1 · The day's garden — today only</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen" style="background:linear-gradient(180deg,#2e2840,#211d30)">
+          <div class="grain" style="opacity:0.25"></div>
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:64px 24px 0">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#a89fc0">Closing · 1 of 4</div>
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#8e88a0;cursor:pointer">skip</span>
+          </div>
+          <div style="flex:none;padding:18px 24px 0">
+            <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:30px;color:#f0ebdd;line-height:1.1">Today's garden</h1>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#b8b0c8">Today · 7 blooms · 3h focused · vine +1</div>
+          </div>
+          <div style="flex:1;position:relative;overflow:hidden">
+            <!-- sun-hours dial -->
+            <div style="position:absolute;left:50%;top:40px;transform:translateX(-50%);width:150px;height:150px">
+              <svg viewBox="0 0 120 120" style="width:100%;height:100%">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(240,235,221,0.14)" stroke-width="7"></circle>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#C9A55A" stroke-width="7" stroke-linecap="round" stroke-dasharray="118 196" transform="rotate(-90 60 60)"></circle>
+                <circle cx="60" cy="60" r="26" fill="#D9B65C" opacity="0.9"></circle>
+                <g stroke="#C9A55A" stroke-width="3" stroke-linecap="round" opacity="0.8"><path d="M60 22v8M60 90v8M22 60h8M90 60h8"></path></g>
+              </svg>
+              <div style="position:absolute;left:0;right:0;top:100%;margin-top:6px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">3h of sun</div>
+            </div>
+            <!-- petal pile -->
+            <div style="position:absolute;left:34px;bottom:96px;width:110px;height:56px">
+              <span style="position:absolute;left:34px;bottom:6px;width:12px;height:9px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(14deg)"></span>
+              <span style="position:absolute;left:50px;bottom:2px;width:11px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(-32deg)"></span>
+              <span style="position:absolute;left:24px;bottom:0;width:10px;height:8px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(56deg)"></span>
+              <span style="position:absolute;left:44px;bottom:12px;width:10px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(-8deg)"></span>
+              <span style="position:absolute;left:60px;bottom:8px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(80deg)"></span>
+              <span style="position:absolute;left:38px;bottom:20px;width:9px;height:7px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:60% 40% 70% 30%;transform:rotate(120deg)"></span>
+              <span style="position:absolute;left:54px;bottom:18px;width:8px;height:6px;background:linear-gradient(135deg,#E8C4CC,#D4A8B0);border-radius:70% 30% 60% 40%;transform:rotate(-60deg)"></span>
+              <div style="position:absolute;left:0;right:0;bottom:-22px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">7 petals</div>
+            </div>
+            <!-- today's vine -->
+            <div style="position:absolute;right:30px;bottom:84px;width:120px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:130px;filter:brightness(0.85)">
+              <div style="margin-top:6px;text-align:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:#a89fc0">vine +1 leaf</div>
+            </div>
+            <span style="position:absolute;left:24px;right:24px;bottom:74px;border-bottom:1.5px dashed rgba(168,159,192,0.35)"></span>
+          </div>
+          <div style="flex:none;padding:0 24px 40px">
+            <button style="width:100%;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2C — BEAT 2 -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>2 · One line — saves to the journal</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen" style="background:linear-gradient(180deg,#332c48,#262138)">
+          <div class="grain" style="opacity:0.25"></div>
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:64px 24px 0">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#a89fc0">Closing · 2 of 4</div>
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#8e88a0;cursor:pointer">skip</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px">
+            <div style="position:relative;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:0 18px 44px rgba(20,16,28,0.45);padding:26px 24px 22px;transform:rotate(-0.6deg)">
+              <span style="position:absolute;top:-8px;left:30px;width:52px;height:14px;background:rgba(168,160,190,0.45);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-3deg);border-radius:1px"></span>
+              <div style="font-family:var(--font-hand);font-size:22px;color:var(--ink-hairline)">One line about today…<span style="display:inline-block;width:1.5px;height:20px;background:var(--acc-terra);margin-left:3px;vertical-align:-3px"></span></div>
+              <div style="margin-top:34px;border-top:1px dashed var(--line-dashed);padding-top:10px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-hairline)">lands in the journal</span>
+                <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">↵ continues</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex:none;padding:0 24px 40px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2D — BEAT 3 -->
+    <div class="dv-opt" id="2d">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>3 · Tomorrow's three — star them into the seed envelope</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen" style="background:linear-gradient(180deg,#2e2840,#211d30)">
+          <div class="grain" style="opacity:0.25"></div>
+          <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:64px 24px 0">
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#a89fc0">Closing · 3 of 4</div>
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#8e88a0;cursor:pointer">skip</span>
+          </div>
+          <div style="flex:none;padding:16px 24px 0">
+            <h1 style="margin:0;font-family:var(--font-display);font-weight:500;font-size:26px;color:#f0ebdd;line-height:1.1">Tomorrow's three</h1>
+            <div style="margin-top:6px;font-family:var(--font-hand);font-size:15px;color:#c9c0d8">tap three, or fewer ✿</div>
+          </div>
+          <div style="flex:1;padding:16px 24px 0;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:11px;background:rgba(244,241,234,0.1);border:1px solid rgba(244,241,234,0.28);border-radius:8px;padding:12px 13px">
+              <svg width="14" height="17" viewBox="0 0 14 18" style="flex:none"><ellipse cx="7" cy="9" rx="4.6" ry="7" fill="#C9A55A" transform="rotate(14 7 9)"/><path d="M7 3.4c1 1.8 1.4 3.4 1.2 5.4" stroke="#8a6a2f" stroke-width="1" fill="none" opacity="0.6"/></svg>
+              <span style="flex:1;font-size:13.5px;color:#f0ebdd">Send Omar the revised scope PDF</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;background:rgba(244,241,234,0.1);border:1px solid rgba(244,241,234,0.28);border-radius:8px;padding:12px 13px">
+              <svg width="14" height="17" viewBox="0 0 14 18" style="flex:none"><ellipse cx="7" cy="9" rx="4.6" ry="7" fill="#C9A55A" transform="rotate(14 7 9)"/><path d="M7 3.4c1 1.8 1.4 3.4 1.2 5.4" stroke="#8a6a2f" stroke-width="1" fill="none" opacity="0.6"/></svg>
+              <span style="flex:1;font-size:13.5px;color:#f0ebdd">Wireframe the charts view</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;background:rgba(244,241,234,0.05);border:1px solid rgba(244,241,234,0.14);border-radius:8px;padding:12px 13px">
+              <span style="width:14px;height:14px;border:1.5px dashed rgba(244,241,234,0.4);border-radius:50%;flex:none"></span>
+              <span style="flex:1;font-size:13.5px;color:#c9c0d8">Reconcile Q2 actuals</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;background:rgba(244,241,234,0.05);border:1px solid rgba(244,241,234,0.14);border-radius:8px;padding:12px 13px">
+              <span style="width:14px;height:14px;border:1.5px dashed rgba(244,241,234,0.4);border-radius:50%;flex:none"></span>
+              <span style="flex:1;font-size:13.5px;color:#c9c0d8">Water the balcony plants</span>
+            </div>
+          </div>
+          <div style="flex:none;padding:14px 24px 40px">
+            <!-- seed envelope -->
+            <div style="position:relative;background:rgba(244,241,234,0.08);border:1.5px dashed rgba(201,165,90,0.5);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:12px">
+              <svg width="30" height="22" viewBox="0 0 34 24" style="flex:none"><path d="M2 4h30v18H2V4Z" fill="#C8B48C" stroke="#9d8a63" stroke-width="1.5"/><path d="M2 4l15 10L32 4" fill="none" stroke="#9d8a63" stroke-width="1.5"/></svg>
+              <div style="flex:1"><div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.18em;text-transform:uppercase;color:#c9b485">For tomorrow</div><div style="font-size:12px;color:#c9c0d8;margin-top:2px">2 seeds dropped in</div></div>
+              <div style="display:flex;gap:4px"><svg width="11" height="14" viewBox="0 0 14 18"><ellipse cx="7" cy="9" rx="4.6" ry="7" fill="#C9A55A" transform="rotate(14 7 9)"></ellipse></svg><svg width="11" height="14" viewBox="0 0 14 18"><ellipse cx="7" cy="9" rx="4.6" ry="7" fill="#C9A55A" transform="rotate(-10 7 9)"></ellipse></svg></div>
+            </div>
+            <button style="width:100%;margin-top:12px;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Tuck them in</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2E — BEAT 4 -->
+    <div class="dv-opt" id="2e">
+      <div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>4 · Goodnight — the dusk veil draws across</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen" style="background:linear-gradient(180deg,#26213a,#171422)">
+          <div class="grain" style="opacity:0.2"></div>
+          <!-- dimmed garden silhouettes -->
+          <div style="position:absolute;left:0;right:0;bottom:110px;display:flex;align-items:flex-end;justify-content:space-around;padding:0 30px;opacity:0.5">
+            <img src="ds/assets/cherry/fallen.png" alt="" style="height:90px;filter:brightness(0.5) saturate(0.6)">
+            <img src="ds/assets/vine/flowering.png" alt="" style="height:104px;filter:brightness(0.5) saturate(0.6)">
+            <img src="ds/assets/clover/resting.png" alt="" style="height:64px;filter:brightness(0.5) saturate(0.6)">
+          </div>
+          <span style="position:absolute;left:20%;top:32%;width:5px;height:5px;border-radius:50%;background:#E8D9A0;box-shadow:0 0 8px 3px rgba(232,217,160,0.45);opacity:0.7"></span>
+          <span style="position:absolute;left:72%;top:26%;width:4px;height:4px;border-radius:50%;background:#E8D9A0;box-shadow:0 0 7px 3px rgba(232,217,160,0.4);opacity:0.5"></span>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 34px;position:relative;z-index:5">
+            <div style="background:rgba(244,241,234,0.07);border:1px solid rgba(244,241,234,0.16);border-radius:12px;padding:26px 28px;text-align:center;backdrop-filter:blur(4px)">
+              <svg width="26" height="26" viewBox="0 0 24 24" style="opacity:0.85"><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#C9C0D8"></path></svg>
+              <div style="margin-top:12px;font-family:var(--font-display);font-size:22px;font-weight:500;color:#f0ebdd;line-height:1.3">The garden's closed.</div>
+              <div style="margin-top:4px;font-family:var(--font-hand);font-size:17px;color:#c9c0d8">see you in the morning ✿</div>
+              <button style="margin-top:20px;border:1px solid rgba(244,241,234,0.3);background:rgba(244,241,234,0.1);color:#f0ebdd;font-family:inherit;font-size:13.5px;padding:10px 34px;border-radius:999px;cursor:pointer">Done</button>
+            </div>
+          </div>
+          <div style="flex:none;padding:0 0 34px;text-align:center;font-family:var(--font-mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#8e88a0;position:relative;z-index:5">returns to a dimmed Today · no sounds after this</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Every beat: ghost "skip" top-right, ≤20 words on screen, reuses the Focus dusk effects — no new weather. Desktop gets the same four beats as a centered takeover.</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Rituals — the guided wizard behind the Today cards (Morning · 4 steps, Evening · 2). Rethought as a calm takeover, not a cramped modal.</span></div>
+
+  <p style="max-width:760px;margin:0 0 22px;font-size:13.5px;line-height:1.65;color:#6b6455">Rituals aren't routines. Routines are the checkboxes that live on Today; a <b>ritual</b> is a short guided flow you step through — tap the <b>Morning</b> or <b>Evening</b> card on <a href="Today" style="color:var(--acc-terra)">Today</a> and the workspace dims to this focused wizard. Skippable, one decision per screen, under five minutes. Each frame below is one step.</p>
+
+  <div class="dv-opts">
+
+    <!-- ===== MORNING STEP 1 — OVERDUE ===== -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Morning · 1/4 — Review overdue</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <!-- dimmed today behind -->
+        <div style="position:absolute;inset:0;padding:34px 40px;opacity:0.55">
+          <div style="font-family:var(--font-display);font-size:34px;font-weight:500;color:var(--ink-body)">Friday, July 10</div>
+          <div style="margin-top:20px;height:12px;width:60%;background:var(--line-card);border-radius:3px"></div>
+          <div style="margin-top:14px;height:12px;width:80%;background:var(--line-card);border-radius:3px"></div>
+          <div style="margin-top:14px;height:12px;width:52%;background:var(--line-card);border-radius:3px"></div>
+        </div>
+        <div class="scene-dim"></div>
+        <div class="panel">
+          <div class="dawn"></div>
+          <div style="padding:22px 26px 24px">
+            <!-- header row -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Morning ritual · step 1/4</span>
+              <span class="rlink">skip</span>
+            </div>
+            <!-- clover stepper -->
+            <div style="display:flex;align-items:flex-end;gap:8px;margin-top:16px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:34px">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.55">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.35">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.2">
+              <span style="margin-left:6px;font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-1deg)">2 loose ends from yesterday</span>
+            </div>
+            <h2 style="margin:18px 0 4px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Review overdue</h2>
+            <p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">Push each one forward or let it go — start the day with a clean slate.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="step-item">
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Figure out linking multiple GitHub accounts</span>
+                <span class="chip" style="background:rgba(181,101,74,0.14);color:var(--acc-terra)">3d over</span>
+                <span class="pill">push to tomorrow</span>
+                <span class="rlink" style="color:var(--acc-terra)">drop</span>
+              </div>
+              <div class="step-item">
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Reconcile Q2 actuals with Omar</span>
+                <span class="chip" style="background:rgba(181,101,74,0.14);color:var(--acc-terra)">1d over</span>
+                <span class="pill">push to tomorrow</span>
+                <span class="rlink" style="color:var(--acc-terra)">drop</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">skip for now</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MORNING STEP 2 — TOP-3 ===== -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Morning · 2/4 — Pick your Top-3</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <div style="position:absolute;inset:0;padding:34px 40px;opacity:0.5"><div style="font-family:var(--font-display);font-size:34px;font-weight:500;color:var(--ink-body)">Friday, July 10</div></div>
+        <div class="scene-dim"></div>
+        <div class="panel">
+          <div class="dawn"></div>
+          <div style="padding:22px 26px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Morning ritual · step 2/4</span>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;margin-top:16px">
+              <img src="ds/assets/clover/dewdrop.png" alt="" style="height:30px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:34px">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.5">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.3">
+              <span style="margin-left:6px;font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-1deg)">1 sprout awake, 2 still sleeping</span>
+            </div>
+            <h2 style="margin:18px 0 4px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Pick your Top-3 <span style="font-family:var(--font-mono);font-weight:400;font-size:13px;color:var(--ink-faint)">(1/3)</span></h2>
+            <p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">The three that would make today a good day. Star up to three.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:11px 14px;display:flex;align-items:center;gap:12px;transform:rotate(-0.3deg)">
+                <span style="color:var(--acc-terra);font-size:15px">★</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Deliver the forecasting MVP</span>
+                <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">picked</span>
+              </div>
+              <div class="step-item">
+                <span style="color:var(--line-sidebar);font-size:15px">☆</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Create official emails for Shaheen</span>
+                <span class="pill">star</span>
+              </div>
+              <div class="step-item">
+                <span style="color:var(--line-sidebar);font-size:15px">☆</span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Audit ads performance</span>
+                <span class="pill">star</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">skip for now</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MORNING STEP 3 — INBOX ===== -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Morning · 3/4 — Inbox to zero</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <div style="position:absolute;inset:0;padding:34px 40px;opacity:0.5"><div style="font-family:var(--font-display);font-size:34px;font-weight:500;color:var(--ink-body)">Friday, July 10</div></div>
+        <div class="scene-dim"></div>
+        <div class="panel">
+          <div class="dawn"></div>
+          <div style="padding:22px 26px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Morning ritual · step 3/4</span>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;margin-top:16px">
+              <img src="ds/assets/clover/dewdrop.png" alt="" style="height:30px">
+              <img src="ds/assets/clover/dewdrop.png" alt="" style="height:30px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:34px">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:24px;opacity:0.5">
+              <span style="margin-left:6px;font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-1deg)">3 letters still waiting</span>
+            </div>
+            <h2 style="margin:18px 0 4px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Inbox to zero</h2>
+            <p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">File what matters, dismiss what doesn't. The hydrangea calms as it clears.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="step-item">
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Call Omar re: pricing tomorrow 3pm</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;padding:6px 13px;border-radius:999px;cursor:pointer">file</button>
+                <span class="rlink">dismiss</span>
+              </div>
+              <div class="step-item">
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">balcony plants — ask Salma</span>
+                <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;padding:6px 13px;border-radius:999px;cursor:pointer">file</button>
+                <span class="rlink">dismiss</span>
+              </div>
+              <div class="step-item" style="opacity:0.55">
+                <span style="width:15px;height:15px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;flex:none"><span style="color:var(--paper-parchment);font-size:9px">✓</span></span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">renew hosting before the 15th</span>
+                <img src="ds/assets/cherry/fallen.png" alt="" style="height:16px">
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">skip for now</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MORNING STEP 4 — BLOCK (planning board) ===== -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Morning · 4/4 — Time-block your day (drag the beds onto the calendar)</div>
+      <div class="dv-card scene" style="width:1060px;height:700px">
+        <div class="grain" style="z-index:60"></div>
+        <div class="scene-dim"></div>
+        <div class="panel" style="width:980px">
+          <div class="dawn"></div>
+          <div style="padding:20px 24px 22px">
+            <!-- header -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="flabel">Morning ritual · step 4/4</span>
+                <span style="display:flex;align-items:flex-end;gap:5px"><img src="ds/assets/clover/dewdrop.png" alt="" style="height:22px"><img src="ds/assets/clover/dewdrop.png" alt="" style="height:22px"><img src="ds/assets/clover/dewdrop.png" alt="" style="height:22px"><img src="ds/assets/clover/awake.png" alt="" style="height:26px"></span>
+              </div>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px">
+              <h2 style="margin:0;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Time-block your day</h2>
+              <span style="font-family:var(--font-hand);font-size:16px;color:#7a745f;transform:rotate(-0.8deg)">drag a bud onto an hour — it plants there ✿</span>
+            </div>
+            <p style="margin:4px 0 14px;font-size:12.5px;color:var(--ink-faint)">Give the day a shape. Pull anything from the beds on the left into an open slot; drop the rest tomorrow.</p>
+
+            <!-- two-pane board -->
+            <div style="display:flex;gap:18px;align-items:stretch">
+
+              <!-- LEFT — source beds -->
+              <div style="width:340px;flex:none;display:flex;flex-direction:column;gap:14px">
+                <!-- Today bed (daisy) -->
+                <div>
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><img src="ds/assets/daisy/morning.png" alt="" style="height:26px;flex:none" title="daisy · morning — the ritual runs before noon"><span class="flabel">Today · Top-3</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">2</span></div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <div style="display:flex;align-items:center;gap:9px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:8px 10px;box-shadow:var(--shadow-crisp)"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="color:var(--acc-terra);font-size:12px">★</span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Deliver the forecasting MVP</span><span class="chip" style="background:rgba(122,148,110,0.2);color:var(--acc-sage-text)">1h 30m</span></div>
+                    <div style="display:flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:8px 10px"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="color:var(--acc-terra);font-size:12px">★</span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Official emails for Shaheen</span><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">30m</span></div>
+                  </div>
+                </div>
+                <!-- Inbox bed (hydrangea) -->
+                <div>
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><img src="ds/assets/hydrangea/light.png" alt="" style="height:26px;flex:none" title="hydrangea · light — 1–4 pending"><span class="flabel">Inbox</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">1</span></div>
+                  <div style="display:flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:8px 10px"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Call Omar re: pricing</span><span class="chip" style="background:rgba(154,180,190,0.24);color:var(--acc-hydrangea-deep)">3 PM</span></div>
+                </div>
+                <!-- This Week bed (wisteria) -->
+                <div>
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><img src="ds/assets/wisteria/p40.png" alt="" style="height:26px;flex:none" title="wisteria · p40 — the week is partway grown"><span class="flabel">This week</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">2</span></div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <div style="display:flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:8px 10px"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Set up LinkedIn</span></div>
+                    <div style="display:flex;align-items:center;gap:9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:8px 10px"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="flex:1;font-size:12.5px;color:var(--ink-body)">Practice problem solving</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT — live day calendar -->
+              <div style="flex:1;min-width:0;border:1px solid var(--line-solid);border-radius:8px;overflow:hidden;background:var(--paper-parchment)">
+                <div style="height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line-card);background:var(--paper-bone)">
+                  <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Fri 10 · today</span>
+                  <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-sage-text)"><span style="color:var(--acc-sage)">●</span> 2 planted · 4h 30m</span>
+                </div>
+                <div style="display:flex;height:364px">
+                  <!-- time gutter (no gridlines) -->
+                  <div style="width:46px;flex:none;position:relative;border-right:1px solid var(--line-card)">
+                    <span style="position:absolute;top:-5px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">8 AM</span>
+                    <span style="position:absolute;top:47px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">9 AM</span>
+                    <span style="position:absolute;top:99px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">10 AM</span>
+                    <span style="position:absolute;top:151px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">11 AM</span>
+                    <span style="position:absolute;top:203px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">12 PM</span>
+                    <span style="position:absolute;top:255px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">1 PM</span>
+                    <span style="position:absolute;top:307px;right:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">2 PM</span>
+                  </div>
+                  <!-- events area (gridlines live here only) -->
+                  <div style="flex:1;min-width:0;position:relative;background-image:repeating-linear-gradient(transparent 0 51px, var(--line-card) 51px 52px)">
+                    <!-- existing event: Standup 9:00-9:45 -->
+                    <div style="position:absolute;top:52px;left:7px;right:8px;height:39px;background:rgba(168,160,190,0.16);border-left:3px solid var(--acc-lavender);border-radius:3px;padding:5px 9px"><div style="font-size:11.5px;color:var(--ink-body)">Standup + triage</div><div style="font-family:var(--font-mono);font-size:8px;color:var(--ink-faint);margin-top:1px">9:00 – 9:45</div></div>
+                    <!-- planted task block: Deliver MVP 10:00-11:30 (blush edge = holds a task) -->
+                    <div style="position:absolute;top:104px;left:7px;right:8px;height:76px;background:rgba(168,160,190,0.2);border-left:3px solid var(--acc-lavender);box-shadow:inset 3px 0 0 var(--acc-blossom);border-radius:3px;padding:6px 9px"><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--acc-terra);font-size:11px">★</span><span style="font-size:11.5px;color:var(--ink-body)">Deliver the forecasting MVP</span></div><div style="font-family:var(--font-mono);font-size:8px;color:var(--ink-faint);margin-top:2px">10:00 – 11:30 · just planted</div></div>
+                    <!-- drop ghost at 1 PM -->
+                    <div style="position:absolute;top:260px;left:7px;right:8px;height:52px;border:1.5px dashed var(--acc-lavender);background:rgba(168,160,190,0.1);border-radius:3px;display:flex;align-items:center;padding:0 10px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc-lavender-deep)">drop here · 1:00 – 2:00</span></div>
+                    <!-- dragging chip -->
+                    <div style="position:absolute;top:246px;left:64px;display:flex;align-items:center;gap:8px;background:var(--paper-parchment);border:1px solid var(--acc-lavender);border-radius:6px;padding:7px 11px;box-shadow:0 12px 26px rgba(60,52,38,0.28);transform:rotate(-2deg)"><span style="color:var(--ink-hairline);font-size:11px;line-height:1;letter-spacing:-3px">⠿</span><span style="font-size:12px;color:var(--ink-body)">Official emails for Shaheen</span><span class="chip" style="border:1px solid var(--line-solid);color:var(--ink-muted)">30m</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- footer -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:13px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">skip for now</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 24px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Finish — the day has a shape</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EVENING STEP 1 — SWEEP ===== -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Evening · 1/2 — Sweep today</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#2a2438,#1a1622)"></div>
+        <div style="position:absolute;inset:0;padding:34px 40px;opacity:0.4"><div style="font-family:var(--font-display);font-size:34px;font-weight:500;color:#e8e2f0">Friday, July 10</div></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%, rgba(20,16,28,0.1), rgba(20,16,28,0.5) 90%)"></div>
+        <div class="panel">
+          <div class="dusk"></div>
+          <div style="padding:22px 26px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Evening ritual · step 1/2</span>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px">
+              <img src="ds/assets/clover/resting.png" alt="" style="height:34px">
+              <span style="font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-1deg)">the garden is settling in for the night</span>
+            </div>
+            <h2 style="margin:18px 0 4px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Sweep today</h2>
+            <p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">Still open — finish it or roll it to tomorrow. Close the loops so tonight is quiet.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="step-item">
+                <span class="cbx"></span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-body)">Review the portfolio site</span>
+                <span class="pill">done</span>
+                <span class="rlink" style="color:var(--acc-lavender-deep);text-decoration:underline">roll to tomorrow</span>
+              </div>
+              <div class="step-item" style="opacity:0.55">
+                <span style="width:15px;height:15px;border-radius:4px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;flex:none"><span style="color:var(--paper-parchment);font-size:9px">✓</span></span>
+                <span style="flex:1;font-size:13.5px;color:var(--ink-hairline);text-decoration:line-through">Create official emails for Shaheen</span>
+                <img src="ds/assets/cherry/fallen.png" alt="" style="height:16px">
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span class="rlink">skip for now</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EVENING STEP 2 — PREVIEW ===== -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Evening · 2/2 — Tomorrow, at a glance</div>
+      <div class="dv-card scene">
+        <div class="grain" style="z-index:60"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#241f33,#151120)"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%, rgba(20,16,28,0.1), rgba(20,16,28,0.55) 90%)"></div>
+        <div class="panel">
+          <div class="dusk"></div>
+          <div style="padding:22px 26px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Evening ritual · step 2/2</span>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:30px">
+              <span style="font-family:var(--font-hand);font-size:17px;color:#7a745f;transform:rotate(-1deg)">tomorrow is still just a seed</span>
+            </div>
+            <h2 style="margin:18px 0 16px;font-family:var(--font-display);font-weight:600;font-size:23px;color:var(--ink-body)">Tomorrow, at a glance</h2>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div><div class="flabel" style="margin-bottom:4px">Top-3</div><div style="font-size:13.5px;color:var(--ink-body)">Ship the pricing one-pager · Re-pot the jasmine · Call Mom</div></div>
+              <div style="border-top:1px dashed var(--line-dashed);padding-top:12px"><div class="flabel" style="margin-bottom:4px">Due tomorrow</div><div style="font-size:13.5px;color:var(--ink-body)">Reconcile Q2 actuals with Omar</div></div>
+              <div style="border-top:1px dashed var(--line-dashed);padding-top:12px"><div class="flabel" style="margin-bottom:4px;color:var(--acc-lavender-deep)">Scheduled</div><div style="font-size:13.5px;color:var(--ink-body)">Standup 9:00 · Lunch w/ Omar 2:00</div></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:15px;border-top:1px dashed var(--line-dashed)">
+              <span style="font-family:var(--font-hand);font-size:15px;color:#7a745f">rest easy — it's all held ✿</span>
+              <button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:9px 22px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Finish</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PHONE ===== -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>iPhone — Morning ritual, full-screen sheet</div>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="phone-screen">
+          <div class="grain" style="border-radius:46px;z-index:50"></div>
+          <div class="dawn" style="height:6px;flex:none"></div>
+          <div style="height:48px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-body);position:relative;z-index:10">
+            <span style="font-weight:500">9:41</span><span style="letter-spacing:2px">▪▪▪ ⏽</span>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 20px 0;position:relative;z-index:10">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="flabel">Morning ritual · 2/4</span>
+              <span class="rlink">skip</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:7px;margin-top:14px">
+              <img src="ds/assets/clover/dewdrop.png" alt="" style="height:28px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:32px">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:22px;opacity:0.5">
+              <img src="ds/assets/clover/seedling.png" alt="" style="height:22px;opacity:0.3">
+            </div>
+            <div style="font-family:var(--font-hand);font-size:16px;color:#7a745f;margin-top:8px;transform:rotate(-1deg)">1 sprout awake, 2 still sleeping</div>
+            <h2 style="margin:12px 0 3px;font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink-body)">Pick your Top-3 <span style="font-family:var(--font-mono);font-weight:400;font-size:12px;color:var(--ink-faint)">(1/3)</span></h2>
+            <p style="margin:0 0 12px;font-size:12px;color:var(--ink-faint)">The three that would make today good.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:11px 13px;display:flex;align-items:center;gap:10px;transform:rotate(-0.3deg)">
+                <span style="color:var(--acc-terra);font-size:15px">★</span>
+                <span style="flex:1;font-size:13px;color:var(--ink-body)">Deliver the forecasting MVP</span>
+                <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">picked</span>
+              </div>
+              <div class="step-item" style="padding:11px 13px"><span style="color:var(--line-sidebar);font-size:15px">☆</span><span style="flex:1;font-size:13px;color:var(--ink-body)">Official emails for Shaheen</span><span class="pill">star</span></div>
+              <div class="step-item" style="padding:11px 13px"><span style="color:var(--line-sidebar);font-size:15px">☆</span><span style="flex:1;font-size:13px;color:var(--ink-body)">Audit ads performance</span><span class="pill">star</span></div>
+            </div>
+            <div style="flex:1"></div>
+            <button style="width:100%;border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:14.5px;padding:14px;border-radius:999px;box-shadow:var(--shadow-cta);margin-bottom:6px">Next →</button>
+            <div style="text-align:center;padding-bottom:8px"><span class="rlink">skip this step</span></div>
+            <div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:120px;height:4px;border-radius:2px;background:rgba(42,36,32,0.28)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "the Morning ritual done-state + streak feedback on Finish" · "a weekly-planning ritual (the longer 6-step one)" · "ritual reminder times in Settings".</p>
+</section>
+
+</x-dc>
+</body>
+</html>

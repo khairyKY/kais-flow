@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6dfce;font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+a{color:var(--ink-body);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+.dv-turn{padding:44px 48px 36px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px var(--font-mono);padding:4px 8px;background:#2a2420;color:#F4F1EA;border-radius:4px;text-decoration:none;letter-spacing:0.08em}
+.dv-tname{font:600 14px var(--font-ui);color:#2a2420}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--font-mono);padding:3px 8px;background:rgba(42,36,32,0.1);color:#2a2420;border-radius:5px;text-decoration:none;letter-spacing:0.06em}
+.dv-olabel{display:flex;align-items:center;gap:10px;font:400 12px var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:#6b6455}
+.dv-card{background:var(--paper-linen);border:1px solid #cfc7b0;border-radius:5px;box-shadow:0 2px 6px rgba(60,52,38,0.12),0 18px 44px rgba(60,52,38,0.14);overflow:hidden;position:relative}
+.dv-opt:target .dv-oid{background:var(--acc-terra);color:#fff}
+.dv-next{margin:26px 0 0;font:13px/1.6 var(--font-ui);color:#6b6455}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:40;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+.snav{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;text-decoration:none}
+.sdot{width:18px;display:flex;justify-content:center;flex:none}
+.ghd{display:flex;align-items:center;gap:12px;margin:26px 0 4px}
+.ghd span:first-child{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.ghd .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+.srow{display:flex;align-items:flex-start;gap:13px;padding:12px 2px;border-bottom:1px dashed var(--line-dashed)}
+.sx{margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--ink-faint)}
+.hl{background:rgba(201,165,90,0.32);border-radius:2px;padding:0 2px;color:var(--ink-body)}
+.fchip{font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1px solid var(--line-solid);color:var(--ink-muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.fchip b{font-weight:400;color:var(--ink-hairline)}
+.mono{font-family:var(--font-mono)}
+.chip{font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Search Results — the full page behind the ⌘/ overlay's "View all results ↵".</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1A — RESULTS ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>/search?q=omar — grouped results, a cross-section of the whole garden</div>
+      <div class="dv-card" style="width:1280px">
+        <div class="grain"></div>
+        <div style="display:flex;min-height:900px;background:var(--paper-linen)">
+
+          <aside style="width:236px;flex:none;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);display:flex;flex-direction:column;padding:24px 0 18px">
+            <div style="padding:0 22px 18px">
+              <div style="font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-body)">Kai's Flow</div>
+              <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">Personal · Cairo</div>
+            </div>
+            <nav style="padding:0 14px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:6px 12px 5px">Plan</div>
+              <a href="Today" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-sage)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Today</span></a>
+              <a href="Inbox" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-hydrangea)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Inbox</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--acc-terra)">3</span></a>
+              <a href="Tasks" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-blossom)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Tasks</span></a>
+              <a href="Calendar" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-lavender)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Calendar</span></a>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-hairline);padding:14px 12px 5px">Cultivate</div>
+              <a href="Routines" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-moss)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Routines</span></a>
+              <a href="Review" class="snav"><span class="sdot"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc-buttercream)"></span></span><span style="font-size:14px;color:var(--ink-muted)">Review</span></a>
+            </nav>
+            <div style="flex:1"></div>
+            <div style="margin:0 22px 14px;padding:12px 0;border-top:1px dashed var(--line-sidebar);border-bottom:1px dashed var(--line-sidebar);display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/vine/flowering.png" alt="" style="height:40px;width:auto;filter:var(--shadow-drop-sm)">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">Streak</div><div style="font-size:13px;color:var(--ink-body);margin-top:1px">6 days · best 21</div></div>
+            </div>
+            <div style="padding:0 14px;display:flex;flex-direction:column;gap:1px">
+              <a href="#1a" style="display:flex;align-items:center;padding:7px 12px;border-radius:6px;text-decoration:none;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-body);font-weight:600">Search</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘K</span></a>
+              <a href="#" class="snav" style="padding:7px 12px"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-muted)">Chat</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">⌘J</span></a>
+              <a href="Settings" class="snav" style="padding:7px 12px"><span style="width:18px"></span><span style="font-size:13.5px;color:var(--ink-muted)">Settings</span></a>
+            </div>
+          </aside>
+
+          <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <div style="height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px dashed var(--line-solid);font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">
+              <div style="display:flex;align-items:center;gap:10px"><span>Kai's Flow</span><span>·</span><span>Fri 10 Jul</span><span>·</span><span style="display:inline-flex;align-items:center;gap:6px">Synced<span style="width:6px;height:6px;border-radius:50%;background:var(--acc-sage)"></span></span></div>
+              <div>Africa/Cairo</div>
+            </div>
+
+            <div style="padding:30px 0 48px;display:flex;justify-content:center;overflow:hidden">
+              <div style="width:920px;max-width:100%;padding:0 34px">
+
+                <!-- pinned search header -->
+                <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 20px;display:flex;align-items:center;gap:14px">
+                  <span style="font-size:19px;color:var(--ink-faint)">⌕</span>
+                  <span style="flex:1;font-family:var(--font-display);font-size:24px;color:var(--ink-body)">omar<span style="display:inline-block;width:1.5px;height:24px;background:var(--acc-terra);margin-left:3px;vertical-align:-4px"></span></span>
+                  <span class="mono" style="font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline)">esc clears</span>
+                </div>
+                <div class="mono" style="margin-top:10px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">23 results for 'omar'</div>
+
+                <!-- filter chips -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:16px">
+                  <div style="display:flex;gap:7px;flex:1;min-width:0;flex-wrap:wrap">
+                    <span class="fchip" style="background:#2a2420;color:#F4F1EA;border-color:#2a2420">All <b style="color:rgba(244,241,234,0.55)">23</b></span>
+                    <span class="fchip">Tasks <b>9</b></span>
+                    <span class="fchip">Events <b>3</b></span>
+                    <span class="fchip">Inbox <b>2</b></span>
+                    <span class="fchip">Projects <b>1</b></span>
+                    <span class="fchip">Journal <b>5</b></span>
+                    <span class="fchip">People <b>2</b></span>
+                    <span class="fchip">Library <b>1</b></span>
+                  </div>
+                  <div style="display:flex;gap:7px;flex:none">
+                    <span class="fchip" style="border-style:dashed">Open only</span>
+                    <span class="fchip" style="border-style:dashed">Any time ▾</span>
+                  </div>
+                </div>
+
+                <!-- PEOPLE -->
+                <div class="ghd"><span style="color:var(--acc-sage-text)">People · 2</span><span class="r"></span></div>
+                <div class="srow">
+                  <svg width="17" height="17" viewBox="0 0 24 24" style="flex:none;margin-top:2px"><g fill="#8A9A7E"><ellipse cx="12" cy="7" rx="3.4" ry="4.4"/><ellipse cx="7" cy="14" rx="3.4" ry="4.4" transform="rotate(-70 7 14)"/><ellipse cx="17" cy="14" rx="3.4" ry="4.4" transform="rotate(70 17 14)"/></g><circle cx="12" cy="12.4" r="2" fill="#6f7f65"/></svg>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)"><span class="hl">Omar</span> El-Sayed</div>
+                    <div class="sx">Pricing call scheduled · 3 open loops together</div>
+                  </div>
+                  <span class="mono" style="font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px">Last touch · 2d ago</span>
+                </div>
+                <div class="srow">
+                  <svg width="17" height="17" viewBox="0 0 24 24" style="flex:none;margin-top:2px"><g fill="#8A9A7E"><ellipse cx="12" cy="7" rx="3.4" ry="4.4"/><ellipse cx="7" cy="14" rx="3.4" ry="4.4" transform="rotate(-70 7 14)"/><ellipse cx="17" cy="14" rx="3.4" ry="4.4" transform="rotate(70 17 14)"/></g><circle cx="12" cy="12.4" r="2" fill="#6f7f65"/></svg>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Youssef Hamdan</div>
+                    <div class="sx"><span class="mono" style="font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--acc-hydrangea-deep);background:rgba(154,180,190,0.16);padding:2px 6px;border-radius:3px;margin-right:7px">Related</span>Shares the Shaheen retainer with Omar</div>
+                  </div>
+                  <span class="mono" style="font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px">Last touch · 12d ago</span>
+                </div>
+
+                <!-- TASKS -->
+                <div class="ghd"><span style="color:var(--acc-blossom-text, #a1707c)">Tasks · 9</span><span class="r"></span></div>
+                <div class="srow">
+                  <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Call <span class="hl">Omar</span> about pricing</div>
+                    <div class="sx">"…lock the retainer number before <span class="hl">Omar</span> flies out on Thursday."</div>
+                  </div>
+                  <span class="mono" style="font-size:9px;color:var(--acc-terra);letter-spacing:0.1em;margin-top:4px">!!</span>
+                  <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text);margin-top:1px">Tomorrow 15:00</span>
+                </div>
+                <div class="srow">
+                  <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Send <span class="hl">Omar</span> the revised scope PDF</div>
+                    <div class="sx">Forecasting App · waiting on the milestone table</div>
+                  </div>
+                  <span class="chip" style="background:rgba(168,160,190,0.22);color:var(--acc-lavender-text)">Fri 17 Jul</span>
+                </div>
+                <div class="srow">
+                  <span style="width:17px;height:17px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:10px;flex:none;margin-top:2px">✓</span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-hairline);text-decoration:line-through">Reply to <span class="hl" style="color:var(--ink-hairline)">Omar</span>'s issue comments</div>
+                    <div class="sx">Done Tuesday · Shaheen website</div>
+                  </div>
+                </div>
+                <div class="srow">
+                  <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Draft agenda for the <span class="hl">Omar</span> workshop</div>
+                    <div class="sx">"…the <span class="hl">Omar</span> workshop wants three concrete demos, not slides."</div>
+                  </div>
+                </div>
+                <div class="srow" style="border-bottom:none">
+                  <span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Invoice the retainer</div>
+                    <div class="sx"><span class="mono" style="font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--acc-hydrangea-deep);background:rgba(154,180,190,0.16);padding:2px 6px;border-radius:3px;margin-right:7px">Related</span>Retainer billed to Omar's studio monthly</div>
+                  </div>
+                </div>
+                <div style="padding:10px 2px 0;border-top:1px dashed var(--line-dashed)"><a href="#1a" style="font-size:12.5px;color:var(--ink-muted)">Show all 9 →</a></div>
+
+                <!-- EVENTS -->
+                <div class="ghd"><span style="color:var(--acc-lavender-text)">Events · 3</span><span class="r"></span></div>
+                <div class="srow">
+                  <span style="width:4px;height:30px;border-radius:2px;background:var(--acc-lavender);flex:none;margin-top:1px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Pricing call — <span class="hl">Omar</span></div>
+                    <div class="sx">Sat 11 Jul · 15:00 – 15:45</div>
+                  </div>
+                </div>
+                <div class="srow">
+                  <span style="width:4px;height:30px;border-radius:2px;background:var(--acc-lavender);flex:none;margin-top:1px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)"><span class="hl">Omar</span> workshop — demo day</div>
+                    <div class="sx">Thu 23 Jul · 10:00 – 13:00 · Zamalek studio</div>
+                  </div>
+                </div>
+                <div class="srow">
+                  <span style="width:4px;height:30px;border-radius:2px;background:var(--acc-lavender);flex:none;margin-top:1px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-hairline)">Coffee — <span class="hl" style="color:var(--ink-hairline)">Omar</span></div>
+                    <div class="sx">Past · Tue 30 Jun</div>
+                  </div>
+                </div>
+
+                <!-- JOURNAL -->
+                <div class="ghd"><span style="color:var(--acc-buttercream-text, #8a6a2f)">Journal · 5</span><span class="r"></span></div>
+                <div class="srow">
+                  <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);width:52px;flex:none;margin-top:4px">Jul 08</span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;color:var(--ink-body);line-height:1.5">"<span class="hl">Omar</span> pushed back on the timeline and he was right — the buffer was fantasy."</div>
+                  </div>
+                </div>
+                <div class="srow" style="border-bottom:none">
+                  <span class="mono" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);width:52px;flex:none;margin-top:4px">Jun 27</span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;color:var(--ink-body);line-height:1.5">"Long walk after the <span class="hl">Omar</span> call. Pricing anxiety is really scope anxiety."</div>
+                  </div>
+                </div>
+                <div style="padding:10px 2px 0;border-top:1px dashed var(--line-dashed)"><a href="#1a" style="font-size:12.5px;color:var(--ink-muted)">Show all 5 →</a></div>
+
+                <!-- PROJECTS -->
+                <div class="ghd"><span style="color:var(--acc-lavender-text)">Projects · 1</span><span class="r"></span></div>
+                <div class="srow" style="border-bottom:none">
+                  <span style="width:9px;height:9px;border-radius:50%;background:var(--acc-blossom);flex:none;margin-top:5px"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;color:var(--ink-body)">Shaheen website</div>
+                    <div class="sx"><span class="hl">Omar</span>'s studio · 5 open · retainer</div>
+                  </div>
+                  <span class="chip" style="background:rgba(212,168,176,0.22);color:#a1707c">11h this month</span>
+                </div>
+
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1B — EMPTY ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Empty result — bare soil, one action toward the chat</div>
+      <div class="dv-card" style="width:560px">
+        <div class="grain"></div>
+        <div style="background:var(--paper-linen);padding:40px 40px 44px;display:flex;flex-direction:column;align-items:center">
+          <div style="width:100%;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:13px 17px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:16px;color:var(--ink-faint)">⌕</span>
+            <span style="flex:1;font-family:var(--font-display);font-size:19px;color:var(--ink-body)">recurring invoces automation</span>
+          </div>
+          <div class="mono" style="margin-top:9px;align-self:flex-start;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">0 results</div>
+          <div style="position:relative;margin-top:34px;width:150px;height:110px">
+            <div style="position:absolute;left:10px;right:10px;bottom:12px;height:26px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#b9a98a,#a3937a 70%);box-shadow:inset 0 3px 6px rgba(60,52,38,0.28)"></div>
+            <div style="position:absolute;left:50%;bottom:30px;width:46px;height:46px;margin-left:-30px;border-radius:50%;border:3px solid #8b8471;background:rgba(244,241,234,0.35)"></div>
+            <div style="position:absolute;left:50%;bottom:14px;width:22px;height:3.5px;margin-left:10px;background:#8b8471;border-radius:2px;transform:rotate(38deg)"></div>
+          </div>
+          <div style="margin-top:20px;font-family:var(--font-hand);font-size:19px;color:#7a745f;text-align:center;max-width:360px;line-height:1.45">Nothing's come up for that — try fewer words, or let the chat dig deeper.</div>
+          <a href="#1b" style="margin-top:20px;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-body);border:1px solid var(--line-solid);border-radius:999px;padding:9px 18px">Ask the garden (chat) →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">The ⌘/ overlay (in <a href="Overlays">Overlays</a>) now carries a "View all results ↵" footer that lands here with the query. Mobile: chips scroll, input pins, groups stack.</p>
+</section>
+</x-dc>
+</body>
+</html>
