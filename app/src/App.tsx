@@ -7,6 +7,7 @@ import { RequireAuth } from './features/auth/RequireAuth'
 import { SignInPage } from './features/auth/SignInPage'
 import { AppLayout } from './components/AppLayout'
 import { Stub } from './components/Stub'
+import { KitReference } from './components/KitReference'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
@@ -23,6 +24,7 @@ const NotificationsPage = lazy(() => import('./features/notifications/Notificati
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
+  { path: '/design-system', element: <KitReference /> }, // §04 kit reference (no auth)
   {
     path: '/',
     element: (
