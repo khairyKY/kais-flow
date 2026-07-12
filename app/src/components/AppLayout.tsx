@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
+import { PageFallback } from './Stub'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
 import { useTheme } from '../lib/theme'
@@ -455,7 +456,9 @@ export function AppLayout() {
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <TopBar />
         <div className="app-main-content" style={{ flex: 1, minWidth: 0, padding: '30px 40px 64px' }}>
-          <Outlet />
+          <Suspense fallback={<PageFallback />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 

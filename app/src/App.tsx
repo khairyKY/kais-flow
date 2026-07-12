@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
@@ -5,15 +6,20 @@ import { AuthProvider } from './features/auth/AuthProvider'
 import { RequireAuth } from './features/auth/RequireAuth'
 import { SignInPage } from './features/auth/SignInPage'
 import { AppLayout } from './components/AppLayout'
-import { TodayPage } from './features/today/TodayPage'
-import { InboxPage } from './features/inbox/InboxPage'
-import { TasksPage } from './features/tasks/TasksPage'
-import { CalendarPage } from './features/calendar/CalendarPage'
-import { PlanningBoard } from './features/calendar/PlanningBoard'
-import { RoutinesPage } from './features/routines/RoutinesPage'
-import { WeeklyReviewPage } from './features/rituals/WeeklyReviewPage'
-import { SettingsPage } from './features/settings/SettingsPage'
-import { NotificationsPage } from './features/notifications/NotificationsPage'
+import { Stub } from './components/Stub'
+
+// Route-level code splitting — each page is its own chunk, loaded on demand.
+// Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
+// AppLayout + SignInPage stay eager: the shell and entry are needed immediately.
+const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
+const InboxPage = lazy(() => import('./features/inbox/InboxPage').then((m) => ({ default: m.InboxPage })))
+const TasksPage = lazy(() => import('./features/tasks/TasksPage').then((m) => ({ default: m.TasksPage })))
+const CalendarPage = lazy(() => import('./features/calendar/CalendarPage').then((m) => ({ default: m.CalendarPage })))
+const PlanningBoard = lazy(() => import('./features/calendar/PlanningBoard').then((m) => ({ default: m.PlanningBoard })))
+const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then((m) => ({ default: m.RoutinesPage })))
+const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage').then((m) => ({ default: m.WeeklyReviewPage })))
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -26,17 +32,33 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/today" replace /> },
+      // Built surfaces (reskin waves W1–W8)
       { path: 'today', element: <TodayPage /> },
       { path: 'inbox', element: <InboxPage /> },
       { path: 'tasks', element: <TasksPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'planning', element: <PlanningBoard /> },
       { path: 'routines', element: <RoutinesPage /> },
-      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
+      // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
+      { path: 'projects', element: <Stub name="Projects" /> },
+      { path: 'projects/:id', element: <Stub name="Project" /> },
+      { path: 'journal', element: <Stub name="Journal" /> },
+      { path: 'library', element: <Stub name="Library" /> },
+      { path: 'people', element: <Stub name="People" /> },
+      { path: 'people/:id', element: <Stub name="Person" /> },
+      { path: 'activity', element: <Stub name="Activity" /> },
+      { path: 'herbarium', element: <Stub name="Herbarium" /> },
+      { path: 'focus', element: <Stub name="Focus" /> },
+      { path: 'seasons', element: <Stub name="Seasons" /> },
+      { path: 'trash', element: <Stub name="Trash" /> },
+      { path: 'search', element: <Stub name="Search" /> },
+      { path: 'perennials', element: <Stub name="Perennials" /> },
     ],
   },
+  { path: '/onboarding', element: <Stub name="Onboarding" /> },
 ])
 
 function App() {
