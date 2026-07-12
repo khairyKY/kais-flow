@@ -328,6 +328,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function AppLayout() {
   useRealtimeSync()
+  const { pathname } = useLocation()
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -457,7 +458,9 @@ export function AppLayout() {
         <TopBar />
         <div className="app-main-content" style={{ flex: 1, minWidth: 0, padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <Outlet />
+            <div key={pathname} className="kf-route">
+              <Outlet />
+            </div>
           </Suspense>
         </div>
       </main>

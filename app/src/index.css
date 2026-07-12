@@ -44,6 +44,20 @@ body,
   height: 100%;
 }
 
+/* Route transition — incoming view settles up from below (Motion 1a/2a).
+   Applied to the keyed Outlet wrapper in AppLayout. */
+.kf-route {
+  animation: entryFadeUp var(--dur-slow) var(--ease-out) both;
+}
+
+/* Entry stagger item — content settles up in source order (Motion 4b).
+   Use with staggerDelay(i) from lib/motion for the per-item delay. */
+.kf-stagger-item {
+  animation: entryFadeUp var(--dur-normal) var(--ease-out) both;
+}
+
+/* Reduced-motion already neutralized globally in tokens/motion.css. */
+
 body {
   margin: 0;
   background: var(--bg-app);
