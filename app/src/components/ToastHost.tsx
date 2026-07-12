@@ -7,13 +7,23 @@ export function ToastHost() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+    <div style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="flex items-center gap-3 rounded bg-slate-900 px-3 py-2 text-sm text-white shadow-lg"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 14,
+            background: 'var(--paper-parchment)',
+            border: '1px solid var(--line-card)',
+            borderLeft: '3px solid var(--acc-sage)',
+            borderRadius: 4,
+            boxShadow: 'var(--shadow-panel)',
+            padding: '11px 16px',
+          }}
         >
-          <span>{t.message}</span>
+          <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{t.message}</span>
           {t.onUndo && (
             <button
               type="button"
@@ -21,7 +31,17 @@ export function ToastHost() {
                 t.onUndo?.()
                 dismiss(t.id)
               }}
-              className="font-semibold underline"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--acc-terra)',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+              }}
             >
               Undo
             </button>

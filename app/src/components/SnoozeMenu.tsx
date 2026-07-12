@@ -30,17 +30,26 @@ function nextMonday(now: Date): Date {
 const itemStyle = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 10,
+  gap: 11,
   width: '100%',
   textAlign: 'left' as const,
   fontFamily: 'var(--font-ui)',
   fontSize: 13,
-  color: 'var(--text-primary)',
+  color: 'var(--ink-body)',
   background: 'none',
   border: 'none',
-  padding: '6px 16px',
+  borderRadius: 5,
+  padding: '7px 10px',
   cursor: 'pointer',
+}
+
+const headerStyle = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 8,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--ink-hairline)',
+  padding: '4px 10px 6px',
 }
 
 /** Same popover, three call sites (Tasks rows, Today, the bulk bar) — always this component, never re-derived. */
@@ -60,13 +69,13 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
 
   const now = new Date()
   const presets = [
-    { label: 'Later today', at: new Date(now.getTime() + 3 * 60 * 60 * 1000) },
-    { label: 'This evening', at: thisEvening(now) },
-    { label: 'Tomorrow morning', at: atTime(addDays(now, 1), 9) },
-    { label: 'Next week', at: nextMonday(now) },
+    { label: 'Later today', dot: 'var(--acc-hydrangea)', at: new Date(now.getTime() + 3 * 60 * 60 * 1000) },
+    { label: 'This evening', dot: 'var(--acc-lavender)', at: thisEvening(now) },
+    { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: atTime(addDays(now, 1), 9) },
+    { label: 'Next week', dot: 'var(--acc-moss)', at: nextMonday(now) },
   ]
 
-  const rows = presets.length + 2 // + Someday row + Pick-date row
+  const rows = presets.length + 3 // header + Someday row + Pick-date row
   const itemHeight = 34
   const maxY = window.innerHeight - 12
   const left = Math.min(position.x, window.innerWidth - 220)
@@ -86,26 +95,27 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
         top: Math.max(12, top),
         left: Math.max(8, left),
         zIndex: 1000,
-        background: 'var(--bg-surface)',
+        background: 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         boxShadow: 'var(--shadow-popover)',
-        borderRadius: 'var(--radius-sharp)',
-        padding: '4px 0',
+        borderRadius: 5,
+        padding: 6,
         minWidth: 210,
-        transform: 'rotate(-0.3deg)',
       }}
     >
+      <div style={headerStyle}>Snooze until…</div>
       {presets.map((p) => (
         <button
           key={p.label}
           type="button"
           onClick={() => fire(p.at)}
           style={itemStyle}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
         >
-          <span>{p.label}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--text-tertiary)' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
+          <span style={{ flex: 1 }}>{p.label}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>
             {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
           </span>
         </button>
@@ -115,13 +125,13 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
         type="button"
         onClick={() => { onSomeday(); onClose() }}
         style={itemStyle}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
       >
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-hairline)', flex: 'none' }} />
         <span>Someday</span>
-        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--text-tertiary)' }}>no dates, no guilt</span>
       </button>
-      <div style={{ padding: '6px 16px 2px' }}>
+      <div style={{ padding: '2px 10px 0' }}>
         <input
           type="date"
           value={pickDate}
@@ -132,12 +142,12 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
           style={{
             width: '100%',
             fontFamily: 'var(--font-ui)',
-            fontSize: 12.5,
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 'var(--radius-input)',
-            padding: '5px 8px',
-            color: 'var(--text-primary)',
+            fontSize: 13,
+            background: 'none',
+            border: 'none',
+            borderRadius: 5,
+            padding: '7px 0',
+            color: 'var(--ink-muted)',
           }}
         />
       </div>
