@@ -17,6 +17,7 @@ const InboxPage = lazy(() => import('./features/inbox/InboxPage').then((m) => ({
 const TasksPage = lazy(() => import('./features/tasks/TasksPage').then((m) => ({ default: m.TasksPage })))
 const CalendarPage = lazy(() => import('./features/calendar/CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const PlanningBoard = lazy(() => import('./features/calendar/PlanningBoard').then((m) => ({ default: m.PlanningBoard })))
+const TaskEditorPage = lazy(() => import('./features/calendar/TaskEditorPage').then((m) => ({ default: m.TaskEditorPage })))
 const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then((m) => ({ default: m.RoutinesPage })))
 const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage').then((m) => ({ default: m.WeeklyReviewPage })))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
       { path: 'today', element: <TodayPage /> },
       { path: 'inbox', element: <InboxPage /> },
       { path: 'tasks', element: <TasksPage /> },
+      { path: 'tasks/:id', element: <TaskEditorPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'planning', element: <PlanningBoard /> },
       { path: 'routines', element: <RoutinesPage /> },

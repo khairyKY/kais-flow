@@ -69,7 +69,8 @@
   font-size: 9px;
   color: var(--ink-hairline);
 }
-.fc .fc-timegrid-slot { border-color: var(--line-dashed); height: 44px; }
+/* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm. */
+.fc .fc-timegrid-slot { border-color: var(--line-dashed); height: 27px; }
 .fc .fc-timegrid-slot-minor { border-color: transparent; }
 .fc .fc-timegrid-divider { display: none; }
 
@@ -156,4 +157,22 @@
   outline-offset: 0;
 }
 
+/* Motion.dc.html 4c "calendar drags" — the ghost floats free while the placeholder snaps to
+   the grid. Scoped to `.cal-motion-on` (CalendarPage toggles it via useMotionEnabled) so it's
+   a no-op under reduced-motion or the Effects-off setting. */
+@keyframes calGridDragFloat {
+  0%, 100% { transform: rotate(-0.8deg) translateY(0); }
+  50% { transform: rotate(1deg) translateY(-2px); }
+}
+.cal-motion-on .fc-event-mirror {
+  animation: calGridDragFloat 2.1s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes calGridSnapFlash {
+  0% { box-shadow: 0 0 0 2px var(--acc-lavender-deep), var(--shadow-card); }
+  100% { box-shadow: var(--shadow-crisp); }
+}
+.cal-motion-on .fc-timegrid-event.kf-snap-flash {
+  animation: calGridSnapFlash 220ms var(--ease-out);
+}
 

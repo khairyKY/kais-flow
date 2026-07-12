@@ -1,8 +1,9 @@
+import { forwardRef, useImperativeHandle, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
-import type { EventClickArg, EventDropArg } from '@fullcalendar/core'
+import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import './CalendarGrid.css'
 
@@ -18,12 +19,28 @@ export interface CalendarGridEvent {
   color?: string | null
 }
 
+export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'timeGridWeek' | 'dayGridMonth'
+
+/** Imperative nav — the design's prev/today/next pills live in CalendarPage's own header,
+ * not FullCalendar's built-in toolbar (hidden via `hideToolbar`), so they need a way to
+ * reach the underlying Calendar API. */
+export interface CalendarGridHandle {
+  prev(): void
+  next(): void
+  today(): void
+}
+
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
 // grid can be restyled or swapped for a hand-rolled one in the design phase without changes here.
 interface CalendarGridProps {
   events: CalendarGridEvent[]
   dayCount?: number
-  onCreate: (start: string, end: string) => void
+  initialView?: CalendarGridView
+  /** Hides FullCalendar's own toolbar — CalendarPage renders the botanical header instead. */
+  hideToolbar?: boolean
+  /** Fires on mount and after every nav/view change — drives CalendarPage's header title. */
+  onRangeChange?: (info: { title: string; start: Date; end: Date }) => void
+  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number }) => void
   onMove: (id: string, start: string, end: string) => void
   onResize: (id: string, start: string, end: string) => void
   onEventClick: (id: string) => void
@@ -48,9 +65,17 @@ function resolveGridDateTime(x: number, y: number): { iso: string; allDay: boole
   return { iso: new Date(y0, mo - 1, d, hh, mm).toISOString(), allDay: false }
 }
 
-export function CalendarGrid({
+function flashSnap(el: HTMLElement): void {
+  el.classList.add('kf-snap-flash')
+  window.setTimeout(() => el.classList.remove('kf-snap-flash'), 250)
+}
+
+export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(function CalendarGrid({
   events,
   dayCount = 7,
+  initialView = 'timeGridWeek',
+  hideToolbar,
+  onRangeChange,
   onCreate,
   onMove,
   onResize,
@@ -59,8 +84,15 @@ export function CalendarGrid({
   onEventContextMenu,
   onGridContextMenu,
   conflictedIds,
-}: CalendarGridProps) {
+}, ref) {
   const customView = 'customDayCount'
+  const fcRef = useRef<FullCalendar>(null)
+
+  useImperativeHandle(ref, () => ({
+    prev: () => fcRef.current?.getApi().prev(),
+    next: () => fcRef.current?.getApi().next(),
+    today: () => fcRef.current?.getApi().today(),
+  }))
 
   function handleGridContextMenu(e: React.MouseEvent) {
     if (!onGridContextMenu) return
@@ -75,9 +107,10 @@ export function CalendarGrid({
   return (
     <div onContextMenu={handleGridContextMenu} style={{ display: 'contents' }}>
     <FullCalendar
-      key={dayCount}
+      key={`${initialView}-${dayCount}`}
+      ref={fcRef}
       plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-      initialView="timeGridWeek"
+      initialView={initialView}
       views={{
         [customView]: {
           type: 'timeGrid',
@@ -86,7 +119,8 @@ export function CalendarGrid({
           buttonText: `${dayCount}d`,
         },
       }}
-      headerToolbar={{ left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
+      headerToolbar={hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
+      datesSet={(arg: DatesSetArg) => onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })}
       height="auto"
       dayMaxEvents
       dayHeaderContent={(arg) => {
@@ -126,15 +160,20 @@ export function CalendarGrid({
         })
       }}
       select={(info) => {
-        onCreate(info.startStr, info.endStr)
+        const jsEvent = info.jsEvent as MouseEvent | null
+        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2 })
       }}
       eventClick={(info: EventClickArg) => onEventClick(info.event.id)}
       eventDrop={(info: EventDropArg) => {
+        // Motion 4c: the placeholder snaps to the grid on commit — a brief flash marks the moment,
+        // scoped in CSS to `.cal-motion-on` so it's a no-op when the caller's motion gate is off.
+        flashSnap(info.el)
         if (info.event.start && info.event.end) {
           onMove(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
         }
       }}
       eventResize={(info: EventResizeDoneArg) => {
+        flashSnap(info.el)
         if (info.event.start && info.event.end) {
           onResize(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
         }
@@ -147,4 +186,4 @@ export function CalendarGrid({
     />
     </div>
   )
-}
+})
