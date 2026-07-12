@@ -19,8 +19,8 @@
 |---|---|
 | `domains` | `name text`, `color text`, `sort_order int` — must survive rename/merge/re-parent cheaply (Jerad's lesson) |
 | `projects` | `domain_id uuid FK`, `name`, `type text check in ('standard','retainer')`, `status text` |
-| `tasks` | `project_id uuid?`, `domain_id uuid?`, `area_id uuid?` (FK areas, P1–P4 retrofit), `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `reminder_at timestamptz?` (per-task reminder, P1–P4 retrofit), `reminder_sent bool default false`, `completed_at timestamptz?` — indexes: `(status, due_at)`, `(domain_id)`, `(area_id)`, `(top3) where top3`, `(reminder_sent, reminder_at)` for notify sweep |
-| `inbox_items` | `kind text check in ('text','voice','github_issue','email')`, `raw_text text`, `transcript text?`, `ai_parse jsonb?`, `confidence real?`, `status text check in ('pending','filed','dismissed')`, `filed_task_id uuid?`, `payload jsonb?` (source metadata, e.g. GitHub issue url/repo/node_id) |
+| `tasks` | `project_id uuid?`, `domain_id uuid?`, `area_id uuid?` (FK areas, P1–P4 retrofit), `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `duration_min int?` (UX Retrofit, migration 0017 — null renders as no chip, calendar falls back to 30), `someday bool default false` (UX Retrofit, migration 0017), `reminder_at timestamptz?` (per-task reminder, P1–P4 retrofit), `reminder_sent bool default false`, `completed_at timestamptz?` — indexes: `(status, due_at)`, `(domain_id)`, `(area_id)`, `(top3) where top3`, `(reminder_sent, reminder_at)` for notify sweep |
+| `inbox_items` | `kind text check in ('text','voice','github_issue','email')`, `raw_text text`, `transcript text?`, `ai_parse jsonb?`, `confidence real?`, `status text check in ('pending','filed','dismissed')`, `filed_task_id uuid?`, `payload jsonb?` (source metadata, e.g. GitHub issue url/repo/node_id), `snoozed_until timestamptz?` (UX Retrofit, migration 0018 — hides from the pending triage queue until this time; no push reminder, that half of SPECS.md's Snooze backlog item stays future-phase) |
 | `activity_log` | `event_type text` (e.g. `task.created`, `task.completed`, `routine.checked`, `journal.created`, `entity.reviewed`), `entity_type text`, `entity_id uuid`, `payload jsonb` — **append-only; the spine.** Slipping, streaks, digests, resurfacing only read this. Index `(entity_type, entity_id, created_at)` |
 
 ### P1–P4 retrofit — areas, reminders, notification history
@@ -38,7 +38,7 @@
 ### P4 — routines & notifications
 | Table | Columns |
 |---|---|
-| `routines` | `name text`, `time_of_day text check in ('morning','afternoon','evening')`, `cadence jsonb` (weekday mask), `challenge_start date?`, `challenge_end date?`, `active bool` |
+| `routines` | `name text`, `time_of_day text?` (one of `'morning'/'afternoon'/'evening'`, a free-text custom label like `'dusk'`, or null for no time — was `not null` + 3-value check until UX Retrofit migration 0019 relaxed it), `clock_time text?` (`HH:MM` 24h, migration 0019 — independent of `time_of_day`), `cadence jsonb` (weekday mask), `challenge_start date?`, `challenge_end date?`, `active bool` |
 | `routine_completions` | `routine_id uuid FK`, `completed_on date`, unique `(routine_id, completed_on)` — streaks are always computed, never stored |
 | `push_subscriptions` | `endpoint text`, `keys jsonb`, `device_label text` |
 | `app_settings` | single row: `timezone text default 'Africa/Cairo'`, `digest_hour int`, `confidence_threshold real default 0.75`, `slipping_default_days int default 7` |
