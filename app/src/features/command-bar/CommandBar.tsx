@@ -152,8 +152,10 @@ export function CommandBar() {
             )}
             {parsed.priority != null && (() => {
               const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
+              // High's tint is the contract's literal rgba(201,165,90,0.22); other priorities fall back to a computed tint.
+              const background = parsed.priority === 2 ? 'rgba(201,165,90,0.22)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
               return (
-                <span style={{ ...CHIP_BASE, color, background: `color-mix(in oklch, ${color} 20%, var(--paper-parchment))` }}>
+                <span style={{ ...CHIP_BASE, color, background }}>
                   {priorityFlag(parsed.priority)} {PRIORITY_NAME[parsed.priority]}
                 </span>
               )
@@ -171,7 +173,7 @@ export function CommandBar() {
           </div>
         )}
 
-        <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Enter = quick add · ⌘Enter = AI capture
         </div>
       </div>

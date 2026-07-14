@@ -1,6 +1,5 @@
 import { useEscapeStack } from '../lib/overlayStack'
-import { usePageShortcutsStore } from '../lib/pageShortcutsStore'
-import { GLOBAL_SHORTCUTS, INBOX_SHORTCUTS } from '../lib/shortcuts'
+import { GLOBAL_SHORTCUTS, NAVIGATE_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
 import type { ShortcutEntry } from '../lib/pageShortcutsStore'
 
 function KeyChip({ text }: { text: string }) {
@@ -29,9 +28,9 @@ function KeyChip({ text }: { text: string }) {
   )
 }
 
-function Column({ title, entries, last }: { title: string; entries: ShortcutEntry[]; last: boolean }) {
+function Category({ title, entries }: { title: string; entries: ShortcutEntry[] }) {
   return (
-    <div style={{ padding: '18px 22px', borderRight: last ? 'none' : '1px dashed var(--line-dashed)' }}>
+    <>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>
         {title}
       </div>
@@ -48,28 +47,25 @@ function Column({ title, entries, last }: { title: string; entries: ShortcutEntr
           <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{entry.label}</span>
         </div>
       ))}
-      {last && (
-        <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-0.5deg)' }}>
-          arrow → key → arrow → key. shovel through it ✿
-        </div>
-      )}
+    </>
+  )
+}
+
+function Column({ children, last }: { children: React.ReactNode; last: boolean }) {
+  return (
+    <div style={{ padding: '18px 22px', borderRight: last ? 'none' : '1px dashed var(--line-dashed)' }}>
+      {children}
     </div>
   )
 }
 
-/** Renders GLOBAL_SHORTCUTS + whichever page is currently registered in `pageShortcutsStore`
- * (via `useListKeys`'s `sectionLabel`) — same data the real key handlers dispatch on. Laid out
- * as the export's 3-column keymap, one live section per column instead of a fixed static map. */
+/** The whole keymap, always — a fixed 3-column reference (Global+Navigate, Task list+Inbox
+ * triage, Calendar+Command bar), same layout and copy as Overlays.dc.html §04 regardless of
+ * which page is mounted underneath. Each category's data is static (see lib/shortcuts.ts). */
 export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { section, entries } = usePageShortcutsStore()
-
   useEscapeStack(open, onClose)
 
   if (!open) return null
-
-  const columns: { title: string; entries: ShortcutEntry[] }[] = [{ title: 'Global', entries: GLOBAL_SHORTCUTS }]
-  if (section) columns.push({ title: section, entries })
-  if (section !== 'Inbox triage') columns.push({ title: 'Inbox triage', entries: INBOX_SHORTCUTS })
 
   return (
     <div
@@ -105,10 +101,25 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}>
-          {columns.map((col, i) => (
-            <Column key={col.title} title={col.title} entries={col.entries} last={i === columns.length - 1} />
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <Column last={false}>
+            <Category title="Global" entries={GLOBAL_SHORTCUTS} />
+            <div style={{ marginTop: 20 }} />
+            <Category title="Navigate" entries={NAVIGATE_SHORTCUTS} />
+          </Column>
+          <Column last={false}>
+            <Category title="Task list" entries={TASK_LIST_SHORTCUTS} />
+            <div style={{ marginTop: 20 }} />
+            <Category title="Inbox triage" entries={INBOX_SHORTCUTS} />
+          </Column>
+          <Column last={true}>
+            <Category title="Calendar" entries={CALENDAR_SHORTCUTS} />
+            <div style={{ marginTop: 20 }} />
+            <Category title="Command bar" entries={COMMAND_BAR_SHORTCUTS} />
+            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-0.5deg)' }}>
+              arrow → key → arrow → key. shovel through it ✿
+            </div>
+          </Column>
         </div>
       </div>
     </div>
