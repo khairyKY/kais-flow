@@ -1,6 +1,6 @@
 import { useTasks } from '../tasks/api'
 import { useAllInboxItems } from '../inbox/api'
-import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced, dismissResurfaced } from './api'
+import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced } from './api'
 
 // Pixel contract: Today.dc.html 1a "From a while ago" card (lines 212-217). TodayPage
 // already renders the SectionLabel above this — own only the card body. `#fff` in the
@@ -67,13 +67,6 @@ export function ResurfaceCard() {
           style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer', font: 'inherit' }}
         >
           Later
-        </button>
-        <button
-          type="button"
-          onClick={() => dismissResurfaced(row)}
-          style={{ color: 'var(--ink-faint)', fontSize: 10.5, padding: '5px 4px', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
-        >
-          Dismiss
         </button>
       </div>
     </div>

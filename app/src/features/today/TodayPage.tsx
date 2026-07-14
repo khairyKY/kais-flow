@@ -201,17 +201,17 @@ export function TodayPage() {
         </>
       )}
 
-      <div style={{ display: 'flex', gap: 14, marginTop: 20 }}>
+      <div style={{ display: 'flex', gap: isMobile ? 9 : 14, marginTop: isMobile ? 12 : 20 }}>
         <RitualCard label="Morning ritual" shortLabel="Morning" done={morning.done} total={morning.total || 4} accent="var(--acc-sage)" dot="var(--acc-gold-warm)" onClick={() => setMorningOpen(true)} icon={<SunIcon />} compact={isMobile} />
         <RitualCard label="Evening ritual" shortLabel="Evening" done={evening.done} total={evening.total || 2} accent="var(--acc-lavender)" dot="var(--acc-lavender)" onClick={() => setEveningOpen(true)} icon={<MoonIcon />} compact={isMobile} />
       </div>
 
-      <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />
+      {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 264px', gap: isMobile ? 30 : 44, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 26 : 34 }}>
           <section>
-            <SectionLabel style={{ marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
+            <SectionLabel style={{ marginTop: isMobile ? 16 : 0, marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
             {nothingPlanned ? (
               <EmptyTodayCard onPlan={() => setCommandBarOpen(true)} />
             ) : allDone ? (
@@ -300,7 +300,7 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 // States.dc.html 1a — Empty Today: seedling clover + one hand line + one action.
 function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
   return (
-    <div style={{ padding: '40px 20px 44px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ padding: '40px 40px 44px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
       <span aria-hidden style={{ position: 'absolute', left: '50%', top: -40, width: 260, height: 170, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,217,160,0.5), rgba(232,217,160,0) 70%)' }} />
       <div style={{ position: 'relative', width: 190, height: 130 }}>
         <div style={{ position: 'absolute', inset: 0, border: '2.5px solid rgba(107,100,85,0.45)', borderRadius: '14px 14px 10px 10px', background: 'rgba(244,241,234,0.4)' }} />
@@ -325,7 +325,7 @@ function DoneTodayCard() {
   ]
   const rotations = [14, -38, 64, -10, 96, 150]
   return (
-    <div style={{ padding: '44px 20px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ padding: '44px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ position: 'relative', width: 150, height: 64 }}>
         <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderBottom: '1.5px dashed var(--line-dashed)' }} />
         {petals.map(([left, bottom, w, h, radius], i) => (
