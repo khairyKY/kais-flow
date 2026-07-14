@@ -11,8 +11,8 @@
 | Order | Work | Prompt |
 |---|---|---|
 | — | Lost / unsure what's next | **Prompt 0** below |
-| now | **[KAI]** Commit the Retrofit work sitting uncommitted in the tree | **Prompt COMMIT-CHECK** below, then commit yourself |
-| now | UX Retrofit — Akiflow core (smart lists, durations, keyboard, planning) | **Prompt UX** below |
+| now | Botanical Integration — design export → live UI (teardown + rebuild, all screens) | **Prompt GO** in `design-integration/PROMPT-BANK.md` |
+| paused | UX Retrofit — remaining *visual* steps superseded by the integration (data/logic stands — see ROADMAP) | **Prompt UX** below |
 | next | Motion Retrofit — buttery & botanical (animations, flower theme, polish debt) | **Prompt MOTION** below |
 | then | Night theme (UI-only, no feature) | paste `design/PROMPTS.md` § D directly |
 | then | P6 Integrations (GitHub → inbox, Settings UI, external capture) | **Prompt P6** below |

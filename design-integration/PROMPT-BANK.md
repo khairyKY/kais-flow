@@ -25,6 +25,37 @@ build green + commit on `ws/<name>` + don't push + report). Don't add anything.
 
 ---
 
+## Prompt GO — the resumable driver (paste this and nothing else, every session, until done)
+
+Same logic as the old `docs/PROMPT-BANK.md` phase prompts: one paste = one unit of work,
+the session finds the next unit itself, pasting it "too many times" is harmless — it just
+tells you when it's Kai's turn. Want parallelism instead? Paste individual `Wxx`/`Nxx`
+blocks below into parallel sessions as before; Prompt GO will pick them up as reviews.
+
+```
+For the Kai's Flow botanical integration: read design-integration/PROMPT-BANK.md,
+design-integration/TEARDOWN.md, and design-integration/briefs/_SHARED.md. Derive the
+live state from git alone: `git branch -a` + `git log --oneline
+feature/botanical-integration -20`. A wave is DONE when its ws/<name> branch is merged
+into feature/botanical-integration; NEEDS REVIEW when the branch exists unmerged;
+NOT STARTED when no ws/<name> branch exists. Then do exactly ONE unit — the first
+rule that applies:
+1. Any ws/<name> unmerged → act as orchestrator: check out the branch, verify the
+   surface against its .dc.html contract (node-for-node transcription, demolition
+   DoD — replaced files deleted, build green, frozen files untouched), fix small
+   deviations in fix commits on that branch, then merge it into
+   feature/botanical-integration.
+2. Else the first NOT STARTED wave in this order — W1-remainder, W4, W5, W6, W7, W8,
+   N1, N2, N3, N4, N5, N6 — execute its block from this file verbatim, as if pasted.
+3. Else if TEARDOWN.md §R3's grep gates still hit → run R3 (legacy purge) on
+   feature/botanical-integration.
+4. Else STOP and print: "Construction done. What remains needs Kai logged in — R4
+   exactness audit + X1–X5 passes (see TEARDOWN.md §R4 / PROMPT-BANK cross-cutting
+   passes)" with the R4 surface checklist.
+One unit per paste, then report what you did and what the next paste will pick up.
+Never build a wave and merge it in the same session — review needs fresh eyes.
+```
+
 ## R1 — Overlay demolition (run FIRST — see TEARDOWN.md)
 
 The old skin bleeds over every page through the shared menus/popovers/toasts. This wave
