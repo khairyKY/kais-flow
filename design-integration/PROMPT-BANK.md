@@ -23,6 +23,10 @@ several out in parallel. The orchestrator session reviews the PRs and merges.
 shell owns the sidebar/topbar so you only rebuild the `.dc.html` MAIN content, `ds/…`→`/ds/…`,
 build green + commit on `ws/<name>` + don't push + report). Don't add anything.
 
+**Dev server: Kai's running one, don't start your own.** `http://localhost:5195` is up
+and logged in with real data for the duration of this plan — use it for visual QA, never
+`npm run dev` / `preview_start` (see `_SHARED.md` Protocol).
+
 ---
 
 ## Prompt GO — the resumable driver (paste this and nothing else, every session, until done)
@@ -42,9 +46,10 @@ NOT STARTED when no ws/<name> branch exists. Then do exactly ONE unit — the fi
 rule that applies:
 1. Any ws/<name> unmerged → act as orchestrator: check out the branch, verify the
    surface against its .dc.html contract (node-for-node transcription, demolition
-   DoD — replaced files deleted, build green, frozen files untouched), fix small
-   deviations in fix commits on that branch, then merge it into
-   feature/botanical-integration.
+   DoD — replaced files deleted, build green, frozen files untouched) using the
+   already-running dev server at http://localhost:5195 (don't start your own —
+   see _SHARED.md Protocol), fix small deviations in fix commits on that branch,
+   then merge it into feature/botanical-integration.
 2. Else the first NOT STARTED wave in this order — W1-remainder, W4, W5, W6, W7, W8,
    N1, N2, N3, N4, N5, N6 — execute its block from this file verbatim, as if pasted.
 3. Else if TEARDOWN.md §R3's grep gates still hit → run R3 (legacy purge) on

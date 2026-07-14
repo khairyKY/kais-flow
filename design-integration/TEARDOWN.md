@@ -45,7 +45,10 @@ substitutions: sample text → real data · static markup → handlers/loops · 
 `/ds/assets/…` · the canvas's embedded sidebar/topbar → omitted (the shell owns them).
 If you're restructuring a layout "because React", you're doing it wrong.
 **And the Kai gate:** no surface counts as done until Kai has eyeballed it in the logged-in
-preview next to the original canvas; every deviation he flags becomes a fix commit.
+preview next to the original canvas; every deviation he flags becomes a fix commit. Kai
+keeps a dev server standing at `http://localhost:5195` for this whole plan — agents use it
+for their own visual QA during R1/R2 (see `_SHARED.md` Protocol); R4 is still the final
+sign-off pass, not the first time anyone looks at the screen.
 
 ---
 
