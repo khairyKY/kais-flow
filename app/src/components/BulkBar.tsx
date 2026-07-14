@@ -2,8 +2,7 @@ export interface BulkBarProps {
   count: number
   onComplete: () => void
   onSnooze: (e: React.MouseEvent) => void
-  onToday: () => void
-  onTomorrow: () => void
+  onSchedule: (e: React.MouseEvent) => void
   onMoveToProject: (e: React.MouseEvent) => void
   onDelete: () => void
   onClear: () => void
@@ -32,7 +31,7 @@ const checkSvg = (
 
 /** One bar, three call sites' worth of actions (Tasks smart lists) — every button loops the
  * existing per-task mutation over the selection, per the phase's own "zero new API surface" rule. */
-export function BulkBar({ count, onComplete, onSnooze, onToday, onTomorrow, onMoveToProject, onDelete, onClear }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onSnooze, onSchedule, onMoveToProject, onDelete, onClear }: BulkBarProps) {
   return (
     <div
       role="toolbar"
@@ -71,11 +70,8 @@ export function BulkBar({ count, onComplete, onSnooze, onToday, onTomorrow, onMo
       <button type="button" style={actionStyle} onClick={onSnooze} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
         Snooze<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
       </button>
-      <button type="button" style={actionStyle} onClick={onToday} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        Today
-      </button>
-      <button type="button" style={actionStyle} onClick={onTomorrow} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        Tomorrow
+      <button type="button" style={actionStyle} onClick={onSchedule} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
+        Schedule<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
       </button>
       <button type="button" style={actionStyle} onClick={onMoveToProject} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
         Move<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>

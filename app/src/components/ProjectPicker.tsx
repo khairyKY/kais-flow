@@ -104,19 +104,6 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
         />
       </div>
       <div style={{ overflowY: 'auto' }}>
-      <button
-        type="button"
-        onClick={() => choose(null)}
-        disabled={!currentProjectId}
-        style={{ ...itemStyle, color: 'var(--ink-muted)', background: currentProjectId ? 'none' : 'var(--paper-bone)', cursor: currentProjectId ? 'pointer' : 'default' }}
-        onMouseEnter={(e) => { if (currentProjectId) e.currentTarget.style.background = 'var(--paper-bone)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = currentProjectId ? 'none' : 'var(--paper-bone)' }}
-      >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', border: '1px solid var(--ink-hairline)', flex: 'none' }} />
-        <span style={{ flex: 1 }}>No project</span>
-        {!currentProjectId && checkSvg}
-      </button>
-      <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
       {filtered.length === 0 && (
         <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No matching projects</div>
       )}
@@ -139,6 +126,18 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
           </button>
         )
       })}
+      <button
+        type="button"
+        onClick={() => choose(null)}
+        disabled={!currentProjectId}
+        style={{ ...itemStyle, color: 'var(--ink-muted)', background: currentProjectId ? 'none' : 'var(--paper-bone)', cursor: currentProjectId ? 'pointer' : 'default' }}
+        onMouseEnter={(e) => { if (currentProjectId) e.currentTarget.style.background = 'var(--paper-bone)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = currentProjectId ? 'none' : 'var(--paper-bone)' }}
+      >
+        <span style={{ width: 7, height: 7, borderRadius: '50%', border: '1px solid var(--ink-hairline)', flex: 'none' }} />
+        <span style={{ flex: 1 }}>(none)</span>
+        {!currentProjectId && checkSvg}
+      </button>
       </div>
     </div>
   )
