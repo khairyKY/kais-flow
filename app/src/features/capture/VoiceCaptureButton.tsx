@@ -1,10 +1,23 @@
 import { useRef, useState } from 'react'
 import { transcribeAudio, captureWithAI } from './api'
 import { useToastStore } from '../../lib/toastStore'
+import { Button } from '../../components/kit'
+
+// Pixel contract: Today.dc.html 1a header CTA (line 132) — mic glyph + pill, kit Button "cta".
 
 function pickMimeType(): string {
   const candidates = ['audio/webm', 'audio/mp4', 'audio/aac']
   return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
+}
+
+function MicIcon() {
+  return (
+    <svg width="15" height="16" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+      <rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 export function VoiceCaptureButton() {
@@ -54,28 +67,19 @@ export function VoiceCaptureButton() {
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="cta"
+      icon={<MicIcon />}
       onClick={() => (recording ? stop() : void start())}
       disabled={busy}
       style={{
-        border: 'none',
-        background: recording ? 'color-mix(in srgb, var(--acc-terra) 80%, black)' : 'var(--acc-terra)',
-        color: 'var(--text-on-accent)',
-        fontFamily: 'inherit',
-        fontSize: 13,
-        padding: '10px 18px',
-        borderRadius: 999,
         cursor: busy ? 'default' : 'pointer',
         opacity: busy ? 0.5 : 1,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        boxShadow: 'var(--shadow-cta)',
+        background: recording ? 'color-mix(in srgb, var(--acc-terra) 80%, black)' : undefined,
       }}
     >
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-on-accent)', display: 'inline-block' }} />
       {busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture'}
-    </button>
+    </Button>
   )
 }
