@@ -1,98 +1,111 @@
-import { CheckMenuIcon, ClockMenuIcon, FolderMenuIcon, ScheduleMenuIcon, TrashMenuIcon } from './icons/MenuIcons'
-
 export interface BulkBarProps {
   count: number
   onComplete: () => void
   onSnooze: (e: React.MouseEvent) => void
-  onToday: () => void
-  onTomorrow: () => void
+  onSchedule: (e: React.MouseEvent) => void
   onMoveToProject: (e: React.MouseEvent) => void
   onDelete: () => void
   onClear: () => void
 }
 
 const actionStyle = {
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
   gap: 6,
   fontFamily: 'var(--font-ui)',
   fontSize: 12.5,
-  color: 'var(--text-primary)',
+  color: 'var(--ink-body)',
   background: 'none',
   border: 'none',
   padding: '6px 10px',
-  borderRadius: 'var(--radius-input)',
+  borderRadius: 999,
   cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
 }
+
+const checkSvg = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <path d="M4 12.5l5 5L20 6" stroke="var(--ink-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
 /** One bar, three call sites' worth of actions (Tasks smart lists) — every button loops the
  * existing per-task mutation over the selection, per the phase's own "zero new API surface" rule. */
-export function BulkBar({ count, onComplete, onSnooze, onToday, onTomorrow, onMoveToProject, onDelete, onClear }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onSnooze, onSchedule, onMoveToProject, onDelete, onClear }: BulkBarProps) {
   return (
     <div
       role="toolbar"
       style={{
         position: 'fixed',
         left: '50%',
-        bottom: 22,
-        transform: 'translateX(-50%) rotate(-0.2deg)',
+        bottom: 16,
+        transform: 'translateX(-50%) rotate(-0.4deg)',
         zIndex: 900,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
-        background: 'var(--bg-surface)',
+        background: 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         boxShadow: 'var(--shadow-popover)',
-        borderRadius: 'var(--radius-sharp)',
-        padding: '6px 8px',
+        borderRadius: 999,
+        padding: '7px 8px 7px 16px',
+        whiteSpace: 'nowrap',
       }}
     >
       <span
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.14em',
+          fontSize: 10,
+          letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: 'var(--text-tertiary)',
-          padding: '0 10px 0 6px',
-          whiteSpace: 'nowrap',
+          color: 'var(--acc-terra)',
         }}
       >
         {count} selected
       </span>
-      <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--line-dashed)' }} />
-      <button type="button" style={actionStyle} onClick={onComplete} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        <CheckMenuIcon /> Complete
+      <div style={{ width: 1, height: 18, background: 'var(--line-dashed)', margin: '0 6px' }} />
+      <button type="button" style={actionStyle} onClick={onComplete} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
+        {checkSvg} Complete
       </button>
-      <button type="button" style={actionStyle} onClick={onSnooze} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        <ClockMenuIcon /> Snooze…
+      <button type="button" style={actionStyle} onClick={onSnooze} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
+        Snooze<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
       </button>
-      <button type="button" style={actionStyle} onClick={onToday} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        <ScheduleMenuIcon /> Today
+      <button type="button" style={actionStyle} onClick={onSchedule} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
+        Schedule<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
       </button>
-      <button type="button" style={actionStyle} onClick={onTomorrow} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        <ScheduleMenuIcon /> Tomorrow
-      </button>
-      <button type="button" style={actionStyle} onClick={onMoveToProject} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        <FolderMenuIcon /> Move…
+      <button type="button" style={actionStyle} onClick={onMoveToProject} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
+        Move<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
       </button>
       <button
         type="button"
-        style={{ ...actionStyle, color: 'var(--sig-overdue)' }}
+        style={{ ...actionStyle, color: 'var(--acc-terra)' }}
         onClick={onDelete}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
       >
-        <TrashMenuIcon /> Delete
+        Delete
       </button>
-      <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--line-dashed)' }} />
       <button
         type="button"
         title="Clear selection (Esc)"
         onClick={onClear}
-        style={{ ...actionStyle, color: 'var(--text-tertiary)', fontSize: 15, padding: '6px 9px' }}
+        style={{
+          width: 28,
+          height: 28,
+          flex: 'none',
+          marginLeft: 4,
+          borderRadius: 999,
+          background: 'var(--paper-bone)',
+          border: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--ink-faint)',
+          fontSize: 12,
+          cursor: 'pointer',
+        }}
       >
-        ×
+        ✕
       </button>
     </div>
   )

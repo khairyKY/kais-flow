@@ -76,28 +76,22 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         maxWidth: 432,
         display: 'flex',
         flexDirection: 'column',
-        background: 'rgba(251,246,233,0.92)',
-        backdropFilter: 'blur(9px)',
-        borderLeft: '1px solid var(--line-dashed)',
-        boxShadow: '-24px 0 60px rgba(40,32,20,0.25)',
+        background: 'var(--paper-parchment)',
+        borderLeft: '1px solid var(--line-card)',
+        boxShadow: '-1px 0 2px rgba(60,52,38,0.14), -10px 0 26px rgba(60,52,38,0.1)',
       }}
     >
-      <style>{'.chat-sprig{transition:transform 200ms ease}.chat-sprig:hover{transform:rotate(4deg)}'}</style>
-
-      <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 11, padding: '18px 22px 14px', borderBottom: '1px dashed var(--line-dashed)' }}>
-        <img src="assets/clover/resting.png" alt="" className="chat-sprig" style={{ height: 30, width: 'auto', objectFit: 'contain', transform: 'rotate(-4deg)' }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 'var(--fw-semibold)', color: 'var(--text-primary)' }}>Chat</div>
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 14.5, color: 'var(--text-tertiary)', marginTop: -1 }}>ask about anything you've captured</div>
-        </div>
-        <button type="button" onClick={onClose} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: 16, cursor: 'pointer', padding: 4, lineHeight: 1 }}>
+      <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>Chat</span>
+        <button type="button" onClick={onClose} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: 'var(--ink-faint)', fontSize: 16, cursor: 'pointer', padding: 4, lineHeight: 1 }}>
           ✕
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
-          <p style={{ fontSize: 13.5, color: 'var(--text-tertiary)', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13.5, color: 'var(--ink-faint)', margin: 0, lineHeight: 1.5 }}>
             Ask about anything you've captured — "what did I capture about the pricing project last week?"
           </p>
         )}
@@ -105,44 +99,44 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           const streaming = busy && i === messages.length - 1
           if (m.role === 'user') {
             return (
-              <div key={i} style={{ alignSelf: 'flex-end', maxWidth: '78%', background: 'var(--text-primary)', color: 'var(--text-on-accent)', borderRadius: '12px 12px 3px 12px', padding: '10px 14px', fontSize: 13.5, lineHeight: 1.45 }}>
+              <div key={i} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45 }}>
                 {m.content}
               </div>
             )
           }
           if (streaming && !m.content) {
             return (
-              <div key={i} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--bg-input)', border: '1px solid var(--line-card)', borderRadius: '12px 12px 12px 3px', padding: '11px 14px' }}>
-                <img src="assets/clover/awake.png" alt="" style={{ height: 20, width: 'auto', objectFit: 'contain' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-tertiary)', letterSpacing: '0.14em' }}>…</span>
+              <div key={i} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>
+                <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 18, width: 'auto', objectFit: 'contain' }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>
               </div>
             )
           }
           return (
-            <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--bg-input)', border: '1px solid var(--line-card)', borderRadius: '12px 12px 12px 3px', padding: '12px 14px', fontSize: 13.5, lineHeight: 1.5, color: 'var(--text-primary)' }}>
+            <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>
               <div>{m.content}</div>
               {m.citations && m.citations.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
                   {m.citations.map((c) => (
                     <button
                       key={`${c.entity_type}-${c.entity_id}`}
                       type="button"
                       onClick={() => goToCitation(c)}
                       style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
+                        display: 'inline-block',
                         fontFamily: 'var(--font-mono)',
-                        fontSize: 9.5,
+                        fontSize: 9,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
                         color: 'var(--acc-clover-text)',
-                        background: 'rgba(201,160,160,0.16)',
-                        border: '1px solid rgba(201,160,160,0.5)',
-                        padding: '3px 9px',
+                        background: 'rgba(201,160,160,0.22)',
+                        border: 'none',
+                        padding: '3px 8px',
                         borderRadius: 999,
                         cursor: 'pointer',
                       }}
                     >
-                      ◈ {c.title}
+                      ↗ {c.title}
                     </button>
                   ))}
                 </div>
@@ -157,7 +151,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           e.preventDefault()
           void send()
         }}
-        style={{ flex: 'none', padding: '14px 22px 18px', borderTop: '1px dashed var(--line-dashed)', display: 'flex', gap: 9 }}
+        style={{ flex: 'none', padding: '12px 14px', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
       >
         <input
           value={input}
@@ -167,13 +161,11 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           style={{
             flex: 1,
             fontFamily: 'var(--font-ui)',
-            fontSize: 13,
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 999,
-            padding: '10px 15px',
+            fontSize: 12.5,
+            background: 'none',
+            border: 'none',
             outline: 'none',
-            color: 'var(--text-primary)',
+            color: 'var(--ink-body)',
             opacity: busy ? 0.6 : 1,
           }}
         />
@@ -181,18 +173,23 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           type="submit"
           disabled={busy || !input.trim()}
           style={{
+            width: 30,
+            height: 30,
+            flex: 'none',
             border: 'none',
             background: 'var(--acc-clover)',
-            color: 'var(--text-on-accent)',
+            color: 'var(--paper-parchment)',
             fontFamily: 'inherit',
-            fontSize: 12.5,
-            padding: '10px 18px',
+            fontSize: 15,
             borderRadius: 999,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: busy || !input.trim() ? 'default' : 'pointer',
             opacity: busy || !input.trim() ? 0.5 : 1,
           }}
         >
-          Send
+          ↑
         </button>
       </form>
     </div>

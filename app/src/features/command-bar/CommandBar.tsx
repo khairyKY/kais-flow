@@ -11,10 +11,14 @@ import { useEscapeStack } from '../../lib/overlayStack'
 
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 10.5,
-  padding: '4px 10px',
+  fontSize: 9.5,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  padding: '4px 9px',
   borderRadius: 999,
 }
+
+const PRIORITY_NAME: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
 
 export function CommandBar() {
   const open = useCommandBarStore((s) => s.open)
@@ -92,119 +96,85 @@ export function CommandBar() {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: 560,
+          maxWidth: 440,
           margin: '0 16px',
-          background: 'rgba(251,246,233,0.78)',
-          backdropFilter: 'blur(9px)',
-          border: '1px solid rgba(224,216,194,0.9)',
-          borderRadius: 16,
-          boxShadow: '0 2px 4px rgba(40,32,20,0.15), 0 30px 70px rgba(40,32,20,0.35)',
-          padding: '22px 24px 18px',
+          background: 'rgba(251,246,233,0.82)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(220,214,190,0.6)',
+          borderRadius: 8,
+          boxShadow: 'var(--shadow-popover)',
+          padding: '16px 18px',
           overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src="assets/fern/unfurl2.png"
-          alt=""
-          style={{ position: 'absolute', right: -14, bottom: -22, height: 150, width: 'auto', opacity: 0.1, transform: 'rotate(8deg)', pointerEvents: 'none' }}
-        />
-
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 12 }}>
-          Command bar · ⌘K
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--line-dashed)', paddingBottom: 12 }}>
+          <svg width="17" height="18" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+            <rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--acc-terra)" />
+            <path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--acc-terra)" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M12 17.5V21M8.5 21h7" stroke="var(--acc-terra)" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <input
+            ref={inputRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault()
+                submitWithAI()
+              } else if (e.key === 'Enter') {
+                submit()
+              }
+            }}
+            placeholder="Call Omar tomorrow 3pm #shaheen"
+            style={{
+              flex: 1,
+              fontFamily: 'var(--font-ui)',
+              fontSize: 16,
+              color: 'var(--ink-body)',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+            }}
+          />
         </div>
-
-        <input
-          ref={inputRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault()
-              submitWithAI()
-            } else if (e.key === 'Enter') {
-              submit()
-            }
-          }}
-          placeholder="Call Omar tomorrow 3pm #shaheen"
-          style={{
-            width: '100%',
-            fontFamily: 'var(--font-display)',
-            fontSize: 21,
-            color: 'var(--text-primary)',
-            background: 'transparent',
-            border: 'none',
-            borderBottom: '1.5px solid var(--line-sidebar)',
-            paddingBottom: 12,
-            outline: 'none',
-          }}
-        />
         {text.trim() && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
             {parsed.dueAt && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  color: 'var(--acc-lavender-text)',
-                  background: 'rgba(168,160,190,0.2)',
-                  border: '1px solid rgba(168,160,190,0.55)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                }}
-              >
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)' }}>
                 {new Date(parsed.dueAt).toLocaleString()}
               </span>
             )}
             {parsed.durationMin != null && (
-              <span style={{ ...CHIP_BASE, color: 'var(--text-secondary)', background: 'var(--bg-input)', border: '1px solid var(--border-default)' }}>
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)' }}>
                 {formatDuration(parsed.durationMin)}
               </span>
             )}
             {parsed.priority != null && (() => {
               const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
+              // High's tint is the contract's literal rgba(201,165,90,0.22); other priorities fall back to a computed tint.
+              const background = parsed.priority === 2 ? 'rgba(201,165,90,0.22)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
               return (
-                <span style={{ ...CHIP_BASE, color, background: `color-mix(in oklch, ${color} 12%, var(--paper-parchment))`, border: `1px solid ${color}`, fontWeight: 600 }}>
-                  {priorityFlag(parsed.priority)} priority
+                <span style={{ ...CHIP_BASE, color, background }}>
+                  {priorityFlag(parsed.priority)} {PRIORITY_NAME[parsed.priority]}
                 </span>
               )
             })()}
             {matchChip && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  color: 'var(--acc-sage-text)',
-                  background: 'rgba(138,154,126,0.2)',
-                  border: '1px solid rgba(138,154,126,0.55)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                }}
-              >
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)' }}>
                 → {matchChip}
               </span>
             )}
             {unmatched && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  color: 'var(--acc-gold)',
-                  background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))',
-                  border: '1px solid var(--acc-gold-warm)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                }}
-              >
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                 → Inbox (unfiled)
               </span>
             )}
-            {matchChip && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--text-secondary)', marginLeft: 4, transform: 'rotate(-1deg)', display: 'inline-block' }}>it knows where this goes</span>}
           </div>
         )}
 
-        <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-          Enter = quick add · Ctrl+Enter = AI capture
+        <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Enter = quick add · ⌘Enter = AI capture
         </div>
       </div>
     </div>

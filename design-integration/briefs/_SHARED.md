@@ -105,5 +105,10 @@ by streak (bare/sprouting/flowering/lush) · Wisteria/Projects by weighted miles
 - Branch/worktree `ws/<name>` off `feature/botanical-integration`; PR back to it.
 - The orchestrator reviews every PR against the pixel contract and owns merges +
   the freeze list. Long-poles (Calendar) merge last.
-- Authed-screen visual QA needs a logged-in preview session (orchestrator/Kai).
-  You can still verify structure/computed-styles headlessly and via `/design-system`.
+- **A dev server is already running at `http://localhost:5195`, logged in with real
+  data (Kai keeps it up for the duration of this plan).** Use it directly for visual
+  QA — screenshot, computed-style checks, day/night toggle, phone-width resize.
+  **Do not start your own** (`npm run dev`, `preview_start`, or otherwise) — a second
+  instance either fights the port or spawns a redundant process for no reason. If
+  `localhost:5195` isn't reachable, say so and fall back to `npm run build` +
+  structural/computed-style checks only; don't spend turns fighting a server.

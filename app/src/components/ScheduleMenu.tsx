@@ -17,11 +17,21 @@ const itemStyle = {
   textAlign: 'left' as const,
   fontFamily: 'var(--font-ui)',
   fontSize: 13,
-  color: 'var(--text-primary)',
+  color: 'var(--ink-body)',
   background: 'none',
   border: 'none',
-  padding: '6px 16px',
+  borderRadius: 5,
+  padding: '7px 10px',
   cursor: 'pointer',
+}
+
+const headerStyle = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 8,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--ink-hairline)',
+  padding: '4px 10px 6px',
 }
 
 /** The "Schedule ▸" submenu opened from the task context menu — same grouped-popover shape as
@@ -41,12 +51,12 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
   }, [onClose])
 
   const presets = [
-    { label: 'Today', at: scheduleToday() },
-    { label: 'Tomorrow', at: scheduleTomorrow() },
-    { label: 'Next week', at: scheduleNextWeek() },
+    { label: 'Today', key: '1', at: scheduleToday() },
+    { label: 'Tomorrow', key: '2', at: scheduleTomorrow() },
+    { label: 'Next week', key: '3', at: scheduleNextWeek() },
   ]
 
-  const rows = presets.length + 1
+  const rows = presets.length + 2
   const itemHeight = 34
   const maxY = window.innerHeight - 12
   const left = Math.min(position.x, window.innerWidth - 220)
@@ -66,32 +76,30 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
         top: Math.max(12, top),
         left: Math.max(8, left),
         zIndex: 1000,
-        background: 'var(--bg-surface)',
+        background: 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         boxShadow: 'var(--shadow-popover)',
-        borderRadius: 'var(--radius-sharp)',
-        padding: '4px 0',
-        minWidth: 210,
-        transform: 'rotate(-0.3deg)',
+        borderRadius: 5,
+        padding: 6,
+        minWidth: 196,
       }}
     >
+      <div style={headerStyle}>Schedule for…</div>
       {presets.map((p) => (
         <button
           key={p.label}
           type="button"
           onClick={() => fire(p.at)}
           style={itemStyle}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-input)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
         >
           <span>{p.label}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--text-tertiary)' }}>
-            {new Date(p.at).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
-          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{p.key}</span>
         </button>
       ))}
-      <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
-      <div style={{ padding: '6px 16px 2px' }}>
+      <div style={{ height: 1, background: 'var(--line-dashed)', margin: '4px 8px' }} />
+      <div style={{ padding: '2px 10px 0' }}>
         <input
           type="date"
           value={pickDate}
@@ -102,12 +110,12 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
           style={{
             width: '100%',
             fontFamily: 'var(--font-ui)',
-            fontSize: 12.5,
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 'var(--radius-input)',
-            padding: '5px 8px',
-            color: 'var(--text-primary)',
+            fontSize: 13,
+            background: 'none',
+            border: 'none',
+            borderRadius: 5,
+            padding: '7px 0',
+            color: 'var(--ink-muted)',
           }}
         />
       </div>

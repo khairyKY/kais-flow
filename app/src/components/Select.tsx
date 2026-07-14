@@ -157,12 +157,11 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
               maxHeight: 320,
               overflowY: 'auto',
               zIndex: 1000,
-              background: 'var(--bg-surface)',
+              background: 'var(--paper-parchment)',
               border: '1px solid var(--line-card)',
               boxShadow: 'var(--shadow-popover)',
-              borderRadius: 'var(--radius-sharp)',
-              padding: '4px 0',
-              transform: 'rotate(-0.3deg)',
+              borderRadius: 5,
+              padding: 6,
             }}
           >
             {options.map((o, i) => {
@@ -180,18 +179,23 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: 10,
-                    padding: '6px 14px',
+                    gap: 11,
+                    borderRadius: 5,
+                    padding: '7px 10px',
                     fontFamily: 'var(--font-ui)',
                     fontSize: 13,
-                    color: o.disabled ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                    color: o.disabled ? 'var(--ink-faint)' : 'var(--ink-body)',
                     opacity: o.disabled ? 0.5 : 1,
                     cursor: o.disabled ? 'default' : 'pointer',
-                    background: isHi ? 'var(--bg-input)' : 'none',
+                    background: isSel ? 'var(--paper-bone)' : isHi ? 'var(--paper-bone)' : 'none',
                   }}
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</span>
-                  {isSel && <span aria-hidden="true" style={{ color: 'var(--text-tertiary)', fontSize: 11 }}>✓</span>}
+                  {isSel && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+                      <path d="M4 12.5l5 5L20 6" stroke="var(--acc-terra)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </div>
               )
             })}

@@ -9,6 +9,7 @@ import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup }
 import { buildListBindings } from './listShortcuts'
 import { useListKeys } from '../../components/useListKeys'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { TapeCard } from '../../components/kit'
@@ -354,6 +355,7 @@ export function TasksPage() {
   useEscapeStack(selected.size > 0, clearSelection)
 
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
 
   function bulkComplete() {
@@ -547,14 +549,14 @@ export function TasksPage() {
           count={selected.size}
           onComplete={bulkComplete}
           onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
-          onToday={() => bulkSchedule(scheduleToday(), 'today')}
-          onTomorrow={() => bulkSchedule(scheduleTomorrow(), 'tomorrow')}
+          onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
         />
       )}
       {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>
   )

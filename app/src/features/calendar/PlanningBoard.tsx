@@ -5,6 +5,7 @@ import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, snoozeTa
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { useProjects } from '../projects/api'
@@ -225,6 +226,7 @@ export function PlanningBoard() {
   useEscapeStack(selected.size > 0, clearSelection)
 
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
 
   function bulkComplete() {
@@ -327,8 +329,7 @@ export function PlanningBoard() {
           count={selected.size}
           onComplete={bulkComplete}
           onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
-          onToday={() => bulkSchedule(scheduleToday(), 'today')}
-          onTomorrow={() => bulkSchedule(scheduleTomorrow(), 'tomorrow')}
+          onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
@@ -340,6 +341,13 @@ export function PlanningBoard() {
           onClose={() => setBulkSnoozePos(null)}
           onSnooze={bulkSnooze}
           onSomeday={bulkSomeday}
+        />
+      )}
+      {bulkSchedulePos && (
+        <ScheduleMenu
+          position={bulkSchedulePos}
+          onClose={() => setBulkSchedulePos(null)}
+          onSchedule={(iso) => bulkSchedule(iso)}
         />
       )}
       {bulkProjectPos && (

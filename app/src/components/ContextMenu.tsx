@@ -80,7 +80,7 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
 
   return (
     // Plain wrapper (no transform of its own) so the submenu's `position: fixed` popover anchors to
-    // the viewport, not to this rotated menu's box — a `transform` on any ancestor turns it into the
+    // the viewport, not to this menu's box — a `transform` on any ancestor turns it into the
     // containing block for fixed descendants (same class of bug Select.tsx's portal works around).
     <div ref={ref}>
       <div
@@ -90,13 +90,12 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
           top: Math.max(12, top),
           left: Math.max(8, left),
           zIndex: 1000,
-          background: 'var(--bg-surface)',
+          background: 'var(--paper-parchment)',
           border: '1px solid var(--line-card)',
           boxShadow: 'var(--shadow-popover)',
-          borderRadius: 'var(--radius-sharp)',
-          padding: '4px 0',
+          borderRadius: 5,
+          padding: 6,
           minWidth: 180,
-          transform: 'rotate(-0.3deg)',
         }}
       >
         {items.map((item, i) => (
@@ -116,32 +115,33 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 9,
+                gap: 11,
                 width: '100%',
                 textAlign: 'left',
                 fontFamily: 'var(--font-ui)',
                 fontSize: 13,
-                color: item.danger ? 'var(--sig-overdue)' : item.labelColor ?? 'var(--text-primary)',
+                color: item.danger ? 'var(--sig-overdue)' : item.labelColor ?? 'var(--ink-body)',
                 background: 'none',
                 border: 'none',
-                padding: '6px 16px',
+                borderRadius: 5,
+                padding: '7px 10px',
                 cursor: item.disabled ? 'default' : 'pointer',
                 opacity: item.disabled ? 0.35 : 1,
                 transition: 'background 0.12s',
               }}
               onMouseEnter={(e) => {
                 if (item.disabled) return
-                e.currentTarget.style.background = 'var(--bg-input)'
+                e.currentTarget.style.background = 'var(--paper-bone)'
                 handleItemHover(i, !!item.submenu)
               }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
             >
-              {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--text-tertiary)' }}>{item.icon}</span>}
+              {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--ink-faint)' }}>{item.icon}</span>}
               <span style={{ flex: 1 }}>{item.label}</span>
               {item.shortcut && !item.submenu && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-s)', color: 'var(--text-tertiary)' }}>{item.shortcut}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{item.shortcut}</span>
               )}
-              {item.submenu && <span aria-hidden="true" style={{ color: 'var(--text-tertiary)', fontSize: 11 }}>▸</span>}
+              {item.submenu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>▸</span>}
             </button>
           </div>
         ))}
