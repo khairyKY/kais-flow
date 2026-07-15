@@ -1,373 +1,132 @@
-import { useState } from 'react'
-import {
-  useRoutines,
-  useRoutineCompletions,
-  createRoutine,
-  createChallenge,
-  archiveRoutine,
-  toggleCompletion,
-} from './api'
-import { aggregateCompletionRate, computeStreak, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
-import { groupRoutinesByTime, NAMED_TIMES, type NamedTime } from './routineGrouping'
+import { useEffect, useMemo, useState } from 'react'
+import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
+import { computeStreak, localDateKey } from './streaks'
+import { groupRoutinesByTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
-import { Select } from '../../components/Select'
+import { NewRoutineForm } from './NewRoutineForm'
+import { StreakTrellis } from './StreakTrellis'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
-const HISTORY_DAYS = 14
+// ── Routines — pixel contract Routines.dc.html #1a (desktop, lines 379-586) and #1b (iPhone,
+// lines 588-642): the rituals-by-time list + "the garden" streak grid. #2a/#2b (New routine)
+// live in NewRoutineForm.tsx; #4a (14-day trellis, turn 3's Gentle Rain redrawn — turn 3 itself
+// skipped per Kai) lives in StreakTrellis.tsx, opened from a row's streak cluster. The shell
+// owns sidebar/topbar/tab-bar; this is the main content, wired to real data. ──
 
-type TimeMode = NamedTime | 'clock' | 'custom' | 'none'
+const A = '/ds/assets'
+const STAGE_LABEL: Record<string, string> = { bare: 'Bare', sprouting: 'Sprouting', flowering: 'Flowering', lush: 'Lush' }
 
-function vineDayState(done: number, scheduled: number): 'bare' | 'sprouting' | 'flowering' | 'lush' {
-  if (scheduled === 0 || done === 0) return 'bare'
-  const ratio = done / scheduled
-  if (ratio < 0.5) return 'sprouting'
-  if (ratio < 1) return 'flowering'
+function vineStage(streakDays: number): 'bare' | 'sprouting' | 'flowering' | 'lush' {
+  if (streakDays <= 0) return 'bare'
+  if (streakDays < 7) return 'sprouting'
+  if (streakDays < 21) return 'flowering'
   return 'lush'
 }
 
-/** The page-header "streak vine" — a horizontal row of the last 7 days, per Kai's audit item 5
- * ("I want the vine to be horizontal ... and resemble the streak"). Each cell reuses the same 4
- * fixed vine PNGs, picked per-day by how much of that day's scheduled routines got done. Growth/
- * flame choreography is deliberately deferred to the Motion Retrofit — this is layout only. */
-function StreakVine({ routines, completions }: { routines: Routine[]; completions: RoutineCompletion[] }) {
-  const today = new Date()
-  const cells = []
-  for (let n = 6; n >= 0; n--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - n)
-    const key = localDateKey(d)
-    const scheduled = routines.filter((r) => r.cadence.weekdays.includes(d.getDay()))
-    const done = scheduled.filter((r) => completions.some((c) => c.routine_id === r.id && c.completed_on === key))
-    cells.push({ key, label: d.toLocaleDateString('en-US', { weekday: 'narrow' }), state: vineDayState(done.length, scheduled.length), isToday: n === 0 })
-  }
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-      {cells.map((c) => (
-        <div
-          key={c.key}
-          title={c.key}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 4,
-            padding: '6px 4px',
-            borderRadius: 4,
-            background: c.isToday ? 'color-mix(in oklch, var(--acc-gold-warm) 12%, transparent)' : 'transparent',
-            border: c.isToday ? '1px dashed var(--acc-gold-warm)' : '1px solid transparent',
-          }}
-        >
-          <img src={`assets/vine/${c.state}.png`} alt="" style={{ width: 28, height: 28, objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: c.isToday ? 'var(--text-primary)' : 'var(--text-tertiary)',
-            }}
-          >
-            {c.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  useEffect(() => {
+    const mq = matchMedia('(max-width: 767px)')
+    const on = () => setIsMobile(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return isMobile
 }
 
-/** A simple polyline sparkline over the last `HISTORY_DAYS` of aggregate completion — per the
- * phase's own "keep the SVG simple" guidance, just a `<polyline>`, no chart library. */
-function Sparkline({ ratios }: { ratios: number[] }) {
-  const w = 90
-  const h = 20
-  const points = ratios
-    .map((r, i) => `${((i / (ratios.length - 1)) * w).toFixed(1)},${(h - r * h).toFixed(1)}`)
-    .join(' ')
+function FlameIcon({ size = 8 }: { size?: number }) {
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ flex: 'none' }}>
-      <polyline points={points} fill="none" stroke="var(--acc-sage)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={size} height={size * 1.22} viewBox="0 0 9 11" style={{ flex: 'none' }}>
+      <path d="M4.5 0C6 3 9 4 8 8c-.7 2.6-3.3 3-4.8 2C1 9 0 7 1.2 4 2 5 2.5 5 3 4 3.3 2.5 4 1 4.5 0Z" fill="var(--sig-streak)" />
     </svg>
   )
 }
 
-/** Real 7/30-day completion rates + a 14-day sparkline + a streak-risk nudge — all computed
- * from `routine_completions`, replacing what used to be a hardcoded 82%/78% (P4/P5.5 debt). */
-function RateSummary({ routines, completions }: { routines: Routine[]; completions: RoutineCompletion[] }) {
-  const rate7 = aggregateCompletionRate(routines, completions, 7)
-  const rate30 = aggregateCompletionRate(routines, completions, 30)
-  const ratios = dailyCompletionRatios(routines, completions, HISTORY_DAYS)
-  const risk = streakRiskMessage(routines, completions)
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', marginBottom: 16 }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-        7D <span style={{ color: 'var(--text-primary)', fontWeight: 'var(--fw-semibold)' }}>{rate7}%</span>
-      </span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-        30D <span style={{ color: 'var(--text-primary)', fontWeight: 'var(--fw-semibold)' }}>{rate30}%</span>
-      </span>
-      <Sparkline ratios={ratios} />
-      {risk && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--acc-terra)' }}>{risk}</span>}
-    </div>
-  )
-}
-
-function History({ routine, completions }: { routine: Routine; completions: RoutineCompletion[] }) {
+function DayDots({ routine, completions, onOpen }: { routine: Routine; completions: RoutineCompletion[]; onOpen: () => void }) {
   const done = new Set(completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on))
-  const days: { key: string; scheduled: boolean; done: boolean }[] = []
-  for (let n = HISTORY_DAYS - 1; n >= 0; n--) {
-    const d = new Date()
+  const today = new Date()
+  const cells: { key: string; scheduled: boolean; done: boolean }[] = []
+  for (let n = 6; n >= 0; n--) {
+    const d = new Date(today)
     d.setDate(d.getDate() - n)
     const key = localDateKey(d)
-    days.push({ key, scheduled: routine.cadence.weekdays.includes(d.getDay()), done: done.has(key) })
+    cells.push({ key, scheduled: routine.cadence.weekdays.includes(d.getDay()), done: done.has(key) })
   }
   return (
-    <div style={{ display: 'flex', gap: 3, alignItems: 'center', flex: 'none' }}>
-      {days.map((d) => (
+    <span onClick={onOpen} title="14-day trellis" style={{ display: 'inline-flex', gap: 3, flex: 'none', cursor: 'pointer' }}>
+      {cells.map((c) => (
         <span
-          key={d.key}
-          title={d.key}
-          style={{
-            width: 9,
-            height: 9,
-            borderRadius: 2,
-            display: 'inline-block',
-            background: !d.scheduled ? 'var(--bg-input)' : d.done ? 'var(--acc-moss)' : 'color-mix(in oklch, var(--acc-terra) 15%, var(--paper-bone))',
-            border: `1px solid ${!d.scheduled ? 'var(--border-default)' : d.done ? 'var(--acc-moss)' : 'var(--acc-terra)'}`,
-          }}
+          key={c.key}
+          title={c.key}
+          style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: !c.scheduled ? 'var(--line-card)' : c.done ? 'var(--acc-moss)' : 'rgba(181,101,74,0.4)' }}
         />
       ))}
-    </div>
+    </span>
   )
 }
 
-function RoutineRow({ routine, completions }: { routine: Routine; completions: RoutineCompletion[] }) {
-  const routineCompletions = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-  const { current, best } = computeStreak(routineCompletions, routine.cadence)
-  const todayKey = localDateKey(new Date())
-  const doneToday = routineCompletions.includes(todayKey)
-
-  const isChallenge = Boolean(routine.challenge_start && routine.challenge_end)
-  let challengeProgress: string | null = null
-  if (isChallenge && routine.challenge_start && routine.challenge_end) {
-    const start = new Date(routine.challenge_start)
-    const end = new Date(routine.challenge_end)
-    const totalDays =
-      routine.cadence.weekdays.length === 7
-        ? Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
-        : null
-    const doneInRange = routineCompletions.filter((d) => d >= routine.challenge_start! && d <= routine.challenge_end!).length
-    challengeProgress = totalDays ? `${doneInRange}/${totalDays} days` : `${doneInRange} done`
-    const today = new Date()
-    if (today > end) return null // challenge window over — disappears per spec
-  }
+function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; onOpenTrellis: () => void }) {
+  const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
+  const { current } = computeStreak(dates, routine.cadence)
 
   function toggle() {
     toggleCompletion(routine)
     useToastStore.getState().push({ message: doneToday ? 'Streak stepped back.' : 'Routine completed! Keep growing ✿' })
   }
 
-  function archive() {
-    archiveRoutine(routine)
-    useToastStore.getState().push({ message: 'Routine archived.' })
-  }
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '14px 0', borderTop: '1px dashed var(--line-dashed)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-        <span
-          onClick={toggle}
-          style={{
-            width: 18,
-            height: 18,
-            border: '1.5px solid var(--line-solid)',
-            borderRadius: 5,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flex: 'none',
-            fontSize: 11,
-            fontWeight: 700,
-            background: doneToday ? 'var(--text-primary)' : 'transparent',
-            borderColor: doneToday ? 'var(--text-primary)' : 'var(--line-solid)',
-            color: 'var(--bg-app)',
-          }}
-        >
-          {doneToday ? '✓' : ''}
-        </span>
-        <span style={{ fontSize: 14.5, color: doneToday ? 'var(--ink-hairline)' : 'var(--text-primary)', textDecoration: doneToday ? 'line-through' : 'none' }}>
-          {routine.name}
-        </span>
-        {(routine.clock_time || (routine.time_of_day && !NAMED_TIMES.includes(routine.time_of_day as NamedTime))) && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>
-            {routine.clock_time ?? routine.time_of_day}
-          </span>
-        )}
-        {isChallenge && (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: 'var(--acc-gold)',
-              background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))',
-              border: '1px solid var(--acc-gold-warm)',
-              padding: '2px 8px',
-              borderRadius: 999,
-            }}
-          >
-            {challengeProgress}
-          </span>
-        )}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+      <span
+        onClick={toggle}
+        style={{
+          width: 19,
+          height: 19,
+          borderRadius: 6,
+          flex: 'none',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          color: 'var(--paper-parchment)',
+          background: doneToday ? 'var(--acc-moss)' : 'transparent',
+          border: doneToday ? 'none' : '1.5px solid #bfb8a3',
+        }}
+      >
+        {doneToday ? '✓' : ''}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>{routine.name}</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 'none' }}>
-        <History routine={routine} completions={completions} />
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--acc-terra)', fontWeight: 500, minWidth: 60, justifyContent: 'flex-end' }}>
-          🔥 {current} <span style={{ fontSize: 9.5, color: 'var(--text-tertiary)' }}>/ {best}</span>
+      {routine.clock_time && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{routine.clock_time}</span>}
+      {current === 0 ? (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>streak lost</span>
+      ) : (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--sig-streak)' }}>
+          <FlameIcon />
+          {current}
         </span>
-        <button type="button" onClick={archive} style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontFamily: 'inherit', fontSize: 11.5, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
-          archive
-        </button>
-      </div>
+      )}
+      <DayDots routine={routine} completions={completions} onOpen={onOpenTrellis} />
+      <button type="button" onClick={() => archiveRoutine(routine)} style={{ border: 'none', background: 'none', color: 'var(--ink-hairline)', font: 'inherit', fontSize: 11, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+        archive
+      </button>
     </div>
   )
 }
 
-/** Resolves the form's time picker into the two columns `createRoutine`/`createChallenge` write. */
-function resolveTime(mode: TimeMode, customLabel: string, clockTime: string): { timeOfDay: string | null; clockTime: string | null } {
-  if (mode === 'morning' || mode === 'afternoon' || mode === 'evening') return { timeOfDay: mode, clockTime: null }
-  if (mode === 'clock') return { timeOfDay: null, clockTime: clockTime || null }
-  if (mode === 'custom') return { timeOfDay: customLabel.trim() || null, clockTime: null }
-  return { timeOfDay: null, clockTime: null }
-}
-
-function AddRoutineForm() {
-  const [name, setName] = useState('')
-  const [timeMode, setTimeMode] = useState<TimeMode>('morning')
-  const [customLabel, setCustomLabel] = useState('')
-  const [clockTime, setClockTime] = useState('')
-  const [isChallenge, setIsChallenge] = useState(false)
-  const [start, setStart] = useState('')
-  const [end, setEnd] = useState('')
-
+function GardenCard({ routine, completions, compact }: { routine: Routine; completions: RoutineCompletion[]; compact: boolean }) {
+  const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
+  const { current } = computeStreak(dates, routine.cadence)
+  const stage = vineStage(current)
+  const sub = stage === 'bare' ? 'Bare · start again' : `${STAGE_LABEL[stage]} · ${current}d`
   return (
-    <div style={{ position: 'relative', background: 'var(--bg-surface)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-card)', borderRadius: 'var(--radius-sharp)', padding: '14px 16px', transform: 'rotate(-0.3deg)', marginBottom: 28 }}>
-      <span
-        style={{
-          position: 'absolute',
-          top: -8,
-          left: 20,
-          width: 48,
-          height: 13,
-          background: 'rgba(122,148,110,0.38)',
-          backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
-          transform: 'rotate(-2deg)',
-          borderRadius: 1,
-        }}
-      />
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (!name.trim()) return
-          const { timeOfDay, clockTime: resolvedClock } = resolveTime(timeMode, customLabel, clockTime)
-          if (isChallenge && start && end) {
-            createChallenge(name.trim(), timeOfDay, { weekdays: [0, 1, 2, 3, 4, 5, 6] }, start, end, resolvedClock)
-            useToastStore.getState().push({ message: 'New challenge registered in the soil.' })
-          } else {
-            createRoutine(name.trim(), timeOfDay, undefined, resolvedClock)
-            useToastStore.getState().push({ message: 'New routine registered in the soil.' })
-          }
-          setName('')
-          setCustomLabel('')
-          setClockTime('')
-          setStart('')
-          setEnd('')
-        }}
-        style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}
-      >
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Quick add routine…"
-          style={{ flex: 1, minWidth: 200, fontFamily: 'var(--font-ui)', fontSize: 13.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '8px 12px', outline: 'none', color: 'var(--text-primary)' }}
-        />
-        <Select
-          value={timeMode}
-          onChange={(v) => setTimeMode(v as TimeMode)}
-          ariaLabel="Routine time"
-          style={{ fontSize: 12.5, padding: '8px 10px' }}
-          options={[
-            { value: 'morning', label: 'Morning' },
-            { value: 'afternoon', label: 'Afternoon' },
-            { value: 'evening', label: 'Evening' },
-            { value: 'clock', label: 'Pick a time…' },
-            { value: 'custom', label: 'Custom label…' },
-            { value: 'none', label: 'No time' },
-          ]}
-        />
-        {timeMode === 'clock' && (
-          <input
-            type="time"
-            value={clockTime}
-            onChange={(e) => setClockTime(e.target.value)}
-            style={{ fontFamily: 'inherit', fontSize: 12.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', color: 'var(--text-primary)' }}
-          />
-        )}
-        {timeMode === 'custom' && (
-          <input
-            value={customLabel}
-            onChange={(e) => setCustomLabel(e.target.value)}
-            placeholder="e.g. dusk"
-            style={{ width: 100, fontFamily: 'var(--font-ui)', fontSize: 12.5, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', outline: 'none', color: 'var(--text-primary)' }}
-          />
-        )}
-        <span
-          role="checkbox"
-          aria-checked={isChallenge}
-          tabIndex={0}
-          onClick={() => setIsChallenge((v) => !v)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsChallenge((v) => !v) } }}
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: 4,
-            border: '1.5px solid var(--line-solid)',
-            background: isChallenge ? 'var(--text-primary)' : 'transparent',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flex: 'none',
-          }}
-        >
-          {isChallenge && <span style={{ color: 'var(--bg-app)', fontSize: 10, lineHeight: 1 }}>✓</span>}
-        </span>
-        <label
-          onClick={() => setIsChallenge((v) => !v)}
-          style={{ fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}
-        >
-          Challenge
-        </label>
-        {isChallenge && (
-          <>
-            <input
-              type="date"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              style={{ fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', color: 'var(--text-primary)' }}
-            />
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>to</span>
-            <input
-              type="date"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              style={{ fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '7px 8px', color: 'var(--text-primary)' }}
-            />
-          </>
-        )}
-        <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 18px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
-          Add
-        </button>
-      </form>
+    <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: compact ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+      <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <img src={`${A}/vine/${stage}.png`} alt="" style={{ maxHeight: compact ? 52 : 74, filter: 'var(--shadow-drop-sm)', opacity: stage === 'bare' ? 0.85 : 1 }} />
+      </div>
+      <div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 7.5 : 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-hairline)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
     </div>
   )
 }
@@ -375,49 +134,170 @@ function AddRoutineForm() {
 export function RoutinesPage() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
+  const isMobile = useIsMobile()
+  const [formOpen, setFormOpen] = useState<null | { challenge: boolean }>(null)
+  const [trellisRoutine, setTrellisRoutine] = useState<Routine | null>(null)
+
   const active = routines.filter((r) => r.active)
   const todayKey = localDateKey(new Date())
-  const doneToday = active.filter((r) => completions.some((c) => c.routine_id === r.id && c.completed_on === todayKey)).length
+  const doneKeys = useMemo(() => new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id)), [completions, todayKey])
+  const doneToday = active.filter((r) => doneKeys.has(r.id)).length
+  const remaining = active.length - doneToday
+
+  const bestStreak = useMemo(() => {
+    let best = 0
+    for (const r of active) best = Math.max(best, computeStreak(completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on), r.cadence).current)
+    return best
+  }, [active, completions])
+
+  const groups = groupRoutinesByTime(active).filter((g) => g.items.length > 0)
+
+  const activeChallenge = active.find((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
+
+  const heroCaption = remaining === 0 ? (active.length > 0 ? 'all tended for today ✿' : 'plant your first routine ✿') : remaining === 1 ? 'one left before the day\'s done' : `${remaining} left before the day's done`
+
+  const garden = (
+    <div>
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>
+        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', marginTop: 2 }}>each habit grows with its streak</div>}
+      </div>
+      {isMobile ? (
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', marginTop: 10, paddingBottom: 4 }}>
+          {active.map((r) => (
+            <GardenCard key={r.id} routine={r} completions={completions} compact />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
+          {active.map((r) => (
+            <GardenCard key={r.id} routine={r} completions={completions} compact={false} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
   return (
-    <div style={{ maxWidth: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 24 }}>
-        <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 9 }}>
-            Routines · the streak vine
-          </div>
-          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Routines</h1>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <StreakVine routines={active} completions={completions} />
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--text-secondary)', transform: 'rotate(-0.6deg)' }}>this week's growth</span>
-        </div>
-      </div>
-
-      <RateSummary routines={active} completions={completions} />
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-          {doneToday}/{active.length} completed today
-        </span>
-      </div>
-
-      <AddRoutineForm />
-
-      <div style={{ maxWidth: 720 }}>
-        {groupRoutinesByTime(active).map((section) => (
-          <div key={section.key} style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-              <span>{section.label}</span>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+    <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 320px', minHeight: '100%' }}>
+      <div style={{ minWidth: 0, padding: isMobile ? '20px 20px 40px' : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
+        <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 0 : 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
+            <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--shadow-drop-sm)' }} />
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
+              <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Daily rituals</h1>
             </div>
-            {section.items.length === 0 ? (
-              <p style={{ fontStyle: 'italic', color: 'var(--text-tertiary)', fontSize: 13.5, padding: '8px 0', margin: 0 }}>Nothing scheduled here.</p>
+          </div>
+          {!isMobile && (
+            <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 17px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
+              ＋ New routine
+            </button>
+          )}
+        </div>
+
+        <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: isMobile ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18, transform: isMobile ? undefined : 'rotate(-0.3deg)' }}>
+          {!isMobile && (
+            <span style={{ position: 'absolute', top: -9, left: 38, width: 60, height: 16, background: 'rgba(122,148,110,0.4)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {active.length} tended</span>
+              {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f' }}>{heroCaption}</span>}
+            </div>
+            <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
+              <span style={{ display: 'block', width: active.length ? `${Math.round((doneToday / active.length) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px dashed var(--line-dashed)' }}>
+            <FlameIcon size={isMobile ? 12 : 13} />
+            {isMobile ? (
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink-body)' }}>{bestStreak}</span>
             ) : (
-              section.items.map((r) => <RoutineRow key={r.id} routine={r} completions={completions} />)
+              <div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>day streak</div>
+              </div>
             )}
           </div>
+        </div>
+
+        {isMobile && (
+          <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', marginTop: 14, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13.5, padding: '11px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
+            ＋ New routine
+          </button>
+        )}
+
+        {active.length === 0 && (
+          <p style={{ fontStyle: 'italic', color: 'var(--ink-faint)', fontSize: 13.5, marginTop: 24 }}>Nothing planted yet.</p>
+        )}
+
+        {groups.map((g) => (
+          <div key={g.key} style={{ marginTop: isMobile ? 20 : 30 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+                {isMobile ? `${g.label} · ${g.items.filter((r) => doneKeys.has(r.id)).length}/${g.items.length}` : g.label}
+              </span>
+              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+              {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.items.filter((r) => doneKeys.has(r.id)).length} / {g.items.length}</span>}
+            </div>
+            {g.items.map((r) => (
+              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} onOpenTrellis={() => setTrellisRoutine(r)} />
+            ))}
+          </div>
         ))}
+
+        {isMobile && active.length > 0 && <div style={{ marginTop: 20 }}>{garden}</div>}
+      </div>
+
+      {!isMobile && (
+        <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'rgba(234,227,210,0.4)' }}>
+          {garden}
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
+              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+            </div>
+            {activeChallenge && (
+              <ChallengeCard routine={activeChallenge} completions={completions} />
+            )}
+            <div onClick={() => setFormOpen({ challenge: true })} style={{ marginTop: activeChallenge ? 12 : 0, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+              ＋ Start a challenge
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formOpen && <NewRoutineForm onClose={() => setFormOpen(null)} initialChallenge={formOpen.challenge} />}
+      {trellisRoutine && <StreakTrellis routine={trellisRoutine} completions={completions} onClose={() => setTrellisRoutine(null)} />}
+    </div>
+  )
+}
+
+function ChallengeCard({ routine, completions }: { routine: Routine; completions: RoutineCompletion[] }) {
+  const start = routine.challenge_start!
+  const end = routine.challenge_end!
+  const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
+  const { current } = computeStreak(dates, routine.cadence)
+  const totalDays = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1
+  const doneInRange = dates.filter((d) => d >= start && d <= end).length
+  const pct = totalDays > 0 ? Math.min(100, Math.round((doneInRange / totalDays) * 100)) : 0
+  const endLabel = new Date(`${end}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  return (
+    <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 3, boxShadow: 'var(--shadow-goal)', padding: '14px 16px', transform: 'rotate(0.4deg)' }}>
+      <span style={{ position: 'absolute', top: -9, right: 20, width: 52, height: 16, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
+      <div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>
+      <div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'rgba(154,123,58,0.2)', overflow: 'hidden' }}>
+        <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--acc-gold)' }} />
+      </div>
+      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+          <FlameIcon size={10} />
+          <span style={{ color: 'var(--sig-streak)' }}>{current}</span>
+        </span>
+        / {totalDays} days · ends {endLabel}
       </div>
     </div>
   )
