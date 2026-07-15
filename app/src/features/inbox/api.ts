@@ -85,3 +85,17 @@ export function dismissInboxItem(item: InboxItem): void {
   writeRow('inbox_items', { ...item, status: 'dismissed' })
   logActivity('inbox.dismissed', 'inbox_item', item.id, {})
 }
+
+/** Dismissed → pending again (Inbox.dc.html 2a/2b "Restore"). */
+export function restoreInboxItem(item: InboxItem): void {
+  writeRow('inbox_items', { ...item, status: 'pending', snoozed_until: null })
+  logActivity('inbox.restored', 'inbox_item', item.id, {})
+}
+
+/** Permanent delete — the Dismissed tab's "Clear now" (2a). The 30-day auto-compost the
+ * copy promises needs a pg_cron purge job; ponytail: out of this wave's scope (no migration
+ * shipped here), add when a real backlog of dismissed rows makes manual "Clear now" not enough. */
+export function purgeInboxItem(item: InboxItem): void {
+  writeRow('inbox_items', item, 'delete')
+  logActivity('inbox.purged', 'inbox_item', item.id, {})
+}

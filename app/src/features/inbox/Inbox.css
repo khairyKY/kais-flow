@@ -1,0 +1,27 @@
+/* Inbox's own chrome. Pixel contract: design-export/Inbox.dc.html (1a/1b/1c/2a/2b) + Motion 1c. */
+
+/* ── Floret drift (Motion 1c) — a one-shot burst of hydrangea florets when a card files. ── */
+@keyframes inboxFloretDrift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  60% { transform: translate(14px, 88px); opacity: 0.85; }
+  100% { transform: translate(4px, 150px); opacity: 0; }
+}
+.inbox-floret {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #cfe0e6, #9ab4be);
+  pointer-events: none;
+  animation: inboxFloretDrift 650ms ease-in forwards;
+  will-change: transform;
+}
+
+/* ── Dismissed-row swipe → to restore (2b) — pointer-driven, one direction only. ── */
+.ib-swipe-actions { position: absolute; inset: 0; display: flex; align-items: stretch; pointer-events: none; }
+.ib-swipe-content { touch-action: pan-y; }
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-floret { animation: none !important; opacity: 0 !important; }
+}
