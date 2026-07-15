@@ -131,6 +131,80 @@ export function dailyCompletionRatios(routines: Routine[], completions: RoutineC
   return ratios
 }
 
+export type TrellisDayState = 'grew' | 'rained' | 'broke' | 'off'
+export interface TrellisDay {
+  key: string
+  state: TrellisDayState
+}
+
+/** Grace-aware current streak — Routines.dc.html turn 4 ("Gentle Rain, redrawn"): one missed
+ * scheduled day per calendar month doesn't break the streak (it "rains" instead). Walks
+ * backward from `today` same as `computeStreak`, but a miss only breaks the run once that
+ * miss's month has already spent its one grace day. Additive/local to the streak-trellis
+ * display (4a) — does not change `computeStreak`, which every other surface (row flame count,
+ * Today's streak circle, streakRiskMessage) still reads as a plain unforgiving streak. */
+export function computeGraceStreak(completedDates: string[], cadence: Cadence, today: Date = new Date()): { current: number; rainedDates: string[] } {
+  if (cadence.weekdays.length === 0) return { current: 0, rainedDates: [] }
+  const completed = new Set(completedDates)
+  const rainUsedByMonth = new Set<string>()
+  const rainedDates: string[] = []
+  let current = 0
+
+  let cursor = new Date(today)
+  if (isScheduled(cursor, cadence) && !completed.has(localDateKey(cursor))) {
+    cursor = addDays(cursor, -1) // today not over yet — doesn't break, doesn't count
+  }
+  let steps = 0
+  while (steps < MAX_LOOKBACK_DAYS) {
+    if (isScheduled(cursor, cadence)) {
+      const key = localDateKey(cursor)
+      if (completed.has(key)) {
+        current++
+      } else {
+        const monthKey = key.slice(0, 7)
+        if (rainUsedByMonth.has(monthKey)) break
+        rainUsedByMonth.add(monthKey)
+        rainedDates.push(key)
+      }
+    }
+    cursor = addDays(cursor, -1)
+    steps++
+  }
+  return { current, rainedDates }
+}
+
+/** Per-day states for the trailing `days`-day trellis (4a): 'grew' (scheduled + done),
+ * 'rained' (scheduled + missed, forgiven — first miss of its calendar month), 'broke'
+ * (scheduled + missed, grace already spent), 'off' (not scheduled, or today-not-over-yet).
+ * Oldest first, fixed length — same shape convention as `dailyCompletionRatios`. */
+export function computeTrellisDays(completedDates: string[], cadence: Cadence, days: number, today: Date = new Date()): TrellisDay[] {
+  const completed = new Set(completedDates)
+  const todayKey = localDateKey(today)
+  const rainUsedByMonth = new Set<string>()
+  const start = addDays(today, -(days - 1))
+  const out: TrellisDay[] = []
+  for (let n = 0; n < days; n++) {
+    const d = addDays(start, n)
+    const key = localDateKey(d)
+    if (!isScheduled(d, cadence) || key === todayKey) {
+      out.push({ key, state: 'off' })
+      continue
+    }
+    if (completed.has(key)) {
+      out.push({ key, state: 'grew' })
+      continue
+    }
+    const monthKey = key.slice(0, 7)
+    if (rainUsedByMonth.has(monthKey)) {
+      out.push({ key, state: 'broke' })
+    } else {
+      rainUsedByMonth.add(monthKey)
+      out.push({ key, state: 'rained' })
+    }
+  }
+  return out
+}
+
 /** No `goal` field exists on a routine, so "streak vs. goal" is read as "streak vs. today":
  * flags the routine with the longest streak that's scheduled today, not yet done, and would
  * break if skipped. Null when nothing active is actually at risk right now. */
