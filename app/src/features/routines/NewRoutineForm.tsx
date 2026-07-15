@@ -41,6 +41,11 @@ function addDays(key: string, n: number): string {
 export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose: () => void; initialChallenge?: boolean }) {
   useEscapeStack(true, onClose)
   const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  // 2a's fields sit on a parchment modal and use bone for contrast; 2b's sheet is linen and
+  // swaps to parchment fields with a bone "raised" tone — same pattern the mock repeats for
+  // every field container and its active/highlight state.
+  const fieldBg = isMobile ? 'var(--paper-parchment)' : 'var(--paper-bone)'
+  const fieldBgRaised = isMobile ? 'var(--paper-bone)' : 'var(--paper-parchment)'
 
   const [name, setName] = useState('')
   const [timeMode, setTimeMode] = useState<TimeMode>('evening')
@@ -85,7 +90,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         fontSize: isMobile ? 12 : 12.5,
         color: timeMode === mode ? 'var(--ink-body)' : 'var(--ink-muted)',
         fontWeight: timeMode === mode ? 600 : 400,
-        background: timeMode === mode ? 'var(--paper-bone)' : 'transparent',
+        background: timeMode === mode ? fieldBgRaised : 'transparent',
         boxShadow: timeMode === mode && !isMobile ? 'var(--shadow-crisp)' : 'none',
       }}
     >
@@ -125,7 +130,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
 
       <div style={{ marginTop: 18 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
-        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px' }}>
           <input
             autoFocus
             value={name}
@@ -139,7 +144,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
 
       <div style={{ marginTop: 16 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>
-        <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden' }}>
           {seg('morning', 'Morning', 'Morn')}
           {seg('afternoon', 'Afternoon', 'Aft')}
           {seg('evening', 'Evening', 'Eve')}
@@ -174,7 +179,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
                     fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     color: on ? 'var(--paper-parchment)' : 'var(--ink-muted)',
-                    background: on ? 'var(--acc-moss)' : 'var(--paper-bone)',
+                    background: on ? 'var(--acc-moss)' : fieldBg,
                     border: on ? 'none' : '1px solid var(--line-card)',
                   }}
                 >
@@ -196,7 +201,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
             type="time"
             value={reminderTime}
             onChange={(e) => setReminderTime(e.target.value)}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
           />
         )}
         <span
@@ -217,7 +222,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
         </div>
         {isChallenge && (
-          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
             <input
               type="number"
               min={1}
@@ -235,7 +240,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f' }}>starts bare, grows with the streak ✿</span>
         </div>
-        <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', outline: '2px solid rgba(122,148,110,0.35)', borderRadius: 8, padding: '8px 4px', textAlign: 'center', width: isMobile ? 76 : 96 }}>
+        <div style={{ background: fieldBg, border: '1px solid var(--acc-moss)', outline: '2px solid rgba(122,148,110,0.35)', borderRadius: 8, padding: '8px 4px', textAlign: 'center', width: isMobile ? 76 : 96 }}>
           <div style={{ height: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <img src={`${A}/vine/flowering.png`} alt="" style={{ maxHeight: 40 }} />
           </div>

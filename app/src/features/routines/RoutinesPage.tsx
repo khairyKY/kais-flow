@@ -235,7 +235,7 @@ export function RoutinesPage() {
         {groups.map((g) => (
           <div key={g.key} style={{ marginTop: isMobile ? 20 : 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9.5 : 10.5, letterSpacing: isMobile ? '0.16em' : '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
                 {isMobile ? `${g.label} · ${g.items.filter((r) => doneKeys.has(r.id)).length}/${g.items.length}` : g.label}
               </span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
