@@ -14,8 +14,9 @@ import type { CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task }
 // ── Weekly Review — pixel contract Review.dc.html 1a (desktop sweep + right rail), 1b
 // (iPhone), 2a/2b (the Weekly Letter — the "didn't arrive" state is the honest one until a
 // real letter-generation pass exists; see the fidelity note), 3c (the season so far, redone —
-// supersedes 2c's plainer trend per the file's own "revised" framing, same convention as
-// Rituals' turn 3 superseding turn 2). Turn 4's animated envelope stays parked. ──
+// turn 3's own header says "'the season so far' gets a stronger trend", so 3c explicitly
+// supersedes 2c's plainer version of the same widget). Turn 4's animated envelope stays
+// parked (its own dv-thd is marked "Parked · future work"). ──
 
 const A = '/ds/assets'
 
@@ -179,13 +180,24 @@ function LetterSection() {
   )
 }
 
+// Effects 2f "weekly flourish": the week's line draws itself left to right, one-shot on
+// open, with a dot popping in per notable day (staggered 900ms) — Effects.dc.html #2f.
+const WEEK_DOTS: [number, number, string][] = [
+  [6, 74, '#D4A8B0'],
+  [76, 44, '#C9A55A'],
+  [138, 60, '#9AB4BE'],
+  [200, 30, '#A8A0BE'],
+  [254, 16, '#7A946E'],
+]
+
 function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: number; domainsTotal: number; isMobile: boolean }) {
   const motion = useMotionEnabled()
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
     <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: 20 }}>
       <style>{`
-        @keyframes weekLine { 0% { stroke-dashoffset: 220 } 30%, 100% { stroke-dashoffset: 0 } }
+        @keyframes weekLine { from { stroke-dashoffset: 220 } to { stroke-dashoffset: 0 } }
+        @keyframes weekDot { 0%, 60% { transform: scale(0); opacity: 0 } 80% { transform: scale(1.3); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
         <img src={`${A}/fern/unfurl2.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
@@ -197,6 +209,9 @@ function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: n
       {!isMobile && motion && (
         <svg viewBox="0 0 260 96" style={{ width: 130, height: 48, overflow: 'visible' }}>
           <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="#7A946E" strokeWidth="1.5" strokeDasharray="220" style={{ animation: 'weekLine 2.2s ease-in-out' }} />
+          {WEEK_DOTS.map(([cx, cy, fill], i) => (
+            <circle key={i} cx={cx} cy={cy} r="3.5" fill={fill} style={{ transformOrigin: `${cx}px ${cy}px`, animation: `weekDot 200ms ease-out ${i * 0.9}s both` }} />
+          ))}
         </svg>
       )}
       <div style={{ textAlign: 'right' }}>

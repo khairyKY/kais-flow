@@ -93,15 +93,6 @@ function StepFooter({ onSkip, onNext, label }: { onSkip: () => void; onNext: () 
   )
 }
 
-function StepHeader({ label, onSkip }: { label: string; onSkip: () => void }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <FieldLabel>{label}</FieldLabel>
-      <RLink onClick={onSkip}>skip</RLink>
-    </div>
-  )
-}
-
 export function MorningRitual({ onClose }: { onClose: () => void }) {
   const [stepIndex, setStepIndex] = useState(0)
   const [repicking, setRepicking] = useState(false)
@@ -150,16 +141,36 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
   return (
     <MorningPanel wide={step === 'block'} footer={step === 'block' ? null : <StepFooter onSkip={onClose} onNext={next} label={stepIndex === STEPS.length - 1 ? 'Finish' : 'Next →'} />}>
-      <StepHeader label={`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`} onSkip={onClose} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <FieldLabel>
+          {`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`}
+          {seeded && <span style={{ color: 'var(--acc-gold)' }}> · closed by last night's seeds</span>}
+        </FieldLabel>
+        <RLink onClick={onClose}>skip</RLink>
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>
         <StepClovers stepIndex={stepIndex} total={STEPS.length} />
         <span style={{ marginLeft: 6, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-1deg)' }}>{caption}</span>
       </div>
 
+      {step === 'top3' && seeded && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, background: 'var(--paper-goal)', border: '1.5px dashed var(--line-goal)', borderRadius: 8, padding: '12px 15px', transform: 'rotate(-0.3deg)' }}>
+          <svg width="30" height="22" viewBox="0 0 34 24" style={{ flex: 'none' }}>
+            <path d="M2 4h30v18H2V4Z" fill="#C8B48C" stroke="#9d8a63" strokeWidth="1.5" />
+            <path d="M2 4l15 10L32 4" fill="none" stroke="#9d8a63" strokeWidth="1.5" />
+          </svg>
+          <div style={{ flex: 1 }}>
+            <FieldLabel color="var(--acc-gold)">Planted last night</FieldLabel>
+            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>Tomorrow's three came in from the closing ritual — this step is already done.</div>
+          </div>
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', transform: 'rotate(-2deg)', flex: 'none' }}>✿ {top3.length} seed{top3.length === 1 ? '' : 's'}</span>
+        </div>
+      )}
+
       <h2 style={{ margin: '18px 0 4px', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 23, color: 'var(--ink-body)' }}>
-        {STEP_TITLES[step]}
-        {step === 'top3' && !seeded && (
+        {step === 'top3' && seeded ? 'Your Top-3' : STEP_TITLES[step]}
+        {step === 'top3' && (
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 400, fontSize: 13, color: 'var(--ink-faint)' }}> ({top3.length}/3{seeded ? ' · seeded' : ''})</span>
         )}
       </h2>
@@ -330,9 +341,14 @@ function DropSlot({ hour }: { hour: number }) {
   return <HourRow hour={hour} isOver={isOver} setNodeRef={setNodeRef} />
 }
 
+function inboxStage(count: number): string {
+  return count === 0 ? 'zero' : count < 5 ? 'light' : count < 10 ? 'medium' : 'heavy'
+}
+
 function BlockStep() {
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
+  const { data: inboxItems = [] } = usePendingInboxItems()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const startOfToday = new Date()
@@ -367,8 +383,29 @@ function BlockStep() {
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Give the day a shape. Drag anything from the beds on the left into an open hour; drop the rest tomorrow.</p>
       <div style={{ display: 'flex', gap: 18, alignItems: 'stretch' }}>
-        <div style={{ width: 300, flex: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ width: 340, flex: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Bed icon={`${A}/daisy/morning.png`} title="Today · Top-3" tasks={top3} />
+          {/* Inbox bed (contract 1d): read-only here — filing+scheduling in one drag needs inbox/api.ts, owned by W4 */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
+              <img src={`${A}/hydrangea/${inboxStage(inboxItems.length)}.png`} alt="" style={{ height: 26, flex: 'none' }} />
+              <FieldLabel>Inbox</FieldLabel>
+              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{inboxItems.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {inboxItems.length === 0 ? (
+                <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', fontStyle: 'italic', margin: 0 }}>nothing here</p>
+              ) : (
+                inboxItems.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px' }}>
+                    <span style={{ color: 'var(--ink-hairline)', fontSize: 11, lineHeight: 1, letterSpacing: -3 }}>⠿</span>
+                    <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}>{item.raw_text}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
           <Bed icon={`${A}/wisteria/p40.png`} title="This week" tasks={thisWeek} />
         </div>
         <div style={{ flex: 1, minWidth: 0, border: '1px solid var(--line-solid)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>

@@ -8,11 +8,15 @@ import { FieldLabel, RLink, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
 
 // ── The Closing Ritual — pixel contract Rituals.dc.html 2c/2d/2e (the four beats) with
-// beat 1 taken from 3a's refined sun (supersedes 2b's plain dial). Turn 1's older two-step
-// "sweep + preview" (1e/1f) is superseded by this — see the fidelity note in the PR: task
-// hygiene now lives entirely in the Morning "Review overdue" step, so Closing is pure
-// reflection + tomorrow-prep, matching the export's own turn progression. Mobile-first dusk
-// phone sheet; desktop gets "the same four beats as a centered takeover" per the dv-next. ──
+// beat 1 taken from 3a's refined sun (the dv-next under t3 explicitly says this sun
+// "replaces 2b's flat dial"). Turn 1's older two-step "sweep + preview" (1e/1f) is NOT
+// built here: turn 2/3 rename the same surface "Closing Ritual" and give it a different
+// 4-beat structure, which reads as a redesign of turn 1's evening flow rather than an
+// addition to it — but that's this build's inference, not something the file states
+// outright, and the brief's own option list (1a-1g) does include 1e/1f. Flagged for R4/Kai
+// to confirm — a plain "roll open tasks to tomorrow" and "tomorrow's schedule at a glance"
+// step from 1e/1f are unbuilt if he wants both flows. Mobile-first dusk phone sheet;
+// desktop gets "the same four beats as a centered takeover" per the dv-next. ──
 
 const A = '/ds/assets'
 const BEATS = ['garden', 'line', 'seeds', 'goodnight'] as const
@@ -144,8 +148,8 @@ function GardenBeat({
         </div>
       </div>
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', left: '50%', top: 20, transform: 'translateX(-50%)', width: 150, height: 150 }}>
-          <span style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: 'radial-gradient(circle,rgba(228,195,107,0.22),rgba(228,195,107,0.07) 45%,transparent 68%)' }} />
+        <div style={{ position: 'absolute', left: '50%', top: 28, transform: 'translateX(-50%)', width: 190, height: 190 }}>
+          <span style={{ position: 'absolute', inset: -26, borderRadius: '50%', background: 'radial-gradient(circle,rgba(228,195,107,0.22),rgba(228,195,107,0.07) 45%,transparent 68%)' }} />
           <svg viewBox="0 0 160 160" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
             <g fill="rgba(240,235,221,0.28)">
               {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => {
@@ -155,6 +159,8 @@ function GardenBeat({
             </g>
             <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(240,235,221,0.1)" strokeWidth="2.5" />
             <circle cx="80" cy="80" r="72" fill="none" stroke="#E4C36B" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${lit} ${circumference - lit}`} transform="rotate(-90 80 80)" />
+            <circle cx="80" cy="8" r="3" fill="#E4C36B" />
+            <circle cx="142.4" cy="44" r="3" fill="#E4C36B" />
             <g style={{ transformOrigin: '80px 80px', animation: motion ? 'sunTurn 140s linear infinite' : undefined }}>
               <g fill="#D9B65C">
                 <path d="M80 30 L83 46 Q80 49 77 46 Z" /><path d="M80 130 L77 114 Q80 111 83 114 Z" />
@@ -164,11 +170,18 @@ function GardenBeat({
                 <path d="M115.4 44.6 L106 58 Q102 57.5 102.5 53.5 Z" /><path d="M44.6 115.4 L54 102 Q58 102.5 57.5 106.5 Z" />
                 <path d="M44.6 44.6 L58 54 Q57.5 58 53.5 57.5 Z" /><path d="M115.4 115.4 L102 106 Q102.5 102 106.5 102.5 Z" />
               </g>
+              <g fill="#C9A55A" opacity="0.6">
+                <path d="M97 33.2 L94.4 47 Q91 47.5 90 44 Z" /><path d="M63 126.8 L65.6 113 Q69 112.5 70 116 Z" />
+                <path d="M126.8 63 L113 65.6 Q112.5 69 116 70 Z" /><path d="M33.2 97 L47 94.4 Q47.5 91 44 90 Z" />
+                <path d="M126.8 97 L113 94.4 Q112.5 91 116 90 Z" /><path d="M33.2 63 L47 65.6 Q47.5 69 44 70 Z" />
+                <path d="M97 126.8 L94.4 113 Q91 112.5 90 116 Z" /><path d="M63 33.2 L65.6 47 Q69 47.5 70 44 Z" />
+              </g>
             </g>
             <g style={{ transformOrigin: '80px 80px', animation: motion ? 'sunBreathe 7s ease-in-out infinite' : undefined }}>
               <circle cx="80" cy="80" r="26" fill="#D9B65C" />
               <circle cx="80" cy="80" r="26" fill="url(#sunShade)" />
               <circle cx="80" cy="80" r="26" fill="none" stroke="rgba(120,84,40,0.5)" strokeWidth="1" />
+              <circle cx="80" cy="80" r="21.5" fill="none" stroke="rgba(255,244,214,0.35)" strokeWidth="0.8" strokeDasharray="1.5 3" />
             </g>
             <defs>
               <radialGradient id="sunShade" cx="0.38" cy="0.32" r="0.9">
@@ -184,7 +197,7 @@ function GardenBeat({
           </div>
         </div>
 
-        <div style={{ position: 'absolute', left: 24, bottom: 56, width: 110, height: 56 }}>
+        <div style={{ position: 'absolute', left: 34, bottom: 88, width: 110, height: 56 }}>
           {petals.slice(0, Math.max(1, Math.min(7, doneToday))).map(([left, bottom, w, h, radius, rot], i) => (
             <span key={i} style={{ position: 'absolute', left, bottom, width: w, height: h, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: radius, transform: `rotate(${rot}deg)` }} />
           ))}
@@ -193,9 +206,13 @@ function GardenBeat({
           </div>
         </div>
 
-        <div style={{ position: 'absolute', right: 20, bottom: 46 }}>
+        <div style={{ position: 'absolute', right: 30, bottom: 76, width: 120 }}>
           <img src={`${A}/vine/${vineStage}.png`} alt="" style={{ height: 84, filter: 'brightness(0.85)' }} />
+          <div style={{ marginTop: 6, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
+            vine{grewToday ? ' +1 leaf' : ''}
+          </div>
         </div>
+        <span style={{ position: 'absolute', left: 24, right: 24, bottom: 66, borderBottom: '1.5px dashed rgba(168,159,192,0.35)' }} />
       </div>
       <div style={{ flex: 'none', padding: '0 24px 32px' }}>
         <CtaButton onClick={onNext} full>Continue</CtaButton>
