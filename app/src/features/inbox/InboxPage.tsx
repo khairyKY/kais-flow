@@ -194,6 +194,21 @@ export function InboxPage() {
     </div>
   )
 
+  // ── 2a/2b header — distinct eyebrow/title/icon from the Waiting header above ──
+  const dismissedHeader = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
+      <img src={`${A}/hydrangea/medium.png`} alt="" style={{ height: isMobile ? 40 : 52, filter: 'var(--shadow-drop-sm) saturate(0.55)', opacity: 0.8 }} />
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10.5, letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Inbox · {dismissedItems.length} dismissed
+        </div>
+        <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 34, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
+          Dismissed
+        </h1>
+      </div>
+    </div>
+  )
+
   const tabsRow = (
     <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 18 : 22, marginTop: isMobile ? 14 : 22, borderBottom: '1px solid var(--line-card)' }}>
       <button type="button" onClick={() => setTab('waiting')} style={tabStyle(tab === 'waiting', isMobile)}>
@@ -209,7 +224,7 @@ export function InboxPage() {
 
   return (
     <div style={{ maxWidth: isMobile ? undefined : 940 }}>
-      {header}
+      {tab === 'dismissed' ? dismissedHeader : !zero && header}
       {tabsRow}
 
       {tab === 'waiting' ? (
@@ -251,7 +266,7 @@ export function InboxPage() {
             {githubItems.length > 0 && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: isMobile ? '22px 0 10px' : '30px 0 10px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · ranked by AI</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub{isMobile ? '' : ' · Shaheen/website'} · ranked by AI</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
                 </div>
