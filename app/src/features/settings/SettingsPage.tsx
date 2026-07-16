@@ -20,6 +20,7 @@ function useIsMobile(): boolean {
   useEffect(() => {
     const mq = matchMedia('(max-width: 767px)')
     const on = () => setIsMobile(mq.matches)
+    on()
     mq.addEventListener('change', on)
     return () => mq.removeEventListener('change', on)
   }, [])
@@ -182,6 +183,20 @@ function AppearanceCard() {
           ]}
         />
       </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <div style={{ flex: 'none' }}>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Paper texture</div>
+          <div style={fhelp}>the grain over everything · 60%</div>
+        </div>
+        <div style={{ flex: 1, maxWidth: 240, height: 4, borderRadius: 2, background: 'var(--line-solid)', position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', borderRadius: 2, background: 'var(--acc-sage)' }} />
+          <span style={{ position: 'absolute', left: '60%', top: '50%', transform: 'translate(-50%, -50%)', width: 15, height: 15, borderRadius: '50%', background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', boxShadow: 'var(--shadow-crisp)' }} />
+        </div>
+        <div style={{ width: 64, height: 44, flex: 'none', border: '1px solid var(--line-card)', borderRadius: 5, background: 'var(--paper-linen)', position: 'relative', overflow: 'hidden' }}>
+          <span style={{ position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.6 }} />
+          <img src="/ds/assets/clover/awake.png" alt="" style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', height: 22 }} />
+        </div>
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Botanical animations</div>
@@ -255,9 +270,10 @@ function TimezoneCard() {
   )
 }
 
-function IntegrationsSummaryCard() {
+function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
   const { data: integrations = [] } = useIntegrations()
   const google = integrations.find((i) => i.provider === 'google')
+  const github = integrations.find((i) => i.provider === 'github')
   return (
     <SCard>
       <div style={{ ...flabel, marginBottom: 12 }}>Integrations · Google Calendar</div>
@@ -268,16 +284,38 @@ function IntegrationsSummaryCard() {
         </span>
         <span style={{ flex: 1 }} />
         <button type="button" disabled={!google} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: google ? 'pointer' : 'default', opacity: google ? 1 : 0.5 }}>Sync now</button>
+        <button type="button" disabled={!google} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: google ? 'pointer' : 'default', opacity: google ? 1 : 0.5 }}>Disconnect</button>
       </div>
       <div style={fhelp}>mirrors events in and out invisibly — never its own UI · scopes: calendar.events read/write</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: github ? 'var(--acc-gold-warm)' : 'var(--line-solid)', flex: 'none' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>GitHub · issues → inbox</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{github ? 'configured' : 'not connected'}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--line-solid)', flex: 'none' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Groq · chat + parse</span>
+        <span style={{ flex: 1 }} />
+        <button
+          type="button"
+          onClick={onOpenIntegrations}
+          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}
+        >
+          open integrations status →
+        </button>
+      </div>
     </SCard>
   )
 }
+
+const RITUAL_REMINDERS_KEY = 'kf_ritual_reminders'
 
 function PushCard() {
   const { data: subs = [] } = useMyPushSubscriptions()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [remindersOn, setRemindersOn] = useState(() => localStorage.getItem(RITUAL_REMINDERS_KEY) !== '0')
   const supported = isPushSupported()
   const thisDeviceLabel = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 60) : ''
   const subscribed = subs.some((s) => s.device_label === thisDeviceLabel)
@@ -323,6 +361,11 @@ function PushCard() {
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{subs.length} device{subs.length === 1 ? '' : 's'} subscribed</span>
+          {subs.map((s) => (
+            <span key={s.id} style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>
+              {s.device_label === thisDeviceLabel ? 'this device ✓' : (s.device_label ?? 'device').slice(0, 20)}
+            </span>
+          ))}
           <span style={{ flex: 1 }} />
           <button type="button" onClick={handleToggle} disabled={busy} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1 }}>
             {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
@@ -333,7 +376,20 @@ function PushCard() {
         </div>
       )}
       {message && <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '10px 0 0' }}>{message}</p>}
-      <div style={{ marginTop: 10 }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Ritual reminders</div>
+          <div style={fhelp}>morning 8:30 · evening 21:30 — a nudge, never a lock</div>
+        </div>
+        <Toggle
+          on={remindersOn}
+          onToggle={() => {
+            const next = !remindersOn
+            setRemindersOn(next)
+            localStorage.setItem(RITUAL_REMINDERS_KEY, next ? '1' : '0')
+          }}
+        />
+      </div>
       <div style={fhelp}>iphone: install to home screen first (share → add to home screen) — safari tabs can't receive push</div>
     </SCard>
   )
@@ -470,7 +526,7 @@ function IntegrationsPage() {
         <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>External capture endpoint</div>
           <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</div>
-          <div style={fhelp}>anything POSTed here will land in your inbox</div>
+          <div style={fhelp}>anything POSTed here lands in your inbox</div>
         </SCard>
         <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -567,12 +623,12 @@ function DesktopSettings() {
         ) : (
           <>
             <div id="settings-Appearance"><AppearanceCard /></div>
+            <SoundCatalogCard />
             <div id="settings-Timezone"><TimezoneCard /></div>
-            <div id="settings-Notifications"><IntegrationsSummaryCard /></div>
-            <div><PushCard /></div>
+            <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
+            <div id="settings-Notifications"><PushCard /></div>
             <div id="settings-Capture API"><CaptureApiCard /></div>
             <div id="settings-Profile"><ProfileCard /></div>
-            <SoundCatalogCard />
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
               everything saves as you touch it — the SAVED chip just says so ✿
             </div>
@@ -611,6 +667,13 @@ function MobileSettings() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Theme</span>
           <Seg<ThemeMode> value={mode} onChange={setMode} options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'auto', label: 'Auto' }]} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Paper texture</span>
+          <span style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--line-solid)', position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', borderRadius: 2, background: 'var(--acc-sage)' }} />
+            <span style={{ position: 'absolute', left: '60%', top: '50%', transform: 'translate(-50%, -50%)', width: 14, height: 14, borderRadius: '50%', background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)' }} />
+          </span>
         </div>
       </SCard>
 
