@@ -1,9 +1,8 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { PageFallback } from './Stub'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../lib/realtime'
-import { useTheme } from '../lib/theme'
 import { CommandBar } from '../features/command-bar/CommandBar'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { ChatPanel } from '../features/chat/ChatPanel'
@@ -13,40 +12,64 @@ import { useTasks } from '../features/tasks/api'
 import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
+import { hydrangeaAsset } from '../lib/gardenAssets'
 import { ToastHost } from './ToastHost'
 import { ShortcutOverlay } from './ShortcutOverlay'
+import { MobileTabBar } from './MobileTabBar'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
-// 1g (Plan folded / rail collapsed). Sidebar groups Plan (drawer) · Tend ·
-// Cultivate; later surfaces (Projects, People, Activity) placed per the newer
-// files' sidebars (Projects/People/Activity.dc.html). Colored dot per surface
-// accent when inactive; the species PNG the design shows when active. ──
+// 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
+// Navigation Reference" (per-item active icon + washi-tape spec, 2026-07-16).
+// Sidebar groups Plan (drawer) · Tend · Cultivate; later surfaces (Projects,
+// People, Activity) placed per the newer files' sidebars. Colored dot per
+// surface accent when inactive; the species PNG/SVG the design shows when
+// active, washi tape tinted per page. ──
 
 const A = '/ds/assets'
+
+// Reference's "terrarium species" flower glyph — same five-ellipse shape, fill/center vary per page.
+function FlowerIcon({ fill, center }: { fill: string; center: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flex: 'none' }}>
+      <g fill={fill}>
+        <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
+        <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
+        <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
+        <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
+        <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
+      </g>
+      <circle cx="12" cy="11" r="2.4" fill={center} />
+    </svg>
+  )
+}
 
 type NavItem = {
   to: string
   label: string
   dot: string // accent CSS var for the resting dot
-  img?: string // always-shown species PNG (design shows Journal's fern this way)
+  img?: string // always-shown species PNG (design shows Journal's fern this way), opacity bumps on active
   activeImg?: string // species PNG shown only when the row is active
+  activeIcon?: ReactNode // inline botanical SVG shown only when the row is active
+  dynamicActiveImg?: (pendingInbox: number) => string // Inbox: species staged by real pending count
   badge?: 'inbox'
+  tape: string // washi-tape rgba tint on the active row (Navigation Reference §02)
 }
 
 const TEND: NavItem[] = [
-  { to: '/today', label: 'Today', dot: '--acc-sage', activeImg: `${A}/clover/awake.png` },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox' },
-  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeImg: `${A}/cherry/bloom.png` },
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender' },
-  { to: '/projects', label: 'Projects', dot: '--acc-moss' },
+  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="#8A9A7E" center="#C9A55A" />, tape: 'rgba(138,154,126,0.4)' },
+  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', dynamicActiveImg: (n) => `${A}/hydrangea/${hydrangeaAsset(n).src}.png`, tape: 'rgba(154,180,190,0.55)' },
+  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeImg: `${A}/cherry/bloom.png`, tape: 'rgba(212,168,176,0.45)' },
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="#A8A0BE" center="#D9B65C" />, tape: 'rgba(168,160,190,0.45)' },
+  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeImg: `${A}/wisteria/p60.png`, tape: 'rgba(122,148,110,0.45)' },
 ]
 
 const CULTIVATE: NavItem[] = [
-  { to: '/routines', label: 'Routines', dot: '--acc-moss' },
-  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream' },
-  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png` },
-  { to: '/people', label: 'People', dot: '--acc-clover' },
-  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
+  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeImg: `${A}/vine/flowering.png`, tape: 'rgba(122,148,110,0.45)' },
+  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeImg: `${A}/fern/unfurl2.png`, tape: 'rgba(212,199,138,0.45)' },
+  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
+  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'rgba(201,160,160,0.45)' },
+  // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
+  { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'rgba(154,123,58,0.45)' },
 ]
 
 const smartLists: { list: SmartList; label: string }[] = [
@@ -147,7 +170,9 @@ function PlanDrawer() {
 
 function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number }) {
   const icon = (active: boolean) => {
-    if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: 0.85 }} />
+    if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
+    if (active && item.activeIcon) return item.activeIcon
+    if (active && item.dynamicActiveImg) return <img src={item.dynamicActiveImg(pendingInbox)} alt="" style={{ height: 16 }} />
     if (active && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16 }} />
     return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
   }
@@ -180,7 +205,7 @@ function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number })
                 left: 16,
                 width: 30,
                 height: 9,
-                background: 'rgba(138,154,126,0.5)',
+                background: item.tape,
                 backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
                 transform: 'rotate(-3deg)',
                 borderRadius: 1,
@@ -339,8 +364,6 @@ export function AppLayout() {
 
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const { data: pendingInbox = [] } = usePendingInboxItems()
-  const theme = useTheme((s) => s.theme)
-  const toggleTheme = useTheme((s) => s.toggle)
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -369,11 +392,12 @@ export function AppLayout() {
   return (
     <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
+        .app-tabbar { display: none; }
         @media (max-width: 767px) {
-          .app-sidebar { width: 64px !important; padding-top: 14px !important; }
-          .app-sidebar-header, .app-nav-label, .app-footer-label, .app-vine, .app-smartlist { display: none !important; }
+          .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
-          .app-main-content { padding: 20px 16px 40px !important; }
+          .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
+          .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
         .app-sidebar.collapsed .app-sidebar-header,
@@ -449,7 +473,6 @@ export function AppLayout() {
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
-          {footerRow(theme === 'night' ? SunGlyph : MoonGlyph, theme === 'night' ? 'Day' : 'Night', undefined, toggleTheme, true)}
           {footerRow(SignOutGlyph, 'Sign out', undefined, () => void supabase.auth.signOut(), true)}
         </div>
       </aside>
@@ -465,6 +488,13 @@ export function AppLayout() {
         </div>
       </main>
 
+      <MobileTabBar
+        pendingInbox={pendingInbox.length}
+        onSearch={() => setSearchOpen(true)}
+        onChat={() => setChatOpen(true)}
+        onSignOut={() => void supabase.auth.signOut()}
+      />
+
       <CommandBar />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
@@ -473,12 +503,3 @@ export function AppLayout() {
     </div>
   )
 }
-
-// Day/Night toggle glyphs (footer). ponytail: interim home; W7 Settings appearance
-// gets the canonical control per the export — both bind the same useTheme store.
-const MoonGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.2 6.2 0 0 0 10.5 10.5Z" /></svg>
-)
-const SunGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></svg>
-)

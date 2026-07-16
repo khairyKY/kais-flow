@@ -20,7 +20,7 @@ function MicIcon() {
   )
 }
 
-export function VoiceCaptureButton() {
+export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
   const [recording, setRecording] = useState(false)
   const [busy, setBusy] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -73,13 +73,15 @@ export function VoiceCaptureButton() {
       icon={<MicIcon />}
       onClick={() => (recording ? stop() : void start())}
       disabled={busy}
+      title={busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture'}
       style={{
         cursor: busy ? 'default' : 'pointer',
         opacity: busy ? 0.5 : 1,
         background: recording ? 'color-mix(in srgb, var(--acc-terra) 80%, black)' : undefined,
+        ...(iconOnly ? { width: 38, height: 38, padding: 0, justifyContent: 'center' } : null),
       }}
     >
-      {busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture'}
+      {!iconOnly && (busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture')}
     </Button>
   )
 }
