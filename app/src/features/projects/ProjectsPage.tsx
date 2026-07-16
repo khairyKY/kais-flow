@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, createProject, useTimeEntries } from './api'
+import { useProjects, createProject, useTimeEntries, restoreProject } from './api'
 import { useAreas, createArea } from '../areas/api'
 import { useTasks } from '../tasks/api'
+import { useSlipping } from '../slipping/api'
+import { queryClient } from '../../lib/queryClient'
 import { SectionLabel } from '../../components/kit'
 
 function localUseIsMobile() {
@@ -30,7 +32,8 @@ export function ProjectsPage() {
   const isMobile = localUseIsMobile()
 
   // State
-  const [view, setView] = useState<'list' | 'board'>('list')
+  const [view, setView] = useState<'list' | 'board' | 'archive'>('list')
+  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
   const [newType, setNewType] = useState<'standard' | 'area' | 'retainer'>('standard')
 
@@ -40,15 +43,28 @@ export function ProjectsPage() {
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
   const { data: timeEntries = [] } = useTimeEntries()
+  const { data: slippingList = [] } = useSlipping()
 
   // Filter out archived projects
-  const projects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
+  const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
+  const archivedProjects = useMemo(() => allProjects.filter((p) => p.status === 'archived'), [allProjects])
+
+  const filteredProjects = useMemo(() => {
+    return activeProjects.filter((p) => !selectedDomainId || p.domain_id === selectedDomainId)
+  }, [activeProjects, selectedDomainId])
+
+  const filteredAreas = useMemo(() => {
+    return areas.filter((a) => !selectedDomainId || a.domain_id === selectedDomainId)
+  }, [areas, selectedDomainId])
+
+  const activeCount = activeProjects.length
+  const totalCount = allProjects.length
 
   // Computed data
   const projectStats = useMemo(() => {
-    const stats: Record<string, { hours: number; doneMilestones: number; totalMilestones: number; pct: number }> = {}
+    const stats: Record<string, { hours: number; doneMilestones: number; totalMilestones: number; pct: number; hasTop3Task: boolean }> = {}
 
-    for (const p of projects) {
+    for (const p of allProjects) {
       // Sum hours from time_entries
       const entries = timeEntries.filter((e) => e.project_id === p.id)
       const minutes = entries.reduce((acc, curr) => acc + curr.duration_min, 0)
@@ -75,16 +91,18 @@ export function ProjectsPage() {
       }
 
       const pct = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0
+      const hasTop3Task = tasks.some((t) => t.project_id === p.id && t.status === 'todo' && t.top3)
 
       stats[p.id] = {
         hours,
         doneMilestones,
         totalMilestones,
         pct,
+        hasTop3Task,
       }
     }
     return stats
-  }, [projects, timeEntries, tasks])
+  }, [allProjects, timeEntries, tasks])
 
   const areaOpenTaskCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -121,10 +139,10 @@ export function ProjectsPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
-          {projects
+          {filteredProjects
             .filter((p) => p.type === 'standard')
             .map((p) => {
-              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -134,7 +152,10 @@ export function ProjectsPage() {
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
+                    </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones
                     </div>
@@ -151,10 +172,10 @@ export function ProjectsPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Retainers</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
-          {projects
+          {filteredProjects
             .filter((p) => p.type === 'retainer')
             .map((p) => {
-              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -164,7 +185,10 @@ export function ProjectsPage() {
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
+                    </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.hours}h / 10h this month
                     </div>
@@ -181,9 +205,10 @@ export function ProjectsPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
-          {areas.map((a) => {
+          {filteredAreas.map((a) => {
             const count = areaOpenTaskCounts[a.id] || 0
             const domain = domains.find((d) => d.id === a.domain_id)
+            const isSlipping = slippingList.some((s) => s.entity_type === 'area' && s.entity_id === a.id)
             return (
               <div
                 key={a.id}
@@ -192,9 +217,15 @@ export function ProjectsPage() {
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                 <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}>{a.name}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>
-                  {count} open
-                </span>
+                {isSlipping ? (
+                  <span className="chip" style={{ background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                    slipping
+                  </span>
+                ) : (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>
+                    {count} open
+                  </span>
+                )}
               </div>
             )
           })}
@@ -225,23 +256,61 @@ export function ProjectsPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {view === 'board' && (
+            {(view === 'board' || view === 'list') && (
               <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-                <span onClick={() => setView('list')} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>List</span>
-                <span className="on" style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-body)', fontWeight: 600, cursor: 'default', fontFamily: 'inherit' }}>Board</span>
+                <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
+                <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
                 <span style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: 'var(--ink-hairline)', cursor: 'default', opacity: 0.5, fontFamily: 'inherit' }}>Timeline</span>
               </span>
             )}
-            {view === 'list' && (
-              <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-                <span className="on" style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-body)', fontWeight: 600, cursor: 'default', fontFamily: 'inherit' }}>List</span>
-                <span onClick={() => setView('board')} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>Board</span>
-                <span style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: 'var(--ink-hairline)', cursor: 'default', opacity: 0.5, fontFamily: 'inherit' }}>Timeline</span>
+            {view === 'archive' && (
+              <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
+                ← Back to Active
               </span>
             )}
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px', cursor: 'pointer' }}>
-              ⚟ Domain ▾
+            <span
+              className="fhelp"
+              onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
+              style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', paddingRight: 6 }}
+            >
+              {activeCount} active · {totalCount} total
             </span>
+            <div
+              style={{
+                position: 'relative',
+                display: 'inline-block',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9.5px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--ink-muted)',
+                border: '1px solid var(--line-solid)',
+                borderRadius: '999px',
+                padding: '8px 13px',
+                cursor: 'pointer',
+              }}
+            >
+              ⚟ {selectedDomainId ? domains.find((d) => d.id === selectedDomainId)?.name : 'Domain'} ▾
+              <select
+                value={selectedDomainId || ''}
+                onChange={(e) => setSelectedDomainId(e.target.value || null)}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0,
+                  cursor: 'pointer',
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <option value="">All Domains</option>
+                {domains.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={() => {
                 setNewType('area')
@@ -270,10 +339,10 @@ export function ProjectsPage() {
             <SectionLabel style={{ margin: '26px 0 4px' }}>
               <span style={{ color: 'var(--acc-sage-text)' }}>Active</span>
             </SectionLabel>
-            {projects
+            {filteredProjects
               .filter((p) => p.type === 'standard')
               .map((p) => {
-                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
                 const domain = domains.find((d) => d.id === p.domain_id)
                 return (
                   <div
@@ -283,7 +352,10 @@ export function ProjectsPage() {
                   >
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                        {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      </div>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Project'}</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -303,10 +375,10 @@ export function ProjectsPage() {
             <SectionLabel style={{ margin: '24px 0 4px' }}>
               <span>Retainers</span>
             </SectionLabel>
-            {projects
+            {filteredProjects
               .filter((p) => p.type === 'retainer')
               .map((p) => {
-                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
                 const domain = domains.find((d) => d.id === p.domain_id)
                 return (
                   <div
@@ -316,7 +388,10 @@ export function ProjectsPage() {
                   >
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                        {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      </div>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Retainer'}</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -336,9 +411,11 @@ export function ProjectsPage() {
             <SectionLabel style={{ margin: '24px 0 4px' }}>
               <span>Areas</span>
             </SectionLabel>
-            {areas.map((a) => {
+            {filteredAreas.map((a) => {
               const count = areaOpenTaskCounts[a.id] || 0
               const domain = domains.find((d) => d.id === a.domain_id)
+              const isSlipping = slippingList.some((s) => s.entity_type === 'area' && s.entity_id === a.id)
+              const slippingItem = slippingList.find((s) => s.entity_type === 'area' && s.entity_id === a.id)
               return (
                 <div
                   key={a.id}
@@ -350,9 +427,15 @@ export function ProjectsPage() {
                     <span style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 600 }}>{a.name}</span>
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain?.name ?? 'No Domain'}</span>
                   </div>
-                  <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 3 }}>
-                    area
-                  </span>
+                  {isSlipping && slippingItem ? (
+                    <span className="chip" style={{ background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                      slipping · {Math.floor(slippingItem.days_since)}d
+                    </span>
+                  ) : (
+                    <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 3 }}>
+                      area
+                    </span>
+                  )}
                   <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                     {count} open
                   </span>
@@ -374,81 +457,174 @@ export function ProjectsPage() {
         {/* BOARD VIEW */}
         {view === 'board' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 26, maxWidth: 1100 }}>
-            {domains.map((d) => {
-              const domainProjects = projects.filter((p) => p.domain_id === d.id)
-              // Rotate cards slightly for placed cards effect
-              return (
-                <div key={d.id} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
-                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
-                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{domainProjects.length}</span>
-                  </div>
+            {domains
+              .filter((d) => !selectedDomainId || d.id === selectedDomainId)
+              .map((d) => {
+                const domainProjects = filteredProjects.filter((p) => p.domain_id === d.id)
+                const almostBloomingProject = domainProjects.find((p) => {
+                  const stat = projectStats[p.id]
+                  return stat && stat.pct >= 80 && stat.pct < 100 && (stat.totalMilestones - stat.doneMilestones === 1)
+                })
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                    {domainProjects.map((p, idx) => {
-                      const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
-                      const cardTilt = idx % 2 === 0 ? -0.4 : 0.3
-                      const imgSource = getWisteriaImage(stat.pct)
+                return (
+                  <div key={d.id} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{domainProjects.length}</span>
+                    </div>
 
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => navigate(`/projects/${p.id}`)}
-                          style={{
-                            display: 'block',
-                            background: 'var(--paper-parchment)',
-                            border: '1px solid var(--line-card)',
-                            borderRadius: 8,
-                            boxShadow: 'var(--shadow-crisp)',
-                            padding: '13px 14px',
-                            cursor: 'pointer',
-                            transform: `rotate(${cardTilt}deg)`,
-                            transition: 'transform 0.2s',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
-                            <img src={imgSource} alt="" style={{ height: 34, flex: 'none' }} />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}>{p.name}</div>
-                              <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
-                                {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+                      {domainProjects.map((p, idx) => {
+                        const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
+                        const cardTilt = idx % 2 === 0 ? -0.4 : 0.3
+                        const imgSource = getWisteriaImage(stat.pct)
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => navigate(`/projects/${p.id}`)}
+                            style={{
+                              display: 'block',
+                              background: 'var(--paper-parchment)',
+                              border: '1px solid var(--line-card)',
+                              borderRadius: 8,
+                              boxShadow: 'var(--shadow-crisp)',
+                              padding: '13px 14px',
+                              cursor: 'pointer',
+                              transform: `rotate(${cardTilt}deg)`,
+                              transition: 'transform 0.2s',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                              <img src={imgSource} alt="" style={{ height: 34, flex: 'none' }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}>{p.name}</div>
+                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
+                                </div>
                               </div>
+                              <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)', flex: 'none', marginTop: 3 }} />
                             </div>
-                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)', flex: 'none', marginTop: 3 }} />
-                          </div>
 
-                          <div style={{ marginTop: 11, height: 5, borderRadius: 3, background: 'rgba(42, 36, 32, 0.08)', overflow: 'hidden' }}>
-                            <span style={{ display: 'block', width: `${stat.pct}%`, height: '100%', background: 'var(--acc-moss)' }} />
-                          </div>
+                            <div style={{ marginTop: 11, height: 5, borderRadius: 3, background: 'rgba(42, 36, 32, 0.08)', overflow: 'hidden' }}>
+                              <span style={{ display: 'block', width: `${stat.pct}%`, height: '100%', background: 'var(--acc-moss)' }} />
+                            </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>
-                            <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                              {stat.doneMilestones} / {stat.totalMilestones}
-                            </span>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>
+                              <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                                {stat.doneMilestones} / {stat.totalMilestones}
+                              </span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
+                              {stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                            </div>
                           </div>
+                        )
+                      })}
+
+                      {almostBloomingProject && (
+                        <div style={{ padding: '16px 6px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f' }}>
+                          almost blooming — one milestone left ✿
                         </div>
-                      )
-                    })}
+                      )}
 
-                    {/* Plant a project here stub slot */}
-                    <div
-                      onClick={() => {
-                        setNewType('standard')
-                        setShowNewModal(true)
-                      }}
-                      style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 8, padding: '13px 14px', cursor: 'pointer' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                        <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px dashed var(--ink-hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 16, flex: 'none' }}>＋</span>
-                        <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Plant a project here…</div>
+                      {/* Plant a project here stub slot */}
+                      <div
+                        onClick={() => {
+                          setNewType('standard')
+                          setShowNewModal(true)
+                        }}
+                        style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 8, padding: '13px 14px', cursor: 'pointer' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                          <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px dashed var(--ink-hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 16, flex: 'none' }}>＋</span>
+                          <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Plant a project here…</div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                )
+              })}
+          </div>
+        )}
+
+        {/* ARCHIVE VIEW */}
+        {view === 'archive' && (
+          <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}>
+                ← All projects
+              </span>
+              <span style={{ marginLeft: 'auto' }} className="fhelp">{archivedProjects.length} finished · {archivedProjects.reduce((acc, p) => acc + (projectStats[p.id]?.hours || 0), 0)}h all-time</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
+              <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
+                <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>
+              </div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', marginTop: 10 }}>
+              finished projects reach the full wisteria cascade — kept, not cleared ✿
+            </div>
+
+            {/* Group archived projects by year */}
+            {Object.entries(
+              archivedProjects.reduce<Record<number, any[]>>((acc, p) => {
+                const year = new Date(p.updated_at).getFullYear()
+                if (!acc[year]) acc[year] = []
+                acc[year].push(p)
+                return acc
+              }, {})
+            )
+              .sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
+              .map(([year, yearProjs]) => (
+                <div key={year}>
+                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
+                    <span>{year}</span>
+                    <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+                    <span style={{ color: 'var(--ink-hairline)' }}>{yearProjs.length}</span>
+                  </div>
+                  {yearProjs.map((p) => {
+                    const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+                    return (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                        <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 30, flex: 'none' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                          <div className="fhelp" style={{ marginTop: 2 }}>{p.engagement_model || 'Project'} · {stat.doneMilestones} / {stat.totalMilestones} milestones</div>
+                        </div>
+                        <span className="mchip">{stat.hours}h</span>
+                        <span className="mchip" style={{ width: 88, textAlign: 'right' }}>
+                          done {new Date(p.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                        </span>
+                        <span
+                          className="chip"
+                          onClick={() => {
+                            restoreProject(p)
+                            queryClient.invalidateQueries({ queryKey: ['projects'] })
+                          }}
+                          style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}
+                        >
+                          restore
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              ))}
+
+            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+                Open the Herbarium — {archivedProjects.length} pressed specimens →
+              </Link>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+                Archived projects stay searchable · restore any time
+              </span>
+              <span style={{ flex: 1 }}></span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Export all ↓</span>
+            </div>
           </div>
         )}
       </main>

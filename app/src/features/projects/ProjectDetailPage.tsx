@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
+import { queryClient } from '../../lib/queryClient'
 import { useDomains } from '../domains/api'
 import {
   useProjects,
@@ -123,6 +124,31 @@ export function ProjectDetailPage() {
     navigate(`/projects/${newProj.id}`)
   }
 
+  const handleToggleMilestone = (milestoneId: string) => {
+    if (!project || !project.milestones) return
+    const m = project.milestones.find((x) => x.id === milestoneId)
+    if (!m) return
+
+    const linkedTasks = tasks.filter((t) => t.milestone_id === milestoneId)
+    const nextCompleted = !m.completed
+
+    if (linkedTasks.length > 0) {
+      for (const t of linkedTasks) {
+        if (t.status !== (nextCompleted ? 'done' : 'todo')) {
+          writeRow('tasks', {
+            ...t,
+            status: nextCompleted ? 'done' : 'todo',
+            completed_at: nextCompleted ? new Date().toISOString() : null,
+            top3: false,
+          })
+          logActivity(nextCompleted ? 'task.completed' : 'task.reopened', 'task', t.id, {})
+        }
+      }
+    }
+
+    toggleProjectMilestone(project, milestoneId)
+  }
+
   const handleAddMilestoneClick = () => {
     if (!project || !newMilestoneTitle.trim()) return
     addProjectMilestone(project, newMilestoneTitle.trim(), newMilestoneWeight)
@@ -182,10 +208,31 @@ export function ProjectDetailPage() {
 
     if (logMode === 'work') {
       const dur = parseDuration(workDuration)
-      logTimeEntry(project?.id || null, null, workNote.trim(), dur, startedAt)
+      const entry = logTimeEntry(project?.id || null, null, workNote.trim(), dur, startedAt)
+      queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
+        const newLog = {
+          id: entry.id,
+          event_type: 'project.work_logged',
+          entity_type: 'project',
+          entity_id: project?.id || '',
+          payload: { note: workNote.trim(), duration_min: dur },
+          created_at: startedAt,
+        }
+        return [newLog, ...(old ?? [])]
+      })
     } else {
-      // Status update only - write to activity log directly
       logActivity('project.update_logged', 'project', project?.id || id || '', { note: workNote.trim() })
+      queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
+        const newLog = {
+          id: crypto.randomUUID(),
+          event_type: 'project.update_logged',
+          entity_type: 'project',
+          entity_id: project?.id || id || '',
+          payload: { note: workNote.trim() },
+          created_at: startedAt,
+        }
+        return [newLog, ...(old ?? [])]
+      })
     }
     setWorkNote('')
   }
@@ -338,7 +385,7 @@ export function ProjectDetailPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {resolvedMilestones.map((m) => (
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                      <Checkbox checked={m.resolvedCompleted} onChange={() => toggleProjectMilestone(project, m.id)} size={15} />
+                      <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} />
                       <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
                       <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
                       <span onClick={() => removeProjectMilestone(project, m.id)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
@@ -590,6 +637,34 @@ export function ProjectDetailPage() {
     // Recent activity log list
     const areaRecentLogs = activityLogs.filter((log) => log.entity_id === area.id)
 
+    const tendedWeeks = useMemo(() => {
+      const weeks = [false, false, false, false, false]
+      const now = Date.now()
+      const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+
+      const markWeek = (dateStr: string) => {
+        const date = new Date(dateStr).getTime()
+        const diff = now - date
+        if (diff >= 0 && diff < 5 * oneWeekMs) {
+          const weekIdx = Math.floor(diff / oneWeekMs)
+          if (weekIdx >= 0 && weekIdx < 5) {
+            weeks[weekIdx] = true
+          }
+        }
+      }
+
+      for (const log of areaRecentLogs) {
+        if (log.created_at) markWeek(log.created_at)
+      }
+      for (const t of completedTasks) {
+        if (t.completed_at) markWeek(t.completed_at)
+      }
+
+      return weeks
+    }, [areaRecentLogs, completedTasks])
+
+    const tendedCount = tendedWeeks.filter(Boolean).length
+
     return (
       <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
@@ -620,16 +695,38 @@ export function ProjectDetailPage() {
             <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
               <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--acc-sage-text)', lineHeight: 1 }}>Healthy</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 30,
+                    fontWeight: 500,
+                    color: tendedCount >= 3 ? 'var(--acc-sage-text)' : tendedCount >= 1 ? 'var(--acc-terra)' : 'var(--ink-muted)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {tendedCount >= 3 ? 'Healthy' : tendedCount >= 1 ? 'Slipping' : 'Neglected'}
+                </span>
               </div>
               <div style={{ display: 'flex', gap: 4, marginTop: 11 }}>
-                <span style={{ flex: 1, height: 22, borderRadius: 3, background: 'var(--acc-moss)', opacity: 0.9 }}></span>
-                <span style={{ flex: 1, height: 22, borderRadius: 3, background: 'var(--acc-moss)', opacity: 0.75 }}></span>
-                <span style={{ flex: 1, height: 22, borderRadius: 3, background: 'var(--acc-moss)', opacity: 0.6 }}></span>
-                <span style={{ flex: 1, height: 22, borderRadius: 3, background: 'var(--acc-moss)', opacity: 0.4 }}></span>
-                <span style={{ flex: 1, height: 22, borderRadius: 3, background: 'rgba(42,36,32,0.08)' }}></span>
+                {tendedWeeks.map((tended, i) => {
+                  const opacities = [0.9, 0.75, 0.6, 0.4, 0.25]
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: 22,
+                        borderRadius: 3,
+                        background: tended ? 'var(--acc-moss)' : 'rgba(42,36,32,0.08)',
+                        opacity: tended ? opacities[i] : 1,
+                      }}
+                    />
+                  )
+                })}
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', marginTop: 8 }}>tended 4 of the last 5 weeks</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', marginTop: 8 }}>
+                tended {tendedCount} of the last 5 weeks
+              </div>
             </div>
 
             <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>

@@ -18,8 +18,8 @@
 | Table | Columns (beyond universal) |
 |---|---|
 | `domains` | `name text`, `color text`, `sort_order int` — must survive rename/merge/re-parent cheaply (Jerad's lesson) |
-| `projects` | `domain_id uuid FK`, `name`, `type text check in ('standard','retainer')`, `status text` |
-| `tasks` | `project_id uuid?`, `domain_id uuid?`, `area_id uuid?` (FK areas, P1–P4 retrofit), `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `duration_min int?` (UX Retrofit, migration 0017 — null renders as no chip, calendar falls back to 30), `someday bool default false` (UX Retrofit, migration 0017), `reminder_at timestamptz?` (per-task reminder, P1–P4 retrofit), `reminder_sent bool default false`, `completed_at timestamptz?` — indexes: `(status, due_at)`, `(domain_id)`, `(area_id)`, `(top3) where top3`, `(reminder_sent, reminder_at)` for notify sweep |
+| `projects` | `domain_id uuid FK`, `name`, `type text check in ('standard','retainer')`, `status text`, `color text?` (P7), `target_date timestamptz?` (P7), `milestones jsonb` (P7 default '[]'), `checklist jsonb` (P7 default '[]'), `engagement_model text?` (P7) |
+| `tasks` | `project_id uuid?`, `domain_id uuid?`, `area_id uuid?` (FK areas, P1–P4 retrofit), `title text`, `notes text?`, `status text check in ('todo','done','cancelled')`, `due_at timestamptz?`, `scheduled_start/scheduled_end timestamptz?`, `top3 bool default false`, `snoozed_until timestamptz?`, `recurrence_rule text?` (RRULE), `labels text[]`, `priority int?`, `duration_min int?` (UX Retrofit, migration 0017 — null renders as no chip, calendar falls back to 30), `someday bool default false` (UX Retrofit, migration 0017), `reminder_at timestamptz?` (per-task reminder, P1–P4 retrofit), `reminder_sent bool default false`, `completed_at timestamptz?`, `milestone_id uuid?` (P7 FK), `paused bool` (P7 default false) — indexes: `(status, due_at)`, `(domain_id)`, `(area_id)`, `(top3) where top3`, `(reminder_sent, reminder_at)` for notify sweep |
 | `inbox_items` | `kind text check in ('text','voice','github_issue','email')`, `raw_text text`, `transcript text?`, `ai_parse jsonb?`, `confidence real?`, `status text check in ('pending','filed','dismissed')`, `filed_task_id uuid?`, `payload jsonb?` (source metadata, e.g. GitHub issue url/repo/node_id), `snoozed_until timestamptz?` (UX Retrofit, migration 0018 — hides from the pending triage queue until this time; no push reminder, that half of SPECS.md's Snooze backlog item stays future-phase) |
 | `activity_log` | `event_type text` (e.g. `task.created`, `task.completed`, `routine.checked`, `journal.created`, `entity.reviewed`), `entity_type text`, `entity_id uuid`, `payload jsonb` — **append-only; the spine.** Slipping, streaks, digests, resurfacing only read this. Index `(entity_type, entity_id, created_at)` |
 
@@ -61,7 +61,7 @@
 | `people` | `name text`, `facts jsonb` (birthday, kids, interests…), `domain_id uuid?` |
 | `interactions` | `person_id uuid FK`, `summary text`, `occurred_at timestamptz` |
 | `content_items` | `title`, `status text check in ('idea','outline','editing','published')`, `channel text?`, `domain_id uuid?`, `outline_md text?`, `sort_order int` |
-| `time_entries` | `task_id uuid?`, `project_id uuid?`, `started_at`, `ended_at?` |
+| `time_entries` | `project_id uuid FK?`, `task_id uuid FK?`, `note text?`, `duration_min int`, `started_at timestamptz`, `ended_at timestamptz?` |
 
 ## Edge functions (contracts live in the phase files)
 

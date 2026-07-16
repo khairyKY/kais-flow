@@ -35,3 +35,48 @@ create trigger set_time_entries_updated_at
 
 -- Add time_entries to Supabase realtime publication
 alter publication supabase_realtime add table time_entries;
+
+-- Retainer reload function
+create or replace function reload_retainers()
+returns void as $$
+declare
+  proj record;
+  item jsonb;
+  new_checklist jsonb;
+begin
+  for proj in select * from projects where type = 'retainer' and status = 'active' loop
+    -- Reset all checklist items to completed = false
+    new_checklist := '[]'::jsonb;
+    if proj.checklist is not null and jsonb_array_length(proj.checklist) > 0 then
+      for item in select * from jsonb_array_elements(proj.checklist) loop
+        item := jsonb_set(item, '{completed}', 'false'::jsonb);
+        new_checklist := new_checklist || item;
+      end loop;
+    end if;
+
+    update projects set checklist = new_checklist, updated_at = now() where id = proj.id;
+
+    -- Log activity
+    insert into activity_log (id, user_id, event_type, entity_type, entity_id, payload, created_at)
+    values (
+      gen_random_uuid(),
+      proj.user_id,
+      'retainer.reloaded',
+      'project',
+      proj.id,
+      jsonb_build_object('name', proj.name),
+      now()
+    );
+  end loop;
+end;
+$$ language plpgsql security definer;
+
+-- Schedule monthly retainer reload cron job (1st of month at 00:00 UTC)
+select cron.unschedule('retainer-reload-monthly') where exists (select 1 from cron.job where jobname = 'retainer-reload-monthly');
+
+select cron.schedule(
+  'retainer-reload-monthly',
+  '0 0 1 * *',
+  $$select reload_retainers()$$
+);
+

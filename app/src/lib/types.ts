@@ -167,7 +167,7 @@ export interface AppSettings {
 }
 
 export interface SlippingRow {
-  entity_type: 'domain' | 'project'
+  entity_type: 'domain' | 'project' | 'area'
   entity_id: string
   entity_name: string
   last_touch: string
