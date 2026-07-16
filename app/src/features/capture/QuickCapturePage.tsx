@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router'
 import { captureWithAI } from './api'
 import { useToastStore } from '../../lib/toastStore'
 import { VoiceCaptureSheet } from './VoiceCaptureSheet'
@@ -535,7 +536,7 @@ export function QuickCapturePage() {
                   <span
                     onClick={() => handleKeyClick(' ')}
                     style={{
-                      width: '200px',
+                      width: '280px',
                       height: '40px',
                       background: 'rgba(240,235,221,0.16)',
                       borderRadius: '5px',
@@ -760,7 +761,7 @@ export function QuickCapturePage() {
 
                 {/* share targets */}
                 <div style={{ display: 'flex', gap: '18px', padding: '16px 4px 4px' }}>
-                  <div style={{ textAlign: 'center', width: '64px', opacity: 0.6 }}>
+                  <div style={{ textAlign: 'center', width: '64px' }}>
                     <span
                       style={{
                         width: '52px',
@@ -820,7 +821,7 @@ export function QuickCapturePage() {
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'center', width: '64px', opacity: 0.6 }}>
+                  <div style={{ textAlign: 'center', width: '64px' }}>
                     <span
                       style={{
                         width: '52px',
@@ -848,7 +849,7 @@ export function QuickCapturePage() {
                     <div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>Mail</div>
                   </div>
 
-                  <div style={{ textAlign: 'center', width: '64px', opacity: 0.6 }}>
+                  <div style={{ textAlign: 'center', width: '64px' }}>
                     <span
                       style={{
                         width: '52px',
@@ -881,8 +882,8 @@ export function QuickCapturePage() {
           </div>
         </div>
       </div>
-      <p style={{ marginTop: '26px', font: '13px/1.6 var(--font-ui)', color: '#6b6455', textAlign: 'center' }}>
-        The sprout glyph on the pill is the only garden element out here — lock screen and share sheet stay OS-native in feel. Everything captured this way lands in the Inbox via the same endpoint.
+      <p className="dv-next" style={{ marginTop: '26px', font: '13px/1.6 var(--font-ui)', color: '#6b6455', textAlign: 'center' }}>
+        The sprout glyph on the pill is the only garden element out here — lock screen and share sheet stay OS-native in feel. Everything captured this way lands in the <Link to="/inbox" style={{ color: 'var(--ink-body)', textDecoration: 'none' }}>Inbox</Link> via the same endpoint as the <Link to="/settings" style={{ color: 'var(--ink-body)', textDecoration: 'none' }}>Integrations</Link> capture URL.
       </p>
     </div>
   )

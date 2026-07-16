@@ -210,6 +210,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto',
+            boxShadow: '0 0 0 8px rgba(181, 101, 74, 0.14), var(--shadow-cta)',
             transition: 'box-shadow var(--dur-normal) var(--ease-natural)',
           }}
         >
