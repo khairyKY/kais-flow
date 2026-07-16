@@ -13,6 +13,22 @@ export interface Project {
   name: string
   type: 'standard' | 'retainer'
   status: string
+  color?: string | null
+  target_date?: string | null
+  milestones?: Array<{
+    id: string
+    title: string
+    weight: number
+    completed: boolean
+  }>
+  checklist?: Array<{
+    id: string
+    title: string
+    type: 'one-shot' | 'task-linked'
+    completed: boolean
+    task_id?: string | null
+  }>
+  engagement_model?: string | null
   created_at: string
   updated_at: string
 }
@@ -40,6 +56,8 @@ export interface Task {
   reminder_at: string | null
   reminder_sent: boolean
   completed_at: string | null
+  paused?: boolean
+  milestone_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -186,4 +204,17 @@ export interface ResurfacedLogRow {
   shown_on: string
   action: ResurfaceAction
   created_at: string
+}
+
+export interface TimeEntry {
+  id: string
+  user_id: string
+  project_id: string | null
+  task_id: string | null
+  note: string | null
+  duration_min: number
+  started_at: string
+  ended_at: string | null
+  created_at: string
+  updated_at: string
 }

@@ -24,6 +24,10 @@ const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then(
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
 const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
+const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
+const ProjectDetailPage = lazy(() => import('./features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
+const PerennialsPage = lazy(() => import('./features/projects/PerennialsPage').then((m) => ({ default: m.PerennialsPage })))
+
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -50,8 +54,8 @@ const router = createBrowserRouter([
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'capture', element: <QuickCapturePage /> },
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
-      { path: 'projects', element: <Stub name="Projects" /> },
-      { path: 'projects/:id', element: <Stub name="Project" /> },
+      { path: 'projects', element: <ProjectsPage /> },
+      { path: 'projects/:id', element: <ProjectDetailPage /> },
       { path: 'journal', element: <Stub name="Journal" /> },
       { path: 'library', element: <Stub name="Library" /> },
       { path: 'people', element: <Stub name="People" /> },
@@ -62,7 +66,7 @@ const router = createBrowserRouter([
       { path: 'seasons', element: <Stub name="Seasons" /> },
       { path: 'trash', element: <Stub name="Trash" /> },
       { path: 'search', element: <SearchPage /> },
-      { path: 'perennials', element: <Stub name="Perennials" /> },
+      { path: 'perennials', element: <PerennialsPage /> },
     ],
   },
   { path: '/onboarding', element: <Stub name="Onboarding" /> },

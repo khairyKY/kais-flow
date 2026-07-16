@@ -164,3 +164,24 @@ export function setReminder(task: Task, reminderAt: string | null): void {
   writeRow('tasks', { ...task, reminder_at: reminderAt, reminder_sent: false })
   logActivity('task.reminder_set', 'task', task.id, { reminder_at: reminderAt })
 }
+
+export function pauseTask(task: Task): void {
+  writeRow('tasks', { ...task, paused: true })
+  logActivity('task.paused', 'task', task.id, {})
+}
+
+export function resumeTask(task: Task): void {
+  writeRow('tasks', { ...task, paused: false })
+  logActivity('task.resumed', 'task', task.id, {})
+}
+
+export function skipNextOccurrence(task: Task): void {
+  if (task.recurrence_rule && task.due_at) {
+    const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
+    if (next) {
+      writeRow('tasks', { ...task, due_at: next.toISOString() })
+      logActivity('task.skipped', 'task', task.id, { next_due_at: next.toISOString() })
+    }
+  }
+}
+
