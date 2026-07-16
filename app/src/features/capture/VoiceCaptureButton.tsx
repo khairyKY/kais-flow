@@ -1,14 +1,8 @@
-import { useRef, useState } from 'react'
-import { transcribeAudio, captureWithAI } from './api'
-import { useToastStore } from '../../lib/toastStore'
+import { useState } from 'react'
 import { Button } from '../../components/kit'
+import { VoiceCaptureSheet } from './VoiceCaptureSheet'
 
 // Pixel contract: Today.dc.html 1a header CTA (line 132) — mic glyph + pill, kit Button "cta".
-
-function pickMimeType(): string {
-  const candidates = ['audio/webm', 'audio/mp4', 'audio/aac']
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
-}
 
 function MicIcon() {
   return (
@@ -21,67 +15,26 @@ function MicIcon() {
 }
 
 export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
-  const [recording, setRecording] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-
-  async function start() {
-    let stream: MediaStream
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      useToastStore.getState().push({ message: 'Microphone permission denied' })
-      return
-    }
-    const mimeType = pickMimeType()
-    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
-    chunksRef.current = []
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data)
-    }
-    recorder.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop())
-      void (async () => {
-        setBusy(true)
-        try {
-          const blob = new Blob(chunksRef.current, { type: recorder.mimeType })
-          const text = await transcribeAudio(blob)
-          if (text.trim()) await captureWithAI(text.trim(), 'voice', text.trim())
-          else useToastStore.getState().push({ message: "Didn't catch that — try again" })
-        } catch {
-          useToastStore.getState().push({ message: 'Voice capture failed' })
-        } finally {
-          setBusy(false)
-        }
-      })()
-    }
-    recorder.start()
-    mediaRecorderRef.current = recorder
-    setRecording(true)
-  }
-
-  function stop() {
-    mediaRecorderRef.current?.stop()
-    setRecording(false)
-  }
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
-    <Button
-      type="button"
-      variant="cta"
-      icon={<MicIcon />}
-      onClick={() => (recording ? stop() : void start())}
-      disabled={busy}
-      title={busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture'}
-      style={{
-        cursor: busy ? 'default' : 'pointer',
-        opacity: busy ? 0.5 : 1,
-        background: recording ? 'color-mix(in srgb, var(--acc-terra) 80%, black)' : undefined,
-        ...(iconOnly ? { width: 38, height: 38, padding: 0, justifyContent: 'center' } : null),
-      }}
-    >
-      {!iconOnly && (busy ? 'Transcribing…' : recording ? 'Stop' : 'Voice capture')}
-    </Button>
+    <>
+      <Button
+        type="button"
+        variant="cta"
+        icon={<MicIcon />}
+        onClick={() => setSheetOpen(true)}
+        title="Voice capture"
+        style={{
+          cursor: 'pointer',
+          ...(iconOnly ? { width: 38, height: 38, padding: 0, justifyContent: 'center' } : null),
+        }}
+      >
+        {!iconOnly && 'Voice capture'}
+      </Button>
+
+      <VoiceCaptureSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+    </>
   )
 }
+

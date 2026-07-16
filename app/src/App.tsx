@@ -23,6 +23,7 @@ const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage'
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
+const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
       { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
+      { path: 'capture', element: <QuickCapturePage /> },
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
       { path: 'projects', element: <Stub name="Projects" /> },
       { path: 'projects/:id', element: <Stub name="Project" /> },
