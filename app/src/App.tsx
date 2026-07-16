@@ -22,6 +22,7 @@ const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then(
 const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage').then((m) => ({ default: m.WeeklyReviewPage })))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -58,7 +59,7 @@ const router = createBrowserRouter([
       { path: 'focus', element: <Stub name="Focus" /> },
       { path: 'seasons', element: <Stub name="Seasons" /> },
       { path: 'trash', element: <Stub name="Trash" /> },
-      { path: 'search', element: <Stub name="Search" /> },
+      { path: 'search', element: <SearchPage /> },
       { path: 'perennials', element: <Stub name="Perennials" /> },
     ],
   },

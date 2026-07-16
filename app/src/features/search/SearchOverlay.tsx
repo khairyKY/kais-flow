@@ -46,6 +46,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     navigate(hit.entity_type === 'task' ? `/tasks?focus=${hit.entity_id}` : `/inbox?focus=${hit.entity_id}`)
   }
 
+  function viewAll() {
+    onClose()
+    navigate(`/search?q=${encodeURIComponent(query.trim())}`)
+  }
+
   const tasks = results.filter((r) => r.entity_type === 'task')
   const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
 
@@ -134,6 +139,16 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View top result</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
           </div>
+        )}
+        {query.trim() && (
+          <button
+            type="button"
+            onClick={viewAll}
+            style={{ marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+          >
+            <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
+          </button>
         )}
       </div>
     </div>
