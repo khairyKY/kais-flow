@@ -17,6 +17,7 @@ import { useMotionEnabled } from '../lib/motion'
 import { ToastHost } from './ToastHost'
 import { ShortcutOverlay } from './ShortcutOverlay'
 import { MobileTabBar } from './MobileTabBar'
+import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -343,6 +344,7 @@ function TopBar() {
         ) : (
           <span style={{ color: 'var(--ink-faint)' }}>◌</span>
         )}
+        <SeasonTopbarEcho />
       </div>
       <div style={{ flex: 'none' }}>Africa/Cairo</div>
     </div>

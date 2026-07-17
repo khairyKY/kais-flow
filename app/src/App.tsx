@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
 import { AuthProvider } from './features/auth/AuthProvider'
@@ -33,6 +33,9 @@ const FocusPage = lazy(() => import('./features/focus/FocusPage').then((m) => ({
 const ActivityPage = lazy(() => import('./features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })))
 const HerbariumPage = lazy(() => import('./features/herbarium/HerbariumPage').then((m) => ({ default: m.HerbariumPage })))
 const TrashPage = lazy(() => import('./features/trash/TrashPage').then((m) => ({ default: m.TrashPage })))
+const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
+const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate').then((m) => ({ default: m.OnboardingGate })))
+const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -45,7 +48,7 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Navigate to="/today" replace /> },
+      { index: true, element: <OnboardingGate /> },
       // Built surfaces (reskin waves W1–W8)
       { path: 'today', element: <TodayPage /> },
       { path: 'inbox', element: <InboxPage /> },
@@ -68,13 +71,20 @@ const router = createBrowserRouter([
       { path: 'activity', element: <ActivityPage /> },
       { path: 'herbarium', element: <HerbariumPage /> },
       { path: 'focus', element: <FocusPage /> },
-      { path: 'seasons', element: <Stub name="Seasons" /> },
+      { path: 'seasons', element: <SeasonsPage /> },
       { path: 'trash', element: <TrashPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'perennials', element: <PerennialsPage /> },
     ],
   },
-  { path: '/onboarding', element: <Stub name="Onboarding" /> },
+  {
+    path: '/onboarding',
+    element: (
+      <RequireAuth>
+        <OnboardingPage />
+      </RequireAuth>
+    ),
+  },
 ])
 
 function App() {
