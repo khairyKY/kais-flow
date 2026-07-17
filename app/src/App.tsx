@@ -33,6 +33,8 @@ const FocusPage = lazy(() => import('./features/focus/FocusPage').then((m) => ({
 const ActivityPage = lazy(() => import('./features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })))
 const HerbariumPage = lazy(() => import('./features/herbarium/HerbariumPage').then((m) => ({ default: m.HerbariumPage })))
 const TrashPage = lazy(() => import('./features/trash/TrashPage').then((m) => ({ default: m.TrashPage })))
+const PeoplePage = lazy(() => import('./features/people/PeoplePage').then((m) => ({ default: m.PeoplePage })))
+const PersonDetailPage = lazy(() => import('./features/people/PersonDetailPage').then((m) => ({ default: m.PersonDetailPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -63,8 +65,8 @@ const router = createBrowserRouter([
       { path: 'projects/:id', element: <ProjectDetailPage /> },
       { path: 'journal', element: <JournalPage /> },
       { path: 'library', element: <LibraryPage /> },
-      { path: 'people', element: <Stub name="People" /> },
-      { path: 'people/:id', element: <Stub name="Person" /> },
+      { path: 'people', element: <PeoplePage /> },
+      { path: 'people/:id', element: <PersonDetailPage /> },
       { path: 'activity', element: <ActivityPage /> },
       { path: 'herbarium', element: <HerbariumPage /> },
       { path: 'focus', element: <FocusPage /> },
