@@ -41,7 +41,7 @@
 | `routines` | `name text`, `time_of_day text?` (one of `'morning'/'afternoon'/'evening'`, a free-text custom label like `'dusk'`, or null for no time — was `not null` + 3-value check until UX Retrofit migration 0019 relaxed it), `clock_time text?` (`HH:MM` 24h, migration 0019 — independent of `time_of_day`), `cadence jsonb` (weekday mask), `challenge_start date?`, `challenge_end date?`, `active bool` |
 | `routine_completions` | `routine_id uuid FK`, `completed_on date`, unique `(routine_id, completed_on)` — streaks are always computed, never stored |
 | `push_subscriptions` | `endpoint text`, `keys jsonb`, `device_label text` |
-| `app_settings` | single row: `timezone text default 'Africa/Cairo'`, `digest_hour int`, `confidence_threshold real default 0.75`, `slipping_default_days int default 7` |
+| `app_settings` | single row: `timezone text default 'Africa/Cairo'`, `digest_hour int`, `confidence_threshold real default 0.75`, `slipping_default_days int default 7`, `display_name text?`, `workspace_name text default 'Personal'`, `seed_avatar text?`, `onboarded_at timestamptz?` (N6 onboarding, migration 0025 — null until the first-run wizard is completed) |
 
 **View `slipping`** — last `activity_log` touch per domain/project/area vs threshold → rows that are going stale. (`slipping_areas` migration 0013 added the `area_id` variant).
 
