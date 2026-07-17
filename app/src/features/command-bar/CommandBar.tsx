@@ -30,6 +30,15 @@ export function CommandBar() {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
 
+  useEffect(() => {
+    function handlePrefill(e: Event) {
+      const customEvent = e as CustomEvent<string>;
+      setText(customEvent.detail || '')
+    }
+    window.addEventListener('prefill-command-bar', handlePrefill)
+    return () => window.removeEventListener('prefill-command-bar', handlePrefill)
+  }, [])
+
   useEscapeStack(open, () => setOpen(false))
   useBodyScrollLock(open)
 

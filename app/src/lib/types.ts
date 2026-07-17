@@ -284,3 +284,31 @@ export interface Commentary {
   created_at: string
   updated_at: string
 }
+
+export interface Fact {
+  id: string
+  label: string
+  value: string
+  date?: string | null
+  recurs?: boolean
+}
+
+export interface Person {
+  id: string
+  user_id: string
+  name: string
+  facts: Fact[]
+  domain_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Interaction {
+  id: string
+  user_id: string
+  person_id: string
+  summary: string
+  occurred_at: string
+  created_at: string
+  updated_at: string
+}
