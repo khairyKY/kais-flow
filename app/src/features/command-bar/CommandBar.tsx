@@ -31,8 +31,9 @@ export function CommandBar() {
   const { data: projects = [] } = useProjects()
 
   useEffect(() => {
-    function handlePrefill(e) {
-      setText(e.detail || '')
+    function handlePrefill(e: Event) {
+      const customEvent = e as CustomEvent<string>;
+      setText(customEvent.detail || '')
     }
     window.addEventListener('prefill-command-bar', handlePrefill)
     return () => window.removeEventListener('prefill-command-bar', handlePrefill)

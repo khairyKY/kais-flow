@@ -153,19 +153,19 @@ export function TodayPage() {
     return people
       .filter((p) => {
         if (dismissedBdays.has(p.id)) return false
-        const bdayFact = p.facts?.find((f) => f.label === 'Birthday')
+        const bdayFact = p.facts?.find((f: any) => f.label === 'Birthday')
         if (!bdayFact) return false
         const days = getDaysUntilBirthday(bdayFact.date || bdayFact.value)
         return days === 0 || days === 1
       })
       .map((p) => {
-        const bdayFact = p.facts?.find((f) => f.label === 'Birthday')
-        const days = getDaysUntilBirthday(bdayFact.date || bdayFact.value)
+        const bdayFact = p.facts?.find((f: any) => f.label === 'Birthday')
+        const days = getDaysUntilBirthday(bdayFact?.date || bdayFact?.value)!
         return { person: p, days }
       })
   }, [people, dismissedBdays])
 
-  const handleDismissBday = (personId) => {
+  const handleDismissBday = (personId: string) => {
     const curY = new Date().getFullYear()
     const key = `dismissed_bday_${personId}_${curY}`
     try {
@@ -600,7 +600,7 @@ const MoonIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#A8A0BE" /></svg>
 )
 
-function getDaysUntilBirthday(birthdayVal) {
+function getDaysUntilBirthday(birthdayVal: string | undefined | null): number | null {
   if (!birthdayVal) return null
   let month = 0
   let day = 0
