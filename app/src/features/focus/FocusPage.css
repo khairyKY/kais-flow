@@ -1,0 +1,194 @@
+/* Focus page custom animations and styling */
+
+.petal {
+  position: absolute;
+  top: -18px;
+  width: 11px;
+  height: 9px;
+  background: linear-gradient(135deg, #E8C4CC, #D4A8B0);
+  border-radius: 70% 30% 60% 40%;
+  will-change: transform;
+}
+
+.mote {
+  position: absolute;
+  bottom: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #C9A55A;
+  opacity: 0;
+  will-change: transform;
+}
+
+.fly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #E8D9A0;
+  box-shadow: 0 0 8px 3px rgba(232, 217, 160, 0.55);
+  will-change: transform, opacity;
+}
+
+/* Animations scoped to motion-on class */
+.app-shell.motion-on .petal {
+  animation: petalFall 7s linear infinite;
+}
+
+.app-shell.motion-on .mote {
+  animation: moteRise 9s ease-in-out infinite;
+}
+
+.app-shell.motion-on .fly {
+  animation: fireflyPulse 4.5s ease-in-out infinite, fireflyDrift 13s ease-in-out infinite alternate;
+}
+
+.app-shell.motion-on .focus-sway {
+  transform-origin: 50% 100%;
+  animation: leafSway 5.5s ease-in-out infinite;
+}
+
+.app-shell.motion-on .focus-bloom-glow {
+  animation: bloomGlow 3.6s ease-in-out infinite;
+}
+
+.app-shell.motion-on .focus-bloom-glow-slow {
+  animation: bloomGlow 4.5s ease-in-out infinite;
+}
+
+.app-shell.motion-on .focus-dew-glint {
+  animation: dewGlint 7s ease-in-out infinite;
+}
+
+.app-shell.motion-on .focus-veil-breathe {
+  animation: veilBreathe 8s ease-in-out infinite;
+}
+
+/* Keyframes definitions */
+@keyframes petalFall {
+  0% {
+    transform: translate(0, -20px) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  30% {
+    transform: translate(26px, 70px) rotate(120deg);
+  }
+  55% {
+    transform: translate(-8px, 140px) rotate(220deg);
+    opacity: 0.9;
+  }
+  80% {
+    transform: translate(22px, 205px) rotate(310deg);
+  }
+  100% {
+    transform: translate(6px, 260px) rotate(400deg);
+    opacity: 0;
+  }
+}
+
+@keyframes moteRise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.7;
+  }
+  45% {
+    transform: translate(9px, -105px);
+    opacity: 0.45;
+  }
+  75% {
+    transform: translate(-6px, -185px);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(4px, -250px);
+    opacity: 0;
+  }
+}
+
+@keyframes fireflyPulse {
+  0%, 100% {
+    opacity: 0.06;
+  }
+  45% {
+    opacity: 0.95;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  78% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes fireflyDrift {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(46px, -30px);
+  }
+}
+
+@keyframes leafSway {
+  0%, 100% {
+    transform: rotate(-2.2deg);
+  }
+  50% {
+    transform: rotate(2.2deg);
+  }
+}
+
+@keyframes bloomGlow {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes dewGlint {
+  0%, 88%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  92% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  96% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+@keyframes veilBreathe {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Washi tape style for custom settings popover */
+.washi-tape-settings {
+  position: absolute;
+  top: -9px;
+  left: 30px;
+  width: 52px;
+  height: 16px;
+  background: rgba(138, 154, 126, 0.4);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 4px, transparent 4px 8px);
+  transform: rotate(-2deg);
+  border-radius: 1px;
+}
