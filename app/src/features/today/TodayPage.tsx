@@ -8,6 +8,7 @@ import { computeStreak, localDateKey } from '../routines/streaks'
 import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
+import { usePeople } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
@@ -59,6 +60,27 @@ export function TodayPage() {
   const { data: completions = [] } = useRoutineCompletions()
   const { data: slipping = [] } = useSlipping()
   const { data: pendingInbox = [] } = usePendingInboxItems()
+  const { data: people = [] } = usePeople()
+  const [dismissedBdays, setDismissedBdays] = useState(() => {
+    const s = new Set()
+    if (typeof window !== 'undefined') {
+      try {
+        const curY = new Date().getFullYear()
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.startsWith('dismissed_bday_') && key.endsWith(`_${curY}`)) {
+            if (localStorage.getItem(key) === '1') {
+              const pid = key.split('_')[2]
+              s.add(pid)
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    return s
+  })
   const { goalTaskId } = useGoalStore()
   const terrariumOn = useTerrariumStore((s) => s.on)
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
@@ -126,6 +148,37 @@ export function TodayPage() {
     ].sort()
     return earliest.length ? Math.max(1, Math.round((Date.now() - new Date(earliest[0]).getTime()) / 86_400_000) + 1) : 1
   }, [tasks, pendingInbox, projects, routines])
+
+  const upcomingBirthdays = useMemo(() => {
+    return people
+      .filter((p) => {
+        if (dismissedBdays.has(p.id)) return false
+        const bdayFact = p.facts?.find((f) => f.label === 'Birthday')
+        if (!bdayFact) return false
+        const days = getDaysUntilBirthday(bdayFact.date || bdayFact.value)
+        return days === 0 || days === 1
+      })
+      .map((p) => {
+        const bdayFact = p.facts?.find((f) => f.label === 'Birthday')
+        const days = getDaysUntilBirthday(bdayFact.date || bdayFact.value)
+        return { person: p, days }
+      })
+  }, [people, dismissedBdays])
+
+  const handleDismissBday = (personId) => {
+    const curY = new Date().getFullYear()
+    const key = `dismissed_bday_${personId}_${curY}`
+    try {
+      localStorage.setItem(key, '1')
+    } catch (e) {
+      console.error(e)
+    }
+    setDismissedBdays((prev) => {
+      const next = new Set(prev)
+      next.add(personId)
+      return next
+    })
+  }
 
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ })
   const dateLabelShort = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: TZ })
@@ -211,6 +264,63 @@ export function TodayPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 264px', gap: isMobile ? 30 : 44, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 26 : 34 }}>
+          {upcomingBirthdays.map(({ person, days }) => {
+            const text = days === 0 
+              ? `${person.name}'s birthday is today!` 
+              : `${person.name}'s birthday is tomorrow.`
+              
+            return (
+              <div key={person.id} style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>
+                    A moment coming
+                  </span>
+                  <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
+                </div>
+                <div
+                  style={{
+                    position: 'relative',
+                    background: 'var(--paper-parchment)',
+                    border: '1px solid var(--line-card)',
+                    borderRadius: 3,
+                    boxShadow: 'var(--shadow-crisp)',
+                    padding: '13px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 13
+                  }}
+                >
+                  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}>
+                    <g fill="#8A9A7E">
+                      <ellipse cx="12" cy="6.8" rx="3" ry="4.2" />
+                      <ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)" />
+                      <ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)" />
+                    </g>
+                    <circle cx="12" cy="12" r="4" fill="#D4A8B0" />
+                    <circle cx="12" cy="12" r="1.8" fill="#C9A55A" />
+                  </svg>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', color: 'var(--ink-body)' }}>{text}</div>
+                  </div>
+                  <span
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` }))
+                      setCommandBarOpen(true)
+                    }}
+                    style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}
+                  >
+                    Plan something →
+                  </span>
+                  <span
+                    onClick={() => handleDismissBday(person.id)}
+                    style={{ fontSize: '12px', color: 'var(--ink-hairline)', cursor: 'pointer', flex: 'none', paddingLeft: 2 }}
+                  >
+                    ✕
+                  </span>
+                </div>
+              </div>
+            )
+          })}
           <section>
             <SectionLabel style={{ marginTop: isMobile ? 16 : 0, marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
             {nothingPlanned ? (
@@ -489,3 +599,31 @@ const SunIcon = () => (
 const MoonIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#A8A0BE" /></svg>
 )
+
+function getDaysUntilBirthday(birthdayVal) {
+  if (!birthdayVal) return null
+  let month = 0
+  let day = 0
+  if (birthdayVal.includes('-')) {
+    const parts = birthdayVal.split('-')
+    month = parseInt(parts[0], 10) - 1
+    day = parseInt(parts[1], 10)
+  } else {
+    const d = new Date(birthdayVal + ' ' + new Date().getFullYear())
+    if (isNaN(d.getTime())) return null
+    month = d.getMonth()
+    day = d.getDate()
+  }
+  const today = new Date()
+  const currentYear = today.getFullYear()
+  const bdayThisYear = new Date(currentYear, month, day)
+  bdayThisYear.setHours(0, 0, 0, 0)
+  const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  let diffTime = bdayThisYear.getTime() - todayZero.getTime()
+  if (diffTime < 0) {
+    const bdayNextYear = new Date(currentYear + 1, month, day)
+    bdayNextYear.setHours(0, 0, 0, 0)
+    diffTime = bdayNextYear.getTime() - todayZero.getTime()
+  }
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
