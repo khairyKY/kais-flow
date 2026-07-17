@@ -366,9 +366,13 @@ export function ActivityPage() {
               </div>
             ))
           )}
-          {!isLoading && rawEntries.length >= limit && (
+          {!isLoading && groupedEntries.length > 0 && (
             <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier \u2193</span>
+              {rawEntries.length >= limit ? (
+                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier \u2193</span>
+              ) : (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
+              )}
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</span>
             </div>

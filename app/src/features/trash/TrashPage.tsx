@@ -129,6 +129,7 @@ export function TrashPage() {
       <svg width="120" height="76" viewBox="0 0 120 76">
         <ellipse cx="60" cy="62" rx="46" ry="12" fill="#b9a98a" opacity="0.55"></ellipse>
         <path d="M22 60c4-14 18-24 38-24s34 10 38 24" fill="#a3937a" opacity="0.6"></path>
+        <path d="M34 52c8-8 40-10 52-2" stroke="#8b7a5e" strokeWidth={1.5} fill="none" opacity={0.5}></path>
         <path d="M60 38V22" stroke="#7A946E" strokeWidth="2.5" strokeLinecap="round"></path>
         <path d="M60 25c-4-.6-6-2.6-6.6-6.6 4 0 6.2 1.8 6.6 6.6Z" fill="#7A946E"></path>
         <path d="M60 28c4-.6 6-2.6 6.6-6.6-4 0-6.2 1.8-6.6 6.6Z" fill="#8A9A7E"></path>
@@ -139,7 +140,28 @@ export function TrashPage() {
 
   const renderAgeGroup = (label: string, items: DeletedItem[]) => items.length > 0 ? (
     <>
-      <div className="aghd"><span className="t">{label}</span><span className="r" /></div>
+      <div className="aghd">
+        {label === 'Today' && (
+          <>
+            <span className="leafbg" style={{ left: '6%', top: 4, background: '#C9A55A', transform: 'rotate(24deg)' }}></span>
+            <span className="leafbg" style={{ left: '38%', top: 12, background: '#a9803f', transform: 'rotate(-30deg)' }}></span>
+            <span className="leafbg" style={{ left: '72%', top: 2, background: '#C9A55A', transform: 'rotate(60deg)' }}></span>
+          </>
+        )}
+        {label === 'This week' && (
+          <>
+            <span className="leafbg" style={{ left: '12%', top: 8, background: '#a9803f', transform: 'rotate(-14deg)' }}></span>
+            <span className="leafbg" style={{ left: '56%', top: 3, background: '#C9A55A', transform: 'rotate(40deg)' }}></span>
+          </>
+        )}
+        {label === 'Older' && (
+          <>
+            <span className="leafbg" style={{ left: '22%', top: 6, background: '#C9A55A', transform: 'rotate(10deg)' }}></span>
+            <span className="leafbg" style={{ left: '80%', top: 9, background: '#a9803f', transform: 'rotate(-48deg)' }}></span>
+          </>
+        )}
+        <span className="t">{label}</span><span className="r" />
+      </div>
       {renderGroupList(items)}
     </>
   ) : null

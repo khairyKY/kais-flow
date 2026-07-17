@@ -247,7 +247,15 @@ export function HerbariumPage() {
 
   const renderEmptyState = () => (
     <div style={{ background: 'var(--paper-linen)', padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: 560, border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', margin: '40px auto' }}>
-      <svg width="150" height="96" viewBox="0 0 150 96"><rect x="20" y="70" width="110" height="9" rx="2" fill="#8b7a5e"></rect><rect x="30" y="34" width="90" height="36" fill="#EFE8D6" stroke="#cfc7b0" strokeWidth="1.5"></rect></svg>
+      <svg width="150" height="96" viewBox="0 0 150 96">
+        <rect x="20" y="70" width="110" height="9" rx="2" fill="#8b7a5e"></rect>
+        <rect x="30" y="34" width="90" height="36" fill="#EFE8D6" stroke="#cfc7b0" strokeWidth={1.5}></rect>
+        <rect x="20" y="24" width="110" height="9" rx="2" fill="#8b7a5e" transform="rotate(-9 75 28)"></rect>
+        <circle cx="34" cy="75" r="3" fill="#6b5d45"></circle>
+        <circle cx="116" cy="75" r="3" fill="#6b5d45"></circle>
+        <path d="M34 20v55M116 20v55" stroke="#6b5d45" strokeWidth={2.5}></path>
+        <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="#6b5d45" strokeWidth={2.5} strokeLinecap="round"></path>
+      </svg>
       <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project and it lives here forever.</div>
       <Link to="/projects" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>Back to the living garden \u2192</Link>
     </div>
