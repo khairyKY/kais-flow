@@ -27,10 +27,20 @@ const CATEGORIES = [
   { id: 'journal', label: 'Journal', color: 'var(--acc-sage)' },
 ]
 
+const MOBILE_CATEGORIES = ['all', 'tasks', 'inbox', 'people', 'routines']
+
+const RANGES = [
+  { id: 'week', label: 'This week', desc: 'last 7 days', days: 7 },
+  { id: 'month', label: 'This month', desc: 'last 30 days', days: 30 },
+  { id: 'all', label: 'All time', desc: 'all time', days: null as number | null },
+]
+
 export function ActivityPage() {
   const isMobile = useIsMobile()
   const [limit, setLimit] = useState(50)
   const [filter, setFilter] = useState('all')
+  const [rangeIdx, setRangeIdx] = useState(0)
+  const range = RANGES[rangeIdx]
 
   const { data: rawEntries = [], isLoading } = useRecentActivity(limit)
   const { data: projects = [] } = useProjects()
@@ -54,6 +64,15 @@ export function ActivityPage() {
     if (isToday) return `Today \u00b7 ${dayName} ${dayNum} ${monthName}`
     if (isYesterday) return `Yesterday \u00b7 ${dayName} ${dayNum} ${monthName}`
     return `${d.toLocaleDateString('en-US', { weekday: 'long' })} \u00b7 ${dayNum} ${monthName}`
+  }
+
+  const formatShortDateHeader = (dateStr: string) => {
+    const d = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date(Date.now() - 86400000)
+    if (d.toDateString() === today.toDateString()) return 'Today'
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
   }
 
   const getEntityName = (entry: ActivityLogEntry) => {
@@ -203,10 +222,12 @@ export function ActivityPage() {
   }
 
   const processedEntries = useMemo(() => {
+    const cutoff = range.days ? Date.now() - range.days * 86400000 : null
     return rawEntries
+      .filter((entry) => !cutoff || new Date(entry.created_at).getTime() >= cutoff)
       .map((entry) => ({ ...entry, info: resolveEntryInfo(entry) }))
       .filter((entry) => filter === 'all' || entry.info.category === filter)
-  }, [rawEntries, filter, projects, tasks, areas])
+  }, [rawEntries, filter, range, projects, tasks, areas])
 
   const groupedEntries = useMemo(() => {
     const groups: Record<string, typeof processedEntries> = {}
@@ -285,9 +306,8 @@ export function ActivityPage() {
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Activity</div>
           </div>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '14px 0 4px', scrollbarWidth: 'none' }} className="no-scrollbar">
-            {CATEGORIES.map((cat) => (
+            {CATEGORIES.filter((cat) => MOBILE_CATEGORIES.includes(cat.id)).map((cat) => (
               <span key={cat.id} onClick={() => setFilter(cat.id)} className={`afilter ${filter === cat.id ? 'on' : ''}`} style={{ fontSize: 8.5, padding: '5px 10px' }}>
-                {filter === cat.id && cat.id !== 'all' && <span style={{ width: 6, height: 6, borderRadius: '50%', background: cat.color, marginRight: 5 }} />}
                 {cat.label}
               </span>
             ))}
@@ -300,7 +320,7 @@ export function ActivityPage() {
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0 12px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{new Date(dateKey).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>{group.length}</span>
                 </div>
@@ -339,7 +359,13 @@ export function ActivityPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="fhelp">{totalCount} events</span>
+              <span className="fhelp">{totalCount} events · {range.desc}</span>
+              <span
+                onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
+              >
+                ⚟ {range.label} ▾
+              </span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '24px 0 4px' }}>
