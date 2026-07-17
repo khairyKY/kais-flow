@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, deleteInteraction } from './api'
+import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, deleteInteraction, getDaysUntilBirthday } from './api'
 import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { Button } from '../../components/kit'
@@ -24,26 +24,6 @@ function getCloverAsset(days: number): string {
   return '/ds/assets/clover/seedling.png'
 }
 
-function getDaysUntilBirthday(val: string | undefined | null): number | null {
-  if (!val) return null
-  let month = 0, day = 0
-  if (val.includes('-')) {
-    const [m, d] = val.split('-')
-    month = parseInt(m, 10) - 1; day = parseInt(d, 10)
-  } else {
-    const d = new Date(val + ' ' + new Date().getFullYear())
-    if (isNaN(d.getTime())) return null
-    month = d.getMonth(); day = d.getDate()
-  }
-  const today = new Date()
-  const y = today.getFullYear()
-  const bday = new Date(y, month, day); bday.setHours(0, 0, 0, 0)
-  const tz = new Date(y, today.getMonth(), today.getDate())
-  let diff = bday.getTime() - tz.getTime()
-  if (diff < 0) { const next = new Date(y + 1, month, day); next.setHours(0, 0, 0, 0); diff = next.getTime() - tz.getTime() }
-  return Math.ceil(diff / 86400000)
-}
-
 function daysSince(s: string): number { return Math.floor((Date.now() - new Date(s).getTime()) / 86400000) }
 
 function getBannerText(name: string, d: number): string {
@@ -64,6 +44,14 @@ const BloomIcon = () => (
   </svg>
 )
 
+/* Moments row icon — filled clover for Birthday, dim leaf-dot for other moments */
+const MomentIcon = ({ filled }: { filled: boolean }) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" style={{ flex: 'none', opacity: filled ? 1 : 0.7 }}>
+    <g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6" /><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)" /><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)" /></g>
+    {filled ? <circle cx="12" cy="12" r="3.4" fill="#D4A8B0" /> : <circle cx="12" cy="12.4" r="1.6" fill="#6f7f65" />}
+  </svg>
+)
+
 export function PersonDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -79,12 +67,14 @@ export function PersonDetailPage() {
 
   const bdayFact = person?.facts?.find((f) => f.label === 'Birthday') ?? null
   const daysUntilBday = bdayFact ? getDaysUntilBirthday(bdayFact.date || bdayFact.value) : null
+  const momentFacts = useMemo(() => (person?.facts || []).filter((f) => f.date), [person])
 
   // Facts form
   const [newFactType, setNewFactType] = useState('Interest')
   const [newFactValue, setNewFactValue] = useState('')
   const [newFactDate, setNewFactDate] = useState('')
   const [newFactRecurs, setNewFactRecurs] = useState(false)
+  const factValueRef = useRef<HTMLInputElement>(null)
 
   // Interactions form
   const [logChannel, setLogChannel] = useState('in person')
@@ -111,6 +101,15 @@ export function PersonDetailPage() {
   const removeFact = (fid: string) => {
     upsertPerson({ ...person, facts: (person.facts || []).filter((f) => f.id !== fid) }, false)
     void refetchPeople()
+  }
+
+  const editFact = (f: Fact) => {
+    setNewFactType(f.label)
+    setNewFactValue(f.value)
+    setNewFactDate(f.date || '')
+    setNewFactRecurs(!!f.recurs)
+    removeFact(f.id)
+    factValueRef.current?.focus()
   }
 
   const handleLog = (e: React.FormEvent) => {
@@ -208,6 +207,30 @@ export function PersonDetailPage() {
         </form>
       )}
 
+      {/* Moments (2b) — dated facts: birthdays, anniversaries, one-off milestones */}
+      <div className="slabel" style={{ margin: '22px 0 6px' }}><span style={{ color: 'var(--acc-clover-text)' }}>Moments</span><span className="r" /></div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {momentFacts.map((f) => (
+          <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+            <MomentIcon filled={f.label === 'Birthday'} />
+            <span style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{f.label}</span>
+            <span className="fhelp">{f.date}</span>
+            <span style={{ flex: 1 }} />
+            {f.recurs
+              ? <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>yearly ✓</span>
+              : <span className="chip" style={{ border: '1px dashed var(--line-solid)', color: 'var(--ink-faint)' }}>once</span>}
+            <span onClick={() => editFact(f)} style={{ fontSize: '11.5px', color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>edit</span>
+          </div>
+        ))}
+        <div
+          onClick={() => factValueRef.current?.focus()}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 2px', cursor: 'pointer' }}
+        >
+          <span style={{ width: 15, textAlign: 'center', color: 'var(--ink-hairline)', fontSize: 14, flex: 'none' }}>+</span>
+          <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Add a moment… label · date · repeats yearly</span>
+        </div>
+      </div>
+
       {/* Facts */}
       <div className="slabel" style={{ margin: '26px 0 6px' }}><span>Facts · {person.facts?.length || 0}</span><span className="r" /></div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -229,17 +252,13 @@ export function PersonDetailPage() {
             {newFactType} <span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
           </span>
           <span style={{ flex: 1, minWidth: 160 }}>
-            <input type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
+            <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
           </span>
-          {newFactType === 'Birthday' && (
-            <>
-              <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', position: 'relative' }}>
-                <input type="text" placeholder="MM-DD" value={newFactDate} onChange={(e) => setNewFactDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%' }} />
-                date?
-              </span>
-              <span onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip" style={{ border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)', cursor: 'pointer' }}>↻</span>
-            </>
-          )}
+          <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', position: 'relative' }}>
+            <input type="text" placeholder="MM-DD" value={newFactDate} onChange={(e) => setNewFactDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%' }} />
+            date?
+          </span>
+          <span onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip" style={{ border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)', cursor: 'pointer' }}>↻</span>
           <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add fact</button>
         </form>
       </div>

@@ -8,7 +8,7 @@ import { computeStreak, localDateKey } from '../routines/streaks'
 import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
-import { usePeople } from '../people/api'
+import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
@@ -600,30 +600,3 @@ const MoonIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#A8A0BE" /></svg>
 )
 
-function getDaysUntilBirthday(birthdayVal: string | undefined | null): number | null {
-  if (!birthdayVal) return null
-  let month = 0
-  let day = 0
-  if (birthdayVal.includes('-')) {
-    const parts = birthdayVal.split('-')
-    month = parseInt(parts[0], 10) - 1
-    day = parseInt(parts[1], 10)
-  } else {
-    const d = new Date(birthdayVal + ' ' + new Date().getFullYear())
-    if (isNaN(d.getTime())) return null
-    month = d.getMonth()
-    day = d.getDate()
-  }
-  const today = new Date()
-  const currentYear = today.getFullYear()
-  const bdayThisYear = new Date(currentYear, month, day)
-  bdayThisYear.setHours(0, 0, 0, 0)
-  const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  let diffTime = bdayThisYear.getTime() - todayZero.getTime()
-  if (diffTime < 0) {
-    const bdayNextYear = new Date(currentYear + 1, month, day)
-    bdayNextYear.setHours(0, 0, 0, 0)
-    diffTime = bdayNextYear.getTime() - todayZero.getTime()
-  }
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-}

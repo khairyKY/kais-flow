@@ -36,6 +36,35 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+/* Days until the next occurrence of a "MM-DD" or freeform month-day string. Null if unparseable. */
+export function getDaysUntilBirthday(val: string | undefined | null): number | null {
+  if (!val) return null
+  let month = 0
+  let day = 0
+  if (val.includes('-')) {
+    const [m, d] = val.split('-')
+    month = parseInt(m, 10) - 1
+    day = parseInt(d, 10)
+  } else {
+    const d = new Date(val + ' ' + new Date().getFullYear())
+    if (isNaN(d.getTime())) return null
+    month = d.getMonth()
+    day = d.getDate()
+  }
+  const today = new Date()
+  const y = today.getFullYear()
+  const bday = new Date(y, month, day)
+  bday.setHours(0, 0, 0, 0)
+  const todayZero = new Date(y, today.getMonth(), today.getDate())
+  let diff = bday.getTime() - todayZero.getTime()
+  if (diff < 0) {
+    const next = new Date(y + 1, month, day)
+    next.setHours(0, 0, 0, 0)
+    diff = next.getTime() - todayZero.getTime()
+  }
+  return Math.ceil(diff / 86400000)
+}
+
 export function upsertPerson(
   person: Partial<Person> & { name: string },
   isNew: boolean

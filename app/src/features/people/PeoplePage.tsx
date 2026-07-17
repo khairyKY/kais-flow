@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, createInteraction } from './api'
+import { usePeople, useInteractions, upsertPerson, createInteraction, getDaysUntilBirthday } from './api'
 import { useDomains } from '../domains/api'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button } from '../../components/kit'
@@ -31,34 +31,6 @@ function getAvatarBgColor(name: string): string {
   }
   const index = Math.abs(hash) % colors.length
   return colors[index]
-}
-
-function getDaysUntilBirthday(birthdayVal: string | undefined | null): number | null {
-  if (!birthdayVal) return null
-  let month = 0
-  let day = 0
-  if (birthdayVal.includes('-')) {
-    const parts = birthdayVal.split('-')
-    month = parseInt(parts[0], 10) - 1
-    day = parseInt(parts[1], 10)
-  } else {
-    const d = new Date(birthdayVal + ' ' + new Date().getFullYear())
-    if (isNaN(d.getTime())) return null
-    month = d.getMonth()
-    day = d.getDate()
-  }
-  const today = new Date()
-  const currentYear = today.getFullYear()
-  const bdayThisYear = new Date(currentYear, month, day)
-  bdayThisYear.setHours(0, 0, 0, 0)
-  const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  let diffTime = bdayThisYear.getTime() - todayZero.getTime()
-  if (diffTime < 0) {
-    const bdayNextYear = new Date(currentYear + 1, month, day)
-    bdayNextYear.setHours(0, 0, 0, 0)
-    diffTime = bdayNextYear.getTime() - todayZero.getTime()
-  }
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
 function daysSince(dateStr: string): number {
