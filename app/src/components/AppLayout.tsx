@@ -433,7 +433,7 @@ export function AppLayout() {
 
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
-        style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', padding: '24px 0 18px', position: 'relative', zIndex: 5 }}
+        style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', padding: '24px 0 18px', position: 'relative', zIndex: 5, overflowY: 'auto' }}
       >
         <button
           type="button"
