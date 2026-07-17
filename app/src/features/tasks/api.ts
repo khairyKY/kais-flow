@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import { deleteEventsForTask } from '../calendar/api'
+import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { nextOccurrence } from './recurrence'
 import type { Task } from '../../lib/types'
 
@@ -17,6 +17,7 @@ export function useTasks() {
       if (error) throw error
       return data as Task[]
     },
+    select: (tasks) => tasks.filter((t) => !t.deleted_at),
   })
 }
 
@@ -102,8 +103,14 @@ export function uncompleteTask(task: Task): void {
 /** Deletes the task and any calendar block scheduled for it (caller should confirm first). */
 export function deleteTask(task: Task): void {
   deleteEventsForTask(task.id)
-  writeRow('tasks', task, 'delete')
+  writeRow('tasks', { ...task, deleted_at: new Date().toISOString() })
   logActivity('task.deleted', 'task', task.id, {})
+}
+
+export function restoreTask(task: Task): void {
+  restoreEventsForTask(task.id)
+  writeRow('tasks', { ...task, deleted_at: null })
+  logActivity('task.restored', 'task', task.id, {})
 }
 
 /** Hides the task from Today-style views until `until` — distinct from `due_at` (the deadline). Clears `someday` since picking a concrete re-surface time is the opposite of "no date, no guilt". */

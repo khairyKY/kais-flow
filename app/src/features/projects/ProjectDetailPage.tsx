@@ -604,7 +604,7 @@ export function ProjectDetailPage() {
                   const conf = window.confirm(`Archive "${project.name}"?`)
                   if (conf) {
                     archiveProject(project)
-                    navigate('/projects')
+                    navigate(`/herbarium?press=${project.id}`)
                   }
                 }}
                 style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}

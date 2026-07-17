@@ -30,6 +30,9 @@ const PerennialsPage = lazy(() => import('./features/projects/PerennialsPage').t
 const JournalPage = lazy(() => import('./features/journal/JournalPage').then((m) => ({ default: m.JournalPage })))
 const LibraryPage = lazy(() => import('./features/library/LibraryPage').then((m) => ({ default: m.LibraryPage })))
 const FocusPage = lazy(() => import('./features/focus/FocusPage').then((m) => ({ default: m.FocusPage })))
+const ActivityPage = lazy(() => import('./features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })))
+const HerbariumPage = lazy(() => import('./features/herbarium/HerbariumPage').then((m) => ({ default: m.HerbariumPage })))
+const TrashPage = lazy(() => import('./features/trash/TrashPage').then((m) => ({ default: m.TrashPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -62,11 +65,11 @@ const router = createBrowserRouter([
       { path: 'library', element: <LibraryPage /> },
       { path: 'people', element: <Stub name="People" /> },
       { path: 'people/:id', element: <Stub name="Person" /> },
-      { path: 'activity', element: <Stub name="Activity" /> },
-      { path: 'herbarium', element: <Stub name="Herbarium" /> },
+      { path: 'activity', element: <ActivityPage /> },
+      { path: 'herbarium', element: <HerbariumPage /> },
       { path: 'focus', element: <FocusPage /> },
       { path: 'seasons', element: <Stub name="Seasons" /> },
-      { path: 'trash', element: <Stub name="Trash" /> },
+      { path: 'trash', element: <TrashPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'perennials', element: <PerennialsPage /> },
     ],

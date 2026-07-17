@@ -13,6 +13,7 @@ export function useCalendarEvents() {
       if (error) throw error
       return data as CalendarEvent[]
     },
+    select: (events) => events.filter((e) => !e.deleted_at),
   })
 }
 
@@ -106,7 +107,7 @@ export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: stri
 
 /** Deleting a block un-schedules its task but the task itself survives. */
 export function deleteEvent(event: CalendarEvent): void {
-  writeRow('calendar_events', event, 'delete')
+  writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
   if (event.task_id) touchTaskSchedule(event.task_id, null, null)
   logActivity('calendar_event.deleted', 'calendar_event', event.id, {})
 }
@@ -115,6 +116,13 @@ export function deleteEvent(event: CalendarEvent): void {
 export function deleteEventsForTask(taskId: string): void {
   const events = queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []
   for (const event of events.filter((e) => e.task_id === taskId)) {
-    writeRow('calendar_events', event, 'delete')
+    writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
+  }
+}
+
+export function restoreEventsForTask(taskId: string): void {
+  const events = queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []
+  for (const event of events.filter((e) => e.task_id === taskId && e.deleted_at)) {
+    writeRow('calendar_events', { ...event, deleted_at: null })
   }
 }

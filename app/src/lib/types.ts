@@ -29,6 +29,7 @@ export interface Project {
     task_id?: string | null
   }>
   engagement_model?: string | null
+  completion_summary?: string | null
   created_at: string
   updated_at: string
 }
@@ -58,6 +59,7 @@ export interface Task {
   completed_at: string | null
   paused?: boolean
   milestone_id?: string | null
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -76,6 +78,7 @@ export interface InboxItem {
   filed_task_id: string | null
   payload: Record<string, unknown> | null
   snoozed_until: string | null
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -105,6 +108,7 @@ export interface CalendarEvent {
   busy: boolean
   type: CalendarEventType
   color: string | null
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -228,6 +232,7 @@ export interface JournalEntry {
   transcript: string | null
   media_paths: string[]
   gratitude: string[]
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
