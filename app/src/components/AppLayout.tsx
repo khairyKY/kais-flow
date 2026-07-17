@@ -170,6 +170,9 @@ function PlanDrawer() {
 }
 
 function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number }) {
+  const { pathname } = useLocation()
+  const isActive = pathname === item.to || (item.to === '/journal' && pathname === '/library')
+
   const icon = (active: boolean) => {
     if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
     if (active && item.activeIcon) return item.activeIcon
@@ -178,10 +181,10 @@ function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number })
     return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
   }
   return (
-    <NavLink
+    <Link
       to={item.to}
-      className={({ isActive }) => `kf-side-row${isActive ? ' kf-active' : ''}`}
-      style={({ isActive }) => ({
+      className={`kf-side-row${isActive ? ' kf-active' : ''}`}
+      style={{
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
@@ -193,36 +196,35 @@ function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number })
         border: isActive ? '1px solid var(--line-card)' : '1px solid transparent',
         boxShadow: isActive ? 'var(--shadow-crisp)' : 'none',
         transform: isActive ? 'rotate(-0.5deg)' : 'none',
-      })}
+      }}
     >
-      {({ isActive }) => (
-        <>
-          {isActive && (
-            <span
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: -6,
-                left: 16,
-                width: 30,
-                height: 9,
-                background: item.tape,
-                backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
-                transform: 'rotate(-3deg)',
-                borderRadius: 1,
-              }}
-            />
-          )}
-          <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none' }}>{icon(isActive)}</span>
-          <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
-            {item.label}
-          </span>
-          {item.badge === 'inbox' && pendingInbox > 0 && (
-            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
-          )}
-        </>
+      {isActive && (
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: -6,
+            left: 16,
+            width: 30,
+            height: 9,
+            background: item.tape,
+            backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+            transform: 'rotate(-3deg)',
+            borderRadius: 1,
+          }}
+        />
       )}
-    </NavLink>
+      <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none' }}>{icon(isActive)}</span>
+      <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
+        {item.label}
+      </span>
+      {item.badge === 'inbox' && pendingInbox > 0 && (
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+      )}
+      {item.to === '/journal' && pathname === '/library' && (
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>library</span>
+      )}
+    </Link>
   )
 }
 

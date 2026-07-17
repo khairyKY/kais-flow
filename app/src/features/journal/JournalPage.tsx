@@ -313,6 +313,12 @@ export function JournalPage() {
   if (isMobile) {
     return (
       <div style={{ width: '100%', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <style>{`
+          .ruled {
+            background-image: repeating-linear-gradient(transparent 0px, transparent 25px, rgba(213,205,181,0.55) 25px, rgba(213,205,181,0.55) 26px);
+            background-attachment: local;
+          }
+        `}</style>
         <div className="grain" style={{ borderRadius: 0, pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 5 }} />
         
         <div style={{ flex: 1, padding: '16px 20px 80px', position: 'relative', zIndex: 10 }}>
@@ -370,7 +376,7 @@ export function JournalPage() {
                     width: '100%',
                     minHeight: 120,
                     border: 'none',
-                    background: 'transparent',
+                    backgroundColor: 'transparent',
                     fontFamily: 'inherit',
                     fontSize: '14.5px',
                     lineHeight: '26px',
@@ -457,6 +463,18 @@ export function JournalPage() {
   // Desktop layout (1a)
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '85vh', background: 'var(--paper-linen)', position: 'relative' }}>
+      <style>{`
+        .ruled {
+          background-image: repeating-linear-gradient(transparent 0px, transparent 26px, rgba(213,205,181,0.55) 26px, rgba(213,205,181,0.55) 27px);
+          background-attachment: local;
+        }
+        .journal-sidebar-link {
+          transition: color var(--dur-quick) var(--ease-natural);
+        }
+        .journal-sidebar-link:hover, .journal-sidebar-link:hover * {
+          color: var(--acc-terra) !important;
+        }
+      `}</style>
       <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
       
       {/* 1. LEFT RAIL: Entry tree + Gutter */}
@@ -497,7 +515,7 @@ export function JournalPage() {
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-body)', fontWeight: 500 }}>{dayName}, {monthDay}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)', marginTop: 3 }}>
-                    {entryForDate?.mood || 'writing...'}
+                    {entryForDate?.mood ? `${entryForDate.mood} · writing…` : 'writing…'}
                   </div>
                 </div>
               )
@@ -506,6 +524,7 @@ export function JournalPage() {
                 <div
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr)}
+                  className="journal-sidebar-link"
                   style={{ display: 'block', textDecoration: 'none', padding: '8px 11px', cursor: 'pointer' }}
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>
@@ -524,6 +543,7 @@ export function JournalPage() {
           <div
             key={n.id}
             onClick={() => navigate(`/library?noteId=${n.id}`)}
+            className="journal-sidebar-link"
             style={{ padding: '6px 11px', fontSize: 13, color: 'var(--ink-muted)', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
           >
             {n.title || 'Untitled Note'}
@@ -536,6 +556,7 @@ export function JournalPage() {
           <div
             key={q.id}
             onClick={() => navigate(`/library?quoteId=${q.id}`)}
+            className="journal-sidebar-link"
             style={{ padding: '6px 11px', fontSize: 13, color: 'var(--ink-muted)', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
           >
             {q.author ? `${q.author} · quote` : 'Untitled quote'}
@@ -566,10 +587,7 @@ export function JournalPage() {
             
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
-              <img src={getFernImage(bodyText.length)} alt="" style={{ height: 40, filter: 'var(--shadow-drop-sm)', opacity: 0.8 }} title="Frond unfurling stage" />
-            </div>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
 
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', marginTop: 8 }}>a quiet page, only for you ✿</div>
 
@@ -601,7 +619,7 @@ export function JournalPage() {
                   width: '100%',
                   minHeight: 180,
                   border: 'none',
-                  background: 'transparent',
+                  backgroundColor: 'transparent',
                   fontFamily: 'inherit',
                   fontSize: '15.5px',
                   lineHeight: '27px',

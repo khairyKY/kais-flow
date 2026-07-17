@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
   useBooks,
@@ -15,7 +15,17 @@ import {
   createCommentary
 } from './api'
 
-
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  useEffect(() => {
+    const mq = matchMedia('(max-width: 767px)')
+    const on = () => setIsMobile(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return isMobile
+}
 
 function getFernImage(progressPercent: number): string {
   if (progressPercent < 25) return '/ds/assets/fern/coil.png'
@@ -206,8 +216,325 @@ export function LibraryPage() {
     return Math.round((activeBook.current_page / activeBook.total_pages) * 100)
   }, [activeBook])
 
+  const isMobile = useIsMobile()
+  const hasSelection = !!(selectedNoteId || selectedQuoteId || selectedBookId)
+
+  if (isMobile) {
+    return (
+      <div style={{ width: '100%', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <style>{`
+          .chip {
+            font-family: var(--font-mono);
+            font-size: 9.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 4px 9px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+          }
+          .flabel {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ink-faint);
+          }
+          .fhelp {
+            font-family: var(--font-mono);
+            font-size: 8.5px;
+            letter-spacing: 0.06em;
+            color: var(--ink-hairline);
+          }
+          .trow {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13.5px;
+            color: var(--ink-muted);
+            background: var(--paper-parchment);
+            border: 1px solid var(--line-card);
+            margin-bottom: 6px;
+          }
+        `}</style>
+        <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
+
+        <div style={{ flex: 1, padding: '16px 20px 80px', position: 'relative', zIndex: 15 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 24, filter: 'var(--shadow-drop-sm)' }} />
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</span>
+          </div>
+
+          {/* Segmented Tab */}
+          {!hasSelection && (
+            <>
+              <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, overflow: 'hidden', marginBottom: 16 }}>
+                {['notes', 'quotes', 'books'].map((tab) => (
+                  <span
+                    key={tab}
+                    onClick={() => setSearchParams({ tab })}
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      padding: '8px 0',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: activeTab === tab ? 'var(--ink-body)' : 'var(--ink-muted)',
+                      background: activeTab === tab ? 'var(--paper-parchment)' : 'transparent',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {tab}
+                  </span>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 11px', marginBottom: 14 }}>
+                <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-hairline)' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="6.4"></circle>
+                    <path d="M19.5 19.5 16 16"></path>
+                  </svg>
+                </span>
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="search the shelf…"
+                  style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '12px', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}
+                />
+              </div>
+
+              {/* List rendering */}
+              {activeTab === 'notes' && (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {filteredNotes.map((n) => (
+                    <div key={n.id} onClick={() => setSearchParams({ tab: 'notes', noteId: n.id })} className="trow" style={{ cursor: 'pointer', display: 'block' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Untitled Note'}</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.body}</div>
+                    </div>
+                  ))}
+                  {filteredNotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No notes found.</div>}
+                </div>
+              )}
+
+              {activeTab === 'quotes' && (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {filteredQuotes.map((q) => (
+                    <div key={q.id} onClick={() => setSearchParams({ tab: 'quotes', quoteId: q.id })} className="trow" style={{ cursor: 'pointer', display: 'block' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>"{q.text}"</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', marginTop: 6, textAlign: 'right' }}>— {q.author || 'Unknown'}</div>
+                    </div>
+                  ))}
+                  {filteredQuotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No quotes found.</div>}
+                </div>
+              )}
+
+              {activeTab === 'books' && (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+                    <button onClick={() => setShowNewBookForm((v) => !v)} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', fontSize: '11px', padding: '6px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+                      + Add Book
+                    </button>
+                  </div>
+                  {showNewBookForm && (
+                    <div style={{ padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, marginBottom: 12 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Plant a Book</div>
+                      <input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Book Title" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                      <input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+                        <input value={newBookPages} onChange={(e) => setNewBookPages(e.target.value)} placeholder="Total Pages" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                        <input value={newBookYear} onChange={(e) => setNewBookYear(e.target.value)} placeholder="Year" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                        <button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Plant</button>
+                      </div>
+                    </div>
+                  )}
+                  {filteredBooks.map((b) => (
+                    <div key={b.id} onClick={() => setSearchParams({ tab: 'books', bookId: b.id })} className="trow" style={{ cursor: 'pointer', display: 'block' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>{b.title}</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{b.author || 'Unknown'} · {Math.round((b.current_page / b.total_pages) * 100)}% read</div>
+                    </div>
+                  ))}
+                  {filteredBooks.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No books found.</div>}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Details / Reader view on mobile */}
+          {hasSelection && (
+            <div style={{ position: 'relative' }}>
+              {/* Back button */}
+              <button
+                onClick={() => setSearchParams({ tab: activeTab })}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--acc-terra)', fontSize: '12px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', cursor: 'pointer', marginBottom: 16, padding: 0 }}
+              >
+                ← Back to List
+              </button>
+
+              {/* Reader components */}
+              {activeBook && (
+                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      <img src={getFernImage(progressPercent)} alt="" style={{ height: 36, opacity: 0.6 }} />
+                      <span className="fhelp" style={{ fontSize: 8 }}>cover</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
+                      <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 22, lineHeight: 1.2, color: 'var(--ink-body)' }}>{activeBook.title}</h1>
+                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{activeBook.author}</div>
+                      
+                      {/* progress */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                        <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--line-card)', position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${progressPercent}%`, borderRadius: 2, background: 'var(--acc-buttercream)' }}></span>
+                        </div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{progressPercent}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+                    <span onClick={() => setShowLogSession((v) => !v)} className="chip" style={{ background: 'rgba(212,199,138,0.25)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>log session</span>
+                    <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>finish</span>
+                  </div>
+
+                  {showLogSession && (
+                    <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Page:</span>
+                        <input value={sessionPage} onChange={(e) => setSessionPage(e.target.value)} placeholder={`max ${activeBook.total_pages}`} style={{ width: 80, padding: '4px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                        <button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', fontSize: '11px', padding: '4px 10px', borderRadius: 999 }}>Log</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quotes kept */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Quotes · {bookQuotes.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  {bookQuotes.map((q) => (
+                    <div key={q.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--ink-body)' }}>"{q.text}"</div>
+                      <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 4 }}>p. {q.page || 'N/A'}</div>
+                    </div>
+                  ))}
+
+                  {/* Notes */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel">Notes · {bookNotes.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  {bookNotes.map((n) => (
+                    <div key={n.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Note'}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 2 }}>{n.body}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeNote && selectedNoteId && (
+                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className="fhelp">Note</span>
+                    <span className="fhelp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-display)', margin: '10px 0 6px', fontSize: '18px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
+                  <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+
+                  {/* Commentary */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  {commentaries.map((c) => (
+                    <div key={c.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{new Date(c.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 2 }}>{c.body}</div>
+                    </div>
+                  ))}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
+                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
+                  </div>
+                </div>
+              )}
+
+              {activeQuote && selectedQuoteId && (
+                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className="fhelp">Quote</span>
+                    <span className="fhelp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLeft: 12 }}>"{activeQuote.text}"</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>
+
+                  {/* Commentary */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  {commentaries.map((c) => (
+                    <div key={c.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{new Date(c.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 2 }}>{c.body}</div>
+                    </div>
+                  ))}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
+                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '85vh', background: 'var(--paper-linen)', position: 'relative' }}>
+      <style>{`
+        .chip {
+          font-family: var(--font-mono);
+          font-size: 9.5px;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          padding: 4px 9px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .flabel {
+          font-family: var(--font-mono);
+          font-size: 9px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--ink-faint);
+        }
+        .fhelp {
+          font-family: var(--font-mono);
+          font-size: 8.5px;
+          letter-spacing: 0.06em;
+          color: var(--ink-hairline);
+        }
+        .trow {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-size: 13px;
+          color: var(--ink-muted);
+        }
+        .recent-row:hover {
+          background: var(--paper-bone) !important;
+        }
+      `}</style>
       <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
 
       {/* 1. LEFT COLUMN: Shelf tree */}
