@@ -15,7 +15,7 @@ export function usePendingInboxItems() {
   return useQuery({
     queryKey: ['inbox_items'],
     queryFn: fetchInboxItems,
-    select: (items) => items.filter((i) => i.status === 'pending' && (!i.snoozed_until || new Date(i.snoozed_until) <= new Date())),
+    select: (items) => items.filter((i) => !i.deleted_at && i.status === 'pending' && (!i.snoozed_until || new Date(i.snoozed_until) <= new Date())),
   })
 }
 
@@ -25,6 +25,7 @@ export function useAllInboxItems() {
   return useQuery({
     queryKey: ['inbox_items'],
     queryFn: fetchInboxItems,
+    select: (items) => items.filter((i) => !i.deleted_at),
   })
 }
 
@@ -88,7 +89,7 @@ export function dismissInboxItem(item: InboxItem): void {
 
 /** Dismissed → pending again (Inbox.dc.html 2a/2b "Restore"). */
 export function restoreInboxItem(item: InboxItem): void {
-  writeRow('inbox_items', { ...item, status: 'pending', snoozed_until: null })
+  writeRow('inbox_items', { ...item, status: 'pending', snoozed_until: null, deleted_at: null })
   logActivity('inbox.restored', 'inbox_item', item.id, {})
 }
 
@@ -96,6 +97,6 @@ export function restoreInboxItem(item: InboxItem): void {
  * copy promises needs a pg_cron purge job; ponytail: out of this wave's scope (no migration
  * shipped here), add when a real backlog of dismissed rows makes manual "Clear now" not enough. */
 export function purgeInboxItem(item: InboxItem): void {
-  writeRow('inbox_items', item, 'delete')
+  writeRow('inbox_items', { ...item, deleted_at: new Date().toISOString() })
   logActivity('inbox.purged', 'inbox_item', item.id, {})
 }

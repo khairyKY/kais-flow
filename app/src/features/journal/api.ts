@@ -15,6 +15,7 @@ export function useJournalEntries() {
       if (error) throw error
       return data as JournalEntry[]
     },
+    select: (entries) => entries.filter((e) => !e.deleted_at),
   })
 }
 
@@ -47,4 +48,14 @@ export function upsertJournalEntry(
     { entry_date: finalEntry.entry_date }
   )
   return finalEntry
+}
+
+export function deleteJournalEntry(entry: JournalEntry): void {
+  writeRow('journal_entries', { ...entry, deleted_at: new Date().toISOString() })
+  logActivity('journal.deleted', 'journal_entry', entry.id, {})
+}
+
+export function restoreJournalEntry(entry: JournalEntry): void {
+  writeRow('journal_entries', { ...entry, deleted_at: null })
+  logActivity('journal.restored', 'journal_entry', entry.id, {})
 }
