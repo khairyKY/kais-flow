@@ -27,6 +27,8 @@ const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage'
 const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
 const ProjectDetailPage = lazy(() => import('./features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const PerennialsPage = lazy(() => import('./features/projects/PerennialsPage').then((m) => ({ default: m.PerennialsPage })))
+const JournalPage = lazy(() => import('./features/journal/JournalPage').then((m) => ({ default: m.JournalPage })))
+const LibraryPage = lazy(() => import('./features/library/LibraryPage').then((m) => ({ default: m.LibraryPage })))
 
 
 const router = createBrowserRouter([
@@ -56,8 +58,8 @@ const router = createBrowserRouter([
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/:id', element: <ProjectDetailPage /> },
-      { path: 'journal', element: <Stub name="Journal" /> },
-      { path: 'library', element: <Stub name="Library" /> },
+      { path: 'journal', element: <JournalPage /> },
+      { path: 'library', element: <LibraryPage /> },
       { path: 'people', element: <Stub name="People" /> },
       { path: 'people/:id', element: <Stub name="Person" /> },
       { path: 'activity', element: <Stub name="Activity" /> },

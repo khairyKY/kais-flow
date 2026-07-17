@@ -218,3 +218,64 @@ export interface TimeEntry {
   created_at: string
   updated_at: string
 }
+
+export interface JournalEntry {
+  id: string
+  user_id: string
+  body: string
+  entry_date: string
+  mood: string | null
+  transcript: string | null
+  media_paths: string[]
+  gratitude: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface Book {
+  id: string
+  user_id: string
+  title: string
+  author: string | null
+  published_year: number | null
+  current_page: number
+  total_pages: number
+  status: 'reading' | 'finished'
+  created_at: string
+  updated_at: string
+}
+
+export interface Note {
+  id: string
+  user_id: string
+  title: string | null
+  body: string
+  tags: string[]
+  domain_id: string | null
+  book_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Quote {
+  id: string
+  user_id: string
+  text: string
+  author: string | null
+  source: string | null
+  tags: string[]
+  book_id: string | null
+  page: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Commentary {
+  id: string
+  user_id: string
+  parent_type: 'note' | 'quote'
+  parent_id: string
+  body: string
+  created_at: string
+  updated_at: string
+}
