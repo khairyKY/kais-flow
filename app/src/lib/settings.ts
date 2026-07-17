@@ -17,6 +17,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   notifications_last_seen_at: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  display_name: null,
+  workspace_name: 'Personal',
+  seed_avatar: null,
+  onboarded_at: null,
 }
 
 export function useAppSettings() {

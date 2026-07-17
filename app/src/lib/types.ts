@@ -168,6 +168,11 @@ export interface AppSettings {
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
+  // N6 onboarding
+  display_name: string | null
+  workspace_name: string
+  seed_avatar: string | null
+  onboarded_at: string | null
 }
 
 export interface SlippingRow {
