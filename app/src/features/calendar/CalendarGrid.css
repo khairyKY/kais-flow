@@ -108,7 +108,7 @@
 .fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5), var(--shadow-crisp); }
 
 /* All-day row */
-.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: 9px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
 .fc .fc-daygrid-event {
   border-radius: 2px;
@@ -120,7 +120,7 @@
 }
 
 /* Month view (dayGridMonth) */
-.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
+.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
 .fc .fc-daygrid-day-number {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -131,7 +131,7 @@
 .fc .fc-daygrid-day.fc-day-past { background: rgba(60, 52, 38, 0.045); }
 .fc .fc-daygrid-more-link {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 10px;
   color: var(--text-tertiary);
 }
 .fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5); }
@@ -173,6 +173,6 @@
   100% { box-shadow: var(--shadow-crisp); }
 }
 .cal-motion-on .fc-timegrid-event.kf-snap-flash {
-  animation: calGridSnapFlash 220ms var(--ease-out);
+  animation: calGridSnapFlash 120ms var(--ease-out);
 }
 

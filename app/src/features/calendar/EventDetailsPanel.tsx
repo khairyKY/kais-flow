@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent } from './api'
+import { useBodyScrollLock } from '../../lib/overlayStack'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
 import { completeTask } from '../tasks/api'
@@ -40,6 +41,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   const [dirty, setDirty] = useState(false)
   const [deleting, setDeleting] = useState<'idle' | 'confirm'>('idle')
   const titleRef = useRef<HTMLInputElement>(null)
+  useBodyScrollLock(true)
 
   const tasks: Task[] = qc.getQueryData(['tasks']) ?? []
   const linkedTask = event.task_id ? tasks.find((t) => t.id === event.task_id) : null

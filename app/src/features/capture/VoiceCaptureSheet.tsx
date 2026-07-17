@@ -36,10 +36,13 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
     if (open) {
       setVisible(true)
       void startRecording()
-    } else {
-      setVisible(false)
+      return () => cleanupRecording()
     }
+    // Delay unmount so captureSheetSlideOut/scrim fade (capture.css) has time to play
+    // instead of the sheet popping out the instant `open` flips false.
+    const timer = window.setTimeout(() => setVisible(false), 140)
     return () => {
+      window.clearTimeout(timer)
       cleanupRecording()
     }
   }, [open])

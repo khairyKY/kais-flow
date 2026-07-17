@@ -164,7 +164,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             <FieldLabel color="var(--acc-gold)">Planted last night</FieldLabel>
             <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>Tomorrow's three came in from the closing ritual — this step is already done.</div>
           </div>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', transform: 'rotate(-2deg)', flex: 'none' }}>✿ {top3.length} seed{top3.length === 1 ? '' : 's'}</span>
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', flex: 'none' }}>✿ {top3.length} seed{top3.length === 1 ? '' : 's'}</span>
         </div>
       )}
 

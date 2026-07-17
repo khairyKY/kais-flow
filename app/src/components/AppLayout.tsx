@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { PageFallback } from './Stub'
 import { supabase } from '../lib/supabase'
@@ -13,6 +13,7 @@ import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { hydrangeaAsset } from '../lib/gardenAssets'
+import { useMotionEnabled } from '../lib/motion'
 import { ToastHost } from './ToastHost'
 import { ShortcutOverlay } from './ShortcutOverlay'
 import { MobileTabBar } from './MobileTabBar'
@@ -353,6 +354,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function AppLayout() {
   useRealtimeSync()
+  const motionOn = useMotionEnabled()
   const { pathname } = useLocation()
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -364,6 +366,13 @@ export function AppLayout() {
 
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const { data: pendingInbox = [] } = usePendingInboxItems()
+
+  // Cold boot shouldn't animate content in (nothing else on screen is settling yet) — only
+  // genuine client-side route landings should. True only for the very first render.
+  const isFirstMount = useRef(true)
+  useEffect(() => {
+    isFirstMount.current = false
+  }, [])
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -390,7 +399,7 @@ export function AppLayout() {
   }, [setCommandBarOpen])
 
   return (
-    <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
         @media (max-width: 767px) {
@@ -407,14 +416,12 @@ export function AppLayout() {
         .app-sidebar.collapsed .app-smartlist { display: none !important; }
 
         .kf-side-row {
-          transition: transform var(--dur-quick) var(--ease-spring),
-                      background-color var(--dur-normal) var(--ease-natural),
-                      color var(--dur-normal) var(--ease-natural);
+          transition: transform var(--dur-quick) var(--ease-spring);
         }
         .kf-side-row:hover { background: var(--paper-bone) !important; transform: translateX(3px); }
         .kf-side-row:active { transform: translateX(1px); }
         .kf-side-row.kf-active:hover { background: var(--paper-parchment) !important; }
-        .kf-side-row:hover .kf-nav-icon { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
+        .motion-on .kf-side-row:hover .kf-nav-icon { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
 
         .kf-collapse-btn {
           transition: transform var(--dur-quick) var(--ease-spring),
@@ -477,11 +484,11 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <TopBar />
-        <div className="app-main-content" style={{ flex: 1, minWidth: 0, padding: '30px 40px 64px' }}>
+        <div className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={pathname} className="kf-route">
+            <div key={pathname} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
               <Outlet />
             </div>
           </Suspense>

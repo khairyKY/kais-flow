@@ -16,30 +16,25 @@
    one-shot, plays while the row still renders (TasksPage keeps a just-checked task in its
    grace window so this has time to finish before the row actually leaves the list). The
    checkbox fill/pop itself is kit.tsx's Checkbox (already built for this); this file only
-   adds the fill transition + the row dip / strike-draw / petal on top of it. ── */
-.task-row .kf-checkbox { transition: background-color 90ms var(--ease-out), border-color 90ms var(--ease-out); }
+   adds the row dip / strike-draw / petal on top of it. ── */
 
 @keyframes tr-rowDip { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(1.5px); } }
 @keyframes tr-strikeGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-.tr-checking { animation: tr-rowDip 320ms var(--ease-natural); }
+.motion-on .tr-checking { animation: tr-rowDip 320ms var(--ease-natural); }
 .tr-title-strike { position: relative; display: inline-block; }
 .tr-title-strike::after {
   content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px;
   background: currentColor; transform: scaleX(0); transform-origin: left;
 }
-.tr-checking .tr-title-strike::after { animation: tr-strikeGrow 240ms var(--ease-out) forwards; }
+.motion-on .tr-checking .tr-title-strike::after { animation: tr-strikeGrow 240ms var(--ease-out) forwards; }
+.tr-checking .tr-title-strike::after { transform: scaleX(1); }
 
 .tr-petal {
   position: absolute; width: 9px; height: 7px; pointer-events: none;
   background: linear-gradient(135deg, #E8C4CC, #D4A8B0); border-radius: 70% 30% 60% 40%;
 }
-.tr-checking .tr-petal-live { animation: petalFall var(--dur-bloom) var(--ease-out) forwards; }
-
-/* ── 3e list breathing — entry only (removal is the grace-window fade above; a full FLIP
-   slide-out needs a mount-tracking library, ponytail: add framer-motion AnimatePresence if
-   every removal path — snooze/delete/reschedule, not just complete — needs an exit slide). ── */
-.tr-enter { animation: entryFadeUp var(--dur-normal) var(--ease-out) both; }
+.tr-checking .tr-petal-live { animation: petalFall 400ms var(--ease-out) forwards; }
 
 /* ── Swipe actions (1b) — pointer-driven reveal, snaps to rest positions. ── */
 .tr-swipe-actions {

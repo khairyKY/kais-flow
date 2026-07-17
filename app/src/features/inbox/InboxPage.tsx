@@ -666,7 +666,7 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
       <div
         className="ib-swipe-content"
         {...swipe.handlers}
-        style={{ position: 'relative', transform: `translateX(${swipe.x}px)`, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : undefined }}
+        style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : undefined }}
       >
         <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 10, flex: 'none' }}>✕</span>
         <div style={{ flex: 1 }}>

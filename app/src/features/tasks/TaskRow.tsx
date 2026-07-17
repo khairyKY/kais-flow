@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './TaskRow.css'
 import {
   completeTask,
@@ -150,6 +150,13 @@ export function TaskRow({
   const swipe = useRowSwipe()
 
   const done = task.status === 'done'
+  // `checking` never resets once set — reopening a done row (checkbox click or the
+  // "Reopen" menu item) would otherwise render it with a stale strikethrough/checked look.
+  const wasDone = useRef(done)
+  useEffect(() => {
+    if (wasDone.current && !done) setChecking(false)
+    wasDone.current = done
+  }, [done])
   const someday = task.someday && !done
   const tag = resolveTag(task, domains, projects, areas)
   const overdueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : 0
@@ -445,7 +452,7 @@ export function TaskRow({
       <div
         className="tr-swipe-content"
         {...swipe.handlers}
-        style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0, background: swipe.x !== 0 ? 'var(--paper-linen)' : undefined, transform: `translateX(${swipe.x}px)`, transition: swipe.x === 0 ? 'transform 200ms var(--ease-spring)' : undefined, boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : swipe.x < 0 ? '9px 0 12px rgba(60,52,38,0.14)' : undefined }}
+        style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0, background: swipe.x !== 0 ? 'var(--paper-linen)' : undefined, transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 ? 'transform 200ms var(--ease-spring)' : undefined, boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : swipe.x < 0 ? '9px 0 12px rgba(60,52,38,0.14)' : undefined }}
       >
         {!hideCheckbox && onToggleSelect && (
           <span

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { searchHybrid } from './api'
-import { useEscapeStack } from '../../lib/overlayStack'
+import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
 
 const DEBOUNCE_MS = 250
@@ -14,6 +14,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const navigate = useNavigate()
 
   useEscapeStack(open, onClose)
+  useBodyScrollLock(open)
 
   useEffect(() => {
     if (open) inputRef.current?.focus()

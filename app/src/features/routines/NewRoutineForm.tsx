@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createRoutine, createChallenge } from './api'
 import { localDateKey } from './streaks'
-import { useEscapeStack } from '../../lib/overlayStack'
+import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import type { Cadence } from '../../lib/types'
 
@@ -40,6 +40,7 @@ function addDays(key: string, n: number): string {
 
 export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose: () => void; initialChallenge?: boolean }) {
   useEscapeStack(true, onClose)
+  useBodyScrollLock(true)
   const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
   // 2a's fields sit on a parchment modal and use bone for contrast; 2b's sheet is linen and
   // swaps to parchment fields with a bone "raised" tone — same pattern the mock repeats for
@@ -273,7 +274,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.32)', zIndex: 998 }} />
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(60,52,38,0.22)', padding: '12px 22px 26px', maxHeight: '90vh', overflowY: 'auto' }}
+          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(60,52,38,0.22)', padding: '12px 22px 26px', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
         >
           <div style={{ width: 38, height: 4, borderRadius: 2, background: 'var(--line-solid)', margin: '0 auto 16px' }} />
           {body}
@@ -284,7 +285,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
         {body}
       </div>
     </div>

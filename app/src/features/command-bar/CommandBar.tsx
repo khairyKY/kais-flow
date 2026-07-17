@@ -7,7 +7,7 @@ import { captureText } from '../inbox/api'
 import { captureWithAI } from '../capture/api'
 import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCommand'
 import { useCommandBarStore } from './commandBarStore'
-import { useEscapeStack } from '../../lib/overlayStack'
+import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
@@ -31,6 +31,7 @@ export function CommandBar() {
   const { data: projects = [] } = useProjects()
 
   useEscapeStack(open, () => setOpen(false))
+  useBodyScrollLock(open)
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {

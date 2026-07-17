@@ -1,4 +1,4 @@
-import { useEscapeStack } from '../lib/overlayStack'
+import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
 import { GLOBAL_SHORTCUTS, NAVIGATE_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
 import type { ShortcutEntry } from '../lib/pageShortcutsStore'
 
@@ -64,6 +64,7 @@ function Column({ children, last }: { children: React.ReactNode; last: boolean }
  * which page is mounted underneath. Each category's data is static (see lib/shortcuts.ts). */
 export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   useEscapeStack(open, onClose)
+  useBodyScrollLock(open)
 
   if (!open) return null
 
@@ -76,8 +77,9 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
         style={{
           width: '100%',
           maxWidth: 660,
-          maxHeight: 'calc(100vh - 160px)',
+          maxHeight: 'calc(100dvh - 160px)',
           overflowY: 'auto',
+          overscrollBehavior: 'contain',
           margin: '0 16px',
           background: 'rgba(251,246,233,0.82)',
           backdropFilter: 'blur(8px)',

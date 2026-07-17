@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { streamChat } from './api'
+import { useBodyScrollLock } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
 
 interface DisplayMessage {
@@ -15,6 +16,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const navigate = useNavigate()
+  useBodyScrollLock(open)
 
   if (!open) return null
 
@@ -89,7 +91,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
           <p style={{ fontSize: 13.5, color: 'var(--ink-faint)', margin: 0, lineHeight: 1.5 }}>
             Ask about anything you've captured — "what did I capture about the pricing project last week?"

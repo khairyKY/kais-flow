@@ -223,10 +223,10 @@ export function CalendarPage() {
   return (
     <>
       <style>{`
-        .cal-shell { display: flex; align-items: stretch; }
-        .cal-rail { width: 244px; flex: none; border-right: 1px dashed var(--line-solid); display: flex; flex-direction: column; padding: 22px 20px; }
+        .cal-shell { display: flex; align-items: stretch; height: 100%; min-height: 0; }
+        .cal-rail { width: 244px; flex: none; border-right: 1px dashed var(--line-solid); display: flex; flex-direction: column; padding: 22px 20px; overflow-y: auto; }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
-        .cal-main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 20px 26px 24px; }
+        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 20px 26px 24px; }
         @media (max-width: 767px) {
           .cal-shell { flex-direction: column; }
           .cal-rail { width: 100%; border-right: none; border-bottom: 1px dashed var(--line-solid); padding: 16px; }

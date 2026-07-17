@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import { useMotionEnabled } from '../lib/motion'
 
 // ── Shared component kit — Design System.dc.html §04. The design-system atoms
 // every feature composes: Button · Chip · SectionLabel · TapeCard · Checkbox.
@@ -137,6 +138,7 @@ export function TapeCard({
 // ── Checkbox — bloom on check (§04 task-row + Motion 5a). Uses the --check-* tokens
 // (sage fill, night glow); checkPop keyframe lives in tokens/motion.css. ──
 export function Checkbox({ checked, onChange, size = 17, style }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; style?: CSSProperties }) {
+  const motionOn = useMotionEnabled()
   return (
     <button
       type="button"
@@ -160,7 +162,7 @@ export function Checkbox({ checked, onChange, size = 17, style }: { checked: boo
         color: 'var(--check-mark)',
         fontSize: size * 0.62,
         lineHeight: 1,
-        animation: checked ? 'checkPop var(--dur-normal) var(--ease-spring)' : 'none',
+        animation: checked && motionOn ? 'checkPop 260ms var(--ease-spring)' : 'none',
         ...style,
       }}
     >

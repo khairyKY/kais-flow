@@ -121,7 +121,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       }}
       headerToolbar={hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
       datesSet={(arg: DatesSetArg) => onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })}
-      height="auto"
+      height="100%"
+      scrollTime="08:00:00"
       dayMaxEvents
       dayHeaderContent={(arg) => {
         // Month view's header row is one cell per weekday, not per date — the two-line

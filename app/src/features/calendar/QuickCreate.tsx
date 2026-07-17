@@ -10,7 +10,7 @@ import { parseCommand } from '../command-bar/parseCommand'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
-import { useEscapeStack } from '../../lib/overlayStack'
+import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { writeRow } from '../../lib/outbox'
 
 // ── Editor.dc.html 2a/2b (compact popover) · 2c (phone sheet) · 1b/1c/1d field
@@ -110,6 +110,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   const [projectTouched, setProjectTouched] = useState(false)
 
   useEscapeStack(true, onClose)
+  useBodyScrollLock(true)
 
   const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects) : null), [kind, title, domains, projects])
   const eventDate = useMemo(() => {
@@ -487,7 +488,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998 }} />
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px 22px', maxHeight: '88vh', overflowY: 'auto' }}
+          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px 22px', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0 10px' }}>
             <span style={{ width: 38, height: 4.5, borderRadius: 3, background: 'var(--line-solid)' }} />
@@ -501,21 +502,21 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   if (expanded || !anchor) {
     return (
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px' }}>
           {body}
         </div>
       </div>
     )
   }
 
-  const left = Math.min(anchor.x, window.innerWidth - 350)
+  const left = Math.max(8, Math.min(anchor.x, window.innerWidth - 350))
   const top = Math.min(anchor.y, window.innerHeight - 420)
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ position: 'fixed', left, top, width: 330, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', transform: 'rotate(-0.3deg)' }}
+        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', transform: 'rotate(-0.3deg)' }}
       >
         {body}
       </div>

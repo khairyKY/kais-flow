@@ -29,3 +29,20 @@ export function useEscapeStack(active: boolean, onClose: () => void): void {
     }
   }, [active, onClose])
 }
+
+/** Body scroll lock, reference-counted so two overlays open at once don't unlock the body
+ * when the first one closes. Prevents a full-screen overlay's backdrop click/scroll from
+ * chaining to the page underneath. */
+let lockCount = 0
+
+export function useBodyScrollLock(active: boolean): void {
+  useEffect(() => {
+    if (!active) return
+    lockCount += 1
+    document.body.style.overflow = 'hidden'
+    return () => {
+      lockCount -= 1
+      if (lockCount === 0) document.body.style.overflow = ''
+    }
+  }, [active])
+}

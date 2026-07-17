@@ -44,16 +44,25 @@ body,
   height: 100%;
 }
 
-/* Route transition — incoming view settles up from below (Motion 1a/2a).
-   Applied to the keyed Outlet wrapper in AppLayout. */
+/* Route transition wrapper — Motion 4b specs ONE entrance mechanism (per-item stagger,
+   not a whole-page fade too), so this carries no animation of its own; it only marks the
+   very first app mount via [data-initial] so stagger children skip animating in on cold
+   boot and only animate on subsequent client-side route landings. Definite height (not
+   auto) so height-bounded pages (calendar) can inherit a real viewport-relative size
+   instead of shrink-wrapping their content — harmless for normal pages, which just
+   overflow past it and keep scrolling via .app-main-content same as before. */
 .kf-route {
-  animation: entryFadeUp var(--dur-slow) var(--ease-out) both;
+  height: 100%;
+  min-height: 0;
+}
+.kf-route[data-initial] .kf-stagger-item {
+  animation: none;
 }
 
 /* Entry stagger item — content settles up in source order (Motion 4b).
    Use with staggerDelay(i) from lib/motion for the per-item delay. */
 .kf-stagger-item {
-  animation: entryFadeUp var(--dur-normal) var(--ease-out) both;
+  animation: entryFadeUp 240ms var(--ease-out) both;
 }
 
 /* Reduced-motion already neutralized globally in tokens/motion.css. */
@@ -64,6 +73,8 @@ body {
   color: var(--text-primary);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Paper grain overlay — felt, not seen */
