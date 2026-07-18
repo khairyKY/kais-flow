@@ -13,6 +13,7 @@
 | — | Lost / unsure what's next | **Prompt 0** below |
 | now | Botanical Integration — design export → live UI (teardown + rebuild, all screens) | **Prompt GO** in `design-integration/PROMPT-BANK.md` |
 | paused | UX Retrofit — remaining *visual* steps superseded by the integration (data/logic stands — see ROADMAP) | **Prompt UX** below |
+| next | P-IMPORT tier-0 — populate the app with real data (Akiflow dump + CSV importer); recommended before R4 | **Prompt IMPORT** below |
 | next | Motion Retrofit — buttery & botanical (animations, flower theme, polish debt) | **Prompt MOTION** below |
 | then | Night theme (UI-only, no feature) | paste `design/PROMPTS.md` § D directly |
 | then | P6 Integrations (GitHub → inbox, Settings UI, external capture) | **Prompt P6** below |
@@ -48,6 +49,31 @@ file belongs to that phase's Files list (plus its docs/migrations). Run
 `cd app && npm run build` and `npx vitest run`. Report: files that belong,
 files that don't (and what they are), build/test results, and a suggested
 commit message. STOP there — I commit myself, you don't.
+```
+
+## Prompt IMPORT — P-IMPORT: one-time data import (tier-0 first)
+
+```
+For the Kai's Flow project: we are building P-IMPORT. Read docs/phases/P-IMPORT.md
+FULLY and follow the CLAUDE.md session workflow. Build tier-0 first (migration +
+import wizard + akiflow.ts and csv.ts adapters), then the remaining adapters in
+later sessions — find the first unfinished step in the phase file's Notes and
+execute in order. Stop and ask me for any [KAI] step. The wizard has no dedicated
+design canvas: build it from the §04 kit + tokens + Settings.dc.html 2a card
+language, minimal and quiet, and flag it for my eye.
+```
+
+**Akiflow-dump prompt** (paste into a Claude session that has the Akiflow connector; do
+this once, before or during tier-0):
+
+```
+Using my Akiflow connector, export my data for the Kai's Flow importer: list all my
+projects and all open + someday tasks (title, status, priority, duration, planned
+date/time, deadline, project, tags, description). Write the result to
+D:\Coding\kais-flow\akiflow-dump.json as {"source":"akiflow","exported_at":ISO,
+"projects":[{id,name}],"tasks":[{id,title,status,priority,duration_min,planned_at,
+deadline,project_id,tags,notes}]}. Local file only — do not commit it (it's personal
+data; .gitignore it).
 ```
 
 ## Prompt UX — current phase: UX Retrofit (Akiflow core)
