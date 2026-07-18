@@ -6,7 +6,6 @@ import { AuthProvider } from './features/auth/AuthProvider'
 import { RequireAuth } from './features/auth/RequireAuth'
 import { SignInPage } from './features/auth/SignInPage'
 import { AppLayout } from './components/AppLayout'
-import { Stub } from './components/Stub'
 import { KitReference } from './components/KitReference'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.

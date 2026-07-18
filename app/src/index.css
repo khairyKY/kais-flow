@@ -12,32 +12,6 @@
    shadow set) wins over the light :root defaults, which share its specificity. */
 @import "./styles/tokens/colors.dark.css";
 /* Fonts load via <link> in index.html, not tokens/fonts.css. */
-
-/* DEPRECATED legacy aliases — pre-design-system names still used by existing
-   components. They point at the semantic tokens so night theme flips them for
-   free. New code reaches for the real tokens; migrate usages, then delete. */
-:root,
-[data-theme="night"] {
-  color-scheme: light;
-
-  --bg-base: var(--bg-app);
-  --bg-hover: var(--bg-input);
-  --paper-card: var(--bg-surface);
-  --sidebar-bg: var(--bg-sidebar);
-  --text-ink: var(--text-primary);
-  --text-muted: var(--text-secondary);
-  --text-faint: var(--text-tertiary);
-  --accent-sage: var(--acc-sage);
-  --accent-terra: var(--acc-terra);
-  --border: var(--border-default);
-  --border-faint: rgba(21, 20, 15, 0.08);
-}
-
-[data-theme="night"] {
-  color-scheme: dark;
-  --border-faint: rgba(220, 214, 190, 0.1);
-}
-
 html,
 body,
 #root {

@@ -276,7 +276,7 @@ export function PlanningBoard() {
           <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Planning board</h1>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'rotate(1deg)' }}>
-          <img src="assets/cherry/bloom.png" alt="" style={{ height: 70, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+          <img src="/ds/assets/cherry/bloom.png" alt="" style={{ height: 70, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>drag a petal into place</span>
         </div>
       </div>

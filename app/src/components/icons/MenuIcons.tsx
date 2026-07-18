@@ -71,16 +71,6 @@ export function BellMenuIcon() {
     </svg>
   )
 }
-
-export function FlagMenuIcon() {
-  return (
-    <svg {...base}>
-      <path d="M4 2.5v11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M4 3h6.5l-1.5 2 1.5 2H4" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 export function DurationMenuIcon() {
   return (
     <svg {...base}>
