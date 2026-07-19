@@ -9,6 +9,7 @@
 - `created_at timestamptz default now()` · `updated_at timestamptz default now()` bumped by the shared `set_updated_at()` trigger.
 - All timestamps stored UTC; the client renders Africa/Cairo.
 - Realtime: tables the UI subscribes to must be added to the `supabase_realtime` publication.
+- **Import idempotency (0027, P-IMPORT):** `external_ref jsonb` (nullable) on `tasks`, `inbox_items`, `journal_entries`, `notes`, `people`, `projects`, `calendar_events` — `{source, id, raw}` — with a partial unique index on `(user_id, external_ref->>'source', external_ref->>'id')`. Re-importing the same file is a no-op; the whole source row survives in `raw`.
 
 **Extensions:** `vector` (pgvector, P0), `pg_cron` (P0), `pg_net` (P4 — lets cron call edge functions over HTTP).
 
