@@ -70,10 +70,12 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
 
   return (
     <div
+      className="kf-scrim"
       style={{ position: 'fixed', inset: 0, zIndex: 55, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }}
       onClick={onClose}
     >
       <div
+        className="kf-overlay-card"
         style={{
           width: '100%',
           maxWidth: 660,
@@ -81,9 +83,9 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           margin: '0 16px',
-          background: 'rgba(251,246,233,0.82)',
+          background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(220,214,190,0.6)',
+          border: '1px solid var(--line-card)',
           borderRadius: 8,
           boxShadow: 'var(--shadow-popover)',
         }}
@@ -94,7 +96,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
             <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 30, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1 }}>Keyboard shortcuts</div>
-              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', marginTop: 2 }}>plant a whole day without the mouse</div>
+              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>plant a whole day without the mouse</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -118,7 +120,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
             <Category title="Calendar" entries={CALENDAR_SHORTCUTS} />
             <div style={{ marginTop: 20 }} />
             <Category title="Command bar" entries={COMMAND_BAR_SHORTCUTS} />
-            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-0.5deg)' }}>
+            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.5deg)' }}>
               arrow → key → arrow → key. shovel through it ✿
             </div>
           </Column>

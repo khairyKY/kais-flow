@@ -190,7 +190,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
           background: 'var(--paper-linen)',
           borderRadius: '22px 22px 0 0',
           boxShadow: '0 -10px 30px rgba(60,52,38,0.2)',
-          padding: '22px 22px 30px',
+          padding: '22px 22px calc(30px + env(safe-area-inset-bottom))',
           zIndex: 110,
           textAlign: 'center',
           animation: motion ? sheetAnimation : undefined,
@@ -247,7 +247,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
         </div>
 
         {/* Prompt string */}
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: '#7a745f', marginTop: 6 }}>
+        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', marginTop: 6 }}>
           {busy ? 'Processing transcription...' : 'say what\'s on your mind…'}
         </div>
 

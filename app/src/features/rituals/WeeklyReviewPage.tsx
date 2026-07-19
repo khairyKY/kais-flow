@@ -12,11 +12,10 @@ import { FieldLabel, useIsMobile } from './RitualChrome'
 import type { CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // ── Weekly Review — pixel contract Review.dc.html 1a (desktop sweep + right rail), 1b
-// (iPhone), 2a/2b (the Weekly Letter — the "didn't arrive" state is the honest one until a
-// real letter-generation pass exists; see the fidelity note), 3c (the season so far, redone —
-// turn 3's own header says "'the season so far' gets a stronger trend", so 3c explicitly
-// supersedes 2c's plainer version of the same widget). Turn 4's animated envelope stays
-// parked (its own dv-thd is marked "Parked · future work"). ──
+// (iPhone), 3c (the season so far, redone — turn 3's own header says "'the season so far'
+// gets a stronger trend", so 3c explicitly supersedes 2c's plainer version of the same
+// widget). The Weekly Letter (2a/2b + turn 4's envelope) is DROPPED per Kai's 2026-07-19
+// ruling — the page opens straight into the sweep. ──
 
 const A = '/ds/assets'
 
@@ -103,7 +102,7 @@ export function WeeklyReviewPage() {
 
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>
+              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>
               <button
                 type="button"
                 disabled={!allSwept}
@@ -172,11 +171,11 @@ export function WeeklyReviewPage() {
 // Effects 2f "weekly flourish": the week's line draws itself left to right, one-shot on
 // open, with a dot popping in per notable day (staggered 900ms) — Effects.dc.html #2f.
 const WEEK_DOTS: [number, number, string][] = [
-  [6, 74, '#D4A8B0'],
-  [76, 44, '#C9A55A'],
-  [138, 60, '#9AB4BE'],
-  [200, 30, '#A8A0BE'],
-  [254, 16, '#7A946E'],
+  [6, 74, 'var(--acc-blossom)'],
+  [76, 44, 'var(--acc-gold-warm)'],
+  [138, 60, 'var(--acc-hydrangea)'],
+  [200, 30, 'var(--acc-lavender)'],
+  [254, 16, 'var(--acc-moss)'],
 ]
 
 function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: number; domainsTotal: number; isMobile: boolean }) {
@@ -187,6 +186,9 @@ function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: n
       <style>{`
         @keyframes weekLine { from { stroke-dashoffset: 220 } to { stroke-dashoffset: 0 } }
         @keyframes weekDot { 0%, 60% { transform: scale(0); opacity: 0 } 80% { transform: scale(1.3); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
+        /* X1 Effects 2i — ink bleed, review prose only: text sharpens from a soft blur. */
+        @keyframes kfInkBleed { from { opacity: 0; filter: blur(4px) } to { opacity: 1; filter: none } }
+        .motion-on .kf-ink { animation: kfInkBleed 480ms var(--ease-out) both; }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
         <img src={`${A}/fern/unfurl2.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
@@ -197,7 +199,7 @@ function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: n
       </div>
       {!isMobile && motion && (
         <svg viewBox="0 0 260 96" style={{ width: 130, height: 48, overflow: 'visible' }}>
-          <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="#7A946E" strokeWidth="1.5" strokeDasharray="220" style={{ animation: 'weekLine 2.2s ease-in-out' }} />
+          <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="var(--acc-moss)" strokeWidth="1.5" strokeDasharray="220" style={{ animation: 'weekLine 2.2s ease-in-out' }} />
           {WEEK_DOTS.map(([cx, cy, fill], i) => (
             <circle key={i} cx={cx} cy={cy} r="3.5" fill={fill} style={{ transformOrigin: `${cx}px ${cy}px`, animation: `weekDot 200ms ease-out ${i * 0.9}s both` }} />
           ))}
@@ -323,7 +325,7 @@ function RightRail({
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
         </div>
-        <div style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>no numbers to chase — just look once, honestly, then close the week</div>
+        <div className="kf-ink" style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.8deg)' }}>no numbers to chase — just look once, honestly, then close the week</div>
       </div>
     </div>
   )
@@ -441,7 +443,7 @@ function SeasonSoFar({
               <span key={w.label} style={i === weeks.length - 1 ? { color: 'var(--acc-terra)' } : undefined}>{w.label}</span>
             ))}
           </div>
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f', marginTop: 6, transform: 'rotate(-0.4deg)' }}>
+          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)', marginTop: 6, transform: 'rotate(-0.4deg)' }}>
             this week's {weeks[7].hours >= 20 ? 'in full bloom' : 'a bud'} — {Math.round(weeks[7].hours)}h in, still opening ✿
           </div>
         </div>
@@ -482,7 +484,7 @@ function SeasonSoFar({
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>{bloomsThisWeek}</div>
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last week · {bloomsLastWeek}</div>
-              <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>
+              <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
                 {bloomsThisWeek === bloomsLastWeek ? 'holding steady ✿' : bloomsThisWeek > bloomsLastWeek ? `${bloomsThisWeek - bloomsLastWeek} more petals down ✿` : `${bloomsLastWeek - bloomsThisWeek} fewer this week`}
               </div>
             </div>

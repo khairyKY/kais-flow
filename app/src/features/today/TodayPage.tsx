@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
@@ -97,6 +97,7 @@ export function TodayPage() {
 
   const [morningOpen, setMorningOpen] = useState(false)
   const [eveningOpen, setEveningOpen] = useState(false)
+  const [celebrate, setCelebrate] = useState(false)
 
   const projectName = useMemo(() => new Map(projects.map((p) => [p.id, p.name] as const)), [projects])
   const projectDot = (id: string | null) => {
@@ -118,6 +119,22 @@ export function TodayPage() {
   const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
   const nothingPlanned = open.length === 0 && doneToday === 0
   const allDone = open.length === 0 && doneToday > 0
+
+  // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
+  // handwritten banner over the Top-3 section. Fires once per calendar day, ever.
+  const motion = useMotionEnabled()
+  const wasAllDone = useRef(allDone)
+  useEffect(() => {
+    const was = wasAllDone.current
+    wasAllDone.current = allDone
+    if (was || !allDone || !motion) return
+    const today = localDateKey(new Date())
+    if (localStorage.getItem('kf.dayDoneShown') === today) return
+    localStorage.setItem('kf.dayDoneShown', today)
+    setCelebrate(true)
+    const t = setTimeout(() => setCelebrate(false), 4200)
+    return () => clearTimeout(t)
+  }, [allDone, motion])
 
   // A2 (2026-07-18 audit): the Tasks selection pattern on Today — checkbox toggle,
   // Ctrl+A via useListKeys, BulkBar. Done rows aren't selectable (bulk acts on open tasks).
@@ -236,7 +253,6 @@ export function TodayPage() {
 
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ })
   const dateLabelShort = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: TZ })
-  const motion = useMotionEnabled()
   const hyd = pendingInbox.length === 0 ? 'zero' : pendingInbox.length < 5 ? 'light' : pendingInbox.length < 20 ? 'medium' : 'heavy'
   const vine = streak >= 30 ? 'lush' : streak >= 7 ? 'flowering' : streak >= 1 ? 'sprouting' : 'bare'
 
@@ -269,7 +285,7 @@ export function TodayPage() {
         <img src={`${A}/hydrangea/${hyd}.png`} alt="Inbox" style={{ height: 30 }} />
         <img src={`${A}/vine/${vine}.png`} alt="Routines" style={{ height: 28 }} />
       </div>
-      <div style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f', lineHeight: 1.2 }}>pressed &amp; kept, one day at a time</div>
+      <div style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)', lineHeight: 1.2 }}>pressed &amp; kept, one day at a time</div>
       <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
         <div>{doneToday} of {open.length + doneToday} done</div>
         <div style={{ color: 'var(--acc-sage-text)' }}>{streak}-day streak</div>
@@ -285,7 +301,7 @@ export function TodayPage() {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The terrarium</div>
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', marginTop: 2 }}>pressed &amp; kept, one day at a time</div>
+        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>pressed &amp; kept, one day at a time</div>
       </div>
       <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.7 }}>
         <div>{pendingInbox.length} in inbox</div>
@@ -375,7 +391,8 @@ export function TodayPage() {
               </div>
             )
           })}
-          <section>
+          <section className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
+            {celebrate && <DayCompleteBurst />}
             <SectionLabel style={{ marginTop: isMobile ? 16 : 0, marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
             {nothingPlanned ? (
               <EmptyTodayCard onPlan={() => setCommandBarOpen(true)} />
@@ -392,7 +409,7 @@ export function TodayPage() {
             )}
           </section>
 
-          <section>
+          <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
             {todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
@@ -401,13 +418,16 @@ export function TodayPage() {
           </section>
 
           {!nothingPlanned && !allDone && (
-            <section>
+            <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
               <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
-              {allOpen.map((t, i) => (
-                <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                  <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
-                </div>
-              ))}
+              {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
+              <div className="kf-dim">
+                {allOpen.map((t, i) => (
+                  <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                  </div>
+                ))}
+              </div>
             </section>
           )}
         </div>
@@ -477,6 +497,47 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
   )
 }
 
+// X1 Effects 2d — day complete: 5 petals fall over the finished Top-3 and a handwritten
+// banner rises once. Reuses the petalFall keyframe (tokens/motion.css) + itemFadeIn.
+function DayCompleteBurst() {
+  const petals = [12, 30, 50, 68, 84] // left %
+  return (
+    <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 5 }}>
+      {petals.map((left, i) => (
+        <span
+          key={i}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: `${left}%`,
+            width: 11,
+            height: 9,
+            background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',
+            borderRadius: i % 2 ? '60% 40% 70% 30%' : '70% 30% 60% 40%',
+            animation: `petalFall 900ms var(--ease-out) ${i * 90}ms both`,
+          }}
+        />
+      ))}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: '100%',
+          marginTop: 6,
+          textAlign: 'center',
+          fontFamily: 'var(--font-hand)',
+          fontSize: 17,
+          color: 'var(--ink-hand, #7a745f)',
+          animation: 'itemFadeIn 400ms var(--ease-out) 500ms both',
+        }}
+      >
+        that's the day, gently done ✿
+      </div>
+    </div>
+  )
+}
+
 // States.dc.html 1a — Empty Today: seedling clover + one hand line + one action.
 function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
   return (
@@ -487,7 +548,7 @@ function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
         <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,#b9a98a,#a3937a)', boxShadow: 'inset 0 3px 5px rgba(60,52,38,0.25)' }} />
         <img src={`${A}/clover/seedling.png`} alt="" style={{ position: 'absolute', left: '50%', bottom: 34, height: 52, transform: 'translateX(-50%)', filter: 'var(--shadow-drop-sm)' }} />
       </div>
-      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center' }}>Nothing planted for today yet.</div>
+      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>
       <Button type="button" variant="cta" onClick={onPlan} style={{ marginTop: 18, fontSize: 13.5, padding: '10px 22px' }}>Plan today</Button>
     </div>
   )
@@ -516,7 +577,7 @@ function DoneTodayCard() {
           />
         ))}
       </div>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center' }}>All done. The garden can rest.</div>
+      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>All done. The garden can rest.</div>
     </div>
   )
 }
@@ -530,7 +591,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
         <span style={{ marginTop: 12 }}>{done ? <DoneCheck task={task} size={16} /> : <Checkbox checked={false} size={16} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : '#4a3a1e', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}>{task.title}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}>{task.title}</div>
         </div>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
@@ -542,7 +603,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
       <span style={{ marginTop: 16 }}>{done ? <DoneCheck task={task} size={19} /> : <Checkbox checked={false} size={19} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : '#4a3a1e', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}>{task.title}</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}>{task.title}</div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
       <div style={{ textAlign: 'center', flex: 'none' }}>
@@ -560,6 +621,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
     <span
       onClick={() => uncompleteTask(task)}
       title="Reopen"
+      className="kf-hit"
       style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', cursor: 'pointer' }}
     >
       ✓
@@ -577,6 +639,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   const selectBox = !done && onToggleSelect && (
     <span
       onClick={onToggleSelect}
+      className="kf-hit"
       style={{ width: 14, height: 14, marginTop: 4, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
     >
       {selected ? '✓' : ''}
@@ -596,7 +659,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
           )}
         </div>
         {!done && (
-          <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
+          <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
             {task.top3 ? '★' : '☆'}
           </span>
         )}
@@ -612,7 +675,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         {metaRow(projectName, dot, task.duration_min)}
       </div>
       {!done && (
-        <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
+        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
           {task.top3 ? '★' : '☆'}
         </span>
       )}
@@ -652,7 +715,7 @@ function SlippingCard({ row }: { row: SlippingRow }) {
     <div
       onClick={() => navigate(to)}
       role="link"
-      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: '#F8F1DC', padding: '12px 14px', transform: 'rotate(0.4deg)', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
+      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: 'var(--paper-goal)', padding: '12px 14px', transform: 'rotate(0.4deg)', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
     >
       <img src={`${A}/wisteria/p20.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
       <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>
@@ -703,7 +766,7 @@ function RitualCard({ label, shortLabel, done, total, accent, dot, onClick, icon
 }
 
 function Empty({ line }: { line: string }) {
-  return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', padding: '8px 2px' }}>{line}</div>
+  return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>
 }
 
 const SunIcon = () => (

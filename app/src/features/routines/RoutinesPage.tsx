@@ -161,7 +161,7 @@ export function RoutinesPage() {
     <div>
       <div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>
-        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', marginTop: 2 }}>each habit grows with its streak</div>}
+        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>each habit grows with its streak</div>}
       </div>
       {isMobile ? (
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', marginTop: 10, paddingBottom: 4 }}>
@@ -204,7 +204,7 @@ export function RoutinesPage() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {active.length} tended</span>
-              {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f' }}>{heroCaption}</span>}
+              {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>{heroCaption}</span>}
             </div>
             <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
               <span style={{ display: 'block', width: active.length ? `${Math.round((doneToday / active.length) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
@@ -229,8 +229,13 @@ export function RoutinesPage() {
           </button>
         )}
 
+        {/* X5 States t1 — the surface's own species as sprout + one hand line; the page's
+            "New routine" CTA above is the one action, so the vignette adds none. */}
         {active.length === 0 && (
-          <p style={{ fontStyle: 'italic', color: 'var(--ink-faint)', fontSize: 13.5, marginTop: 24 }}>Nothing planted yet.</p>
+          <div style={{ padding: '36px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src={`${A}/vine/bare.png`} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
+            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted yet.</div>
+          </div>
         )}
 
         {groups.map((g) => (
@@ -252,7 +257,7 @@ export function RoutinesPage() {
       </div>
 
       {!isMobile && (
-        <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'rgba(234,227,210,0.4)' }}>
+        <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
           {garden}
 
           <div>

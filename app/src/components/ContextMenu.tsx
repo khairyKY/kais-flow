@@ -83,8 +83,11 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
     // the viewport, not to this menu's box — a `transform` on any ancestor turns it into the
     // containing block for fixed descendants (same class of bug Select.tsx's portal works around).
     <div ref={ref}>
+      {/* kf-fade (opacity only) — kfOverlayIn's transform would make this menu the
+          containing block for its fixed submenu while animating. */}
       <div
         role="menu"
+        className="kf-fade"
         style={{
           position: 'fixed',
           top: Math.max(12, top),

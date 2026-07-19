@@ -71,6 +71,7 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
     <div
       ref={ref}
       role="menu"
+      className="kf-overlay-card"
       style={{
         position: 'fixed',
         top: Math.max(12, top),

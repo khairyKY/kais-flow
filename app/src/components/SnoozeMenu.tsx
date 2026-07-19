@@ -90,6 +90,7 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
     <div
       ref={ref}
       role="menu"
+      className="kf-overlay-card"
       style={{
         position: 'fixed',
         top: Math.max(12, top),

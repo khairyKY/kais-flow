@@ -151,7 +151,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>
         <StepClovers stepIndex={stepIndex} total={STEPS.length} />
-        <span style={{ marginLeft: 6, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-1deg)' }}>{caption}</span>
+        <span style={{ marginLeft: 6, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{caption}</span>
       </div>
 
       {step === 'top3' && seeded && (

@@ -82,7 +82,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
 
           <div style={{ position: 'relative', marginTop: 30, height: 112 }}>
             <svg viewBox={`0 0 ${STEM_W} ${STEM_H}`} preserveAspectRatio="none" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: 84, overflow: 'visible' }}>
-              <path d="M8,57 C120,44 200,68 300,55 S480,42 560,58 S720,50 778,52" fill="none" stroke="#7A946E" strokeWidth={2} strokeLinecap="round" />
+              <path d="M8,57 C120,44 200,68 300,55 S480,42 560,58 S720,50 778,52" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" />
             </svg>
             {days.map((d, i) => {
               const x = leafX(i)
@@ -96,7 +96,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
                 return (
                   <svg key={d.key} width={16} height={22} viewBox="0 0 16 22" style={{ position: 'absolute', left: x, top: y + 18 }}>
                     <title>{d.key}</title>
-                    <path d="M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z" fill="#9AB4BE" opacity={0.92} />
+                    <path d="M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z" fill="var(--acc-hydrangea)" opacity={0.92} />
                     <path d="M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z" fill="none" stroke="#7d99a3" strokeWidth={0.8} />
                     <circle cx={5.4} cy={13.2} r={2} fill="#fff" opacity={0.65} />
                   </svg>
@@ -107,8 +107,8 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
                   <svg key={d.key} width={22} height={20} viewBox="0 0 22 20" style={{ position: 'absolute', left: x - 3, top: y - 12 }}>
                     <title>{d.key}</title>
                     <rect x={0} y={0} width={22} height={20} fill="var(--paper-linen)" />
-                    <path d="M0 10q3 1 5 4" fill="none" stroke="#7A946E" strokeWidth={2} strokeLinecap="round" />
-                    <path d="M22 9q-3 0 -5 3" fill="none" stroke="#7A946E" strokeWidth={2} strokeLinecap="round" />
+                    <path d="M0 10q3 1 5 4" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" />
+                    <path d="M22 9q-3 0 -5 3" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" />
                   </svg>
                 )
               }
@@ -125,12 +125,12 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: '#7a745f', transform: 'rotate(-0.7deg)' }}>{caption}</div>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={`${A}/vine/leaf-right.png`} alt="" style={{ height: 12 }} />grew</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><DropletIcon size={8} />rained, held</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <svg width={14} height={8} viewBox="0 0 22 10"><path d="M1 5q3 1 5 4" fill="none" stroke="#7A946E" strokeWidth={2} strokeLinecap="round" /><path d="M21 4q-3 0 -5 3" fill="none" stroke="#7A946E" strokeWidth={2} strokeLinecap="round" /></svg>
+                <svg width={14} height={8} viewBox="0 0 22 10"><path d="M1 5q3 1 5 4" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /><path d="M21 4q-3 0 -5 3" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /></svg>
                 broke
               </span>
             </div>
@@ -144,7 +144,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
 function DropletIcon({ size }: { size: number }) {
   return (
     <svg width={size} height={size * 1.375} viewBox="0 0 12 16">
-      <path d="M6 1C8 5 11 6.5 11 10a5 5 0 0 1-10 0C1 6.5 4 5 6 1Z" fill="#9AB4BE" />
+      <path d="M6 1C8 5 11 6.5 11 10a5 5 0 0 1-10 0C1 6.5 4 5 6 1Z" fill="var(--acc-hydrangea)" />
       <circle cx={4.6} cy={9.4} r={1.3} fill="#fff" opacity={0.7} />
     </svg>
   )

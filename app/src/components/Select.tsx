@@ -147,6 +147,7 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
           <div
             ref={panelRef}
             role="listbox"
+            className="kf-overlay-card"
             style={{
               position: 'fixed',
               left: Math.max(8, Math.min(pos.left, window.innerWidth - Math.max(pos.width, 160) - 8)),

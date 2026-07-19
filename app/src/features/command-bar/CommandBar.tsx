@@ -99,18 +99,22 @@ export function CommandBar() {
 
   return (
     <div
+      className="kf-scrim"
       style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }}
       onClick={() => setOpen(false)}
     >
+      {/* X2 Motion 3c — overlay card arrives with the scrim (kf classes, AppLayout shell CSS).
+          X3 — translucent parchment via color-mix so the night paper-parchment shows through. */}
       <div
+        className="kf-overlay-card"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: 440,
           margin: '0 16px',
-          background: 'rgba(251,246,233,0.82)',
+          background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(220,214,190,0.6)',
+          border: '1px solid var(--line-card)',
           borderRadius: 8,
           boxShadow: 'var(--shadow-popover)',
           padding: '16px 18px',

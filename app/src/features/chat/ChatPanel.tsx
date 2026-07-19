@@ -52,7 +52,8 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             })
           },
           onDone: (citations) => updateLast({ citations }),
-          onError: (message) => updateLast({ content: `Error: ${message}` }),
+          // X5 States rule — the word "error" never appears; calm copy, no raw message.
+          onError: () => updateLast({ content: "That one got lost on the breeze — try asking again." }),
         },
         controller.signal,
       )
@@ -68,6 +69,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <div
+      className="kf-drawer"
       style={{
         position: 'fixed',
         top: 0,
@@ -83,10 +85,12 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         boxShadow: '-1px 0 2px rgba(60,52,38,0.14), -10px 0 26px rgba(60,52,38,0.1)',
       }}
     >
+      {/* X2 Motion 5d — hover lean: the chat sprig leans a few degrees, pinned at the soil line. */}
+      <style>{`.motion-on .kf-lean { transition: transform 420ms var(--ease-out); transform-origin: 50% 100%; } .motion-on .kf-lean:hover { transform: rotate(3.5deg); }`}</style>
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px dashed var(--line-dashed)' }}>
-        <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
+        <img src="/ds/assets/clover/awake.png" alt="" className="kf-lean" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>Chat</span>
-        <button type="button" onClick={onClose} style={{ marginLeft: 'auto', border: 'none', background: 'none', color: 'var(--ink-faint)', fontSize: 16, cursor: 'pointer', padding: 4, lineHeight: 1 }}>
+        <button type="button" onClick={onClose} className="kf-hit" style={{ marginLeft: 'auto', border: 'none', background: 'none', color: 'var(--ink-faint)', fontSize: 16, cursor: 'pointer', padding: 4, lineHeight: 1 }}>
           ✕
         </button>
       </div>
@@ -153,7 +157,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           e.preventDefault()
           void send()
         }}
-        style={{ flex: 'none', padding: '12px 14px', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
+        style={{ flex: 'none', padding: '12px 14px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
       >
         <input
           value={input}

@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
+import { get } from 'idb-keyval'
 import { PageFallback } from './Stub'
 import { supabase } from '../lib/supabase'
+import type { OutboxEntry } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
 import { CommandBar } from '../features/command-bar/CommandBar'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
@@ -329,27 +331,132 @@ function useOnline(): boolean {
   return online
 }
 
-// Topbar sync strip — States.dc.html 2a. Synced ● (sage) / Offline ◌.
-// ponytail: live "Syncing ↻ N" / "N saved here" needs a reactive outbox pending
-// count the queue doesn't yet expose; wired in the States pass (X5).
+// ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue.
+// Event-driven via outbox's 'kf-outbox-change' (foundation patch landed); the slow
+// interval is only a belt-and-braces fallback.
+// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection. ──
+function useOutboxQueue(): OutboxEntry[] {
+  const [queue, setQueue] = useState<OutboxEntry[]>([])
+  useEffect(() => {
+    let alive = true
+    const read = () => void get<OutboxEntry[]>('kf-outbox').then((q) => { if (alive) setQueue(q ?? []) })
+    read()
+    const t = setInterval(read, 30_000)
+    window.addEventListener('kf-outbox-change', read)
+    window.addEventListener('online', read)
+    window.addEventListener('offline', read)
+    return () => {
+      alive = false
+      clearInterval(t)
+      window.removeEventListener('kf-outbox-change', read)
+      window.removeEventListener('online', read)
+      window.removeEventListener('offline', read)
+    }
+  }, [])
+  return queue
+}
+
+const QUEUE_KIND: Record<string, string> = {
+  tasks: 'task', inbox_items: 'inbox', journal_entries: 'journal', calendar_events: 'event', routines: 'routine',
+}
+function queueAgo(ts: number): string {
+  const min = Math.max(1, Math.round((Date.now() - ts) / 60_000))
+  return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
+}
+
 function TopBar() {
   const online = useOnline()
+  const motionOn = useMotionEnabled()
+  const queue = useOutboxQueue()
+  const n = queue.length
+  const [popOpen, setPopOpen] = useState(false)
+  const popRef = useRef<HTMLDivElement>(null)
+
+  // States 2d — reconnect: the only celebration is one glint on the dot, 300ms.
+  const prevPending = useRef(0)
+  const [glint, setGlint] = useState(false)
+  useEffect(() => {
+    const was = prevPending.current
+    prevPending.current = n
+    if (was > 0 && n === 0 && online && motionOn) {
+      setGlint(true)
+      const t = setTimeout(() => setGlint(false), 600)
+      return () => clearTimeout(t)
+    }
+  }, [n, online, motionOn])
+
+  useEffect(() => {
+    if (!popOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (popRef.current && !popRef.current.contains(e.target as Node)) setPopOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [popOpen])
+
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
+  const status = !online ? (n > 0 ? `Offline ◌ — ${n} saved here` : 'Offline ◌') : n > 0 ? `Syncing ↻ ${n}` : 'Synced'
   return (
     <div
       className="app-topbar"
-      style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+      style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        <span>Kai's Flow · {dateLabel} · {online ? 'Synced' : 'Offline'}</span>
-        {online ? (
-          <span style={{ color: 'var(--acc-sage)' }}>●</span>
-        ) : (
-          <span style={{ color: 'var(--ink-faint)' }}>◌</span>
-        )}
+        <span>Kai's Flow · {dateLabel} ·</span>
+        <button
+          type="button"
+          onClick={() => setPopOpen((v) => !v)}
+          className="kf-hit"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online && n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          {status}
+          {online ? (
+            <span style={{ color: 'var(--acc-sage)', animation: glint ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: glint ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
+          ) : (
+            <span style={{ color: 'var(--ink-faint)' }}>◌</span>
+          )}
+        </button>
         <SeasonTopbarEcho />
       </div>
       <div style={{ flex: 'none' }}>Africa/Cairo</div>
+
+      {popOpen && (
+        <div
+          ref={popRef}
+          className="kf-sync-pop kf-overlay-card"
+          style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '12px 14px', textTransform: 'none', letterSpacing: 'normal' }}
+        >
+          {n === 0 ? (
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
+          ) : (
+            <>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
+                {online ? `Syncing ↻ ${n}` : `Offline ◌ · ${n} saved here`}
+              </div>
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                {queue.map((e) => {
+                  const p = e.payload as Record<string, unknown>
+                  const label = (p.title ?? p.raw_text ?? p.name ?? '') as string
+                  return (
+                    <div key={`${e.table}-${e.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
+                        {QUEUE_KIND[e.table] ?? e.table}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {label ? `'${label}'` : ''} {e.op === 'delete' ? 'removed' : 'saved'}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(e.queuedAt)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>
+                {online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back."}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -436,6 +543,49 @@ export function AppLayout() {
         }
         .kf-collapse-btn:hover { transform: scale(1.15); color: var(--ink-muted); }
         .kf-collapse-btn:active { transform: scale(0.97); }
+
+        /* X2 Motion 4a — resting layer: hover lifts a breath, press gives to 0.97 in 80ms. */
+        .kf-btn { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
+        .kf-btn:hover { transform: translateY(-1px); }
+        .kf-btn:active { transform: scale(0.97); transition-duration: 80ms; }
+
+        /* X1 Effects 2g — focus dim: hover/focus a row and the rest of the list steps back.
+           260ms in, 420ms out; opacity 0.45 + 0.6px blur per the export. List views only. */
+        .motion-on .kf-dim > * { transition: opacity 420ms var(--ease-out), filter 420ms var(--ease-out); }
+        .motion-on .kf-dim:has(> :hover) > :not(:hover),
+        .motion-on .kf-dim:has(> :focus-within) > :not(:focus-within) {
+          opacity: 0.45; filter: blur(0.6px); transition-duration: 260ms;
+        }
+
+        /* X2 Motion 3c — overlay in: card + scrim arrive together, 210ms up-and-settle.
+           Keyframes end at transform:none (containing-block rule, tokens/motion.css). */
+        @keyframes kfOverlayIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        @keyframes kfFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes kfSheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+        @keyframes kfDrawerIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+        .kf-overlay-card { animation: kfOverlayIn 210ms var(--ease-out); }
+        .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); }
+        .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
+        .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
+        .kf-fade { animation: kfFadeIn 160ms var(--ease-out); }
+
+        /* X2 Motion 1f — the sidebar streak plant is the app's sole persistent loop. */
+        @keyframes kfLeafSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+        .motion-on .app-vine img { animation: kfLeafSway 5.8s var(--ease-natural) infinite; transform-origin: 50% 100%; }
+
+        /* X4 — >=44px touch targets for small glyph controls, coarse pointers only. */
+        .kf-hit { position: relative; }
+        .kf-checkbox { position: relative; }
+        @media (pointer: coarse) {
+          .kf-hit::after { content: ''; position: absolute; inset: -12px; }
+          .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
+        }
+
+        /* X5 States 2b — sync queue popover; bottom sheet on mobile. */
+        .kf-sync-pop { position: absolute; top: 38px; left: 40px; z-index: 200; width: 300px; }
+        @media (max-width: 767px) {
+          .kf-sync-pop { position: fixed; top: auto; left: 10px; right: 10px; bottom: calc(74px + env(safe-area-inset-bottom)); width: auto; }
+        }
       `}</style>
 
       {/* A1 (2026-07-18 audit): overflow stays visible on the aside so the collapse button can

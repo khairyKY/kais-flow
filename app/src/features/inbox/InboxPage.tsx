@@ -260,7 +260,7 @@ export function InboxPage() {
       </div>
       {!isMobile && !zero && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-1.5deg)' }}>clear them and the hydrangea calms ✿</span>
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1.5deg)' }}>clear them and the hydrangea calms ✿</span>
           <VoiceCaptureButton />
         </div>
       )}
@@ -317,7 +317,7 @@ export function InboxPage() {
 
             {focusedItem && focusedItem.status !== 'pending' && <ResolvedCard item={focusedItem} />}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 12, marginTop: 18 }}>
+            <div className='kf-dim' style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 12, marginTop: 18 }}>
               {aiItems.map((item, i) => (
                 <TriageCard
                   key={item.id}
@@ -454,7 +454,7 @@ function EmptyInboxCard() {
       <p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
         Captures land here when the command bar can't tell where they go. Nothing waits on you.
       </p>
-      <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-1deg)' }}>one calm bloom ✿</div>
+      <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>one calm bloom ✿</div>
     </div>
   )
 }
@@ -732,12 +732,12 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
   }
 
   if (items.length === 0) {
-    return <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', padding: '8px 2px' }}>nothing composting right now</div>
+    return <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>nothing composting right now</div>
   }
 
   return (
     <div style={{ marginTop: compact ? 12 : 16 }}>
-      <div style={{ fontFamily: 'var(--font-hand)', fontSize: compact ? 14 : 17, color: '#7a745f', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-hand)', fontSize: compact ? 14 : 17, color: 'var(--ink-hand, #7a745f)', marginBottom: 12 }}>
         dismissed captures rest here, then compost after 30 days ✿
       </div>
 
@@ -756,13 +756,13 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
         )}
       </div>
 
-      {compact && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}
+      {compact && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}
 
       {today.length > 0 && <DismissedGroup label="Today" items={today} compact={compact} selected={selected} onToggleSelect={onToggleSelect} />}
       {earlier.length > 0 && <DismissedGroup label="Earlier" items={earlier} compact={compact} selected={selected} onToggleSelect={onToggleSelect} />}
 
       {!compact && (
-        <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>
+        <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
           a capture is never truly lost — it just goes quiet ✿
         </div>
       )}

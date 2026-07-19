@@ -148,6 +148,31 @@ function GardenBeat({
         </div>
       </div>
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        {/* X1 Effects 1c — firefly dusk: slow pulses, slower drift, <=5 flies. Reuses the
+            fireflyDrift/twinkle keyframes (tokens/motion.css); dusk palette is this file's own. */}
+        {motion &&
+          [
+            { left: '16%', top: '58%', size: 5, drift: 13, pulse: 4.5, delay: 0 },
+            { left: '78%', top: '46%', size: 4, drift: 15, pulse: 5.2, delay: 1.6 },
+            { left: '58%', top: '72%', size: 4, drift: 11, pulse: 4, delay: 3.1 },
+          ].map((f, i) => (
+            <span
+              key={i}
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: f.left,
+                top: f.top,
+                width: f.size,
+                height: f.size,
+                borderRadius: '50%',
+                background: '#E8D9A0',
+                boxShadow: '0 0 8px 3px rgba(232,217,160,0.5)',
+                animation: `fireflyDrift ${f.drift}s ease-in-out ${f.delay}s infinite, twinkle ${f.pulse}s ease-in-out ${f.delay}s infinite`,
+                pointerEvents: 'none',
+              }}
+            />
+          ))}
         <div style={{ position: 'absolute', left: '50%', top: 28, transform: 'translateX(-50%)', width: 190, height: 190 }}>
           <span style={{ position: 'absolute', inset: -26, borderRadius: '50%', background: 'radial-gradient(circle,rgba(228,195,107,0.22),rgba(228,195,107,0.07) 45%,transparent 68%)' }} />
           <svg viewBox="0 0 160 160" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
