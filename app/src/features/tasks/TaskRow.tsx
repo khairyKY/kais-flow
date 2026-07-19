@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import './TaskRow.css'
+import { settleSwipeX, DRAG_THRESHOLD, SWIPE_LEFT, SWIPE_RIGHT } from './swipe'
 import {
   completeTask,
   uncompleteTask,
@@ -43,8 +45,15 @@ import type { Task } from '../../lib/types'
 // 2b (someday). W1 Today and W3 Planning import this; keep the prop surface additive. ──
 
 const A = '/ds/assets'
-const SWIPE_RIGHT = 156 // Resched · Project · Snooze, 52px each
-const SWIPE_LEFT = 88 // Delete
+
+// Star for the Top 3 menu item — path from the design's context menu (Tasks.dc.html:261).
+function StarMenuIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3.5l2.6 5.5 6 .7-4.4 4.1 1.1 5.9L12 16.9 6.7 19.7l1.1-5.9L3.4 9.7l6-.7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 function PriorityFlag({ color }: { color: string }) {
   return (
@@ -101,29 +110,54 @@ export interface TaskRowProps {
 
 function useRowSwipe() {
   const [x, setX] = useState(0)
+  const armed = useRef(false)
   const dragging = useRef(false)
   const startClientX = useRef(0)
   const startX = useRef(0)
+  const lastClientX = useRef(0)
+  const lastTime = useRef(0)
+  const velocity = useRef(0)
+
+  function settle() {
+    armed.current = false
+    if (!dragging.current) return
+    dragging.current = false
+    const v = velocity.current
+    setX((cur) => settleSwipeX(cur, v))
+  }
 
   return {
     x,
     reset: () => setX(0),
     handlers: {
+      // The gesture only becomes a drag (and only captures the pointer) after ~8px of
+      // horizontal travel — so plain clicks on child controls (selection checkbox,
+      // complete checkbox, star) stay ordinary clicks.
       onPointerDown(e: React.PointerEvent) {
-        dragging.current = true
+        armed.current = true
+        dragging.current = false
         startClientX.current = e.clientX
         startX.current = x
-        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        lastClientX.current = e.clientX
+        lastTime.current = e.timeStamp
+        velocity.current = 0
       },
       onPointerMove(e: React.PointerEvent) {
-        if (!dragging.current) return
-        const next = startX.current + (e.clientX - startClientX.current)
-        setX(Math.max(-SWIPE_LEFT, Math.min(SWIPE_RIGHT, next)))
+        if (!armed.current) return
+        const dx = e.clientX - startClientX.current
+        if (!dragging.current) {
+          if (Math.abs(dx) < DRAG_THRESHOLD) return
+          dragging.current = true
+          ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        }
+        const dt = e.timeStamp - lastTime.current
+        if (dt > 0) velocity.current = (e.clientX - lastClientX.current) / dt
+        lastClientX.current = e.clientX
+        lastTime.current = e.timeStamp
+        setX(Math.max(-SWIPE_LEFT, Math.min(SWIPE_RIGHT, startX.current + dx)))
       },
-      onPointerUp() {
-        dragging.current = false
-        setX((cur) => (cur > SWIPE_RIGHT / 2 ? SWIPE_RIGHT : cur < -SWIPE_LEFT / 2 ? -SWIPE_LEFT : 0))
-      },
+      onPointerUp: settle,
+      onPointerCancel: settle,
     },
   }
 }
@@ -143,6 +177,7 @@ export function TaskRow({
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
+  const navigate = useNavigate()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const [popover, setPopover] = useState<{ kind: 'snooze' | 'schedule' | 'project'; x: number; y: number } | null>(null)
   const [checking, setChecking] = useState(false)
@@ -192,6 +227,13 @@ export function TaskRow({
           shortcut: shortcutHint('complete'),
           onClick: () => (bulkActive ? bulk!.onComplete() : handleCheck()),
         },
+        // 2nd item per the design's context menu (Tasks.dc.html:261).
+        {
+          label: task.top3 ? 'Remove from Top 3' : 'Add to Top 3',
+          icon: <StarMenuIcon />,
+          shortcut: shortcutHint('top3'),
+          onClick: () => toggleTop3(task),
+        },
         {
           label: 'Snooze…',
           icon: <ClockMenuIcon />,
@@ -228,6 +270,9 @@ export function TaskRow({
                 { label: 'Daily', onClick: () => { setRecurrence(task, 'FREQ=DAILY'); closeAll() } },
                 { label: 'Weekly', onClick: () => { setRecurrence(task, 'FREQ=WEEKLY'); closeAll() } },
                 { label: 'Monthly', onClick: () => { setRecurrence(task, 'FREQ=MONTHLY'); closeAll() } },
+                // Overlays.dc.html:188 — no dedicated rrule editor exists yet, so Custom…
+                // opens the task editor (its Repeat select lives there).
+                { label: 'Custom…', onClick: () => { navigate(`/tasks/${task.id}`); closeAll() } },
               ]}
             />
           ),

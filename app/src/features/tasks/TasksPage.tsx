@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useDomains, createDomain } from '../domains/api'
-import { useProjects, createProject } from '../projects/api'
-import { useAreas, createArea } from '../areas/api'
+import { useProjects } from '../projects/api'
+import { useAreas } from '../areas/api'
+import { NewProjectModal } from '../projects/NewProjectModal'
 import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
@@ -156,8 +157,13 @@ function InlineAdd({ label, placeholder, color, onSubmit }: { label: string; pla
 
 function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; projects: Project[]; areas: Area[]; tasks: Task[] }) {
   const open = tasks.filter((t) => t.status === 'todo')
+  // "New area" / "New project" open the rich designed modal (shared with Projects);
+  // "Add domain" keeps InlineAdd — no designed rich form exists for domains.
+  const [newModal, setNewModal] = useState<'standard' | 'area' | null>(null)
   return (
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'rgba(234,227,210,0.35)' }}>
+    // deviation(2026-07-18 audit): rail pinned (sticky + own scroll) while the list scrolls —
+    // neither the code nor the export pinned it; Kai wants it pinned.
+    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'rgba(234,227,210,0.35)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: '100vh', overflowY: 'auto' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: -4 }}>Organize</div>
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
@@ -185,7 +191,9 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
             <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}>{a.name}</span>
           ))}
         </div>
-        <InlineAdd label="New area" placeholder="New area…" color="var(--acc-terra)" onSubmit={(name) => createArea(name)} />
+        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+          ＋ New area
+        </div>
       </TapeCard>
 
       <TapeCard tilt={-0.35} tape={false} style={{ padding: '16px 16px 14px' }}>
@@ -210,12 +218,18 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
             )
           })}
         </div>
-        <InlineAdd label="New project" placeholder="New project…" color="var(--acc-terra)" onSubmit={(name) => createProject(name, null)} />
+        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+          ＋ New project
+        </div>
       </TapeCard>
+
+      {newModal && <NewProjectModal onClose={() => setNewModal(null)} defaultType={newModal} domains={domains} />}
     </div>
   )
 }
 
+// List body only — the shared page header + TabBar above it live in TasksPage, so Done
+// keeps the same tabs as every other view (Tasks.dc.html 2a).
 function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: boolean; justCompletedId: string | null }) {
   const [expanded, setExpanded] = useState(false)
   const doneRecent = tasks.filter((t) => t.status === 'done' && t.completed_at && daysSince(t.completed_at) <= 30)
@@ -224,23 +238,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
   const mostRecentId = justCompletedId && doneToday.some((t) => t.id === justCompletedId) ? justCompletedId : null
 
   return (
-    <div style={{ maxWidth: 780, position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Tasks · {doneToday.length} done today</div>
-            <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Done</h1>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneToday.length}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
-        </div>
-      </div>
-
-      <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', marginTop: 12 }}>everything you tended today — one petal fell for each ✿</div>
-
+    <div style={{ position: 'relative' }}>
       <div style={{ position: 'relative', marginTop: 16 }}>
         <span aria-hidden style={{ position: 'absolute', right: 18, top: -4, width: 11, height: 9, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: '70% 30% 60% 40%', transform: 'rotate(24deg)', opacity: 0.85 }} />
         <span aria-hidden style={{ position: 'absolute', right: 120, top: 64, width: 9, height: 7, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: '70% 30% 60% 40%', transform: 'rotate(-18deg)', opacity: 0.55 }} />
@@ -415,38 +413,48 @@ export function TasksPage() {
     onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
   })
 
-  if (activeTab === 'done') {
-    return <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} />
-  }
-
+  const isDone = activeTab === 'done'
   const isSomeday = activeTab === 'someday'
+  // Someday and Done are single-column (Tasks.dc.html 2a/2b — no Organize rail).
+  const singleCol = isSomeday || isDone
   const stage = cherryStage(openTotal, doneTodayCount)
-  const headerIcon = isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/${stage}.png`
-  const h1 = isSomeday ? 'Someday' : 'Tasks'
-  const eyebrow = isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
+  const headerIcon = isDone ? `${A}/cherry/fallen.png` : isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/${stage}.png`
+  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : 'Tasks'
+  const eyebrow = isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
   const caption =
     activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
+    : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
     : null
 
+  // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
+  // (Tasks.dc.html:253-256) so the Organize rail starts level with the header.
   return (
     <div style={{ maxWidth: 1180 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, maxWidth: 780 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
-            <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: singleCol ? '1fr' : 'minmax(0,1fr) 288px', maxWidth: singleCol ? 780 : undefined }}>
+        <div style={{ minWidth: 0, maxWidth: 780 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
+              <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>
+            </div>
           </div>
+          {isDone ? (
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
+            </div>
+          ) : (
+            !isSomeday && <VoiceCaptureButton />
+          )}
         </div>
-        {!isSomeday && <VoiceCaptureButton />}
-      </div>
 
-      <div style={{ maxWidth: 780 }}>
         <TabBar active={activeTab} todayCount={todayCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', marginTop: 12 }}>{caption}</div>}
 
-        {!isSomeday && domains.length > 0 && (
+        {!singleCol && domains.length > 0 && (
           <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
             <span
               onClick={() => setDomainChip(null)}
@@ -466,7 +474,7 @@ export function TasksPage() {
           </div>
         )}
 
-        {!isSomeday && (
+        {!singleCol && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -484,10 +492,11 @@ export function TasksPage() {
             />
           </form>
         )}
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isSomeday ? '1fr' : 'minmax(0,1fr) 288px', maxWidth: isSomeday ? 780 : undefined }}>
-        <div style={{ minWidth: 0, maxWidth: 780, paddingTop: isSomeday ? 16 : 0 }}>
+        {isDone ? (
+          <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} />
+        ) : (
+        <div style={{ paddingTop: isSomeday ? 16 : 0 }}>
           {groups.length === 0 ? (
             <p style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', margin: '16px 0 0' }}>
               {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
@@ -533,8 +542,10 @@ export function TasksPage() {
             </div>
           )}
         </div>
+        )}
+        </div>
 
-        {!isSomeday && <OrganizeRail domains={domains} projects={projects} areas={areas} tasks={displayTasks} />}
+        {!singleCol && <OrganizeRail domains={domains} projects={projects} areas={areas} tasks={displayTasks} />}
       </div>
 
       {kbSnoozeTask && (
@@ -544,7 +555,7 @@ export function TasksPage() {
         <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
       )}
 
-      {selected.size > 0 && (
+      {!isDone && selected.size > 0 && (
         <BulkBar
           count={selected.size}
           onComplete={bulkComplete}

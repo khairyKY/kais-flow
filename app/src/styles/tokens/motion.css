@@ -44,14 +44,18 @@
   100% { transform: scale(1); }
 }
 
+/* Entry keyframes MUST end at `transform: none`, not translateY(0): a retained transform
+   (fill-mode both/forwards) — even an identity one — makes the element a containing block
+   for position:fixed descendants, so row-anchored popovers (ContextMenu, SnoozeMenu, …)
+   would position relative to the row instead of the viewport. A filled `none` does not. */
 @keyframes entryFadeUp {
   0%   { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 @keyframes itemFadeIn {
   0%   { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
