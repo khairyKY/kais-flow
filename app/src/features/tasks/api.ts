@@ -33,6 +33,8 @@ export interface CreateTaskInput {
   reminderOffsetMin?: number | null
   durationMin?: number | null
   priority?: number | null
+  /** One level deep (Akiflow model) — callers must not pass a task that is itself a child. */
+  parentTaskId?: string | null
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -63,6 +65,8 @@ export function createTask(input: CreateTaskInput): Task {
     completed_at: null,
     created_at: nowIso(),
     updated_at: nowIso(),
+    // ponytail: key only present when set — plain task inserts stay valid until 0029 is pushed
+    ...(input.parentTaskId ? { parent_task_id: input.parentTaskId } : {}),
   }
   writeRow('tasks', task)
   logActivity('task.created', 'task', task.id, { title: input.title })

@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { createRoutine, createChallenge } from './api'
 import { localDateKey } from './streaks'
+import { useDomains } from '../domains/api'
+import { Select } from '../../components/Select'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import type { Cadence } from '../../lib/types'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
-// Deviations from the mock, both because the routines schema (migrations 0005/0019) has no
-// backing field for them — building working inputs against nothing would be fake, not real
-// data: the "Steps" checklist (no routine_steps table) and the "Domain" picker (routines
-// carry no domain_id) are both omitted. "Its plant" is a static Vine chip, not a picker —
-// routines only ever grow the vine species (_SHARED.md growth-stage map). "Challenge" trades
-// the mock's bare day-count for a real start/end pair: start = today, end = today + N-1. ──
+// "Steps" and "Domain" are real since migration 0028 (routines.steps jsonb + domain_id).
+// Deviations from the mock: steps are plain labels — the schema stores no per-step minutes,
+// so the mock's "2 min" chips / "10 min total" tally and the drag-reorder handle are dropped.
+// "Its plant" is a static Vine chip, not a picker — routines only ever grow the vine species
+// (_SHARED.md growth-stage map). "Challenge" trades the mock's bare day-count for a real
+// start/end pair: start = today, end = today + N-1. ──
 
 const A = '/ds/assets'
 type TimeMode = 'morning' | 'afternoon' | 'evening' | 'anytime'
@@ -49,6 +51,9 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   const fieldBgRaised = isMobile ? 'var(--paper-bone)' : 'var(--paper-parchment)'
 
   const [name, setName] = useState('')
+  const [steps, setSteps] = useState<string[]>([])
+  const [domainId, setDomainId] = useState('')
+  const { data: domains = [] } = useDomains()
   const [timeMode, setTimeMode] = useState<TimeMode>('evening')
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('custom')
   const [customWeekdays, setCustomWeekdays] = useState<number[]>([1, 3, 5])
@@ -68,13 +73,15 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
     const timeOfDay = timeMode === 'anytime' ? null : timeMode
     const clockTime = reminderOn ? reminderTime : null
     const days = Math.max(1, Number(challengeDays) || 0)
+    const stepList = steps.map((s) => s.trim()).filter(Boolean)
+    const domain = domainId || null
 
     if (isChallenge && days > 0) {
       const start = localDateKey(new Date())
-      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime)
+      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime, stepList, domain)
       useToastStore.getState().push({ message: 'New challenge registered in the soil.' })
     } else {
-      createRoutine(trimmed, timeOfDay, cadence, clockTime)
+      createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain)
       useToastStore.getState().push({ message: 'New routine planted ✿' })
     }
     onClose()
@@ -140,6 +147,32 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
             placeholder="Evening stretch"
             style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
           />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 7 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 8.5 : 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isMobile ? 'Steps' : 'Steps · what it’s made of'}</span>
+          {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f' }}>checked off one by one, or all at once ✿</span>}
+        </div>
+        <div style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: isMobile ? '2px 12px' : '2px 13px' }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)', width: isMobile ? 12 : 14, flex: 'none' }}>{i + 1}</span>
+              <input
+                autoFocus={step === '' && i === steps.length - 1}
+                value={step}
+                onChange={(e) => setSteps((cur) => cur.map((s, j) => (j === i ? e.target.value : s)))}
+                placeholder="Neck & shoulder rolls"
+                style={{ flex: 1, font: 'inherit', fontSize: isMobile ? 13.5 : 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
+              />
+              <span onClick={() => setSteps((cur) => cur.filter((_, j) => j !== i))} style={{ color: 'var(--ink-hairline)', fontSize: 11, cursor: 'pointer' }}>✕</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0' }}>
+            <span style={{ width: isMobile ? 12 : 14, flex: 'none' }} />
+            <span onClick={() => setSteps((cur) => [...cur, ''])} style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ Add a step</span>
+          </div>
         </div>
       </div>
 
@@ -215,25 +248,40 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         </span>
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 7 }}>
-          <span role="checkbox" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChallenge ? 'var(--ink-body)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none' }}>
-            {isChallenge && <span style={{ color: 'var(--paper-parchment)', fontSize: 10, lineHeight: 1 }}>✓</span>}
-          </span>
-          <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
-        </div>
-        {isChallenge && (
-          <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
-            <input
-              type="number"
-              min={1}
-              value={challengeDays}
-              onChange={(e) => setChallengeDays(e.target.value)}
-              style={{ width: 36, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
-            />
-            <span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 14, marginTop: 16 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 7 }}>
+            <span role="checkbox" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChallenge ? 'var(--ink-body)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none' }}>
+              {isChallenge && <span style={{ color: 'var(--paper-parchment)', fontSize: 10, lineHeight: 1 }}>✓</span>}
+            </span>
+            <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
           </div>
-        )}
+          {isChallenge && (
+            <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
+              <input
+                type="number"
+                min={1}
+                value={challengeDays}
+                onChange={(e) => setChallengeDays(e.target.value)}
+                style={{ width: 36, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
+              />
+              <span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
+          <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px' }}>
+            {domainId && <span style={{ width: 8, height: 8, borderRadius: '50%', background: domains.find((d) => d.id === domainId)?.color ?? 'var(--acc-hydrangea)', marginRight: 9, flex: 'none' }} />}
+            <Select
+              value={domainId}
+              onChange={setDomainId}
+              ariaLabel="Domain"
+              options={[{ value: '', label: 'None' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+              style={{ flex: 1, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontSize: 14, color: 'var(--ink-body)' }}
+            />
+          </div>
+        </div>
       </div>
 
       <div style={{ marginTop: 16 }}>

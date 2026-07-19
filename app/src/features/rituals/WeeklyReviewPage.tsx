@@ -87,7 +87,6 @@ export function WeeklyReviewPage() {
     <div style={{ maxWidth: isMobile ? undefined : 1000 }}>
       <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
         <div style={{ minWidth: 0 }}>
-          <LetterSection />
           <SweepHeader domainsSwept={swept.size} domainsTotal={domains.length} isMobile={isMobile} />
 
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
@@ -167,18 +166,8 @@ export function WeeklyReviewPage() {
   )
 }
 
-// ── The Weekly Letter (2a/2b) — no digest pipeline exists yet (that's a future Groq pass,
-// same footing as turn 4's parked envelope animation), so the honest, real state is 2b's
-// third state: "didn't arrive". The full hand-written letter (2a) and its "writing" shimmer
-// (2b state 1) are pixel-ready in the export but need real generated prose to not be
-// invented copy — flagged for a follow-up pass alongside the parked Weekly Letter v2. ──
-function LetterSection() {
-  return (
-    <div style={{ background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '15px 18px', marginBottom: 22, fontSize: 13, color: 'var(--ink-muted)' }}>
-      The letter didn't arrive this week — the numbers below still tell the story.
-    </div>
-  )
-}
+// The Weekly Letter (Review 2a/2b/t4) is DROPPED per Kai's 2026-07-19 ruling — no stub,
+// no digest pipeline; the page opens straight into the sweep.
 
 // Effects 2f "weekly flourish": the week's line draws itself left to right, one-shot on
 // open, with a dot popping in per notable day (staggered 900ms) — Effects.dc.html #2f.

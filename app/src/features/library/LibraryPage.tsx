@@ -14,6 +14,7 @@ import {
   useCommentaries,
   createCommentary
 } from './api'
+import { useJournalEntries } from '../journal/api'
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -42,6 +43,8 @@ export function LibraryPage() {
   const { data: books = [] } = useBooks()
   const { data: notes = [] } = useNotes()
   const { data: quotes = [] } = useQuotes()
+  const { data: journalEntries = [] } = useJournalEntries()
+  const dailyPagesCount = journalEntries.filter((e) => !e.deleted_at).length
 
   // Selection states (from query params)
   const activeTab = searchParams.get('tab') || 'quotes' // 'notes' | 'quotes' | 'books'
@@ -572,7 +575,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Daily pages
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>42</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{dailyPagesCount}</span>
         </div>
 
         <div className="flabel" style={{ padding: '0 6px', margin: '12px 0 5px' }}>Shelf</div>

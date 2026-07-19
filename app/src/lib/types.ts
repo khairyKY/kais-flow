@@ -60,6 +60,8 @@ export interface Task {
   paused?: boolean
   milestone_id?: string | null
   deleted_at?: string | null
+  /** Subtasks (migration 0029): set → this task is a child of that task. One level deep. */
+  parent_task_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -128,6 +130,10 @@ export interface Routine {
   challenge_start: string | null
   challenge_end: string | null
   active: boolean
+  /** Steps checklist (migration 0028): ordered labels, Routines.dc.html "what it's made of". */
+  steps?: string[]
+  /** Domain this routine tends (migration 0028), per the New Routine form's Domain picker. */
+  domain_id?: string | null
   created_at: string
   updated_at: string
 }

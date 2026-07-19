@@ -39,6 +39,8 @@ export function createRoutine(
   timeOfDay: string | null,
   cadence: Cadence = DAILY_CADENCE,
   clockTime: string | null = null,
+  steps: string[] = [],
+  domainId: string | null = null,
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
@@ -49,6 +51,8 @@ export function createRoutine(
     challenge_start: null,
     challenge_end: null,
     active: true,
+    steps,
+    domain_id: domainId,
     created_at: nowIso(),
     updated_at: nowIso(),
   }
@@ -64,6 +68,8 @@ export function createChallenge(
   startDate: string,
   endDate: string,
   clockTime: string | null = null,
+  steps: string[] = [],
+  domainId: string | null = null,
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
@@ -74,6 +80,8 @@ export function createChallenge(
     challenge_start: startDate,
     challenge_end: endDate,
     active: true,
+    steps,
+    domain_id: domainId,
     created_at: nowIso(),
     updated_at: nowIso(),
   }

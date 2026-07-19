@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
-  useTasks, renameTask, rescheduleDue, setLabels, setSomeday, setRecurrence,
+  useTasks, createTask, renameTask, rescheduleDue, setLabels, setSomeday, setRecurrence,
   setReminder, setDuration, toggleTop3, deleteTask, completeTask, uncompleteTask, snoozeTask,
 } from '../tasks/api'
 import { useCalendarEvents } from './api'
@@ -20,8 +20,9 @@ import type { Task } from '../../lib/types'
 // ── Editor.dc.html 1a — task detail, the full page (popover's "Open full ↗"
 // lands here) · 1f — the same content, phone width via the media query below.
 // Sidebar/topbar are the shell's (AppLayout); this owns everything past the
-// breadcrumb. Subtasks (1a's "Subtasks · 1 of 3") have no backing table in the
-// schema yet — omitted rather than faked; flagged in the PR notes. ──
+// breadcrumb. Subtasks (1a's "Subtasks · 1 of 3") are children one level deep
+// via tasks.parent_task_id (migration 0029) — hidden on a task that is itself
+// a child, so the tree can't nest. ──
 
 function taskCherryStage(task: Task): 'bud' | 'opening' | 'bloom' | 'fallen' {
   if (task.status === 'done') return 'fallen'
@@ -60,6 +61,7 @@ export function TaskEditorPage() {
   const [title, setTitleLocal] = useState(task?.title ?? '')
   const [notes, setNotesLocal] = useState(task?.notes ?? '')
   const [labelInput, setLabelInput] = useState('')
+  const [subtaskInput, setSubtaskInput] = useState('')
   const [snoozePos, setSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -94,6 +96,9 @@ export function TaskEditorPage() {
   const area = task.area_id ? areas.find((a) => a.id === task.area_id) : null
   const stage = taskCherryStage(task)
   const statusLabel = task.status === 'done' ? 'Done' : task.status === 'cancelled' ? 'Cancelled' : 'Open'
+  // Children come straight from the tasks cache — no extra query needed.
+  const subtasks = tasks.filter((t) => t.parent_task_id === task.id)
+  const subtasksDone = subtasks.filter((t) => t.status === 'done').length
 
   function saveTitle() {
     const t = title.trim()
@@ -126,6 +131,13 @@ export function TaskEditorPage() {
     setLabelInput('')
   }
 
+  function addSubtask() {
+    const t = subtaskInput.trim()
+    if (!t) return
+    createTask({ title: t, parentTaskId: task!.id, projectId: task!.project_id, domainId: task!.domain_id })
+    setSubtaskInput('')
+  }
+
   function handleDelete() {
     deleteTask(task!)
     navigate('/tasks')
@@ -142,6 +154,7 @@ export function TaskEditorPage() {
       <style>{`
         .te-body { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 36px; margin-top: 26px; }
         @media (max-width: 767px) { .te-body { grid-template-columns: minmax(0, 1fr); } }
+        .te-sub-add::placeholder { color: var(--ink-faint); }
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -199,6 +212,47 @@ export function TaskEditorPage() {
             style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', resize: 'vertical' }}
           />
           <FHelp>plain text · autosaves on blur</FHelp>
+
+          {/* Subtasks — Editor.dc.html 1a:332. Hidden on a child task: one level deep only. */}
+          {!task.parent_task_id && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 10px' }}>
+                <span style={{ ...FLabelInline }}>Subtasks{subtasks.length > 0 && ` · ${subtasksDone} of ${subtasks.length}`}</span>
+                <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {subtasks.map((c) => (
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                    {c.status === 'done' ? (
+                      <button type="button" aria-label={`Reopen ${c.title}`} onClick={() => uncompleteTask(c)} style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                        <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+                      </button>
+                    ) : (
+                      <button type="button" aria-label={`Complete ${c.title}`} onClick={() => completeTask(c)} style={{ width: 16, height: 16, border: '1.5px solid #bfb8a3', borderRadius: 4, flex: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
+                    )}
+                    <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}>{c.title}</span>
+                    {c.duration_min != null && (
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+                        {c.duration_min >= 60 ? `${Math.floor(c.duration_min / 60)}h${c.duration_min % 60 ? c.duration_min % 60 + 'm' : ''}` : `${c.duration_min}m`}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px' }}>
+                  <span style={{ width: 16, height: 16, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }} />
+                  <input
+                    className="te-sub-add"
+                    value={subtaskInput}
+                    onChange={(e) => setSubtaskInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubtask() } }}
+                    placeholder="Add a subtask…"
+                    style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
+                  />
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>enter to add</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {(linkedEvent || linkedInbox) && (
             <>
