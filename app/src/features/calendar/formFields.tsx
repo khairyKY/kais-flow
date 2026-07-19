@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { TimeField } from './TimeField'
 
 // ── Small form atoms shared by QuickCreate / TaskEditorPage / EventDetailsPanel —
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
@@ -39,8 +40,10 @@ export function DateInput({ value, onChange, style }: { value: string; onChange:
   return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputBase, ...style }} />
 }
 
+// C5 (2026-07-18 audit): themed TimeField instead of native <input type="time"> —
+// the OS picker chrome ignored the parchment theme. Same "HH:mm" value contract.
 export function TimeInput({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: CSSProperties }) {
-  return <input type="time" value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputBase, ...style }} />
+  return <TimeField value={value} onChange={onChange} style={{ ...inputBase, ...style }} />
 }
 
 // ── Segmented control — Editor .seg/.on. Generic over any option value. ──

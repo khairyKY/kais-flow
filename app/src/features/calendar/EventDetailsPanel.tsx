@@ -7,6 +7,7 @@ import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
 import { completeTask } from '../tasks/api'
 import { ColorDots } from './formFields'
+import { TimeField } from './TimeField'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 
 // ── Overlays.dc.html §02 "Event details · calendar" — a compact 280px popover,
@@ -92,7 +93,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 300, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden' }}
+        style={{ width: 280, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden' }}
       >
         <div style={{ height: 6, background: stripColor }} />
         <div style={{ padding: '16px 18px' }}>
@@ -115,9 +116,10 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
             {!event.all_day && (
               <>
                 <span>·</span>
-                <input type="time" value={startTime} onChange={(e) => { setStartTime(e.target.value); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0 }} />
+                {/* C5 (2026-07-18 audit): themed TimeField, not native time inputs with OS chrome */}
+                <TimeField value={startTime} onChange={(v) => { setStartTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
                 <span>–</span>
-                <input type="time" value={endTime} onChange={(e) => { setEndTime(e.target.value); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0 }} />
+                <TimeField value={endTime} onChange={(v) => { setEndTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
               </>
             )}
           </div>

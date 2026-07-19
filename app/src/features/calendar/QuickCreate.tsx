@@ -235,11 +235,14 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
 
   const titleField = (
     <div
+      // Editor.dc.html 2a:98 — compact title is bare text over the popover paper with only a
+      // dashed underline; the boxed treatment (border/shadow) is the expanded editor's. The old
+      // always-on box + zero horizontal padding put the placeholder right on the border line.
       style={{
-        background: 'var(--paper-parchment)',
-        border: '1px solid var(--line-card)',
-        borderRadius: expanded ? 6 : 5,
-        boxShadow: 'var(--shadow-card)',
+        background: expanded ? 'var(--paper-parchment)' : 'none',
+        border: expanded ? '1px solid var(--line-card)' : 'none',
+        borderRadius: expanded ? 6 : 0,
+        boxShadow: expanded ? 'var(--shadow-card)' : 'none',
         padding: expanded ? '16px 18px' : '0 0 9px',
         borderBottom: expanded ? undefined : '1px dashed var(--line-dashed)',
         marginBottom: 11,
@@ -385,6 +388,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
           </div>
         </>
       )}
+      {!expanded && slot && (
+        <FHelp style={{ marginTop: 9 }}>lands in Tasks · this slot becomes its time block, blush-edged</FHelp>
+      )}
     </>
   )
 
@@ -443,7 +449,27 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     </>
   )
 
-  const footer = (
+  // Editor.dc.html 2c — the phone sheet gets a full-width terra CTA with the editor link
+  // centered under it, not the desktop's left/right footer row.
+  const footer = isMobile && !expanded ? (
+    <>
+      <button
+        type="button"
+        onClick={submit}
+        style={{ width: '100%', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 14.5, padding: 14, borderRadius: 999, boxShadow: 'var(--shadow-cta)', marginTop: 16, cursor: 'pointer' }}
+      >
+        {KIND_META[kind].cta}
+      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 10 }}>
+        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          Full editor ↗
+        </button>
+        {/* deviation(2026-07-18 audit): export says "swipe down to dismiss" but the sheet has
+            no swipe gesture — the hint names the dismiss that actually works. */}
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>tap outside to dismiss</span>
+      </div>
+    </>
+  ) : (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: expanded ? 22 : 14, paddingTop: expanded ? 16 : 11, borderTop: '1px dashed var(--line-dashed)' }}>
       {expanded ? (
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
@@ -516,7 +542,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', transform: 'rotate(-0.3deg)' }}
+        // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
+        // sub-pixel transform blurred all popover text — dropped for crisp rendering.
+        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px' }}
       >
         {body}
       </div>

@@ -31,12 +31,13 @@ function taskCherryStage(task: Task): 'bud' | 'opening' | 'bloom' | 'fallen' {
 }
 
 const DURATION_CHIPS = [30, 45, 60, 90]
+// Editor.dc.html 1a "30 min before due" — the labels name what they're before.
 const REMINDER_OPTIONS = [
   { value: '', label: 'No reminder' },
-  { value: '10', label: '10 min before' },
-  { value: '30', label: '30 min before' },
-  { value: '60', label: '1 hour before' },
-  { value: '1440', label: '1 day before' },
+  { value: '10', label: '10 min before due' },
+  { value: '30', label: '30 min before due' },
+  { value: '60', label: '1 hour before due' },
+  { value: '1440', label: '1 day before due' },
 ]
 const REPEAT_OPTIONS = [
   { value: '', label: "Doesn't repeat" },
@@ -65,6 +66,15 @@ export function TaskEditorPage() {
   useEffect(() => {
     if (task) { setTitleLocal(task.title); setNotesLocal(task.notes ?? '') }
   }, [task?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Editor.dc.html 1a shows a ⌘⏎ hint next to Save — wire it so the hint is true.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && task) { e.preventDefault(); handleSave() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   if (!task) {
     return (
@@ -138,6 +148,7 @@ export function TaskEditorPage() {
         <Link to="/tasks" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>← Tasks</Link>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
           Created {new Date(task.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+          {task.updated_at !== task.created_at && ` · edited ${new Date(task.updated_at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`}
         </span>
       </div>
 
@@ -240,6 +251,8 @@ export function TaskEditorPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(0.4deg)' }}>
+            {/* washi tape — Editor.dc.html 1a:382 */}
+            <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'rgba(122,148,110,0.4)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
             <FLabel style={{ fontSize: 8.5, color: 'var(--ink-hairline)' }}>Project or area</FLabel>
             <Select
@@ -269,6 +282,8 @@ export function TaskEditorPage() {
           </div>
 
           <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(-0.4deg)' }}>
+            {/* washi tape — Editor.dc.html 1a:398 */}
+            <span style={{ position: 'absolute', top: -9, right: 26, width: 52, height: 16, background: 'rgba(168,160,190,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Schedule</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>

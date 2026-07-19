@@ -138,6 +138,15 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         )
       }}
       nowIndicator
+      // Calendar.dc.html:213 — live mono time chip riding the now line; FC's NowTimer
+      // re-renders this every minute, so no interval of our own.
+      nowIndicatorContent={(arg) =>
+        arg.isAxis ? null : (
+          <span className="cal-now-chip">
+            {arg.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+          </span>
+        )
+      }
       selectable
       selectMirror
       editable
@@ -148,8 +157,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (conflictedIds?.includes(e.id)) classes.push('fc-event-conflict')
         const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
         if (e.color) {
-          ev.backgroundColor = e.color + '22'
-          ev.borderColor = 'transparent'
+          // Calendar.dc.html:209-211 — colored events keep a ~20% tint fill AND the solid
+          // accent left border in their color (CSS zeroes every other border width, so this
+          // inline border-color paints only the 3px accent bar).
+          ev.backgroundColor = e.color + '33'
+          ev.borderColor = e.color
         }
         return ev
       })}
@@ -173,6 +185,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           onMove(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
         }
       }}
+      // While resizing, FC keeps the original chip visible under the mirror — with both drawn
+      // the overlap reads as a dark doubled rectangle. Hide the original for the duration.
+      eventResizeStart={(info) => { info.el.style.visibility = 'hidden' }}
+      eventResizeStop={(info) => { info.el.style.visibility = '' }}
       eventResize={(info: EventResizeDoneArg) => {
         flashSnap(info.el)
         if (info.event.start && info.event.end) {

@@ -5,7 +5,7 @@
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: var(--bg-input);
   --fc-today-bg-color: rgba(168, 160, 190, 0.1);
-  --fc-now-indicator-color: var(--acc-terra);
+  --fc-now-indicator-color: var(--acc-lavender);
   --fc-event-bg-color: var(--paper-event);
   --fc-event-border-color: var(--line-solid);
   --fc-event-text-color: var(--text-primary);
@@ -77,33 +77,62 @@
 /* Past/future day dimming */
 .fc .fc-timegrid-col.fc-day-past { background: rgba(60, 52, 38, 0.045); }
 
-/* Now indicator — terra, per P-DESIGN §5.1 (a deliberate departure from the static mockup's
-   lavender reference line: terra reads as "this moment", consistent with SKILL.md's "terra is a
-   moment, not a texture"). */
-.fc .fc-timegrid-now-indicator-line { border-color: var(--acc-terra); border-width: 1px 0 0; }
-.fc .fc-timegrid-now-indicator-arrow { border-color: var(--acc-terra); background: var(--acc-terra); }
+/* Now indicator — Calendar.dc.html:213: 2px lavender line + 9px dot at the left end + mono
+   time chip on parchment (chip text rendered live via nowIndicatorContent in CalendarGrid.tsx).
+   deviation(2026-07-18 audit): drops the earlier terra 1px take — Kai wants the designed one. */
+.fc .fc-timegrid-now-indicator-line { border-width: 2px 0 0; overflow: visible; }
+.fc .fc-timegrid-now-indicator-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -5.5px; /* centers the 9px dot on the 2px line (padding box starts below the border) */
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--acc-lavender);
+}
+.fc .fc-timegrid-now-indicator-arrow { display: none; }
+.cal-now-chip {
+  position: absolute;
+  right: 6px;
+  top: -16px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--acc-lavender-text);
+  background: var(--paper-parchment);
+  padding: 0 4px;
+  white-space: nowrap;
+}
 
 /* Selection / external-drag drop target ghost */
 .fc .fc-highlight { background: var(--fc-highlight-color); border: 1px dashed var(--acc-lavender); }
 
-/* Event chips */
+/* Event chips — Calendar.dc.html:209-211: 2px radius, accent LEFT border only (no outline),
+   paper-event fill by default; colored events get a ~20% tint + their color on the accent bar
+   (inline backgroundColor/borderColor from CalendarGrid.tsx — only the left border has width,
+   so the inline border-color paints just the accent bar). */
 .fc .fc-timegrid-event {
-  border-radius: var(--radius-sharp);
+  border-radius: 2px;
+  border: none;
   border-left: 3px solid var(--acc-lavender);
   box-shadow: var(--shadow-crisp);
-  padding: 4px 7px;
+  padding: 6px 8px;
 }
+.fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 2px; padding-bottom: 2px; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
 .fc .fc-event-title {
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: var(--fw-medium);
-  color: var(--text-primary);
+  color: var(--ink-body);
 }
 .fc .fc-event-time {
   font-family: var(--font-mono);
   font-size: 8.5px;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
 }
+/* Contract shows title above time; FC renders time first — flip in the tall layout only
+   (short layout is a single row where the time carries a trailing dash). */
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
 .fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5), var(--shadow-crisp); }
 
@@ -137,8 +166,10 @@
 .fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5); }
 .fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
 
-/* Drag mirror + resize handle */
-.fc .fc-event-mirror { box-shadow: var(--shadow-card); opacity: 0.85; }
+/* Drag mirror + resize handle — fully opaque: at 0.85 the mirror stacked over the still-visible
+   original read as a dark doubled rectangle during resize (the original is also hidden while
+   resizing, via eventResizeStart in CalendarGrid.tsx). */
+.fc .fc-event-mirror { box-shadow: var(--shadow-card); opacity: 1; }
 .fc .fc-event-resizer { border-color: var(--line-solid); }
 .fc .fc-event-resizer-end { border-width: 4px; }
 
