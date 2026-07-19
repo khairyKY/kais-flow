@@ -1,0 +1,83 @@
+/* X-pass (XC surfaces) shared effect/motion pieces — Effects.dc.html + Motion.dc.html recipes.
+   Reduced-motion is neutralized globally in tokens/motion.css; decorative pieces (bloom,
+   amber, sway, ink) are additionally gated in JS via useMotionEnabled().
+   ponytail: lives here instead of index.css (frozen to XA) — fold into the foundation later. */
+
+/* Motion 3b — overlay in: scrim + card arrive together, 210ms up-and-settle from 10px,
+   0.98 → 1. Exit is a cut (esc obeys immediately); the 140ms out is skipped. */
+@keyframes kfScrimIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes kfOverlayCardIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.kf-overlay-scrim { animation: kfScrimIn 210ms var(--ease-out); }
+.kf-overlay-card  { animation: kfOverlayCardIn 210ms var(--ease-out); }
+
+/* Motion 4a — hover & press resting layer: hover lifts 1px under a soft shadow;
+   press gives to 0.97 in 80ms. Buttons, rows, cards, chips alike. */
+.kf-lift { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
+@media (hover: hover) {
+  .kf-lift:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+}
+.kf-lift:active { transform: scale(0.97); transition-duration: 80ms; }
+
+/* When a row both staggers in (4b) and lifts on hover (4a): fill `backwards` instead of
+   `both`, so the finished animation stops pinning transform/opacity — the hover transition
+   works, and no retained transform turns the row into a containing block for fixed
+   popovers (Kai audit B1 ruling). */
+.kf-lift.kf-stagger-item,
+.kf-lift-tilt.kf-stagger-item { animation-fill-mode: backwards; }
+
+/* Same pair for washi/tilt cards — keeps the pasted-in rotation through hover/press.
+   Set `--kf-tilt` inline on the element. */
+.kf-lift-tilt { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); transform: rotate(var(--kf-tilt, 0deg)); }
+@media (hover: hover) {
+  .kf-lift-tilt:hover { transform: rotate(var(--kf-tilt, 0deg)) translateY(-1px); box-shadow: var(--shadow-card); }
+}
+.kf-lift-tilt:active { transform: rotate(var(--kf-tilt, 0deg)) scale(0.97); transition-duration: 80ms; }
+
+/* Effects 1e — bloom glow: one gold radial breath behind the plant at 100%.
+   3.6s ease-in-out, ≤0.5 alpha, never on more than one plant at once (enforced in JS). */
+@keyframes kfBloomGlow {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+.kf-bloom {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
+  animation: kfBloomGlow 3.6s ease-in-out infinite;
+}
+
+/* Effects 1t — amber drift: sparse autumn leaves (≤3) over a slipping plant,
+   petalFall grammar at 9.5–11s; the plant itself desaturates ~20% (inline filter). */
+@keyframes kfAmberFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0.95; }
+  100% { transform: translateY(80px) rotate(140deg); opacity: 0; }
+}
+.kf-amber-leaf {
+  position: absolute;
+  top: -4px;
+  width: 11px;
+  height: 8px;
+  border-radius: 70% 30% 60% 40%;
+  background: linear-gradient(135deg, var(--acc-gold-warm), var(--acc-gold));
+  animation: kfAmberFall 10s linear infinite;
+  pointer-events: none;
+}
+
+/* Effects 2i — ink bleed: prose sharpens from a soft blur, blur 4→0 + opacity,
+   480ms ease-out, stagger 180ms per block (inline animation-delay). Prose only. */
+@keyframes kfInkBleed {
+  from { opacity: 0; filter: blur(4px); }
+  to   { opacity: 1; filter: none; }
+}
+.kf-ink { animation: kfInkBleed 480ms var(--ease-out) both; }
+
+/* Effects 1c — leaf sway idle on standing plants; origin pinned at the soil line.
+   Reuses the cloverSway keyframes from tokens/motion.css. */
+.kf-sway { animation: cloverSway 7s ease-in-out infinite; transform-origin: 50% 100%; }

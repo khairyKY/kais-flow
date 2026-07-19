@@ -52,7 +52,7 @@ export function SignInPage() {
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 384, margin: '0 16px' }}>
         <TapeCard
           tilt={-0.4}
-          tape="rgba(138,154,126,0.4)" // Sage tape to match original login design
+          tape="color-mix(in oklch, var(--acc-sage) 40%, transparent)" // Sage tape to match original login design
           style={{
             boxShadow: 'var(--shadow-popover)',
             padding: '34px 34px 30px',

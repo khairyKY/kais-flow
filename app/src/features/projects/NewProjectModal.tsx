@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useDomains } from '../domains/api'
 import { createProject } from './api'
 import { createArea } from '../areas/api'
+import { useEscapeStack } from '../../lib/overlayStack'
+import './xfx.css'
 
 // Extracted from ProjectsPage (2026-07-18 audit) so the Tasks rail can open the same
 // designed modal. `domains` is optional — when omitted the modal fetches them itself.
@@ -16,6 +18,7 @@ export function NewProjectModal({
 }) {
   const { data: fetchedDomains = [] } = useDomains()
   const domains = domainsProp ?? fetchedDomains
+  useEscapeStack(true, onClose)
   const [type, setType] = useState(defaultType)
   const [name, setName] = useState('')
   const [domainId, setDomainId] = useState(domains[0]?.id || '')
@@ -79,8 +82,8 @@ export function NewProjectModal({
   ]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-      <div className="dv-card" style={{ width: 620, background: 'var(--paper-parchment)', position: 'relative', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: '0 18px 44px rgba(60,52,38,0.18)' }}>
+    <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+      <div className="dv-card kf-overlay-card" style={{ width: 620, maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-popover)' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.3 }} />
         <div style={{ padding: '26px 30px 28px', position: 'relative', zIndex: 10 }}>
 
@@ -99,21 +102,21 @@ export function NewProjectModal({
             <div style={{ display: 'flex', gap: 8 }}>
               <div
                 onClick={() => setType('standard')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid rgba(122,148,110,0.28)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/ds/assets/wisteria/p40.png" alt="" style={{ height: 20 }} /><span style={{ fontSize: 14, fontWeight: type === 'standard' ? 600 : 400, color: 'var(--ink-body)' }}>Project</span></div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5 }}>has a finish line</div>
               </div>
               <div
                 onClick={() => setType('area')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid rgba(122,148,110,0.28)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-buttercream)' }}></span><span style={{ fontSize: 14, fontWeight: type === 'area' ? 600 : 400, color: 'var(--ink-body)' }}>Area</span></div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5 }}>ongoing, no end</div>
               </div>
               <div
                 onClick={() => setType('retainer')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid rgba(122,148,110,0.28)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-lavender-deep)' }}></span><span style={{ fontSize: 14, fontWeight: type === 'retainer' ? 600 : 400, color: 'var(--ink-body)' }}>Retainer</span></div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5 }}>monthly hours</div>
@@ -203,7 +206,7 @@ export function NewProjectModal({
             <div style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Starting milestones</span>
-                <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f' }}>optional — the trellis it climbs ✿</span>
+                <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>optional — the trellis it climbs ✿</span>
               </div>
               <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '2px 13px' }}>
                 {milestones.map((m, index) => (

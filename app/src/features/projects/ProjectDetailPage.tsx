@@ -25,6 +25,8 @@ import { logActivity } from '../../lib/activity'
 import { SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { ConfirmCard } from './ConfirmCard'
+import { useMotionEnabled } from '../../lib/motion'
+import './xfx.css'
 
 // Local query hook to retrieve activity log for a specific project/area
 function useActivityLog(entityId: string) {
@@ -45,6 +47,7 @@ function useActivityLog(entityId: string) {
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const motion = useMotionEnabled()
 
   // Queries
   const { data: domains = [] } = useDomains()
@@ -356,7 +359,7 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 820px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ display: 'flex', position: 'relative', zIndex: 10 }}>
@@ -364,7 +367,11 @@ export function ProjectDetailPage() {
           <div style={{ width: 34, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '34px 0 30px', borderRight: '1px dashed var(--line-dashed)' }}>
             <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 26, opacity: 0.6 }} title="p0 — where it started" />
             <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--acc-moss)', opacity: 0.6, margin: '8px 0' }}></span>
-            <img src={wisteriaImg} alt="" style={{ height: 26 }} title={`p${milestonePct}`} />
+            <span style={{ position: 'relative', display: 'inline-flex' }}>
+              {/* Effects 1e — bloom glow: one gold breath when milestones hit 100% */}
+              {motion && milestonePct === 100 && <span className="kf-bloom" style={{ inset: -10 }} />}
+              <img src={wisteriaImg} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 26, position: 'relative' }} title={`p${milestonePct}`} />
+            </span>
             <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--line-dashed)', margin: '8px 0' }}></span>
             <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 22, opacity: 0.45 }} title="p100" />
           </div>
@@ -423,7 +430,7 @@ export function ProjectDetailPage() {
               <div>
                 <SectionLabel style={{ marginBottom: 8 }}>
                   <span>Milestones</span>
-                  <span className="chip" style={{ background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)', marginLeft: 8, fontSize: 9, padding: '2px 6px' }}>{milestonePct}%</span>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', marginLeft: 8, fontSize: 9, padding: '2px 6px' }}>{milestonePct}%</span>
                 </SectionLabel>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -487,7 +494,7 @@ export function ProjectDetailPage() {
                   <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
                   <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{t.title}</span>
                   {t.due_at && (
-                    <span className="chip" style={{ background: 'rgba(168,160,190,0.22)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                       {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                     </span>
                   )}
@@ -627,14 +634,14 @@ export function ProjectDetailPage() {
                     <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-hairline)', fontSize: 11 }}>{dateLabel}</span>
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
-                        <span className="chip" style={{ background: 'rgba(212,199,138,0.25)', color: 'var(--acc-buttercream-text)', fontSize: 9, padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
+                        <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 9, padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
                           update
                         </span>
                       )}
                       {log.note}
                     </span>
                     {log.type === 'work' && log.duration && (
-                      <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '3px 8px', borderRadius: 999 }}>
+                      <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '3px 8px', borderRadius: 999 }}>
                         {Math.floor(log.duration / 60) > 0 ? `${Math.floor(log.duration / 60)}h ` : ''}
                         {log.duration % 60 > 0 ? `${log.duration % 60}m` : ''}
                       </span>
@@ -665,7 +672,7 @@ export function ProjectDetailPage() {
               >
                 Archive project…
               </span>
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-1deg)' }}>
+              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
                 100% milestones → the wisteria's full cascade ✿
               </span>
             </div>
@@ -697,7 +704,7 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 760px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ padding: '30px 40px 36px', position: 'relative', zIndex: 10 }}>
@@ -748,7 +755,7 @@ export function ProjectDetailPage() {
                         flex: 1,
                         height: 22,
                         borderRadius: 3,
-                        background: tended ? 'var(--acc-moss)' : 'rgba(42,36,32,0.08)',
+                        background: tended ? 'var(--acc-moss)' : 'color-mix(in oklch, var(--ink-body) 8%, transparent)',
                         opacity: tended ? opacities[i] : 1,
                       }}
                     />
@@ -801,7 +808,7 @@ export function ProjectDetailPage() {
                 <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
                 <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{t.title}</span>
                 {t.due_at && (
-                  <span className="chip" style={{ background: 'rgba(181,101,74,0.12)', color: 'var(--acc-terra)', fontSize: 9, padding: '3px 8px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 12%, transparent)', color: 'var(--acc-terra)', fontSize: 9, padding: '3px 8px', borderRadius: 999 }}>
                     {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                   </span>
                 )}
@@ -865,7 +872,7 @@ export function ProjectDetailPage() {
             >
               Convert to project…
             </span>
-            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-1deg)' }}>
+            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
               an area is a garden bed — never done, just kept ✿
             </span>
           </div>

@@ -4,6 +4,8 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import type { ActivityLogEntry } from '../../lib/types'
+import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -37,6 +39,7 @@ const RANGES = [
 
 export function ActivityPage() {
   const isMobile = useIsMobile()
+  const motion = useMotionEnabled()
   const [limit, setLimit] = useState(50)
   const [filter, setFilter] = useState('all')
   const [rangeIdx, setRangeIdx] = useState(0)
@@ -100,7 +103,7 @@ export function ActivityPage() {
     let details = ''
     let category = 'all'
     let icon = null
-    let iconBg = 'rgba(154, 180, 190, 0.22)'
+    let iconBg = 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)'
 
     if (type.startsWith('task.')) {
       category = 'tasks'
@@ -121,9 +124,9 @@ export function ActivityPage() {
       } else if (type === 'task.deleted') {
         text = `Deleted task "${name || 'task'}"`
         details = 'removed'
-        iconBg = 'rgba(212,168,176,0.24)'
+        iconBg = 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)'
         icon = (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A4A58" strokeWidth="2" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         )
@@ -133,7 +136,7 @@ export function ActivityPage() {
       }
     } else if (type.startsWith('inbox.')) {
       category = 'inbox'
-      iconBg = 'rgba(154,180,190,0.28)'
+      iconBg = 'color-mix(in oklch, var(--acc-hydrangea) 28%, transparent)'
       icon = (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 7h16M4 12h16M4 17h10"/>
@@ -153,7 +156,7 @@ export function ActivityPage() {
       }
     } else if (type.startsWith('routine.')) {
       category = 'routines'
-      iconBg = 'rgba(122,148,110,0.26)'
+      iconBg = 'color-mix(in oklch, var(--acc-moss) 26%, transparent)'
       icon = <img src="/ds/assets/vine/flowering.png" alt="" style={{ height: 18 }} />
       if (type === 'routine.checked') {
         text = `Kept the streak on "${name || 'routine'}"`
@@ -163,7 +166,7 @@ export function ActivityPage() {
       }
     } else if (type.startsWith('calendar_event.') || type.startsWith('calendar.')) {
       category = 'calendar'
-      iconBg = 'rgba(168,160,190,0.3)'
+      iconBg = 'color-mix(in oklch, var(--acc-lavender) 30%, transparent)'
       icon = (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-lavender-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="5" width="16" height="16" rx="2"/>
@@ -182,13 +185,13 @@ export function ActivityPage() {
       }
     } else if (type.startsWith('people.') || type.startsWith('person.')) {
       category = 'people'
-      iconBg = 'rgba(201,160,160,0.32)'
+      iconBg = 'color-mix(in oklch, var(--acc-clover) 32%, transparent)'
       icon = <img src="/ds/assets/clover/dewdrop.png" alt="" style={{ height: 16 }} />
       text = `Logged an interaction with "${name || 'someone'}"`
       details = (entry.payload?.interaction_type as string) || 'interaction logged'
     } else if (type.startsWith('journal.')) {
       category = 'journal'
-      iconBg = 'rgba(122,148,110,0.2)'
+      iconBg = 'color-mix(in oklch, var(--acc-moss) 20%, transparent)'
       icon = <img src="/ds/assets/fern/full.png" alt="" style={{ height: 17 }} />
       if (type === 'journal.created') {
         text = `Wrote a journal entry \u2014 "${name || 'A slow, good morning'}"`
@@ -198,9 +201,9 @@ export function ActivityPage() {
         details = 'kept'
       }
     } else if (type.startsWith('project.')) {
-      iconBg = 'rgba(212,168,176,0.24)'
+      iconBg = 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)'
       icon = (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A4A58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 5v14M5 12h14"/>
         </svg>
       )
@@ -243,16 +246,16 @@ export function ActivityPage() {
   const handleLoadEarlier = () => setLimit((prev) => prev + 50)
 
   const chipBg = (cat: string) =>
-    cat === 'tasks' ? 'rgba(212,168,176,0.24)' :
-    cat === 'inbox' ? 'rgba(154,180,190,0.24)' :
-    cat === 'routines' ? 'rgba(122,148,110,0.2)' :
-    cat === 'calendar' ? 'rgba(168,160,190,0.24)' :
-    cat === 'people' ? 'rgba(201,160,160,0.22)' :
-    cat === 'journal' ? 'rgba(122,148,110,0.2)' :
-    'rgba(42,36,32,0.07)'
+    cat === 'tasks' ? 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)' :
+    cat === 'inbox' ? 'color-mix(in oklch, var(--acc-hydrangea) 24%, transparent)' :
+    cat === 'routines' ? 'color-mix(in oklch, var(--acc-moss) 20%, transparent)' :
+    cat === 'calendar' ? 'color-mix(in oklch, var(--acc-lavender) 24%, transparent)' :
+    cat === 'people' ? 'color-mix(in oklch, var(--acc-clover) 22%, transparent)' :
+    cat === 'journal' ? 'color-mix(in oklch, var(--acc-moss) 20%, transparent)' :
+    'color-mix(in oklch, var(--ink-body) 7%, transparent)'
 
   const chipColor = (cat: string) =>
-    cat === 'tasks' ? '#8A4A58' :
+    cat === 'tasks' ? 'var(--acc-clover-text)' :
     cat === 'inbox' ? 'var(--acc-hydrangea-deep)' :
     cat === 'routines' ? 'var(--acc-sage-text)' :
     cat === 'calendar' ? 'var(--acc-lavender-deep)' :
@@ -275,7 +278,7 @@ export function ActivityPage() {
   `
 
   const renderItem = (entry: typeof processedEntries[0], idx: number, groupLen: number) => (
-    <div className="aitem" key={entry.id}>
+    <div className={motion ? 'aitem kf-stagger-item' : 'aitem'} style={motion ? staggerDelay(idx) : undefined} key={entry.id}>
       <div className="arail">
         <span className="aicon" style={{ width: isMobile ? 26 : 30, height: isMobile ? 26 : 30, background: entry.info.iconBg }}>{entry.info.icon}</span>
         {idx < groupLen - 1 && <span className="aline" />}
@@ -300,7 +303,7 @@ export function ActivityPage() {
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, borderRadius: 46 }} />
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 18px 0', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(154,180,190,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
+            <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
             </span>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Activity</div>
@@ -315,7 +318,7 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)' }}>Loading the ledger...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)', fontStyle: 'italic' }}>No events logged in this category.</div>
+            <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
@@ -350,7 +353,7 @@ export function ActivityPage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '34px 48px 40px', maxWidth: 880 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(154,180,190,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
+              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
               </span>
               <div>
@@ -379,7 +382,7 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--ink-muted)' }}>Loading activity log...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--ink-muted)', fontStyle: 'italic' }}>No activity records found matching this category.</div>
+            <div style={{ padding: '60px 0', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
@@ -400,7 +403,7 @@ export function ActivityPage() {
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
               )}
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</span>
+              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</span>
             </div>
           )}
         </div>

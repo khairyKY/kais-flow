@@ -1,5 +1,9 @@
 // Local in-app confirm dialog — styled to Overlays.dc.html "Confirm · destructive only":
 // parchment card, display title, muted body, Keep + terra destructive action.
+// X2 (Motion 3b): scrim+card enter together via .kf-overlay-*; exit is a cut, esc obeys.
+import { useEscapeStack } from '../../lib/overlayStack'
+import './xfx.css'
+
 export function ConfirmCard({
   title,
   body,
@@ -15,13 +19,16 @@ export function ConfirmCard({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  useEscapeStack(true, onCancel)
   return (
     <div
       onClick={onCancel}
+      className="kf-overlay-scrim"
       style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.14)' }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        className="kf-overlay-card"
         style={{ width: 300, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px' }}
       >
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}>{title}</div>

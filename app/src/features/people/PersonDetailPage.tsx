@@ -5,11 +5,12 @@ import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { Button } from '../../components/kit'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { ConfirmCard } from '../projects/ConfirmCard'
 
 function getAvatarBgColor(name: string): string {
   const colors = [
-    'rgba(154,180,190,0.3)', 'rgba(212,168,176,0.32)', 'rgba(201,160,160,0.3)',
-    'rgba(212,199,138,0.35)', 'rgba(122,148,110,0.28)'
+    'color-mix(in oklch, var(--acc-hydrangea) 30%, transparent)', 'color-mix(in oklch, var(--acc-blossom) 32%, transparent)', 'color-mix(in oklch, var(--acc-clover) 30%, transparent)',
+    'color-mix(in oklch, var(--acc-buttercream) 35%, transparent)', 'color-mix(in oklch, var(--acc-moss) 28%, transparent)'
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
@@ -39,16 +40,16 @@ function getBannerText(name: string, d: number): string {
 /* Bloom icon (30 × 30 for the detail banner) */
 const BloomIcon = () => (
   <svg width="30" height="30" viewBox="0 0 24 24" style={{ flex: 'none' }}>
-    <g fill="#8A9A7E"><ellipse cx="12" cy="6.8" rx="3" ry="4.2" /><ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)" /><ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)" /></g>
-    <circle cx="12" cy="12" r="4" fill="#D4A8B0" /><circle cx="12" cy="12" r="1.8" fill="#C9A55A" />
+    <g fill="var(--acc-sage)"><ellipse cx="12" cy="6.8" rx="3" ry="4.2" /><ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)" /><ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)" /></g>
+    <circle cx="12" cy="12" r="4" fill="var(--acc-blossom)" /><circle cx="12" cy="12" r="1.8" fill="var(--acc-gold-warm)" />
   </svg>
 )
 
 /* Moments row icon — filled clover for Birthday, dim leaf-dot for other moments */
 const MomentIcon = ({ filled }: { filled: boolean }) => (
   <svg width="15" height="15" viewBox="0 0 24 24" style={{ flex: 'none', opacity: filled ? 1 : 0.7 }}>
-    <g fill="#8A9A7E"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6" /><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)" /><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)" /></g>
-    {filled ? <circle cx="12" cy="12" r="3.4" fill="#D4A8B0" /> : <circle cx="12" cy="12.4" r="1.6" fill="#6f7f65" />}
+    <g fill="var(--acc-sage)"><ellipse cx="12" cy="7.4" rx="2.6" ry="3.6" /><ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)" /><ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)" /></g>
+    {filled ? <circle cx="12" cy="12" r="3.4" fill="var(--acc-blossom)" /> : <circle cx="12" cy="12.4" r="1.6" fill="var(--acc-sage-text)" />}
   </svg>
 )
 
@@ -83,6 +84,7 @@ export function PersonDetailPage() {
 
   // Edit person
   const [editing, setEditing] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [editName, setEditName] = useState(person?.name ?? '')
   const [editDomain, setEditDomain] = useState(person?.domain_id ?? '')
   useMemo(() => { if (person) { setEditName(person.name); setEditDomain(person.domain_id ?? '') } }, [person])
@@ -136,7 +138,8 @@ export function PersonDetailPage() {
     void refetchPeople()
   }
 
-  const removePerson = () => { if (confirm(`Delete ${person.name}?`)) { deletePerson(person.id); navigate('/people') } }
+  // Kai audit E2 grammar: in-app ConfirmCard, never a native popup
+  const removePerson = () => setConfirmDelete(true)
 
   const lastTouchLabel = lastTouchDays === 0 ? 'today' : lastTouchDays === 1 ? 'yesterday' : lastTouchDays < 7 ? `${lastTouchDays}d ago` : `${Math.floor(lastTouchDays / 7)}w ago`
 
@@ -182,8 +185,8 @@ export function PersonDetailPage() {
 
       {/* Quick actions */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-        <span onClick={() => quickTouch('call')} className="chip" style={{ background: 'rgba(201,160,160,0.2)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>log a call</span>
-        <span onClick={() => quickTouch('meet')} className="chip" style={{ background: 'rgba(201,160,160,0.2)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>met in person</span>
+        <span onClick={() => quickTouch('call')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>log a call</span>
+        <span onClick={() => quickTouch('meet')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>met in person</span>
         <span onClick={() => quickTouch('text')} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>text</span>
         <span style={{ flex: 1 }} />
         <span onClick={() => setEditing(!editing)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>{editing ? 'close editor' : 'edit person ▸'}</span>
@@ -289,7 +292,7 @@ export function PersonDetailPage() {
           const dateStr = new Date(i.occurred_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
           const s = i.summary.toLowerCase()
           const channel = s.includes('call') || s.includes('phone') ? 'call' : s.includes('dinner') || s.includes('met ') || s.includes('in person') ? 'in person' : 'text'
-          const chipStyle = channel === 'in person' ? { background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' } : { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }
+          const chipStyle = channel === 'in person' ? { background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' } : { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }
           return (
             <div key={i.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 2px', borderBottom: idx < personInteractions.length - 1 ? '1px dashed var(--line-dashed)' : 'none' }}>
               <span className="fhelp" style={{ width: 74, flex: 'none', paddingTop: 3 }}>{dateStr}</span>
@@ -304,8 +307,18 @@ export function PersonDetailPage() {
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
         <span onClick={removePerson} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person…</span>
-        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
+        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
       </div>
+
+      {confirmDelete && (
+        <ConfirmCard
+          title={`Delete ${person.name}?`}
+          body="Their facts and the interaction log go with them."
+          confirmLabel="Delete"
+          onConfirm={() => { setConfirmDelete(false); deletePerson(person.id); navigate('/people') }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   )
 }

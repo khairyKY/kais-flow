@@ -60,7 +60,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
       disabled={!onToggle}
       style={{ width: 34, height: 20, borderRadius: 999, background: on ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', border: 'none', cursor: onToggle ? 'pointer' : 'default', padding: 0 }}
     >
-      <span style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 150ms' }} />
+      <span style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left var(--dur-quick) var(--ease-out)' }} />
     </button>
   )
 }
@@ -167,7 +167,7 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(motionOn)
 
   return (
-    <SCard tapeTint="rgba(138,154,126,0.4)">
+    <SCard tapeTint="color-mix(in oklch, var(--acc-sage) 40%, transparent)">
       <div style={{ ...flabel, marginBottom: 4 }}>Appearance · the garden's light</div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
@@ -243,7 +243,7 @@ function TimezoneCard() {
     <SCard>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <div style={flabel}>Timezone</div>
-        <span style={{ ...chip, background: 'rgba(138,154,126,0.18)', color: 'var(--acc-sage-text)' }}>saved ✓</span>
+        <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' }}>saved ✓</span>
       </div>
       <p style={{ margin: '6px 0 14px', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
         Used everywhere the app needs to know "what day is it" — due dates, routine checks, the daily summary. Stored in UTC, converted at the edges.
@@ -406,7 +406,7 @@ function CaptureApiCard() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</span>
       </div>
-      <div style={{ marginTop: 10, background: 'rgba(42,36,32,0.05)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 10.5, lineHeight: 1.7, color: 'var(--ink-muted)' }}>
+      <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 10.5, lineHeight: 1.7, color: 'var(--ink-muted)' }}>
         POST /capture · body: {'{"text": "call omar tomorrow 3pm"}'}
         <br />→ parsed, filed, or held in Inbox — same as ⌘K
       </div>
@@ -464,7 +464,7 @@ function ProviderRow({ icon, name, desc, status }: { icon: ReactNode; name: stri
 
 function GithubGlyph({ dim }: { dim?: boolean }) {
   return (
-    <span style={{ width: 34, height: 34, borderRadius: 8, background: '#2a2420', color: '#F4F1EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', opacity: dim ? 0.75 : 1 }}>
+    <span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--ink-body)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', opacity: dim ? 0.75 : 1 }}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.8 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 4-2.4 4.8-4.6 5.1.4.3.7 1 .7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.8C22 6.6 17.5 2 12 2Z" /></svg>
     </span>
   )
@@ -562,7 +562,7 @@ function IntegrationsPage() {
 function SoundCatalogCard() {
   const { sounds, set, masterOn, setMaster } = useSoundSettings()
   return (
-    <SCard tapeTint="rgba(154,180,190,0.4)">
+    <SCard tapeTint="color-mix(in oklch, var(--acc-hydrangea) 40%, transparent)">
       <div style={{ ...flabel, marginBottom: 4 }}>Sound · the garden's voice</div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
@@ -628,7 +628,7 @@ function DesktopSettings() {
           )
         })}
         <div style={{ flex: 1 }} />
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-1.2deg)', padding: '0 4px' }}>
+        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)', padding: '0 4px' }}>
           {active === 'Integrations' ? "the garden's irrigation ✿" : "where the garden's light gets tuned ✿"}
         </div>
       </div>
@@ -646,7 +646,7 @@ function DesktopSettings() {
             <div id="settings-Capture API"><CaptureApiCard /></div>
             <ImportCard />
             <div id="settings-Profile"><ProfileCard /></div>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
               everything saves as you touch it — the SAVED chip just says so ✿
             </div>
           </>
@@ -704,7 +704,7 @@ function MobileSettings() {
         ))}
       </div>
 
-      <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>
+      <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>
     </div>
   )
 }

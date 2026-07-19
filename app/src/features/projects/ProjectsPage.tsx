@@ -8,6 +8,8 @@ import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
 import { SectionLabel } from '../../components/kit'
+import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import './xfx.css'
 
 function localUseIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -31,6 +33,7 @@ export function getWisteriaImage(pct: number): string {
 export function ProjectsPage() {
   const navigate = useNavigate()
   const isMobile = localUseIsMobile()
+  const motion = useMotionEnabled()
 
   // State
   const [view, setView] = useState<'list' | 'board' | 'archive'>('list')
@@ -113,6 +116,36 @@ export function ProjectsPage() {
     return counts
   }, [areas, tasks])
 
+  // Effects 1e bloom glow — never on more than one plant at once.
+  const bloomId = activeProjects.find((p) => projectStats[p.id]?.pct === 100)?.id ?? null
+  const isSlippingProject = (pid: string) => slippingList.some((s) => s.entity_type === 'project' && s.entity_id === pid)
+
+  const isEmpty = allProjects.length === 0 && areas.length === 0
+
+  // States t1 / 1c — unplanted projects: pots on a shelf, soil at the ready.
+  const renderEmptyState = () => (
+    <div style={{ padding: '52px 40px 56px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <svg width="180" height="86" viewBox="0 0 180 86">
+        <path d="M8 74h164" stroke="var(--ink-faint)" strokeWidth="2.5" strokeLinecap="round" />
+        {[36, 90, 144].map((cx, i) => (
+          <g key={cx}>
+            <path d={`M${cx - 20} 40h40l-5 33h-30l-5-33Z`} fill="none" stroke={i === 1 ? 'var(--ink-faint)' : 'var(--ink-hairline)'} strokeWidth="2" strokeLinejoin="round" />
+            <path d={`M${cx - 24} 40h48`} stroke={i === 1 ? 'var(--ink-faint)' : 'var(--ink-hairline)'} strokeWidth="2" strokeLinecap="round" />
+            {i === 1 && <text x={cx} y={62} textAnchor="middle" style={{ font: '600 8px var(--font-mono)', letterSpacing: '0.14em', fill: 'var(--ink-hairline)' }}>SOIL</text>}
+          </g>
+        ))}
+      </svg>
+      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No projects growing yet.</div>
+      <button
+        onClick={() => { setNewType('standard'); setShowNewModal(true) }}
+        className="kf-lift"
+        style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
+      >
+        + Plant the first one
+      </button>
+    </div>
+  )
+
   // Render Mobile (iPhone variant 1c)
   if (isMobile) {
     return (
@@ -121,20 +154,25 @@ export function ProjectsPage() {
         <div style={{ flex: 1, padding: '16px 18px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <img src="/ds/assets/wisteria/p60.png" alt="" style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
+              <img src="/ds/assets/wisteria/p60.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</div>
             </div>
+            {/* X4: 44px touch target */}
             <button
               onClick={() => {
                 setNewType('standard')
                 setShowNewModal(true)
               }}
-              style={{ width: 30, height: 30, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: '#F4F1EA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, cursor: 'pointer' }}
+              className="kf-lift"
+              style={{ width: 44, height: 44, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
             >
               +
             </button>
           </div>
 
+          {isEmpty && renderEmptyState()}
+
+          {!isEmpty && <>
           {/* Active section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 4px' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
@@ -142,14 +180,15 @@ export function ProjectsPage() {
           </div>
           {filteredProjects
             .filter((p) => p.type === 'standard')
-            .map((p) => {
+            .map((p, i) => {
               const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                  className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
@@ -161,7 +200,7 @@ export function ProjectsPage() {
                       {stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones
                     </div>
                   </div>
-                  <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                     {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : 'no date'}
                   </span>
                 </div>
@@ -175,14 +214,15 @@ export function ProjectsPage() {
           </div>
           {filteredProjects
             .filter((p) => p.type === 'retainer')
-            .map((p) => {
+            .map((p, i) => {
               const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', cursor: 'pointer' }}
+                  className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
@@ -194,7 +234,7 @@ export function ProjectsPage() {
                       {stat.hours}h / 10h this month
                     </div>
                   </div>
-                  <span className="chip" style={{ background: 'rgba(168,160,190,0.22)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                     retainer
                   </span>
                 </div>
@@ -206,7 +246,7 @@ export function ProjectsPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
-          {filteredAreas.map((a) => {
+          {filteredAreas.map((a, i) => {
             const count = areaOpenTaskCounts[a.id] || 0
             const domain = domains.find((d) => d.id === a.domain_id)
             const isSlipping = slippingList.some((s) => s.entity_type === 'area' && s.entity_id === a.id)
@@ -214,12 +254,13 @@ export function ProjectsPage() {
               <div
                 key={a.id}
                 onClick={() => navigate(`/projects/${a.id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                 <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}>{a.name}</span>
                 {isSlipping ? (
-                  <span className="chip" style={{ background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                     slipping
                   </span>
                 ) : (
@@ -230,6 +271,7 @@ export function ProjectsPage() {
               </div>
             )
           })}
+          </>}
         </div>
         {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
       </div>
@@ -245,7 +287,7 @@ export function ProjectsPage() {
         {/* Toggle header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="/ds/assets/wisteria/p60.png" alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            <img src="/ds/assets/wisteria/p60.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Projects &amp; areas · the forest
@@ -341,7 +383,8 @@ export function ProjectsPage() {
         </div>
 
         {/* LIST VIEW */}
-        {view === 'list' && (
+        {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{renderEmptyState()}</div>}
+        {view === 'list' && !isEmpty && (
           <div style={{ maxWidth: 900 }}>
             {/* Active Projects */}
             <SectionLabel style={{ margin: '26px 0 4px' }}>
@@ -349,14 +392,15 @@ export function ProjectsPage() {
             </SectionLabel>
             {filteredProjects
               .filter((p) => p.type === 'standard')
-              .map((p) => {
+              .map((p, i) => {
                 const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
                 const domain = domains.find((d) => d.id === p.domain_id)
                 return (
                   <div
                     key={p.id}
                     onClick={() => navigate(`/projects/${p.id}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: '1px dashed var(--line-dashed)', textDecoration: 'none', cursor: 'pointer' }}
+                    className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: '1px dashed var(--line-dashed)', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                   >
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -369,7 +413,7 @@ export function ProjectsPage() {
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                       {stat.hours}h logged
                     </span>
-                    <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                       {stat.doneMilestones} / {stat.totalMilestones} milestones
                     </span>
                     <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -385,14 +429,15 @@ export function ProjectsPage() {
             </SectionLabel>
             {filteredProjects
               .filter((p) => p.type === 'retainer')
-              .map((p) => {
+              .map((p, i) => {
                 const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
                 const domain = domains.find((d) => d.id === p.domain_id)
                 return (
                   <div
                     key={p.id}
                     onClick={() => navigate(`/projects/${p.id}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                    className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                   >
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -405,7 +450,7 @@ export function ProjectsPage() {
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                       {stat.hours}h / 10h this month
                     </span>
-                    <span className="chip" style={{ background: 'rgba(168,160,190,0.22)', color: 'var(--acc-lavender-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                       retainer
                     </span>
                     <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -419,7 +464,7 @@ export function ProjectsPage() {
             <SectionLabel style={{ margin: '24px 0 4px' }}>
               <span>Areas</span>
             </SectionLabel>
-            {filteredAreas.map((a) => {
+            {filteredAreas.map((a, i) => {
               const count = areaOpenTaskCounts[a.id] || 0
               const domain = domains.find((d) => d.id === a.domain_id)
               const isSlipping = slippingList.some((s) => s.entity_type === 'area' && s.entity_id === a.id)
@@ -428,7 +473,8 @@ export function ProjectsPage() {
                 <div
                   key={a.id}
                   onClick={() => navigate(`/projects/${a.id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                  className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -436,7 +482,7 @@ export function ProjectsPage() {
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain?.name ?? 'No Domain'}</span>
                   </div>
                   {isSlipping && slippingItem ? (
-                    <span className="chip" style={{ background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                       slipping · {Math.floor(slippingItem.days_since)}d
                     </span>
                   ) : (
@@ -451,7 +497,7 @@ export function ProjectsPage() {
               )
             })}
 
-            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>
+            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>
               projects finish; areas just keep going — both grow leaves as you tend them ✿
             </div>
             <div style={{ marginTop: 20 }}>
@@ -488,24 +534,39 @@ export function ProjectsPage() {
                         const cardTilt = idx % 2 === 0 ? -0.4 : 0.3
                         const imgSource = getWisteriaImage(stat.pct)
 
+                        const slipping = isSlippingProject(p.id)
                         return (
                           <div
                             key={p.id}
                             onClick={() => navigate(`/projects/${p.id}`)}
+                            className="kf-lift-tilt"
                             style={{
                               display: 'block',
+                              position: 'relative',
+                              overflow: 'hidden',
                               background: 'var(--paper-parchment)',
                               border: '1px solid var(--line-card)',
                               borderRadius: 8,
                               boxShadow: 'var(--shadow-crisp)',
                               padding: '13px 14px',
                               cursor: 'pointer',
-                              transform: `rotate(${cardTilt}deg)`,
-                              transition: 'transform 0.2s',
+                              ['--kf-tilt' as string]: `${cardTilt}deg`,
                             }}
                           >
+                            {/* Effects 1t — amber drift over a slipping card, <=3 leaves; plant desaturates ~20% */}
+                            {motion && slipping && (
+                              <>
+                                <span className="kf-amber-leaf" style={{ left: '18%', animationDelay: '0s', animationDuration: '9.5s' }} />
+                                <span className="kf-amber-leaf" style={{ left: '52%', animationDelay: '3.4s', animationDuration: '11s' }} />
+                                <span className="kf-amber-leaf" style={{ left: '78%', animationDelay: '6.2s', animationDuration: '10.2s' }} />
+                              </>
+                            )}
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
-                              <img src={imgSource} alt="" style={{ height: 34, flex: 'none' }} />
+                              <span style={{ position: 'relative', flex: 'none', display: 'inline-flex' }}>
+                                {/* Effects 1e — bloom glow at 100%, never more than one plant */}
+                                {motion && p.id === bloomId && <span className="kf-bloom" style={{ inset: -10 }} />}
+                                <img src={imgSource} alt="" style={{ height: 34, flex: 'none', position: 'relative', filter: slipping ? 'saturate(0.8)' : undefined }} />
+                              </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}>{p.name}</div>
                                 <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
@@ -515,12 +576,12 @@ export function ProjectsPage() {
                               <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? d.color ?? (p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)'), flex: 'none', marginTop: 3 }} />
                             </div>
 
-                            <div style={{ marginTop: 11, height: 5, borderRadius: 3, background: 'rgba(42, 36, 32, 0.08)', overflow: 'hidden' }}>
+                            <div style={{ marginTop: 11, height: 5, borderRadius: 3, background: 'color-mix(in oklch, var(--ink-body) 8%, transparent)', overflow: 'hidden' }}>
                               <span style={{ display: 'block', width: `${stat.pct}%`, height: '100%', background: 'var(--acc-moss)' }} />
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>
-                              <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                              <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                                 {stat.doneMilestones} / {stat.totalMilestones}
                               </span>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
@@ -531,7 +592,7 @@ export function ProjectsPage() {
                       })}
 
                       {almostBloomingProject && (
-                        <div style={{ padding: '16px 6px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 14, color: '#7a745f' }}>
+                        <div style={{ padding: '16px 6px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>
                           almost blooming — one milestone left ✿
                         </div>
                       )}
@@ -558,7 +619,7 @@ export function ProjectsPage() {
 
         {/* ARCHIVE VIEW */}
         {view === 'archive' && (
-          <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
+          <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}>
                 ← All projects
@@ -567,13 +628,13 @@ export function ProjectsPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
-              <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
+              <img src="/ds/assets/wisteria/p100.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
                 <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>
               </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', marginTop: 10 }}>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', marginTop: 10 }}>
               finished projects reach the full wisteria cascade — kept, not cleared ✿
             </div>
 

@@ -4,6 +4,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useProjects, useTimeEntries } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { writeRow } from '../../lib/outbox'
+import { useEscapeStack } from '../../lib/overlayStack'
+import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import '../projects/xfx.css'
 import { Button } from '../../components/kit'
 import type { Project } from '../../lib/types'
 
@@ -53,14 +56,15 @@ function formatMonthYear(dateStr: string) {
 
 // The four washi/frame combinations 1a cycles across its spread — matches Herbarium.dc.html 1a exactly.
 const SPEC_VARIANTS = [
-  { cardH: 170, imgH: 165, tapeL: { left: 22, rotate: '-4deg' }, tapeR: { right: 22, rotate: '3deg', tint: 'rgba(201,165,90,0.4)' } },
-  { cardH: 170, imgH: 150, tapeL: { left: 30, rotate: '2.5deg', tint: 'rgba(212,168,176,0.42)' }, tapeR: { right: 30, rotate: '-3deg' } },
-  { cardH: 150, imgH: 135, tapeL: { left: 26, rotate: '-3deg', tint: 'rgba(154,180,190,0.42)' }, tapeR: { right: 26, rotate: '4deg' } },
-  { cardH: 150, imgH: 140, tapeL: { left: 34, rotate: '3deg' }, tapeR: { right: 34, rotate: '-2deg', tint: 'rgba(168,160,190,0.4)' } },
+  { cardH: 170, imgH: 165, tapeL: { left: 22, rotate: '-4deg' }, tapeR: { right: 22, rotate: '3deg', tint: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' } },
+  { cardH: 170, imgH: 150, tapeL: { left: 30, rotate: '2.5deg', tint: 'color-mix(in oklch, var(--acc-blossom) 42%, transparent)' }, tapeR: { right: 30, rotate: '-3deg' } },
+  { cardH: 150, imgH: 135, tapeL: { left: 26, rotate: '-3deg', tint: 'color-mix(in oklch, var(--acc-hydrangea) 42%, transparent)' }, tapeR: { right: 26, rotate: '4deg' } },
+  { cardH: 150, imgH: 140, tapeL: { left: 34, rotate: '3deg' }, tapeR: { right: 34, rotate: '-2deg', tint: 'color-mix(in oklch, var(--acc-lavender) 40%, transparent)' } },
 ]
 
 export function HerbariumPage() {
   const isMobile = useIsMobile()
+  const motion = useMotionEnabled()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -75,6 +79,10 @@ export function HerbariumPage() {
   const [pressingProject, setPressingProject] = useState<Project | null>(null)
   const [ceremonyBeat, setCeremonyBeat] = useState<1 | 2 | 3>(1)
   const [ceremonyLine, setCeremonyLine] = useState('')
+
+  // X2 (Motion 3b): esc obeys immediately on both overlays
+  useEscapeStack(!!selectedSpecimen, () => { setSelectedSpecimen(null); setIsEditingLine(false) })
+  useEscapeStack(!!pressingProject, () => setPressingProject(null))
 
   useEffect(() => {
     const pressParam = searchParams.get('press')
@@ -149,9 +157,11 @@ export function HerbariumPage() {
 
   const styles = `
     .pressed { filter: saturate(0.35) sepia(0.28) contrast(0.88) brightness(1.04); }
-    .washi { position:absolute; width:52px; height:15px; background:rgba(138,154,126,0.42); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px); border-radius:1px; box-shadow:var(--shadow-crisp); z-index:6; }
-    .spec { position:relative; background:var(--paper-parchment); border:1px solid var(--line-card); border-radius:3px; box-shadow:var(--shadow-card); padding:22px 24px 20px; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; }
-    .spec:hover { transform:translateY(-2px); box-shadow:var(--shadow-panel); }
+    .washi { position:absolute; width:52px; height:15px; background:color-mix(in oklch, var(--acc-sage) 42%, transparent); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px); border-radius:1px; box-shadow:var(--shadow-crisp); z-index:6; }
+    .spec { position:relative; background:var(--paper-parchment); border:1px solid var(--line-card); border-radius:3px; box-shadow:var(--shadow-card); padding:22px 24px 20px; cursor:pointer; transition:transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
+    .spec:hover { transform:translateY(-1px); box-shadow:var(--shadow-panel); }
+    .spec:active { transform:scale(0.97); transition-duration:80ms; }
+    .spec.kf-stagger-item { animation-fill-mode: backwards; }
     .ledger { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); line-height:2; }
     .seas { display:flex; align-items:center; gap:14px; margin:30px 0 18px; }
     .seas span.t { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
@@ -163,10 +173,10 @@ export function HerbariumPage() {
     const p = selectedSpecimen
     const imgSource = getSpecimenPlant(p.id)
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-        <div style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: '0 24px 60px rgba(42,36,32,0.35)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
+      <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+        <div className="kf-overlay-card" style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
-          <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'rgba(201,165,90,0.4)' }}></span>
+          <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
           <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>\u2715</span>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 18 : 30 }}>
             <div style={{ flex: 'none', width: isMobile ? '100%' : 230, height: isMobile ? 220 : 280, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', borderRight: isMobile ? 'none' : '1px solid var(--line-card)', paddingRight: isMobile ? 0 : 26 }}>
@@ -213,8 +223,10 @@ export function HerbariumPage() {
     const milestones = p.milestones || []
     const doneMilestones = milestones.filter(m => m.completed).length
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-        <div style={{ width: isMobile ? '92%' : 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: '0 20px 50px rgba(42,36,32,0.32)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+      <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+        <div className="kf-overlay-card" style={isMobile
+          ? { width: '100%', height: '100dvh', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
+          : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press \u00b7 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
@@ -223,7 +235,7 @@ export function HerbariumPage() {
                 <img src={imgSource} alt="" style={{ height: 140, transform: 'scaleY(0.82)', transformOrigin: '50% 100%', filter: 'saturate(0.7)' }} />
               </div>
               <div style={{ width: 210, height: 10, background: '#8b7a5e', borderRadius: 2, boxShadow: '0 2px 4px rgba(60,52,38,0.3)' }}></div>
-              <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>the press closes, gently</div>
+              <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
@@ -239,7 +251,7 @@ export function HerbariumPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
+              <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
             <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
@@ -268,14 +280,14 @@ export function HerbariumPage() {
     <div style={{ padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <svg width="150" height="96" viewBox="0 0 150 96">
         <rect x="20" y="70" width="110" height="9" rx="2" fill="#8b7a5e"></rect>
-        <rect x="30" y="34" width="90" height="36" fill="#EFE8D6" stroke="#cfc7b0" strokeWidth={1.5}></rect>
+        <rect x="30" y="34" width="90" height="36" fill="var(--paper-bone)" stroke="var(--line-solid)" strokeWidth={1.5}></rect>
         <rect x="20" y="24" width="110" height="9" rx="2" fill="#8b7a5e" transform="rotate(-9 75 28)"></rect>
-        <circle cx="34" cy="75" r="3" fill="#6b5d45"></circle>
-        <circle cx="116" cy="75" r="3" fill="#6b5d45"></circle>
-        <path d="M34 20v55M116 20v55" stroke="#6b5d45" strokeWidth={2.5}></path>
-        <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="#6b5d45" strokeWidth={2.5} strokeLinecap="round"></path>
+        <circle cx="34" cy="75" r="3" fill="var(--ink-faint)"></circle>
+        <circle cx="116" cy="75" r="3" fill="var(--ink-faint)"></circle>
+        <path d="M34 20v55M116 20v55" stroke="var(--ink-faint)" strokeWidth={2.5}></path>
+        <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="var(--ink-faint)" strokeWidth={2.5} strokeLinecap="round"></path>
       </svg>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project and it lives here forever.</div>
+      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project and it lives here forever.</div>
       <Link to="/projects" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>Back to the living garden \u2192</Link>
     </div>
   )
@@ -295,7 +307,7 @@ export function HerbariumPage() {
                 {archivedProjects.length} specimens{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
               </div>
               <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The Herbarium</h1>
-              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever \u273f</div>
+              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever \u273f</div>
             </div>
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, paddingBottom: 6 }}>
@@ -311,14 +323,14 @@ export function HerbariumPage() {
                 <div key={seasonKey}>
                   <div className="seas"><span className="t">{seasonKey}</span><span className="r"></span></div>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 22 }}>
-                    {group.map((p) => {
+                    {group.map((p, gi) => {
                       const imgSrc = getSpecimenPlant(p.id)
                       const pTE = timeEntries.filter((e) => e.project_id === p.id)
                       const hrs = Math.round((pTE.reduce((a, e) => a + e.duration_min, 0) / 60) * 10) / 10
                       const ms = p.milestones || []; const doneM = ms.filter(m => m.completed).length
                       const variant = SPEC_VARIANTS[((specimenIndex.get(p.id) || 1) - 1) % SPEC_VARIANTS.length]
                       return (
-                        <div className="spec" key={p.id} onClick={() => setSelectedSpecimen(p)}>
+                        <div className={motion ? 'spec kf-stagger-item' : 'spec'} style={motion ? staggerDelay(gi) : undefined} key={p.id} onClick={() => setSelectedSpecimen(p)}>
                           <span className="washi" style={{ top: -8, left: variant.tapeL.left, transform: `rotate(${variant.tapeL.rotate})`, ...(variant.tapeL.tint ? { background: variant.tapeL.tint } : {}) }}></span>
                           <span className="washi" style={{ top: -8, right: variant.tapeR.right, transform: `rotate(${variant.tapeR.rotate})`, ...(variant.tapeR.tint ? { background: variant.tapeR.tint } : {}) }}></span>
                           <div style={{ height: variant.cardH, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', borderBottom: '1px solid var(--line-card)', paddingBottom: 14 }}>

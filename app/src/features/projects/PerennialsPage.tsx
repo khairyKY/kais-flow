@@ -11,6 +11,9 @@ import {
 } from '../tasks/api'
 import { Chip, SectionLabel } from '../../components/kit'
 import { useToastStore } from '../../lib/toastStore'
+import { useEffect } from 'react'
+import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import './xfx.css'
 
 export function getCadenceType(rule: string): 'daily' | 'weekly' | 'monthly' | 'custom' {
   if (!rule) return 'custom'
@@ -122,6 +125,17 @@ export function formatNextDue(dueAt: string | null): { text: string; urgent: boo
 export function PerennialsPage() {
   const { data: domains = [] } = useDomains()
   const { data: allTasks = [] } = useTasks()
+  const motion = useMotionEnabled()
+
+  // X4: hover-revealed row actions get a touch counterpart — a per-row expand toggle
+  // (spec: "row actions collapse into an ellipsis" on mobile)
+  const [isCoarse, setIsCoarse] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches)
+  useEffect(() => {
+    const mq = matchMedia('(hover: none)')
+    const on = () => setIsCoarse(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
 
   // Hover states
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
@@ -185,15 +199,15 @@ export function PerennialsPage() {
   // Render Perennials Empty state (1b)
   if (activeSeries.length === 0) {
     return (
-      <div style={{ maxWidth: 560, margin: '60px auto 0', background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: '0 18px 44px rgba(60,52,38,0.14)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ maxWidth: 560, margin: '60px auto 0', background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
         <div style={{ background: 'var(--paper-linen)', padding: '44px 40px 46px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18 }}>
-            <svg width="52" height="44" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="#8b8471" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="#8b8471" strokeWidth="2" strokeLinecap="round" /></svg>
-            <svg width="44" height="38" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="#a9a68f" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="#a9a68f" strokeWidth="2" strokeLinecap="round" /></svg>
-            <svg width="52" height="44" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="#8b8471" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="#8b8471" stroke-width="2" stroke-linecap="round" /><path d="M26 14V8" stroke="#7A946E" strokeWidth="2" strokeLinecap="round" /><path d="M26 9c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="#7A946E" /></svg>
+            <svg width="52" height="44" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="var(--ink-faint)" strokeWidth="2" strokeLinecap="round" /></svg>
+            <svg width="44" height="38" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="var(--ink-hairline)" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="var(--ink-hairline)" strokeWidth="2" strokeLinecap="round" /></svg>
+            <svg width="52" height="44" viewBox="0 0 52 44"><path d="M8 14h36l-4 26H12L8 14Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round" /><path d="M5 14h42" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" /><path d="M26 14V8" stroke="var(--acc-moss)" strokeWidth="2" strokeLinecap="round" /><path d="M26 9c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="var(--acc-moss)" /></svg>
           </div>
-          <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center', maxWidth: 380, lineHeight: 1.45 }}>
+          <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 380, lineHeight: 1.45 }}>
             Nothing on repeat yet. Perennials come back on their own — give one a rhythm from any task's Repeat menu.
           </div>
           <Link to="/tasks" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>
@@ -206,16 +220,16 @@ export function PerennialsPage() {
 
   // Svg Icons
   const DailyIcon = (
-    <svg width="12" height="14" viewBox="0 0 16 20" style={{ marginRight: 6 }}><path d="M8 1c2 3 5 4 5 8 0 3-2.2 5-5 5s-5-2-5-5c0-4 3-5 5-8Z" fill="none" stroke="#8b8471" strokeWidth="1.4" /><path d="M8 14v5M5.5 19h5" stroke="#8b8471" strokeWidth="1.4" strokeLinecap="round" /></svg>
+    <svg width="12" height="14" viewBox="0 0 16 20" style={{ marginRight: 6 }}><path d="M8 1c2 3 5 4 5 8 0 3-2.2 5-5 5s-5-2-5-5c0-4 3-5 5-8Z" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" /><path d="M8 14v5M5.5 19h5" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinecap="round" /></svg>
   )
   const WeeklyIcon = (
-    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><ellipse cx="9" cy="7" rx="3" ry="4.5" fill="none" stroke="#8b8471" strokeWidth="1.4" /><path d="M9 11v5" stroke="#8b8471" strokeWidth="1.4" strokeLinecap="round" /><path d="M4 16.5h10l-1 3H5l-1-3Z" fill="none" stroke="#8b8471" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><ellipse cx="9" cy="7" rx="3" ry="4.5" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" /><path d="M9 11v5" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinecap="round" /><path d="M4 16.5h10l-1 3H5l-1-3Z" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinejoin="round" /></svg>
   )
   const MonthlyIcon = (
-    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><path d="M5 12h8l-1.2 6.5H6.2L5 12Z" fill="none" stroke="#8b8471" strokeWidth="1.4" strokeLinejoin="round" /><path d="M4 12h10" stroke="#8b8471" strokeWidth="1.4" stroke-linecap="round" /><path d="M9 12V7" stroke="#8b8471" strokeWidth="1.4" stroke-linecap="round" /><circle cx="9" cy="4.5" r="2.6" fill="none" stroke="#8b8471" strokeWidth="1.4" /></svg>
+    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><path d="M5 12h8l-1.2 6.5H6.2L5 12Z" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinejoin="round" /><path d="M4 12h10" stroke="var(--ink-faint)" strokeWidth="1.4" stroke-linecap="round" /><path d="M9 12V7" stroke="var(--ink-faint)" strokeWidth="1.4" stroke-linecap="round" /><circle cx="9" cy="4.5" r="2.6" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" /></svg>
   )
   const CustomIcon = (
-    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><path d="M9 18c-3-4-6-5-6-9 0-3 2-5 4-5 .8 0 1.5.3 2 .8.5-.5 1.2-.8 2-.8 2 0 4 2 4 5 0 4-3 5-6 9Z" fill="none" stroke="#8b8471" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+    <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><path d="M9 18c-3-4-6-5-6-9 0-3 2-5 4-5 .8 0 1.5.3 2 .8.5-.5 1.2-.8 2-.8 2 0 4 2 4 5 0 4-3 5-6 9Z" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinejoin="round" /></svg>
   )
 
   const handleSkip = (task: any) => {
@@ -239,7 +253,7 @@ export function PerennialsPage() {
     setConfirmEndSeries(null)
   }
 
-  const renderRow = (t: any) => {
+  const renderRow = (t: any, rowIndex: number) => {
     const lastDone = getLastCompletedDate(t.title)
     const nextInfo = formatNextDue(t.due_at)
     const domain = domains.find((d) => d.id === t.domain_id)
@@ -249,7 +263,7 @@ export function PerennialsPage() {
     const isConfirming = confirmEndSeries === t.id
 
     return (
-      <div key={t.id} style={{ display: 'flex', flexDirection: 'column' }}>
+      <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(rowIndex) : {}) }}>
         <div
           onMouseEnter={() => setHoveredRow(t.id)}
           onMouseLeave={() => {
@@ -270,7 +284,7 @@ export function PerennialsPage() {
         >
           {/* Accent dot or paused icon */}
           {t.paused ? (
-            <svg width="15" height="15" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M12 20c0-5 0-8 3-11" fill="none" stroke="#8b8471" strokeWidth="1.5" strokeLinecap="round" /><path d="M15 9c2.6-.4 4-2 4.4-4.6C17 4 15 5 14.3 7.2" fill="#a9a68f" opacity="0.7" transform="rotate(24 15 6)" /><path d="M12 13c-2-2-4.5-2.2-6.5-1 1.4 2.4 3.4 3.2 5.8 2.6" fill="#a9a68f" opacity="0.7" /></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M12 20c0-5 0-8 3-11" fill="none" stroke="var(--ink-faint)" strokeWidth="1.5" strokeLinecap="round" /><path d="M15 9c2.6-.4 4-2 4.4-4.6C17 4 15 5 14.3 7.2" fill="var(--ink-hairline)" opacity="0.7" transform="rotate(24 15 6)" /><path d="M12 13c-2-2-4.5-2.2-6.5-1 1.4 2.4 3.4 3.2 5.8 2.6" fill="var(--ink-hairline)" opacity="0.7" /></svg>
           ) : (
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: domain?.color ?? 'var(--acc-sage)', flex: 'none' }} />
           )}
@@ -283,7 +297,7 @@ export function PerennialsPage() {
           </div>
 
           {/* Action controls or Next due date chip */}
-          {isHovered && !isConfirming && !isEditing ? (
+          {(isHovered || (isCoarse && hoveredRow === t.id)) && !isConfirming && !isEditing ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
               <span onClick={() => setEditingRule(t.id)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Edit rule</span>
               <span onClick={() => handleSkip(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Skip next</span>
@@ -298,6 +312,12 @@ export function PerennialsPage() {
                 <Chip tone="bordered">Paused</Chip>
               ) : (
                 <Chip tone={nextInfo.urgent ? 'terra' : 'lavender'}>{nextInfo.text}</Chip>
+              )}
+              {isCoarse && (
+                <span
+                  onClick={() => setHoveredRow(hoveredRow === t.id ? null : t.id)}
+                  style={{ fontSize: 18, color: 'var(--ink-faint)', padding: '10px 12px', margin: '-10px -8px', cursor: 'pointer', userSelect: 'none' }}
+                >⋯</span>
               )}
             </>
           )}
@@ -381,7 +401,7 @@ export function PerennialsPage() {
             <SectionLabel style={{ marginTop: 28, marginBottom: 4 }} action={DailyIcon}>
               <span>Daily · {groupedSeries.daily.length}</span>
             </SectionLabel>
-            {groupedSeries.daily.map(renderRow)}
+            {groupedSeries.daily.map((t, i) => renderRow(t, i))}
           </>
         )}
 
@@ -391,7 +411,7 @@ export function PerennialsPage() {
             <SectionLabel style={{ marginTop: 28, marginBottom: 4 }} action={WeeklyIcon}>
               <span>Weekly · {groupedSeries.weekly.length}</span>
             </SectionLabel>
-            {groupedSeries.weekly.map(renderRow)}
+            {groupedSeries.weekly.map((t, i) => renderRow(t, i))}
           </>
         )}
 
@@ -401,7 +421,7 @@ export function PerennialsPage() {
             <SectionLabel style={{ marginTop: 28, marginBottom: 4 }} action={MonthlyIcon}>
               <span>Monthly · {groupedSeries.monthly.length}</span>
             </SectionLabel>
-            {groupedSeries.monthly.map(renderRow)}
+            {groupedSeries.monthly.map((t, i) => renderRow(t, i))}
           </>
         )}
 
@@ -411,7 +431,7 @@ export function PerennialsPage() {
             <SectionLabel style={{ marginTop: 28, marginBottom: 4 }} action={CustomIcon}>
               <span>Custom · {groupedSeries.custom.length}</span>
             </SectionLabel>
-            {groupedSeries.custom.map(renderRow)}
+            {groupedSeries.custom.map((t, i) => renderRow(t, i))}
           </>
         )}
       </div>

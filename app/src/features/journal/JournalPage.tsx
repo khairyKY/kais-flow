@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useJournalEntries, upsertJournalEntry } from './api'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
+import { useMotionEnabled } from '../../lib/motion'
+import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -35,9 +37,13 @@ function getFernImage(length: number): string {
 export function JournalPage() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const motion = useMotionEnabled()
+
 
   // Queries
   const { data: entries = [] } = useJournalEntries()
+  // States 1d — first-run: the input is the action, this line is the invitation
+  const firstPage = entries.length === 0
   const { data: notes = [] } = useNotes()
   const { data: quotes = [] } = useQuotes()
 
@@ -315,7 +321,7 @@ export function JournalPage() {
       <div style={{ width: '100%', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <style>{`
           .ruled {
-            background-image: repeating-linear-gradient(transparent 0px, transparent 25px, rgba(213,205,181,0.55) 25px, rgba(213,205,181,0.55) 26px);
+            background-image: repeating-linear-gradient(transparent 0px, transparent 25px, var(--line-dashed) 25px, var(--line-dashed) 26px);
             background-attachment: local;
           }
         `}</style>
@@ -335,19 +341,19 @@ export function JournalPage() {
           <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, overflow: 'hidden', marginTop: 16 }}>
             <span
               onClick={() => setMobileTab('journal')}
-              style={{ flex: 1, textAlign: 'center', padding: '8px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'journal' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'journal' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
+              style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'journal' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'journal' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
             >
               Journal
             </span>
             <span
               onClick={() => setMobileTab('notes')}
-              style={{ flex: 1, textAlign: 'center', padding: '8px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'notes' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'notes' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
+              style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'notes' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'notes' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
             >
               Notes
             </span>
             <span
               onClick={() => setMobileTab('quotes')}
-              style={{ flex: 1, textAlign: 'center', padding: '8px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'quotes' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'quotes' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
+              style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'quotes' ? 'var(--ink-body)' : 'var(--ink-muted)', background: mobileTab === 'quotes' ? 'var(--paper-parchment)' : 'transparent', cursor: 'pointer' }}
             >
               Quotes
             </span>
@@ -359,13 +365,13 @@ export function JournalPage() {
           {mobileTab === 'journal' && (
             <>
               {/* Prompt */}
-              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>
-                {PROMPTS[promptIndex]}
+              <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>
+                {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
               </div>
 
               {/* Writing Card */}
               <div style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
-                <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'rgba(212,199,138,0.5)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
+                <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
                 
                 <textarea
                   value={bodyText}
@@ -408,7 +414,7 @@ export function JournalPage() {
                         fontSize: 10,
                         textTransform: 'uppercase',
                         color: selected ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        background: selected ? 'rgba(138,154,126,0.2)' : 'transparent',
+                        background: selected ? 'color-mix(in oklch, var(--acc-sage) 20%, transparent)' : 'transparent',
                         border: selected ? '1px solid var(--acc-sage)' : '1px solid var(--line-solid)',
                         borderRadius: 999,
                         padding: '6px 11px',
@@ -465,7 +471,7 @@ export function JournalPage() {
     <div style={{ display: 'flex', width: '100%', minHeight: '85vh', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .ruled {
-          background-image: repeating-linear-gradient(transparent 0px, transparent 26px, rgba(213,205,181,0.55) 26px, rgba(213,205,181,0.55) 27px);
+          background-image: repeating-linear-gradient(transparent 0px, transparent 26px, var(--line-dashed) 26px, var(--line-dashed) 27px);
           background-attachment: local;
         }
         .journal-sidebar-link {
@@ -589,7 +595,7 @@ export function JournalPage() {
             
             <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
 
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', marginTop: 8 }}>a quiet page, only for you ✿</div>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
 
             {/* Prompt Selector */}
             <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -602,13 +608,13 @@ export function JournalPage() {
                 ↻ another
               </span>
             </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--ink-body)', marginTop: 12, lineHeight: 1.4 }}>
+            <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--ink-body)', marginTop: 12, lineHeight: 1.4 }}>
               {PROMPTS[promptIndex]}
             </div>
 
             {/* Ruled Notebook Card */}
             <div style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'rgba(212,199,138,0.5)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
+              <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
               
               <textarea
                 value={bodyText}
@@ -653,7 +659,7 @@ export function JournalPage() {
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                         color: selected ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        background: selected ? 'rgba(138,154,126,0.2)' : 'transparent',
+                        background: selected ? 'color-mix(in oklch, var(--acc-sage) 20%, transparent)' : 'transparent',
                         border: selected ? '1px solid var(--acc-sage)' : '1px solid var(--line-solid)',
                         borderRadius: 999,
                         padding: '6px 12px',
@@ -707,7 +713,7 @@ export function JournalPage() {
             <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', transform: 'rotate(-0.4deg)' }}>
               <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', top: -14, right: 10, height: 34, filter: 'var(--shadow-drop-sm)' }} />
               
-              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)' }}>
+              <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)', animationDelay: '180ms' }}>
                 "{commonplaceQuote.text}"
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 10 }}>
@@ -716,7 +722,7 @@ export function JournalPage() {
 
               <div style={{ marginTop: 12, paddingTop: 11, borderTop: '1px dashed var(--line-dashed)' }}>
                 {commonplaceCommentaries.map((c) => (
-                  <div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', lineHeight: 1.35, marginBottom: 6 }}>
+                  <div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>
                     {c.body}
                   </div>
                 ))}
@@ -731,7 +737,7 @@ export function JournalPage() {
                     />
                     <div style={{ display: 'flex', gap: 6, marginTop: 4, justifyContent: 'flex-end' }}>
                       <button onClick={() => setShowAddCommentary(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '10.5px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={handleAddCommentary} style={{ border: 'none', background: 'var(--acc-terra)', color: '#fff', font: 'inherit', fontSize: '10.5px', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
+                      <button onClick={handleAddCommentary} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '10.5px', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
                     </div>
                   </div>
                 ) : (
@@ -758,7 +764,7 @@ export function JournalPage() {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
                 {new Date(onThisDayEntry.entry_date).getFullYear() === new Date(selectedDate).getFullYear() - 1 ? 'One year ago' : `${new Date(selectedDate).getFullYear() - new Date(onThisDayEntry.entry_date).getFullYear()} years ago`}
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, color: 'var(--ink-body)', marginTop: 7, lineHeight: 1.45 }}>
+              <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, color: 'var(--ink-body)', marginTop: 7, lineHeight: 1.45, animationDelay: '360ms' }}>
                 "{onThisDayEntry.body.slice(0, 100)}{onThisDayEntry.body.length > 100 ? '...' : ''}"
               </div>
               {onThisDayEntry.gratitude.length > 0 && (

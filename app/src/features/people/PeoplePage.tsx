@@ -4,6 +4,8 @@ import { usePeople, useInteractions, upsertPerson, createInteraction, getDaysUnt
 import { useDomains } from '../domains/api'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button } from '../../components/kit'
+import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -19,11 +21,11 @@ function useIsMobile(): boolean {
 
 function getAvatarBgColor(name: string): string {
   const colors = [
-    'rgba(154,180,190,0.3)',
-    'rgba(212,168,176,0.32)',
-    'rgba(201,160,160,0.3)',
-    'rgba(212,199,138,0.35)',
-    'rgba(122,148,110,0.28)'
+    'color-mix(in oklch, var(--acc-hydrangea) 30%, transparent)',
+    'color-mix(in oklch, var(--acc-blossom) 32%, transparent)',
+    'color-mix(in oklch, var(--acc-clover) 30%, transparent)',
+    'color-mix(in oklch, var(--acc-buttercream) 35%, transparent)',
+    'color-mix(in oklch, var(--acc-moss) 28%, transparent)'
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -68,18 +70,19 @@ function weeksQuiet(dateStr: string): string {
 /* Bloom badge SVG — shows when a birthday is within 14 days */
 const BloomBadge = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" style={{ position: 'absolute', top: -6, right: -6 }}>
-    <g fill="#8A9A7E">
+    <g fill="var(--acc-sage)">
       <ellipse cx="12" cy="7.4" rx="2.6" ry="3.6" />
       <ellipse cx="7.6" cy="13.6" rx="2.6" ry="3.6" transform="rotate(-70 7.6 13.6)" />
       <ellipse cx="16.4" cy="13.6" rx="2.6" ry="3.6" transform="rotate(70 16.4 13.6)" />
     </g>
-    <circle cx="12" cy="12" r="3.4" fill="#D4A8B0" />
-    <circle cx="12" cy="12" r="1.5" fill="#C9A55A" />
+    <circle cx="12" cy="12" r="3.4" fill="var(--acc-blossom)" />
+    <circle cx="12" cy="12" r="1.5" fill="var(--acc-gold-warm)" />
   </svg>
 )
 
 export function PeoplePage() {
   const isMobile = useIsMobile()
+  const motion = useMotionEnabled()
   const navigate = useNavigate()
   const { data: people = [] } = usePeople()
   const { data: interactions = [] } = useInteractions()
@@ -156,9 +159,17 @@ export function PeoplePage() {
           </div>
           <span
             onClick={() => setShowNewForm(true)}
-            style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: '#F4F1EA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, cursor: 'pointer' }}
+            className="kf-lift"
+            style={{ width: 44, height: 44, borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
           >+</span>
         </div>
+
+        {people.length === 0 && (
+          <div style={{ padding: '44px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
+            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)', textAlign: 'center', lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
+          </div>
+        )}
 
         {/* Nudges (mobile) */}
         {nudges.length > 0 && (
@@ -199,7 +210,7 @@ export function PeoplePage() {
               const lastTouchText = latest ? timeAgoShort(latest.occurred_at) : '—'
               const summaryShort = latest ? latest.summary.split('—')[0].split('·')[0].trim().slice(0, 30) : ''
               return (
-                <Link key={p.id} to={`/people/${p.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: idx < groupPeople.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none' }}>
+                <Link key={p.id} to={`/people/${p.id}`} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: idx < groupPeople.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', ...(motion ? staggerDelay(idx) : {}) }}>
                   <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
@@ -258,8 +269,17 @@ export function PeoplePage() {
         </form>
       )}
 
+      {/* States t1 — no people yet: clover seedling, one line, one action */}
+      {people.length === 0 && (
+        <div style={{ padding: '52px 40px 56px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 64, filter: 'var(--shadow-drop-sm)' }} />
+          <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
+          <button onClick={() => setShowNewForm(true)} className="kf-lift" style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>+ New person</button>
+        </div>
+      )}
+
       {/* Nudges section */}
-      {nudges.length > 0 && (
+      {people.length > 0 && nudges.length > 0 && (
         <>
           <div className="slabel" style={{ margin: '26px 0 10px' }}>
             <span style={{ color: 'var(--acc-clover-text)' }}>Say hi — it's been a while</span>
@@ -277,7 +297,7 @@ export function PeoplePage() {
               const nudgeBody = interestFact ? interestFact.value.split('—')[0].trim() : ''
               const nudgeHint = nudgeBody ? ` · ${nudgeBody}` : ''
               return (
-                <div key={p.id} style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${idx % 2 === 0 ? '-0.3' : '0.3'}deg)` }}>
+                <div key={p.id} className="kf-lift-tilt" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12, ['--kf-tilt' as string]: idx % 2 === 0 ? '-0.3deg' : '0.3deg' }}>
                   <span className="av" style={{ background: getAvatarBgColor(p.name) }}>{p.name.charAt(0)}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
@@ -311,7 +331,7 @@ export function PeoplePage() {
               const showBloom = bdayDays !== null && bdayDays <= 14
               const isLast = idx === groupPeople.length - 1
               return (
-                <Link key={p.id} to={`/people/${p.id}`} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 2px', borderBottom: isLast ? 'none' : '1px dashed var(--line-dashed)', textDecoration: 'none' }}>
+                <Link key={p.id} to={`/people/${p.id}`} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 2px', borderBottom: isLast ? 'none' : '1px dashed var(--line-dashed)', textDecoration: 'none', ...(motion ? staggerDelay(idx) : {}) }}>
                   <span className="av" style={{ background: getAvatarBgColor(p.name), position: 'relative' }}>
                     {p.name.charAt(0)}
                     {showBloom && <BloomBadge />}
@@ -321,7 +341,7 @@ export function PeoplePage() {
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{summaryText}</div>
                   </div>
                   {showBloom && (
-                    <span className="chip" style={{ background: 'rgba(212,168,176,0.24)', color: '#a1707c' }}>
+                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)', color: 'var(--acc-clover-text)' }}>
                       Birthday · in {bdayDays} days
                     </span>
                   )}
@@ -334,7 +354,7 @@ export function PeoplePage() {
         </div>
       ))}
 
-      <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>a light CRM — facts so you remember, nudges so you reach out ✿</div>
+      <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>a light CRM — facts so you remember, nudges so you reach out ✿</div>
     </div>
   )
 }
