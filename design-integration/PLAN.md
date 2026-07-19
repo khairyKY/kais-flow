@@ -95,7 +95,7 @@ Per `AUDIT.md`:
 - **D2 — AUDIT.md says "all 29 pages"; the export has 30.** `Design System Dark.dc.html` post-dates the audit (the audit's own Night row references it as the new living reference). No action needed — it ships as the dark-token reference.
 - **D3 — Sidebar drift across files.** The shell sidebar grew as screens were added. Today/Journal-era files link Inbox·Tasks·Calendar·Routines·Review·Search·Chat·Settings (+ **Rituals**, which your prompt's list omits); the newest files (Projects, Activity) additionally link Today·Projects·People·Journal·Editor·Herbarium·Activity (and Projects.dc.html even links "Screens"). One app needs one canonical sidebar → **Q5**.
 - **D4 — No Chat screen exists.** `href="Chat"` appears in every sidebar, but Chat exists only as the ⌘J slide-over in Overlays §02. Plan wires the Chat nav row to open that slide-over (the only Chat surface in the export) → confirm in **Q5**.
-- **D5 — `envelope/flap.png`** doc drift. **RESOLVED (Kai, Jul 12): everything regarding the Weekly Letter feature is future work** — consistent with Review 4a parked; no action in this project.
+- **D5 — `envelope/flap.png`** doc drift. **RESOLVED (Kai, Jul 12): everything regarding the Weekly Letter feature is future work** — consistent with Review 4a parked; no action in this project. **SUPERSEDED (Kai, 2026-07-19): the Weekly Letter is DROPPED entirely** — removed from all plans, not future work; the Review page ships without it (its "didn't arrive" stub gets removed in the audit-fix wave 2).
 - **D6 — Routines t4 vs t3. RESOLVED (Kai, Jul 12): skip t3, keep the rest** — 3a/3b are not built; 4a trellis is the streak visual; Routines t1/t2 ship. → **Q6**.
 - **D7 — Rituals t3 refinements.** 3a redraws 2b's sun; 3b is 1b "arrives already done." Same additive rule: all reproduced; in the wired flow the refined beats (3a sun, 3b pre-done state) are what the user hits, with 2b/1b variants still reachable → confirm in **Q6**.
 
@@ -105,7 +105,7 @@ Per `AUDIT.md`:
 
 **Q2 · Data — ✅ SUPERSEDED by the live-product mandate: real data.** Surfaces bind to the real Supabase data layer (which the audit rates fully reusable, untouched). Export sample-content states (inbox zero, Done petals, empty pots…) become real reachable states of real data, not hard-coded copies. Designed sample *strings* are still the copy source for labels, empty states, and microcopy — invented copy remains forbidden.
 
-**Q3 · Parked items — ✅ confirmed:** Focus 2a/2b and Review 4a stay parked, per AUDIT/FUTURE_WORK.
+**Q3 · Parked items — ✅ confirmed:** Focus 2a/2b and Review 4a stay parked, per AUDIT/FUTURE_WORK. **Amended 2026-07-19: Review 4a (Weekly Letter) is no longer parked — it is DROPPED from the plan entirely (Kai's ruling; see D5).**
 
 **Q4 · Inventory mismatches — ✅ confirmed:** D1–D7 accepted as resolved in this plan (States = 30th file, spec category, Phase 8).
 
