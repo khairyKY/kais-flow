@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import {
   isPushSupported,
   useMyPushSubscriptions,
@@ -413,6 +414,21 @@ function CaptureApiCard() {
   )
 }
 
+// P-IMPORT entry card — Settings.dc.html 2a Integrations-card language.
+function ImportCard() {
+  return (
+    <SCard>
+      <div style={{ ...flabel, marginBottom: 12 }}>Import data · bring your life in</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>One-time import from Akiflow or a CSV file.</span>
+        <span style={{ flex: 1 }} />
+        <Link to="/settings/import" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, textDecoration: 'none' }}>Open importer</Link>
+      </div>
+      <div style={fhelp}>parsed on this device · re-importing the same file never duplicates</div>
+    </SCard>
+  )
+}
+
 function ProfileCard() {
   const email = (() => {
     try {
@@ -628,6 +644,7 @@ function DesktopSettings() {
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>
             <div id="settings-Capture API"><CaptureApiCard /></div>
+            <ImportCard />
             <div id="settings-Profile"><ProfileCard /></div>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
               everything saves as you touch it — the SAVED chip just says so ✿

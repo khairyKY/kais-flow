@@ -37,6 +37,7 @@ const PersonDetailPage = lazy(() => import('./features/people/PersonDetailPage')
 const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
 const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate').then((m) => ({ default: m.OnboardingGate })))
 const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
+const ImportPage = lazy(() => import('./features/import/ImportPage').then((m) => ({ default: m.ImportPage })))
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: 'routines', element: <RoutinesPage /> },
       { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'settings/import', element: <ImportPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'capture', element: <QuickCapturePage /> },
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.

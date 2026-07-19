@@ -81,4 +81,38 @@ dedicated canvas exists for the wizard itself).
 - Timezones: Akiflow datetimes are user-local; convert explicitly, don't trust `Z` suffixes.
 
 ## Notes / deviations
-_(filled during execution)_
+
+**Tier-0 shipped 2026-07-18** (build-agent G):
+
+- **Migration `0027_external_ref.sql`** — `external_ref jsonb` + partial unique index on the six
+  listed tables **plus `calendar_events`** (deviation: the Akiflow adapter imports events behind
+  the default-OFF toggle, so they need the same idempotency key). **Needs `supabase db push`
+  before any import runs** — until then task upserts carrying `external_ref` will 400.
+  `docs/DATA_MODEL.md` not updated (outside this agent's file ownership) — one line needed.
+- **`features/import/`** — `ImportPage.tsx` (wizard at `/settings/import`: source picker →
+  drop/pick → csv column mapping → preview with duplicate flags + toggles [completed OFF,
+  events OFF] → chunked commit with progress → summary), `api.ts` (fetch existing refs,
+  `commitBatch` = ~50-row `writeRow` chunks with `flushOutbox()` awaited between, projects
+  before tasks so FKs resolve, `logActivity('import.run')` with source + written/skipped
+  counts), `adapters/shared.ts` (types, Cairo-naive→UTC via Intl two-pass — no tz lib
+  installed, `mapPriority`, djb2 `stableHash`), `adapters/akiflow.ts`, `adapters/csv.ts`,
+  colocated vitest tests (20 passing: mapping, DST-aware tz conversion both halves of the
+  year, idempotency-key stability, RFC 4180 quoting).
+- **Mapping decisions:** priority GOAL/HIGH→1, MEDIUM→2, LOW→3, NONE→null (app has no goal
+  tier; raw survives). `deadline`→`due_at` (Cairo midnight→UTC); `datetime`→`scheduled_start`
+  (+duration→`scheduled_end`, default 30) and doubles as `due_at` when no deadline; bare
+  `date`→`due_at` fallback. `status:'someday'`→`someday`; "planned for …" strings are
+  redundant display text, kept in raw only. `tags`→`labels`. `description` `<br />`→newlines.
+  The WHOLE source row goes into `external_ref.raw` — nothing dropped. `plan_week/plan_month/
+  parent_task_id/links/url` live only in raw (no app fields).
+- **Duplicate strategy:** client-side skip against fetched existing `(source, id)` refs
+  (shown in preview as "already here"); already-imported Akiflow projects are *reused* as
+  `project_id` targets, not re-created. DB unique index is the backstop only.
+- **CSV:** no source ids → `external_ref.id = hash(title+due+project)` (stated in the preview);
+  identical-key rows in one file collapse; mapping remembered in localStorage per filename
+  pattern (digits stripped). Groq mapping-assist **not** built (step 5 optional; header
+  guesser covers the common case — add if a real CSV defeats it).
+- **The import run itself is `[KAI]`/orchestrator:** push 0027, open Settings › Import data
+  in the browser, drop `akiflow-dump.json`, confirm, re-import once to prove zero duplicates.
+  Acceptance items stay unchecked until that run.
+- Later-tier adapters (todoist/ticktick/notion/markdown) untouched.
