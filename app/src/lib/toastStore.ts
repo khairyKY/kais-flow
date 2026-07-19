@@ -17,7 +17,7 @@ export const useToastStore = create<ToastState>((set) => ({
   push: (toast) => {
     const id = crypto.randomUUID()
     set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }))
-    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 6000)
+    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4000) // Motion 3d: 4s dwell
   },
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))

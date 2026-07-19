@@ -12,6 +12,7 @@
   --sky-horizon:        #3B3450;   /* horizon glow, dusk buttons */
   --sky-panel:          #262233;   /* moonlit paper card */
   --sky-panel-strong:   #2C2740;
+  --paper-event:        #2C2740;   /* calendar event chip at night (X-pass foundation patch) */
   --sky-input:          rgba(244, 241, 234, 0.05);
 
   /* Paper names, remapped — components using paper-* just work at night */
@@ -29,6 +30,7 @@
   --ink-muted:          #C9C0D8;   /* secondary text, metadata */
   --ink-faint:          #8E88A0;   /* hints, mono captions */
   --ink-hairline:       #6E687F;   /* tertiary, "done" strike text */
+  --ink-hand:           #C9C0D8;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Lines — cream hairlines, more transparent than day */
   --line-solid:         rgba(240, 235, 221, 0.2);

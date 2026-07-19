@@ -31,6 +31,9 @@ function withQueue<T>(fn: (queue: OutboxEntry[]) => { next: OutboxEntry[]; resul
     const queue = await getQueue()
     const { next, result } = fn(queue)
     await setQueue(next)
+    // X-pass foundation patch: let UI (topbar sync chrome) react without polling.
+    // Peeks pass the same array through; only real mutations notify.
+    if (typeof window !== 'undefined' && next !== queue) window.dispatchEvent(new Event('kf-outbox-change'))
     return result
   })
   // Keep the chain alive even if this step failed, so later ops aren't stuck behind a rejection.

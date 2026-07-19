@@ -30,7 +30,7 @@ const dump = {
     { ...akiflowTask, id: 't4', title: 'Someday: build a greenhouse', status: 'someday', priority: 'GOAL' },
     { ...akiflowTask, id: 't5', title: 'Tagged task', tags: ['Deep Work'] },
     // real dumps: {id,title} objects, orphaned {id,name:null} refs to deleted tags, and id-only lookups
-    { ...(akiflowTask as object), id: 't6', title: 'Odd tags', tags: [{ id: 'tagX', name: null }, { id: 'tag1' }, { id: 'tag2', title: 'Inline' }] } as typeof akiflowTask,
+    { ...(akiflowTask as object), id: 't6', title: 'Odd tags', tags: [{ id: 'tagX', name: null }, { id: 'tag1' }, { id: 'tag2', title: 'Inline' }] } as unknown as typeof akiflowTask,
   ],
   events: [
     { id: 'e1', url: '', title: 'Standup', start: '2026-07-18T10:00:00', end: '2026-07-18T10:15:00', duration: 15, all_day: false, description: null, location: null, recurrence: null, busy_mode: null, visibility: null, guests_count: 0, guests: [], declined: false, read_only: false, calendar_id: 'c1', calendar_name: 'Work', calendar_read_only: false },

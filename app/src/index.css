@@ -68,7 +68,7 @@ body::before {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d4cdb9;
+  background: color-mix(in srgb, var(--ink-hairline) 55%, var(--bg-app)); /* night-safe (X-pass patch) */
   border-radius: 6px;
   border: 3px solid var(--bg-app);
 }

@@ -13,6 +13,7 @@
   --ink-muted:          #6b6455;   /* secondary text, metadata labels */
   --ink-faint:          #8b8471;   /* hints, uppercase mono captions */
   --ink-hairline:       #a49d87;   /* tertiary hint, "done" strike text */
+  --ink-hand:           #7a745f;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Borders */
   --line-solid:         #cfc7b0;
