@@ -24,6 +24,7 @@ import { useTasks, completeTask, createTask } from '../tasks/api'
 import { logActivity } from '../../lib/activity'
 import { SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
+import { ConfirmCard } from './ConfirmCard'
 
 // Local query hook to retrieve activity log for a specific project/area
 function useActivityLog(entityId: string) {
@@ -71,6 +72,75 @@ export function ProjectDetailPage() {
   const [workDuration, setWorkDuration] = useState('1h30m')
   const [workDate, setWorkDate] = useState('today')
 
+  // E2 (2026-07-18 audit): in-app confirm replaces window.confirm
+  const [confirm, setConfirm] = useState<{ title: string; body: string; confirmLabel: string; onConfirm: () => void } | null>(null)
+
+  // E7 (2026-07-18 audit): ALL hooks must run before any early return — these useMemos
+  // previously lived inside the project/area branches after the `!project && !area`
+  // return, crashing cold loads of /projects/:id with "Rendered more hooks".
+  const pTimeEntries = useMemo(
+    () => (project ? timeEntries.filter((e) => e.project_id === project.id) : []),
+    [timeEntries, project]
+  )
+
+  // Logged Work Feed (project detail)
+  const mergedLogs = useMemo(() => {
+    const logs: Array<{ id: string; date: string; type: 'work' | 'update'; note: string; duration?: number }> = []
+
+    // 1. Time entries (work)
+    for (const entry of pTimeEntries) {
+      logs.push({
+        id: entry.id,
+        date: entry.started_at,
+        type: 'work',
+        note: entry.note || '',
+        duration: entry.duration_min,
+      })
+    }
+
+    // 2. Activity logs (updates)
+    const updateLogs = activityLogs.filter((log) => log.event_type === 'project.update_logged')
+    for (const log of updateLogs) {
+      logs.push({
+        id: log.id,
+        date: log.created_at,
+        type: 'update',
+        note: (log.payload?.note as string) || '',
+      })
+    }
+
+    // Sort by date descending
+    return logs.sort((a, b) => b.date.localeCompare(a.date))
+  }, [pTimeEntries, activityLogs])
+
+  // Tended-weeks cadence (area detail)
+  const tendedWeeks = useMemo(() => {
+    const weeks = [false, false, false, false, false]
+    if (!area) return weeks
+    const now = Date.now()
+    const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+
+    const markWeek = (dateStr: string) => {
+      const date = new Date(dateStr).getTime()
+      const diff = now - date
+      if (diff >= 0 && diff < 5 * oneWeekMs) {
+        const weekIdx = Math.floor(diff / oneWeekMs)
+        if (weekIdx >= 0 && weekIdx < 5) {
+          weeks[weekIdx] = true
+        }
+      }
+    }
+
+    for (const log of activityLogs.filter((l) => l.entity_id === area.id)) {
+      if (log.created_at) markWeek(log.created_at)
+    }
+    for (const t of tasks.filter((t) => t.area_id === area.id && t.status === 'done')) {
+      if (t.completed_at) markWeek(t.completed_at)
+    }
+
+    return weeks
+  }, [area, activityLogs, tasks])
+
   if (!project && !area) {
     return (
       <div style={{ padding: 40, color: 'var(--ink-muted)' }}>
@@ -94,12 +164,22 @@ export function ProjectDetailPage() {
     return total || 60 // Default to 60m if parsing fails
   }
 
-  // Convert area to project helper
+  // Convert area to project helper — E2: in-app ConfirmCard instead of window.confirm
   const handleConvertAreaToProject = () => {
     if (!area) return
-    const confirmed = window.confirm(`Convert "${area.name}" to a project? All open tasks in this area will be moved.`)
-    if (!confirmed) return
+    setConfirm({
+      title: `Convert "${area.name}" to a project?`,
+      body: 'All open tasks in this area will be moved to the new project.',
+      confirmLabel: 'Convert',
+      onConfirm: () => {
+        setConfirm(null)
+        doConvertAreaToProject()
+      },
+    })
+  }
 
+  const doConvertAreaToProject = () => {
+    if (!area) return
     // 1. Create a project
     const newProj = createProject(
       area.name,
@@ -185,16 +265,10 @@ export function ProjectDetailPage() {
     setShowAddTask(false)
   }
 
+  // E8 (2026-07-18 audit): was calling createTask twice — one task per submit
   const handleAddAreaTask = (e: React.FormEvent) => {
     e.preventDefault()
     if (!area || !newAddTaskTitle.trim()) return
-    createTask({
-      title: newAddTaskTitle.trim(),
-      projectId: null,
-      domainId: area.domain_id,
-      // area_id column can be set. Let's do it via custom createTask update
-    })
-    // Since task is created, we reparent it to Area
     const t = createTask({ title: newAddTaskTitle.trim(), domainId: area.domain_id })
     writeRow('tasks', { ...t, area_id: area.id })
     setNewAddTaskTitle('')
@@ -256,8 +330,7 @@ export function ProjectDetailPage() {
     const projectTasks = tasks.filter((t) => t.project_id === project.id)
     const openTasks = projectTasks.filter((t) => t.status === 'todo')
 
-    // Sum project hours
-    const pTimeEntries = timeEntries.filter((e) => e.project_id === project.id)
+    // Sum project hours (pTimeEntries hoisted above the early return — E7)
     const totalMinutes = pTimeEntries.reduce((acc, curr) => acc + curr.duration_min, 0)
     const totalHours = Math.round((totalMinutes / 60) * 10) / 10
 
@@ -281,38 +354,9 @@ export function ProjectDetailPage() {
     const milestonePct = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0
     const wisteriaImg = getWisteriaImage(milestonePct)
 
-    // Logged Work Feed
-    const mergedLogs = useMemo(() => {
-      const logs: Array<{ id: string; date: string; type: 'work' | 'update'; note: string; duration?: number }> = []
-
-      // 1. Time entries (work)
-      for (const entry of pTimeEntries) {
-        logs.push({
-          id: entry.id,
-          date: entry.started_at,
-          type: 'work',
-          note: entry.note || '',
-          duration: entry.duration_min,
-        })
-      }
-
-      // 2. Activity logs (updates)
-      const updateLogs = activityLogs.filter((log) => log.event_type === 'project.update_logged')
-      for (const log of updateLogs) {
-        logs.push({
-          id: log.id,
-          date: log.created_at,
-          type: 'update',
-          note: (log.payload?.note as string) || '',
-        })
-      }
-
-      // Sort by date descending
-      return logs.sort((a, b) => b.date.localeCompare(a.date))
-    }, [pTimeEntries, activityLogs])
-
     return (
-      <div style={{ maxWidth: 820, background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      // deviation(2026-07-18 audit): export caps at 820px; Kai wants full width
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ display: 'flex', position: 'relative', zIndex: 10 }}>
@@ -495,10 +539,11 @@ export function ProjectDetailPage() {
               </div>
             </div>
 
-            {/* Activity log */}
-            <SectionLabel style={{ margin: '24px 0 8px' }}>
-              <span>Activity · {mergedLogs.length}</span>
-              <span className="seg" style={{ marginLeft: 'auto', display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 2, gap: 2 }}>
+            {/* Activity log — E6: seg toggle passed via `action` so it sits far right after the dashed rule (Projects.dc.html:583) */}
+            <SectionLabel
+              style={{ margin: '24px 0 8px' }}
+              action={
+              <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 2, gap: 2 }}>
                 <span
                   onClick={() => setLogMode('work')}
                   className={logMode === 'work' ? 'on' : ''}
@@ -534,6 +579,9 @@ export function ProjectDetailPage() {
                   📌 Update
                 </span>
               </span>
+              }
+            >
+              <span>Activity · {mergedLogs.length}</span>
             </SectionLabel>
 
             {/* Log form */}
@@ -600,13 +648,19 @@ export function ProjectDetailPage() {
             {/* Archive / Convert action footer */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
               <span
-                onClick={() => {
-                  const conf = window.confirm(`Archive "${project.name}"?`)
-                  if (conf) {
-                    archiveProject(project)
-                    navigate(`/herbarium?press=${project.id}`)
-                  }
-                }}
+                onClick={() =>
+                  // E2: in-app ConfirmCard instead of window.confirm
+                  setConfirm({
+                    title: `Archive "${project.name}"?`,
+                    body: 'It moves to the Herbarium as a pressed specimen — you can restore it any time.',
+                    confirmLabel: 'Archive',
+                    onConfirm: () => {
+                      setConfirm(null)
+                      archiveProject(project)
+                      navigate(`/herbarium?press=${project.id}`)
+                    },
+                  })
+                }
                 style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
                 Archive project…
@@ -617,6 +671,7 @@ export function ProjectDetailPage() {
             </div>
           </div>
         </div>
+        {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )
   }
@@ -637,36 +692,12 @@ export function ProjectDetailPage() {
     // Recent activity log list
     const areaRecentLogs = activityLogs.filter((log) => log.entity_id === area.id)
 
-    const tendedWeeks = useMemo(() => {
-      const weeks = [false, false, false, false, false]
-      const now = Date.now()
-      const oneWeekMs = 7 * 24 * 60 * 60 * 1000
-
-      const markWeek = (dateStr: string) => {
-        const date = new Date(dateStr).getTime()
-        const diff = now - date
-        if (diff >= 0 && diff < 5 * oneWeekMs) {
-          const weekIdx = Math.floor(diff / oneWeekMs)
-          if (weekIdx >= 0 && weekIdx < 5) {
-            weeks[weekIdx] = true
-          }
-        }
-      }
-
-      for (const log of areaRecentLogs) {
-        if (log.created_at) markWeek(log.created_at)
-      }
-      for (const t of completedTasks) {
-        if (t.completed_at) markWeek(t.completed_at)
-      }
-
-      return weeks
-    }, [areaRecentLogs, completedTasks])
-
+    // tendedWeeks hoisted above the early return — E7
     const tendedCount = tendedWeeks.filter(Boolean).length
 
     return (
-      <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      // deviation(2026-07-18 audit): export caps at 760px; Kai wants full width
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid #cfc7b0', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ padding: '30px 40px 36px', position: 'relative', zIndex: 10 }}>
@@ -839,6 +870,7 @@ export function ProjectDetailPage() {
             </span>
           </div>
         </div>
+        {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )
   }

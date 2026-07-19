@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProjects, useTimeEntries } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { writeRow } from '../../lib/outbox'
+import { Button } from '../../components/kit'
 import type { Project } from '../../lib/types'
 
 function useIsMobile(): boolean {
@@ -60,6 +61,7 @@ const SPEC_VARIANTS = [
 
 export function HerbariumPage() {
   const isMobile = useIsMobile()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: projects = [], isLoading } = useProjects()
@@ -295,7 +297,11 @@ export function HerbariumPage() {
               <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The Herbarium</h1>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever \u273f</div>
             </div>
-            <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline', paddingBottom: 6 }}>see the garden as it was \u2192</Link>
+            {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, paddingBottom: 6 }}>
+              <Button variant="secondary" onClick={() => navigate('/projects')}>\u2190 Back to the garden</Button>
+              <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was \u2192</Link>
+            </div>
           </div>
           {isLoading ? <div style={{ padding: 60, textAlign: 'center', color: 'var(--ink-muted)' }}>Reading the field guide...</div>
           : !hasItems ? renderEmptyState()
