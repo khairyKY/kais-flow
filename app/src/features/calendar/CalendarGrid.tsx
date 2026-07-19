@@ -49,6 +49,8 @@ interface CalendarGridProps {
   /** Right-click on empty grid space (not an existing event) — resolves the exact slot under the cursor. */
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
   conflictedIds?: string[]
+  /** Effects 21 — id of an event just created by an external drop; its chip plays the settle-in. */
+  justDroppedId?: string | null
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -84,6 +86,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onEventContextMenu,
   onGridContextMenu,
   conflictedIds,
+  justDroppedId,
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
@@ -155,6 +158,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const classes = ['fc-event-type-' + e.type]
         if (e.linked) classes.push('fc-event-linked')
         if (conflictedIds?.includes(e.id)) classes.push('fc-event-conflict')
+        if (e.id === justDroppedId) classes.push('kf-settle-in')
         const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
         if (e.color) {
           // Calendar.dc.html:209-211 — colored events keep a ~20% tint fill AND the solid

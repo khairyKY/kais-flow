@@ -4,7 +4,7 @@
   --fc-border-color: var(--line-dashed);
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: var(--bg-input);
-  --fc-today-bg-color: rgba(168, 160, 190, 0.1);
+  --fc-today-bg-color: color-mix(in srgb, var(--acc-lavender) 10%, transparent);
   --fc-now-indicator-color: var(--acc-lavender);
   --fc-event-bg-color: var(--paper-event);
   --fc-event-border-color: var(--line-solid);
@@ -14,7 +14,7 @@
   --fc-button-hover-bg-color: var(--bg-surface);
   --fc-button-active-bg-color: var(--bg-surface);
   --fc-button-text-color: var(--text-primary);
-  --fc-highlight-color: rgba(168, 160, 190, 0.16);
+  --fc-highlight-color: color-mix(in srgb, var(--acc-lavender) 16%, transparent);
   font-family: var(--font-ui);
   font-size: var(--fs-body-s);
 }
@@ -134,7 +134,7 @@
    (short layout is a single row where the time carries a trailing dash). */
 .fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
-.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5), var(--shadow-crisp); }
+.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
 
 /* All-day row */
 .fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: 9px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
@@ -142,8 +142,8 @@
 .fc .fc-daygrid-event {
   border-radius: 2px;
   border-left: 3px solid var(--acc-lavender);
-  background: rgba(168, 160, 190, 0.2);
-  border-color: rgba(168, 160, 190, 0.5);
+  background: color-mix(in srgb, var(--acc-lavender) 20%, transparent);
+  border-color: color-mix(in srgb, var(--acc-lavender) 50%, transparent);
   font-size: 10.5px;
   color: var(--acc-lavender-text);
 }
@@ -163,7 +163,7 @@
   font-size: 10px;
   color: var(--text-tertiary);
 }
-.fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5); }
+.fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent); }
 .fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
 
 /* Drag mirror + resize handle — fully opaque: at 0.85 the mirror stacked over the still-visible
@@ -176,11 +176,18 @@
 /* Time block — dashed border to distinguish from standalone events */
 .fc .fc-timegrid-event.fc-event-type-time_block {
   border-left: 3px dashed var(--acc-lavender);
-  background: rgba(168, 160, 190, 0.08);
+  background: color-mix(in srgb, var(--acc-lavender) 8%, transparent);
+}
+
+/* Night guard — colors.dark.css has no --paper-event value yet, so event chips would keep
+   the daylight cream fill on the night grid. Scoped here until the token lands (foundation
+   patch requested: --paper-event: var(--sky-panel-strong) in colors.dark.css). */
+[data-theme="night"] .fc {
+  --fc-event-bg-color: var(--sky-panel-strong);
 }
 
 /* Task-linked block — blush edge (existing, kept for clarity) */
-.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 rgba(212, 168, 176, 0.5), var(--shadow-crisp); }
+.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
 
 /* Conflict highlight — only for type='event' */
 .fc .fc-timegrid-event.fc-event-conflict {
@@ -205,5 +212,17 @@
 }
 .cal-motion-on .fc-timegrid-event.kf-snap-flash {
   animation: calGridSnapFlash 120ms var(--ease-out);
+}
+
+/* Effects 21 "Settle-in" — a task dropped from the rail lands: falls, overshoots a breath,
+   settles. One-shot on the freshly created chip (CalendarGrid gets the id via justDroppedId).
+   Ends at transform:none per the 2026-07-18 containing-block ruling. */
+@keyframes calSettleIn {
+  0%   { transform: translateY(-26px); opacity: 0; }
+  60%  { transform: translateY(2px) scale(1.03) rotate(1deg); opacity: 1; }
+  100% { transform: none; }
+}
+.cal-motion-on .fc-timegrid-event.kf-settle-in {
+  animation: calSettleIn 700ms var(--ease-out);
 }
 

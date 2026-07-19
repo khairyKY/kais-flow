@@ -147,6 +147,9 @@ export function TimeField({ value, onChange, style }: { value: string; onChange:
               boxShadow: 'var(--shadow-popover)',
               borderRadius: 5,
               padding: 4,
+              // Overlay rules (Motion 3c popover dialect) — entryFadeUp is a global token
+              // keyframe, so it reaches this body-level portal too.
+              animation: 'entryFadeUp 200ms var(--ease-out)',
             }}
           >
             {OPTIONS.map((t, i) => {

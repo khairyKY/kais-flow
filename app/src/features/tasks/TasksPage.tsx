@@ -163,11 +163,11 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
   return (
     // deviation(2026-07-18 audit): rail pinned (sticky + own scroll) while the list scrolls —
     // neither the code nor the export pinned it; Kai wants it pinned.
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'rgba(234,227,210,0.35)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: '100vh', overflowY: 'auto' }}>
+    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: '100vh', overflowY: 'auto' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: -4 }}>Organize</div>
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} left={22} width={58} tint="rgba(122,148,110,0.4)" rotate={-2} />
+        <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
           {domains.map((d) => (
@@ -184,7 +184,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
       </TapeCard>
 
       <TapeCard tilt={0.4} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} right={26} width={52} tint="rgba(168,160,190,0.42)" rotate={2} />
+        <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
           {areas.map((a) => (
@@ -197,7 +197,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
       </TapeCard>
 
       <TapeCard tilt={-0.35} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} left={30} width={56} tint="rgba(154,180,190,0.42)" rotate={-1.5} />
+        <OffsetTape top={-9} left={30} width={56} tint="color-mix(in srgb, var(--acc-hydrangea) 42%, transparent)" rotate={-1.5} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
           {projects.slice(0, 4).map((p) => {
@@ -255,7 +255,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
           </>
         )}
         {doneToday.length === 0 && doneEarlier.length === 0 && (
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', padding: '8px 2px' }}>Nothing finished yet today.</div>
+          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', padding: '8px 2px' }}>Nothing finished yet today.</div>
         )}
 
         {doneEarlier.length > 0 && (
@@ -303,10 +303,24 @@ export function TasksPage() {
   // somewhere to play before the row actually leaves the list.
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null)
   const [completingIds, setCompletingIds] = useState<Set<string>>(new Set())
+  // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
+  // hand banner. Fires once per calendar day, ever (localStorage gate).
+  const [dayComplete, setDayComplete] = useState(false)
   function handleRowComplete(task: Task) {
     completeTask(task)
     setJustCompletedId(task.id)
     if (!motion) return
+    const todayOpen = filterByList(tasks, 'today', now).filter((t) => t.status === 'todo')
+    if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id)) {
+      const dayKey = new Date().toDateString()
+      try {
+        if (localStorage.getItem('kf_day_complete') !== dayKey) {
+          localStorage.setItem('kf_day_complete', dayKey)
+          setDayComplete(true)
+          window.setTimeout(() => setDayComplete(false), 3400)
+        }
+      } catch { /* private mode — skip the ceremony */ }
+    }
     setCompletingIds((prev) => new Set(prev).add(task.id))
     window.setTimeout(() => {
       setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
@@ -431,7 +445,15 @@ export function TasksPage() {
   // (Tasks.dc.html:253-256) so the Organize rail starts level with the header.
   return (
     <div style={{ maxWidth: 1180 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: singleCol ? '1fr' : 'minmax(0,1fr) 288px', maxWidth: singleCol ? 780 : undefined }}>
+      {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only. */}
+      <style>{`
+        .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr) 288px; }
+        @media (max-width: 767px) {
+          .tasks-grid { grid-template-columns: 1fr; }
+          .tasks-rail { display: none; }
+        }
+      `}</style>
+      <div className={singleCol ? undefined : 'tasks-grid'} style={{ display: singleCol ? 'block' : undefined, maxWidth: singleCol ? 780 : undefined }}>
         <div style={{ minWidth: 0, maxWidth: 780 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -452,13 +474,19 @@ export function TasksPage() {
         </div>
 
         <TabBar active={activeTab} todayCount={todayCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} />
-        {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', marginTop: 12 }}>{caption}</div>}
+        {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
+        {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
+        {!singleCol && (
+          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
+            swipe → for actions · swipe ← to delete
+          </div>
+        )}
 
         {!singleCol && domains.length > 0 && (
           <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
             <span
               onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? '#8A4A58' : 'var(--ink-muted)', background: !domainChip ? 'rgba(212,168,176,0.2)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? '#8A4A58' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
             >
               All
             </span>
@@ -466,7 +494,7 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? '#8A4A58' : 'var(--ink-muted)', background: domainChip === d.id ? 'rgba(212,168,176,0.2)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? '#8A4A58' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
                 {d.name}
               </span>
@@ -493,14 +521,29 @@ export function TasksPage() {
           </form>
         )}
 
+        {/* Effects 4 — banner rises 400ms, dwells 3s; petals ride the token petalFall (900ms) */}
+        {dayComplete && (
+          <div style={{ position: 'relative', marginTop: 18 }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} className="tr-petal tr-burst" style={{ left: `${16 + i * 17}%`, top: 0, animationDelay: `${i * 60}ms` }} />
+            ))}
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--acc-gold)', textAlign: 'center', animation: 'entryFadeUp 400ms var(--ease-out) both' }}>
+              All done. The garden can rest. ✿
+            </div>
+          </div>
+        )}
         {isDone ? (
           <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} />
         ) : (
         <div style={{ paddingTop: isSomeday ? 16 : 0 }}>
           {groups.length === 0 ? (
-            <p style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', margin: '16px 0 0' }}>
-              {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
-            </p>
+            // States t1 rule — the surface's own flower as seed + one hand line (the quick-add above is the one action)
+            <div style={{ margin: '28px 0 0', textAlign: 'center' }}>
+              <img src={isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/bud.png`} alt="" style={{ height: 44, margin: '0 auto', display: 'block', filter: 'var(--shadow-drop-sm)', opacity: 0.9 }} />
+              <p style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', margin: '10px 0 0' }}>
+                {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
+              </p>
+            </div>
           ) : (
             groups.map((group) => (
               <div key={group.key}>
@@ -537,7 +580,7 @@ export function TasksPage() {
           )}
 
           {isSomeday && (
-            <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>
+            <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>
               pull one up whenever you're ready — it keeps until then
             </div>
           )}
@@ -545,7 +588,11 @@ export function TasksPage() {
         )}
         </div>
 
-        {!singleCol && <OrganizeRail domains={domains} projects={projects} areas={areas} tasks={displayTasks} />}
+        {!singleCol && (
+          <div className="tasks-rail" style={{ minWidth: 0 }}>
+            <OrganizeRail domains={domains} projects={projects} areas={areas} tasks={displayTasks} />
+          </div>
+        )}
       </div>
 
       {kbSnoozeTask && (

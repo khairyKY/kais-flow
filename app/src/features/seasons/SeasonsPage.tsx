@@ -159,7 +159,7 @@ export function SeasonsPage() {
       <div style={{ marginTop: 30 }}>
         <SectionLabel>The seasons row</SectionLabel>
         <div style={{ marginTop: 16, width: '100%', maxWidth: 1240, border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             {SEASON_ORDER.map((season, i) => {
               const meta = SEASON_META[season]
               const sample = SEASON_SAMPLE[season]
@@ -187,7 +187,7 @@ export function SeasonsPage() {
       <div style={{ marginTop: 34 }}>
         <SectionLabel>Three composites — season × weather, enough to prove the matrix</SectionLabel>
         <div style={{ marginTop: 16, width: '100%', maxWidth: 1240, border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <SeasonStage
               bg="#EBE5CE" radial="linear-gradient(rgba(154,180,190,0.18),rgba(154,180,190,0) 60%)"
               label="Rainy summer day" date="Friday · 10 July · rain" greeting="Good morning, Kai"

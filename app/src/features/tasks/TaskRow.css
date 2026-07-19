@@ -36,6 +36,10 @@
 }
 .tr-checking .tr-petal-live { animation: petalFall 400ms var(--ease-out) forwards; }
 
+/* Effects 4 "Day complete" — 5-petal burst over the finished list, once per calendar day
+   (TasksPage owns the once-a-day gate). Rides the token petalFall at the recipe's 900ms. */
+.motion-on .tr-burst { animation: petalFall 900ms var(--ease-out) forwards; }
+
 /* ── Swipe actions (1b) — pointer-driven reveal, snaps to rest positions. ── */
 .tr-swipe-actions {
   position: absolute; inset: 0; display: flex; align-items: stretch; pointer-events: none;

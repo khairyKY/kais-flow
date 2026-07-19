@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
+import { useMotionEnabled } from '../../lib/motion'
 
 // ── Pixel contract: design-export/Onboarding.dc.html — 1a-1g (the seven steps) + 1h
 // (iPhone, full-screen, CTA pinned). One React tree; the phone chrome from 1h (dots-only
@@ -21,9 +22,9 @@ const SEEDS = [
 ]
 
 const PILLARS = {
-  plan: { n: 1, label: 'Plan', bg: 'rgba(154,180,190,0.28)', color: 'var(--acc-hydrangea-deep)' },
-  tend: { n: 2, label: 'Tend', bg: 'rgba(122,148,110,0.24)', color: 'var(--acc-sage-text)' },
-  cultivate: { n: 3, label: 'Cultivate', bg: 'rgba(212,199,138,0.32)', color: 'var(--acc-buttercream-text)' },
+  plan: { n: 1, label: 'Plan', bg: 'color-mix(in srgb, var(--acc-hydrangea) 28%, transparent)', color: 'var(--acc-hydrangea-deep)' },
+  tend: { n: 2, label: 'Tend', bg: 'color-mix(in srgb, var(--acc-moss) 24%, transparent)', color: 'var(--acc-sage-text)' },
+  cultivate: { n: 3, label: 'Cultivate', bg: 'color-mix(in srgb, var(--acc-buttercream) 32%, transparent)', color: 'var(--acc-buttercream-text)' },
 }
 
 const STYLES = `
@@ -50,7 +51,7 @@ const STYLES = `
   .ob-seedchip { width: 36px; height: 36px; border-radius: 10px; background: var(--paper-parchment); border: 1px solid var(--line-card); display: flex; align-items: center; justify-content: center; flex: none; padding: 0; cursor: pointer; }
   .ob-seedchip.on { outline: 2px solid var(--paper-linen); box-shadow: 0 0 0 3px var(--acc-terra); }
   .ob-nudge { display: flex; align-items: center; gap: 12px; margin-top: 24px; width: 100%; background: var(--paper-parchment); border: 1px dashed var(--line-solid); border-radius: 8px; padding: 12px 16px; }
-  .ob-hand { font-family: var(--font-hand); color: #7a745f; }
+  .ob-hand { font-family: var(--font-hand); color: var(--ink-muted); }
   .ob-int-row { display: flex; align-items: center; gap: 13px; border: 1px solid var(--line-card); border-radius: 10px; padding: 13px 16px; background: var(--paper-parchment); }
   .ob-int-btn { border: 1px solid var(--line-solid); background: var(--paper-bone); color: var(--ink-body); font-family: inherit; font-size: 12.5px; padding: 8px 16px; border-radius: 999px; cursor: pointer; text-decoration: none; display: inline-block; }
   .ob-terrarium { width: 100%; margin-top: 26px; position: relative; height: 170px; background: linear-gradient(180deg,#F4EFE0,#EDE6D3); border: 1px solid var(--line-card); border-radius: 12px; overflow: hidden; }
@@ -59,6 +60,24 @@ const STYLES = `
   .ob-pebble { width: 10px; height: 10px; border-radius: 50%; background: #5a4a30; opacity: 0.7; }
   .ob-terrarium-note { position: absolute; top: 12px; right: 16px; font-family: var(--font-hand); font-size: 16px; color: #8f7a54; transform: rotate(-2deg); }
   .ob-mobile-only { display: none; }
+  /* Effects 9 "Ink bleed" — onboarding lines sharpen from a soft blur, 480ms, 180ms stagger.
+     Effects 21 "Settle-in" — the step-7 seeds drop in and settle (700ms, overshoot, ends at
+     transform:none per the 2026-07-18 containing-block ruling). Gated by .ob-motion
+     (useMotionEnabled — onboarding renders outside the app-shell gate); reduced-motion is
+     neutralized globally in tokens/motion.css. */
+  @keyframes obInkBleed { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: none; } }
+  @keyframes obSettleIn {
+    0%   { transform: translateY(-26px); opacity: 0; }
+    60%  { transform: translateY(2px) scale(1.03) rotate(1deg); opacity: 1; }
+    100% { transform: none; opacity: 1; }
+  }
+  .ob-motion .ob-h { animation: obInkBleed 480ms var(--ease-out) both; }
+  .ob-motion .ob-sub { animation: obInkBleed 480ms var(--ease-out) 180ms both; }
+  .ob-motion .ob-terrarium-seeds > * { animation: obSettleIn 700ms var(--ease-out) both; }
+  .ob-motion .ob-terrarium-seeds > *:nth-child(2) { animation-delay: 90ms; }
+  .ob-motion .ob-terrarium-seeds > *:nth-child(3) { animation-delay: 180ms; }
+  .ob-motion .ob-terrarium-seeds > *:nth-child(4) { animation-delay: 270ms; }
+  .ob-motion .ob-terrarium-seeds > *:nth-child(5) { animation-delay: 360ms; }
   @media (max-width: 767px) {
     .ob-page { padding: 0; background: var(--paper-linen); }
     .ob-card { width: 100%; height: 100dvh; max-height: none; border-radius: 0; border: none; box-shadow: none; }
@@ -122,8 +141,8 @@ function Footer({ onBack, skip, ctaLabel, onCta }: { onBack?: () => void; skip?:
 
 const NudgeArrow = (
   <svg width="42" height="20" viewBox="0 0 42 20" fill="none" style={{ flex: 'none' }}>
-    <path d="M2 11 C 13 4, 24 4, 34 9" stroke="#B5654A" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="1 4.5" />
-    <path d="M29 5 L 35 9.5 L 28 12.5" stroke="#B5654A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 11 C 13 4, 24 4, 34 9" stroke="var(--acc-terra)" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="1 4.5" />
+    <path d="M29 5 L 35 9.5 L 28 12.5" stroke="var(--acc-terra)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 
@@ -143,6 +162,7 @@ export function OnboardingPage() {
   const { data: settings } = useAppSettings()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const motionOn = useMotionEnabled()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [workspaceName, setWorkspaceName] = useState('Personal')
@@ -185,7 +205,7 @@ export function OnboardingPage() {
     : <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{step === 0 ? 'Your Flow' : appName}</div>
 
   return (
-    <div className="ob-page">
+    <div className={`ob-page${motionOn ? ' ob-motion' : ''}`}>
       <style>{STYLES}</style>
       <div className="ob-card">
         <div className="ob-grain" />

@@ -47,7 +47,7 @@ function ResultGroup({ label, tint, hits, query, onGo, offset, activeIndex, onHo
           // plus a faint lavender outline ring — Kai's explicit "faint blue outline" ask.
           style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 6px', width: '100%', textAlign: 'left', background: offset + i === activeIndex ? 'var(--paper-bone)' : 'none', boxShadow: offset + i === activeIndex ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none', borderRadius: 5, border: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
         >
-          <span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '50%', border: hit.entity_type === 'task' ? '1.5px solid #bfb8a3' : 'none', background: hit.entity_type === 'inbox_item' ? 'var(--acc-hydrangea)' : 'transparent', flex: 'none' }} />
+          <span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '50%', border: hit.entity_type === 'task' ? '1.5px solid var(--check-border)' : 'none', background: hit.entity_type === 'inbox_item' ? 'var(--acc-hydrangea)' : 'transparent', flex: 'none' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14.5, color: 'var(--ink-body)' }}>
               <Highlight text={hit.title} query={query} />
@@ -74,10 +74,11 @@ function EmptyResult({ query }: { query: string }) {
       <div style={{ marginTop: 9, alignSelf: 'flex-start', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>0 results</div>
       <div style={{ position: 'relative', marginTop: 34, width: 150, height: 110 }}>
         <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, #b9a98a, #a3937a 70%)', boxShadow: 'inset 0 3px 6px rgba(60,52,38,0.28)' }} />
-        <div style={{ position: 'absolute', left: '50%', bottom: 30, width: 46, height: 46, marginLeft: -30, borderRadius: '50%', border: '3px solid #8b8471', background: 'rgba(244,241,234,0.35)' }} />
-        <div style={{ position: 'absolute', left: '50%', bottom: 14, width: 22, height: 3.5, marginLeft: 10, background: '#8b8471', borderRadius: 2, transform: 'rotate(38deg)' }} />
+        <div style={{ position: 'absolute', left: '50%', bottom: 30, width: 46, height: 46, marginLeft: -30, borderRadius: '50%', border: '3px solid var(--ink-faint)', background: 'rgba(244,241,234,0.35)' }} />
+        <div style={{ position: 'absolute', left: '50%', bottom: 14, width: 22, height: 3.5, marginLeft: 10, background: 'var(--ink-faint)', borderRadius: 2, transform: 'rotate(38deg)' }} />
       </div>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: '#7a745f', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }}>
+      {/* deviation(2026-07-19 X3): hand notes ride var(--ink-muted) so night matches Night.dc's #c9c0d8 (export's light #7a745f was illegible on the night ground) */}
+      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }}>
         Nothing's come up for that — try fewer words, or let the chat dig deeper.
       </div>
       <button
@@ -135,7 +136,7 @@ export function SearchPage() {
 
   return (
     <div style={{ width: 920, maxWidth: '100%', margin: '0 auto', padding: '30px 34px 48px' }}>
-      <style>{'.search-hl{background:rgba(201,165,90,0.32);border-radius:2px;padding:0 2px;color:var(--ink-body)}'}</style>
+      <style>{'.search-hl{background:color-mix(in srgb, var(--acc-gold-warm) 32%, transparent);border-radius:2px;padding:0 2px;color:var(--ink-body)}'}</style>
 
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
         <span style={{ fontSize: 19, color: 'var(--ink-faint)' }}>⌕</span>
@@ -164,8 +165,9 @@ export function SearchPage() {
       {trimmed && !loading && results.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
           <div style={{ display: 'flex', gap: 7, flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: '#2a2420', color: '#F4F1EA', border: '1px solid #2a2420', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              All <b style={{ fontWeight: 400, color: 'rgba(244,241,234,0.55)' }}>{results.length}</b>
+            {/* Active chip inverts with the theme: dark-on-cream by day, cream-on-violet at night */}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: 'var(--ink-body)', color: 'var(--paper-linen)', border: '1px solid var(--ink-body)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              All <b style={{ fontWeight: 400, color: 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' }}>{results.length}</b>
             </span>
             {tasks.length > 0 && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>

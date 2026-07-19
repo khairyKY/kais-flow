@@ -31,9 +31,12 @@
   will-change: transform, opacity;
 }
 
-/* Animations scoped to motion-on class */
+/* Animations scoped to motion-on class.
+   Keyframe names are fp-prefixed where they'd collide with tokens/motion.css —
+   @keyframes are global, and an unprefixed petalFall here silently replaced the
+   token one that TaskRow's completion petal animates with. */
 .app-shell.motion-on .petal {
-  animation: petalFall 7s linear infinite;
+  animation: fpPetalFall 7s linear infinite;
 }
 
 .app-shell.motion-on .mote {
@@ -41,7 +44,7 @@
 }
 
 .app-shell.motion-on .fly {
-  animation: fireflyPulse 4.5s ease-in-out infinite, fireflyDrift 13s ease-in-out infinite alternate;
+  animation: fireflyPulse 4.5s ease-in-out infinite, fpFireflyDrift 13s ease-in-out infinite alternate;
 }
 
 .app-shell.motion-on .focus-sway {
@@ -66,7 +69,7 @@
 }
 
 /* Keyframes definitions */
-@keyframes petalFall {
+@keyframes fpPetalFall {
   0% {
     transform: translate(0, -20px) rotate(0deg);
     opacity: 0;
@@ -127,7 +130,7 @@
   }
 }
 
-@keyframes fireflyDrift {
+@keyframes fpFireflyDrift {
   0% {
     transform: translate(0, 0);
   }
@@ -180,6 +183,14 @@
   }
 }
 
+/* Overlay in — Motion 3c: scrim and card arrive together, 210ms up-and-settle.
+   Card rides the global entryFadeUp token keyframe; scrim needs its own fade. */
+@keyframes fpFadeIn {
+  from { opacity: 0; }
+}
+.app-shell.motion-on .fp-scrim-in { animation: fpFadeIn 210ms var(--ease-out); }
+.app-shell.motion-on .fp-card-in { animation: entryFadeUp 210ms var(--ease-out); }
+
 /* Washi tape style for custom settings popover */
 .washi-tape-settings {
   position: absolute;
@@ -187,7 +198,7 @@
   left: 30px;
   width: 52px;
   height: 16px;
-  background: rgba(138, 154, 126, 0.4);
+  background: color-mix(in srgb, var(--acc-sage) 40%, transparent);
   background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 4px, transparent 4px 8px);
   transform: rotate(-2deg);
   border-radius: 1px;

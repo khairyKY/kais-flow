@@ -486,7 +486,7 @@ export function FocusPage() {
         )}
 
         {/* The 7 beds */}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 90px', zIndex: 10 }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(90px, 6vw)', zIndex: 10, overflowX: 'auto' }}>
           {/* Bed 1: Tasks */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 150, filter: 'var(--shadow-drop-sm)' }} />
@@ -622,7 +622,7 @@ export function FocusPage() {
 
   // 6. Base Timer layout (Pomodoro / Break / Stopwatch)
   return (
-    <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
+    <div style={{ position: 'relative', width: '100%', height: 'calc(100dvh - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
       <div className="grain" style={{ pointerEvents: 'none' }}></div>
 
       {/* Quiet top strip */}
@@ -710,7 +710,7 @@ export function FocusPage() {
                           background: isDone || isActive ? 'var(--acc-terra)' : 'none',
                           border: isDone || isActive ? 'none' : '1.5px solid var(--line-sidebar)',
                           outline: isActive ? '2px solid var(--paper-linen)' : 'none',
-                          boxShadow: isActive ? '0 0 0 3.5px rgba(181,101,74,0.35)' : 'none',
+                          boxShadow: isActive ? '0 0 0 3.5px color-mix(in srgb, var(--acc-terra) 35%, transparent)' : 'none',
                         }}
                       />
                     )
@@ -752,7 +752,7 @@ export function FocusPage() {
                 </div>
               </div>
             </div>
-            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-1deg)' }}>
+            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
               stand up — go water something real ✿
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
@@ -843,7 +843,7 @@ export function FocusPage() {
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 30, position: 'relative' }}>
               <span
-                style={{ width: 19, height: 19, border: '1.5px solid #bfb8a3', borderRadius: 6, flex: 'none', cursor: 'pointer' }}
+                style={{ width: 19, height: 19, border: '1.5px solid var(--check-border)', borderRadius: 6, flex: 'none', cursor: 'pointer' }}
                 onClick={handleCheckOff}
                 title="Complete task"
               />
@@ -874,8 +874,9 @@ export function FocusPage() {
                     </div>
                   ))}
                   {tasks.filter(t => t.status === 'todo').length === 0 && (
-                    <div style={{ padding: '12px', fontSize: 12, color: 'var(--ink-muted)', textAlign: 'center' }}>
-                      No tasks left!
+                    // States t1 voice — hand line, no alarm, never "error"
+                    <div style={{ padding: '12px', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>
+                      all clear — nothing waiting ✿
                     </div>
                   )}
                 </div>
@@ -884,7 +885,7 @@ export function FocusPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
               {activeProject && (
-                <span className="chip" style={{ background: 'rgba(122,148,110,0.2)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
+                <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
                   {activeProject.name}
                 </span>
               )}
@@ -902,7 +903,7 @@ export function FocusPage() {
               on stop, this lands automatically
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span className="chip" style={{ background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
+              <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
                 work · {Math.round(stopwatchSeconds / 60)}m
               </span>
               <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>
@@ -987,7 +988,7 @@ export function FocusPage() {
         )}
 
         {mode !== 'break' && (
-          <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: '#7a745f', transform: 'rotate(-0.8deg)' }}>
+          <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>
             nothing else exists for the next hour ✿
           </div>
         )}
@@ -1008,7 +1009,7 @@ export function FocusPage() {
         )}
 
         {/* The 7 small beds */}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 130px', zIndex: 10 }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(130px, 7vw)', zIndex: 10 }}>
           <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 120, filter: 'var(--shadow-drop-sm)' }} title={cherryData.note} />
           <img className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 96, animationDelay: '1.2s', filter: 'var(--shadow-drop-sm)' }} title={hydrangeaData.note} />
           <img className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 100, animationDelay: '2.6s', filter: 'var(--shadow-drop-sm)' }} title={daisyData.note} />
@@ -1018,7 +1019,7 @@ export function FocusPage() {
           <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
         </div>
         <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-        <div style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-1deg)' }}>
+        <div style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
           the garden grows while you work
         </div>
         <span
@@ -1031,8 +1032,10 @@ export function FocusPage() {
 
       {/* 1e: SETTINGS POPOVER (Modal Overlay) */}
       {isSettingsOpen && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.05)', zIndex: 100 }}>
-          <div style={{ position: 'relative', width: 420, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px', transform: 'rotate(-0.3deg)' }}>
+        <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.05)', zIndex: 100 }}>
+          {/* deviation(2026-07-18 audit): no rotate() on the settings card — text containers stay
+              transform-free for crisp rendering (same ruling as C4). Washi tape keeps the tilt. */}
+          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
             {/* Washi tape decoration */}
             <span className="washi-tape-settings"></span>
 
@@ -1065,9 +1068,9 @@ export function FocusPage() {
                     padding: '4px 9px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    background: settings.focusRoundMin === t ? 'rgba(181,101,74,0.16)' : 'none',
+                    background: settings.focusRoundMin === t ? 'color-mix(in srgb, var(--acc-terra) 16%, transparent)' : 'none',
                     color: settings.focusRoundMin === t ? 'var(--acc-terra)' : 'var(--ink-muted)',
-                    border: settings.focusRoundMin === t ? '1px solid rgba(181,101,74,0.3)' : '1px solid var(--line-solid)',
+                    border: settings.focusRoundMin === t ? '1px solid color-mix(in srgb, var(--acc-terra) 30%, transparent)' : '1px solid var(--line-solid)',
                   }}
                 >
                   {t}m
@@ -1094,9 +1097,9 @@ export function FocusPage() {
                         padding: '4px 9px',
                         borderRadius: 999,
                         cursor: 'pointer',
-                        background: settings.shortBreakMin === t ? 'rgba(122,148,110,0.2)' : 'none',
+                        background: settings.shortBreakMin === t ? 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' : 'none',
                         color: settings.shortBreakMin === t ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        border: settings.shortBreakMin === t ? '1px solid rgba(122,148,110,0.35)' : '1px solid var(--line-solid)',
+                        border: settings.shortBreakMin === t ? '1px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)' : '1px solid var(--line-solid)',
                       }}
                     >
                       {t}m
@@ -1123,9 +1126,9 @@ export function FocusPage() {
                         padding: '4px 9px',
                         borderRadius: 999,
                         cursor: 'pointer',
-                        background: settings.longBreakMin === t ? 'rgba(122,148,110,0.2)' : 'none',
+                        background: settings.longBreakMin === t ? 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' : 'none',
                         color: settings.longBreakMin === t ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        border: settings.longBreakMin === t ? '1px solid rgba(122,148,110,0.35)' : '1px solid var(--line-solid)',
+                        border: settings.longBreakMin === t ? '1px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)' : '1px solid var(--line-solid)',
                       }}
                     >
                       {t}m
@@ -1230,7 +1233,7 @@ export function FocusPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-1deg)' }}>
+              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
                 saves quietly, per you ✿
               </span>
               <span

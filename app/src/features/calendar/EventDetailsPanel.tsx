@@ -88,12 +88,14 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(11, 10, 8, 0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(11, 10, 8, 0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'edpFadeIn 210ms var(--ease-out)' }}
       onClick={onClose}
     >
+      {/* Motion 3c — scrim and card arrive together, 210ms up-and-settle */}
+      <style>{'@keyframes edpFadeIn{from{opacity:0}}'}</style>
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 280, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden' }}
+        style={{ width: 280, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         <div style={{ height: 6, background: stripColor }} />
         <div style={{ padding: '16px 18px' }}>
@@ -126,7 +128,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {linkedTask ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'rgba(212,168,176,0.16)', color: '#8A4A58' }}>Task</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: '#8A4A58' }}>Task</span>
             ) : (
               (['event', 'time_block'] as CalendarEventType[]).map((t) => (
                 <button
@@ -136,7 +138,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                   style={{
                     font: 'inherit', cursor: 'pointer', border: type === t ? 'none' : '1px solid var(--line-solid)',
                     fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999,
-                    background: type === t ? 'rgba(168,160,190,0.22)' : 'transparent',
+                    background: type === t ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                     color: type === t ? 'var(--acc-lavender-text)' : 'var(--ink-muted)',
                   }}
                 >

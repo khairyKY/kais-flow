@@ -108,20 +108,24 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96, animation: 'seOverlayFade 210ms var(--ease-out)' }}
       onClick={onClose}
     >
+      {/* Motion 3c — scrim and card arrive together, 210ms up-and-settle */}
+      <style>{'@keyframes seOverlayFade{from{opacity:0}}'}</style>
       <div
         style={{
           width: '100%',
           maxWidth: 400,
           margin: '0 16px',
-          background: 'rgba(251,246,233,0.82)',
+          // Frost rides the paper token so night gets the Night.dc violet glass, not day cream
+          background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(220,214,190,0.6)',
+          border: '1px solid color-mix(in srgb, var(--line-card) 60%, transparent)',
           borderRadius: 8,
           boxShadow: 'var(--shadow-popover)',
           padding: '14px 16px',
+          animation: 'entryFadeUp 210ms var(--ease-out)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -142,7 +146,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         {loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}
-        {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontSize: 13.5, color: 'var(--ink-faint)' }}>No matches.</p>}
+        {/* Search.dc.html 1b voice — same line as the full page's empty state, shortened */}
+        {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
 
         {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} offset={0} />}
         {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} offset={tasks.length} />}

@@ -376,7 +376,7 @@ export function TaskRow({
     gap: 14,
     padding: '13px 2px',
     borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
-    boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+    boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
     background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
     outline: 'none',
   }
@@ -399,7 +399,8 @@ export function TaskRow({
         </span>
         <span style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}>{task.title}</span>
         {justCompleted ? (
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>just now ✿</span>
+          // deviation(2026-07-19 X3): hand notes ride --ink-muted so night matches Night.dc (#c9c0d8)
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>just now ✿</span>
         ) : (
           <>
             {tag && (
@@ -444,14 +445,14 @@ export function TaskRow({
         <span
           className="tr-someday-hover"
           onClick={() => rescheduleDue(task, scheduleToday())}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
           → Today
         </span>
         <span
           className="tr-someday-hover"
           onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
           Schedule ▾
         </span>
@@ -474,15 +475,15 @@ export function TaskRow({
     >
       {swipe.x !== 0 && (
         <div className="tr-swipe-actions" aria-hidden="true">
-          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(168,160,190,0.92)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}>
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'color-mix(in srgb, var(--acc-lavender) 92%, transparent)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}>
             <ScheduleMenuIcon />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Resched</span>
           </div>
-          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(122,148,110,0.94)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'project', x: e.clientX, y: e.clientY })}>
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'color-mix(in srgb, var(--acc-moss) 94%, transparent)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'project', x: e.clientX, y: e.clientY })}>
             <FolderMenuIcon />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Project</span>
           </div>
-          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(201,165,90,0.95)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'snooze', x: e.clientX, y: e.clientY })}>
+          <div style={{ width: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'color-mix(in srgb, var(--acc-gold-warm) 95%, transparent)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={(e) => setPopover({ kind: 'snooze', x: e.clientX, y: e.clientY })}>
             <ClockMenuIcon />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Snooze</span>
           </div>
@@ -553,7 +554,7 @@ export function TaskRow({
         <span
           onClick={() => toggleTop3(task)}
           title={task.top3 ? 'Remove from Top 3' : 'Add to Top 3'}
-          style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}
+          style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-solid)', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}
         >
           {task.top3 ? '★' : '☆'}
         </span>

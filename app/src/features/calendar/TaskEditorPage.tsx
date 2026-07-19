@@ -169,16 +169,16 @@ export function TaskEditorPage() {
         <button
           type="button"
           onClick={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
-          style={{ width: 22, height: 22, border: '1.5px solid #bfb8a3', borderRadius: 6, flex: 'none', marginTop: 9, background: task.status === 'done' ? 'var(--sig-done)' : 'none', cursor: 'pointer', padding: 0 }}
+          style={{ width: 22, height: 22, border: '1.5px solid var(--check-border)', borderRadius: 6, flex: 'none', marginTop: 9, background: task.status === 'done' ? 'var(--sig-done)' : 'none', cursor: 'pointer', padding: 0 }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'done' ? 'rgba(191,184,163,0.3)' : 'rgba(138,154,126,0.18)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
             {linkedInbox?.kind === 'voice' && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>
             )}
             {task.priority != null && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'rgba(201,165,90,0.22)', color: priorityColor(task.priority) ?? 'var(--acc-gold)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: priorityColor(task.priority) ?? 'var(--acc-gold)' }}>
                 {priorityFlag(task.priority)} {task.priority === 1 ? 'Critical' : task.priority === 2 ? 'High' : 'Medium'}
               </span>
             )}
@@ -228,7 +228,7 @@ export function TaskEditorPage() {
                         <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
                       </button>
                     ) : (
-                      <button type="button" aria-label={`Complete ${c.title}`} onClick={() => completeTask(c)} style={{ width: 16, height: 16, border: '1.5px solid #bfb8a3', borderRadius: 4, flex: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
+                      <button type="button" aria-label={`Complete ${c.title}`} onClick={() => completeTask(c)} style={{ width: 16, height: 16, border: '1.5px solid var(--check-border)', borderRadius: 4, flex: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
                     )}
                     <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}>{c.title}</span>
                     {c.duration_min != null && (
@@ -262,7 +262,7 @@ export function TaskEditorPage() {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {linkedEvent && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'rgba(168,160,190,0.16)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 3, padding: '9px 13px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 3, padding: '9px 13px' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>
                       Block · {new Date(linkedEvent.starts_at).toLocaleDateString('en-US', { weekday: 'short' })} {localTimeKey(new Date(linkedEvent.starts_at))}–{localTimeKey(new Date(linkedEvent.ends_at))}
                     </span>
@@ -270,7 +270,7 @@ export function TaskEditorPage() {
                   </span>
                 )}
                 {linkedInbox && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'rgba(154,180,190,0.14)', borderLeft: '3px solid var(--acc-hydrangea)', borderRadius: 3, padding: '9px 13px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)', borderLeft: '3px solid var(--acc-hydrangea)', borderRadius: 3, padding: '9px 13px' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                       Capture · {linkedInbox.kind}, {new Date(linkedInbox.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </span>
@@ -306,7 +306,7 @@ export function TaskEditorPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(0.4deg)' }}>
             {/* washi tape — Editor.dc.html 1a:382 */}
-            <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'rgba(122,148,110,0.4)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
+            <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
             <FLabel style={{ fontSize: 8.5, color: 'var(--ink-hairline)' }}>Project or area</FLabel>
             <Select
@@ -337,7 +337,7 @@ export function TaskEditorPage() {
 
           <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(-0.4deg)' }}>
             {/* washi tape — Editor.dc.html 1a:398 */}
-            <span style={{ position: 'absolute', top: -9, right: 26, width: 52, height: 16, background: 'rgba(168,160,190,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
+            <span style={{ position: 'absolute', top: -9, right: 26, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-lavender) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Schedule</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
@@ -352,7 +352,7 @@ export function TaskEditorPage() {
             <FLabel style={{ fontSize: 8.5, marginTop: 12 }}>Duration</FLabel>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {DURATION_CHIPS.map((m) => (
-                <span key={m} onClick={() => setDuration(task, m)} style={{ ...chipStyle, cursor: 'pointer', ...(task.duration_min === m ? { background: 'rgba(168,160,190,0.22)', color: 'var(--acc-lavender-text)', border: 'none' } : {}) }}>
+                <span key={m} onClick={() => setDuration(task, m)} style={{ ...chipStyle, cursor: 'pointer', ...(task.duration_min === m ? { background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', border: 'none' } : {}) }}>
                   {m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? m % 60 + 'm' : ''}` : `${m}m`}
                 </span>
               ))}
@@ -392,7 +392,7 @@ export function TaskEditorPage() {
             </div>
           </div>
 
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#7a745f', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
+          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
         </div>
       </div>
 

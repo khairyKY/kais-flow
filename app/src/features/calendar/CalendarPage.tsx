@@ -103,7 +103,12 @@ export function CalendarPage() {
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'today' })
-  const [viewKind, setViewKind] = useState<ViewKind>('week')
+  // Calendar.dc.html 1b — phones open on the day view, not a 7-column squeeze.
+  const [viewKind, setViewKind] = useState<ViewKind>(() =>
+    typeof window !== 'undefined' && window.innerWidth <= 767 ? 'day' : 'week',
+  )
+  // Effects 21 — the chip created by a rail drop plays settle-in once.
+  const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
 
   const railTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start)
@@ -210,7 +215,11 @@ export function CalendarPage() {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
     const end = new Date(new Date(start).getTime() + (task.duration_min ?? 30) * 60000).toISOString()
-    scheduleTask(task, start, end)
+    const ev = scheduleTask(task, start, end)
+    if (motionOn) {
+      setJustDroppedId(ev.id)
+      window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
+    }
   }
 
   function cycleDayCount() {
@@ -385,6 +394,7 @@ export function CalendarPage() {
               }}
               onEventClick={handleEventClick}
               onExternalDrop={handleExternalDrop}
+              justDroppedId={justDroppedId}
               dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}

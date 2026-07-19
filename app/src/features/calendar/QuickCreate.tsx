@@ -213,7 +213,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               {k === 'block' ? (
-                <span style={{ width: 16, height: 16, borderLeft: '3px solid var(--acc-lavender)', background: 'rgba(168,160,190,0.2)', borderRadius: 2 }} />
+                <span style={{ width: 16, height: 16, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 20%, transparent)', borderRadius: 2 }} />
               ) : (
                 <img src={`/ds/assets/${k === 'task' ? 'cherry/bud' : 'daisy/midday'}.png`} alt="" style={{ height: 20, opacity: on ? 1 : 0.8 }} />
               )}
@@ -267,12 +267,12 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       {(parsed?.dueAt || parsed?.projectMatch || parsed?.priority != null || eventDate) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)' }}>
           {(parsed?.dueAt || eventDate) && (
-            <span style={chipStyle('rgba(168,160,190,0.22)', 'var(--acc-lavender-text)')}>
+            <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
               → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
             </span>
           )}
-          {parsed?.projectMatch && <span style={chipStyle('rgba(122,148,110,0.2)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}
-          {parsed?.priority != null && <span style={chipStyle('rgba(201,165,90,0.22)', 'var(--acc-gold)')}>{'!'.repeat(4 - parsed.priority)} {parsed.priority === 1 ? 'Critical' : parsed.priority === 2 ? 'High' : 'Medium'}</span>}
+          {parsed?.projectMatch && <span style={chipStyle('color-mix(in srgb, var(--acc-moss) 20%, transparent)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}
+          {parsed?.priority != null && <span style={chipStyle('color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', 'var(--acc-gold)')}>{'!'.repeat(4 - parsed.priority)} {parsed.priority === 1 ? 'Critical' : parsed.priority === 2 ? 'High' : 'Medium'}</span>}
           {expanded && kind === 'task' && <FHelp style={{ marginLeft: 'auto', marginTop: 0 }}>the title types it, the fields catch it</FHelp>}
         </div>
       )}
@@ -350,7 +350,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
                   key={m}
                   type="button"
                   onClick={() => { const [eh, em] = startTime.split(':').map(Number); const total = eh * 60 + em + m; setEndTime(`${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`) }}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: durationMin === m ? 'none' : '1px solid var(--line-solid)', background: durationMin === m ? 'rgba(168,160,190,0.22)' : 'transparent', color: durationMin === m ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: durationMin === m ? 'none' : '1px solid var(--line-solid)', background: durationMin === m ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent', color: durationMin === m ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', cursor: 'pointer' }}
                 >
                   {m >= 60 ? `${m / 60}h` : `${m}m`}
                 </button>
@@ -406,7 +406,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} style={{ accentColor: 'var(--acc-lavender)' }} />
             All day
           </label>
-          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, background: 'rgba(154,180,190,0.12)', borderRadius: 6, padding: '9px 12px' }}>
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 12%, transparent)', borderRadius: 6, padding: '9px 12px' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar · never shown as its own UI</span>
           </div>
@@ -472,7 +472,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   ) : (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: expanded ? 22 : 14, paddingTop: expanded ? 16 : 11, borderTop: '1px dashed var(--line-dashed)' }}>
       {expanded ? (
-        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
+        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
       ) : (
         <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           More options ↗
@@ -508,13 +508,19 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   )
 
   // ── Container: mobile bottom sheet · desktop popover (near click) · expanded modal (centered) ──
+  // Motion 3c — scrim and card arrive together, 210ms up-and-settle (entryFadeUp is the
+  // token keyframe; qcFadeIn is the scrim's plain fade). Exits stay instant for now —
+  // delayed-unmount helper is a foundation-level ask.
+  const overlayAnim = <style>{'@keyframes qcFadeIn{from{opacity:0}}'}</style>
+
   if (isMobile) {
     return (
       <>
-        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998 }} />
+        {overlayAnim}
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, animation: 'qcFadeIn 210ms var(--ease-out)' }} />
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px 22px', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px calc(22px + env(safe-area-inset-bottom))', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', animation: 'entryFadeUp 210ms var(--ease-out)' }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0 10px' }}>
             <span style={{ width: 38, height: 4.5, borderRadius: 3, background: 'var(--line-solid)' }} />
@@ -527,8 +533,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
 
   if (expanded || !anchor) {
     return (
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px' }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'qcFadeIn 210ms var(--ease-out)' }}>
+        {overlayAnim}
+        <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px', animation: 'entryFadeUp 210ms var(--ease-out)' }}>
           {body}
         </div>
       </div>
@@ -544,7 +551,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px' }}
+        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         {body}
       </div>
