@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDeletedItems, restoreItem, deleteItemForever, type DeletedItem } from './api'
+import { flushOutbox } from '../../lib/outbox'
+import { useToastStore } from '../../lib/toastStore'
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -16,36 +17,57 @@ function useIsMobile(): boolean {
 }
 
 export function TrashPage() {
-  const navigate = useNavigate()
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const { data: deletedItems = [], isLoading } = useDeletedItems()
   const [showGlobalConfirm, setShowGlobalConfirm] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const [toastText, setToastText] = useState<string | null>(null)
-  const [toastTarget, setToastTarget] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const pushToast = useToastStore((s) => s.push)
+
+  const baseKey = (type: DeletedItem['type']) =>
+    type === 'Task' ? 'tasks' : type === 'Inbox' ? 'inbox_items' : type === 'Event' ? 'calendar_events' : 'journal_entries'
+
+  // writeRow only patches the base-table cache, never ['deleted_items'] — remove optimistically
+  // here so the row leaves the trash list immediately instead of racing the outbox flush.
+  const dropFromTrashCache = (ids: Set<string>) => {
+    queryClient.setQueryData<DeletedItem[]>(['deleted_items'], (old) => old?.filter((i) => !ids.has(i.id)))
+  }
+
+  // Truth reconvergence: outbox exposes no per-write promise (writeRow is fire-and-forget), but
+  // flushOutbox() is awaitable and its peek is serialized behind the just-queued entry.
+  // ponytail: its `flushing` guard can early-return if another flush is mid-flight, so pad with a
+  // short delay before invalidating; the 30s interval flush is the backstop either way.
+  const invalidateAfterFlush = (keys: string[]) => {
+    void flushOutbox().finally(() => {
+      setTimeout(() => {
+        for (const key of keys) void queryClient.invalidateQueries({ queryKey: [key] })
+      }, 800)
+    })
+  }
 
   const handleRestore = (item: DeletedItem) => {
+    dropFromTrashCache(new Set([item.id]))
     restoreItem(item)
-    queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
-    queryClient.invalidateQueries({ queryKey: [item.type === 'Task' ? 'tasks' : item.type === 'Inbox' ? 'inbox_items' : item.type === 'Event' ? 'calendar_events' : 'journal_entries'] })
-    const routeMap = { Task: '/tasks', Inbox: '/inbox', Event: '/calendar', Journal: '/journal' }
-    setToastText(`Restored to ${item.type === 'Event' ? 'Calendar' : item.type}s`)
-    setToastTarget(routeMap[item.type])
-    setTimeout(() => { setToastText(null); setToastTarget(null) }, 6000)
+    pushToast({ message: `Restored to ${{ Task: 'Tasks', Inbox: 'Inbox', Event: 'Calendar', Journal: 'Journal' }[item.type]}` })
+    invalidateAfterFlush(['deleted_items', baseKey(item.type)])
   }
 
   const handleDeleteForever = (item: DeletedItem) => {
+    dropFromTrashCache(new Set([item.id]))
     deleteItemForever(item)
     setConfirmDeleteId(null)
-    queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
+    pushToast({ message: 'Gone forever' })
+    invalidateAfterFlush(['deleted_items'])
   }
 
   const handleEmptyEverything = () => {
-    for (const item of deletedItems) deleteItemForever(item)
+    const items = deletedItems
+    dropFromTrashCache(new Set(items.map((i) => i.id)))
+    for (const item of items) deleteItemForever(item)
     setShowGlobalConfirm(false)
-    queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
+    pushToast({ message: `Trash emptied — ${items.length} item${items.length === 1 ? '' : 's'} composted` })
+    invalidateAfterFlush(['deleted_items'])
   }
 
   const getDeletionMeta = (deletedAtStr: string) => {
@@ -205,12 +227,6 @@ export function TrashPage() {
           )}
         </div>
       </div>
-      {toastText && (
-        <div style={{ position: 'absolute', left: '50%', bottom: 22, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 12, background: '#2a2420', color: '#F4F1EA', borderRadius: 999, padding: '9px 16px', boxShadow: '0 10px 26px rgba(42,36,32,0.3)', whiteSpace: 'nowrap', zIndex: 45 }}>
-          <span style={{ fontSize: 12 }}>{toastText}</span>
-          {toastTarget && <span onClick={() => navigate(toastTarget)} style={{ fontSize: 12, fontWeight: 600, color: '#C9A55A', cursor: 'pointer' }}>Jump there \u2192</span>}
-        </div>
-      )}
     </div>
   )
 }

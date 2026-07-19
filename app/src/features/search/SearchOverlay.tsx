@@ -10,6 +10,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
@@ -33,7 +34,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     setLoading(true)
     const handle = setTimeout(() => {
       searchHybrid(trimmed)
-        .then(setResults)
+        .then((hits) => {
+          setResults(hits)
+          setActiveIndex(0)
+        })
         .catch(() => setResults([]))
         .finally(() => setLoading(false))
     }, DEBOUNCE_MS)
@@ -54,42 +58,50 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   const tasks = results.filter((r) => r.entity_type === 'task')
   const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
+  // Flat list in render order (Tasks group, then Inbox) so activeIndex maps 1:1 to visible rows.
+  const ordered = [...tasks, ...inboxItems]
 
-  function ResultGroup({ label, dot, hits }: { label: string; dot: string; hits: SearchHit[] }) {
+  function ResultGroup({ label, dot, hits, offset }: { label: string; dot: string; hits: SearchHit[]; offset: number }) {
     return (
       <div style={{ marginTop: 12 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
           {label}
         </div>
-        {hits.map((hit) => (
-          <button
-            key={`${hit.entity_type}-${hit.entity_id}`}
-            type="button"
-            onClick={() => goTo(hit)}
-            className="search-result-row"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 11,
-              width: '100%',
-              textAlign: 'left',
-              background: 'none',
-              border: 'none',
-              borderRadius: 5,
-              padding: '8px 6px',
-              cursor: 'pointer',
-              font: 'inherit',
-            }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flex: 'none' }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{hit.title}</div>
-              {hit.snippet && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
-              )}
-            </div>
-          </button>
-        ))}
+        {hits.map((hit, i) => {
+          const active = offset + i === activeIndex
+          return (
+            <button
+              key={`${hit.entity_type}-${hit.entity_id}`}
+              type="button"
+              onClick={() => goTo(hit)}
+              onMouseEnter={() => setActiveIndex(offset + i)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 11,
+                width: '100%',
+                textAlign: 'left',
+                // Overlays.dc.html .mi selected = bone fill; deviation(2026-07-18 audit): plus a
+                // faint lavender outline ring — Kai's explicit "faint blue outline" ask.
+                background: active ? 'var(--paper-bone)' : 'none',
+                boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none',
+                border: 'none',
+                borderRadius: 5,
+                padding: '8px 6px',
+                cursor: 'pointer',
+                font: 'inherit',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flex: 'none' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{hit.title}</div>
+                {hit.snippet && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
+                )}
+              </div>
+            </button>
+          )
+        })}
       </div>
     )
   }
@@ -113,8 +125,6 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <style>{'.search-result-row:hover{background:var(--paper-bone)}'}</style>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--line-dashed)', paddingBottom: 11 }}>
           <span style={{ color: 'var(--ink-faint)' }}>⌕</span>
           <input
@@ -122,7 +132,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && results[0]) { e.preventDefault(); goTo(results[0]) }
+              if (e.key === 'ArrowDown' && ordered.length > 0) { e.preventDefault(); setActiveIndex((i) => (i + 1) % ordered.length) }
+              else if (e.key === 'ArrowUp' && ordered.length > 0) { e.preventDefault(); setActiveIndex((i) => (i - 1 + ordered.length) % ordered.length) }
+              else if (e.key === 'Enter' && ordered[activeIndex]) { e.preventDefault(); goTo(ordered[activeIndex]) }
             }}
             placeholder="Search tasks and inbox…"
             style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 15, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
@@ -132,12 +144,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}
         {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontSize: 13.5, color: 'var(--ink-faint)' }}>No matches.</p>}
 
-        {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} />}
-        {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} />}
+        {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} offset={0} />}
+        {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} offset={tasks.length} />}
 
         {results.length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View top result</span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
           </div>
         )}

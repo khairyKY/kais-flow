@@ -27,7 +27,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   )
 }
 
-function ResultGroup({ label, tint, hits, query, onGo }: { label: string; tint: string; hits: SearchHit[]; query: string; onGo: (h: SearchHit) => void }) {
+function ResultGroup({ label, tint, hits, query, onGo, offset, activeIndex, onHover }: { label: string; tint: string; hits: SearchHit[]; query: string; onGo: (h: SearchHit) => void; offset: number; activeIndex: number; onHover: (i: number) => void }) {
   if (hits.length === 0) return null
   return (
     <>
@@ -37,12 +37,15 @@ function ResultGroup({ label, tint, hits, query, onGo }: { label: string; tint: 
         </span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
-      {hits.map((hit) => (
+      {hits.map((hit, i) => (
         <button
           key={`${hit.entity_type}-${hit.entity_id}`}
           type="button"
           onClick={() => onGo(hit)}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 2px', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
+          onMouseEnter={() => onHover(offset + i)}
+          // Selected row = bone fill (Overlays.dc.html .mi selected); deviation(2026-07-18 audit):
+          // plus a faint lavender outline ring — Kai's explicit "faint blue outline" ask.
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 6px', width: '100%', textAlign: 'left', background: offset + i === activeIndex ? 'var(--paper-bone)' : 'none', boxShadow: offset + i === activeIndex ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none', borderRadius: 5, border: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
         >
           <span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '50%', border: hit.entity_type === 'task' ? '1.5px solid #bfb8a3' : 'none', background: hit.entity_type === 'inbox_item' ? 'var(--acc-hydrangea)' : 'transparent', flex: 'none' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -95,6 +98,7 @@ export function SearchPage() {
   const [query, setQuery] = useState(urlQuery)
   const [results, setResults] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -108,7 +112,10 @@ export function SearchPage() {
     const handle = setTimeout(() => {
       setParams({ q: trimmed }, { replace: true })
       searchHybrid(trimmed)
-        .then(setResults)
+        .then((hits) => {
+          setResults(hits)
+          setActiveIndex(0)
+        })
         .catch(() => setResults([]))
         .finally(() => setLoading(false))
     }, DEBOUNCE_MS)
@@ -122,6 +129,8 @@ export function SearchPage() {
 
   const tasks = results.filter((r) => r.entity_type === 'task')
   const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
+  // Flat list in render order (Tasks group, then Inbox) so activeIndex maps 1:1 to visible rows.
+  const ordered = [...tasks, ...inboxItems]
   const trimmed = query.trim()
 
   return (
@@ -136,6 +145,9 @@ export function SearchPage() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setQuery('')
+            else if (e.key === 'ArrowDown' && ordered.length > 0) { e.preventDefault(); setActiveIndex((i) => (i + 1) % ordered.length) }
+            else if (e.key === 'ArrowUp' && ordered.length > 0) { e.preventDefault(); setActiveIndex((i) => (i - 1 + ordered.length) % ordered.length) }
+            else if (e.key === 'Enter' && ordered[activeIndex]) { e.preventDefault(); goTo(ordered[activeIndex]) }
           }}
           placeholder="Search the garden…"
           style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
@@ -173,8 +185,8 @@ export function SearchPage() {
 
       {!loading && (
         <>
-          <ResultGroup label="Tasks" tint="#a1707c" hits={tasks} query={trimmed} onGo={goTo} />
-          <ResultGroup label="Inbox" tint="var(--acc-hydrangea-deep)" hits={inboxItems} query={trimmed} onGo={goTo} />
+          <ResultGroup label="Tasks" tint="#a1707c" hits={tasks} query={trimmed} onGo={goTo} offset={0} activeIndex={activeIndex} onHover={setActiveIndex} />
+          <ResultGroup label="Inbox" tint="var(--acc-hydrangea-deep)" hits={inboxItems} query={trimmed} onGo={goTo} offset={tasks.length} activeIndex={activeIndex} onHover={setActiveIndex} />
         </>
       )}
     </div>
