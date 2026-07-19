@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router'
-import { useTasks, completeTask, toggleTop3 } from '../tasks/api'
+import { Link, useNavigate } from 'react-router'
+import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
+import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
 import { groupRoutinesByTime } from '../routines/routineGrouping'
@@ -17,6 +18,13 @@ import { useGoalStore } from './goalStore'
 import { useTerrariumStore } from './terrariumStore'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button } from '../../components/kit'
+import { useListKeys } from '../../components/useListKeys'
+import { BulkBar } from '../../components/BulkBar'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { useEscapeStack } from '../../lib/overlayStack'
+import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import type { Task, CalendarEvent, Routine, SlippingRow } from '../../lib/types'
 
@@ -59,6 +67,7 @@ export function TodayPage() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: slipping = [] } = useSlipping()
+  const { data: domains = [] } = useDomains()
   const { data: pendingInbox = [] } = usePendingInboxItems()
   const { data: people = [] } = usePeople()
   const [dismissedBdays, setDismissedBdays] = useState(() => {
@@ -96,14 +105,59 @@ export function TodayPage() {
     return `var(${PROJECT_DOTS[idx >= 0 ? idx % PROJECT_DOTS.length : 0]})`
   }
 
-  const open = tasks.filter((t) => !t.completed_at && !t.someday)
-  const top3 = open.filter((t) => t.top3)
+  // A3 (2026-07-18 audit): tasks completed *today* stay visible struck-through in their
+  // sections instead of vanishing; done rows sort after open ones within each section.
+  const doneAfterOpen = (a: Task, b: Task) => Number(!!a.completed_at) - Number(!!b.completed_at)
+  const visible = tasks.filter((t) => !t.someday && (!t.completed_at || isToday(t.completed_at)))
+  const open = visible.filter((t) => !t.completed_at)
+  const top3 = visible.filter((t) => t.top3).sort(doneAfterOpen)
   const goal = top3.find((t) => t.id === goalTaskId) ?? top3[0]
   const restTop3 = top3.filter((t) => t.id !== goal?.id)
-  const allOpen = open.filter((t) => !t.top3)
+  const allOpen = visible.filter((t) => !t.top3).sort(doneAfterOpen)
+  const openCount = allOpen.filter((t) => !t.completed_at).length
   const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
   const nothingPlanned = open.length === 0 && doneToday === 0
   const allDone = open.length === 0 && doneToday > 0
+
+  // A2 (2026-07-18 audit): the Tasks selection pattern on Today — checkbox toggle,
+  // Ctrl+A via useListKeys, BulkBar. Done rows aren't selectable (bulk acts on open tasks).
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const selectable = [...restTop3, ...allOpen].filter((t) => !t.completed_at)
+  const selectedTasks = selectable.filter((t) => selected.has(t.id))
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+  function clearSelection() {
+    setSelected(new Set())
+  }
+  useEscapeStack(selected.size > 0, clearSelection)
+
+  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+
+  const bulkToast = (verb: string) =>
+    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
+  function bulkComplete() { selectedTasks.forEach((t) => completeTask(t)); bulkToast('completed'); clearSelection() }
+  function bulkSnooze(until: string) { selectedTasks.forEach((t) => snoozeTask(t, until)); bulkToast('snoozed'); clearSelection() }
+  function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
+  function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
+  function bulkSomeday() { selectedTasks.forEach((t) => setSomeday(t, true)); bulkToast('parked for someday'); clearSelection() }
+  function bulkDelete() {
+    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
+    selectedTasks.forEach(deleteTask)
+    bulkToast('deleted')
+    clearSelection()
+  }
+
+  const { focusedId } = useListKeys(selectable, [], {
+    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos,
+    onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
+  })
 
   const todayEvents = events
     .filter((e) => !e.all_day && isToday(e.starts_at))
@@ -331,7 +385,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -348,10 +402,10 @@ export function TodayPage() {
 
           {!nothingPlanned && !allDone && (
             <section>
-              <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${allOpen.length}`}</SectionLabel>
+              <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
               {allOpen.map((t, i) => (
                 <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                  <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow />
+                  <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                 </div>
               ))}
             </section>
@@ -384,6 +438,21 @@ export function TodayPage() {
           </section>
         </div>
       </div>
+
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onComplete={bulkComplete}
+          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
+          onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
+        />
+      )}
+      {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} />}
+      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
 
       {morningOpen && <MorningRitual onClose={() => setMorningOpen(false)} />}
       {eveningOpen && <EveningRitual onClose={() => setEveningOpen(false)} />}
@@ -453,14 +522,15 @@ function DoneTodayCard() {
 }
 
 function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName?: string; dot: string; compact?: boolean }) {
+  const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   if (compact) {
     return (
       <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}><Checkbox checked={false} size={16} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} /></span>
+        <span style={{ marginTop: 12 }}>{done ? <DoneCheck task={task} size={16} /> : <Checkbox checked={false} size={16} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: '#4a3a1e', lineHeight: 1.25, marginTop: 3 }}>{task.title}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : '#4a3a1e', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}>{task.title}</div>
         </div>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
@@ -469,11 +539,11 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   return (
     <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}><Checkbox checked={false} size={19} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} /></span>
+      <span style={{ marginTop: 16 }}>{done ? <DoneCheck task={task} size={19} /> : <Checkbox checked={false} size={19} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: '#4a3a1e', lineHeight: 1.3, marginTop: 5 }}>{task.title}</div>
-        {metaRow(projectName, dot, task.duration_min, <span>Due today</span>)}
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : '#4a3a1e', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}>{task.title}</div>
+        {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
       <div style={{ textAlign: 'center', flex: 'none' }}>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
@@ -483,35 +553,69 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean }) {
+// A3 — the design's done treatment (Today.dc.html:204, same as routine rows): filled
+// --sig-done check, struck-through title. Click reopens.
+function DoneCheck({ task, size }: { task: Task; size: number }) {
+  return (
+    <span
+      onClick={() => uncompleteTask(task)}
+      title="Reopen"
+      style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', cursor: 'pointer' }}
+    >
+      ✓
+    </span>
+  )
+}
+
+function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
+  const done = !!task.completed_at
+  const rowExtra: React.CSSProperties = {
+    background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
+    boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+    outline: 'none',
+  }
+  const selectBox = !done && onToggleSelect && (
+    <span
+      onClick={onToggleSelect}
+      style={{ width: 14, height: 14, marginTop: 4, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
+    >
+      {selected ? '✓' : ''}
+    </span>
+  )
   if (compact) {
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-        <span style={{ marginTop: 1 }}><Checkbox checked={false} size={16} onChange={() => completeTask(task)} /></span>
+      <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
+        {selectBox}
+        {done ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={false} size={16} onChange={() => completeTask(task)} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{task.title}</div>
+          <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{task.title}</div>
           {(projectName || task.duration_min != null) && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               {[projectName, task.duration_min != null ? `${task.duration_min}m` : null].filter(Boolean).join(' · ')}
             </div>
           )}
         </div>
-        <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
-          {task.top3 ? '★' : '☆'}
-        </span>
+        {!done && (
+          <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
+            {task.top3 ? '★' : '☆'}
+          </span>
+        )}
       </div>
     )
   }
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-      <span style={{ marginTop: 2 }}><Checkbox checked={false} onChange={() => completeTask(task)} /></span>
+    <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
+      {selectBox}
+      {done ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={false} onChange={() => completeTask(task)} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: hollow ? 14.5 : 15, color: 'var(--ink-body)' }}>{task.title}</div>
+        <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{task.title}</div>
         {metaRow(projectName, dot, task.duration_min)}
       </div>
-      <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
-        {task.top3 ? '★' : '☆'}
-      </span>
+      {!done && (
+        <span onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : '#d0c9b6', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
+          {task.top3 ? '★' : '☆'}
+        </span>
+      )}
     </div>
   )
 }
@@ -539,12 +643,21 @@ function EventRow({ event, first, border, compact }: { event: CalendarEvent; fir
 }
 
 function SlippingCard({ row }: { row: SlippingRow }) {
+  const navigate = useNavigate()
+  // A4 (2026-07-18 audit): the card body opens the slipping entity itself. Projects and
+  // areas both live at /projects/:id (ProjectDetailPage renders either); a domain has no
+  // detail page, so it lands on the garden overview.
+  const to = row.entity_type === 'domain' ? '/projects' : `/projects/${row.entity_id}`
   return (
-    <div style={{ position: 'relative', border: '1px solid var(--line-goal)', background: '#F8F1DC', padding: '12px 14px', transform: 'rotate(0.4deg)', boxShadow: 'var(--shadow-card)', borderRadius: 3 }}>
+    <div
+      onClick={() => navigate(to)}
+      role="link"
+      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: '#F8F1DC', padding: '12px 14px', transform: 'rotate(0.4deg)', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
+    >
       <img src={`${A}/wisteria/p20.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
       <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} days untouched</div>
-      <button onClick={() => markReviewed(row)} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>reviewed</button>
+      <button onClick={(e) => { e.stopPropagation(); markReviewed(row) }} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>reviewed</button>
     </div>
   )
 }

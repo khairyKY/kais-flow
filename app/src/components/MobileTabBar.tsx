@@ -16,6 +16,9 @@ function slotLabel(active: boolean): CSSProperties {
 const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; badge?: boolean }[] = [
   { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
   { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 18 },
+  // Focus + Library added per 2026-07-18 audit A7 — both were unreachable from mobile nav.
+  { to: '/library', label: 'Library', img: `${A}/tools/pen.png`, imgHeight: 16 },
+  { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
   { to: '/people', label: 'People', dot: '--acc-clover' },

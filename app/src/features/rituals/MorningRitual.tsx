@@ -51,9 +51,12 @@ function StepClovers({ stepIndex, total }: { stepIndex: number; total: number })
 }
 
 // The parchment "scene" panel — desktop centered takeover, full-bleed sheet on phone widths.
+// A5 (2026-07-18 audit): the export's `.scene-dim` scrim now lives on the full-viewport
+// `inset:0` layer (it used to sit inside a fixed-width inner box, so the app behind was never
+// dimmed) — the real app plays the role of the export's faux page behind the scene. The panel
+// carries the export `.panel` elevation shadow (0 30px 70px) so it reads as a takeover.
 function MorningPanel({ wide, children, footer }: { wide?: boolean; children: ReactNode; footer: ReactNode }) {
   const isMobile = useIsMobile()
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   if (isMobile) {
     return (
@@ -66,18 +69,12 @@ function MorningPanel({ wide, children, footer }: { wide?: boolean; children: Re
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'relative', width: wide ? 980 : 640, maxHeight: '90vh', borderRadius: 5, overflow: 'hidden', background: 'var(--paper-linen)' }}>
-        <div style={{ position: 'absolute', inset: 0, padding: '34px 40px', opacity: 0.5 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 500, color: 'var(--ink-body)' }}>{dateLabel}</div>
-        </div>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 50% 0%, rgba(42,36,32,0.1), rgba(42,36,32,0.34) 90%)' }} />
-        <div style={{ position: 'relative', width: wide ? 940 : 520, margin: '0 auto', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 12, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', maxHeight: '86vh', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ height: 7, flex: 'none', background: 'linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))' }} />
-          <div style={{ padding: '22px 26px 24px', overflowY: 'auto' }}>
-            {children}
-            {footer}
-          </div>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'radial-gradient(120% 90% at 50% 0%, rgba(42,36,32,0.1), rgba(42,36,32,0.34) 90%)' }}>
+      <div style={{ position: 'relative', width: wide ? 940 : 520, maxWidth: '100%', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 12, boxShadow: '0 30px 70px rgba(46,40,32,0.4)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: 7, flex: 'none', background: 'linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))' }} />
+        <div style={{ padding: '22px 26px 24px', overflowY: 'auto' }}>
+          {children}
+          {footer}
         </div>
       </div>
     </div>
@@ -139,6 +136,9 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             : `${inboxItems.length} letter${inboxItems.length === 1 ? '' : 's'} still waiting`
           : "let today's shape settle onto the calendar"
 
+  // A6 (2026-07-18 audit): two distinct skips — the top-right "skip" advances past the current
+  // step without performing it (also the block step's only skip, since it has no footer); the
+  // footer's "skip for now" abandons the whole ritual.
   return (
     <MorningPanel wide={step === 'block'} footer={step === 'block' ? null : <StepFooter onSkip={onClose} onNext={next} label={stepIndex === STEPS.length - 1 ? 'Finish' : 'Next →'} />}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -146,7 +146,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
           {`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`}
           {seeded && <span style={{ color: 'var(--acc-gold)' }}> · closed by last night's seeds</span>}
         </FieldLabel>
-        <RLink onClick={onClose}>skip</RLink>
+        <RLink onClick={next}>skip</RLink>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>

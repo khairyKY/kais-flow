@@ -67,8 +67,14 @@ const TEND: NavItem[] = [
 
 const CULTIVATE: NavItem[] = [
   { to: '/routines', label: 'Routines', dot: '--acc-moss', activeImg: `${A}/vine/flowering.png`, tape: 'rgba(122,148,110,0.45)' },
+  // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable);
+  // same NavItem formula: daisy = the Focus page's own hour-of-day species, gold-warm accents.
+  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeImg: `${A}/daisy/midday.png`, tape: 'rgba(201,165,90,0.45)' },
   { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeImg: `${A}/fern/unfurl2.png`, tape: 'rgba(212,199,138,0.45)' },
   { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
+  // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Library had no nav entry;
+  // it now owns /library active state instead of aliasing onto Journal). Pen = the writing shelf.
+  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },
   { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'rgba(201,160,160,0.45)' },
   // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
   { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'rgba(154,123,58,0.45)' },
@@ -172,7 +178,7 @@ function PlanDrawer() {
 
 function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number }) {
   const { pathname } = useLocation()
-  const isActive = pathname === item.to || (item.to === '/journal' && pathname === '/library')
+  const isActive = pathname === item.to
 
   const icon = (active: boolean) => {
     if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
@@ -221,9 +227,6 @@ function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number })
       </span>
       {item.badge === 'inbox' && pendingInbox > 0 && (
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
-      )}
-      {item.to === '/journal' && pathname === '/library' && (
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>library</span>
       )}
     </Link>
   )
@@ -435,9 +438,11 @@ export function AppLayout() {
         .kf-collapse-btn:active { transform: scale(0.97); }
       `}</style>
 
+      {/* A1 (2026-07-18 audit): overflow stays visible on the aside so the collapse button can
+          overhang the divider at right:-12 un-clipped — scrolling lives on the inner column. */}
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
-        style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', padding: '24px 0 18px', position: 'relative', zIndex: 5, overflowY: 'auto' }}
+        style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
@@ -448,6 +453,8 @@ export function AppLayout() {
         >
           {collapsed ? '›' : '‹'}
         </button>
+
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
 
         <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>
@@ -485,6 +492,7 @@ export function AppLayout() {
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
           {footerRow(SignOutGlyph, 'Sign out', undefined, () => void supabase.auth.signOut(), true)}
+        </div>
         </div>
       </aside>
 
