@@ -16,6 +16,10 @@ import { hydrangeaAsset } from '../../lib/gardenAssets'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { Select } from '../../components/Select'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { useEscapeStack } from '../../lib/overlayStack'
+import { useToastStore } from '../../lib/toastStore'
+import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { Button, Chip } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
@@ -133,6 +137,70 @@ export function InboxPage() {
     return `var(${PROJECT_DOTS[idx >= 0 ? idx % PROJECT_DOTS.length : 0]})`
   }
 
+  // ── D2/D3 (2026-07-18 audit): real multi-select. Bulk triage is design-future
+  // ("Try next", Inbox.dc.html:395) — greenlit by Kai; selected styling follows Tasks'
+  // sage language. deviation(2026-07-18 audit): not Overlays.dc.html's terra rows, per ruling. ──
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const selectionActive = selected.size > 0
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+  function clearSelection() {
+    setSelected(new Set())
+  }
+  useEscapeStack(selectionActive, clearSelection)
+
+  // Selection follows the visible list — items that file/dismiss/restore away (or a tab
+  // switch) drop out instead of ghost-counting in the bar.
+  const visibleItems = tab === 'waiting' ? orderedItems : dismissedItems
+  useEffect(() => {
+    setSelected((prev) => {
+      const live = [...prev].filter((id) => visibleItems.some((i) => i.id === id))
+      return live.length === prev.size ? prev : new Set(live)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, allItems, tab])
+
+  const selectedItems = visibleItems.filter((i) => selected.has(i.id))
+  const [bulkFilePos, setBulkFilePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+
+  function bulkToast(n: number, verb: string) {
+    useToastStore.getState().push({ message: `${n} capture${n === 1 ? '' : 's'} ${verb}.` })
+  }
+  // ponytail: bulk = loop the existing single-item outbox helpers; no batch API needed.
+  function bulkFile(projectId: string | null, domainId: string | null) {
+    const n = selectedItems.length
+    selectedItems.forEach((i) => {
+      const parse = i.ai_parse as AiParse | null
+      fileToTask(i, { domainId, projectId, title: parse?.cleaned_text ?? undefined })
+    })
+    bulkToast(n, 'filed')
+    clearSelection()
+  }
+  function bulkSnooze(until: string) {
+    const n = selectedItems.length
+    selectedItems.forEach((i) => snoozeInboxItem(i, until))
+    bulkToast(n, 'snoozed')
+    clearSelection()
+  }
+  function bulkDismiss() {
+    const n = selectedItems.length
+    selectedItems.forEach((i) => dismissInboxItem(i))
+    bulkToast(n, 'dismissed')
+    clearSelection()
+  }
+  function bulkRestore() {
+    const n = selectedItems.length
+    selectedItems.forEach((i) => restoreInboxItem(i))
+    bulkToast(n, 'restored')
+    clearSelection()
+  }
+
   function fileWithFloret(item: InboxItem, opts: Parameters<typeof fileToTask>[1]) {
     if (motion) {
       setFilingIds((s) => new Set(s).add(item.id))
@@ -162,7 +230,11 @@ export function InboxPage() {
     { keys: ['s'], label: 'Snooze', run: (item) => setKbSnoozeId(item.id) },
     { keys: ['Enter'], label: 'Open (edit title)', run: (item) => setEditRequestId(item.id) },
   ]
-  const { focusedId } = useListKeys(orderedItems, bindings, { idPrefix: 'inbox-', active: tab === 'waiting' })
+  const { focusedId } = useListKeys(orderedItems, bindings, {
+    idPrefix: 'inbox-',
+    active: tab === 'waiting',
+    onSelectAll: () => setSelected(new Set(orderedItems.map((i) => i.id))),
+  })
   const kbSnoozeTask = orderedItems.find((i) => i.id === kbSnoozeId)
 
   useEffect(() => {
@@ -224,7 +296,7 @@ export function InboxPage() {
   )
 
   return (
-    <div style={{ maxWidth: isMobile ? undefined : 940 }}>
+    <div style={{ maxWidth: isMobile ? undefined : 940, userSelect: selectionActive ? 'none' : undefined }}>
       {tab === 'dismissed' ? dismissedHeader : !zero && header}
       {tabsRow}
 
@@ -259,6 +331,9 @@ export function InboxPage() {
                   projectName={projectName.get((item.ai_parse as AiParse | null)?.project_id ?? '')}
                   projectDot={projectDot}
                   editRequested={item.id === editRequestId}
+                  selected={selected.has(item.id)}
+                  selectionActive={selectionActive}
+                  onToggleSelect={() => toggleSelected(item.id)}
                   onFile={fileWithFloret}
                 />
               ))}
@@ -273,7 +348,16 @@ export function InboxPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {githubItems.map((item) => (
-                    <GithubRow key={item.id} item={item} compact={isMobile} onFile={() => fileWithFloret(item, {})} onDismiss={() => dismissInboxItem(item)} />
+                    <GithubRow
+                      key={item.id}
+                      item={item}
+                      compact={isMobile}
+                      selected={selected.has(item.id)}
+                      selectionActive={selectionActive}
+                      onToggleSelect={() => toggleSelected(item.id)}
+                      onFile={() => fileWithFloret(item, {})}
+                      onDismiss={() => dismissInboxItem(item)}
+                    />
                   ))}
                 </div>
               </>
@@ -292,7 +376,7 @@ export function InboxPage() {
           </>
         )
       ) : (
-        <DismissedPanel items={dismissedItems} compact={isMobile} />
+        <DismissedPanel items={dismissedItems} compact={isMobile} selected={selected} onToggleSelect={toggleSelected} />
       )}
 
       {kbSnoozeTask && (
@@ -301,6 +385,28 @@ export function InboxPage() {
           onClose={() => setKbSnoozeId(null)}
           onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); setKbSnoozeId(null) }}
           onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); setKbSnoozeId(null) }}
+        />
+      )}
+
+      {selectionActive && (
+        <InboxBulkBar
+          count={selected.size}
+          onFileTo={tab === 'waiting' ? (e) => setBulkFilePos({ x: e.clientX, y: e.clientY }) : undefined}
+          onSnooze={tab === 'waiting' ? (e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY }) : undefined}
+          onDismiss={tab === 'waiting' ? bulkDismiss : undefined}
+          onRestore={tab === 'dismissed' ? bulkRestore : undefined}
+          onClear={clearSelection}
+        />
+      )}
+      {bulkFilePos && (
+        <ProjectPicker position={bulkFilePos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkFile} onClose={() => setBulkFilePos(null)} />
+      )}
+      {bulkSnoozePos && (
+        <SnoozeMenu
+          position={bulkSnoozePos}
+          onClose={() => setBulkSnoozePos(null)}
+          onSnooze={(until) => { bulkSnooze(until); setBulkSnoozePos(null) }}
+          onSomeday={() => { bulkSnooze(new Date(Date.now() + 365 * 86_400_000).toISOString()); setBulkSnoozePos(null) }}
         />
       )}
     </div>
@@ -341,7 +447,9 @@ function deepLinkBannerStyle(isMobile: boolean): React.CSSProperties {
 function EmptyInboxCard() {
   return (
     <div style={{ padding: '60px 20px 54px', textAlign: 'center' }}>
-      <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, filter: 'var(--shadow-drop-sm)' }} />
+      {/* D1 (2026-07-18 audit): margin:0 auto — Tailwind Preflight's img{display:block} defeats
+          the card's text-align:center; this restores Inbox.dc.html 1b's centered bloom. */}
+      <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, margin: '0 auto', filter: 'var(--shadow-drop-sm)' }} />
       <div style={{ marginTop: 18, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Inbox zero</div>
       <p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
         Captures land here when the command bar can't tell where they go. Nothing waits on you.
@@ -372,6 +480,23 @@ function ResolvedCard({ item }: { item: InboxItem }) {
   )
 }
 
+// ── D2/D3 — selection checkbox, TaskRow's checkbox language (hover-reveal via .ib-select-box).
+// stopPropagation so the row/card surface handler doesn't re-toggle (deselect must stick). ──
+function SelectBox({ selected, active, onToggle, marginTop = 3 }: { selected?: boolean; active?: boolean; onToggle: () => void; marginTop?: number }) {
+  return (
+    <span
+      role="checkbox"
+      aria-checked={!!selected}
+      aria-label="Select capture"
+      onClick={(e) => { e.stopPropagation(); onToggle() }}
+      className={`ib-select-box${selected || active ? ' on' : ''}`}
+      style={{ width: 15, height: 15, marginTop, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
+    >
+      {selected ? '✓' : ''}
+    </span>
+  )
+}
+
 // ── 1a / 1c — triage card, AI confident or unsure ──
 function TriageCard({
   item,
@@ -384,6 +509,9 @@ function TriageCard({
   projectName,
   projectDot,
   editRequested,
+  selected,
+  selectionActive,
+  onToggleSelect,
   onFile,
 }: {
   item: InboxItem
@@ -396,6 +524,9 @@ function TriageCard({
   projectName?: string
   projectDot: (id: string | null | undefined) => string
   editRequested?: boolean
+  selected?: boolean
+  selectionActive?: boolean
+  onToggleSelect?: () => void
   onFile: (item: InboxItem, opts: { domainId?: string | null; projectId?: string | null; title?: string }) => void
 }) {
   const parse = item.ai_parse as AiParse | null
@@ -426,15 +557,23 @@ function TriageCard({
   return (
     <div
       id={`inbox-${item.id}`}
+      className="ib-card"
       tabIndex={highlighted ? 0 : -1}
+      onClick={(e) => {
+        // Card-surface click toggles select; anything interactive (buttons, inputs, the Select
+        // popovers, title-edit, edit-parse) opts out so every existing action stays untouched.
+        if (!onToggleSelect) return
+        if ((e.target as HTMLElement).closest('button, input, a, [role="listbox"], [data-no-select]')) return
+        onToggleSelect()
+      }}
       style={{
         position: 'relative',
-        background: 'var(--paper-parchment)',
+        background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         outline: highlighted ? '2px solid rgba(154,180,190,0.5)' : 'none',
         outlineOffset: 2,
         borderRadius: 3,
-        boxShadow: highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)',
+        boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`,
         padding: size.pad,
         transform: `rotate(${rotate}deg)`,
         overflow: 'hidden',
@@ -451,6 +590,7 @@ function TriageCard({
       )}
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+        {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} />}
         {editing ? (
           <input
             value={title}
@@ -461,7 +601,7 @@ function TriageCard({
             style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontFamily: 'var(--font-ui)', fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', padding: '4px 8px' }}
           />
         ) : (
-          <div onClick={() => setEditing(true)} title="Tap to edit the title before filing" style={{ fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, cursor: 'text' }}>
+          <div data-no-select onClick={() => setEditing(true)} title="Tap to edit the title before filing" style={{ flex: 1, fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, cursor: 'text' }}>
             {title}
           </div>
         )}
@@ -479,7 +619,7 @@ function TriageCard({
                 "{parse.cleaned_text ?? item.raw_text}"{dueLabel && <> · due <b style={{ fontWeight: 600 }}>{dueLabel}</b></>}{projectName && <> · → {projectName}</>}
               </span>
               {!compact && (
-                <span onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', cursor: 'pointer' }}>
+                <span data-no-select onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', cursor: 'pointer' }}>
                   ✎ edit parse
                 </span>
               )}
@@ -549,10 +689,20 @@ function TriageCard({
 }
 
 // ── GitHub-ranked row ──
-function GithubRow({ item, compact, onFile, onDismiss }: { item: InboxItem; compact?: boolean; onFile: () => void; onDismiss: () => void }) {
+function GithubRow({ item, compact, selected, selectionActive, onToggleSelect, onFile, onDismiss }: { item: InboxItem; compact?: boolean; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void; onFile: () => void; onDismiss: () => void }) {
   const payload = item.payload as { number?: number; rank?: number } | null
   return (
-    <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div
+      id={`inbox-${item.id}`}
+      className="ib-card"
+      onClick={(e) => {
+        if (!onToggleSelect) return
+        if ((e.target as HTMLElement).closest('button, input, a, [data-no-select]')) return
+        onToggleSelect()
+      }}
+      style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}var(--shadow-crisp)`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
+    >
+      {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
       <KindChip kind="github_issue" />
       <span style={{ flex: 1, fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</span>
       {!compact && (
@@ -567,7 +717,7 @@ function GithubRow({ item, compact, onFile, onDismiss }: { item: InboxItem; comp
 }
 
 // ── 2a / 2b — Dismissed tab ──
-function DismissedPanel({ items, compact }: { items: InboxItem[]; compact?: boolean }) {
+function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: InboxItem[]; compact?: boolean; selected: Set<string>; onToggleSelect: (id: string) => void }) {
   const today = items.filter((i) => isToday(i.updated_at))
   const earlier = items.filter((i) => !isToday(i.updated_at))
 
@@ -608,8 +758,8 @@ function DismissedPanel({ items, compact }: { items: InboxItem[]; compact?: bool
 
       {compact && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f', margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}
 
-      {today.length > 0 && <DismissedGroup label="Today" items={today} compact={compact} />}
-      {earlier.length > 0 && <DismissedGroup label="Earlier" items={earlier} compact={compact} />}
+      {today.length > 0 && <DismissedGroup label="Today" items={today} compact={compact} selected={selected} onToggleSelect={onToggleSelect} />}
+      {earlier.length > 0 && <DismissedGroup label="Earlier" items={earlier} compact={compact} selected={selected} onToggleSelect={onToggleSelect} />}
 
       {!compact && (
         <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: '#7a745f' }}>
@@ -620,21 +770,37 @@ function DismissedPanel({ items, compact }: { items: InboxItem[]; compact?: bool
   )
 }
 
-function DismissedGroup({ label, items, compact }: { label: string; items: InboxItem[]; compact?: boolean }) {
+function DismissedGroup({ label, items, compact, selected, onToggleSelect }: { label: string; items: InboxItem[]; compact?: boolean; selected: Set<string>; onToggleSelect: (id: string) => void }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '22px 0 4px' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 9 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{label} · {items.length}</span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
-      {items.map((item) => (compact ? <DismissedRowMobile key={item.id} item={item} /> : <DismissedRow key={item.id} item={item} />))}
+      {items.map((item) =>
+        compact ? (
+          // ponytail: mobile Dismissed keeps swipe→restore only; bulk select is a desktop flow.
+          <DismissedRowMobile key={item.id} item={item} />
+        ) : (
+          <DismissedRow key={item.id} item={item} selected={selected.has(item.id)} selectionActive={selected.size > 0} onToggleSelect={() => onToggleSelect(item.id)} />
+        ),
+      )}
     </div>
   )
 }
 
-function DismissedRow({ item }: { item: InboxItem }) {
+function DismissedRow({ item, selected, selectionActive, onToggleSelect }: { item: InboxItem; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+    <div
+      className="ib-row"
+      onClick={(e) => {
+        if (!onToggleSelect) return
+        if ((e.target as HTMLElement).closest('button, input, a, [data-no-select]')) return
+        onToggleSelect()
+      }}
+      style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '12px 10px', margin: '0 -10px', borderRadius: 7, borderBottom: '1px dashed var(--line-dashed)', background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined, boxShadow: selected ? 'inset 2px 0 0 var(--acc-sage)' : undefined }}
+    >
+      {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
       <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 11, flex: 'none' }}>✕</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{item.raw_text}</div>

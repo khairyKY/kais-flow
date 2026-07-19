@@ -22,6 +22,16 @@
 .ib-swipe-actions { position: absolute; inset: 0; display: flex; align-items: stretch; pointer-events: none; }
 .ib-swipe-content { touch-action: pan-y; }
 
+/* ── Multi-select (2026-07-18 audit D2/D3) — hover-reveal select box, TaskRow's language.
+   `.on` = selected or a selection already active, so Ctrl+A shows every box at once. ── */
+.ib-select-box { opacity: 0; transition: opacity var(--dur-quick); }
+.ib-card:hover .ib-select-box,
+.ib-row:hover .ib-select-box,
+.ib-select-box.on { opacity: 1; }
+@media (hover: none) {
+  .ib-select-box { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inbox-floret { animation: none !important; opacity: 0 !important; }
 }
