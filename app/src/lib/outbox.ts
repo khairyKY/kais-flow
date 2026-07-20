@@ -4,6 +4,9 @@ import { queryClient } from './queryClient'
 import { useToastStore } from './toastStore'
 
 const OUTBOX_KEY = 'kf-outbox'
+/** Rows the server permanently rejected. Kept (not silently dropped) so a failure is
+ * inspectable, but out of the live queue so it can't block anything behind it. */
+const DEAD_KEY = 'kf-outbox-dead'
 
 export interface OutboxEntry {
   id: string
@@ -96,15 +99,27 @@ export async function flushOutbox(): Promise<void> {
         // a real, likely-permanent failure, not connectivity. A raw fetch failure (offline,
         // DNS, timeout) has no `.code`/`.message` shape and stays silent as before.
         const isServerRejection = !!err && typeof err === 'object' && 'code' in err && 'message' in err
-        if (isServerRejection) {
-          const key = `${entry.table}:${entry.id}`
-          if (!toastedEntries.has(key)) {
-            toastedEntries.add(key)
-            const message = (err as { message?: string }).message || 'Unknown error'
-            useToastStore.getState().push({ message: `Sync failed for ${entry.table}: ${message}` })
-          }
+        if (!isServerRejection) break // offline/transient — stop, keep the queue, retry later
+
+        // R4 (2026-07-20): a permanently-rejected row used to stay at the head of the queue and
+        // `break`, so it blocked EVERY write queued behind it — forever. One malformed journal
+        // entry (user_id: '') was enough to wedge the whole outbox: later writes never reached
+        // the server, the optimistic cache made them look applied, and the next refetch reverted
+        // them. Park the poison row so the queue keeps draining, and say so out loud.
+        const message = (err as { message?: string }).message || 'Unknown error'
+        await removeEntry(entry.id, entry.table)
+        try {
+          const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
+          await set(DEAD_KEY, [...dead, { ...entry, error: message, failedAt: Date.now() }])
+        } catch {
+          /* storage full/unavailable — dropping it still beats wedging every later write */
         }
-        break // stop and retry later, keep remaining queue intact
+        const key = `${entry.table}:${entry.id}`
+        if (!toastedEntries.has(key)) {
+          toastedEntries.add(key)
+          useToastStore.getState().push({ message: `Sync failed for ${entry.table}: ${message}` })
+        }
+        // continue — the next entry gets its turn instead of queueing behind a dead one
       }
     }
   } finally {

@@ -236,7 +236,9 @@ export interface TimeEntry {
 
 export interface JournalEntry {
   id: string
-  user_id: string
+  /** Server-assigned (`default auth.uid()`); the client never knows it at write time and must
+   * not send it — an explicit value overrides the default, and '' fails uuid parsing. */
+  user_id?: string
   body: string
   entry_date: string
   mood: string | null

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { splitEmojiSegments } from './emojiSegments'
+import { splitEmojiSegments, emojiCandidates } from './emojiSegments'
 
 // Renders emoji in text with self-hosted Twemoji SVGs (public/emoji/, from
 // @discordapp/twemoji — MIT + CC-BY 4.0) instead of the OS's native emoji
@@ -19,15 +19,18 @@ export function EmojiText({ text }: { text: string }) {
 }
 
 function EmojiGlyph({ char, file }: { char: string; file: string }) {
-  const [failed, setFailed] = useState(false)
-  if (failed) return <>{char}</>
+  // Walk the candidate filenames (base, then the -fe0f variant); if none resolve, fall back to
+  // the plain character — never worse than the OS rendering we're replacing.
+  const [attempt, setAttempt] = useState(0)
+  const candidates = emojiCandidates(file)
+  if (attempt >= candidates.length) return <>{char}</>
   return (
     <img
-      src={`/emoji/${file}`}
+      src={`/emoji/${candidates[attempt]}`}
       alt={char}
       draggable={false}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setAttempt((a) => a + 1)}
       style={{ height: '1em', width: '1em', verticalAlign: '-0.15em', display: 'inline-block' }}
     />
   )

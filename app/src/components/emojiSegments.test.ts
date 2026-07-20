@@ -9,7 +9,7 @@ describe('splitEmojiSegments', () => {
   it('splits leading emoji + text into emoji then text segments', () => {
     const segs = splitEmojiSegments('🏠 Home')
     expect(segs).toEqual([
-      { type: 'emoji', char: '🏠', file: '1f3e0.svg' },
+      { type: 'emoji', char: '🏠', file: '1f3e0' },
       { type: 'text', value: ' Home' },
     ])
   })
@@ -18,7 +18,7 @@ describe('splitEmojiSegments', () => {
     const segs = splitEmojiSegments('Buy 🥛 milk')
     expect(segs).toEqual([
       { type: 'text', value: 'Buy ' },
-      { type: 'emoji', char: '🥛', file: '1f95b.svg' },
+      { type: 'emoji', char: '🥛', file: '1f95b' },
       { type: 'text', value: ' milk' },
     ])
   })
@@ -26,8 +26,8 @@ describe('splitEmojiSegments', () => {
   it('handles back-to-back emoji with no gap segment between them', () => {
     const segs = splitEmojiSegments('🔥🔥')
     expect(segs).toEqual([
-      { type: 'emoji', char: '🔥', file: '1f525.svg' },
-      { type: 'emoji', char: '🔥', file: '1f525.svg' },
+      { type: 'emoji', char: '🔥', file: '1f525' },
+      { type: 'emoji', char: '🔥', file: '1f525' },
     ])
   })
 

@@ -12,7 +12,7 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
-import { useRitualStepsToday, RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
+import { useRitualStepsToday, RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
 import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
 import { PinIcon } from '../rituals/PinIcon'
 import { MorningRitual } from '../rituals/MorningRitual'
@@ -70,7 +70,7 @@ export function TodayPage() {
   const { data: projects = [] } = useProjects()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
-  const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
+  const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
   const ritualPins = useRitualPins()
   const { data: slipping = [] } = useSlipping()
   const { data: domains = [] } = useDomains()
@@ -118,7 +118,12 @@ export function TodayPage() {
   const visible = tasks.filter((t) => !t.someday && (!t.completed_at || isToday(t.completed_at)))
   const open = visible.filter((t) => !t.completed_at)
   const top3 = visible.filter((t) => t.top3).sort(doneAfterOpen)
-  const goal = top3.find((t) => t.id === goalTaskId) ?? top3[0]
+  // R4 (2026-07-20 audit): "when the goal of the day is finished it should still be displayed,
+  // just crossed out." The card already strikes a done goal through — but the *selection* moved:
+  // `top3` sorts done-after-open, so once the goal was checked `top3[0]` became a different,
+  // still-open task and the finished one silently lost the title. Fall back to the first top-3
+  // in unsorted order so today's goal stays today's goal after it's completed.
+  const goal = top3.find((t) => t.id === goalTaskId) ?? visible.filter((t) => t.top3)[0]
   const restTop3 = top3.filter((t) => t.id !== goal?.id)
   const allOpen = visible.filter((t) => !t.top3).sort(doneAfterOpen)
   const openCount = allOpen.filter((t) => !t.completed_at).length
@@ -428,7 +433,7 @@ export function TodayPage() {
               <div className="kf-dim">
                 {allOpen.map((t, i) => (
                   <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                   </div>
                 ))}
               </div>
@@ -586,13 +591,33 @@ function DoneTodayCard() {
   )
 }
 
+// Holds a bloomed checkbox on screen for the length of Motion 5a before the row settles into
+// its done treatment. Without it the swap to DoneCheck is instant and nothing animates.
+function useBloomCheck(task: Task) {
+  const [checking, setChecking] = useState(false)
+  const done = !!task.completed_at
+  const wasDone = useRef(done)
+  useEffect(() => {
+    if (wasDone.current && !done) setChecking(false) // reopened — drop the stale checked look
+    wasDone.current = done
+  }, [done])
+  return {
+    checking,
+    check: () => {
+      setChecking(true)
+      completeTask(task)
+    },
+  }
+}
+
 function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName?: string; dot: string; compact?: boolean }) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
+  const bloom = useBloomCheck(task)
   if (compact) {
     return (
       <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}>{done ? <DoneCheck task={task} size={16} /> : <Checkbox checked={false} size={16} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
+        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}><EmojiText text={task.title} /></div>
@@ -604,7 +629,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   return (
     <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{done ? <DoneCheck task={task} size={19} /> : <Checkbox checked={false} size={19} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
+      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
@@ -634,6 +659,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
 }
 
 function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
+  const bloom = useBloomCheck(task)
   const done = !!task.completed_at
   const rowExtra: React.CSSProperties = {
     background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
@@ -653,7 +679,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     return (
       <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
         {selectBox}
-        {done ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={false} size={16} onChange={() => completeTask(task)} /></span>}
+        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null) && (
@@ -673,7 +699,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   return (
     <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
       {selectBox}
-      {done ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={false} onChange={() => completeTask(task)} /></span>}
+      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min)}

@@ -63,7 +63,13 @@ type NavItem = {
 const TEND: NavItem[] = [
   { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="#8A9A7E" center="#C9A55A" />, tape: 'rgba(138,154,126,0.4)' },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', dynamicActiveImg: (n) => `${A}/hydrangea/${hydrangeaAsset(n).src}.png`, tape: 'rgba(154,180,190,0.55)' },
-  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeImg: `${A}/cherry/bloom.png`, tape: 'rgba(212,168,176,0.45)' },
+  // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
+  // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
+  // line 225 specifies the 18px five-ellipse glyph (fill #D4A8B0, centre #C98A4B), not
+  // cherry/bloom.png. Checked every page: Today/Calendar already used the glyph, and
+  // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
+  // Tasks was the odd one out.
+  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="#D4A8B0" center="#C98A4B" />, tape: 'rgba(212,168,176,0.45)' },
   { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="#A8A0BE" center="#D9B65C" />, tape: 'rgba(168,160,190,0.45)' },
   { to: '/projects', label: 'Projects', dot: '--acc-moss', activeImg: `${A}/wisteria/p60.png`, tape: 'rgba(122,148,110,0.45)' },
 ]
@@ -173,9 +179,9 @@ function PlanDrawer() {
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
             <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
           ))}
-          {row('/planning', 'Planning board', pathname === '/planning', undefined, (
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>▦</span>
-          ))}
+          {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
+              redesign it." Nav entry removed so it can't be reached by accident; the route and
+              component stay in the codebase for when he redesigns it. */}
         </>
       )}
     </div>
@@ -237,6 +243,14 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
       <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
         {item.label}
       </span>
+      {/* R4 (2026-07-20 audit): an icon-only rail is unreadable on its own — "this would make
+          the nav bar dysfunctional". Hovering a collapsed row flies its name out to the right,
+          in the export's own nav type (14px, --ink-body on parchment with the card border). */}
+      {collapsed && (
+        <span className="kf-nav-flyout" aria-hidden="true">
+          {item.label}
+        </span>
+      )}
       {item.badge === 'inbox' && pendingInbox > 0 && (
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
       )}
@@ -535,6 +549,19 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
+           width and the label floats over the page. Styled to the export's nav row: parchment,
+           card border, crisp shadow, 14px --ink-body. */
+        .app-sidebar.collapsed .kf-nav-flyout {
+          position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+          white-space: nowrap; pointer-events: none; opacity: 0;
+          background: var(--paper-parchment); border: 1px solid var(--line-card);
+          box-shadow: var(--shadow-crisp); border-radius: 6px; padding: 6px 11px;
+          font-size: 14px; color: var(--ink-body); z-index: 60;
+          transition: opacity var(--dur-quick) var(--ease-out);
+        }
+        .app-sidebar.collapsed .kf-side-row:hover .kf-nav-flyout,
+        .app-sidebar.collapsed .kf-side-row:focus-visible .kf-nav-flyout { opacity: 1; }
         .app-sidebar.collapsed .app-sidebar-header,
         .app-sidebar.collapsed .app-nav-label,
         .app-sidebar.collapsed .app-footer-label,

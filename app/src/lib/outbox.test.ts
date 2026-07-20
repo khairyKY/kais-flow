@@ -92,20 +92,41 @@ describe('outbox', () => {
     expect(toastPushMock).not.toHaveBeenCalled()
   })
 
-  it('toasts once when the server rejects a write (PostgrestError shape), and only once per row across retries', async () => {
+  it('toasts once when the server rejects a write, and parks it out of the live queue', async () => {
     upsertMock.mockResolvedValue({ error: { code: '42501', message: 'permission denied' } })
     const { writeRow, flushOutbox } = await import('./outbox')
     writeRow('tasks', { id: 't-rejected', title: 'x' })
     await flushMicrotasks()
     await flushOutbox()
-    await flushOutbox() // simulate the 30s retry interval firing again on the same stuck row
+    await flushOutbox() // the 30s retry firing again must not re-toast
+
     expect(toastPushMock).toHaveBeenCalledTimes(1)
     expect(toastPushMock).toHaveBeenCalledWith(
       expect.objectContaining({ message: expect.stringContaining('permission denied') }),
     )
-    expect(store.get('kf-outbox')).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 't-rejected' })]),
+    // Parked, not retried forever, and kept for inspection rather than silently dropped.
+    expect(store.get('kf-outbox')).toEqual([])
+    expect(store.get('kf-outbox-dead')).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 't-rejected', error: 'permission denied' })]),
     )
+  })
+
+  // The regression that wedged Kai's whole sync: one poison row blocked everything behind it.
+  it('keeps draining the queue when an earlier row is permanently rejected', async () => {
+    upsertMock.mockImplementation((table: string) =>
+      table === 'journal_entries'
+        ? Promise.resolve({ error: { code: '22P02', message: 'invalid input syntax for type uuid: ""' } })
+        : Promise.resolve({ error: null }),
+    )
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('journal_entries', { id: 'bad-1', body: 'x' }) // poison, queued first
+    await flushMicrotasks()
+    writeRow('tasks', { id: 'good-1', title: 'behind the poison row' })
+    await flushMicrotasks()
+    await flushOutbox()
+
+    expect(upsertMock).toHaveBeenCalledWith('tasks', expect.objectContaining({ id: 'good-1' }))
+    expect(store.get('kf-outbox')).toEqual([])
   })
 
   // R4 P0: the exact race behind "if I dismiss smth it comes back to the inbox".

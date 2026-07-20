@@ -27,9 +27,14 @@ export function upsertJournalEntry(
   entry: Partial<JournalEntry> & { entry_date: string; body: string },
   isNew: boolean
 ): JournalEntry {
+  // R4 (2026-07-20): `user_id` used to default to '' with the note "Handled by DB default
+  // auth.uid()" — but sending the column explicitly *overrides* that default, and Postgres
+  // rejects '' as a uuid ("invalid input syntax for type uuid"). Every journal write failed
+  // permanently, and because a rejected entry sat at the head of the outbox it also blocked
+  // every write queued behind it. Omit the column so the DB default actually applies.
   const finalEntry: JournalEntry = {
     id: entry.id || crypto.randomUUID(),
-    user_id: entry.user_id || '', // Handled by DB default auth.uid()
+    ...(entry.user_id ? { user_id: entry.user_id } : {}),
     body: entry.body,
     entry_date: entry.entry_date,
     mood: entry.mood ?? null,
