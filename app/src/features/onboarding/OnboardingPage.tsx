@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router'
+import { Navigate, useNavigate } from 'react-router'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
 import { useMotionEnabled } from '../../lib/motion'
@@ -33,7 +33,7 @@ const STYLES = `
   .ob-grain { position: absolute; inset: 0; pointer-events: none; z-index: 40; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
   .ob-header { position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; }
   .ob-dots-mobile { display: none; }
-  .ob-body { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 40px; }
+  .ob-body { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 40px; }
   .ob-col { width: 460px; max-width: 100%; display: flex; flex-direction: column; align-items: center; }
   .ob-footer { position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 40px 28px; }
   .ob-footer-right { display: flex; align-items: center; gap: 16px; }
@@ -264,7 +264,7 @@ export function OnboardingPage() {
               <h1 className="ob-h">Get it out of your head</h1>
               <p className="ob-sub" style={{ marginBottom: 24 }}>Everything that takes time belongs in one place. Capture fast, sort later.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
-                <Feature icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-body)' }}>⌘K</span>} title="Command bar & voice" desc={'Type or speak a thought — "call Omar friday 3pm" — and it parses the date, project and priority for you.'} />
+                <Feature icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-body)' }}>⌘K</span>} title="Command bar & voice" desc={'Type or speak a thought — "send the invoice friday 3pm" — and it parses the date, project and priority for you.'} />
                 <Feature icon={<img src="/ds/assets/hydrangea/light.png" alt="" style={{ height: 20 }} />} title="Universal inbox" desc="Anything it can't place waits in one calm inbox. Clear it to zero, one keystroke each." />
                 <Feature icon={<img src="/ds/assets/wisteria/p60.png" alt="" style={{ height: 20 }} />} title="Projects & areas" desc="Group work that finishes into projects, and the parts of life that just continue into areas." />
               </div>
@@ -309,17 +309,17 @@ export function OnboardingPage() {
           {step === 5 && (
             <div className="ob-col" style={{ width: 480 }}>
               <h1 className="ob-h">Connect what you already use</h1>
-              <p className="ob-sub" style={{ marginBottom: 24 }}>Optional — you can wire these up any time in Settings.</p>
+              <p className="ob-sub" style={{ marginBottom: 24 }}>Optional — integrations arrive in a later release; push works today.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
                 <div className="ob-int-row">
                   <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-lavender)', flex: 'none' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}><div className="ob-feat-t">Google Calendar</div><div className="ob-feat-d">Two-way sync — your blocks and events, everywhere.</div></div>
-                  <Link to="/settings" className="ob-cta" style={{ padding: '8px 16px', fontSize: 12.5, textDecoration: 'none' }}>Connect</Link>
+                  <span className="ob-int-btn" aria-disabled="true" title="Coming with integrations — not wired up yet" style={{ opacity: 0.45, cursor: 'not-allowed' }}>Soon</span>
                 </div>
                 <div className="ob-int-row">
                   <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}><div className="ob-feat-t">GitHub</div><div className="ob-feat-d">Ranked issues drop straight into your inbox.</div></div>
-                  <Link to="/settings" className="ob-int-btn">Connect</Link>
+                  <span className="ob-int-btn" aria-disabled="true" title="Coming with integrations — not wired up yet" style={{ opacity: 0.45, cursor: 'not-allowed' }}>Soon</span>
                 </div>
                 <div className="ob-int-row">
                   <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />

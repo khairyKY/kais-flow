@@ -140,7 +140,7 @@ export function CommandBar() {
                 submit()
               }
             }}
-            placeholder="Call Omar tomorrow 3pm #shaheen"
+            placeholder="Send the quote tomorrow 3pm #shaheen"
             style={{
               flex: 1,
               fontFamily: 'var(--font-ui)',

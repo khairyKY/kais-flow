@@ -137,7 +137,11 @@ export function TapeCard({
 
 // ── Checkbox — bloom on check (§04 task-row + Motion 5a). Uses the --check-* tokens
 // (sage fill, night glow); checkPop keyframe lives in tokens/motion.css. ──
-export function Checkbox({ checked, onChange, size = 17, style }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; style?: CSSProperties }) {
+// R4-24 (Kai's 2026-07-20 ruling): the bloom (Motion 5a — pop + glow) is reserved for the Top-3
+// and the Goal of the day, plus milestones. "Not every task in the today view, not in task view,
+// not anywhere." Everything else still fills and shows its check, just without the ceremony —
+// so opt in with `bloom`, don't opt out.
+export function Checkbox({ checked, onChange, size = 17, bloom = false, style }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties }) {
   const motionOn = useMotionEnabled()
   return (
     <button
@@ -158,11 +162,11 @@ export function Checkbox({ checked, onChange, size = 17, style }: { checked: boo
         justifyContent: 'center',
         border: checked ? 'none' : '1.5px solid var(--check-border)',
         background: checked ? 'var(--check-fill)' : 'var(--check-bg)',
-        boxShadow: checked ? 'var(--check-glow)' : 'none',
+        boxShadow: checked && bloom ? 'var(--check-glow)' : 'none',
         color: 'var(--check-mark)',
         fontSize: size * 0.62,
         lineHeight: 1,
-        animation: checked && motionOn ? 'checkPop 260ms var(--ease-spring)' : 'none',
+        animation: checked && bloom && motionOn ? 'checkPop 260ms var(--ease-spring)' : 'none',
         ...style,
       }}
     >

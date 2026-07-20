@@ -254,7 +254,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
-        placeholder={kind === 'task' ? 'Call Omar re: pricing friday 3pm !!' : kind === 'event' ? 'Dinner with Salma & the cousins' : 'What is this time for?'}
+        placeholder={kind === 'task' ? 'Review the pricing sheet friday 3pm !!' : kind === 'event' ? 'Dinner with family' : 'What is this time for?'}
         style={{
           width: '100%',
           fontFamily: 'var(--font-display)',

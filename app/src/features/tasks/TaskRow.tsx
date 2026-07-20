@@ -514,10 +514,11 @@ export function TaskRow({
           <Checkbox
             checked={checking}
             size={18}
+            bloom={task.top3}
             onChange={handleCheck}
             style={checking ? { background: 'var(--sig-done)', boxShadow: 'none' } : overdue ? { borderColor: 'var(--acc-terra)' } : undefined}
           />
-          {checking && motionOn && <span className="tr-petal tr-petal-live" style={{ right: -5, bottom: -3, transform: 'rotate(40deg)' }} />}
+          {checking && motionOn && task.top3 && <span className="tr-petal tr-petal-live" style={{ right: -5, bottom: -3, transform: 'rotate(40deg)' }} />}
         </span>
 
         <div style={{ flex: 1, minWidth: 0 }}>

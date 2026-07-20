@@ -5,10 +5,14 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { useDomains } from '../domains/api'
-import { EmojiText } from '../../components/EmojiText'
+import { EmojiText } from '../../components/EmojiText'
+import { localDateKey } from '../routines/streaks'
+import { localTimeKey, localToIso } from '../calendar/eventTime'
+import { Select } from '../../components/Select'
 import {
   useProjects,
   updateProjectColor,
+  reparentProject,
   addProjectMilestone,
   toggleProjectMilestone,
   removeProjectMilestone,
@@ -74,7 +78,7 @@ export function ProjectDetailPage() {
   const [logMode, setLogMode] = useState<'work' | 'update'>('work')
   const [workNote, setWorkNote] = useState('')
   const [workDuration, setWorkDuration] = useState('1h30m')
-  const [workDate, setWorkDate] = useState('today')
+  const [workDate, setWorkDate] = useState(() => localDateKey(new Date()))
 
   // E2 (2026-07-18 audit): in-app confirm replaces window.confirm
   const [confirm, setConfirm] = useState<{ title: string; body: string; confirmLabel: string; onConfirm: () => void } | null>(null)
@@ -281,8 +285,10 @@ export function ProjectDetailPage() {
 
   const handleLogActivity = () => {
     if (!workNote.trim()) return
-    const dateOffset = workDate === 'yesterday' ? 1 : 0
-    const startedAt = new Date(Date.now() - dateOffset * 86400000).toISOString()
+    // Logged work lands on the chosen day at the current wall-clock time; a future date is
+    // blocked by the input’s max, so this can only ever be now or backdated.
+    const now = new Date()
+    const startedAt = localToIso(workDate, localTimeKey(now))
 
     if (logMode === 'work') {
       const dur = parseDuration(workDuration)
@@ -418,6 +424,16 @@ export function ProjectDetailPage() {
               ))}
             </div>
 
+            {/* Domain — R4-17: reparent an existing project (the API had this all along) */}
+            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+            <Select
+              value={project.domain_id ?? ''}
+              onChange={(v) => reparentProject(project, v || null)}
+              options={[{ value: '', label: '— no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+              ariaLabel="Project domain"
+              style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }}
+            />
+
             {/* Hours + Milestones */}
             <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 26, marginTop: 24 }}>
               <div>
@@ -437,7 +453,8 @@ export function ProjectDetailPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {resolvedMilestones.map((m) => (
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                      <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} />
+                      {/* R4-24: milestones keep the bloom — Kai's one exception alongside Top-3/Goal */}
+                      <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} bloom />
                       <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
                       <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
                       <span onClick={() => removeProjectMilestone(project, m.id)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
@@ -459,6 +476,7 @@ export function ProjectDetailPage() {
                     value={newMilestoneWeight}
                     onChange={(e) => setNewMilestoneWeight(parseInt(e.target.value) || 1)}
                     min="1"
+                    className="kf-num"
                     style={{ width: 45, font: 'inherit', fontSize: 12.5, background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', textAlign: 'center', outline: 'none', color: 'var(--ink-body)' }}
                   />
                   <button
@@ -530,14 +548,13 @@ export function ProjectDetailPage() {
                   placeholder="Add a checklist item — sub-steps too small for a task…"
                   style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                 />
-                <select
+                <Select
                   value={newChecklistType}
-                  onChange={(e) => setNewChecklistType(e.target.value as any)}
-                  style={{ font: 'inherit', fontSize: 11, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '4px 8px', outline: 'none', color: 'var(--ink-body)' }}
-                >
-                  <option value="one-shot">one-shot</option>
-                  <option value="task-linked">task-linked</option>
-                </select>
+                  onChange={(v) => setNewChecklistType(v as 'one-shot' | 'task-linked')}
+                  options={[{ value: 'one-shot', label: 'one-shot' }, { value: 'task-linked', label: 'task-linked' }]}
+                  ariaLabel="Checklist item type"
+                  style={{ fontSize: 11, padding: '4px 8px' }}
+                />
                 <button
                   onClick={handleAddChecklistItemClick}
                   style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}
@@ -608,14 +625,14 @@ export function ProjectDetailPage() {
                     placeholder="1h30m"
                     style={{ width: 75, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', textAlign: 'center', outline: 'none' }}
                   />
-                  <select
+                  <input
+                    type="date"
                     value={workDate}
-                    onChange={(e) => setWorkDate(e.target.value)}
+                    max={localDateKey(new Date())}
+                    onChange={(e) => { if (e.target.value && e.target.value <= localDateKey(new Date())) setWorkDate(e.target.value) }}
+                    aria-label="Date this work happened"
                     style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', outline: 'none' }}
-                  >
-                    <option value="today">today</option>
-                    <option value="yesterday">yesterday</option>
-                  </select>
+                  />
                 </>
               )}
               <button

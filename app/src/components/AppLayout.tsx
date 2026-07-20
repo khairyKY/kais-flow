@@ -555,13 +555,11 @@ export function AppLayout() {
         .kf-btn:hover { transform: translateY(-1px); }
         .kf-btn:active { transform: scale(0.97); transition-duration: 80ms; }
 
-        /* X1 Effects 2g — focus dim: hover/focus a row and the rest of the list steps back.
-           260ms in, 420ms out; opacity 0.45 + 0.6px blur per the export. List views only. */
-        .motion-on .kf-dim > * { transition: opacity 420ms var(--ease-out), filter 420ms var(--ease-out); }
-        .motion-on .kf-dim:has(> :hover) > :not(:hover),
-        .motion-on .kf-dim:has(> :focus-within) > :not(:focus-within) {
-          opacity: 0.45; filter: blur(0.6px); transition-duration: 260ms;
-        }
+        /* Effects 2g (focus dim) — PARKED per Kai's R4 ruling 2026-07-20: "I don't think
+           that it should apply to everywhere on the elements, not every item… park this for
+           now and we can reuse it later." It read unsharp across a whole list; the export
+           uses it to lift ONE card while the room steps back. The .kf-dim hooks stay in the
+           markup (Today, Inbox) so re-enabling it for a single surface is this block again. */
 
         /* X2 Motion 3c — overlay in: card + scrim arrive together, 210ms up-and-settle.
            Keyframes end at transform:none (containing-block rule, tokens/motion.css). */

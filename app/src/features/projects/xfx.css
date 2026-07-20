@@ -81,3 +81,10 @@
 /* Effects 1c — leaf sway idle on standing plants; origin pinned at the soil line.
    Reuses the cloverSway keyframes from tokens/motion.css. */
 .kf-sway { animation: cloverSway 7s ease-in-out infinite; transform-origin: 50% 100%; }
+
+/* R4-15 (2026-07-20 audit): a bare type="number" shows the browser's own spinner arrows on
+   hover — Kai: "these two arrows show up… they don't look fitting to our theme". Type the
+   number instead; the field keeps number semantics (mobile keypad, min/max) without OS chrome. */
+.kf-num { appearance: textfield; -moz-appearance: textfield; }
+.kf-num::-webkit-outer-spin-button,
+.kf-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }

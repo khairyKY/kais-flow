@@ -407,7 +407,7 @@ function CaptureApiCard() {
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</span>
       </div>
       <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 10.5, lineHeight: 1.7, color: 'var(--ink-muted)' }}>
-        POST /capture · body: {'{"text": "call omar tomorrow 3pm"}'}
+        POST /capture · body: {'{"text": "send the quote tomorrow 3pm"}'}
         <br />→ parsed, filed, or held in Inbox — same as ⌘K
       </div>
     </SCard>
