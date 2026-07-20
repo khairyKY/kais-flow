@@ -112,12 +112,43 @@ export async function flushOutbox(): Promise<void> {
   }
 }
 
+/** Applies one queued write onto a cached value, mirroring writeRow's optimistic update. */
+function applyEntry(old: unknown, entry: OutboxEntry): unknown {
+  if (!old) return old
+  const row = entry.payload as { id: string }
+  if (!Array.isArray(old)) return entry.op === 'delete' ? undefined : row
+  if (entry.op === 'delete') return old.filter((r: { id: string }) => r.id !== entry.id)
+  const idx = old.findIndex((r: { id: string }) => r.id === entry.id)
+  if (idx === -1) return [...old, row]
+  const copy = [...old]
+  // Server row spread first so columns the client never sends (e.g. generated ones) survive.
+  copy[idx] = { ...copy[idx], ...row }
+  return copy
+}
+
+/** R4 P0 (2026-07-20 audit): the outbox is a *write-behind* queue, but the read path had no
+ * knowledge of it. Between the optimistic update and a successful flush, any refetch — and
+ * realtime invalidates on every change to a synced table, including our own — replaced the
+ * cache with server rows that don't have the pending change yet, so the UI silently reverted.
+ * That is Kai's "if I dismiss smth it comes back", filing "comes back waiting", the project
+ * colour resetting, and onboarding looping: four symptoms, one race. Re-applying the queue on
+ * top of every fresh fetch makes the cache read "server state + what we still owe it". */
+export async function reapplyPendingWrites(table: string): Promise<void> {
+  const queue = await peekQueue()
+  const pending = queue.filter((e) => e.table === table)
+  if (pending.length === 0) return
+  queryClient.setQueryData([table], (old: unknown) => pending.reduce(applyEntry, old))
+}
+
 /** Optimistically updates the query cache for `table` and queues the write for sync. */
 export function writeRow<T extends { id: string }>(
   table: string,
   row: T,
   op: 'upsert' | 'delete' = 'upsert',
 ): void {
+  // Without this, a fetch already in flight resolves after the optimistic write and clobbers
+  // it — the same revert, just a narrower window than the refetch case above.
+  void queryClient.cancelQueries({ queryKey: [table] })
   queryClient.setQueryData<T[] | T>([table], (old) => {
     if (!old) return undefined // no cached row/list yet — nothing to update optimistically
     // Every table caches an array under its query key, except the `app_settings` singleton
@@ -148,4 +179,15 @@ if (typeof window !== 'undefined') {
   window.addEventListener('online', () => void flushOutbox())
   setInterval(() => void flushOutbox(), 30_000)
   void flushOutbox()
+
+  // Every table's query is keyed by `[table]`, so one subscription covers all of them.
+  // `manual` marks a setQueryData (including our own re-apply below) — only real fetch
+  // results need the queue laid back over them, and skipping manual writes avoids a loop.
+  queryClient.getQueryCache().subscribe((event) => {
+    if (event.type !== 'updated') return
+    const action = event.action as { type?: string; manual?: boolean }
+    if (action?.type !== 'success' || action.manual) return
+    const table = event.query.queryKey[0]
+    if (typeof table === 'string') void reapplyPendingWrites(table)
+  })
 }

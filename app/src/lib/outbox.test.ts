@@ -21,8 +21,22 @@ vi.mock('./supabase', () => ({
   },
 }))
 
+// A minimal stand-in for the query cache: remembers the value per key so a test can simulate
+// "server refetch lands stale data" and then assert what the cache ends up holding.
+const cache = new Map<string, unknown>()
+const setQueryDataMock = vi.fn((key: unknown[], updater: unknown) => {
+  const k = String(key[0])
+  const next = typeof updater === 'function' ? (updater as (o: unknown) => unknown)(cache.get(k)) : updater
+  cache.set(k, next)
+  return next
+})
+
 vi.mock('./queryClient', () => ({
-  queryClient: { setQueryData: vi.fn() },
+  queryClient: {
+    setQueryData: (key: unknown[], updater: unknown) => setQueryDataMock(key, updater),
+    cancelQueries: vi.fn(),
+    getQueryCache: () => ({ subscribe: vi.fn() }),
+  },
 }))
 
 const toastPushMock = vi.fn()
@@ -39,9 +53,11 @@ async function flushMicrotasks() {
 describe('outbox', () => {
   beforeEach(() => {
     store.clear()
+    cache.clear()
     upsertMock.mockReset()
     deleteEqMock.mockReset()
     toastPushMock.mockReset()
+    setQueryDataMock.mockClear()
     vi.resetModules()
   })
 
@@ -90,6 +106,64 @@ describe('outbox', () => {
     expect(store.get('kf-outbox')).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 't-rejected' })]),
     )
+  })
+
+  // R4 P0: the exact race behind "if I dismiss smth it comes back to the inbox".
+  describe('pending writes survive a refetch (write-behind read path)', () => {
+    it('re-applies a queued status change over stale server rows', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep it queued
+      const { writeRow, reapplyPendingWrites } = await import('./outbox')
+
+      cache.set('inbox_items', [{ id: 'i1', status: 'pending' }])
+      writeRow('inbox_items', { id: 'i1', status: 'dismissed' })
+      await flushMicrotasks()
+      expect((cache.get('inbox_items') as { status: string }[])[0].status).toBe('dismissed')
+
+      // realtime fires, a refetch lands server rows that predate the flush
+      cache.set('inbox_items', [{ id: 'i1', status: 'pending' }])
+      await reapplyPendingWrites('inbox_items')
+
+      expect((cache.get('inbox_items') as { status: string }[])[0].status).toBe('dismissed')
+    })
+
+    it('keeps server-only columns while re-applying the pending change', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') })
+      const { writeRow, reapplyPendingWrites } = await import('./outbox')
+
+      cache.set('projects', [{ id: 'p1', color: null }])
+      writeRow('projects', { id: 'p1', color: '#8A9A7E' })
+      await flushMicrotasks()
+
+      // refetch brings a generated/server-side column the client never sends
+      cache.set('projects', [{ id: 'p1', color: null, search_tsv: 'xyz' }])
+      await reapplyPendingWrites('projects')
+
+      const row = (cache.get('projects') as Record<string, unknown>[])[0]
+      expect(row.color).toBe('#8A9A7E')
+      expect(row.search_tsv).toBe('xyz')
+    })
+
+    it('re-applies a queued delete so a removed row does not reappear', async () => {
+      deleteEqMock.mockResolvedValue({ error: new Error('offline') })
+      const { writeRow, reapplyPendingWrites } = await import('./outbox')
+
+      cache.set('tasks', [{ id: 't1' }, { id: 't2' }])
+      writeRow('tasks', { id: 't1' }, 'delete')
+      await flushMicrotasks()
+
+      cache.set('tasks', [{ id: 't1' }, { id: 't2' }]) // stale refetch
+      await reapplyPendingWrites('tasks')
+
+      expect((cache.get('tasks') as { id: string }[]).map((r) => r.id)).toEqual(['t2'])
+    })
+
+    it('leaves the cache alone when nothing is queued for that table', async () => {
+      const { reapplyPendingWrites } = await import('./outbox')
+      cache.set('tasks', [{ id: 't9' }])
+      setQueryDataMock.mockClear()
+      await reapplyPendingWrites('tasks')
+      expect(setQueryDataMock).not.toHaveBeenCalled()
+    })
   })
 
   it('replaces a queued write for the same row instead of stacking duplicates', async () => {
