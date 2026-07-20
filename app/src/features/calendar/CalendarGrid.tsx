@@ -126,6 +126,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       datesSet={(arg: DatesSetArg) => onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })}
       height="100%"
       scrollTime="08:00:00"
+      // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
+      // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
+      // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
+      slotDuration="00:30:00"
+      snapDuration="00:30:00"
       dayMaxEvents
       dayHeaderContent={(arg) => {
         // Month view's header row is one cell per weekday, not per date — the two-line

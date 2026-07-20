@@ -299,8 +299,11 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         <div>
           <FLabel>{kind === 'task' ? 'Block' : 'From — to'}</FLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {kind !== 'task' && <TimeInput value={startTime} onChange={(v) => { setStartTime(v); markDateTouched() }} />}
-            {kind === 'task' && <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{startTime}</span>}
+            {/* R4-13 (2026-07-20 audit): switching a draft to "task" used to render the block's
+                start as static text, so the only start time you could get was wherever you
+                happened to click — "It shouldn't be hard coded based on where I clicked."
+                It's the same state either way, so just let every kind edit it. */}
+            <TimeInput value={startTime} onChange={(v) => { setStartTime(v); markDateTouched() }} />
             <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
             <TimeInput value={endTime} onChange={(v) => { setEndTime(v); markDateTouched() }} />
             {durationMin > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`}</span>}
@@ -543,8 +546,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     )
   }
 
+  // R4-14 (2026-07-20 audit): "it is too long… sometimes it gets clipped. I don't see the
+  // buttons, the escape nor the create." Two causes: `top` was clamped downward but never
+  // upward, so on a short viewport it went negative and took the header off-screen; and the
+  // popover had no height bound, so tall content ran past the viewport with nothing to scroll
+  // — leaving Esc/Create unreachable. Clamp both ends and let the sheet scroll inside itself.
   const left = Math.max(8, Math.min(anchor.x, window.innerWidth - 350))
-  const top = Math.min(anchor.y, window.innerHeight - 420)
+  const top = Math.max(8, Math.min(anchor.y, window.innerHeight - 420))
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
@@ -552,7 +560,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', maxHeight: `calc(100dvh - ${top + 8}px)`, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         {body}
       </div>

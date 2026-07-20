@@ -21,6 +21,11 @@ import { Select } from '../../components/Select'
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import type { CalendarEvent } from '../../lib/types'
 
+const RAIL_W_KEY = 'kf.calRailWidth'
+const DEFAULT_RAIL_W = 244
+const RAIL_MIN = 180
+const RAIL_MAX = 520
+
 // ── Calendar.dc.html 1a (desktop: task rail + time-grid) · 1b (iPhone day view). ──
 
 type ViewKind = 'day' | 'ndays' | 'week' | 'month'
@@ -228,13 +233,48 @@ export function CalendarPage() {
     setViewKind('ndays')
   }
 
+  // R4-16: rail width is user-controlled and remembered across sessions.
+  const [railWidth, setRailWidth] = useState(() => {
+    const stored = Number(localStorage.getItem(RAIL_W_KEY))
+    return Number.isFinite(stored) && stored >= RAIL_MIN && stored <= RAIL_MAX ? stored : DEFAULT_RAIL_W
+  })
+  const [railDragging, setRailDragging] = useState(false)
+  useEffect(() => {
+    localStorage.setItem(RAIL_W_KEY, String(railWidth))
+  }, [railWidth])
+
+  function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = railWidth
+    setRailDragging(true)
+    const onMove = (ev: PointerEvent) => {
+      const next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
+      setRailWidth(next)
+    }
+    const onUp = () => {
+      setRailDragging(false)
+      window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("pointerup", onUp)
+      document.body.style.userSelect = ""
+    }
+    // The grid and the cards below would otherwise select text as the pointer sweeps them.
+    document.body.style.userSelect = "none"
+    window.addEventListener("pointermove", onMove)
+    window.addEventListener("pointerup", onUp)
+  }
+
   const pillCircle = { width: 32, height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
 
   return (
     <>
       <style>{`
         .cal-shell { display: flex; align-items: stretch; height: 100%; min-height: 0; }
-        .cal-rail { width: 244px; flex: none; border-right: 1px dashed var(--line-solid); display: flex; flex-direction: column; padding: 22px 20px; overflow-y: auto; }
+        .cal-rail { width: var(--cal-rail-w, 244px); flex: none; border-right: 1px dashed var(--line-solid); display: flex; flex-direction: column; padding: 22px 20px; overflow-y: auto; }
+        .cal-railsplit { flex: none; width: 7px; cursor: col-resize; position: relative; }
+        .cal-railsplit::after { content: ""; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }
+        .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
+        @media (max-width: 767px) { .cal-railsplit { display: none; } }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 20px 26px 24px; }
         @media (max-width: 767px) {
@@ -246,7 +286,7 @@ export function CalendarPage() {
         }
       `}</style>
 
-      <div className="cal-shell">
+      <div className="cal-shell" style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
         <aside className="cal-rail">
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
@@ -330,6 +370,17 @@ export function CalendarPage() {
             </div>
           </div>
         </aside>
+
+        {/* R4-16: drag to rebalance rail vs. grid; double-click restores the default. */}
+        <div
+          className="cal-railsplit"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize unscheduled panel"
+          data-dragging={railDragging ? "" : undefined}
+          onPointerDown={startRailDrag}
+          onDoubleClick={() => setRailWidth(DEFAULT_RAIL_W)}
+        />
 
         <div className="cal-main">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>

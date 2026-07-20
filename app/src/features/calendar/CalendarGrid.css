@@ -6,7 +6,9 @@
   --fc-neutral-bg-color: var(--bg-input);
   --fc-today-bg-color: color-mix(in srgb, var(--acc-lavender) 10%, transparent);
   --fc-now-indicator-color: var(--acc-lavender);
-  --fc-event-bg-color: var(--paper-event);
+  /* R4-26: the contract fills a block with its accent at 20% (rgba(168,160,190,0.2)); the flat
+     --paper-event swatch read as a grey box. Coloured events still override this inline. */
+  --fc-event-bg-color: color-mix(in srgb, var(--acc-lavender) 20%, transparent);
   --fc-event-border-color: var(--line-solid);
   --fc-event-text-color: var(--text-primary);
   --fc-button-bg-color: var(--bg-input);
@@ -116,23 +118,31 @@
   border: none;
   border-left: 3px solid var(--acc-lavender);
   box-shadow: var(--shadow-crisp);
-  padding: 6px 8px;
+  /* R4-26 (2026-07-20 audit): was 6px 8px; the contract is 8px 10px. The cramped padding was a
+     large part of why Kai read these blocks as wrong. */
+  padding: 8px 10px;
 }
 .fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 2px; padding-bottom: 2px; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
 .fc .fc-event-title {
-  font-size: 11.5px;
+  /* contract 12.5px (Calendar.dc.html:209) — was 11.5px */
+  font-size: 12.5px;
   font-weight: var(--fw-medium);
   color: var(--ink-body);
 }
 .fc .fc-event-time {
+  /* The single biggest deviation: the contract sets the time in the block's own accent text
+     colour, uppercase and letter-spaced. It was plain grey ink-faint at 8.5px — that, more
+     than anything, is what made a block read as unstyled beside the mockup. */
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  color: var(--ink-faint);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--acc-lavender-text);
 }
 /* Contract shows title above time; FC renders time first — flip in the tall layout only
    (short layout is a single row where the time carries a trailing dash). */
-.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 4px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
 .fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
 
