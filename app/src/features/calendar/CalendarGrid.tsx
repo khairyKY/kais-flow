@@ -72,6 +72,17 @@ function flashSnap(el: HTMLElement): void {
   window.setTimeout(() => el.classList.remove('kf-snap-flash'), 250)
 }
 
+/** 4c's resize snap line: the grid line the handle just committed to, flashed once. */
+function flashSnapLine(el: HTMLElement): void {
+  const parent = el.parentElement
+  if (!parent) return
+  const line = document.createElement('div')
+  line.className = 'kf-cal-snapline'
+  line.style.top = `${el.offsetTop + el.offsetHeight}px`
+  parent.appendChild(line)
+  window.setTimeout(() => line.remove(), 340)
+}
+
 // Motion 4c — "the ghost floats free, the placeholder snaps to the grid". FullCalendar only
 // draws ONE dragging element and it snaps, so the free half of the dialect didn't exist. This
 // mints a real ghost that tracks the pointer continuously; FC's own mirror is restyled (CSS,
@@ -201,25 +212,24 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (conflictedIds?.includes(e.id)) classes.push('fc-event-conflict')
         if (e.id === justDroppedId) classes.push('kf-settle-in')
         const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
-        if (e.color) {
-          // Calendar.dc.html:209-211 — colored events keep a ~20% tint fill AND the solid
-          // accent left border in their color (CSS zeroes every other border width, so this
-          // inline border-color paints only the 3px accent bar).
-          ev.backgroundColor = e.color + '33'
-          ev.borderColor = e.color
-          // The export gives *coloured* blocks the roomier, shadowed treatment; plain
-          // paper-event blocks stay 6px 8px with a grey time. See .fc-event-tinted.
-          classes.push('fc-event-tinted')
-        }
+        // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
+        // extendedProps rather than FC's backgroundColor/borderColor, because those land as
+        // inline styles that would beat the stylesheet and undo the 4c fill/edge.
+        if (e.color) ev.extendedProps = { kfColor: e.color }
         return ev
       })}
       eventDidMount={(info) => {
-        // R4-26 follow-up (2026-07-20): the time label was hardcoded to --acc-lavender-text, so a
-        // green/terra event rendered lavender uppercase text against its own tint — which is why
-        // the blocks read *worse* after the restyle, not better. Publish the event's own accent
-        // as a custom property and let the CSS fall back to lavender only when there isn't one.
-        const own = (info.event.borderColor || '').trim()
-        if (own) info.el.style.setProperty('--kf-ev-accent', own)
+        // Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender
+        // values (fill .24 / edge .35 / grip .5); a coloured event restates them in its colour
+        // at the same alphas, so nothing about the block's shape or weight changes.
+        const own = (info.event.extendedProps as { kfColor?: string })?.kfColor
+        if (own) {
+          const s = info.el.style
+          s.setProperty('--kf-ev-accent', own)
+          s.setProperty('--kf-ev-fill', `color-mix(in srgb, ${own} 24%, transparent)`)
+          s.setProperty('--kf-ev-edge', `color-mix(in srgb, ${own} 55%, transparent)`)
+          s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${own} 65%, transparent)`)
+        }
 
         if (!onEventContextMenu) return
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
@@ -254,7 +264,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       eventResizeStart={(info) => { info.el.style.visibility = 'hidden' }}
       eventResizeStop={(info) => { info.el.style.visibility = '' }}
       eventResize={(info: EventResizeDoneArg) => {
+        // 4c: "the block stretches freely, the handle commits to the grid line" — mark the line.
         flashSnap(info.el)
+        flashSnapLine(info.el)
         if (info.event.start && info.event.end) {
           onResize(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
         }

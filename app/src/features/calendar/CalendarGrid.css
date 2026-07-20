@@ -109,51 +109,58 @@
 /* Selection / external-drag drop target ghost */
 .fc .fc-highlight { background: var(--fc-highlight-color); border: 1px dashed var(--acc-lavender); }
 
-/* Event chips — Calendar.dc.html:209-211: 2px radius, accent LEFT border only (no outline),
-   paper-event fill by default; colored events get a ~20% tint + their color on the accent bar
-   (inline backgroundColor/borderColor from CalendarGrid.tsx — only the left border has width,
-   so the inline border-color paints just the accent bar). */
+/* ── Event blocks — Motion.dc.html 4c, verbatim ──────────────────────────────────────────────
+   Kai's ruling (2026-07-20, with the 4c screenshot): the real calendar block IS the 4c example.
+   That supersedes Calendar.dc.html's 2px-radius / left-accent-bar treatment, which is what the
+   two earlier attempts kept chasing. Straight from the 4c markup:
+       border-radius: 6px
+       background:    rgba(168,160,190,0.24)
+       border:        1px solid rgba(124,106,154,0.35)   ← a full border, not a left bar
+       padding:       7px 10px
+       title:         12px, --ink-body
+       time:          mono 8.5px, --acc-lavender-text, margin-top 2px
+       handle:        28×3 bar, centred, 3px off the bottom, rgba(124,106,154,0.5)
+   --kf-ev-accent (published per event in eventDidMount) lets a coloured event swap the lavender
+   for its own hue while keeping this exact geometry. */
 .fc .fc-timegrid-event {
-  border-radius: 2px;
-  border: none;
-  border-left: 3px solid var(--acc-lavender);
-  /* Calendar.dc.html:205 — the ORDINARY block: paper-event fill, 6px 8px, no shadow. A previous
-     R4 pass mistakenly promoted every block to the *emphasised* treatment (8px 10px + 20% tint +
-     shadow) that the export reserves for coloured events, which is what made them read heavier
-     and worse. Base = ordinary; `.fc-event-tinted` below carries the emphasised spec. */
-  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));
+  background: var(--kf-ev-fill, rgba(168, 160, 190, 0.24));
+  padding: 7px 10px;
+  box-shadow: none;
+  overflow: hidden;
 }
-.fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 2px; padding-bottom: 2px; }
+.fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 3px; padding-bottom: 3px; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
 .fc .fc-event-title {
-  font-size: 11.5px;
-  font-weight: var(--fw-medium);
+  font-size: 12px;
+  font-weight: var(--fw-regular, 400);
   color: var(--ink-body);
 }
 .fc .fc-event-time {
   font-family: var(--font-mono);
   font-size: 8.5px;
-  color: var(--ink-faint);
-}
-
-/* Calendar.dc.html:208-209 — a block carrying its own colour: roomier, its accent on the time,
-   and the crisp lift. --kf-ev-accent is published per event in CalendarGrid's eventDidMount. */
-.fc .fc-timegrid-event.fc-event-tinted {
-  padding: 8px 10px;
-  box-shadow: var(--shadow-crisp);
-}
-.fc .fc-timegrid-event.fc-event-tinted .fc-event-title { font-size: 12.5px; }
-.fc .fc-timegrid-event.fc-event-tinted .fc-event-time {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--kf-ev-accent, var(--acc-lavender-text));
 }
-/* Contract shows title above time; FC renders time first — flip in the tall layout only
-   (short layout is a single row where the time carries a trailing dash). */
+/* 4c puts the title first and the time under it; FC emits time first. */
 .fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
-/* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
-.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
+
+/* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
+   seat it without colliding with the text. */
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 28px;
+  height: 3px;
+  margin-left: -14px;
+  border-radius: 2px;
+  background: var(--kf-ev-grip, rgba(124, 106, 154, 0.5));
+}
+/* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from
+   task"). No drop shadow — a 4c block sits flat on the grid. */
+.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent); }
 
 /* All-day row */
 .fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: 9px; letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
@@ -238,16 +245,38 @@
 }
 .cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
 
-/* The placeholder states the outcome, so it reads as an outline rather than a second card:
-   the accent bar stays, the fill drops back, and it never wobbles. */
+/* The stepped placeholder, verbatim from 4c's move panel:
+   border-radius 6px · 1.5px dashed --acc-lavender-deep · background rgba(168,160,190,0.1).
+   It states the outcome, so it never wobbles and never carries the block's text weight. */
 .fc .fc-event-mirror {
   opacity: 1;
-  background: var(--fc-highlight-color);
+  border-radius: 6px;
+  border: 1.5px dashed var(--acc-lavender-deep);
+  background: rgba(168, 160, 190, 0.1);
   box-shadow: none;
-  outline: 1px dashed var(--acc-lavender);
-  outline-offset: -1px;
 }
+.fc .fc-event-mirror .fc-event-title,
+.fc .fc-event-mirror .fc-event-time { opacity: 0.55; }
 .cal-motion-on .fc-event-mirror { animation: none; }
+
+/* 4c's resize snap line — "the handle commits to the grid line", flashed at the committed
+   slot. 1.5px solid --acc-lavender-deep, up over 120ms per the recipe. */
+@keyframes calSnapLineFlash {
+  0% { opacity: 0; }
+  25%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.kf-cal-snapline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1.5px solid var(--acc-lavender-deep);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+}
+.cal-motion-on .kf-cal-snapline { animation: calSnapLineFlash 320ms var(--ease-out); }
 @keyframes calGridSnapFlash {
   0% { box-shadow: 0 0 0 2px var(--acc-lavender-deep), var(--shadow-card); }
   100% { box-shadow: var(--shadow-crisp); }
