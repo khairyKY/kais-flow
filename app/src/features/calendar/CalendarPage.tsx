@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent } from './api'
@@ -299,7 +300,7 @@ export function CalendarPage() {
                       transform: `rotate(${RAIL_TILTS[i % RAIL_TILTS.length]}deg)`,
                     }}
                   >
-                    <div style={{ fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}>{t.title}</div>
+                    <div style={{ fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
                     <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                       {overdue > 0 ? (
                         <span style={{ color: 'var(--acc-terra)' }}>Overdue {overdue}d</span>
@@ -360,6 +361,9 @@ export function CalendarPage() {
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
                         cursor: 'pointer',
+                        // R4-9 (2026-07-20 audit): repeat-clicking the N-day pill to cycle the
+                        // day count was selecting the label text as if dragging over it.
+                        userSelect: 'none',
                         color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
                         background: on ? 'var(--paper-parchment)' : 'transparent',
                         borderLeft: vk !== 'day' ? '1px solid var(--line-card)' : undefined,

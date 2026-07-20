@@ -5,6 +5,8 @@ import {
   setReminder, setDuration, toggleTop3, deleteTask, completeTask, uncompleteTask, snoozeTask,
 } from '../tasks/api'
 import { useCalendarEvents } from './api'
+import { EmojiText } from '../../components/EmojiText'
+import { MiniFocus } from '../focus/MiniFocus'
 import { useAllInboxItems } from '../inbox/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -230,7 +232,7 @@ export function TaskEditorPage() {
                     ) : (
                       <button type="button" aria-label={`Complete ${c.title}`} onClick={() => completeTask(c)} style={{ width: 16, height: 16, border: '1.5px solid var(--check-border)', borderRadius: 4, flex: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
                     )}
-                    <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}>{c.title}</span>
+                    <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}><EmojiText text={c.title} /></span>
                     {c.duration_min != null && (
                       <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
                         {c.duration_min >= 60 ? `${Math.floor(c.duration_min / 60)}h${c.duration_min % 60 ? c.duration_min % 60 + 'm' : ''}` : `${c.duration_min}m`}
@@ -304,6 +306,11 @@ export function TaskEditorPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* R4-D3 (2026-07-20 ruling): a Focus entry point right on the task, with the tiny
+              pomodoro beside it — same session as /focus, so it keeps running either way.
+              Only for open tasks: nothing to focus on once it's done. */}
+          {task.status === 'todo' && <MiniFocus task={task} />}
+
           <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(0.4deg)' }}>
             {/* washi tape — Editor.dc.html 1a:382 */}
             <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />

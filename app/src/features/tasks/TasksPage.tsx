@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { EmojiText } from '../../components/EmojiText'
+import { SortIcon } from '../../components/controlIcons'
 import { Link, useSearchParams } from 'react-router'
 import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
@@ -54,21 +56,45 @@ function effectiveDomainId(task: Task, projects: Project[], areas: Area[]): stri
   return null
 }
 
+/** Scrolls a deep-linked task row into view once it exists in the rendered list. */
+function useDeepLinkScroll(focusId: string | null, tasks: Task[]): void {
+  useEffect(() => {
+    if (!focusId) return
+    document.getElementById(`task-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusId, tasks])
+}
+
+export type SortKey = 'smart' | 'due' | 'priority' | 'title'
+const SORT_KEYS: readonly SortKey[] = ['smart', 'due', 'priority', 'title']
+const SORT_LABELS: Record<SortKey, string> = { smart: 'Sort · Smart', due: 'Sort · Due', priority: 'Sort · Priority', title: 'Sort · A-Z' }
+
+/** Reorders tasks inside each display group. `smart` keeps groupTasks' own date order. */
+function applySort(groups: TaskGroup[], sort: SortKey): TaskGroup[] {
+  if (sort === 'smart') return groups
+  const cmp = (a: Task, b: Task) => {
+    if (sort === 'title') return a.title.localeCompare(b.title)
+    if (sort === 'priority') return (a.priority ?? 99) - (b.priority ?? 99)
+    return new Date(a.due_at ?? a.scheduled_start ?? 8.64e15).getTime() - new Date(b.due_at ?? b.scheduled_start ?? 8.64e15).getTime()
+  }
+  return groups.map((g) => ({ ...g, tasks: [...g.tasks].sort(cmp) }))
+}
+
 function parseList(raw: string | null): SmartList | null {
   return SMART_LISTS.includes(raw as SmartList) ? (raw as SmartList) : null
 }
 
-type Tab = 'today' | 'upcoming' | 'someday' | 'done'
+type Tab = 'today' | 'overdue' | 'upcoming' | 'someday' | 'done'
 
 function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
   if (rawList === 'done') return 'done'
+  if (list === 'overdue') return 'overdue'
   if (rawList === null || list === 'today') return 'today'
   if (list === 'upcoming') return 'upcoming'
   if (list === 'someday') return 'someday'
   return null
 }
 
-function TabBar({ active, todayCount, upcomingCount, somedayCount, doneCount }: { active: Tab | null; todayCount: number; upcomingCount: number; somedayCount: number; doneCount: number }) {
+function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
   const tab = (key: Tab, label: string, count: number, underline: string) => (
     <Link
       key={key}
@@ -90,12 +116,23 @@ function TabBar({ active, todayCount, upcomingCount, somedayCount, doneCount }: 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
       {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
+      {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
+      {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
       {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
       {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
       {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11 }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'default' }}>⚟ Filter</span>
+        {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
+            with the `⚟` glyph. Now a real sort cycler with a real icon. */}
+        <button
+          type="button"
+          onClick={() => onSort(SORT_KEYS[(SORT_KEYS.indexOf(sort) + 1) % SORT_KEYS.length])}
+          title="Change sort order"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}
+        >
+          <SortIcon /> {SORT_LABELS[sort]}
+        </button>
       </span>
     </div>
   )
@@ -188,7 +225,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
           {areas.map((a) => (
-            <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}>{a.name}</span>
+            <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></span>
           ))}
         </div>
         <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
@@ -211,7 +248,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{p.name}</div>
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
                 </div>
               </div>
@@ -291,6 +328,9 @@ export function TasksPage() {
   const [title, setTitle] = useState('')
   const [searchParams] = useSearchParams()
   const rawList = searchParams.get('list')
+  // R4-3 (2026-07-20 audit): SearchOverlay deep-links here as /tasks?focus=<id>, but this
+  // page never read the param, so a clicked result landed on an unhighlighted list.
+  const focusId = searchParams.get('focus')
   const list = parseList(rawList)
   const activeTab = tabOf(rawList, list)
   const motion = useMotionEnabled()
@@ -335,7 +375,8 @@ export function TasksPage() {
 
   const filteredBase = filterByList(displayTasks, list, now)
   const filtered = domainChip ? filteredBase.filter((t) => effectiveDomainId(t, projects, areas) === domainChip) : filteredBase
-  const groups = groupTasks(filtered, now)
+  const [sort, setSort] = useState<SortKey>('smart')
+  const groups = applySort(groupTasks(filtered, now), sort)
   const flatTasks = groups.flatMap((g) => g.tasks)
 
   const openTotal = displayTasks.filter((t) => t.status === 'todo' && !t.someday).length
@@ -343,6 +384,7 @@ export function TasksPage() {
   const doneTodayTasks = displayTasks.filter((t) => t.status === 'done' && isToday(t.completed_at))
 
   const todayCount = filterByList(displayTasks, 'today', now).length
+  const overdueCount = filterByList(displayTasks, 'overdue', now).length
   const upcomingCount = filterByList(displayTasks, 'upcoming', now).length
   const somedayCount = filterByList(displayTasks, 'someday', now).length
   const doneCount = tasks.filter((t) => t.status === 'done').length
@@ -421,6 +463,8 @@ export function TasksPage() {
       if (window.confirm(message)) deleteTask(t)
     },
   })
+  useDeepLinkScroll(focusId, flatTasks)
+
   const { focusedId: kbFocusedId } = useListKeys(flatTasks, bindings, {
     active: !kbSnoozeId && !kbProjectId && activeTab !== 'done',
     sectionLabel: activeTab === 'done' ? undefined : 'Lists',
@@ -433,12 +477,14 @@ export function TasksPage() {
   const singleCol = isSomeday || isDone
   const stage = cherryStage(openTotal, doneTodayCount)
   const headerIcon = isDone ? `${A}/cherry/fallen.png` : isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/${stage}.png`
-  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : 'Tasks'
+  const isOverdue = activeTab === 'overdue'
+  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : 'Tasks'
   const eyebrow = isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
   const caption =
     activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
     : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
+    : isOverdue ? `${overdueCount} past their date — reschedule what still matters`
     : null
 
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
@@ -473,8 +519,38 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} />
+        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} sort={sort} onSort={setSort} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
+        {/* R4-12 (2026-07-20 audit): "there should be a reschedule button that lets me replan
+            the tasks that I missed" — one click pulls every overdue task onto today. */}
+        {isOverdue && overdueCount > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const stale = filterByList(displayTasks, 'overdue', now)
+              stale.forEach((t) => rescheduleDue(t, now.toISOString()))
+              useToastStore.getState().push({
+                message: `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`,
+              })
+            }}
+            style={{
+              marginTop: 14,
+              minHeight: 34,
+              padding: '0 14px',
+              borderRadius: 999,
+              border: '1px solid color-mix(in srgb, var(--acc-terra) 40%, transparent)',
+              background: 'color-mix(in srgb, var(--acc-terra) 12%, transparent)',
+              color: 'var(--acc-terra)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            Reschedule all to today
+          </button>
+        )}
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
           <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
@@ -515,7 +591,7 @@ export function TasksPage() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder='Quick add task… try "call Omar tomorrow 3pm #forecasting"'
+              placeholder='Quick add task… try "submit the report tomorrow 3pm #forecasting"'
               style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
             />
           </form>
@@ -552,7 +628,7 @@ export function TasksPage() {
                   <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
-                      highlighted={t.id === kbFocusedId}
+                      highlighted={t.id === kbFocusedId || t.id === focusId}
                       selected={selected.has(t.id)}
                       onToggleSelect={isSomeday ? undefined : () => toggleSelected(t.id)}
                       bulk={isSomeday ? undefined : bulkActions}

@@ -4,6 +4,10 @@
 .task-row-hover { opacity: 0; transition: opacity var(--dur-quick); }
 .task-row:hover .task-row-hover, .task-row:focus-within .task-row-hover { opacity: 1; }
 
+/* R4-5 (2026-07-20 audit): Kai asked for a divider between tasks — a dashed hairline in the
+   same family as every other rule on the page, on all but the last row of a run. */
+.task-row + .task-row { border-top: 1px dashed var(--line-dashed); }
+
 /* ── Someday row — hover reveals the promote pills + a lifted background (2b) ── */
 .tr-someday-hover { opacity: 0; transition: opacity var(--dur-quick); }
 .tr-someday:hover .tr-someday-hover, .tr-someday:focus-within .tr-someday-hover { opacity: 1; }

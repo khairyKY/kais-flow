@@ -25,6 +25,11 @@ vi.mock('./queryClient', () => ({
   queryClient: { setQueryData: vi.fn() },
 }))
 
+const toastPushMock = vi.fn()
+vi.mock('./toastStore', () => ({
+  useToastStore: { getState: () => ({ push: toastPushMock }) },
+}))
+
 vi.stubGlobal('navigator', { onLine: true })
 
 async function flushMicrotasks() {
@@ -36,6 +41,7 @@ describe('outbox', () => {
     store.clear()
     upsertMock.mockReset()
     deleteEqMock.mockReset()
+    toastPushMock.mockReset()
     vi.resetModules()
   })
 
@@ -58,6 +64,31 @@ describe('outbox', () => {
     expect(upsertMock).toHaveBeenCalled()
     expect(store.get('kf-outbox')).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 't2' })]),
+    )
+  })
+
+  it('does not toast on a plain network/offline failure', async () => {
+    upsertMock.mockResolvedValue({ error: new Error('offline') })
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('tasks', { id: 't-net', title: 'x' })
+    await flushMicrotasks()
+    await flushOutbox()
+    expect(toastPushMock).not.toHaveBeenCalled()
+  })
+
+  it('toasts once when the server rejects a write (PostgrestError shape), and only once per row across retries', async () => {
+    upsertMock.mockResolvedValue({ error: { code: '42501', message: 'permission denied' } })
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('tasks', { id: 't-rejected', title: 'x' })
+    await flushMicrotasks()
+    await flushOutbox()
+    await flushOutbox() // simulate the 30s retry interval firing again on the same stuck row
+    expect(toastPushMock).toHaveBeenCalledTimes(1)
+    expect(toastPushMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('permission denied') }),
+    )
+    expect(store.get('kf-outbox')).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 't-rejected' })]),
     )
   })
 

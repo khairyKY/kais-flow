@@ -32,3 +32,6 @@ kai's flow Design system and UI improvements.zip
 
 # personal data dump (P-IMPORT source) — never commit
 akiflow-dump.json
+
+# graphify knowledge-graph output — regenerable tool artifact, not project source
+graphify-out/

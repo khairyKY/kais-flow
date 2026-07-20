@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
@@ -11,6 +12,7 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { useRitualStepsToday, RITUAL_STEP_COUNT } from '../rituals/api'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
@@ -66,6 +68,7 @@ export function TodayPage() {
   const { data: projects = [] } = useProjects()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
+  const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
   const { data: slipping = [] } = useSlipping()
   const { data: domains = [] } = useDomains()
   const { data: pendingInbox = [] } = usePendingInboxItems()
@@ -188,12 +191,10 @@ export function TodayPage() {
   const routinesDone = routines.filter((r) => r.active && doneKeys.has(r.id)).length
   const routinesTotal = routines.filter((r) => r.active).length
 
-  const ritualProgress = (keys: string[]) => {
-    const items = routineGroups.filter((g) => keys.includes(g.key)).flatMap((g) => g.items)
-    return { done: items.filter((r) => doneKeys.has(r.id)).length, total: items.length }
-  }
-  const morning = ritualProgress(['morning'])
-  const evening = ritualProgress(['evening'])
+  // R4-D1 (Kai's 2026-07-20 ruling (a)): a ritual's progress is its own steps walked today,
+  // never a count of `time_of_day`-tagged routines — those are a separate surface entirely.
+  const morning = { done: ritualSteps.morning.size, total: RITUAL_STEP_COUNT.morning }
+  const evening = { done: ritualSteps.evening.size, total: RITUAL_STEP_COUNT.evening }
 
   const streak = useMemo(() => {
     const byRoutine = new Map<string, string[]>()
@@ -591,7 +592,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
         <span style={{ marginTop: 12 }}>{done ? <DoneCheck task={task} size={16} /> : <Checkbox checked={false} size={16} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}>{task.title}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}><EmojiText text={task.title} /></div>
         </div>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
@@ -603,7 +604,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
       <span style={{ marginTop: 16 }}>{done ? <DoneCheck task={task} size={19} /> : <Checkbox checked={false} size={19} onChange={() => completeTask(task)} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}>{task.title}</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
       <div style={{ textAlign: 'center', flex: 'none' }}>
@@ -651,7 +652,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         {selectBox}
         {done ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={false} size={16} onChange={() => completeTask(task)} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{task.title}</div>
+          <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null) && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               {[projectName, task.duration_min != null ? `${task.duration_min}m` : null].filter(Boolean).join(' · ')}
@@ -671,7 +672,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
       {selectBox}
       {done ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={false} onChange={() => completeTask(task)} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{task.title}</div>
+        <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min)}
       </div>
       {!done && (

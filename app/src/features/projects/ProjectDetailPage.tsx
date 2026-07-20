@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { useDomains } from '../domains/api'
+import { EmojiText } from '../../components/EmojiText'
 import {
   useProjects,
   updateProjectColor,
@@ -388,7 +389,7 @@ export function ProjectDetailPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1 }}>{project.name}</h1>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={project.name} /></h1>
               <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
                 target<br />
                 <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
@@ -492,7 +493,7 @@ export function ProjectDetailPage() {
               {openTasks.map((t) => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                   <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{t.title}</span>
+                  <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                   {t.due_at && (
                     <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                       {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
@@ -721,7 +722,7 @@ export function ProjectDetailPage() {
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
-              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{area.name}</h1>
+              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}><EmojiText text={area.name} /></h1>
             </div>
             <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '4px 9px', borderRadius: 3 }}>
               area, not a project
@@ -806,7 +807,7 @@ export function ProjectDetailPage() {
             {openTasks.map((t) => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
-                <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{t.title}</span>
+                <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                 {t.due_at && (
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 12%, transparent)', color: 'var(--acc-terra)', fontSize: 9, padding: '3px 8px', borderRadius: 999 }}>
                     {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
@@ -826,7 +827,7 @@ export function ProjectDetailPage() {
             {repeatingTasks.map((t) => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <Checkbox checked={false} onChange={() => completeTask(t)} size={15} />
-                <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}>{t.title}</span>
+                <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                 <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '3px 8px', borderRadius: 3 }}>
                   ↻ repeats
                 </span>

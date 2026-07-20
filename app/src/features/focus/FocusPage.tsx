@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { Link } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -11,36 +12,48 @@ import { useTimeEntries, logTimeEntry } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
 import type { ActivityLogEntry } from '../../lib/types'
+import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import './FocusPage.css'
 
-interface FocusSettings {
-  focusRoundMin: number
-  shortBreakMin: number
-  longBreakMin: number
-  roundsBeforeLongBreak: number
-  autoStartNextRound: boolean
-  autoStartBreaks: boolean
-  gardenViewOnLongBreaks: boolean
-  gentleChime: boolean
+// R4-18 (2026-07-20 audit): the duration rows offered fixed presets only — Kai: "where are the
+// custom times in the pomodoro setting". This is the any-value escape hatch beside each row.
+function CustomMin({ value, presets, onChange }: { value: number; presets: number[]; onChange: (v: number) => void }) {
+  const isCustom = !presets.includes(value)
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <input
+        type="number"
+        min={1}
+        max={180}
+        value={value}
+        onChange={(e) => {
+          const n = Number(e.target.value)
+          if (Number.isFinite(n) && n >= 1 && n <= 180) onChange(n)
+        }}
+        aria-label="Custom minutes"
+        style={{
+          width: 46,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9.5,
+          padding: '4px 6px',
+          borderRadius: 999,
+          textAlign: 'center',
+          color: isCustom ? 'var(--acc-terra)' : 'var(--ink-muted)',
+          background: isCustom ? 'color-mix(in srgb, var(--acc-terra) 16%, transparent)' : 'none',
+          border: `1px solid ${isCustom ? 'color-mix(in srgb, var(--acc-terra) 30%, transparent)' : 'var(--line-solid)'}`,
+        }}
+      />
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>min</span>
+    </span>
+  )
 }
 
-const SETTINGS_KEY = 'kf_focus_settings'
-
-const DEFAULT_SETTINGS: FocusSettings = {
-  focusRoundMin: 25,
-  shortBreakMin: 5,
-  longBreakMin: 20,
-  roundsBeforeLongBreak: 4,
-  autoStartNextRound: true,
-  autoStartBreaks: true,
-  gardenViewOnLongBreaks: true,
-  gentleChime: false,
-}
-
+// R4-18 (2026-07-20 audit): the old "GearIcon" was a circle with radiating rays — it read as a
+// sun, not a settings control. This is a real cog: toothed rim + hub.
 const GearIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3.1" />
-    <path d="M12 2.6v2.4M12 19v2.4M4.4 7.2l2.1 1.2M17.5 15.6l2.1 1.2M4.4 16.8l2.1-1.2M17.5 8.4l2.1-1.2" />
+    <circle cx="12" cy="12" r="3.2" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 )
 
@@ -68,35 +81,34 @@ export function FocusPage() {
     },
   })
 
-  // 2. Settings state
-  const [settings, setSettings] = useState<FocusSettings>(() => {
-    try {
-      const stored = localStorage.getItem(SETTINGS_KEY)
-      return stored ? JSON.parse(stored) : DEFAULT_SETTINGS
-    } catch {
-      return DEFAULT_SETTINGS
-    }
-  })
+  // 2. Settings — persisted in focusStore (shared with MiniFocus)
+  const settings = useFocusStore((s) => s.settings)
+  const saveSettings = useFocusStore((s) => s.saveSettings)
 
-  const saveSettings = (newSettings: FocusSettings) => {
-    setSettings(newSettings)
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings))
-    } catch (e) {
-      /* private mode */
-    }
+  // 3. Focus session state — R4-D3: owned by focusStore so a running session survives
+  // navigation and is shared with the MiniFocus widget on a task's detail page.
+  const {
+    mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr,
+    currentRound, breakType, pomodoroStartIso,
+  } = useFocusStore()
+  const setStore = useFocusStore.setState
+  const setMode = useFocusStore((s) => s.setMode)
+  const storeActiveTask = useFocusStore((s) => s.activeTask)
+  const setStoreActiveTask = useFocusStore((s) => s.setActiveTask)
+  const setIsRunning = (v: boolean) => setStore({ isRunning: v })
+  const setSecondsLeft = (v: number | ((p: number) => number)) =>
+    setStore((s) => ({ secondsLeft: typeof v === 'function' ? v(s.secondsLeft) : v }))
+  const setCurrentRound = (fn: (r: number) => number) => setStore((s) => ({ currentRound: fn(s.currentRound) }))
+  const setPomodoroStartIso = (v: string | null) => setStore({ pomodoroStartIso: v })
+  const setStopwatchSeconds = (v: number | ((p: number) => number)) =>
+    setStore((s) => ({ stopwatchSeconds: typeof v === 'function' ? v(s.stopwatchSeconds) : v }))
+  const setStopwatchStartIso = (v: string) => setStore({ stopwatchStartIso: v })
+  const setStopwatchStartStr = (v: string) => setStore({ stopwatchStartStr: v })
+  const activeTaskId = storeActiveTask?.id ?? null
+  const setActiveTaskId = (id: string | null) => {
+    const t = id ? tasks.find((x) => x.id === id) : null
+    setStoreActiveTask(t ? { id: t.id, project_id: t.project_id } : null)
   }
-
-  // 3. Focus session state
-  const [mode, setMode] = useState<'pomodoro' | 'break' | 'stopwatch' | 'garden'>('pomodoro')
-  const [isRunning, setIsRunning] = useState(false)
-  const [secondsLeft, setSecondsLeft] = useState(settings.focusRoundMin * 60)
-  const [stopwatchSeconds, setStopwatchSeconds] = useState(0)
-  const [stopwatchStartIso, setStopwatchStartIso] = useState('')
-  const [stopwatchStartStr, setStopwatchStartStr] = useState('9:41')
-  const [currentRound, setCurrentRound] = useState(2) // Defaults to 2 to match option 1a "round 2 of 4"
-  const [breakType, setBreakType] = useState<'short' | 'long'>('short')
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [taskPickerOpen, setTaskPickerOpen] = useState(false)
@@ -116,87 +128,9 @@ export function FocusPage() {
     return projects.find((p) => p.id === activeTask.project_id) || null
   }, [projects, activeTask])
 
-  // Start time ISO for the current Pomodoro round
-  const [pomodoroStartIso, setPomodoroStartIso] = useState<string | null>(null)
+  // The tick loop lives in focusStore (driven by useFocusTicker in the shell), so the
+  // session keeps running when Kai navigates away from this page.
 
-  // Reset timer if settings change
-  useEffect(() => {
-    if (!isRunning && mode === 'pomodoro') {
-      setSecondsLeft(settings.focusRoundMin * 60)
-    }
-  }, [settings.focusRoundMin, mode])
-
-  // Live timer tick
-  useEffect(() => {
-    if (!isRunning) return
-    const interval = setInterval(() => {
-      if (mode === 'pomodoro') {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval)
-            setIsRunning(false)
-            
-            // Log completed time entry
-            if (activeTask) {
-              const start = pomodoroStartIso || new Date(Date.now() - settings.focusRoundMin * 60 * 1000).toISOString()
-              logTimeEntry(
-                activeTask.project_id,
-                activeTask.id,
-                'Pomodoro round completed',
-                settings.focusRoundMin,
-                start
-              )
-              queryClient.invalidateQueries({ queryKey: ['time_entries'] })
-              queryClient.invalidateQueries({ queryKey: ['projects'] })
-            }
-
-            // Chime / alert at round end
-            if (settings.gentleChime) {
-              try {
-                const audio = new Audio('/ds/assets/chime.mp3')
-                audio.play()
-              } catch (e) {
-                console.log('Chime!')
-              }
-            }
-
-            // Switch to break
-            if (currentRound >= settings.roundsBeforeLongBreak) {
-              setMode('break')
-              setBreakType('long')
-              setSecondsLeft(settings.longBreakMin * 60)
-              if (settings.gardenViewOnLongBreaks) {
-                setMode('garden')
-              }
-            } else {
-              setMode('break')
-              setBreakType('short')
-              setSecondsLeft(settings.shortBreakMin * 60)
-            }
-            return 0
-          }
-          return prev - 1
-        })
-      } else if (mode === 'break') {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval)
-            setIsRunning(false)
-            
-            // Switch back to Focus
-            setMode('pomodoro')
-            setSecondsLeft(settings.focusRoundMin * 60)
-            setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
-            return 0
-          }
-          return prev - 1
-        })
-      } else if (mode === 'stopwatch') {
-        setStopwatchSeconds((prev) => prev + 1)
-      }
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [isRunning, mode, settings, currentRound, activeTask, pomodoroStartIso, queryClient])
 
   // Handle Play/Pause toggle
   const togglePlay = () => {
@@ -439,11 +373,7 @@ export function FocusPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Dynamic coordinates for Cherry Bud marker on Pomodoro circle
   const progressRatio = secondsLeft / (settings.focusRoundMin * 60)
-  const angle = -Math.PI / 2 + 2 * Math.PI * (1 - progressRatio)
-  const budX = 160 + 146 * Math.cos(angle)
-  const budY = 160 + 146 * Math.sin(angle)
 
   // Dynamic coordinates for Break circle
   const breakTotalSeconds = (breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin) * 60
@@ -793,20 +723,9 @@ export function FocusPage() {
                 <circle cx="160" cy="160" r="146" fill="none" stroke="var(--line-card)" strokeWidth="10"></circle>
                 <circle cx="160" cy="160" r="146" fill="none" stroke="var(--acc-lavender)" strokeWidth="10" strokeLinecap="round" strokeDasharray="917" strokeDashoffset={917 * (1 - progressRatio)}></circle>
               </svg>
-              {/* Bud marker at progress tip */}
-              <img
-                src="/ds/assets/cherry/bud.png"
-                alt=""
-                style={{
-                  position: 'absolute',
-                  left: budX - 15,
-                  top: budY - 15,
-                  height: 30,
-                  width: 30,
-                  filter: 'var(--shadow-drop-sm)',
-                  pointerEvents: 'none',
-                }}
-              />
+              {/* deviation(2026-07-20 R4): the bud marker that rode the progress tip is gone —
+                  Kai: "there is a weird flower at the top of the timer". At a full timer it
+                  parks dead-centre above the clock and reads as a stray graphic. */}
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   remaining
@@ -869,7 +788,7 @@ export function FocusPage() {
                       style={{ padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                       className="task-picker-row"
                     >
-                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginRight: 8 }}>{t.title}</span>
+                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginRight: 8 }}><EmojiText text={t.title} /></span>
                       {t.top3 && <span style={{ color: 'var(--acc-terra)' }}>★</span>}
                     </div>
                   ))}
@@ -1076,6 +995,7 @@ export function FocusPage() {
                   {t}m
                 </span>
               ))}
+              <CustomMin value={settings.focusRoundMin} presets={[15, 25, 45, 50]} onChange={(v) => saveSettings({ ...settings, focusRoundMin: v })} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -1105,6 +1025,7 @@ export function FocusPage() {
                       {t}m
                     </span>
                   ))}
+                  <CustomMin value={settings.shortBreakMin} presets={[3, 5, 10]} onChange={(v) => saveSettings({ ...settings, shortBreakMin: v })} />
                 </div>
               </div>
 
@@ -1134,6 +1055,7 @@ export function FocusPage() {
                       {t}m
                     </span>
                   ))}
+                  <CustomMin value={settings.longBreakMin} presets={[15, 20, 30]} onChange={(v) => saveSettings({ ...settings, longBreakMin: v })} />
                 </div>
               </div>
             </div>

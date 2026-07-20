@@ -2,9 +2,9 @@ import { localDateKey } from '../routines/streaks'
 import { daysUntilNextMonday } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
-export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday'
+export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue'
 
-export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday']
+export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue']
 
 /** Calendar-day difference from `a` to `b` (positive = b is later), computed on local day keys
  * so a task due 23:00 today reads as day 0, not "tomorrow" via a raw ms comparison. */
@@ -45,6 +45,10 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
   return pending.filter((t) => {
     const diff = taskDayDiff(t, now)
     switch (list) {
+      // R4-12 (2026-07-20 audit): Kai wants an overdue-only view — strictly past its date,
+      // never today's work and never an undated backlog item.
+      case 'overdue':
+        return diff !== null && diff < 0
       case 'today':
         return t.top3 || isScheduledToday(t, now) || (diff !== null && diff <= 0)
       case 'week':

@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { get } from 'idb-keyval'
-import { PageFallback } from './Stub'
+import { PageFallback } from './PageFallback'
+import { useFocusTicker } from '../features/focus/focusStore'
 import { supabase } from '../lib/supabase'
 import type { OutboxEntry } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
@@ -73,7 +74,10 @@ const CULTIVATE: NavItem[] = [
   // same NavItem formula: daisy = the Focus page's own hour-of-day species, gold-warm accents.
   { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeImg: `${A}/daisy/midday.png`, tape: 'rgba(201,165,90,0.45)' },
   { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeImg: `${A}/fern/unfurl2.png`, tape: 'rgba(212,199,138,0.45)' },
-  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
+  // R4-D4 (Kai's 2026-07-20 ruling): Journal is PARKED until he redesigns it — the whole
+  // one-entry-per-day model is unsettled. Nav entry removed; the route and page stay in the
+  // codebase (reachable by URL) so nothing is lost when it comes back.
+  // { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
   // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Library had no nav entry;
   // it now owns /library active state instead of aliasing onto Journal). Pen = the writing shelf.
   { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },
@@ -468,6 +472,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function AppLayout() {
   useRealtimeSync()
+  // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
+  useFocusTicker()
   const motionOn = useMotionEnabled()
   const { pathname } = useLocation()
   const [chatOpen, setChatOpen] = useState(false)

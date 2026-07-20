@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { EmojiText } from '../../components/EmojiText'
 import {
   usePendingInboxItems,
   useAllInboxItems,
@@ -467,7 +468,7 @@ function ResolvedCard({ item }: { item: InboxItem }) {
       <span style={{ width: 15, height: 15, borderRadius: 4, background: filed ? 'var(--sig-done)' : 'var(--ink-hairline)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
         <span style={{ color: 'var(--paper-parchment)', fontSize: 8 }}>✓</span>
       </span>
-      <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{item.raw_text}</span>
+      <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>
       <Chip tone="sage" style={filed ? undefined : { background: 'rgba(107,100,85,0.14)', color: 'var(--ink-faint)' }}>
         {filed ? 'already filed as a task' : 'dismissed'}
       </Chip>
@@ -616,7 +617,7 @@ function TriageCard({
             <>
               <Chip tone="hydrangea" style={{ background: 'rgba(154,180,190,0.3)' }}>AI · {parse.kind ?? 'note'} · {pct}%</Chip>
               <span style={{ fontSize: size.meta, color: 'var(--ink-body)' }}>
-                "{parse.cleaned_text ?? item.raw_text}"{dueLabel && <> · due <b style={{ fontWeight: 600 }}>{dueLabel}</b></>}{projectName && <> · → {projectName}</>}
+                "<EmojiText text={parse.cleaned_text ?? item.raw_text} />"{dueLabel && <> · due <b style={{ fontWeight: 600 }}>{dueLabel}</b></>}{projectName && <> · → {projectName}</>}
               </span>
               {!compact && (
                 <span data-no-select onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', cursor: 'pointer' }}>

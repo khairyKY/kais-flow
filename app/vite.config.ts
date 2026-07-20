@@ -33,11 +33,21 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
-        // Parked Weekly Letter set-piece (Review t4, future work) ships large
-        // un-downscaled art; keep it out of the offline precache. Hardening does
-        // the real image-optimization pass across ds/assets.
-        globIgnores: ['**/ds/assets/envelope/**'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // 3.8k self-hosted emoji glyphs (public/emoji/) — too many to bulk-precache
+        // for a niche icon a user may see a handful of. Cached on first use instead
+        // (runtimeCaching below); an unseen one falls back to the plain character.
+        globIgnores: ['**/emoji/**'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/emoji\/.*\.svg$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'emoji-glyphs',
+              expiration: { maxEntries: 500 },
+            },
+          },
+        ],
       },
     }),
   ],

@@ -9,14 +9,3 @@ export function Stub({ name }: { name: string }) {
     </div>
   )
 }
-
-// Suspense fallback while a lazily-loaded route chunk arrives.
-export function PageFallback() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
-      <span
-        style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--acc-sage)', opacity: 0.6, animation: 'twinkle 1.1s var(--ease-natural) infinite' }}
-      />
-    </div>
-  )
-}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
+import { EmojiText } from './EmojiText'
 import type { Domain, Project } from '../lib/types'
 
 export interface ProjectPickerProps {
@@ -122,7 +123,7 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
             onMouseLeave={(e) => { e.currentTarget.style.background = isCurrent ? 'var(--paper-bone)' : 'none' }}
           >
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flex: 'none' }} />
-            <span style={{ flex: 1 }}>{p.name}</span>
+            <span style={{ flex: 1 }}><EmojiText text={p.name} /></span>
             {isCurrent && checkSvg}
           </button>
         )

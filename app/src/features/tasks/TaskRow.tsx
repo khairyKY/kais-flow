@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
 import { settleSwipeX, DRAG_THRESHOLD, SWIPE_LEFT, SWIPE_RIGHT } from './swipe'
 import {
@@ -397,7 +398,7 @@ export function TaskRow({
         >
           ✓
         </span>
-        <span style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}>{task.title}</span>
+        <span style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}><EmojiText text={task.title} /></span>
         {justCompleted ? (
           // deviation(2026-07-19 X3): hand notes ride --ink-muted so night matches Night.dc (#c9c0d8)
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>just now ✿</span>
@@ -434,7 +435,7 @@ export function TaskRow({
       >
         <Checkbox checked={false} size={18} onChange={handleCheck} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, color: 'var(--ink-body)' }}>{task.title}</div>
+          <div style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></div>
           {tag && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
@@ -521,7 +522,7 @@ export function TaskRow({
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className={checking ? 'tr-title-strike' : undefined} style={{ fontSize: 15.5, color: 'var(--ink-body)' }}>{task.title}</span>
+            <span className={checking ? 'tr-title-strike' : undefined} style={{ fontSize: 15.5, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></span>
             {inProgress && <img src={`${A}/cherry/opening.png`} alt="in progress" style={{ height: 19, filter: 'var(--shadow-drop-sm)' }} />}
           </div>
           <div style={metaStyle}>

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useTasks, rescheduleDue, deleteTask, toggleTop3 } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { localToIso } from '../calendar/eventTime'
 import { localDateKey } from '../routines/streaks'
+import { logRitualStep } from './api'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import type { Task } from '../../lib/types'
 
@@ -105,6 +107,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const seeded = step === 'top3' && top3.length === 3 && !repicking
 
   function next() {
+    logRitualStep('morning', STEPS[stepIndex])
     if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1)
     else onClose()
   }
@@ -184,7 +187,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             ) : (
               overdue.map((t) => (
                 <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}>{t.title}</span>
+                  <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' }}>
                     {daysOver(t.due_at!)}d over
                   </span>
@@ -205,7 +208,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               {top3.map((t, i) => (
                 <div key={t.id} style={{ background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.2}deg)` }}>
                   <span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{t.title}</span>
+                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
                   <FieldLabel color="var(--acc-gold)">seeded</FieldLabel>
                 </div>
               ))}
@@ -222,14 +225,14 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               {top3.map((t, i) => (
                 <div key={t.id} onClick={() => toggleTop3(t)} style={{ background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.25}deg)`, cursor: 'pointer' }}>
                   <span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{t.title}</span>
+                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
                   <FieldLabel color="var(--acc-gold)">picked</FieldLabel>
                 </div>
               ))}
               {candidatesForTop3.map((t) => (
                 <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ color: 'var(--line-sidebar)', fontSize: 15 }}>☆</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{t.title}</span>
+                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
                   <Pill onClick={() => toggleTop3(t)}>star</Pill>
                 </div>
               ))}
@@ -299,7 +302,7 @@ function BedItem({ task }: { task: Task }) {
     >
       <span style={{ color: 'var(--ink-hairline)', fontSize: 11, letterSpacing: -3 }}>⠿</span>
       {task.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
-      <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}>{task.title}</span>
+      <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></span>
       {task.duration_min != null && (
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{task.duration_min}m</span>
       )}

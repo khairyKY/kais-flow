@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useTasks } from '../tasks/api'
@@ -498,7 +499,7 @@ function SeasonSoFar({
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {topProjects.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-muted)', flex: 'none' }}>{p.name}</span>
+                <span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-muted)', flex: 'none' }}><EmojiText text={p.name} /></span>
                 <div style={{ flex: 1, height: 11, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, (p.hours / totalProjectHours) * 100)}%`, background: 'var(--acc-lavender-deep)', borderRadius: 2, opacity: 0.8 }} />
                 </div>

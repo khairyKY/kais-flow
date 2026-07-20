@@ -1,9 +1,11 @@
 import { useState, type ReactNode } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { useTasks, toggleTop3 } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
 import { logActivity } from '../../lib/activity'
+import { logRitualStep } from './api'
 import { FieldLabel, RLink, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
 
@@ -77,6 +79,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const [seededIds, setSeededIds] = useState<Set<string>>(new Set())
 
   function next() {
+    logRitualStep('evening', BEATS[beatIndex])
     if (beatIndex < BEATS.length - 1) setBeatIndex(beatIndex + 1)
     else onClose()
   }
@@ -308,13 +311,13 @@ function SeedsBeat({
         {top3.map((t) => (
           <div key={t.id} onClick={() => toggle(t)} style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'rgba(244,241,234,0.1)', border: '1px solid rgba(244,241,234,0.28)', borderRadius: 8, padding: '12px 13px', cursor: 'pointer' }}>
             <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>
-            <span style={{ flex: 1, fontSize: 13.5, color: '#f0ebdd' }}>{t.title}</span>
+            <span style={{ flex: 1, fontSize: 13.5, color: '#f0ebdd' }}><EmojiText text={t.title} /></span>
           </div>
         ))}
         {candidates.map((t) => (
           <div key={t.id} onClick={() => toggle(t)} style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'rgba(244,241,234,0.05)', border: '1px solid rgba(244,241,234,0.14)', borderRadius: 8, padding: '12px 13px', cursor: 'pointer' }}>
             <span style={{ width: 14, height: 14, border: '1.5px dashed rgba(244,241,234,0.4)', borderRadius: '50%', flex: 'none' }} />
-            <span style={{ flex: 1, fontSize: 13.5, color: '#c9c0d8' }}>{t.title}</span>
+            <span style={{ flex: 1, fontSize: 13.5, color: '#c9c0d8' }}><EmojiText text={t.title} /></span>
           </div>
         ))}
       </div>

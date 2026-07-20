@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import * as chrono from 'chrono-node'
 import { Select } from '../../components/Select'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
@@ -435,7 +436,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             {holdsMatches.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', zIndex: 5 }}>
                 {holdsMatches.map((t) => (
-                  <div key={t.id} onClick={() => { setHoldsTaskId(t.id); setHoldsQuery(t.title) }} style={{ padding: '8px 10px', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed var(--line-dashed)' }}>{t.title}</div>
+                  <div key={t.id} onClick={() => { setHoldsTaskId(t.id); setHoldsQuery(t.title) }} style={{ padding: '8px 10px', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed var(--line-dashed)' }}><EmojiText text={t.title} /></div>
                 ))}
               </div>
             )}

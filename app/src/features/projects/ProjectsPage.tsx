@@ -8,6 +8,8 @@ import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
 import { SectionLabel } from '../../components/kit'
+import { EmojiText } from '../../components/EmojiText'
+import { FunnelIcon } from '../../components/controlIcons'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import './xfx.css'
 
@@ -193,7 +195,7 @@ export function ProjectsPage() {
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
@@ -227,7 +229,7 @@ export function ProjectsPage() {
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
@@ -258,7 +260,7 @@ export function ProjectsPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
-                <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}>{a.name}</span>
+                <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
                 {isSlipping ? (
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
                     slipping
@@ -340,7 +342,7 @@ export function ProjectsPage() {
                 cursor: 'pointer',
               }}
             >
-              ⚟ {selectedDomainId ? domains.find((d) => d.id === selectedDomainId)?.name : 'Domain'} ▾
+              <FunnelIcon /> {selectedDomainId ? domains.find((d) => d.id === selectedDomainId)?.name : 'Domain'} ▾
               <select
                 value={selectedDomainId || ''}
                 onChange={(e) => setSelectedDomainId(e.target.value || null)}
@@ -405,7 +407,7 @@ export function ProjectsPage() {
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                         {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Project'}</div>
@@ -442,7 +444,7 @@ export function ProjectsPage() {
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                         {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Retainer'}</div>
@@ -478,7 +480,7 @@ export function ProjectsPage() {
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 600 }}>{a.name}</span>
+                    <span style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 600 }}><EmojiText text={a.name} /></span>
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain?.name ?? 'No Domain'}</span>
                   </div>
                   {isSlipping && slippingItem ? (
@@ -568,7 +570,7 @@ export function ProjectsPage() {
                                 <img src={imgSource} alt="" style={{ height: 34, flex: 'none', position: 'relative', filter: slipping ? 'saturate(0.8)' : undefined }} />
                               </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}>{p.name}</div>
+                                <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
                                 <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
                                   {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
                                 </div>
@@ -661,7 +663,7 @@ export function ProjectsPage() {
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                         <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 30, flex: 'none' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}>{p.name}</div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                           <div className="fhelp" style={{ marginTop: 2 }}>{p.engagement_model || 'Project'} · {stat.doneMilestones} / {stat.totalMilestones} milestones</div>
                         </div>
                         <span className="mchip">{stat.hours}h</span>

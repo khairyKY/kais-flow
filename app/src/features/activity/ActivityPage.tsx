@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useRecentActivity } from './api'
+import { useRecentActivity } from './api'
+import { FunnelIcon } from '../../components/controlIcons'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
@@ -365,9 +366,9 @@ export function ActivityPage() {
               <span className="fhelp">{totalCount} events · {range.desc}</span>
               <span
                 onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
               >
-                ⚟ {range.label} ▾
+                <FunnelIcon /> {range.label} ▾
               </span>
             </div>
           </div>

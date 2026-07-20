@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { EmojiText } from '../../components/EmojiText'
 import { Link } from 'react-router'
 import { useDomains } from '../domains/api'
 import {
@@ -290,7 +291,7 @@ export function PerennialsPage() {
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}>{t.title}</div>
+            <div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}><EmojiText text={t.title} /></div>
             <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
               {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
             </div>

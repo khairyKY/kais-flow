@@ -1,6 +1,7 @@
 import { get, set } from 'idb-keyval'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
+import { useToastStore } from './toastStore'
 
 const OUTBOX_KEY = 'kf-outbox'
 
@@ -66,6 +67,14 @@ function removeEntry(id: string, table: string): Promise<void> {
 
 let flushing = false
 
+// R4 P0 (2026-07-20 audit): a write the server permanently rejects — expired session, RLS
+// denial, a column the client's still-unpushed migration hasn't created — used to be caught
+// and silently dropped into "retry later" identically to a genuine offline failure. The
+// optimistic cache update made the UI look like it worked; the real write never landed; the
+// next refetch reverted it with zero signal why. One toast per stuck row per page load (not
+// every 30s retry) so a permanent failure is now visible instead of invisible.
+const toastedEntries = new Set<string>()
+
 export async function flushOutbox(): Promise<void> {
   if (flushing || !navigator.onLine) return
   flushing = true
@@ -81,8 +90,21 @@ export async function flushOutbox(): Promise<void> {
             : await supabase.from(entry.table).upsert(entry.payload)
         if (error) throw error
         await removeEntry(entry.id, entry.table)
-      } catch {
-        break // offline or transient failure — stop and retry later, keep remaining queue intact
+        toastedEntries.delete(`${entry.table}:${entry.id}`)
+      } catch (err) {
+        // A PostgrestError means the server actually responded and rejected the write —
+        // a real, likely-permanent failure, not connectivity. A raw fetch failure (offline,
+        // DNS, timeout) has no `.code`/`.message` shape and stays silent as before.
+        const isServerRejection = !!err && typeof err === 'object' && 'code' in err && 'message' in err
+        if (isServerRejection) {
+          const key = `${entry.table}:${entry.id}`
+          if (!toastedEntries.has(key)) {
+            toastedEntries.add(key)
+            const message = (err as { message?: string }).message || 'Unknown error'
+            useToastStore.getState().push({ message: `Sync failed for ${entry.table}: ${message}` })
+          }
+        }
+        break // stop and retry later, keep remaining queue intact
       }
     }
   } finally {

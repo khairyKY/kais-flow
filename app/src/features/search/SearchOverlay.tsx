@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { searchHybrid } from './api'
+import { EmojiText } from '../../components/EmojiText'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
 
@@ -94,7 +95,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             >
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flex: 'none' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{hit.title}</div>
+                <div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>
                 {hit.snippet && (
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
                 )}
@@ -149,8 +150,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {/* Search.dc.html 1b voice — same line as the full page's empty state, shortened */}
         {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
 
-        {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} offset={0} />}
-        {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} offset={tasks.length} />}
+        {/* R4 (2026-07-20 audit): long result sets need to scroll inside the card, not clip */}
+        <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+          {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} offset={0} />}
+          {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} offset={tasks.length} />}
+        </div>
 
         {results.length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
