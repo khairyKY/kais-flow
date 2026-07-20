@@ -23,8 +23,8 @@ import type { CalendarEvent } from '../../lib/types'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
 const DEFAULT_RAIL_W = 244
-const RAIL_MIN = 180
-const RAIL_MAX = 520
+const RAIL_MIN = 150
+const RAIL_MAX = 760
 
 // ── Calendar.dc.html 1a (desktop: task rail + time-grid) · 1b (iPhone day view). ──
 
@@ -276,7 +276,7 @@ export function CalendarPage() {
         .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
         @media (max-width: 767px) { .cal-railsplit { display: none; } }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
-        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 20px 26px 24px; }
+        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
         @media (max-width: 767px) {
           .cal-shell { flex-direction: column; }
           .cal-rail { width: 100%; border-right: none; border-bottom: 1px dashed var(--line-solid); padding: 16px; }

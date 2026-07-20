@@ -6,9 +6,9 @@
   --fc-neutral-bg-color: var(--bg-input);
   --fc-today-bg-color: color-mix(in srgb, var(--acc-lavender) 10%, transparent);
   --fc-now-indicator-color: var(--acc-lavender);
-  /* R4-26: the contract fills a block with its accent at 20% (rgba(168,160,190,0.2)); the flat
-     --paper-event swatch read as a grey box. Coloured events still override this inline. */
-  --fc-event-bg-color: color-mix(in srgb, var(--acc-lavender) 20%, transparent);
+  /* Ordinary blocks fill with --paper-event (Calendar.dc.html:205). Only events carrying their
+     own colour get the ~20% tint, and that arrives inline from CalendarGrid. */
+  --fc-event-bg-color: var(--paper-event);
   --fc-event-border-color: var(--line-solid);
   --fc-event-text-color: var(--text-primary);
   --fc-button-bg-color: var(--bg-input);
@@ -117,32 +117,41 @@
   border-radius: 2px;
   border: none;
   border-left: 3px solid var(--acc-lavender);
-  box-shadow: var(--shadow-crisp);
-  /* R4-26 (2026-07-20 audit): was 6px 8px; the contract is 8px 10px. The cramped padding was a
-     large part of why Kai read these blocks as wrong. */
-  padding: 8px 10px;
+  /* Calendar.dc.html:205 — the ORDINARY block: paper-event fill, 6px 8px, no shadow. A previous
+     R4 pass mistakenly promoted every block to the *emphasised* treatment (8px 10px + 20% tint +
+     shadow) that the export reserves for coloured events, which is what made them read heavier
+     and worse. Base = ordinary; `.fc-event-tinted` below carries the emphasised spec. */
+  padding: 6px 8px;
 }
 .fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 2px; padding-bottom: 2px; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
 .fc .fc-event-title {
-  /* contract 12.5px (Calendar.dc.html:209) — was 11.5px */
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: var(--fw-medium);
   color: var(--ink-body);
 }
 .fc .fc-event-time {
-  /* The single biggest deviation: the contract sets the time in the block's own accent text
-     colour, uppercase and letter-spaced. It was plain grey ink-faint at 8.5px — that, more
-     than anything, is what made a block read as unstyled beside the mockup. */
   font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+
+/* Calendar.dc.html:208-209 — a block carrying its own colour: roomier, its accent on the time,
+   and the crisp lift. --kf-ev-accent is published per event in CalendarGrid's eventDidMount. */
+.fc .fc-timegrid-event.fc-event-tinted {
+  padding: 8px 10px;
+  box-shadow: var(--shadow-crisp);
+}
+.fc .fc-timegrid-event.fc-event-tinted .fc-event-title { font-size: 12.5px; }
+.fc .fc-timegrid-event.fc-event-tinted .fc-event-time {
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--acc-lavender-text);
+  color: var(--kf-ev-accent, var(--acc-lavender-text));
 }
 /* Contract shows title above time; FC renders time first — flip in the tall layout only
    (short layout is a single row where the time carries a trailing dash). */
-.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 4px; }
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from task") */
 .fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
 
@@ -179,7 +188,7 @@
 /* Drag mirror + resize handle — fully opaque: at 0.85 the mirror stacked over the still-visible
    original read as a dark doubled rectangle during resize (the original is also hidden while
    resizing, via eventResizeStart in CalendarGrid.tsx). */
-.fc .fc-event-mirror { box-shadow: var(--shadow-card); opacity: 1; }
+/* (mirror styling now lives with the Motion 4c ghost/placeholder pair further down) */
 .fc .fc-event-resizer { border-color: var(--line-solid); }
 .fc .fc-event-resizer-end { border-width: 4px; }
 
@@ -212,16 +221,33 @@
   0%, 100% { transform: rotate(-0.8deg) translateY(0); }
   50% { transform: rotate(1deg) translateY(-2px); }
 }
-/* Motion 5b "Drag lift" — R4-23: the picked-up block lifts over 140ms as it appears, then the
-   2c/4c float takes over. The settle-on-release half of the grammar is the snap flash below. */
+/* Motion 4c — "the ghost floats free, the placeholder snaps to the grid."
+   The two halves are now genuinely different elements:
+   · .kf-cal-ghost  — our own clone, follows the pointer continuously (CalendarGrid.tsx)
+   · .fc-event-mirror — FullCalendar's snapping element, demoted to the stepped placeholder
+   Previously the mirror played both parts, so nothing ever moved freely. */
+.kf-cal-ghost {
+  opacity: 0.95;
+  box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
+  border-radius: 2px;
+}
+/* Motion 5b lift-in, then the 2c wobble — on the ghost, which is the thing "in hand". */
 @keyframes calGridDragLiftIn {
-  from { transform: scale(1); box-shadow: var(--shadow-crisp); }
-  to   { transform: scale(1.04); box-shadow: 0 14px 30px rgba(60,52,38,0.26); }
+  from { transform: scale(1); }
+  to   { transform: scale(1.04); }
 }
-.cal-motion-on .fc-event-mirror {
-  animation: calGridDragLiftIn 140ms var(--ease-out), calGridDragFloat 2.1s ease-in-out 140ms infinite;
-  will-change: transform;
+.cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+
+/* The placeholder states the outcome, so it reads as an outline rather than a second card:
+   the accent bar stays, the fill drops back, and it never wobbles. */
+.fc .fc-event-mirror {
+  opacity: 1;
+  background: var(--fc-highlight-color);
+  box-shadow: none;
+  outline: 1px dashed var(--acc-lavender);
+  outline-offset: -1px;
 }
+.cal-motion-on .fc-event-mirror { animation: none; }
 @keyframes calGridSnapFlash {
   0% { box-shadow: 0 0 0 2px var(--acc-lavender-deep), var(--shadow-card); }
   100% { box-shadow: var(--shadow-crisp); }

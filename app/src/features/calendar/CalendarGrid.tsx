@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -72,6 +72,39 @@ function flashSnap(el: HTMLElement): void {
   window.setTimeout(() => el.classList.remove('kf-snap-flash'), 250)
 }
 
+// Motion 4c — "the ghost floats free, the placeholder snaps to the grid". FullCalendar only
+// draws ONE dragging element and it snaps, so the free half of the dialect didn't exist. This
+// mints a real ghost that tracks the pointer continuously; FC's own mirror is restyled (CSS,
+// .fc-event-mirror) into the stepped placeholder it's supposed to be.
+const GHOST_ID = 'kf-cal-ghost'
+
+function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
+  if (typeof document === 'undefined') return () => {}
+  const rect = source.getBoundingClientRect()
+  const ghost = source.cloneNode(true) as HTMLElement
+  ghost.id = GHOST_ID
+  ghost.className = `${source.className} kf-cal-ghost`
+  // The clone must not inherit the mirror's absolute grid placement.
+  ghost.style.cssText = `position:fixed;left:0;top:0;width:${rect.width}px;height:${rect.height}px;margin:0;pointer-events:none;z-index:70;`
+  document.body.appendChild(ghost)
+
+  // Grab offset keeps the ghost under the same spot on the block the pointer picked up.
+  const grabX = ev ? ev.clientX - rect.left : rect.width / 2
+  const grabY = ev ? ev.clientY - rect.top : rect.height / 2
+  const move = (e: MouseEvent) => {
+    ghost.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
+  }
+  if (ev) move(ev)
+  window.addEventListener('mousemove', move)
+  window.addEventListener('dragover', move as EventListener)
+
+  return () => {
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('dragover', move as EventListener)
+    ghost.remove()
+  }
+}
+
 export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(function CalendarGrid({
   events,
   dayCount = 7,
@@ -90,6 +123,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
+  // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
+  const stopGhostRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => stopGhostRef.current?.(), []) // never strand a ghost on unmount
 
   useImperativeHandle(ref, () => ({
     prev: () => fcRef.current?.getApi().prev(),
@@ -171,10 +207,20 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           // inline border-color paints only the 3px accent bar).
           ev.backgroundColor = e.color + '33'
           ev.borderColor = e.color
+          // The export gives *coloured* blocks the roomier, shadowed treatment; plain
+          // paper-event blocks stay 6px 8px with a grey time. See .fc-event-tinted.
+          classes.push('fc-event-tinted')
         }
         return ev
       })}
       eventDidMount={(info) => {
+        // R4-26 follow-up (2026-07-20): the time label was hardcoded to --acc-lavender-text, so a
+        // green/terra event rendered lavender uppercase text against its own tint — which is why
+        // the blocks read *worse* after the restyle, not better. Publish the event's own accent
+        // as a custom property and let the CSS fall back to lavender only when there isn't one.
+        const own = (info.event.borderColor || '').trim()
+        if (own) info.el.style.setProperty('--kf-ev-accent', own)
+
         if (!onEventContextMenu) return
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault()
@@ -186,6 +232,15 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2 })
       }}
       eventClick={(info: EventClickArg) => onEventClick(info.event.id)}
+      // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
+      // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
+      eventDragStart={(info) => {
+        stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
+      }}
+      eventDragStop={() => {
+        stopGhostRef.current?.()
+        stopGhostRef.current = null
+      }}
       eventDrop={(info: EventDropArg) => {
         // Motion 4c: the placeholder snaps to the grid on commit — a brief flash marks the moment,
         // scoped in CSS to `.cal-motion-on` so it's a no-op when the caller's motion gate is off.
