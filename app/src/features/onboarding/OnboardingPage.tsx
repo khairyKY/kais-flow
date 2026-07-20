@@ -29,7 +29,11 @@ const PILLARS = {
 
 const STYLES = `
   .ob-page { min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: var(--paper-sidebar); padding: 24px; }
-  .ob-card { position: relative; width: 780px; max-width: 100%; height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(60,52,38,0.12), 0 18px 44px rgba(60,52,38,0.14); overflow: hidden; }
+  /* R4-28b (2026-07-20 audit): "There's even a vertical one here, too." height was pinned at
+     600px, so the taller steps overflowed into an internal scrollbar. min-height keeps the
+     roomy proportions for the short steps and lets the tall ones grow; max-height still caps
+     it to the viewport, so a genuinely small window scrolls instead of clipping. */
+  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(60,52,38,0.12), 0 18px 44px rgba(60,52,38,0.14); overflow: hidden; }
   .ob-grain { position: absolute; inset: 0; pointer-events: none; z-index: 40; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
   .ob-header { position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; }
   .ob-dots-mobile { display: none; }
@@ -231,10 +235,20 @@ export function OnboardingPage() {
                     </button>
                   ))}
                 </div>
+                {/* R4-26 (2026-07-20 audit): "If the name's too long, the app takes your name.
+                    Notice it gets bumped down." Nothing bounded the echoed name, so a long one
+                    wrapped and shoved the row. Both sides may now shrink (min-width:0 — flex
+                    items refuse to shrink below content width without it) and the name ellipses
+                    rather than wrapping. */}
                 <div className="ob-nudge">
-                  <span className="ob-hand" style={{ fontSize: 16, transform: 'rotate(-1.5deg)', flex: 1, textAlign: 'left' }}>type it, and the whole app takes your name —</span>
+                  <span className="ob-hand" style={{ fontSize: 16, transform: 'rotate(-1.5deg)', flex: '1 1 auto', minWidth: 0, textAlign: 'left' }}>type it, and the whole app takes your name —</span>
                   {NudgeArrow}
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', borderBottom: '2px solid var(--acc-terra)', paddingBottom: 1 }}>{appName}</span>
+                  <span
+                    title={appName}
+                    style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', borderBottom: '2px solid var(--acc-terra)', paddingBottom: 1, flex: '0 1 auto', minWidth: 0, maxWidth: '48%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {appName}
+                  </span>
                 </div>
               </div>
             </div>

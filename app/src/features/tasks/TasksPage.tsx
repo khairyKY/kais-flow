@@ -201,7 +201,11 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
     // deviation(2026-07-18 audit): rail pinned (sticky + own scroll) while the list scrolls —
     // neither the code nor the export pinned it; Kai wants it pinned.
     <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: '100vh', overflowY: 'auto' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: -4 }}>Organize</div>
+      {/* R4-19 (2026-07-20 audit): "should be a bit more of a header… the same font as the title
+          of the page… make it a bit more subtle, but to still be visible." Was 9.5px uppercase
+          mono in --ink-faint, reading as a caption. Now the display face the page titles use,
+          at a quiet weight and size — present without shouting. */}
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2 }}>Organize</div>
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />

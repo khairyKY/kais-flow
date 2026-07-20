@@ -5,6 +5,10 @@ import { groupRoutinesByTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
 import { NewRoutineForm } from './NewRoutineForm'
 import { StreakTrellis } from './StreakTrellis'
+import { MorningRitual } from '../rituals/MorningRitual'
+import { EveningRitual } from '../rituals/EveningRitual'
+import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
+import { PinIcon } from '../rituals/PinIcon'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Routines — pixel contract Routines.dc.html #1a (desktop, lines 379-586) and #1b (iPhone,
@@ -133,6 +137,11 @@ function GardenCard({ routine, completions, compact }: { routine: Routine; compl
 }
 
 export function RoutinesPage() {
+  // R4-5b (2026-07-20 audit): "they should be accessible from the [routines] window" — the
+  // guided rituals are reachable here whether or not they are pinned to Today, and this is
+  // where an unpinned one gets pinned back.
+  const ritualPins = useRitualPins()
+  const [openRitual, setOpenRitual] = useState<'morning' | 'evening' | null>(null)
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const isMobile = useIsMobile()
@@ -195,6 +204,39 @@ export function RoutinesPage() {
               ＋ New routine
             </button>
           )}
+        </div>
+
+        {/* R4-5b: the two guided rituals, always reachable from Routines */}
+        <div style={{ display: 'flex', gap: isMobile ? 9 : 12, marginTop: isMobile ? 14 : 18 }}>
+          {(['morning', 'evening'] as const).map((kind) => (
+            <div
+              key={kind}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '10px 12px' }}
+            >
+              <button
+                type="button"
+                onClick={() => setOpenRitual(kind)}
+                style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}
+              >
+                {kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}
+                <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 3 }}>
+                  {kind === 'morning' ? 'plan the day' : 'close its loops'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleRitualPin(kind)}
+                title={ritualPins[kind] ? 'Unpin from Today' : 'Pin to Today'}
+                aria-label={ritualPins[kind] ? 'Unpin this ritual from Today' : 'Pin this ritual to Today'}
+                aria-pressed={ritualPins[kind]}
+                className="kf-hit"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: '4px 2px', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
+              >
+                <PinIcon size={10} filled={ritualPins[kind]} />
+                {ritualPins[kind] ? 'pinned' : 'pin'}
+              </button>
+            </div>
+          ))}
         </div>
 
         <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: isMobile ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18, transform: isMobile ? undefined : 'rotate(-0.3deg)' }}>
@@ -276,6 +318,9 @@ export function RoutinesPage() {
       )}
 
       {formOpen && <NewRoutineForm onClose={() => setFormOpen(null)} initialChallenge={formOpen.challenge} />}
+      {/* R4-5b: the same guided flows Today launches, reachable here regardless of pin state */}
+      {openRitual === 'morning' && <MorningRitual onClose={() => setOpenRitual(null)} />}
+      {openRitual === 'evening' && <EveningRitual onClose={() => setOpenRitual(null)} />}
       {trellisRoutine && <StreakTrellis routine={trellisRoutine} completions={completions} onClose={() => setTrellisRoutine(null)} />}
     </div>
   )

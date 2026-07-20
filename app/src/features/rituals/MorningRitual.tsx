@@ -7,6 +7,7 @@ import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { localToIso } from '../calendar/eventTime'
 import { localDateKey } from '../routines/streaks'
 import { logRitualStep } from './api'
+import { dragLift, useMotionEnabled } from '../../lib/motion'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import type { Task } from '../../lib/types'
 
@@ -282,6 +283,7 @@ const HOUR_PX = 52
 
 function BedItem({ task }: { task: Task }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+  const motionOn = useMotionEnabled()
   return (
     <div
       ref={setNodeRef}
@@ -295,9 +297,10 @@ function BedItem({ task }: { task: Task }) {
         border: '1px solid var(--line-card)',
         borderRadius: 6,
         padding: '8px 10px',
-        cursor: 'grab',
-        opacity: isDragging ? 0.4 : 1,
+        cursor: isDragging ? 'grabbing' : 'grab',
         touchAction: 'none',
+        // Motion 5b, via the shared grammar (R4-23) — replaces a flat 0.4 opacity fade.
+        ...dragLift(isDragging, motionOn),
       }}
     >
       <span style={{ color: 'var(--ink-hairline)', fontSize: 11, letterSpacing: -3 }}>⠿</span>

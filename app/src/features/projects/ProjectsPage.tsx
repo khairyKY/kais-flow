@@ -8,8 +8,8 @@ import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
 import { SectionLabel } from '../../components/kit'
-import { EmojiText } from '../../components/EmojiText'
-import { FunnelIcon } from '../../components/controlIcons'
+import { EmojiText } from '../../components/EmojiText'
+import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import './xfx.css'
 
@@ -321,16 +321,36 @@ export function ProjectsPage() {
               {activeCount} active · {totalCount} total
             </span>
             {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
+            {/* R4-33a (2026-07-20 audit): "four big pills of buttons" all shouted equally. This is
+                a quiet navigation toggle, not an action — ghost text unless it's the active view,
+                so "+ New project" is the only filled CTA in the row. */}
             <button
               onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-              style={{ border: '1px solid var(--line-solid)', background: view === 'archive' ? 'var(--paper-parchment)' : 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer', boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none' }}
-            >
-              Finished projects · {archivedProjects.length}
-            </button>
-            <div
               style={{
-                position: 'relative',
-                display: 'inline-block',
+                border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
+                background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
+                color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
+                fontFamily: 'inherit',
+                fontSize: '12.5px',
+                padding: '9px 13px',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
+              }}
+            >
+              Finished · {archivedProjects.length}
+            </button>
+            {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
+                was a styled div with a transparent native <select> laid over it — the trigger
+                looked right, but opening it handed you the OS dropdown. The themed Select keeps
+                the pill (it merges `style` onto its trigger) and brings our own popover. */}
+            <Select
+              value={selectedDomainId || ''}
+              onChange={(v) => setSelectedDomainId(v || null)}
+              options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+              ariaLabel="Filter by domain"
+              placeholder="Domain"
+              style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: '9.5px',
                 letterSpacing: '0.08em',
@@ -339,36 +359,15 @@ export function ProjectsPage() {
                 border: '1px solid var(--line-solid)',
                 borderRadius: '999px',
                 padding: '8px 13px',
-                cursor: 'pointer',
               }}
-            >
-              <FunnelIcon /> {selectedDomainId ? domains.find((d) => d.id === selectedDomainId)?.name : 'Domain'} ▾
-              <select
-                value={selectedDomainId || ''}
-                onChange={(e) => setSelectedDomainId(e.target.value || null)}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0,
-                  cursor: 'pointer',
-                  width: '100%',
-                  height: '100%',
-                }}
-              >
-                <option value="">All Domains</option>
-                {domains.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            />
             <button
               onClick={() => {
                 setNewType('area')
                 setShowNewModal(true)
               }}
-              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
+              // R4-33a: the secondary create — outlined, not filled, so it reads below the CTA.
+              style={{ border: '1px solid var(--line-solid)', background: 'transparent', color: 'var(--ink-muted)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
             >
               + New area
             </button>

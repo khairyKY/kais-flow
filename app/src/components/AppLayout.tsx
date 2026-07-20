@@ -182,15 +182,21 @@ function PlanDrawer() {
   )
 }
 
-function NavRow({ item, pendingInbox }: { item: NavItem; pendingInbox: number }) {
+function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox: number; collapsed?: boolean }) {
   const { pathname } = useLocation()
   const isActive = pathname === item.to
 
+  // R4-1 (2026-07-20 audit): "I don't see the cluster of icons that are supposed to happen when
+  // these sidebars collapse." Only the *active* row ever drew its species icon; every other row
+  // fell through to an 8px dot. Expanded that's fine — the label carries the meaning — but
+  // collapsing hides the labels, leaving a column of anonymous dots instead of Editor-1g's icon
+  // rail. Collapsed, every row now draws its own icon (dimmed until active).
   const icon = (active: boolean) => {
+    const showSpecies = active || collapsed
     if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
-    if (active && item.activeIcon) return item.activeIcon
-    if (active && item.dynamicActiveImg) return <img src={item.dynamicActiveImg(pendingInbox)} alt="" style={{ height: 16 }} />
-    if (active && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16 }} />
+    if (showSpecies && item.activeIcon) return <span style={{ opacity: active ? 1 : 0.7 }}>{item.activeIcon}</span>
+    if (showSpecies && item.dynamicActiveImg) return <img src={item.dynamicActiveImg(pendingInbox)} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
+    if (showSpecies && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
     return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
   }
   return (
@@ -621,11 +627,11 @@ export function AppLayout() {
         <nav style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <GroupLabel>Tend</GroupLabel>
           {TEND.map((item) => (
-            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} />
+            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} collapsed={collapsed} />
           ))}
           <GroupLabel>Cultivate</GroupLabel>
           {CULTIVATE.map((item) => (
-            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} />
+            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} collapsed={collapsed} />
           ))}
         </nav>
 

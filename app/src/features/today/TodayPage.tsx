@@ -12,7 +12,9 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
-import { useRitualStepsToday, RITUAL_STEP_COUNT } from '../rituals/api'
+import { useRitualStepsToday, RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
+import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
+import { PinIcon } from '../rituals/PinIcon'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
@@ -68,7 +70,8 @@ export function TodayPage() {
   const { data: projects = [] } = useProjects()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
-  const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
+  const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
+  const ritualPins = useRitualPins()
   const { data: slipping = [] } = useSlipping()
   const { data: domains = [] } = useDomains()
   const { data: pendingInbox = [] } = usePendingInboxItems()
@@ -326,10 +329,10 @@ export function TodayPage() {
         </>
       )}
 
-      <div style={{ display: 'flex', gap: isMobile ? 9 : 14, marginTop: isMobile ? 12 : 20 }}>
-        <RitualCard label="Morning ritual" shortLabel="Morning" done={morning.done} total={morning.total || 4} accent="var(--acc-sage)" dot="var(--acc-gold-warm)" onClick={() => setMorningOpen(true)} icon={<SunIcon />} compact={isMobile} />
-        <RitualCard label="Evening ritual" shortLabel="Evening" done={evening.done} total={evening.total || 2} accent="var(--acc-lavender)" dot="var(--acc-lavender)" onClick={() => setEveningOpen(true)} icon={<MoonIcon />} compact={isMobile} />
-      </div>
+      {(ritualPins.morning || ritualPins.evening) && <div style={{ display: 'flex', gap: isMobile ? 9 : 14, marginTop: isMobile ? 12 : 20 }}>
+        {ritualPins.morning && <RitualCard kind="morning" label="Morning ritual" shortLabel="Morning" done={morning.done} total={morning.total || 4} accent="var(--acc-sage)" dot="var(--acc-gold-warm)" onClick={() => setMorningOpen(true)} icon={<SunIcon />} compact={isMobile} />}
+        {ritualPins.evening && <RitualCard kind="evening" label="Evening ritual" shortLabel="Evening" done={evening.done} total={evening.total || 2} accent="var(--acc-lavender)" dot="var(--acc-lavender)" onClick={() => setEveningOpen(true)} icon={<MoonIcon />} compact={isMobile} />}
+      </div>}
 
       {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
@@ -735,7 +738,7 @@ function RoutineRow({ routine, done }: { routine: Routine; done: boolean }) {
   )
 }
 
-function RitualCard({ label, shortLabel, done, total, accent, dot, onClick, icon, compact }: { label: string; shortLabel: string; done: number; total: number; accent: string; dot: string; onClick: () => void; icon: React.ReactNode; compact?: boolean }) {
+function RitualCard({ kind, label, shortLabel, done, total, accent, dot, onClick, icon, compact }: { kind: RitualKind; label: string; shortLabel: string; done: number; total: number; accent: string; dot: string; onClick: () => void; icon: React.ReactNode; compact?: boolean }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   if (compact) {
     return (
@@ -753,7 +756,20 @@ function RitualCard({ label, shortLabel, done, total, accent, dot, onClick, icon
   }
   return (
     <button onClick={onClick} style={{ position: 'relative', flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 13, cursor: 'pointer', font: 'inherit', textAlign: 'left' }}>
-      <span style={{ position: 'absolute', top: 9, right: 11, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>◧ pinned</span>
+      {/* R4-5c: a real pin, and a real control — click to unpin this ritual off Today
+          (it stays reachable from Routines). Was a static '◧ pinned' caption. */}
+      <span
+        role="button"
+        tabIndex={0}
+        title="Unpin from Today"
+        aria-label="Unpin this ritual from Today"
+        onClick={(e) => { e.stopPropagation(); toggleRitualPin(kind) }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleRitualPin(kind) } }}
+        className="kf-hit"
+        style={{ position: 'absolute', top: 7, right: 9, display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer' }}
+      >
+        <PinIcon size={9} /> pinned
+      </span>
       {icon}
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, color: 'var(--ink-body)', fontWeight: 500 }}>{label}</div>

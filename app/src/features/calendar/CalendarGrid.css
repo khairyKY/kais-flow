@@ -212,8 +212,14 @@
   0%, 100% { transform: rotate(-0.8deg) translateY(0); }
   50% { transform: rotate(1deg) translateY(-2px); }
 }
+/* Motion 5b "Drag lift" — R4-23: the picked-up block lifts over 140ms as it appears, then the
+   2c/4c float takes over. The settle-on-release half of the grammar is the snap flash below. */
+@keyframes calGridDragLiftIn {
+  from { transform: scale(1); box-shadow: var(--shadow-crisp); }
+  to   { transform: scale(1.04); box-shadow: 0 14px 30px rgba(60,52,38,0.26); }
+}
 .cal-motion-on .fc-event-mirror {
-  animation: calGridDragFloat 2.1s ease-in-out infinite;
+  animation: calGridDragLiftIn 140ms var(--ease-out), calGridDragFloat 2.1s ease-in-out 140ms infinite;
   will-change: transform;
 }
 @keyframes calGridSnapFlash {
