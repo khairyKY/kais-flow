@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
@@ -52,6 +52,13 @@ function useActivityLog(entityId: string) {
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  // Search deep-link: /projects/:id?focus=<taskId> — scroll to the row and ring it.
+  const [searchParams] = useSearchParams()
+  const focusTaskId = searchParams.get('focus')
+  useEffect(() => {
+    if (!focusTaskId) return
+    document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusTaskId])
   const motion = useMotionEnabled()
 
   // Queries
@@ -507,7 +514,7 @@ export function ProjectDetailPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {openTasks.map((t) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                <div key={t.id} id={`task-${t.id}`} style={{ boxShadow: focusTaskId === t.id ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                   <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
                   <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                   {t.due_at && (
@@ -818,7 +825,7 @@ export function ProjectDetailPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {openTasks.map((t) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+              <div key={t.id} id={`task-${t.id}`} style={{ boxShadow: focusTaskId === t.id ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
                 <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                 {t.due_at && (

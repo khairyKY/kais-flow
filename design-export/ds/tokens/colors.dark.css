@@ -20,6 +20,15 @@
   --paper-bone:         #2E2942;   /* input fields, hover surfaces */
   --paper-sidebar:      #1C1929;   /* left rail */
   --paper-goal:         #322B22;   /* gold goal card — ember-lit */
+  --paper-event:        #2A2639;   /* neutral calendar block — external / read-only */
+
+  /* Calendar block tints — brighter alpha so the wash reads on violet ground */
+  --block-lavender:     rgba(192, 183, 224, 0.22);
+  --block-moss:         rgba(154, 190, 140, 0.18);
+  --block-blossom:      rgba(233, 191, 197, 0.18);
+  --block-sage:         rgba(168, 196, 152, 0.18);
+  --block-hydrangea:    rgba(169, 197, 211, 0.18);
+  --block-buttercream:  rgba(232, 220, 160, 0.18);
 
   /* Moonlight ink — soft cream on violet, never pure white */
   --moon-primary:       #F0EBDD;

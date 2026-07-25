@@ -6,6 +6,15 @@
   --paper-bone:         #F6F0E1;   /* input fields, hover surfaces */
   --paper-sidebar:      #EAE3D2;   /* left rail */
   --paper-goal:         #F8EFD3;   /* gold card — goal of the day */
+  --paper-event:        #F4EFE0;   /* neutral calendar block — external / read-only */
+
+  /* Calendar block tints — accent washed over paper. Never use the raw accent as a fill. */
+  --block-lavender:     rgba(168, 160, 190, 0.20);
+  --block-moss:         rgba(122, 148, 110, 0.18);
+  --block-blossom:      rgba(212, 168, 176, 0.22);
+  --block-sage:         rgba(138, 154, 126, 0.20);
+  --block-hydrangea:    rgba(154, 180, 190, 0.22);
+  --block-buttercream:  rgba(212, 199, 138, 0.24);
 
   /* Ink */
   --ink-body:           #2a2420;   /* primary text — bark brown */

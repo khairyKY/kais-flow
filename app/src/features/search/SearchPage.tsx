@@ -1,3 +1,4 @@
+import { useTasks } from '../tasks/api'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { searchHybrid } from './api'
@@ -95,6 +96,7 @@ function EmptyResult({ query }: { query: string }) {
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
+  const { data: allTasks = [] } = useTasks()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
   const [results, setResults] = useState<SearchHit[]>([])
@@ -125,7 +127,11 @@ export function SearchPage() {
   }, [query])
 
   function goTo(hit: SearchHit) {
-    navigate(hit.entity_type === 'task' ? `/tasks?focus=${hit.entity_id}` : `/inbox?focus=${hit.entity_id}`)
+    // Same project-aware routing as the overlay (Kai 2026-07-21).
+            if (hit.entity_type !== 'task') { navigate(`/inbox?focus=${hit.entity_id}`); return }
+            const task = allTasks.find((t) => t.id === hit.entity_id)
+            if (task?.project_id) navigate(`/projects/${task.project_id}?focus=${hit.entity_id}`)
+            else navigate(`/tasks?focus=${hit.entity_id}`)
   }
 
   const tasks = results.filter((r) => r.entity_type === 'task')

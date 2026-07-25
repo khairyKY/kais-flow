@@ -94,10 +94,10 @@ a:hover{color:#8f4f39}
 @keyframes enterUp{0%,6%{opacity:0;transform:translateY(8px)}12%,86%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(8px)}}
 /* t4 — calendar drags */
 @keyframes calGhost{0%,8%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}13%{opacity:1;transform:translate(2px,-4px) rotate(1.8deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}22%{opacity:1;transform:translate(3px,16px) rotate(-1.6deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}31%{opacity:1;transform:translate(2px,42px) rotate(1.4deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}38%{opacity:1;transform:translate(2px,62px) rotate(-1deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}46%,80%{opacity:1;transform:translate(0,56px) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}86%{opacity:0;transform:translate(0,56px) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}87%{opacity:0;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}93%,100%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}}
-@keyframes calSnap{0%,11%{opacity:0;transform:translateY(0)}14%,29%{opacity:1;transform:translateY(0)}30%,44%{opacity:1;transform:translateY(56px)}50%,100%{opacity:0;transform:translateY(56px)}}
+@keyframes calSnap{0%,11%{opacity:0;transform:translateY(0)}14%,29%{opacity:1;transform:translateY(0)}30%,44%{opacity:1;transform:translateY(54px)}50%,100%{opacity:0;transform:translateY(54px)}}
 @keyframes calTimeA{0%,29%{opacity:1}32%,86%{opacity:0}93%,100%{opacity:1}}
 @keyframes calTimeB{0%,29%{opacity:0}32%,86%{opacity:1}93%,100%{opacity:0}}
-@keyframes calResize{0%,16%{height:52px}26%{height:82px}33%{height:98px}40%,72%{height:108px}82%,100%{height:52px}}
+@keyframes calResize{0%,16%{height:54px}26%{height:81px}33%{height:97px}40%,72%{height:108px}82%,100%{height:54px}}
 @keyframes calSnapLine{0%,34%{opacity:0}39%,48%{opacity:1}56%,100%{opacity:0}}
 /* t4 — drag polish */
 @keyframes catchDrop{0%,12%{opacity:0;transform:translateY(-38px) rotate(0deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}18%{opacity:1;transform:translateY(-38px) rotate(-1.6deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}27%{opacity:1;transform:translateY(-36px) rotate(1.5deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}35%{opacity:1;transform:translateY(-35px) rotate(-1.2deg) scale(1.04);box-shadow:0 14px 30px rgba(60,52,38,0.26)}42%,82%{opacity:1;transform:translateY(0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}90%,100%{opacity:0;transform:translateY(0) rotate(0deg) scale(1);box-shadow:var(--shadow-crisp)}}
@@ -358,13 +358,13 @@ a:hover{color:#8f4f39}
               <!-- panel 1: move -->
               <div class="flabel" style="position:absolute;left:0;top:0">Move · snaps to the hour</div>
               <div style="position:absolute;left:0;top:26px;width:300px;height:180px">
-                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-5px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
-                <div style="position:absolute;left:36px;right:0;top:56px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:51px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
-                <div style="position:absolute;left:36px;right:0;top:112px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:107px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
-                <div style="position:absolute;left:36px;right:0;top:168px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:163px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
-                <div class="m-hide" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;border:1.5px dashed var(--acc-lavender-deep);background:rgba(168,160,190,0.1);opacity:0;animation:calSnap 8s ease-in-out infinite"></div>
-                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;background:rgba(168,160,190,0.24);border:1px solid rgba(124,106,154,0.35);padding:7px 10px;animation:calGhost 8s ease-in-out infinite;will-change:transform;z-index:3">
-                  <div style="font-size:12px;color:var(--ink-body)">Deep work · forecasting</div>
+                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-7px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
+                <div style="position:absolute;left:36px;right:0;top:54px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:47px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
+                <div style="position:absolute;left:36px;right:0;top:108px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:101px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
+                <div style="position:absolute;left:36px;right:0;top:162px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:155px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
+                <div class="m-hide" style="position:absolute;left:44px;right:4px;top:0;height:54px;border-radius:6px;border:1.5px dashed var(--acc-lavender-deep);background:color-mix(in srgb, var(--acc-lavender) 10%, transparent);opacity:0;animation:calSnap 8s ease-in-out infinite"></div>
+                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:0;height:54px;border-radius:6px;background:color-mix(in srgb, var(--acc-lavender) 24%, transparent);border:1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent);padding:7px 10px;animation:calGhost 8s ease-in-out infinite;will-change:transform;z-index:3">
+                  <div style="font-size:12px;line-height:1.3;color:var(--ink-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Deep work — Forecasting</div>
                   <div style="position:relative;margin-top:2px;font-family:var(--font-mono);font-size:8.5px;color:var(--acc-lavender-text)">
                     <span class="m-anim" style="animation:calTimeA 8s ease-in-out infinite">9:00 – 10:00</span>
                     <span class="m-hide" style="position:absolute;left:0;top:0;opacity:0;animation:calTimeB 8s ease-in-out infinite">10:00 – 11:00</span>
@@ -374,13 +374,13 @@ a:hover{color:#8f4f39}
               <!-- panel 2: resize -->
               <div class="flabel" style="position:absolute;left:348px;top:0">Resize · handle snaps to the hour</div>
               <div style="position:absolute;left:348px;top:26px;width:300px;height:180px">
-                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-5px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
-                <div style="position:absolute;left:36px;right:0;top:56px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:51px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
-                <div style="position:absolute;left:36px;right:0;top:112px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:107px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
-                <div style="position:absolute;left:36px;right:0;top:168px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:163px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
-                <div class="m-hide" style="position:absolute;left:36px;right:0;top:112px;border-top:1.5px solid var(--acc-lavender-deep);opacity:0;animation:calSnapLine 8s ease-in-out infinite"></div>
-                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:2px;height:52px;border-radius:6px;background:rgba(168,160,190,0.24);border:1px solid rgba(124,106,154,0.35);padding:7px 10px;overflow:hidden;animation:calResize 8s ease-in-out infinite;z-index:3">
-                  <div style="font-size:12px;color:var(--ink-body)">Deep work · forecasting</div>
+                <div style="position:absolute;left:36px;right:0;top:0;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:-7px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">9:00</span>
+                <div style="position:absolute;left:36px;right:0;top:54px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:47px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">10:00</span>
+                <div style="position:absolute;left:36px;right:0;top:108px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:101px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">11:00</span>
+                <div style="position:absolute;left:36px;right:0;top:162px;border-top:1px dashed var(--line-dashed)"></div><span style="position:absolute;left:0;top:155px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">12:00</span>
+                <div class="m-hide" style="position:absolute;left:36px;right:0;top:108px;border-top:1.5px solid var(--acc-lavender-deep);opacity:0;animation:calSnapLine 8s ease-in-out infinite"></div>
+                <div class="m-anim" style="position:absolute;left:44px;right:4px;top:0;height:54px;border-radius:6px;background:color-mix(in srgb, var(--acc-lavender) 24%, transparent);border:1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent);padding:7px 10px;overflow:hidden;animation:calResize 8s ease-in-out infinite;z-index:3">
+                  <div style="font-size:12px;line-height:1.3;color:var(--ink-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Deep work — Forecasting</div>
                   <div style="position:relative;margin-top:2px;font-family:var(--font-mono);font-size:8.5px;color:var(--acc-lavender-text)">
                     <span class="m-anim" style="animation:calTimeA 8s ease-in-out infinite">9:00 – 10:00 · 1h</span>
                     <span class="m-hide" style="position:absolute;left:0;top:0;opacity:0;animation:calTimeB 8s ease-in-out infinite">9:00 – 11:00 · 2h</span>
@@ -394,7 +394,7 @@ a:hover{color:#8f4f39}
         <div class="mcap">
           <div class="mname">Calendar drag dialect · snap</div>
           <div class="muse">Same wobbly ghost as <a href="#2c">2c</a>, but the placeholder doesn't trail it — it jumps hour to hour, so the hand stays loose while the outcome stays exact. The time label re-reads at each snap. Resize mirrors it: the block stretches freely, the handle commits to the grid line.</div>
-          <div class="mrecipe">ghost free + placeholder stepped (snap at slot midpoint) · snap flash 120ms · resize: free stretch, stepped commit · 30-min grid in the real view</div>
+          <div class="mrecipe">ghost free + placeholder stepped (snap at slot midpoint) · snap flash 120ms · resize: free stretch, stepped commit · 54px = 1h, snap 30min (27px) · block spec: Calendar 3a–3f / CALENDAR.md</div>
         </div>
       </div>
     </div>

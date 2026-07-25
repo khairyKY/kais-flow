@@ -43,7 +43,14 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
       }
     }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    // A fixed menu over a scrolled list detaches from the row it was opened on — close it.
+    window.addEventListener('scroll', onClose, true)
+    window.addEventListener('resize', onClose)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      window.removeEventListener('scroll', onClose, true)
+      window.removeEventListener('resize', onClose)
+    }
   }, [onClose])
 
   useEffect(() => () => { if (openTimer.current) window.clearTimeout(openTimer.current) }, [])
@@ -68,12 +75,15 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
   // once here and every clamp below keeps working in one consistent space.
   const z = uiZoom()
 
+  // Returns VISUAL px — every position-taking popover (SnoozeMenu, ScheduleMenu,
+  // ProjectPicker) divides by uiZoom() itself, so handing them layout px here would
+  // double-divide and drift the submenu up-left at 125%.
   function submenuPosition(i: number): { x: number; y: number } {
     const el = itemRefs.current[i]
-    if (!el) return { x: position.x / z, y: position.y / z }
+    if (!el) return position
     const rect = el.getBoundingClientRect()
     const flip = rect.right + SUBMENU_WIDTH * z > window.innerWidth
-    return { x: flip ? Math.max(8, rect.left / z - SUBMENU_WIDTH) : rect.right / z, y: rect.top / z }
+    return { x: flip ? Math.max(8 * z, rect.left - SUBMENU_WIDTH * z) : rect.right, y: rect.top }
   }
 
   const itemHeight = 34

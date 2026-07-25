@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { searchHybrid } from './api'
+import { useTasks } from '../tasks/api'
 import { EmojiText } from '../../components/EmojiText'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
@@ -8,6 +9,7 @@ import type { SearchHit } from '../../lib/types'
 const DEBOUNCE_MS = 250
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data: allTasks = [] } = useTasks()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,7 +51,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   function goTo(hit: SearchHit) {
     onClose()
-    navigate(hit.entity_type === 'task' ? `/tasks?focus=${hit.entity_id}` : `/inbox?focus=${hit.entity_id}`)
+    // Kai 2026-07-21: "it should take you to the task — if it's inside a project, take you
+    // to that project and highlight where it is." Inbox hits keep their deep-link.
+    if (hit.entity_type !== 'task') { navigate(`/inbox?focus=${hit.entity_id}`); return }
+    const task = allTasks.find((t) => t.id === hit.entity_id)
+    if (task?.project_id) navigate(`/projects/${task.project_id}?focus=${hit.entity_id}`)
+    else navigate(`/tasks?focus=${hit.entity_id}`)
   }
 
   function viewAll() {

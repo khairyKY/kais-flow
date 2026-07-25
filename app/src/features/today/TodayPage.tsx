@@ -26,7 +26,8 @@ import { useListKeys } from '../../components/useListKeys'
 import { BulkBar } from '../../components/BulkBar'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
@@ -152,8 +153,17 @@ export function TodayPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const selectable = [...restTop3, ...allOpen].filter((t) => !t.completed_at)
   const selectedTasks = selectable.filter((t) => selected.has(t.id))
-  // (per-row selection checkboxes removed from Today per Kai 2026-07-21; keyboard
-  // bulk-select still populates `selected` via useListKeys.)
+  // Kai 2026-07-21 (clarified): the visible per-row select SQUARES go, but selectability
+  // stays — Ctrl/Cmd+click toggles a row, Ctrl+A still selects all, the BulkBar still rides
+  // a selection, and every row has a right-click menu.
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
   function clearSelection() {
     setSelected(new Set())
   }
@@ -406,7 +416,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} highlighted={t.id === focusedId} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -428,7 +438,7 @@ export function TodayPage() {
               <div className="kf-dim">
                 {allOpen.map((t, i) => (
                   <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} highlighted={t.id === focusedId} />
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                   </div>
                 ))}
               </div>
@@ -661,19 +671,37 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
     outline: 'none',
   }
-  const selectBox = !done && onToggleSelect && (
-    <span
-      onClick={onToggleSelect}
-      className="kf-hit"
-      style={{ width: 14, height: 14, marginTop: 4, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
-    >
-      {selected ? '✓' : ''}
-    </span>
-  )
+  // Kai 2026-07-21: no visible select squares, but the row keeps its selection and menu
+  // behaviours — Ctrl/Cmd+click toggles selection, right-click opens the actions menu.
+  const navigate = useNavigate()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  function rowClick(e: React.MouseEvent) {
+    if ((e.ctrlKey || e.metaKey) && !done && onToggleSelect) {
+      e.preventDefault()
+      onToggleSelect()
+    }
+  }
+  function rowMenu(e: React.MouseEvent) {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY })
+  }
+  const menuItems: ContextMenuItem[] = [
+    done
+      ? { label: 'Reopen', onClick: () => uncompleteTask(task) }
+      : { label: 'Complete', onClick: () => completeTask(task) },
+    { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
+    { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
+    { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
+    { label: 'Someday', onClick: () => setSomeday(task, true), disabled: done },
+    ...(onToggleSelect && !done ? [{ label: selected ? 'Deselect' : 'Select', onClick: onToggleSelect, shortcut: '⌃click' }] : []),
+    { label: 'Open details', onClick: () => navigate(`/tasks/${task.id}`) },
+    { label: 'Delete', danger: true, onClick: () => deleteTask(task) },
+  ]
+  const menuNode = menu && <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
   if (compact) {
     return (
-      <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
-        {selectBox}
+      <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
+        {menuNode}
         {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
@@ -692,8 +720,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     )
   }
   return (
-    <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
-      {selectBox}
+    <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
+      {menuNode}
       {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>

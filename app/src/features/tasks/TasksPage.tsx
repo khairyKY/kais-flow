@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
 import { Link, useSearchParams } from 'react-router'
@@ -330,11 +330,27 @@ export function TasksPage() {
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
   const [title, setTitle] = useState('')
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const rawList = searchParams.get('list')
   // R4-3 (2026-07-20 audit): SearchOverlay deep-links here as /tasks?focus=<id>, but this
   // page never read the param, so a clicked result landed on an unhighlighted list.
   const focusId = searchParams.get('focus')
+  // Kai 2026-07-21: a deep-linked task on another tab (someday/done/upcoming) never scrolled
+  // because its row was not rendered. Hop to its tab once, keeping the focus param.
+  const tabSwitched = useRef(false)
+  useEffect(() => {
+    if (!focusId || tabSwitched.current) return
+    const t = tasks.find((x) => x.id === focusId)
+    if (!t) return
+    const target = t.status === 'done' ? 'done' : t.someday ? 'someday' : filterByList([t], 'today', now).length > 0 ? 'today' : 'upcoming'
+    if (target !== activeTab) {
+      tabSwitched.current = true
+      const p = new URLSearchParams(searchParams)
+      p.set('list', target)
+      setSearchParams(p, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, tasks])
   const list = parseList(rawList)
   const activeTab = tabOf(rawList, list)
   const motion = useMotionEnabled()
@@ -629,7 +645,7 @@ export function TasksPage() {
               <div key={group.key}>
                 {!isSomeday && <SectionHeader group={group} />}
                 {group.tasks.map((t, i) => (
-                  <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
+                  <div key={t.id} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
                       highlighted={t.id === kbFocusedId || t.id === focusId}
