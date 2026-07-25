@@ -12,8 +12,9 @@ screenshot round · the checkbox/drag round. Claim-by-claim history:
 **Score: 48 done · 11 open · 6 parked · 3 blocked**
 
 > ⚠️ **Before verifying anything:** hard-reload (`Ctrl+Shift+R`). Several rounds were judged on a
-> stale dev server. Default interface size is now **110%** — if that reads too small or too big,
-> Settings → Appearance → Interface size (100/110/125/150).
+> stale dev server. Default interface size is now **125%** (round 6) — adjust in Settings → Appearance →
+> Interface size (100/110/125/150/175), and set the BROWSER back to 100% so the two scales
+> don't compound into blur.
 
 ---
 
@@ -21,7 +22,7 @@ screenshot round · the checkbox/drag round. Claim-by-claim history:
 
 | # | What you said | Status | Verify by |
 |---|---|---|---|
-| G1 | *"the audit was done at 125–150% zoom, most natural at 110%, but everything feels small"* | ✅ | App now renders at **110% by default**. Settings → Appearance → **Interface size**. Diagnosis: tokens were correct (they match the export's px values) — it's a render-scale issue, so the document scales via root `zoom`, not the design system. Chose `zoom` over `transform: scale` after testing: transform breaks fixed-position coords (every popover would mis-place). |
+| G1 | *"the audit was done at 125–150% zoom, most natural at 110%, but everything feels small"* | ✅ | App now renders at **125% by default** (raised from 110 in round 6). Settings → Appearance → **Interface size**. Diagnosis: tokens were correct (they match the export's px values) — it's a render-scale issue, so the document scales via root `zoom`, not the design system. Chose `zoom` over `transform: scale` after testing: transform breaks fixed-position coords (every popover would mis-place). |
 | G2 | *"Sync failed for journal_entries: invalid input syntax for type uuid"* on every refresh | ✅ | Toast should be gone. Journal writes sent `user_id: ''`, which Postgres rejects — **and a rejected row sat at the head of the outbox and blocked every write behind it, forever.** Very likely the real cause of the whole "my changes come back" cluster. Rejected rows are now parked in a dead-letter key so the queue keeps draining. |
 | P0 | Dismissed inbox items return · filing "comes back waiting" · project colour resets · onboarding loops | ✅ | All four were **one bug**, twice over: (1) the outbox wedge above, (2) a refetch race where realtime invalidation reverted pending writes. Test: dismiss an inbox item, refresh — it should stay dismissed. |
 
