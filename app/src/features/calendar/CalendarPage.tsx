@@ -3,8 +3,10 @@ import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent } from './api'
-import { useTasks, completeTask } from '../tasks/api'
+import { useTasks, completeTask, uncompleteTask } from '../tasks/api'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
+import { Checkbox } from '../../components/kit'
+import { dragGuard } from './dragGuard'
 import { resolveTag, daysOverdue, formatDuration } from '../tasks/taskDisplay'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
@@ -340,7 +342,14 @@ export function CalendarPage() {
                       transform: `rotate(${RAIL_TILTS[i % RAIL_TILTS.length]}deg)`,
                     }}
                   >
-                    <div style={{ fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+                      {/* R4 (Kai 2026-07-20): tick a task off without scheduling it first. The
+                          guard swallows pointerdown so FullCalendar's Draggable never sees it. */}
+                      <span ref={dragGuard(() => completeTask(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
+                        <Checkbox checked={false} size={15} />
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
+                    </div>
                     <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                       {overdue > 0 ? (
                         <span style={{ color: 'var(--acc-terra)' }}>Overdue {overdue}d</span>
@@ -437,7 +446,11 @@ export function CalendarPage() {
               initialView={VIEW_MAP[viewKind]}
               hideToolbar
               onRangeChange={setRangeInfo}
-              events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id) }))}
+              events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: tasks.find((t) => t.id === e.task_id)?.status === 'done' }))}
+              onCompleteTask={(taskId, done) => {
+                const t = tasks.find((x) => x.id === taskId)
+                if (t) (done ? uncompleteTask : completeTask)(t)
+              }}
               onCreate={handleGridCreate}
               onMove={(id, start, end) => {
                 const event = events.find((e) => e.id === id)

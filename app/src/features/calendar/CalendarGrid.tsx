@@ -5,6 +5,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
+import { EmojiText } from '../../components/EmojiText'
+import { dragGuard } from './dragGuard'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -17,6 +19,9 @@ export interface CalendarGridEvent {
   allDay?: boolean
   type: 'time_block' | 'event' | 'task'
   color?: string | null
+  /** Set when the block came from a task — drives the in-block checkbox (R4, 2026-07-20). */
+  taskId?: string | null
+  taskDone?: boolean
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'timeGridWeek' | 'dayGridMonth'
@@ -48,6 +53,8 @@ interface CalendarGridProps {
   onEventContextMenu?: (eventId: string, x: number, y: number) => void
   /** Right-click on empty grid space (not an existing event) — resolves the exact slot under the cursor. */
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
+  /** Toggles the task behind a block from its checkbox. `done` is the state it was just in. */
+  onCompleteTask?: (taskId: string, done: boolean) => void
   conflictedIds?: string[]
   /** Effects 21 — id of an event just created by an external drop; its chip plays the settle-in. */
   justDroppedId?: string | null
@@ -92,18 +99,36 @@ const GHOST_ID = 'kf-cal-ghost'
 function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   if (typeof document === 'undefined') return () => {}
   const rect = source.getBoundingClientRect()
+
+  // The ghost lives on <body> so `position: fixed` is always viewport-relative (a transformed
+  // ancestor inside the grid would otherwise become its containing block — the mispositioning
+  // bug the 2026-07-19 audit already paid for once). But every block rule is scoped `.fc ...`,
+  // so a bare clone on <body> matched none of them and fell back to FullCalendar's own unscoped
+  // `.fc-v-event`, whose --fc-event-bg-color defaults to #3788d8 — Kai's "it turns all blue".
+  // Wrapping the clone in a `.fc` host restores the scope without moving it off <body>.
+  const host = document.createElement('div')
+  host.id = GHOST_ID
+  host.className = source.closest('.cal-motion-on') ? 'fc cal-motion-on' : 'fc'
+  host.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;z-index:70;'
+
   const ghost = source.cloneNode(true) as HTMLElement
-  ghost.id = GHOST_ID
   ghost.className = `${source.className} kf-cal-ghost`
-  // The clone must not inherit the mirror's absolute grid placement.
-  ghost.style.cssText = `position:fixed;left:0;top:0;width:${rect.width}px;height:${rect.height}px;margin:0;pointer-events:none;z-index:70;`
-  document.body.appendChild(ghost)
+  // Size and neutralise the grid placement WITHOUT cssText, which would wipe the inline
+  // --kf-ev-* custom properties eventDidMount sets for a coloured event.
+  ghost.style.position = 'relative'
+  ghost.style.inset = 'auto'
+  ghost.style.margin = '0'
+  ghost.style.width = `${rect.width}px`
+  ghost.style.height = `${rect.height}px`
+  host.appendChild(ghost)
+  document.body.appendChild(host)
 
   // Grab offset keeps the ghost under the same spot on the block the pointer picked up.
   const grabX = ev ? ev.clientX - rect.left : rect.width / 2
   const grabY = ev ? ev.clientY - rect.top : rect.height / 2
+  // The host carries the position so the ghost itself keeps the 2c wobble on its own transform.
   const move = (e: MouseEvent) => {
-    ghost.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
+    host.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
   }
   if (ev) move(ev)
   window.addEventListener('mousemove', move)
@@ -112,7 +137,7 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   return () => {
     window.removeEventListener('mousemove', move)
     window.removeEventListener('dragover', move as EventListener)
-    ghost.remove()
+    host.remove()
   }
 }
 
@@ -129,6 +154,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onExternalDrop,
   onEventContextMenu,
   onGridContextMenu,
+  onCompleteTask,
   conflictedIds,
   justDroppedId,
 }, ref) {
@@ -195,10 +221,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       nowIndicator
       // Calendar.dc.html:213 — live mono time chip riding the now line; FC's NowTimer
       // re-renders this every minute, so no interval of our own.
+      // R4 (2026-07-20): the chip read a constant "12:00 AM". `arg.date` is a FullCalendar
+      // DateMarker — wall-clock encoded AS UTC — so toLocaleTimeString shifted it a second time
+      // by the local offset (21:41 Cairo -> 00:41 "local"). The chip always means "now", and FC's
+      // NowTimer re-renders it every minute, so read the real clock instead of the marker.
       nowIndicatorContent={(arg) =>
         arg.isAxis ? null : (
           <span className="cal-now-chip">
-            {arg.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
           </span>
         )
       }
@@ -215,9 +245,35 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
         // extendedProps rather than FC's backgroundColor/borderColor, because those land as
         // inline styles that would beat the stylesheet and undo the 4c fill/edge.
-        if (e.color) ev.extendedProps = { kfColor: e.color }
+        ev.extendedProps = { kfColor: e.color ?? null, kfTaskId: e.taskId ?? null, kfTaskDone: !!e.taskDone }
         return ev
       })}
+      // 4c renders the title above the time. FC emits them the other way round, so own the
+      // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
+      // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
+      eventContent={(arg) => {
+        const { kfTaskId, kfTaskDone } = arg.event.extendedProps as { kfTaskId: string | null; kfTaskDone: boolean }
+        const done = !!kfTaskDone
+        return (
+          <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
+            {kfTaskId && !arg.isMirror && (
+              <span
+                className={`kf-ev-check${done ? ' kf-on' : ''}`}
+                role="checkbox"
+                aria-checked={done}
+                aria-label={`${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
+                ref={dragGuard(() => onCompleteTask?.(kfTaskId, done))}
+              >
+                {done ? '✓' : ''}
+              </span>
+            )}
+            <div className="kf-ev-text">
+              <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
+              {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
+            </div>
+          </div>
+        )
+      }}
       eventDidMount={(info) => {
         // Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender
         // values (fill .24 / edge .35 / grip .5); a coloured event restates them in its colour

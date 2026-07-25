@@ -142,8 +142,38 @@
   font-size: 8.5px;
   color: var(--kf-ev-accent, var(--acc-lavender-text));
 }
-/* 4c puts the title first and the time under it; FC emits time first. */
-.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { order: 2; margin-top: 2px; }
+/* 4c puts the title first and the time under it — CalendarGrid's eventContent renders them in
+   that order directly, so this is only the gap between them. */
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { margin-top: 2px; }
+
+/* In-block checkbox on task-linked events (R4, Kai 2026-07-20). Sits left of the text, uses the
+   block's own accent so a coloured event stays coherent, and swallows the drag gesture
+   (dragGuard) so ticking one never starts a move. */
+.fc .fc-timegrid-event .kf-ev-row { display: flex; align-items: flex-start; gap: 7px; height: 100%; }
+.fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
+.fc .fc-timegrid-event .kf-ev-check {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  border: 1.5px solid var(--kf-ev-accent, var(--acc-lavender-text));
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--paper-parchment);
+  cursor: pointer;
+}
+.fc .fc-timegrid-event .kf-ev-check.kf-on {
+  background: var(--kf-ev-accent, var(--acc-lavender-text));
+  border-color: transparent;
+}
+.fc .fc-timegrid-event .kf-ev-row.kf-done .fc-event-title {
+  text-decoration: line-through;
+  color: var(--ink-hairline);
+}
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
    seat it without colliding with the text. */
@@ -196,8 +226,11 @@
    original read as a dark doubled rectangle during resize (the original is also hidden while
    resizing, via eventResizeStart in CalendarGrid.tsx). */
 /* (mirror styling now lives with the Motion 4c ghost/placeholder pair further down) */
-.fc .fc-event-resizer { border-color: var(--line-solid); }
-.fc .fc-event-resizer-end { border-width: 4px; }
+/* R4 (2026-07-20, Kai's arrow): a 4px --line-solid border on the end resizer painted a wide
+   brown bar across the bottom of every block being resized. 4c's only bottom affordance is the
+   28x3 lavender grip (rendered via ::after above), so the resizer is now purely a hit area. */
+.fc .fc-event-resizer { border: none; background: none; }
+.fc .fc-timegrid-event .fc-event-resizer-end { height: 10px; bottom: 0; }
 
 /* Time block — dashed border to distinguish from standalone events */
 .fc .fc-timegrid-event.fc-event-type-time_block {
