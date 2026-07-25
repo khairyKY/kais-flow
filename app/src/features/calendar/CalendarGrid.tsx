@@ -233,7 +233,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         )
       }
       selectable
-      selectMirror
+      selectMirror
+      // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking
+      // anything in our own popover counts as a click outside the grid, so FC unselectAuto
+      // wiped the slot highlight. Exempt the popover from it.
+      unselectCancel=".kf-quickcreate"
       editable
       droppable
       events={events.map((e) => {

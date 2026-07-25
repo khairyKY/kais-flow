@@ -130,7 +130,26 @@
   box-shadow: none;
   overflow: hidden;
 }
-.fc .fc-timegrid-event.fc-timegrid-event-short { padding-top: 3px; padding-bottom: 3px; }
+/* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
+   can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
+   ellipsis and the time is dropped rather than half-drawn. The grip goes too — there's no
+   room to seat it clear of the text. */
+.fc .fc-timegrid-event.fc-timegrid-event-short { padding: 2px 8px; }
+.fc .fc-timegrid-event.fc-timegrid-event-short .kf-ev-row { align-items: center; gap: 5px; }
+.fc .fc-timegrid-event.fc-timegrid-event-short .kf-ev-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+}
+.fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-time { display: none; }
+/* Any block, short or not: never let the text bleed past the rounded edge. */
+.fc .fc-timegrid-event .kf-ev-text { overflow: hidden; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
 .fc .fc-event-title {
   font-size: 12px;

@@ -22,12 +22,13 @@ import { create } from 'zustand'
 // Like the theme, this is a per-device preference: localStorage, not the synced settings row,
 // so it works pre-auth and offline. index.html applies it before first paint.
 
-export const UI_SCALES = [1, 1.1, 1.25, 1.5] as const
+export const UI_SCALES = [1, 1.1, 1.25, 1.5, 1.75] as const
 export type UiScale = (typeof UI_SCALES)[number]
 
 export const UI_SCALE_KEY = 'kf_ui_scale'
-/** 110% — the density Kai called "most natural", now the 1:1 baseline. */
-export const DEFAULT_UI_SCALE: UiScale = 1.1
+/** 125%. 110% was still "kinda zoomed out / small" (2026-07-21), and 125 is also a cleaner
+ * ratio than 110 — fewer fractional device pixels, so hairlines and text land crisper. */
+export const DEFAULT_UI_SCALE: UiScale = 1.25
 
 export function readUiScale(): UiScale {
   try {

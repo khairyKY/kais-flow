@@ -523,7 +523,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {overlayAnim}
         <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, animation: 'qcFadeIn 210ms var(--ease-out)' }} />
         <div
-          onClick={(e) => e.stopPropagation()}
+          className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
           style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px calc(22px + env(safe-area-inset-bottom))', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', animation: 'entryFadeUp 210ms var(--ease-out)' }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0 10px' }}>
@@ -539,7 +539,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     return (
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'qcFadeIn 210ms var(--ease-out)' }}>
         {overlayAnim}
-        <div onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px', animation: 'entryFadeUp 210ms var(--ease-out)' }}>
+        <div className="kf-quickcreate" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px', animation: 'entryFadeUp 210ms var(--ease-out)' }}>
           {body}
         </div>
       </div>
@@ -557,7 +557,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
       <div
-        onClick={(e) => e.stopPropagation()}
+        className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
         style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', maxHeight: `calc(100dvh - ${top + 8}px)`, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}

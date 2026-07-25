@@ -192,7 +192,7 @@ function AppearanceCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Interface size</div>
-          <div style={fhelp}>scales the whole app · 110% is the new normal</div>
+          <div style={fhelp}>scales the whole app · 125% is the new normal</div>
         </div>
         <Seg<UiScale>
           value={scale}

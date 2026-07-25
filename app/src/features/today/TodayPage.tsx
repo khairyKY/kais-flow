@@ -152,13 +152,8 @@ export function TodayPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const selectable = [...restTop3, ...allOpen].filter((t) => !t.completed_at)
   const selectedTasks = selectable.filter((t) => selected.has(t.id))
-  function toggleSelected(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
+  // (per-row selection checkboxes removed from Today per Kai 2026-07-21; keyboard
+  // bulk-select still populates `selected` via useListKeys.)
   function clearSelection() {
     setSelected(new Set())
   }
@@ -411,7 +406,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} highlighted={t.id === focusedId} />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -433,7 +428,7 @@ export function TodayPage() {
               <div className="kf-dim">
                 {allOpen.map((t, i) => (
                   <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} highlighted={t.id === focusedId} />
                   </div>
                 ))}
               </div>

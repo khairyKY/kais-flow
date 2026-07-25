@@ -13,7 +13,7 @@
       // Keep the allowed values in sync with UI_SCALES in src/lib/uiScale.ts.
       try {
         var s = Number(localStorage.getItem('kf_ui_scale'))
-        if ([1, 1.1, 1.25, 1.5].indexOf(s) === -1) s = 1.1
+        if ([1, 1.1, 1.25, 1.5, 1.75].indexOf(s) === -1) s = 1.25
         if (s !== 1) document.documentElement.style.zoom = String(s)
       } catch (e) {}
     </script>
