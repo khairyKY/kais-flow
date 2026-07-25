@@ -39,9 +39,15 @@ const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate')
 const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
 const ImportPage = lazy(() => import('./features/import/ImportPage').then((m) => ({ default: m.ImportPage })))
 
+// Lazy like every other route — a static import would pull CalendarGrid (and its CSS) into the
+// eager bundle and undo F4's code-splitting.
+const CalendarHarness = lazy(() => import('./features/calendar/CalendarHarness').then((m) => ({ default: m.CalendarHarness })))
+
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
   { path: '/design-system', element: <KitReference /> }, // §04 kit reference (no auth)
+  // Dev-only geometry harness for CalendarGrid (no auth) — see CalendarHarness.tsx.
+  { path: '/calendar-harness', element: <CalendarHarness /> },
   {
     path: '/',
     element: (

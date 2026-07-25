@@ -43,6 +43,11 @@ export function applyUiScale(scale: UiScale): void {
   if (typeof document === 'undefined') return
   // Leave the property off entirely at 1:1 rather than setting `zoom: 1`.
   document.documentElement.style.zoom = scale === 1 ? '' : String(scale)
+  // Published for CSS that must compensate for the zoom. FullCalendar measures slot geometry
+  // with getBoundingClientRect (zoom-scaled) and writes it back as CSS px, so a zoomed ancestor
+  // double-scales every event position — CalendarGrid.css neutralises the zoom and re-applies
+  // this factor to its own lengths instead.
+  document.documentElement.style.setProperty('--kf-ui-scale', String(scale))
 }
 
 interface UiScaleState {
