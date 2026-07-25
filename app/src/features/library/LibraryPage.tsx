@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { BackLink } from '../../components/kit'
 import {
   useBooks,
   createBook,
@@ -380,12 +381,7 @@ export function LibraryPage() {
           {hasSelection && (
             <div style={{ position: 'relative' }}>
               {/* Back button */}
-              <button
-                onClick={() => setSearchParams({ tab: activeTab })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--acc-terra)', fontSize: '12px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', cursor: 'pointer', marginBottom: 16, padding: 0 }}
-              >
-                ← Back to List
-              </button>
+              <BackLink onClick={() => setSearchParams({ tab: activeTab })} style={{ marginBottom: 16 }}>Back to List</BackLink>
 
               {/* Reader components */}
               {activeBook && (
@@ -847,9 +843,7 @@ export function LibraryPage() {
             {activeBook ? (
               <div style={{ width: '100%', maxWidth: 760, padding: '30px 40px 36px', background: 'var(--paper-linen)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span onClick={() => setSearchParams({ tab: 'books' })} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}>
-                    ← Library / Books
-                  </span>
+                  <BackLink onClick={() => setSearchParams({ tab: 'books' })}>Library / Books</BackLink>
                   <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · via capture</span>
                 </div>
 

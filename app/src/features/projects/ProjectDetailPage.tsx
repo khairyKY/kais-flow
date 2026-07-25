@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router'
+import { useParams, useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { useDomains } from '../domains/api'
-import { EmojiText } from '../../components/EmojiText'
+import { EmojiText } from '../../components/EmojiText'
 import { localDateKey } from '../routines/streaks'
 import { localTimeKey, localToIso } from '../calendar/eventTime'
 import { Select } from '../../components/Select'
@@ -27,7 +27,7 @@ import {
 import { useAreas } from '../areas/api'
 import { useTasks, completeTask, createTask } from '../tasks/api'
 import { logActivity } from '../../lib/activity'
-import { SectionLabel, Checkbox } from '../../components/kit'
+import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { ConfirmCard } from './ConfirmCard'
 import { useMotionEnabled } from '../../lib/motion'
@@ -153,7 +153,7 @@ export function ProjectDetailPage() {
     return (
       <div style={{ padding: 40, color: 'var(--ink-muted)' }}>
         <div>Entity not found.</div>
-        <Link to="/projects" style={{ color: 'var(--acc-terra)' }}>← Go back</Link>
+        <BackLink to="/projects">All projects</BackLink>
       </div>
     )
   }
@@ -385,9 +385,7 @@ export function ProjectDetailPage() {
 
           <div style={{ flex: 1, minWidth: 0, padding: '30px 36px 36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Link to="/projects" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
-                ← All projects
-              </Link>
+              <BackLink to="/projects">All projects</BackLink>
               <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
                 {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
@@ -727,9 +725,7 @@ export function ProjectDetailPage() {
 
         <div style={{ padding: '30px 40px 36px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Link to="/projects" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
-              ← All projects
-            </Link>
+            <BackLink to="/projects">All projects</BackLink>
             <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
               {domain?.name || 'Personal'} · ongoing since {new Date(area.created_at).toLocaleDateString('en-US', { month: 'short' })}
             </span>

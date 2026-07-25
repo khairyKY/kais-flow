@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { get, set } from 'idb-keyval'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
@@ -205,4 +206,36 @@ if (typeof window !== 'undefined') {
     const table = event.query.queryKey[0]
     if (typeof table === 'string') void reapplyPendingWrites(table)
   })
+}
+
+// ── React binding for the CALENDAR.md §7 pending/sync-failed block states ──────────────────
+// A block whose write is still queued shows `· saving ◌` + a dashed outer outline; one whose
+// write the server rejected shows the ⚠ / `· retry` treatment. Reads the same two idb keys the
+// queue itself uses, refreshed by the kf-outbox-change event withQueue() already dispatches.
+export function useOutboxMarks(table: string): { pending: Set<string>; failed: Set<string> } {
+  const [marks, setMarks] = useState<{ pending: Set<string>; failed: Set<string> }>({
+    pending: new Set(),
+    failed: new Set(),
+  })
+  useEffect(() => {
+    let alive = true
+    const refresh = async () => {
+      const [queue, dead] = await Promise.all([
+        get<OutboxEntry[]>(OUTBOX_KEY),
+        get<OutboxEntry[]>(DEAD_KEY),
+      ])
+      if (!alive) return
+      setMarks({
+        pending: new Set((queue ?? []).filter((e) => e.table === table).map((e) => e.id)),
+        failed: new Set((dead ?? []).filter((e) => e.table === table).map((e) => e.id)),
+      })
+    }
+    void refresh()
+    window.addEventListener('kf-outbox-change', refresh)
+    return () => {
+      alive = false
+      window.removeEventListener('kf-outbox-change', refresh)
+    }
+  }, [table])
+  return marks
 }

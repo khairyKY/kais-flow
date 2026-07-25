@@ -1,3 +1,4 @@
+import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState, type CSSProperties, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
@@ -51,15 +52,17 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
   }
 
   function openMenu() {
+    const z = uiZoom() // visual->layout px; see uiZoom()
     const el = localRef.current
     if (!el) return
-    const r = el.getBoundingClientRect()
+    const b = el.getBoundingClientRect()
+    const r = { left: b.left / z, top: b.top / z, bottom: b.bottom / z, width: b.width / z }
     const estHeight = Math.min(options.length * ITEM_H + 8, 320)
-    const below = r.bottom + estHeight <= window.innerHeight - 12
+    const below = r.bottom + estHeight <= window.innerHeight / z - 12
     setPos(
       below
         ? { left: r.left, top: r.bottom + 4, width: r.width }
-        : { left: r.left, bottom: window.innerHeight - r.top + 4, width: r.width },
+        : { left: r.left, bottom: window.innerHeight / z - r.top + 4, width: r.width },
     )
     setHighlight(Math.max(0, options.findIndex((o) => o.value === value)))
     setOpen(true)

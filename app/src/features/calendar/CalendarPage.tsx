@@ -4,6 +4,7 @@ import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent } from './api'
 import { useTasks, completeTask, uncompleteTask } from '../tasks/api'
+import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Checkbox } from '../../components/kit'
 import { dragGuard } from './dragGuard'
@@ -31,7 +32,7 @@ const RAIL_MAX = 760
 // ── Calendar.dc.html 1a (desktop: task rail + time-grid) · 1b (iPhone day view). ──
 
 type ViewKind = 'day' | 'ndays' | 'week' | 'month'
-const VIEW_MAP: Record<ViewKind, CalendarGridView> = { day: 'timeGridDay', ndays: 'customDayCount', week: 'timeGridWeek', month: 'dayGridMonth' }
+const VIEW_MAP: Record<ViewKind, CalendarGridView> = { day: 'timeGridDay', ndays: 'customDayCount', week: 'rollingWeek', month: 'dayGridMonth' }
 
 const SCOPE_KIND_OPTIONS: { value: RailScopeKind; label: string }[] = [
   { value: 'smart', label: 'Smart list' },
@@ -107,6 +108,8 @@ export function CalendarPage() {
   const { data: areas = [] } = useAreas()
   const sidebarRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<CalendarGridHandle>(null)
+  // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
+  const outboxMarks = useOutboxMarks('calendar_events')
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
@@ -441,6 +444,10 @@ export function CalendarPage() {
           </div>
 
           <div className={motionOn ? 'cal-motion-on' : undefined} style={{ flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 4, boxShadow: 'var(--shadow-panel)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {/* Kai 2026-07-21: "why cant I scroll horizontally in the week view" — the grid
+                keeps ≥170px per day column (CalendarGrid sets its own min-width) and scrolls
+                sideways here instead of crushing the last day (today) into a sliver. */}
+            <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'hidden' }}>
             <CalendarGrid
               ref={gridRef}
               initialView={VIEW_MAP[viewKind]}
@@ -467,7 +474,10 @@ export function CalendarPage() {
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}
               conflictedIds={Array.from(conflicts.keys())}
+              pendingIds={[...outboxMarks.pending]}
+              failedIds={[...outboxMarks.failed]}
             />
+            </div>
           </div>
         </div>
       </div>

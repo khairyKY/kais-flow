@@ -1,3 +1,4 @@
+import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { EmojiText } from './EmojiText'
@@ -53,9 +54,10 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
 
   const rows = filtered.length + 1
   const itemHeight = 34
-  const maxY = window.innerHeight - 12
-  const left = Math.min(position.x, window.innerWidth - 220)
-  const top = Math.min(position.y, maxY - Math.min(rows, 8) * itemHeight - 38)
+  const z = uiZoom() // visual->layout px; see uiZoom()
+  const maxY = window.innerHeight / z - 12
+  const left = Math.min(position.x / z, window.innerWidth / z - 220)
+  const top = Math.min(position.y / z, maxY - Math.min(rows, 8) * itemHeight - 38)
 
   function choose(project: Project | null) {
     onSelect(project?.id ?? null, project?.domain_id ?? null)

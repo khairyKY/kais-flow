@@ -50,6 +50,19 @@ export function applyUiScale(scale: UiScale): void {
   document.documentElement.style.setProperty('--kf-ui-scale', String(scale))
 }
 
+/** The zoom factor currently applied to the document root (1 when unscaled).
+ *
+ * Why callers need it: event coordinates (`clientX/Y`) and `getBoundingClientRect()` report
+ * VISUAL pixels (zoom-multiplied), but `position: fixed` left/top are consumed as LAYOUT pixels
+ * and get multiplied by the zoom again on render. Any popover that positions itself from a click
+ * must divide by this factor or it lands scale-times down-right of the pointer — Kai's "the
+ * context menu is way too far from where I right clicked" at 125%. `window.innerWidth/Height`
+ * are visual too, so viewport clamps must divide as well (his clipped popup on the last day). */
+export function uiZoom(): number {
+  if (typeof document === 'undefined') return 1
+  return Number(document.documentElement.style.zoom) || 1
+}
+
 interface UiScaleState {
   scale: UiScale
   setScale: (s: UiScale) => void

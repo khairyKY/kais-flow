@@ -1,3 +1,4 @@
+import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 
@@ -63,18 +64,22 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
     openTimer.current = window.setTimeout(() => setOpenIndex(i), SUBMENU_OPEN_DELAY)
   }
 
+  // Pointer coords and rects are VISUAL px; fixed left/top are LAYOUT px (see uiZoom). Divide
+  // once here and every clamp below keeps working in one consistent space.
+  const z = uiZoom()
+
   function submenuPosition(i: number): { x: number; y: number } {
     const el = itemRefs.current[i]
-    if (!el) return position
+    if (!el) return { x: position.x / z, y: position.y / z }
     const rect = el.getBoundingClientRect()
-    const flip = rect.right + SUBMENU_WIDTH > window.innerWidth
-    return { x: flip ? Math.max(8, rect.left - SUBMENU_WIDTH) : rect.right, y: rect.top }
+    const flip = rect.right + SUBMENU_WIDTH * z > window.innerWidth
+    return { x: flip ? Math.max(8, rect.left / z - SUBMENU_WIDTH) : rect.right / z, y: rect.top / z }
   }
 
   const itemHeight = 34
-  const maxY = window.innerHeight - 12
-  const left = Math.min(position.x, window.innerWidth - 220)
-  const top = Math.min(position.y, maxY - items.length * itemHeight)
+  const maxY = window.innerHeight / z - 12
+  const left = Math.min(position.x / z, window.innerWidth / z - 220)
+  const top = Math.min(position.y / z, maxY - items.length * itemHeight)
 
   const openItem = openIndex !== null ? items[openIndex] : null
 

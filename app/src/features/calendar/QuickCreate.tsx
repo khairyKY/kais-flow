@@ -1,3 +1,4 @@
+import { uiZoom } from '../../lib/uiScale'
 import { useEffect, useMemo, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import * as chrono from 'chrono-node'
@@ -551,8 +552,15 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   // upward, so on a short viewport it went negative and took the header off-screen; and the
   // popover had no height bound, so tall content ran past the viewport with nothing to scroll
   // — leaving Esc/Create unreachable. Clamp both ends and let the sheet scroll inside itself.
-  const left = Math.max(8, Math.min(anchor.x, window.innerWidth - 350))
-  const top = Math.max(8, Math.min(anchor.y, window.innerHeight - 420))
+  // anchor is VISUAL px (clientX/Y); fixed left/top are LAYOUT px — divide by the UI zoom or the
+  // popover lands scale-times away from the click and the clamps measure the wrong viewport
+  // (Kai's clipped popup on the last visible day at 125%). Viewport units are also unreliable
+  // inside zoomed content, so the width/height caps are computed here in px too.
+  const z = uiZoom()
+  const vw = window.innerWidth / z
+  const vh = window.innerHeight / z
+  const left = Math.max(8, Math.min(anchor.x / z, vw - 350))
+  const top = Math.max(8, Math.min(anchor.y / z, vh - 420))
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
@@ -560,7 +568,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left, top, width: 330, maxWidth: 'calc(100vw - 16px)', maxHeight: `calc(100dvh - ${top + 8}px)`, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ position: 'fixed', left, top, width: 330, maxWidth: vw - 16, maxHeight: vh - top - 8, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         {body}
       </div>

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import { Link } from 'react-router'
 import { useMotionEnabled } from '../lib/motion'
 
 // ── Shared component kit — Design System.dc.html §04. The design-system atoms
@@ -172,5 +173,48 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style }:
     >
       {checked ? '✓' : ''}
     </button>
+  )
+}
+
+// ── BackLink — every page's "← Tasks" / "← Projects" breadcrumb (was hand-styled
+// per file: no padding, no hover feedback, tiny hit target). One atom, a real
+// hit target (.kf-hit, same rule the sidebar's small glyphs use), a hover tint,
+// and a stroke chevron instead of the "←" glyph so it lines up with the rest
+// of the icon set (sidebar nav uses the same stroke style). ──
+type BackLinkProps = { children: ReactNode; style?: CSSProperties } & (
+  | { to: string; onClick?: never }
+  | { to?: never; onClick: () => void }
+)
+
+export function BackLink({ children, style, ...nav }: BackLinkProps) {
+  const content = (
+    <>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+      {children}
+    </>
+  )
+  const backLinkStyle: CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    margin: '-6px -8px',
+    padding: '6px 8px',
+    borderRadius: 6,
+    font: 'inherit',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 10,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: 'var(--ink-muted)',
+    textDecoration: 'none',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    ...style,
+  }
+  return nav.to ? (
+    <Link to={nav.to} className="kf-backlink kf-hit" style={backLinkStyle}>{content}</Link>
+  ) : (
+    <button type="button" onClick={nav.onClick} className="kf-backlink kf-hit" style={backLinkStyle}>{content}</button>
   )
 }

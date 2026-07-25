@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router'
 import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, deleteInteraction, getDaysUntilBirthday } from './api'
 import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
-import { Button } from '../../components/kit'
+import { BackLink, Button } from '../../components/kit'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { ConfirmCard } from '../projects/ConfirmCard'
 
@@ -157,7 +157,7 @@ export function PersonDetailPage() {
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link to="/people" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>← People</Link>
+        <BackLink to="/people">People</BackLink>
         <span className="fhelp">added {new Date(person.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · {person.facts?.length || 0} facts · {personInteractions.length} interactions</span>
       </div>
 

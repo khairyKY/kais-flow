@@ -1,3 +1,4 @@
+import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../lib/dateShortcuts'
@@ -58,9 +59,10 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
 
   const rows = presets.length + 2
   const itemHeight = 34
-  const maxY = window.innerHeight - 12
-  const left = Math.min(position.x, window.innerWidth - 220)
-  const top = Math.min(position.y, maxY - rows * itemHeight)
+  const z = uiZoom() // visual->layout px; see uiZoom()
+  const maxY = window.innerHeight / z - 12
+  const left = Math.min(position.x / z, window.innerWidth / z - 220)
+  const top = Math.min(position.y / z, maxY - rows * itemHeight)
 
   function fire(iso: string) {
     onSchedule(iso)

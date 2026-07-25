@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, snoozeTask, setProject, deleteTask } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
@@ -8,6 +7,7 @@ import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
+import { BackLink } from '../../components/kit'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -270,9 +270,7 @@ export function PlanningBoard() {
     <div style={{ maxWidth: 1400 }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
-          <Link to="/tasks?list=upcoming" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 9, display: 'inline-block', textDecoration: 'underline' }}>
-            ← Upcoming
-          </Link>
+          <BackLink to="/tasks?list=upcoming" style={{ marginBottom: 9 }}>Upcoming</BackLink>
           <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Planning board</h1>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'rotate(1deg)' }}>

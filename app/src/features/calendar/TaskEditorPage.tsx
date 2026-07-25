@@ -15,6 +15,7 @@ import { localDateKey } from '../routines/streaks'
 import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { Select } from '../../components/Select'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { BackLink, Checkbox } from '../../components/kit'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
@@ -83,7 +84,7 @@ export function TaskEditorPage() {
   if (!task) {
     return (
       <div>
-        <Link to="/tasks" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>← Tasks</Link>
+        <BackLink to="/tasks">Tasks</BackLink>
         <p style={{ marginTop: 24, color: 'var(--ink-muted)' }}>That task isn't here — it may have been deleted, or is still loading.</p>
       </div>
     )
@@ -160,7 +161,7 @@ export function TaskEditorPage() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-        <Link to="/tasks" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>← Tasks</Link>
+        <BackLink to="/tasks">Tasks</BackLink>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
           Created {new Date(task.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
           {task.updated_at !== task.created_at && ` · edited ${new Date(task.updated_at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`}
@@ -168,10 +169,11 @@ export function TaskEditorPage() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginTop: 24 }}>
-        <button
-          type="button"
-          onClick={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
-          style={{ width: 22, height: 22, border: '1.5px solid var(--check-border)', borderRadius: 6, flex: 'none', marginTop: 9, background: task.status === 'done' ? 'var(--sig-done)' : 'none', cursor: 'pointer', padding: 0 }}
+        <Checkbox
+          checked={task.status === 'done'}
+          onChange={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
+          size={22}
+          style={{ borderRadius: 6, marginTop: 9, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -225,13 +227,12 @@ export function TaskEditorPage() {
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {subtasks.map((c) => (
                   <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                    {c.status === 'done' ? (
-                      <button type="button" aria-label={`Reopen ${c.title}`} onClick={() => uncompleteTask(c)} style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                        <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
-                      </button>
-                    ) : (
-                      <button type="button" aria-label={`Complete ${c.title}`} onClick={() => completeTask(c)} style={{ width: 16, height: 16, border: '1.5px solid var(--check-border)', borderRadius: 4, flex: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
-                    )}
+                    <Checkbox
+                      checked={c.status === 'done'}
+                      onChange={() => (c.status === 'done' ? uncompleteTask(c) : completeTask(c))}
+                      size={16}
+                      style={{ borderRadius: 4, ...(c.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
+                    />
                     <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}><EmojiText text={c.title} /></span>
                     {c.duration_min != null && (
                       <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>

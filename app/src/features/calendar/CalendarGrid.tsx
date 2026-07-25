@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -24,7 +24,7 @@ export interface CalendarGridEvent {
   taskDone?: boolean
 }
 
-export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'timeGridWeek' | 'dayGridMonth'
+export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
 
 /** Imperative nav — the design's prev/today/next pills live in CalendarPage's own header,
  * not FullCalendar's built-in toolbar (hidden via `hideToolbar`), so they need a way to
@@ -56,6 +56,9 @@ interface CalendarGridProps {
   /** Toggles the task behind a block from its checkbox. `done` is the state it was just in. */
   onCompleteTask?: (taskId: string, done: boolean) => void
   conflictedIds?: string[]
+  /* CALENDAR.md §7: outbox visibility — queued writes render pending, rejected ones failed. */
+  pendingIds?: string[]
+  failedIds?: string[]
   /** Effects 21 — id of an event just created by an external drop; its chip plays the settle-in. */
   justDroppedId?: string | null
 }
@@ -144,7 +147,7 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
 export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(function CalendarGrid({
   events,
   dayCount = 7,
-  initialView = 'timeGridWeek',
+  initialView = 'rollingWeek',
   hideToolbar,
   onRangeChange,
   onCreate,
@@ -156,10 +159,22 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onGridContextMenu,
   onCompleteTask,
   conflictedIds,
+  pendingIds,
+  failedIds,
   justDroppedId,
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
+  // CALENDAR.md §5 temporal states (in progress / past / ran over) move with the clock — one
+  // re-render per minute keeps them honest without any per-block timers.
+  const [, setMinute] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setMinute((m) => m + 1), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+  // Rendered day-column count, from datesSet — drives the min-width that makes the grid
+  // horizontally scrollable instead of crushing columns (Kai: "why cant I scroll horizontally").
+  const [visibleDays, setVisibleDays] = useState(initialView === 'timeGridDay' ? 1 : 7)
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
   useEffect(() => () => stopGhostRef.current?.(), []) // never strand a ghost on unmount
@@ -181,7 +196,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   }
 
   return (
-    <div onContextMenu={handleGridContextMenu} style={{ display: 'contents' }}>
+    // 170px per day column + the time axis: below that the grid scrolls horizontally in the
+    // page's scroller instead of crushing the last day into a sliver (CALENDAR.md §6 narrow-col).
+    <div onContextMenu={handleGridContextMenu} style={{ height: '100%', minWidth: visibleDays > 1 ? 58 + visibleDays * 170 : undefined }}>
     <FullCalendar
       key={`${initialView}-${dayCount}`}
       ref={fcRef}
@@ -191,12 +208,26 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         [customView]: {
           type: 'timeGrid',
           duration: { days: dayCount },
-          // dayCount defaults to 7, same span as Week — harmless, just a redundant button.
+          // Duration views start at the current date, so today leads instead of trailing.
+          dateAlignment: 'day',
+          dateIncrement: { days: dayCount },
           buttonText: `${dayCount}d`,
+        },
+        // Kai 2026-07-21: "why am I stuck with having to see today as the last day of the
+        // week" — a Sun-Sat week puts Saturday last all day Saturday. Week is now a ROLLING
+        // 7 days starting today; prev/next steps a full week.
+        rollingWeek: {
+          type: 'timeGrid',
+          duration: { days: 7 },
+          dateAlignment: 'day',
+          dateIncrement: { days: 7 },
         },
       }}
       headerToolbar={hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
-      datesSet={(arg: DatesSetArg) => onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })}
+      datesSet={(arg: DatesSetArg) => {
+        onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
+        if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
+      }}
       height="100%"
       scrollTime="08:00:00"
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
@@ -233,7 +264,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         )
       }
       selectable
-      selectMirror
+      selectMirror
       // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking
       // anything in our own popover counts as a click outside the grid, so FC unselectAuto
       // wiped the slot highlight. Exempt the popover from it.
@@ -241,39 +272,108 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       editable
       droppable
       events={events.map((e) => {
+        // ── CALENDAR.md §0: one block, five independent axes, composed as classes. ──
+        const startMs = new Date(e.start).getTime()
+        const endMs = new Date(e.end).getTime()
+        const now = Date.now()
+        const isTaskish = e.type !== 'event' // task + time_block are completable kinds
+
         const classes = ['fc-event-type-' + e.type]
-        if (e.linked) classes.push('fc-event-linked')
-        if (conflictedIds?.includes(e.id)) classes.push('fc-event-conflict')
+        // Kind (§3, hue only): tasks/blocks ride lavender (or their project hue, set inline in
+        // eventDidMount); a plain event is a Meeting → blossom. Ritual/Focus/Admin/External
+        // kinds need data the schema doesn't carry yet.
+        classes.push(isTaskish ? 'kf-kind-task' : 'kf-kind-event')
+        // Layout (§6): tier by DRAWN height at 0.9px/min — micro <27, short <54, std <81, full ≥81.
+        const drawnPx = ((endMs - startMs) / 60_000) * 0.9
+        classes.push(drawnPx < 27 ? 'kf-tier-micro' : drawnPx < 54 ? 'kf-tier-short' : drawnPx < 81 ? 'kf-tier-std' : 'kf-tier-full')
+        // Temporal (§5): ran-over (task not done, end passed) is the one terra exception and
+        // outranks plain past-dimming; in-progress carries the elapsed wash.
+        const ranOver = isTaskish && !!e.taskId && !e.taskDone && endMs < now && !e.allDay
+        if (ranOver) classes.push('kf-ranover')
+        else if (endMs < now) classes.push('kf-past')
+        else if (startMs <= now) classes.push('kf-inprog')
+        // Semantic (§4): completed / conflict are the two states the data can express today
+        // (tentative/declined/cancelled/RSVP/free need status columns the schema doesn't have).
+        if (e.taskDone) classes.push('kf-done')
+        const conflicted = conflictedIds?.includes(e.id) ?? false
+        if (conflicted) classes.push('fc-event-conflict')
+        // Interaction (§7): outbox visibility — pending dashes, sync-failed warns.
+        if (pendingIds?.includes(e.id)) classes.push('kf-pending')
+        if (failedIds?.includes(e.id)) classes.push('kf-failed')
         if (e.id === justDroppedId) classes.push('kf-settle-in')
+
         const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
         // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
         // extendedProps rather than FC's backgroundColor/borderColor, because those land as
         // inline styles that would beat the stylesheet and undo the 4c fill/edge.
-        ev.extendedProps = { kfColor: e.color ?? null, kfTaskId: e.taskId ?? null, kfTaskDone: !!e.taskDone }
+        ev.extendedProps = {
+          kfColor: e.color ?? null,
+          kfTaskId: e.taskId ?? null,
+          kfTaskDone: !!e.taskDone,
+          kfStart: startMs,
+          kfEnd: endMs,
+          kfRanOver: ranOver,
+          kfConflict: conflicted,
+          kfPending: pendingIds?.includes(e.id) ?? false,
+          kfFailed: failedIds?.includes(e.id) ?? false,
+          kfFull: drawnPx >= 81,
+        }
         return ev
       })}
       // 4c renders the title above the time. FC emits them the other way round, so own the
       // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
       // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
       eventContent={(arg) => {
-        const { kfTaskId, kfTaskDone } = arg.event.extendedProps as { kfTaskId: string | null; kfTaskDone: boolean }
-        const done = !!kfTaskDone
+        const p = arg.event.extendedProps as {
+          kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
+          kfRanOver: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
+        }
+        const done = !!p.kfTaskDone
+        const now = Date.now()
+
+        // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
+        let timeText = arg.timeText
+        if (p.kfRanOver) {
+          timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+        } else if (!done && p.kfStart <= now && now < p.kfEnd) {
+          timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
+        } else if (p.kfFull && arg.timeText) {
+          // full tier has room for the duration suffix (§2 "as space allows")
+          const mins = Math.round((p.kfEnd - p.kfStart) / 60_000)
+          timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
+        }
+        // §7 outbox suffixes ride the time row
+        if (p.kfPending) timeText = `${timeText || ''} · saving ◌`
+        if (p.kfFailed) timeText = `${timeText || ''} · retry`
+
+        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal.
+        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : null
+
+        // §5 in-progress elapsed wash: the lived proportion, ACCENT-DEEP at 14%.
+        const elapsedPct =
+          !done && !p.kfRanOver && p.kfStart <= now && now < p.kfEnd
+            ? Math.round(((now - p.kfStart) / (p.kfEnd - p.kfStart)) * 100)
+            : 0
+
         return (
           <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
-            {kfTaskId && !arg.isMirror && (
+            {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
+            {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
+            {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
+            {p.kfTaskId && !arg.isMirror && (
               <span
                 className={`kf-ev-check${done ? ' kf-on' : ''}`}
                 role="checkbox"
                 aria-checked={done}
                 aria-label={`${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
-                ref={dragGuard(() => onCompleteTask?.(kfTaskId, done))}
+                ref={dragGuard(() => onCompleteTask?.(p.kfTaskId!, done))}
               >
                 {done ? '✓' : ''}
               </span>
             )}
             <div className="kf-ev-text">
               <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
-              {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
+              {timeText && <div className="fc-event-time">{timeText}</div>}
             </div>
           </div>
         )

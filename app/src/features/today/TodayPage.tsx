@@ -417,7 +417,7 @@ export function TodayPage() {
             <SectionLabel action={!isMobile && <Link to="/calendar" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
             {todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} first={i === 0} border={i > 0} compact={isMobile} />
+              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
             ))}
           </section>
 
@@ -708,22 +708,33 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   )
 }
 
-function EventRow({ event, first, border, compact }: { event: CalendarEvent; first: boolean; border: boolean; compact?: boolean }) {
+// Kai 2026-07-21: "where are the checkboxes for the top 3 tasks and the entire task behaviour" —
+// Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
+// same contract as the calendar block (only task-linked entries are completable; plain events
+// have nothing to complete).
+function EventRow({ event, task, first, border, compact }: { event: CalendarEvent; task?: Task; first: boolean; border: boolean; compact?: boolean }) {
   const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+  const done = task?.status === 'done'
+  const check = task && (
+    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTask(task))} />
+  )
+  const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
   if (compact) {
     return (
-      <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'baseline', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
+      <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
         <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
-        <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-body)' }}>{event.title}</div>
+        {check}
+        <div style={{ flex: 1, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
       </div>
     )
   }
   return (
-    <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'baseline', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
+    <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
       <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
+      {check}
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14.5, color: 'var(--ink-body)' }}>{event.title}</div>
+        <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
       </div>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
     </div>

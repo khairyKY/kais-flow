@@ -179,9 +179,12 @@
 .fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-check {
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   margin-top: 1px;
+  /* §2/§9: never visible at rest — revealed on hover/focus, or when already checked */
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
   border: 1.5px solid var(--kf-ev-accent, var(--acc-lavender-text));
   border-radius: 4px;
   display: inline-flex;
@@ -192,8 +195,12 @@
   color: var(--paper-parchment);
   cursor: pointer;
 }
+.fc .fc-timegrid-event:hover .kf-ev-check,
+.fc .fc-timegrid-event:focus-within .kf-ev-check,
+.fc .fc-timegrid-event .kf-ev-check.kf-on { opacity: 1; }
 .fc .fc-timegrid-event .kf-ev-check.kf-on {
-  background: var(--kf-ev-accent, var(--acc-lavender-text));
+  /* §4 completed: the check fills sage — hue leaves the block entirely */
+  background: var(--check-fill, var(--acc-sage));
   border-color: transparent;
 }
 .fc .fc-timegrid-event .kf-ev-row.kf-done .fc-event-title {
@@ -204,6 +211,8 @@
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
    seat it without colliding with the text. */
 .fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after {
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
   content: '';
   position: absolute;
   left: 50%;
@@ -216,18 +225,20 @@
 }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from
    task"). No drop shadow — a 4c block sits flat on the grid. */
-.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent); }
 
 /* All-day row */
 .fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
+/* §6 all-day chip: 20px pill in the band above the grid — no grip, no time row */
 .fc .fc-daygrid-event {
-  border-radius: 2px;
-  border-left: 3px solid var(--acc-lavender);
-  background: color-mix(in srgb, var(--acc-lavender) 20%, transparent);
-  border-color: color-mix(in srgb, var(--acc-lavender) 50%, transparent);
+  height: 20px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent);
+  background: color-mix(in srgb, var(--acc-lavender) 24%, transparent);
   font-size: calc(10.5px * var(--s));
-  color: var(--acc-lavender-text);
+  line-height: 18px;
+  padding: 0 8px;
+  color: var(--ink-body);
 }
 
 /* Month view (dayGridMonth) */
@@ -245,7 +256,6 @@
   font-size: calc(10px * var(--s));
   color: var(--text-tertiary);
 }
-.fc .fc-daygrid-event.fc-event-type-task { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent); }
 .fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
 
 /* Drag mirror + resize handle — fully opaque: at 0.85 the mirror stacked over the still-visible
@@ -258,11 +268,6 @@
 .fc .fc-event-resizer { border: none; background: none; }
 .fc .fc-timegrid-event .fc-event-resizer-end { height: 10px; bottom: 0; }
 
-/* Time block — dashed border to distinguish from standalone events */
-.fc .fc-timegrid-event.fc-event-type-time_block {
-  border-left: 3px dashed var(--acc-lavender);
-  background: color-mix(in srgb, var(--acc-lavender) 8%, transparent);
-}
 
 /* Night guard — colors.dark.css has no --paper-event value yet, so event chips would keep
    the daylight cream fill on the night grid. Scoped here until the token lands (foundation
@@ -271,14 +276,7 @@
   --fc-event-bg-color: var(--sky-panel-strong);
 }
 
-/* Task-linked block — blush edge (existing, kept for clarity) */
-.fc .fc-timegrid-event.fc-event-linked { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--acc-blossom) 50%, transparent), var(--shadow-crisp); }
 
-/* Conflict highlight — only for type='event' */
-.fc .fc-timegrid-event.fc-event-conflict {
-  outline: 1px solid var(--sig-overdue);
-  outline-offset: 0;
-}
 
 /* Motion.dc.html 4c "calendar drags" — the ghost floats free while the placeholder snaps to
    the grid. Scoped to `.cal-motion-on` (CalendarPage toggles it via useMotionEnabled) so it's
@@ -347,12 +345,105 @@
 /* Effects 21 "Settle-in" — a task dropped from the rail lands: falls, overshoots a breath,
    settles. One-shot on the freshly created chip (CalendarGrid gets the id via justDroppedId).
    Ends at transform:none per the 2026-07-18 containing-block ruling. */
-@keyframes calSettleIn {
-  0%   { transform: translateY(-26px); opacity: 0; }
-  60%  { transform: translateY(2px) scale(1.03) rotate(1deg); opacity: 1; }
-  100% { transform: none; }
+/* §7 just-landed: "selection ring 18% -> 0 over 300ms; no bounce" — supersedes the old
+   Effects-21 drop-in overshoot, which the v2 spec explicitly rules out. */
+@keyframes calJustLanded {
+  from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-lavender-deep) 18%, transparent); }
+  to   { box-shadow: 0 0 0 3px transparent; }
 }
 .cal-motion-on .fc-timegrid-event.kf-settle-in {
-  animation: calSettleIn 700ms var(--ease-out);
+  animation: calJustLanded 300ms var(--ease-out);
 }
 
+
+/* ═══ CALENDAR.md v2 — the five axes, composed as classes (CalendarGrid.tsx events map) ═══ */
+
+/* §3 Kind — hue only, geometry untouched. Defaults are the task lavender; a plain event is a
+   Meeting → blossom (clover text per the table). Project-hued tasks arrive inline via --kf-ev-*
+   from eventDidMount and win over these class values. Ritual/Focus/Admin/External kinds need
+   source data the schema does not carry yet. */
+.fc .fc-timegrid-event.kf-kind-event {
+  --kf-ev-fill: color-mix(in srgb, var(--acc-blossom) 24%, transparent);
+  --kf-ev-edge: color-mix(in srgb, var(--acc-blossom) 55%, transparent);
+  --kf-ev-accent: var(--acc-clover-text);
+  --kf-ev-grip: color-mix(in srgb, var(--acc-blossom) 65%, transparent);
+}
+
+/* §5 Temporal — opacity/saturation only. Past stays draggable (§9). */
+.fc .fc-timegrid-event.kf-past { opacity: 0.55; filter: saturate(0.6); }
+/* ran over — the ONE terra exception on the grid */
+.fc .fc-timegrid-event.kf-ranover {
+  --kf-ev-fill: color-mix(in srgb, var(--acc-terra) 10%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--acc-terra) 55%, transparent);
+}
+.fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--acc-terra); }
+/* in-progress elapsed wash — the lived proportion, ACCENT-DEEP at 14% */
+.fc .fc-timegrid-event .kf-ev-elapsed {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  background: color-mix(in srgb, var(--kf-ev-edge, var(--acc-lavender-deep)) 14%, transparent);
+  pointer-events: none;
+}
+
+/* §4 completed — drains to paper, hue leaves entirely; strike lives on .kf-done above. */
+.fc .fc-timegrid-event.kf-done {
+  --kf-ev-fill: var(--paper-bone);
+  --kf-ev-accent: var(--ink-faint);
+  border-color: var(--line-solid);
+}
+
+/* §4 conflict — solid DEEP edge; the ⚠ badge is ink, never terra. */
+.fc .fc-timegrid-event.fc-event-conflict {
+  border: 1px solid var(--kf-ev-edge, var(--acc-lavender-deep));
+}
+
+/* §0 badge slot — top-right, 9px mono, exactly one. */
+.fc .fc-timegrid-event .kf-ev-badge {
+  position: absolute;
+  top: 3px; right: 5px;
+  font-family: var(--font-mono);
+  font-size: calc(9px * var(--s));
+  line-height: 1;
+  color: var(--ink-body);
+  pointer-events: none;
+}
+/* completed petal badge (9x7, tilted 38°) */
+.fc .fc-timegrid-event .kf-ev-petal {
+  width: 9px; height: 7px;
+  border-radius: 70% 30% 60% 40%;
+  background: var(--acc-blossom);
+  transform: rotate(38deg);
+}
+
+/* §7 Interaction — overlay only, the fill never re-tints. */
+.fc .fc-timegrid-event { cursor: grab; }
+.fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
+.fc .fc-timegrid-event:active { transform: scale(0.99); box-shadow: none; cursor: grabbing; }
+.fc .fc-timegrid-event:focus-visible { outline: 2px solid var(--kf-ev-edge, var(--acc-lavender-deep)); outline-offset: 2px; }
+/* pending — outbox write still queued: OUTER dashed outline, the border stays semantic */
+.fc .fc-timegrid-event.kf-pending { outline: 1px dashed var(--ink-hairline); outline-offset: 2px; }
+/* sync-failed — server rejected: sig-overdue OUTLINE + ⚠; the FILL never goes terra */
+.fc .fc-timegrid-event.kf-failed { outline: 1.5px solid var(--sig-overdue); outline-offset: 2px; }
+
+/* §6 micro tier (<27px drawn): one mono strip — no padding rows, radius eases to 3. */
+.fc .fc-timegrid-event.kf-tier-micro { padding: 0 6px; border-radius: 3px; }
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
+.fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after { display: none; }
+/* §6 full tier (≥81px): the title may wrap to two lines — never three. */
+.fc .fc-timegrid-event.kf-tier-full .fc-event-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* §6 month view: badges/check/wash drop; the pill stays 16px. */
+.fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-elapsed { display: none; }
+.fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s)); }
+
+/* grip reveal (pairs with the opacity:0 set on the ::after above) */
+.fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
+.fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after { opacity: 1; }

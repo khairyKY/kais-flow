@@ -588,6 +588,10 @@ export function AppLayout() {
         .kf-btn:hover { transform: translateY(-1px); }
         .kf-btn:active { transform: scale(0.97); transition-duration: 80ms; }
 
+        .kf-backlink { transition: background var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out); }
+        .kf-backlink:hover { background: var(--paper-bone); color: var(--ink-body); }
+        .kf-backlink:active { transform: scale(0.97); transition-duration: 80ms; }
+
         /* Effects 2g (focus dim) — PARKED per Kai's R4 ruling 2026-07-20: "I don't think
            that it should apply to everywhere on the elements, not every item… park this for
            now and we can reuse it later." It read unsharp across a whole list; the export

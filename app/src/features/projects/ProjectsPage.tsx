@@ -7,7 +7,7 @@ import { NewProjectModal } from './NewProjectModal'
 import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
-import { SectionLabel } from '../../components/kit'
+import { BackLink, SectionLabel } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
@@ -622,9 +622,7 @@ export function ProjectsPage() {
         {view === 'archive' && (
           <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}>
-                ← All projects
-              </span>
+              <BackLink onClick={() => setView('list')}>All projects</BackLink>
               <span style={{ marginLeft: 'auto' }} className="fhelp">{archivedProjects.length} finished · {archivedProjects.reduce((acc, p) => acc + (projectStats[p.id]?.hours || 0), 0)}h all-time</span>
             </div>
 
