@@ -9,6 +9,7 @@ import {
 } from '../notifications/api'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useTheme } from '../../lib/theme'
+import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
 import { useMotionEnabled, setEffectsEnabled } from '../../lib/motion'
 import { Select } from '../../components/Select'
 import { useIntegrations } from './api'
@@ -65,7 +66,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
   )
 }
 
-function Seg<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
+function Seg<T extends string | number>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
   return (
     <div style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
       {options.map((o) => {
@@ -162,7 +163,9 @@ function useSoundSettings() {
 const COMMON_TIMEZONES = ['Africa/Cairo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai']
 
 function AppearanceCard() {
-  const { mode, setMode } = useThemeMode()
+  const { mode, setMode } = useThemeMode()
+  const scale = useUiScale((s) => s.scale)
+  const setScale = useUiScale((s) => s.setScale)
   const motionOn = useMotionEnabled()
   const [animOn, setAnimOn] = useState(motionOn)
 
@@ -182,6 +185,19 @@ function AppearanceCard() {
             { value: 'dark', label: 'Dark' },
             { value: 'auto', label: 'Auto' },
           ]}
+        />
+      </div>
+      {/* R4 (Kai 2026-07-20): "things look most natural [at] 110% but everything feels small."
+          Labelled in the same percentages he used, so the control speaks his language. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Interface size</div>
+          <div style={fhelp}>scales the whole app · 110% is the new normal</div>
+        </div>
+        <Seg<UiScale>
+          value={scale}
+          onChange={setScale}
+          options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))}
         />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
