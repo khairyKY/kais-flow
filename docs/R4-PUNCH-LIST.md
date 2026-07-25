@@ -196,3 +196,14 @@ editable title, "where is the actual journaling part") all parked with it.
 1. **`supabase login`** — unblocks #5 only; everything else is unblocked (a credential-free schema probe already confirmed all migrations are applied).
 2. **Calendar verdict** (claim 21).
 3. **Seed art**, flowers 3 & 5 (claim 30).
+---
+
+## Round 6 — CALENDAR.md v2 + zoom-space popovers (2026-07-21, commit `1351b97`)
+
+| What you said | Status | Verify by |
+|---|---|---|
+| *"the context menues… way too far from where I right clicked"* | ✅ | Same double-scale family as the FullCalendar bug: pointer coords are visual px, `fixed` popovers are layout px. All six popovers (ContextMenu, Snooze, Schedule, ProjectPicker, Select, QuickCreate) now divide by the UI zoom. Measured at 125%: menu corner lands exactly on the click point. |
+| *"popups… clipped when creating on the last visible day"* | ✅ | Same fix — the viewport clamps were also measuring the wrong space. |
+| *"why cant I scroll horizontally… stuck with today as the last day of the week"* | ✅ | Week is now a **rolling 7 days starting today**; the 2–6-day view starts today too. Grid keeps ≥170px per day column and scrolls sideways — this also closes the rail-clipping item that made Saturday a sliver. |
+| *"where are the checkboxes for the top 3 tasks and the entire task behaviour"* (Up next) | ✅ | Task-linked Up-next rows on Today carry the task's checkbox + strike-through. Plain events aren't completable (per your spec §3). |
+| **CALENDAR.md v2 "applied religiously"** | ✅ within data limits | Five axes composed as classes: kind hues (lavender task / blossom event, **no left spine anywhere**), completed drains to paper + petal, conflict = DEEP edge + ink ⚠, past dims .55/sat .6, in-progress elapsed wash + "Now · Xm left", ran-over terra (the one exception), tiers micro/short/std/full at 0.9px/min, grip + 12px checkbox hover-only, hover lift, ring-fade landing (bounce removed per §7), pending "· saving" / failed "· retry" wired to the real outbox. **Data-blocked, need schema fields:** ritual/focus/admin/external kinds, tentative/declined/cancelled/RSVP/free/read-only, recurring ↻ badge, overlap shingle (FC-internal layout). |
