@@ -88,7 +88,7 @@ screenshot round · the checkbox/drag round. Claim-by-claim history:
 | # | What you said | Status | Verify by |
 |---|---|---|---|
 | 9 | *"there is no scrolling for the search overlay?!!"* | ✅ | Results scroll inside the card. |
-| 10 | *"results are not highlighted after clicking them"* | ⬜ **OPEN (reopened)** | First fix made `?focus=` work, but you then found it deeper: **(a)** lands on the task *list*, not the task; **(b)** if the task is in a project it should open that project and highlight it there; **(c)** highlight doesn't fire from the **full search page**; **(d)** the settle animation replays when landing mid-page — should start from just before the first item on screen. |
+| 10 | *"the results are not highlighted after clicking them… it should take you to the task, if it's inside a project it should take you to that project and highlight where it is"* | ✅ (round 7) | Task results route to the owning **project** with scroll + ring (both entry points — overlay and full page); projectless tasks land on Tasks with highlight; TasksPage hops to the right tab (someday/done/upcoming) for a deep link; the settle cascade is suppressed on deep links so the landing doesn't swim. |
 
 ---
 
@@ -208,3 +208,12 @@ editable title, "where is the actual journaling part") all parked with it.
 | *"why cant I scroll horizontally… stuck with today as the last day of the week"* | ✅ | Week is now a **rolling 7 days starting today**; the 2–6-day view starts today too. Grid keeps ≥170px per day column and scrolls sideways — this also closes the rail-clipping item that made Saturday a sliver. |
 | *"where are the checkboxes for the top 3 tasks and the entire task behaviour"* (Up next) | ✅ | Task-linked Up-next rows on Today carry the task's checkbox + strike-through. Plain events aren't completable (per your spec §3). |
 | **CALENDAR.md v2 "applied religiously"** | ✅ within data limits | Five axes composed as classes: kind hues (lavender task / blossom event, **no left spine anywhere**), completed drains to paper + petal, conflict = DEEP edge + ink ⚠, past dims .55/sat .6, in-progress elapsed wash + "Now · Xm left", ran-over terra (the one exception), tiers micro/short/std/full at 0.9px/min, grip + 12px checkbox hover-only, hover lift, ring-fade landing (bounce removed per §7), pending "· saving" / failed "· retry" wired to the real outbox. **Data-blocked, need schema fields:** ritual/focus/admin/external kinds, tentative/declined/cancelled/RSVP/free/read-only, recurring ↻ badge, overlap shingle (FC-internal layout). |
+---
+
+## Round 7 — search-to-task, context menus, Today selection (2026-07-21, commit `0f92fe6`)
+
+| What you said | Status | Verify by |
+|---|---|---|
+| Search → task (all four sub-bugs) | ✅ | See claim 10 above. Try: search a task that lives in a project → click → project page opens, row ringed. Search a someday task → Tasks opens on the Someday tab, row ringed, no cascade replay. |
+| *"the right click context menu globally, I see a couple of bugs"* | ✅ 2 fixed | (1) Submenus (Snooze/Schedule/Move-to) drifted up-left at 125% — a double-divide I introduced in the zoom round; one coordinate convention now. (2) Menus now close when the page scrolls/resizes instead of floating detached over the wrong rows. If you saw a *different* bug, name it and it gets its own row. |
+| *"I didnt mean to remove the ctrl a, bulk actions, selectibility functions and right click context menus"* | ✅ | Selection is back without the squares: **Ctrl/Cmd+click** toggles a row, **Ctrl+A** selects all, BulkBar appears on selection, and every Today row has a right-click menu (Complete · Star · Due today/tomorrow · Someday · Select · Open details · Delete). |
