@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent } from './api'
-import { useBodyScrollLock } from '../../lib/overlayStack'
+import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
 import { completeTask } from '../tasks/api'
@@ -47,13 +47,9 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   const tasks: Task[] = qc.getQueryData(['tasks']) ?? []
   const linkedTask = event.task_id ? tasks.find((t) => t.id === event.task_id) : null
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  // F3 (punch 12): through the shared Esc stack — the private listener fired alongside
+  // whatever overlay was genuinely topmost (two things closed on one Esc).
+  useEscapeStack(true, onClose)
 
   useEffect(() => {
     titleRef.current?.focus()

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { buildListBindings } from '../tasks/listShortcuts'
+import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -26,7 +28,7 @@ import { useListKeys } from '../../components/useListKeys'
 import { BulkBar } from '../../components/BulkBar'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { ProjectPicker } from '../../components/ProjectPicker'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
@@ -187,8 +189,25 @@ export function TodayPage() {
     clearSelection()
   }
 
-  const { focusedId } = useListKeys(selectable, [], {
+  // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
+  // app's primary surface. Wired to the same handlers its context menu already uses; snooze/
+  // project row-menus aren't registered here (yet — WA-4), so the cheatsheet stays truthful.
+  const listNavigate = useNavigate()
+  const listBindings = buildListBindings({
+    complete: (t) => completeTask(t),
+    open: (t) => listNavigate(`/tasks/${t.id}`),
+    today: (t) => rescheduleDue(t, scheduleToday()),
+    tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
+    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    top3: (t) => toggleTop3(t),
+    toggleSelect: (t) => toggleSelected(t.id),
+    delete: (t) => {
+      if (window.confirm(`Delete "${t.title}"?`)) deleteTask(t)
+    },
+  })
+  const { focusedId } = useListKeys(selectable, listBindings, {
     active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos,
+    sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
 

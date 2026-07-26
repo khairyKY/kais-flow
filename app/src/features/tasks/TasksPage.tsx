@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -331,6 +331,7 @@ export function TasksPage() {
   const { data: tasks = [] } = useTasks()
   const [title, setTitle] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const rawList = searchParams.get('list')
   // R4-3 (2026-07-20 audit): SearchOverlay deep-links here as /tasks?focus=<id>, but this
   // page never read the param, so a clicked result landed on an unhighlighted list.
@@ -471,6 +472,7 @@ export function TasksPage() {
 
   const bindings = buildListBindings({
     complete: (t) => handleRowComplete(t),
+    open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
     tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),

@@ -1,5 +1,5 @@
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
-import { GLOBAL_SHORTCUTS, NAVIGATE_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
+import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
 import type { ShortcutEntry } from '../lib/pageShortcutsStore'
 
 function KeyChip({ text }: { text: string }) {
@@ -108,16 +108,12 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
           <Column last={false}>
             <Category title="Global" entries={GLOBAL_SHORTCUTS} />
-            <div style={{ marginTop: 20 }} />
-            <Category title="Navigate" entries={NAVIGATE_SHORTCUTS} />
           </Column>
           <Column last={false}>
             <Category title="Task list" entries={TASK_LIST_SHORTCUTS} />
-            <div style={{ marginTop: 20 }} />
-            <Category title="Inbox triage" entries={INBOX_SHORTCUTS} />
           </Column>
           <Column last={true}>
-            <Category title="Calendar" entries={CALENDAR_SHORTCUTS} />
+            <Category title="Inbox triage" entries={INBOX_SHORTCUTS} />
             <div style={{ marginTop: 20 }} />
             <Category title="Command bar" entries={COMMAND_BAR_SHORTCUTS} />
             <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.5deg)' }}>

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { streamChat } from './api'
-import { useBodyScrollLock } from '../../lib/overlayStack'
+import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
 
 interface DisplayMessage {
@@ -17,6 +17,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   const abortRef = useRef<AbortController | null>(null)
   const navigate = useNavigate()
   useBodyScrollLock(open)
+  useEscapeStack(open, onClose) // F3 (punch 12): Esc closes the ⌘J drawer like every other overlay
 
   if (!open) return null
 

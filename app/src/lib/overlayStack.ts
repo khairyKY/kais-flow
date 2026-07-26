@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 /**
  * One Escape key = one overlay closes: whichever registered last (topmost). Replaces the
@@ -18,16 +18,23 @@ if (typeof window !== 'undefined') {
   })
 }
 
-/** Call with `active=true` while an overlay is open; it registers `onClose` as the topmost. */
+/** Call with `active=true` while an overlay is open; it registers `onClose` as the topmost.
+ * F3 fix: the handler rides a ref so inline-arrow `onClose` props don't tear down and re-push
+ * on every parent render — which silently re-promoted that overlay to topmost above whatever
+ * genuinely opened later (drift-audit Esc-stack finding). Stack position now reflects true
+ * open order; only `active` transitions move an entry. */
 export function useEscapeStack(active: boolean, onClose: () => void): void {
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   useEffect(() => {
     if (!active) return
-    stack.push(onClose)
+    const entry = () => closeRef.current()
+    stack.push(entry)
     return () => {
-      const i = stack.lastIndexOf(onClose)
+      const i = stack.lastIndexOf(entry)
       if (i !== -1) stack.splice(i, 1)
     }
-  }, [active, onClose])
+  }, [active])
 }
 
 /** Body scroll lock, reference-counted so two overlays open at once don't unlock the body
