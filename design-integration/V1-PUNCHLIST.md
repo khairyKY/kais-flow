@@ -12,8 +12,10 @@
 - [x] **D-1 Journal model** — ✅ **DECIDED 2026-07-26:** one daily page, unlimited timestamped entries, delete→Trash; titled notes → v2 with Library. *(unblocks 47)*
 - [x] **D-2 Evening ritual shape** — ✅ **DECIDED 2026-07-26:** keep the 4-beat Closing Ritual, fold "sweep today" in as beat 1. *(unblocks 43)*
 - [x] **D-3 Accent setting** — ✅ **DECIDED 2026-07-26: remove the row for v1; real accent picker ships with v2.** *(unblocks 55)*
-- [ ] **D-4 Page-switch animation** — when you click a sidebar item, should the new page (a) appear instantly (today's behavior), or (b) do the design's subtle 160ms fade-in rising 6px? Your 1a ban killed the *big* view-to-view transition; this asks about its small replacement. *(blocks 61)*
-- [ ] **D-5 "Go to" jump** — the design has a G-key overlay showing all pages to jump to; today G does nothing but the ? cheatsheet advertises it. Options: build it / fold into ⌘K (type "inbox" → jump) / drop it. *(blocks 59)*
+- [x] **D-4 Page-switch animation** — ✅ **DECIDED 2026-07-26: (b)** — the subtle 160ms fade-in rising 6px on every page switch (2a). The 1a ban stands for the big transition only. *(unblocks 61)*
+- [x] **D-5 "Go to" jump** — ✅ **DECIDED 2026-07-26: (b) fold into ⌘K** — typing a view name in the command bar offers a jump; G is removed from the cheatsheet; no separate overlay. *(unblocks 59)*
+
+**Section 0 is closed — no open decisions remain.**
 
 ---
 
@@ -168,7 +170,8 @@
 
 - [ ] **58. Collapsed rail: simple line icons** for Inbox/Projects/Routines/Focus/Review/Library-slot; hover labels verified.
   **Judge:** collapse — icon set is coherent and every icon identifies its page.
-- [ ] **59. Go-to per D-5**; `n` key + cheatsheet consistent.
+- [ ] **59. ⌘K navigation** (per D-5): typing a view name ("inbox", "calendar"…) offers a jump row; plain quick-add unaffected; G gone from the cheatsheet.
+  **Judge:** ⌘K → type "inbox" → Enter on the jump row lands on Inbox; typing "buy milk" still quick-adds.
 - [ ] **60. Topbar fixed:** date `Fri 15 Aug` format, single `◌` offline, syncing colors.
   **Judge:** eyeball online/offline/syncing.
 - [ ] **61. Motion application wave** per "everything except 1a" (+ D-4 for 2a): the absent motions (list breathing rowIn/rowOut, drag-lift grammar on all draggables, seed plant, mobile stack, drag polish) wired with spec timings; check-pop timings corrected (boxFill 90 → pop 180 → strike 240 → dip 120).
