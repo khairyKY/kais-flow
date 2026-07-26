@@ -9,11 +9,11 @@
 
 ## 0. Decisions that unblock items below — **decide by Aug 1**
 
-- [ ] **D-1 Journal model** — proposal: one daily page, unlimited timestamped entries, delete→Trash; titled notes → v2 with Library. *(blocks item 47)*
-- [ ] **D-2 Evening ritual shape** — proposal: keep the 4-beat Closing Ritual, fold "sweep today" in as beat 1. *(blocks 43)*
-- [ ] **D-3 Accent setting** — make real or remove the row. *(blocks 55)*
-- [ ] **D-4 Route cut (Motion 2a)** — does the 1a ban cover the 160ms route cut? *(blocks 61)*
-- [ ] **D-5 Go-to** — fold into ⌘K (type a view name → jump) or drop entirely from the cheatsheet. *(blocks 59)*
+- [x] **D-1 Journal model** — ✅ **DECIDED 2026-07-26:** one daily page, unlimited timestamped entries, delete→Trash; titled notes → v2 with Library. *(unblocks 47)*
+- [x] **D-2 Evening ritual shape** — ✅ **DECIDED 2026-07-26:** keep the 4-beat Closing Ritual, fold "sweep today" in as beat 1. *(unblocks 43)*
+- [x] **D-3 Accent setting** — ✅ **DECIDED 2026-07-26: remove the row for v1; real accent picker ships with v2.** *(unblocks 55)*
+- [ ] **D-4 Page-switch animation** — when you click a sidebar item, should the new page (a) appear instantly (today's behavior), or (b) do the design's subtle 160ms fade-in rising 6px? Your 1a ban killed the *big* view-to-view transition; this asks about its small replacement. *(blocks 61)*
+- [ ] **D-5 "Go to" jump** — the design has a G-key overlay showing all pages to jump to; today G does nothing but the ? cheatsheet advertises it. Options: build it / fold into ⌘K (type "inbox" → jump) / drop it. *(blocks 59)*
 
 ---
 
@@ -157,7 +157,8 @@
   **Judge:** drag it — the grain visibly changes; persists.
 - [ ] **54. Every remaining row functional or hidden.** Sounds section hidden (v2); capture API hidden; integrations page deduplicated vs in-page sections; push section says what it does.
   **Judge:** every visible settings control does something observable.
-- [ ] **55. Accent per D-3.**
+- [ ] **55. Accent row removed** (per D-3; real picker → v2).
+  **Judge:** Settings shows no Accent row.
 - [ ] **56. "Botanical animations" off = still garden.** All loops gated; toggle decoupled from OS reduced-motion; present on mobile settings.
   **Judge:** toggle off — waveform bars, fireflies, twinkles all freeze; toggle reads correctly on a reduced-motion OS.
 - [ ] **57. Night sweep.** Grain visible at night (overlay blend); the ~12 hardcoded light-only clusters fixed.
