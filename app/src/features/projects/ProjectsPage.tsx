@@ -287,7 +287,11 @@ export function ProjectsPage() {
 
       <main style={{ position: 'relative', zIndex: 10, padding: '10px 8px 40px' }}>
         {/* Toggle header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 28 }}>
+        {/* punch 16 (2026-07-26): both rows wrap — the 1.25 root zoom shrinks the layout
+            viewport to innerWidth/1.25, so at 100% browser zoom this fixed-width control row
+            overflowed the title (fine at 90%, where innerWidth grows). Wrapping drops the
+            controls under the title instead of clipping. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, rowGap: 14, marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src="/ds/assets/wisteria/p60.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
@@ -300,7 +304,7 @@ export function ProjectsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, rowGap: 10 }}>
             {(view === 'board' || view === 'list') && (
               <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
                 <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>

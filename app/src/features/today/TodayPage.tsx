@@ -808,7 +808,9 @@ function SlippingCard({ row }: { row: SlippingRow }) {
     <div
       onClick={() => navigate(to)}
       role="link"
-      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: 'var(--paper-goal)', padding: '12px 14px', transform: 'rotate(0.4deg)', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
+      // deviation(punch 15, 2026-07-26): export tilts this card rotate(0.4deg); dropped — the
+      // sub-degree transform blurred the title + mono caption (see QuickCreate's 07-18 deviation).
+      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: 'var(--paper-goal)', padding: '12px 14px', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
     >
       <img src={`${A}/wisteria/p20.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
       <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>

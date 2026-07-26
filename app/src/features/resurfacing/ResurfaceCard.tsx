@@ -24,12 +24,15 @@ export function ResurfaceCard() {
 
   return (
     <div
+      // deviation(punch 15, 2026-07-26): export tilts this card rotate(-0.3deg), but the
+      // sub-degree transform blurs the 14px quote text (grayscale AA on a rotated baseline,
+      // compounded by the 1.25 root zoom) — dropped for crisp rendering, same call as
+      // QuickCreate's 2026-07-18 deviation. The tape strip keeps the placed-note feel.
       style={{
         position: 'relative',
         border: '1px solid var(--line-card)',
         background: 'var(--paper-parchment)',
         padding: '13px 14px',
-        transform: 'rotate(-0.3deg)',
         boxShadow: 'var(--shadow-card)',
         borderRadius: 3,
       }}
