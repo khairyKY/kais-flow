@@ -25,48 +25,74 @@ export interface StreakResult {
 
 const MAX_LOOKBACK_DAYS = 3650 // ~10 years safety bound against pathological cadences
 
+/** Backward grace walk shared by computeStreak and computeGraceStreak — Routines.dc.html
+ * turn 4 ("Gentle Rain"): one missed scheduled day per calendar month doesn't break the
+ * streak (it "rains" instead); the second miss in a month snaps it. Today, if scheduled but
+ * not yet completed, doesn't break the current streak — the day isn't over. */
+function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date): { current: number; rainedDates: string[] } {
+  if (cadence.weekdays.length === 0) return { current: 0, rainedDates: [] }
+  const rainUsedByMonth = new Set<string>()
+  const rainedDates: string[] = []
+  let current = 0
+
+  let cursor = new Date(today)
+  if (isScheduled(cursor, cadence) && !completed.has(localDateKey(cursor))) {
+    cursor = addDays(cursor, -1) // today not over yet — doesn't break, doesn't count
+  }
+  let steps = 0
+  while (steps < MAX_LOOKBACK_DAYS) {
+    if (isScheduled(cursor, cadence)) {
+      const key = localDateKey(cursor)
+      if (completed.has(key)) {
+        current++
+      } else {
+        const monthKey = key.slice(0, 7)
+        if (rainUsedByMonth.has(monthKey)) break
+        rainUsedByMonth.add(monthKey)
+        rainedDates.push(key)
+      }
+    }
+    cursor = addDays(cursor, -1)
+    steps++
+  }
+  return { current, rainedDates }
+}
+
 /**
  * completedDates: local YYYY-MM-DD strings the routine was checked off.
  * Only days the cadence schedules count toward a streak; unscheduled days are skipped over
- * without breaking anything. Today, if scheduled but not yet completed, doesn't break the
- * current streak — it just isn't counted yet (the day isn't over).
+ * without breaking anything. Punch item 44: this is THE one user-facing streak everywhere
+ * (row flame, trellis header, Today's circle, sidebar, Focus) and it is grace-forgiving per
+ * the trellis's own legend — see `walkCurrentStreak`. `best` applies the same one-rain-per-
+ * calendar-month-per-run grace walking forward.
  */
 export function computeStreak(completedDates: string[], cadence: Cadence, today: Date = new Date()): StreakResult {
   const completed = new Set(completedDates)
-
-  let current = 0
-  if (cadence.weekdays.length > 0) {
-    let cursor = new Date(today)
-    if (isScheduled(cursor, cadence) && !completed.has(localDateKey(cursor))) {
-      cursor = addDays(cursor, -1)
-    }
-    let steps = 0
-    while (steps < MAX_LOOKBACK_DAYS) {
-      if (isScheduled(cursor, cadence)) {
-        if (completed.has(localDateKey(cursor))) {
-          current++
-        } else {
-          break
-        }
-      }
-      cursor = addDays(cursor, -1)
-      steps++
-    }
-  }
+  const { current } = walkCurrentStreak(completed, cadence, today)
 
   let best = 0
   if (completed.size > 0 && cadence.weekdays.length > 0) {
     const earliest = Array.from(completed).sort()[0]
+    const todayKey = localDateKey(today)
     let cursor = new Date(`${earliest}T00:00:00`)
     let run = 0
+    let rainUsedByMonth = new Set<string>()
     let steps = 0
     while (cursor <= today && steps < MAX_LOOKBACK_DAYS) {
       if (isScheduled(cursor, cadence)) {
-        if (completed.has(localDateKey(cursor))) {
+        const key = localDateKey(cursor)
+        if (completed.has(key)) {
           run++
           best = Math.max(best, run)
-        } else {
-          run = 0
+        } else if (key !== todayKey) {
+          // a miss: forgiven once per calendar month within a run, same rule as the backward walk
+          const monthKey = key.slice(0, 7)
+          if (rainUsedByMonth.has(monthKey)) {
+            run = 0
+            rainUsedByMonth = new Set()
+          } else {
+            rainUsedByMonth.add(monthKey)
+          }
         }
       }
       cursor = addDays(cursor, 1)
@@ -74,7 +100,9 @@ export function computeStreak(completedDates: string[], cadence: Cadence, today:
     }
   }
 
-  return { current, best }
+  // ponytail: backward walk rains the *latest* miss of a month, forward walk the *oldest* —
+  // in rare splits current could exceed the forward best, so clamp for coherence.
+  return { current, best: Math.max(best, current) }
 }
 
 function scheduledAndDone(cadence: Cadence, completedDates: string[], days: number, today: Date): { scheduled: number; done: number } {
@@ -137,46 +165,18 @@ export interface TrellisDay {
   state: TrellisDayState
 }
 
-/** Grace-aware current streak — Routines.dc.html turn 4 ("Gentle Rain, redrawn"): one missed
- * scheduled day per calendar month doesn't break the streak (it "rains" instead). Walks
- * backward from `today` same as `computeStreak`, but a miss only breaks the run once that
- * miss's month has already spent its one grace day. Additive/local to the streak-trellis
- * display (4a) — does not change `computeStreak`, which every other surface (row flame count,
- * Today's streak circle, streakRiskMessage) still reads as a plain unforgiving streak. */
+/** Same grace walk as `computeStreak`'s current, but also returns which days rained — the
+ * streak-trellis (4a) draws a droplet on each. Punch item 44: `current` here and
+ * `computeStreak().current` are the SAME number by construction (one shared walk). */
 export function computeGraceStreak(completedDates: string[], cadence: Cadence, today: Date = new Date()): { current: number; rainedDates: string[] } {
-  if (cadence.weekdays.length === 0) return { current: 0, rainedDates: [] }
-  const completed = new Set(completedDates)
-  const rainUsedByMonth = new Set<string>()
-  const rainedDates: string[] = []
-  let current = 0
-
-  let cursor = new Date(today)
-  if (isScheduled(cursor, cadence) && !completed.has(localDateKey(cursor))) {
-    cursor = addDays(cursor, -1) // today not over yet — doesn't break, doesn't count
-  }
-  let steps = 0
-  while (steps < MAX_LOOKBACK_DAYS) {
-    if (isScheduled(cursor, cadence)) {
-      const key = localDateKey(cursor)
-      if (completed.has(key)) {
-        current++
-      } else {
-        const monthKey = key.slice(0, 7)
-        if (rainUsedByMonth.has(monthKey)) break
-        rainUsedByMonth.add(monthKey)
-        rainedDates.push(key)
-      }
-    }
-    cursor = addDays(cursor, -1)
-    steps++
-  }
-  return { current, rainedDates }
+  return walkCurrentStreak(new Set(completedDates), cadence, today)
 }
 
-/** Per-day states for the trailing `days`-day trellis (4a): 'grew' (scheduled + done),
- * 'rained' (scheduled + missed, forgiven — first miss of its calendar month), 'broke'
- * (scheduled + missed, grace already spent), 'off' (not scheduled, or today-not-over-yet).
- * Oldest first, fixed length — same shape convention as `dailyCompletionRatios`. */
+/** Per-day states for the trailing `days`-day trellis (4a): 'grew' (scheduled + done —
+ * including today, the moment it's checked), 'rained' (scheduled + missed, forgiven — first
+ * miss of its calendar month), 'broke' (scheduled + missed, grace already spent), 'off'
+ * (not scheduled, or today-scheduled-but-not-yet-done: the day isn't over, so it never reads
+ * as a miss). Oldest first, fixed length — same shape convention as `dailyCompletionRatios`. */
 export function computeTrellisDays(completedDates: string[], cadence: Cadence, days: number, today: Date = new Date()): TrellisDay[] {
   const completed = new Set(completedDates)
   const todayKey = localDateKey(today)
@@ -186,7 +186,7 @@ export function computeTrellisDays(completedDates: string[], cadence: Cadence, d
   for (let n = 0; n < days; n++) {
     const d = addDays(start, n)
     const key = localDateKey(d)
-    if (!isScheduled(d, cadence) || key === todayKey) {
+    if (!isScheduled(d, cadence) || (key === todayKey && !completed.has(key))) {
       out.push({ key, state: 'off' })
       continue
     }

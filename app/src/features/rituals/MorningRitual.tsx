@@ -107,10 +107,15 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const candidatesForTop3 = tasks.filter((t) => t.status === 'todo' && !t.top3)
   const seeded = step === 'top3' && top3.length === 3 && !repicking
 
-  function next() {
-    logRitualStep('morning', STEPS[stepIndex])
+  // Punch item 43: skipping a step must NOT count it as done — `advance` moves on without
+  // logging; `next` is the "I did this step" path that logs it to the activity spine.
+  function advance() {
     if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1)
     else onClose()
+  }
+  function next() {
+    logRitualStep('morning', STEPS[stepIndex])
+    advance()
   }
 
   // 3b — "the step arrives closed and auto-advances after a beat unless touched".
@@ -141,8 +146,9 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
           : "let today's shape settle onto the calendar"
 
   // A6 (2026-07-18 audit): two distinct skips — the top-right "skip" advances past the current
-  // step without performing it (also the block step's only skip, since it has no footer); the
-  // footer's "skip for now" abandons the whole ritual.
+  // step without performing it (also the block step's only skip, since it has no footer) and,
+  // per punch item 43, without logging it as complete; the footer's "skip for now" abandons
+  // the whole ritual.
   return (
     <MorningPanel wide={step === 'block'} footer={step === 'block' ? null : <StepFooter onSkip={onClose} onNext={next} label={stepIndex === STEPS.length - 1 ? 'Finish' : 'Next →'} />}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -150,7 +156,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
           {`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`}
           {seeded && <span style={{ color: 'var(--acc-gold)' }}> · closed by last night's seeds</span>}
         </FieldLabel>
-        <RLink onClick={next}>skip</RLink>
+        <RLink onClick={advance}>skip</RLink>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>

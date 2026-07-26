@@ -1,29 +1,32 @@
 import { useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { useTasks, toggleTop3 } from '../tasks/api'
+import { useTasks, toggleTop3, completeTask, uncompleteTask, rescheduleDue } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
+import { useJournalEntries, upsertJournalEntry } from '../journal/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
+import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
 import { logRitualStep } from './api'
-import { FieldLabel, RLink, CtaButton, useIsMobile } from './RitualChrome'
+import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
+import type { Task } from '../../lib/types'
 
 // ── The Closing Ritual — pixel contract Rituals.dc.html 2c/2d/2e (the four beats) with
 // beat 1 taken from 3a's refined sun (the dv-next under t3 explicitly says this sun
-// "replaces 2b's flat dial"). Turn 1's older two-step "sweep + preview" (1e/1f) is NOT
-// built here: turn 2/3 rename the same surface "Closing Ritual" and give it a different
-// 4-beat structure, which reads as a redesign of turn 1's evening flow rather than an
-// addition to it — but that's this build's inference, not something the file states
-// outright, and the brief's own option list (1a-1g) does include 1e/1f. Flagged for R4/Kai
-// to confirm — a plain "roll open tasks to tomorrow" and "tomorrow's schedule at a glance"
-// step from 1e/1f are unbuilt if he wants both flows. Mobile-first dusk phone sheet;
-// desktop gets "the same four beats as a centered takeover" per the dv-next. ──
+// "replaces 2b's flat dial"). Ruling D-2 (2026-07-26, punch item 43): keep the four built
+// beats and FOLD turn 1's "Sweep today" (1e) in as beat 1, before the day's-garden beat —
+// five beats total, and Today's pinned card reads n/5 via RITUAL_STEP_COUNT. 1f ("tomorrow
+// at a glance") stays unbuilt: the seeds beat already carries the tomorrow-preview role.
+// Mobile-first dusk phone sheet; desktop gets the same beats as a centered takeover per
+// the dv-next. ──
 
 const A = '/ds/assets'
-const BEATS = ['garden', 'line', 'seeds', 'goodnight'] as const
+const BEATS = ['sweep', 'garden', 'line', 'seeds', 'goodnight'] as const
 type Beat = (typeof BEATS)[number]
 const BEAT_BG: Record<Beat, string> = {
+  sweep: 'linear-gradient(180deg,#2a2438,#1a1622)',
   garden: 'linear-gradient(180deg,#2e2840,#211d30)',
   line: 'linear-gradient(180deg,#332c48,#262138)',
   seeds: 'linear-gradient(180deg,#2e2840,#211d30)',
@@ -75,21 +78,132 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const { data: events = [] } = useCalendarEvents()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
+  const { data: journalEntries = [] } = useJournalEntries()
   const [line, setLine] = useState('')
   const [seededIds, setSeededIds] = useState<Set<string>>(new Set())
 
-  function next() {
-    logRitualStep('evening', BEATS[beatIndex])
+  // Advance without counting the step — the sweep beat's "skip for now" (punch item 43:
+  // skipping must never log the step as complete).
+  function advance() {
     if (beatIndex < BEATS.length - 1) setBeatIndex(beatIndex + 1)
     else onClose()
   }
+  function next() {
+    logRitualStep('evening', BEATS[beatIndex])
+    advance()
+  }
+
+  // "lands in the journal" — literally (punch item 43): append the line to today's real
+  // journal entry, not just the activity log.
+  function commitLine() {
+    const text = line.trim()
+    if (text) {
+      const todayKey = localDateKey(new Date())
+      const existing = journalEntries.find((e) => e.entry_date === todayKey)
+      upsertJournalEntry(
+        existing ? { ...existing, body: existing.body ? `${existing.body}\n${text}` : text } : { entry_date: todayKey, body: text },
+        !existing,
+      )
+      logActivity('journal.line_added', 'ritual', todayKey, { text })
+    }
+    next()
+  }
 
   return <DuskPanel bg={BEAT_BG[beat]}>{
+    beat === 'sweep' ? <SweepBeat tasks={tasks} onSkip={onClose} onSkipStep={advance} onNext={next} /> :
     beat === 'garden' ? <GardenBeat tasks={tasks} events={events} routines={routines} completions={completions} onSkip={onClose} onNext={next} /> :
-    beat === 'line' ? <LineBeat line={line} onChange={setLine} onSkip={onClose} onNext={() => { if (line.trim()) logActivity('journal.line_added', 'ritual', localDateKey(new Date()), { text: line.trim() }); next() }} /> :
+    beat === 'line' ? <LineBeat line={line} onChange={setLine} onSkip={onClose} onNext={commitLine} /> :
     beat === 'seeds' ? <SeedsBeat tasks={tasks} seededIds={seededIds} onSeed={(id) => setSeededIds((s) => new Set(s).add(id))} onSkip={onClose} onNext={next} /> :
-    <GoodnightBeat onDone={onClose} />
+    <GoodnightBeat onDone={next} />
   }</DuskPanel>
+}
+
+// ── Beat 1 — Sweep today (Rituals.dc.html 1e, folded in per ruling D-2). Copy verbatim.
+// Open tasks that were on today's plate get a per-task [done] / [roll to tomorrow]; tasks
+// already completed today show struck-through with a fallen petal, per the 1e sample row. ──
+
+function sweepTomorrowIso(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString()
+}
+
+function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSkip: () => void; onSkipStep: () => void; onNext: () => void }) {
+  const [rolled, setRolled] = useState<Set<string>>(new Set())
+  const [todayStart, todayEnd] = todayBounds()
+
+  // "today's plate": open, not someday, and either starred, due by tonight, or scheduled today
+  const stillOpen = tasks.filter(
+    (t) =>
+      t.status === 'todo' &&
+      !t.someday &&
+      !rolled.has(t.id) &&
+      (t.top3 ||
+        (t.due_at && new Date(t.due_at) <= todayEnd) ||
+        (t.scheduled_start && new Date(t.scheduled_start) >= todayStart && new Date(t.scheduled_start) <= todayEnd)),
+  )
+  const doneToday = tasks.filter((t) => t.completed_at && new Date(t.completed_at) >= todayStart && new Date(t.completed_at) <= todayEnd)
+
+  function markDone(t: Task) {
+    completeTask(t)
+    toastUndo('Task completed', () => uncompleteTask(t))
+  }
+
+  function roll(t: Task) {
+    const priorDue = t.due_at
+    rescheduleDue(t, sweepTomorrowIso())
+    setRolled((s) => new Set(s).add(t.id))
+    toastUndo('Rolled to tomorrow', () => {
+      rescheduleDue(t, priorDue)
+      setRolled((s) => {
+        const next = new Set(s)
+        next.delete(t.id)
+        return next
+      })
+    })
+  }
+
+  return (
+    <>
+      <BeatHeader label="Closing · 1 of 5" onSkip={onSkip} />
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '14px 24px' }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: '0 18px 44px rgba(20,16,28,0.45)', padding: '22px 26px 24px', maxHeight: '100%', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src={`${A}/clover/resting.png`} alt="" style={{ height: 34 }} />
+            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>the garden is settling in for the night</span>
+          </div>
+          <h2 style={{ margin: '18px 0 4px', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 23, color: 'var(--ink-body)' }}>Sweep today</h2>
+          <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Still open — finish it or roll it to tomorrow. Close the loops so tonight is quiet.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {stillOpen.length === 0 && doneToday.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--ink-faint)', margin: 0 }}>Nothing still open.</p>
+            )}
+            {stillOpen.map((t) => (
+              <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span onClick={() => markDone(t)} style={{ width: 16, height: 16, border: '1.5px solid var(--line-sidebar)', borderRadius: 4, flex: 'none', cursor: 'pointer' }} />
+                <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
+                <Pill onClick={() => markDone(t)}>done</Pill>
+                <RLink onClick={() => roll(t)} color="var(--acc-lavender-deep)" style={{ textDecoration: 'underline' }}>roll to tomorrow</RLink>
+              </div>
+            ))}
+            {doneToday.map((t) => (
+              <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.55 }}>
+                <span style={{ width: 15, height: 15, borderRadius: 4, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                  <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+                </span>
+                <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}><EmojiText text={t.title} /></span>
+                <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 16 }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 15, borderTop: '1px dashed var(--line-dashed)' }}>
+            <RLink onClick={onSkipStep}>skip for now</RLink>
+            <CtaButton onClick={onNext}>Next →</CtaButton>
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function GardenBeat({
@@ -122,7 +236,7 @@ function GardenBeat({
     const dates = (completions ?? []).filter((c) => c.routine_id === r.id).map((c) => c.completed_on)
     return Math.max(max, computeStreak(dates, r.cadence).current)
   }, 0)
-  const vineStage = best >= 30 ? 'lush' : best >= 7 ? 'flowering' : best >= 1 ? 'sprouting' : 'bare'
+  const stage = vineStage(best)
 
   const circumference = 2 * Math.PI * 72
   const lit = circumference * (focusedHours / 12)
@@ -143,7 +257,7 @@ function GardenBeat({
         @keyframes sunTurn { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         @keyframes sunBreathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.035) } }
       `}</style>
-      <BeatHeader label="Closing · 1 of 4" onSkip={onSkip} />
+      <BeatHeader label="Closing · 2 of 5" onSkip={onSkip} />
       <div style={{ flex: 'none', padding: '14px 24px 0' }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, color: '#f0ebdd', lineHeight: 1.1 }}>Today's garden</h1>
         <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#b8b0c8' }}>
@@ -235,7 +349,7 @@ function GardenBeat({
         </div>
 
         <div style={{ position: 'absolute', right: 30, bottom: 76, width: 120 }}>
-          <img src={`${A}/vine/${vineStage}.png`} alt="" style={{ height: 84, filter: 'brightness(0.85)' }} />
+          <img src={`${A}/vine/${stage}.png`} alt="" style={{ height: 84, filter: 'brightness(0.85)' }} />
           <div style={{ marginTop: 6, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
             vine{grewToday ? ' +1 leaf' : ''}
           </div>
@@ -252,7 +366,7 @@ function GardenBeat({
 function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: (v: string) => void; onSkip: () => void; onNext: () => void }) {
   return (
     <>
-      <BeatHeader label="Closing · 2 of 4" onSkip={onSkip} />
+      <BeatHeader label="Closing · 3 of 5" onSkip={onSkip} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px' }}>
         <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: '0 18px 44px rgba(20,16,28,0.45)', padding: '26px 24px 22px', transform: 'rotate(-0.6deg)' }}>
           <input
@@ -302,7 +416,7 @@ function SeedsBeat({
 
   return (
     <>
-      <BeatHeader label="Closing · 3 of 4" onSkip={onSkip} />
+      <BeatHeader label="Closing · 4 of 5" onSkip={onSkip} />
       <div style={{ flex: 'none', padding: '12px 24px 0' }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 22, color: '#f0ebdd', lineHeight: 1.1 }}>Tomorrow's three</h1>
         <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#c9c0d8' }}>tap three, or fewer ✿</div>

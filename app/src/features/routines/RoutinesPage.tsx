@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
 import { computeStreak, localDateKey } from './streaks'
+import { vineStage } from '../../lib/growthStages'
 import { groupRoutinesByTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
 import { NewRoutineForm } from './NewRoutineForm'
@@ -19,13 +20,6 @@ import type { Routine, RoutineCompletion } from '../../lib/types'
 
 const A = '/ds/assets'
 const STAGE_LABEL: Record<string, string> = { bare: 'Bare', sprouting: 'Sprouting', flowering: 'Flowering', lush: 'Lush' }
-
-function vineStage(streakDays: number): 'bare' | 'sprouting' | 'flowering' | 'lush' {
-  if (streakDays <= 0) return 'bare'
-  if (streakDays < 7) return 'sprouting'
-  if (streakDays < 21) return 'flowering'
-  return 'lush'
-}
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
