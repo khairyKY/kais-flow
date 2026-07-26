@@ -18,16 +18,18 @@ body,
   height: 100%;
 }
 
-/* Route transition wrapper — Motion 4b specs ONE entrance mechanism (per-item stagger,
-   not a whole-page fade too), so this carries no animation of its own; it only marks the
-   very first app mount via [data-initial] so stagger children skip animating in on cold
-   boot and only animate on subsequent client-side route landings. Definite height (not
-   auto) so height-bounded pages (calendar) can inherit a real viewport-relative size
-   instead of shrink-wrapping their content — harmless for normal pages, which just
-   overflow past it and keep scrolling via .app-main-content same as before. */
+/* Route transition wrapper — Motion 2a route cut (D-4 ruling, 2026-07-26): the incoming
+   page rises 6px over 160ms on every client-side route change; [data-initial] suppresses
+   it (and the stagger) on cold boot. The keyframe ends at transform:none so fixed-position
+   popovers aren't containing-block-trapped after landing. Definite height (not auto) so
+   height-bounded pages (calendar) inherit a real viewport-relative size. */
 .kf-route {
   height: 100%;
   min-height: 0;
+  animation: routeCut 160ms var(--ease-out) both;
+}
+.kf-route[data-initial] {
+  animation: none;
 }
 .kf-route[data-initial] .kf-stagger-item {
   animation: none;

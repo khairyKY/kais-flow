@@ -167,11 +167,24 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style }:
         color: 'var(--check-mark)',
         fontSize: size * 0.62,
         lineHeight: 1,
-        animation: checked && bloom && motionOn ? 'checkPop 260ms var(--ease-spring)' : 'none',
+        // Motion 3b (F4): boxFill 90ms on every checkbox; the mark pops after it.
+        animation: checked && motionOn ? 'boxFill 90ms var(--ease-out)' : 'none',
         ...style,
       }}
     >
-      {checked ? '✓' : ''}
+      {checked ? (
+        <span
+          style={{
+            display: 'inline-block',
+            // checkPop 180ms (0→1.3→1), delayed behind the 90ms fill; `both` holds scale(0) during the delay.
+            animation: motionOn ? 'checkPop 180ms var(--ease-out) 90ms both' : 'none',
+          }}
+        >
+          ✓
+        </span>
+      ) : (
+        ''
+      )}
     </button>
   )
 }

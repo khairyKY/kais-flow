@@ -25,7 +25,7 @@
 @keyframes tr-rowDip { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(1.5px); } }
 @keyframes tr-strikeGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-.motion-on .tr-checking { animation: tr-rowDip 320ms var(--ease-natural); }
+.motion-on .tr-checking { animation: tr-rowDip 120ms var(--ease-natural); } /* Motion 3b: 120ms (F4; was 320) */
 .tr-title-strike { position: relative; display: inline-block; }
 .tr-title-strike::after {
   content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px;

@@ -605,10 +605,22 @@ export function AppLayout() {
         @keyframes kfSheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
         @keyframes kfDrawerIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
         .kf-overlay-card { animation: kfOverlayIn 210ms var(--ease-out); }
-        .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); }
+        .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
         .kf-fade { animation: kfFadeIn 160ms var(--ease-out); }
+
+        /* F4 Motion 3c — overlay OUT: 140ms drop; pair with useOverlayExit (lib/motion.ts).
+           .kf-scrim now carries the canonical 20% scrim (3c); feature-file inline backgrounds
+           still override it — WB-1 deletes those inline values instead of retinting them. */
+        @keyframes kfOverlayOut { to { opacity: 0; transform: translateY(6px) scale(0.99); } }
+        @keyframes kfFadeOut { to { opacity: 0; } }
+        @keyframes kfSheetOut { to { opacity: 0; transform: translateY(20px); } }
+        @keyframes kfDrawerOut { to { opacity: 0; transform: translateX(18px); } }
+        .kf-overlay-card--out { animation: kfOverlayOut 140ms var(--ease-in) both; }
+        .kf-scrim--out { animation: kfFadeOut 140ms var(--ease-in) both; }
+        .kf-sheet--out { animation: kfSheetOut 140ms var(--ease-in) both; }
+        .kf-drawer--out { animation: kfDrawerOut 140ms var(--ease-in) both; }
 
         /* X2 Motion 1f — the sidebar streak plant is the app's sole persistent loop. */
         @keyframes kfLeafSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }

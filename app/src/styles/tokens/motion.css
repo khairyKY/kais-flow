@@ -9,9 +9,9 @@
   --dur-bloom:    600ms;   /* petal fall */
   --dur-grow:     800ms;   /* vine growth */
 
-  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);       /* easeOutExpo for reveals */
+  --ease-out:     cubic-bezier(0.22, 0.61, 0.36, 1);   /* canonical export curve (F4; was easeOutExpo — drift) */
   --ease-in:      cubic-bezier(0.55, 0, 0.68, 0.53);
-  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);   /* springy bounce for actions */
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);   /* springy bounce for actions (app-only, kept) */
   --ease-natural: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -38,10 +38,36 @@
   100% { transform: translateY(90px) rotate(140deg); opacity: 0; }
 }
 
+/* Motion 3b — the four-beat check sequence. Recipe per MOTION_RETROFIT:
+   boxFill 90ms → checkPop 180ms (0→1.3→1 overshoot) → strikeGrow 240ms → rowDip 120ms.
+   boxFill/checkPop live here (kit Checkbox); strike/dip live with the row (TaskRow.css). */
+@keyframes boxFill {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 @keyframes checkPop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.18); }
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.3); }
   100% { transform: scale(1); }
+}
+
+/* Motion 3e — list breathing. rowIn: the arriving row settles up (height growth is the
+   call site's job — see animateRowRemoval in lib/motion.ts for the exit counterpart). */
+@keyframes rowIn {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes rowOutSlide {
+  0%   { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(24px); }
+}
+
+/* Motion 2a — route cut (D-4 ruling): the incoming page rises 6px over 160ms. */
+@keyframes routeCut {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
 }
 
 /* Entry keyframes MUST end at `transform: none`, not translateY(0): a retained transform
