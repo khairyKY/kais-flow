@@ -15,8 +15,8 @@ import { useTasks } from '../features/tasks/api'
 import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { hydrangeaAsset } from '../lib/gardenAssets'
 import { useMotionEnabled } from '../lib/motion'
+import { FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 import { ToastHost } from './ToastHost'
 import { ShortcutOverlay } from './ShortcutOverlay'
 import { MobileTabBar } from './MobileTabBar'
@@ -54,15 +54,17 @@ type NavItem = {
   dot: string // accent CSS var for the resting dot
   img?: string // always-shown species PNG (design shows Journal's fern this way), opacity bumps on active
   activeImg?: string // species PNG shown only when the row is active
-  activeIcon?: ReactNode // inline botanical SVG shown only when the row is active
-  dynamicActiveImg?: (pendingInbox: number) => string // Inbox: species staged by real pending count
+  activeIcon?: ReactNode // inline SVG shown when the row is active or the rail is collapsed
   badge?: 'inbox'
   tape: string // washi-tape rgba tint on the active row (Navigation Reference §02)
 }
 
+// Punch 58 (Kai's V1 ruling): rail icons ALL simple — Inbox/Projects/Routines/
+// Focus/Review swap their species PNG renders for line glyphs (icons/NavGlyphs.tsx).
+// Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
 const TEND: NavItem[] = [
   { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="#8A9A7E" center="#C9A55A" />, tape: 'rgba(138,154,126,0.4)' },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', dynamicActiveImg: (n) => `${A}/hydrangea/${hydrangeaAsset(n).src}.png`, tape: 'rgba(154,180,190,0.55)' },
+  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'rgba(154,180,190,0.55)' },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
   // line 225 specifies the 18px five-ellipse glyph (fill #D4A8B0, centre #C98A4B), not
@@ -71,15 +73,14 @@ const TEND: NavItem[] = [
   // Tasks was the odd one out.
   { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="#D4A8B0" center="#C98A4B" />, tape: 'rgba(212,168,176,0.45)' },
   { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="#A8A0BE" center="#D9B65C" />, tape: 'rgba(168,160,190,0.45)' },
-  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeImg: `${A}/wisteria/p60.png`, tape: 'rgba(122,148,110,0.45)' },
+  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'rgba(122,148,110,0.45)' },
 ]
 
 const CULTIVATE: NavItem[] = [
-  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeImg: `${A}/vine/flowering.png`, tape: 'rgba(122,148,110,0.45)' },
-  // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable);
-  // same NavItem formula: daisy = the Focus page's own hour-of-day species, gold-warm accents.
-  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeImg: `${A}/daisy/midday.png`, tape: 'rgba(201,165,90,0.45)' },
-  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeImg: `${A}/fern/unfurl2.png`, tape: 'rgba(212,199,138,0.45)' },
+  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph />, tape: 'rgba(122,148,110,0.45)' },
+  // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable).
+  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph />, tape: 'rgba(201,165,90,0.45)' },
+  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'rgba(212,199,138,0.45)' },
   // R4-D4 (Kai's 2026-07-20 ruling): Journal is PARKED until he redesigns it — the whole
   // one-entry-per-day model is unsettled. Nav entry removed; the route and page stay in the
   // codebase (reachable by URL) so nothing is lost when it comes back.
@@ -200,8 +201,9 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
   const icon = (active: boolean) => {
     const showSpecies = active || collapsed
     if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
-    if (showSpecies && item.activeIcon) return <span style={{ opacity: active ? 1 : 0.7 }}>{item.activeIcon}</span>
-    if (showSpecies && item.dynamicActiveImg) return <img src={item.dynamicActiveImg(pendingInbox)} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
+    if (showSpecies && item.activeIcon)
+      // Explicit color: line glyphs stroke currentColor, and the Link sets no color of its own.
+      return <span style={{ display: 'flex', opacity: active ? 1 : 0.7, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{item.activeIcon}</span>
     if (showSpecies && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
     return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
   }
