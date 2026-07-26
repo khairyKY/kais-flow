@@ -3,6 +3,7 @@
 > **What this is:** the list of features that should exist *and work* for v1.0 — public, deployable. Written from the **user's POV and best UX**, not from the design export; the export is an input, the drift audit (`DRIFT-AUDIT.md`) supplies the statuses. Kai reviews line by line: keep / cut / change.
 >
 > **Legend:** ✅ works today · 🟡 partial/broken · ❌ missing · 🔵 needs Kai's decision · ✂ recommended cut from v1.
+> **Updated 2026-07-26** with Kai's spoken review rulings (vault: `05 - Projects/Kai's Flow/2026-07-26 — v1.0 review (spoken).md`; punch list: `Kai's Flow — The Deal`). Changed lines marked **[K-26]**.
 > **Principle applied throughout:** *nothing dead on screen* — every visible control either works or doesn't render in v1. A half-app that's honest beats a full-app that lies.
 
 ---
@@ -37,7 +38,7 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| Views: Today / Overdue / Upcoming / Someday / Done + Repeating | ✅ | Overdue + reschedule-all = Kai's rulings. |
+| Views: Today / Overdue / Upcoming / Someday / Done + Repeating | ✅ | Overdue + reschedule-all = Kai's rulings. **[K-26]** add an **All** tab — filed-without-date tasks are invisible today; All is their landing. |
 | Sort (Smart/Due/Priority/A-Z) | ✅ | |
 | Filter (domain chips on mobile; anything richer?) | 🔵 | Kai killed the dead ⚟ button. Decide: domain/project filter chips on desktop too, or sort alone is enough for v1. |
 | Top-3 + Goal of the day | ✅ | |
@@ -52,7 +53,10 @@
 | Invalid-drop "soft no" shake + 30-min minimum clamp + top-edge resize | ❌ | Feedback trio, cheap, recommend v1. |
 | All-day ↔ timed drag conversion | ❌ | 🔵 Recommend v1 — the band exists, dragging into it silently does the wrong thing today. |
 | Edge auto-scroll while dragging | ❌ | Recommend v1 (long days are unreachable mid-drag). |
-| Quick-create popover (event/task/block flip, editable start time) | ✅ | Kai re-verify clipping today. Kill text-selection on the N-day cycler (`user-select:none`). |
+| Quick-create popover (event/task/block flip, editable start time) | ✅ | Kill text-selection on the N-day cycler (`user-select:none`). |
+| **View-options popover, Akiflow-style** — 1–6/W/M day buttons + density + weekends/declined/done toggles | ❌ | **[K-26]** un-cut: replaces the N-day cycler. Reference screenshot in the vault review note. |
+| Drag a scheduled block **back to the Unscheduled rail** | ❌ | **[K-26]** only right-click unschedule works today. |
+| Open **task details from a calendar block** (click / bulk action) | ❌ | **[K-26]** |
 | Event details popover | ✅ | Polish: anchor to block on desktop, sheet on mobile — v1.1 ok. |
 | Planning board | ✂ | Parked by Kai until his redesign. Route stays hidden. |
 | Unscheduled rail + capacity readout + quick-add | ✅ | Make rail quick-add a real inline input (type → Enter → unscheduled task). |
@@ -92,7 +96,7 @@
 | **Journal model** | 🔵 | Blocked on Kai. Recommendation to react to: **one dated daily page** (the diary spine) holding unlimited timestamped entries + mood + three-small-things; **titled standalone notes live in Library**, not Journal; **delete → Trash** like everything else. Then un-park the nav row. |
 | People: circles, nudges, birthdays, moments, detail log | ✅ | Wire the `later` nudge chip; vary call/text action. |
 | Birthday card on Today | ✅ | Kai-sanctioned keep. |
-| Library: shelves, books (fern progress), quotes, notes, append-only commentary | ✅ | Wire resurface chips; add delete confirm; drop the hardcoded "resurfaced twice". |
+| Library: shelves, books (fern progress), quotes, notes, append-only commentary | ✂ | **[K-26] RULED: parked to v2** — feature + nav row out of v1. Code stays. |
 | Activity ledger + filters | ✅ | Fix escapes bug; **make rows navigate to their source**; add Projects chip. |
 | Search page + ⌘/ overlay | 🟡 | Index only covers tasks+inbox. **v1: add people, events, projects, journal** (they're the things you actually lose); overlay scroll; chips either filter or go. |
 | Chat over your data (⌘J) | ✅ | Add Esc-close. |
@@ -103,12 +107,13 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| Auth + onboarding (once per account, editable later in Settings) | ✅ | Kai re-verify the gate; seed art for flowers 3 & 5 [KAI art]. |
+| Auth + onboarding (once per account, editable later in Settings) | 🟡 | **[K-26] Sign-UP page + logic don't exist** (only sign-in) — public blocker, now punch-list A5. Seed art for flowers 3 & 5 [KAI art]. |
+| One-time import (CSV/Akiflow) + **recurring-dedupe assistant** | 🟡 | CSV is the v1 win **[K-26]**; multi-source (Notion, GDocs…) → v2. |
 | Offline outbox + optimistic writes + reapply-over-fetch | ✅ | The invisible crown jewel. |
 | Sync topbar states + queue popover | 🟡 | Fix duplicate `◌`, date format, calm-copy the failure toast (no "error"). "Needs a look" conflict UI → **v1.1** ✂. |
 | Night theme | 🟡 | Tokens ✅. v1: fix the grain (vanishes at night), sweep the ~12 hard-coded light-only colors. Frost/silhouette polish → v1.1. |
 | Settings — **every row functional or hidden** | 🟡 | Working: theme, size, timezone, push, effects. Inert today: paper-texture slider, accent picker, sound toggles/previews, capture API, Connect buttons. 🔵 per row: make real or hide. Recommend: paper-texture = make real (one CSS var), accent = cut, sounds = see below, capture API = hide. |
-| **Sounds** | 🔵 | Catalog UI exists, zero audio runtime, chime.mp3 missing. Recommend: ship a *minimal* real layer (paper rustle on complete + round-end chime, preview buttons, quiet hours) **or cut the section entirely**. No fake toggles. |
+| **Sounds** | ✂ | **[K-26] RULED: "not designed yet" — cut from v1**, section hidden until designed. No fake toggles. |
 | Keyboard truth: `?` overlay lists **only** working keys | ❌ | Today it advertises ~12 dead keys. Either implement (g/t/i/u, calendar d/w/m/←→) or delete the rows. |
 | Go-to (G) | 🔵 | Recommend: fold into ⌘K (type a view name → jump) instead of a separate overlay; drop the G key. |
 | Undo system — **every destructive/completing action toasts with working Undo** | ❌ | The single biggest UX debt (1 of ~11 sites today). v1 core. |
@@ -134,7 +139,7 @@
 
 ## Explicitly OUT of v1 (parked/cut register)
 
-Garden Postcard export · Labels (picker/manager/L) · Board & Calendar view-options popovers · Seasonal-drift ambient layer · Time-of-day paper / idle life / parasol header · "Needs a look" conflict UI · Notifications feed · Planning board (Kai redesign) · Focus "Year in the Garden" (parked) · Weekly Letter (dropped) · GitHub/Google/email integrations + Capture API (v1.1) · Quick-Capture mockup gallery route (dev-only) · Effects 2g focus-dim (Kai parked) · Motion 1a (banned).
+Garden Postcard export · Labels (picker/manager/L) · Board view-options popover (**Calendar view-options is back IN — [K-26]**) · **Library (feature + nav) [K-26]** · **Sounds [K-26]** · Multi-source import [K-26] · Organize-sticky chooser + deep links [K-26] · Entry-stagger scroll-trigger tuning [K-26] · Seasonal-drift ambient layer · Time-of-day paper / idle life / parasol header · "Needs a look" conflict UI · Notifications feed · Planning board (Kai redesign) · Focus "Year in the Garden" (parked) · Weekly Letter (dropped) · GitHub/Google/email integrations + Capture API (v1.1) · Quick-Capture mockup gallery route (dev-only) · Effects 2g focus-dim (Kai parked) · Motion 1a (banned).
 
 ---
 
