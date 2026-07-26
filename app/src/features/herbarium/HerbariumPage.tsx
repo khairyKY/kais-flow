@@ -177,15 +177,15 @@ export function HerbariumPage() {
         <div className="kf-overlay-card" style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
-          <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>\u2715</span>
+          <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 18 : 30 }}>
             <div style={{ flex: 'none', width: isMobile ? '100%' : 230, height: isMobile ? 220 : 280, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', borderRight: isMobile ? 'none' : '1px solid var(--line-card)', paddingRight: isMobile ? 0 : 26 }}>
               <img src={imgSource} alt="" className="pressed" style={{ height: isMobile ? 200 : 265, transform: 'scaleY(0.94) rotate(-1.2deg)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} \u00b7 {p.engagement_model || 'Standard'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} · {p.engagement_model || 'Standard'}</div>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>
-              <div className="ledger" style={{ marginTop: 12 }}>Planted {formatFullDate(p.created_at)}<br />Bloomed {formatFullDate(p.updated_at)}<br />{specimenStats.hours} hours \u00b7 {specimenStats.doneMilestones}/{specimenStats.totalMilestones} milestones</div>
+              <div className="ledger" style={{ marginTop: 12 }}>Planted {formatFullDate(p.created_at)}<br />Bloomed {formatFullDate(p.updated_at)}<br />{specimenStats.hours} hours · {specimenStats.doneMilestones}/{specimenStats.totalMilestones} milestones</div>
               <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>
                 {isEditingLine ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -197,7 +197,7 @@ export function HerbariumPage() {
                   </div>
                 ) : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>"{p.completion_summary || 'No summary line written.'}"</div>}
               </div>
-              {!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer', alignSelf: 'flex-end' }}>Edit the line\u2026</span>}
+              {!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer', alignSelf: 'flex-end' }}>Edit the line…</span>}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>A life in numbers</div>
@@ -228,7 +228,7 @@ export function HerbariumPage() {
           ? { width: '100%', height: '100dvh', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press \u00b7 1 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ width: 210, height: 10, background: '#8b7a5e', borderRadius: 2, boxShadow: '0 2px 4px rgba(60,52,38,0.3)' }}></div>
               <div style={{ width: 190, height: 150, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
@@ -240,7 +240,7 @@ export function HerbariumPage() {
             <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
           {ceremonyBeat === 2 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press \u00b7 2 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 6px' }}>
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>
               <div style={{ marginTop: 18, borderTop: '1px dashed var(--line-dashed)' }}>
@@ -256,13 +256,13 @@ export function HerbariumPage() {
             <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
           {ceremonyBeat === 3 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press \u00b7 3 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: 110 }}>
                 <img src={imgSource} alt="" className="pressed" style={{ height: 100, transform: 'scaleY(0.94)' }} />
               </div>
               <div style={{ marginTop: 20, borderBottom: '1.5px dashed var(--line-dashed)', paddingBottom: 8, display: 'flex', alignItems: 'center' }}>
-                <input value={ceremonyLine} onChange={(e) => setCeremonyLine(e.target.value)} placeholder="One line for the field guide\u2026" style={{ flex: 1, fontStyle: 'italic', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-body)', border: 'none', background: 'transparent', outline: 'none' }} />
+                <input value={ceremonyLine} onChange={(e) => setCeremonyLine(e.target.value)} placeholder="One line for the field guide…" style={{ flex: 1, fontStyle: 'italic', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-body)', border: 'none', background: 'transparent', outline: 'none' }} />
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
@@ -288,7 +288,7 @@ export function HerbariumPage() {
         <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="var(--ink-faint)" strokeWidth={2.5} strokeLinecap="round"></path>
       </svg>
       <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project and it lives here forever.</div>
-      <Link to="/projects" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>Back to the living garden \u2192</Link>
+      <Link to="/projects" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>Back to the living garden →</Link>
     </div>
   )
 
@@ -297,7 +297,7 @@ export function HerbariumPage() {
       <style>{styles}</style>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 34px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-        <span>Kai's Flow \u00b7 Projects \u00b7 Herbarium</span><span>Africa/Cairo</span>
+        <span>Kai's Flow · Projects · Herbarium</span><span>Africa/Cairo</span>
       </div>
       <div style={{ flex: 1, padding: '32px 0 48px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 880, maxWidth: '100%', padding: '0 34px' }}>
@@ -307,12 +307,12 @@ export function HerbariumPage() {
                 {archivedProjects.length} specimens{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
               </div>
               <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The Herbarium</h1>
-              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever \u273f</div>
+              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>
             </div>
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, paddingBottom: 6 }}>
-              <Button variant="secondary" onClick={() => navigate('/projects')}>\u2190 Back to the garden</Button>
-              <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was \u2192</Link>
+              <Button variant="secondary" onClick={() => navigate('/projects')}>← Back to the garden</Button>
+              <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was →</Link>
             </div>
           </div>
           {isLoading ? <div style={{ padding: 60, textAlign: 'center', color: 'var(--ink-muted)' }}>Reading the field guide...</div>
@@ -337,7 +337,7 @@ export function HerbariumPage() {
                             <img src={imgSrc} alt="" className="pressed" style={{ height: variant.imgH, transform: 'scaleY(0.94) rotate(-1.2deg)' }} />
                           </div>
                           <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 22, color: 'var(--ink-body)' }}>{p.name}</div>
-                          <div className="ledger" style={{ marginTop: 8 }}>Planted {formatDayMonth(p.created_at)} \u00b7 Bloomed {formatDayMonth(p.updated_at)}<br />{hrs} hours \u00b7 {doneM}/{ms.length} milestones</div>
+                          <div className="ledger" style={{ marginTop: 8 }}>Planted {formatDayMonth(p.created_at)} · Bloomed {formatDayMonth(p.updated_at)}<br />{hrs} hours · {doneM}/{ms.length} milestones</div>
                           <div style={{ marginTop: 10, fontSize: 13, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: 1.55 }}>"{p.completion_summary || 'Pressed specimen.'}"</div>
                         </div>
                       )

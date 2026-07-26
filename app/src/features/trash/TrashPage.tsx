@@ -122,7 +122,7 @@ export function TrashPage() {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <div style={{ position: 'relative' }}>
-              <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>\u22ef</span>
+              <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>
               {openMenuId === item.id && (
                 <div style={{ position: 'absolute', right: 0, top: 22, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, boxShadow: 'var(--shadow-panel)', padding: '6px 0', zIndex: 30, display: 'flex', flexDirection: 'column', minWidth: 120 }}>
                   <span onClick={() => { handleRestore(item); setOpenMenuId(null) }} style={{ padding: '6px 14px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>Restore</span>
@@ -139,7 +139,7 @@ export function TrashPage() {
         </div>
         {isConfirming && (
           <div className="kf-overlay-card" style={{ margin: '8px 0 0 71px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-panel)', padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 440 }}>
-            <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good \u2014 compost now?</span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good — compost now?</span>
             <span style={{ flex: 1 }}></span>
             <span onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
             <button onClick={() => handleDeleteForever(item)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '6px 13px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Delete forever</button>
@@ -196,7 +196,7 @@ export function TrashPage() {
       <style>{styles}</style>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 34px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
-        <span>Kai's Flow \u00b7 Settings \u00b7 Trash</span><span>Africa/Cairo</span>
+        <span>Kai's Flow · Settings · Trash</span><span>Africa/Cairo</span>
       </div>
       <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 760, maxWidth: '100%', padding: '0 34px', display: 'flex', flexDirection: 'column' }}>
@@ -208,7 +208,7 @@ export function TrashPage() {
                 <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>
               </div>
             </div>
-            {hasItems && <span onClick={() => setShowGlobalConfirm(true)} style={{ fontSize: 12.5, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer', paddingBottom: 5 }}>Empty trash\u2026</span>}
+            {hasItems && <span onClick={() => setShowGlobalConfirm(true)} style={{ fontSize: 12.5, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer', paddingBottom: 5 }}>Empty trash…</span>}
           </div>
           {showGlobalConfirm && (
             <div className="kf-overlay-card" style={{ marginTop: 16, marginBottom: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-panel)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -225,7 +225,7 @@ export function TrashPage() {
               {renderAgeGroup('Today', ageGroupedItems.today)}
               {renderAgeGroup('This week', ageGroupedItems.thisWeek)}
               {renderAgeGroup('Older', ageGroupedItems.older)}
-              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px dashed var(--line-solid)', borderRadius: 6, background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 12.5, color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days \u2014 gone for good, feeding nothing in particular.</div>
+              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px dashed var(--line-solid)', borderRadius: 6, background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 12.5, color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days — gone for good, feeding nothing in particular.</div>
             </div>
           )}
         </div>

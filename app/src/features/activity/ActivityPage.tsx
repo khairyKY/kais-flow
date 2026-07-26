@@ -319,7 +319,7 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)' }}>Loading the ledger...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</div>
+            <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
@@ -334,7 +334,7 @@ export function ActivityPage() {
           )}
           {!isLoading && rawEntries.length >= limit && (
             <div style={{ margin: '8px 0 24px', padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', justifyContent: 'center' }}>
-              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier \u2193</span>
+              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
             </div>
           )}
         </div>
@@ -348,7 +348,7 @@ export function ActivityPage() {
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
         <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          <span>Kai's Flow \u00b7 Activity</span>
+          <span>Kai's Flow · Activity</span>
           <span>Africa/Cairo</span>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '34px 48px 40px', maxWidth: 880 }}>
@@ -358,7 +358,7 @@ export function ActivityPage() {
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
               </span>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity \u00b7 the ledger</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity · the ledger</div>
                 <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>
               </div>
             </div>
@@ -383,7 +383,7 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--ink-muted)' }}>Loading activity log...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: '60px 0', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</div>
+            <div style={{ padding: '60px 0', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
@@ -399,12 +399,12 @@ export function ActivityPage() {
           {!isLoading && groupedEntries.length > 0 && (
             <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>
               {rawEntries.length >= limit ? (
-                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier \u2193</span>
+                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
               ) : (
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
               )}
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do \u2014 just a trail behind you \u273f</span>
+              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do — just a trail behind you ✿</span>
             </div>
           )}
         </div>
