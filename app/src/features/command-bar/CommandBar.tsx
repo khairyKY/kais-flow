@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { createTask } from '../tasks/api'
@@ -20,12 +21,43 @@ const CHIP_BASE: React.CSSProperties = {
 
 const PRIORITY_NAME: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
 
+// F3b (D-5 ruling, punch 59): Go-to lives inside ⌘K — type a view name, a jump row
+// appears; ↓ selects it, ↵ navigates. Plain ↵ still quick-adds. Parked surfaces
+// (Journal, Library) and dev routes are deliberately absent until they return.
+const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
+  { name: 'today', label: 'Today', to: '/today' },
+  { name: 'inbox', label: 'Inbox', to: '/inbox' },
+  { name: 'tasks', label: 'Tasks', to: '/tasks' },
+  { name: 'calendar', label: 'Calendar', to: '/calendar' },
+  { name: 'projects', label: 'Projects', to: '/projects' },
+  { name: 'routines', label: 'Routines', to: '/routines' },
+  { name: 'review', label: 'Review', to: '/weekly-review' },
+  { name: 'focus', label: 'Focus', to: '/focus' },
+  { name: 'people', label: 'People', to: '/people' },
+  { name: 'activity', label: 'Activity', to: '/activity' },
+  { name: 'settings', label: 'Settings', to: '/settings' },
+  { name: 'search', label: 'Search', to: '/search' },
+  { name: 'herbarium', label: 'Herbarium', to: '/herbarium' },
+  { name: 'perennials', label: 'Perennials', to: '/perennials' },
+  { name: 'trash', label: 'Trash', to: '/trash' },
+]
+
+/** Unique-prefix match, ≥2 chars — "in" → Inbox, but "t" (today/tasks/trash) offers nothing. */
+function matchJumpView(input: string): (typeof JUMP_VIEWS)[number] | null {
+  const q = input.trim().toLowerCase()
+  if (q.length < 2) return null
+  const hits = JUMP_VIEWS.filter((v) => v.name.startsWith(q))
+  return hits.length === 1 ? hits[0] : null
+}
+
 export function CommandBar() {
   const open = useCommandBarStore((s) => s.open)
   const setOpen = useCommandBarStore((s) => s.setOpen)
   const toggle = useCommandBarStore((s) => s.toggle)
   const [text, setText] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
+  const [jumpSelected, setJumpSelected] = useState(false)
+  const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
@@ -55,10 +87,19 @@ export function CommandBar() {
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
-    else setText('')
+    else {
+      setText('')
+      setJumpSelected(false)
+    }
   }, [open])
 
   const parsed = useMemo(() => parseCommand(text, domains, projects), [text, domains, projects])
+  const jumpView = useMemo(() => matchJumpView(text), [text])
+
+  function jumpTo(view: NonNullable<ReturnType<typeof matchJumpView>>) {
+    setOpen(false)
+    navigate(view.to)
+  }
 
   function submit() {
     const trimmed = text.trim()
@@ -131,9 +172,21 @@ export function CommandBar() {
           <input
             ref={inputRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value)
+              setJumpSelected(false)
+            }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              if (e.key === 'ArrowDown' && jumpView) {
+                e.preventDefault()
+                setJumpSelected(true)
+              } else if (e.key === 'ArrowUp' && jumpSelected) {
+                e.preventDefault()
+                setJumpSelected(false)
+              } else if (e.key === 'Enter' && jumpSelected && jumpView) {
+                e.preventDefault()
+                jumpTo(jumpView)
+              } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault()
                 submitWithAI()
               } else if (e.key === 'Enter') {
@@ -152,6 +205,30 @@ export function CommandBar() {
             }}
           />
         </div>
+        {jumpView && (
+          <div
+            onClick={() => jumpTo(jumpView)}
+            onMouseEnter={() => setJumpSelected(true)}
+            onMouseLeave={() => setJumpSelected(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginTop: 10,
+              padding: '8px 10px',
+              borderRadius: 6,
+              cursor: 'pointer',
+              background: jumpSelected ? 'rgba(168,160,190,0.22)' : 'transparent',
+              border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
+            }}
+          >
+            <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)' }}>Jump</span>
+            <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
+            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+              {jumpSelected ? '↵' : '↓ then ↵'}
+            </span>
+          </div>
+        )}
         {text.trim() && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
             {parsed.dueAt && (

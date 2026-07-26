@@ -46,4 +46,5 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['⌘/Ctrl', '↵'], label: 'AI capture' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
+  { keys: ['↓', '↵'], label: 'Jump to typed view' },
 ]
