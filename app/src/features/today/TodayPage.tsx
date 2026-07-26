@@ -30,6 +30,7 @@ import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
@@ -174,6 +175,8 @@ export function TodayPage() {
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+  // Punch 14: in-app ConfirmCard replaces the native confirm popup (bulk delete + keyboard delete)
+  const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   const bulkToast = (verb: string) =>
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
@@ -183,10 +186,16 @@ export function TodayPage() {
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
   function bulkSomeday() { selectedTasks.forEach((t) => setSomeday(t, true)); bulkToast('parked for someday'); clearSelection() }
   function bulkDelete() {
-    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
-    selectedTasks.forEach(deleteTask)
-    bulkToast('deleted')
-    clearSelection()
+    setConfirm({
+      title: `Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`,
+      body: '',
+      onConfirm: () => {
+        setConfirm(null)
+        selectedTasks.forEach(deleteTask)
+        bulkToast('deleted')
+        clearSelection()
+      },
+    })
   }
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
@@ -202,11 +211,11 @@ export function TodayPage() {
     top3: (t) => toggleTop3(t),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => {
-      if (window.confirm(`Delete "${t.title}"?`)) deleteTask(t)
+      setConfirm({ title: `Delete "${t.title}"?`, body: '', onConfirm: () => { setConfirm(null); deleteTask(t) } })
     },
   })
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos,
+    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos && !confirm,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
@@ -506,6 +515,7 @@ export function TodayPage() {
       {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
       {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
 
       {morningOpen && <MorningRitual onClose={() => setMorningOpen(false)} />}
       {eveningOpen && <EveningRitual onClose={() => setEveningOpen(false)} />}

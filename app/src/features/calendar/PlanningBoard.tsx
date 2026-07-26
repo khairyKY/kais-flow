@@ -6,6 +6,7 @@ import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '..
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
 import { useProjects } from '../projects/api'
@@ -228,6 +229,8 @@ export function PlanningBoard() {
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+  // Punch 14: in-app ConfirmCard replaces the native confirm popup
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function bulkComplete() {
     selectedTasks.forEach(completeTask)
@@ -255,10 +258,7 @@ export function PlanningBoard() {
     clearSelection()
   }
   function bulkDelete() {
-    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
-    selectedTasks.forEach(deleteTask)
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
-    clearSelection()
+    setConfirmDelete(true)
   }
 
   const bulkActions: BulkActions | undefined =
@@ -356,6 +356,20 @@ export function PlanningBoard() {
           currentProjectId={null}
           onSelect={bulkMove}
           onClose={() => setBulkProjectPos(null)}
+        />
+      )}
+      {confirmDelete && (
+        <ConfirmCard
+          title={`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`}
+          body=""
+          confirmLabel="Delete"
+          onConfirm={() => {
+            setConfirmDelete(false)
+            selectedTasks.forEach(deleteTask)
+            useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
+            clearSelection()
+          }}
+          onCancel={() => setConfirmDelete(false)}
         />
       )}
     </div>

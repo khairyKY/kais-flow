@@ -18,6 +18,7 @@ import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { Select } from '../../components/Select'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { InboxBulkBar } from './InboxBulkBar'
@@ -719,6 +720,8 @@ function GithubRow({ item, compact, selected, selectionActive, onToggleSelect, o
 
 // ── 2a / 2b — Dismissed tab ──
 function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: InboxItem[]; compact?: boolean; selected: Set<string>; onToggleSelect: (id: string) => void }) {
+  // Punch 14: in-app ConfirmCard replaces the native confirm popup
+  const [confirmClear, setConfirmClear] = useState(false)
   const today = items.filter((i) => isToday(i.updated_at))
   const earlier = items.filter((i) => !isToday(i.updated_at))
 
@@ -727,9 +730,7 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
   }
   function clearNow() {
     if (items.length === 0) return
-    if (window.confirm(`Permanently delete ${items.length} dismissed item${items.length === 1 ? '' : 's'}? This can't be undone.`)) {
-      items.forEach(purgeInboxItem)
-    }
+    setConfirmClear(true)
   }
 
   if (items.length === 0) {
@@ -766,6 +767,15 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
         <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
           a capture is never truly lost — it just goes quiet ✿
         </div>
+      )}
+      {confirmClear && (
+        <ConfirmCard
+          title={`Permanently delete ${items.length} dismissed item${items.length === 1 ? '' : 's'}?`}
+          body="This can't be undone."
+          confirmLabel="Delete"
+          onConfirm={() => { setConfirmClear(false); items.forEach(purgeInboxItem) }}
+          onCancel={() => setConfirmClear(false)}
+        />
       )}
     </div>
   )

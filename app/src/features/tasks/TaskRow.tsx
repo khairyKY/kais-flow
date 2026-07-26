@@ -27,6 +27,7 @@ import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import { Checkbox } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
 import {
@@ -181,6 +182,8 @@ export function TaskRow({
   const navigate = useNavigate()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const [popover, setPopover] = useState<{ kind: 'snooze' | 'schedule' | 'project'; x: number; y: number } | null>(null)
+  // Punch 14: in-app ConfirmCard replaces the native confirm popup on every delete path
+  const [confirmDelete, setConfirmDelete] = useState<{ title: string; body: string } | null>(null)
   const [checking, setChecking] = useState(false)
   const motionOn = useMotionEnabled()
   const swipe = useRowSwipe()
@@ -219,7 +222,7 @@ export function TaskRow({
   const menuItems: ContextMenuItem[] = done
     ? [
         { label: 'Reopen', icon: <UndoMenuIcon />, onClick: () => uncompleteTask(task) },
-        { label: 'Delete', danger: true, icon: <TrashMenuIcon />, onClick: () => { if (window.confirm(`Delete "${task.title}"?`)) deleteTask(task) } },
+        { label: 'Delete', danger: true, icon: <TrashMenuIcon />, onClick: () => setConfirmDelete({ title: `Delete "${task.title}"?`, body: '' }) },
       ]
     : [
         {
@@ -362,13 +365,24 @@ export function TaskRow({
           shortcut: shortcutHint('delete'),
           onClick: () => {
             if (bulkActive) { bulk!.onDelete(); return }
-            const message = task.scheduled_start
-              ? `Delete "${task.title}"? This also removes its scheduled calendar block.`
-              : `Delete "${task.title}"?`
-            if (window.confirm(message)) deleteTask(task)
+            setConfirmDelete({
+              title: `Delete "${task.title}"?`,
+              body: task.scheduled_start ? 'This also removes its scheduled calendar block.' : '',
+            })
           },
         },
       ]
+
+  // One card serves all three delete entry points (menu, done-menu, swipe) — rendered in every branch.
+  const confirmCard = confirmDelete && (
+    <ConfirmCard
+      title={confirmDelete.title}
+      body={confirmDelete.body}
+      confirmLabel="Delete"
+      onConfirm={() => { setConfirmDelete(null); deleteTask(task) }}
+      onCancel={() => setConfirmDelete(null)}
+    />
+  )
 
   const rowStyle: React.CSSProperties = {
     position: 'relative',
@@ -419,6 +433,7 @@ export function TaskRow({
         )}
         {justCompleted && <span className="tr-petal" style={{ left: 24, top: 4, transform: 'rotate(35deg)' }} />}
         {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+        {confirmCard}
       </div>
     )
   }
@@ -458,6 +473,7 @@ export function TaskRow({
           Schedule ▾
         </span>
         {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+        {confirmCard}
         {popover?.kind === 'schedule' && (
           <ScheduleMenu position={popover} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null) }} />
         )}
@@ -489,7 +505,7 @@ export function TaskRow({
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Snooze</span>
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{ width: 88, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--acc-terra)', pointerEvents: swipe.x < 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={() => { const message = task.scheduled_start ? `Delete "${task.title}"? This also removes its scheduled calendar block.` : `Delete "${task.title}"?`; if (window.confirm(message)) deleteTask(task) }}>
+          <div style={{ width: 88, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--acc-terra)', pointerEvents: swipe.x < 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={() => setConfirmDelete({ title: `Delete "${task.title}"?`, body: task.scheduled_start ? 'This also removes its scheduled calendar block.' : '' })}>
             <TrashMenuIcon />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Delete</span>
           </div>
@@ -563,6 +579,7 @@ export function TaskRow({
       </div>
 
       {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
+      {confirmCard}
       {popover?.kind === 'snooze' && (
         <SnoozeMenu position={popover} onClose={() => setPopover(null)} onSnooze={(until) => { snoozeTask(task, until); setPopover(null); swipe.reset() }} onSomeday={() => { setSomeday(task, true); setPopover(null); swipe.reset() }} />
       )}

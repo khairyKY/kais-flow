@@ -6,6 +6,7 @@ import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
@@ -432,6 +433,8 @@ export function TasksPage() {
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+  // Punch 14: in-app ConfirmCard replaces the native confirm popup (bulk delete + keyboard delete)
+  const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   function bulkComplete() {
     selectedTasks.forEach((t) => handleRowComplete(t))
@@ -459,10 +462,16 @@ export function TasksPage() {
     clearSelection()
   }
   function bulkDelete() {
-    if (!window.confirm(`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`)) return
-    selectedTasks.forEach(deleteTask)
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
-    clearSelection()
+    setConfirm({
+      title: `Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`,
+      body: '',
+      onConfirm: () => {
+        setConfirm(null)
+        selectedTasks.forEach(deleteTask)
+        useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
+        clearSelection()
+      },
+    })
   }
 
   const bulkActions: BulkActions | undefined =
@@ -481,14 +490,17 @@ export function TasksPage() {
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => {
-      const message = t.scheduled_start ? `Delete "${t.title}"? This also removes its scheduled calendar block.` : `Delete "${t.title}"?`
-      if (window.confirm(message)) deleteTask(t)
+      setConfirm({
+        title: `Delete "${t.title}"?`,
+        body: t.scheduled_start ? 'This also removes its scheduled calendar block.' : '',
+        onConfirm: () => { setConfirm(null); deleteTask(t) },
+      })
     },
   })
   useDeepLinkScroll(focusId, flatTasks)
 
   const { focusedId: kbFocusedId } = useListKeys(flatTasks, bindings, {
-    active: !kbSnoozeId && !kbProjectId && activeTab !== 'done',
+    active: !kbSnoozeId && !kbProjectId && !confirm && activeTab !== 'done',
     sectionLabel: activeTab === 'done' ? undefined : 'Lists',
     onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
   })
@@ -714,6 +726,7 @@ export function TasksPage() {
       {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
       {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
     </div>
   )
 }
