@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateCompletionRate, completionRate, computeStreak, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
+import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
@@ -56,12 +56,32 @@ describe('computeStreak', () => {
     expect(current).toBe(3)
   })
 
-  it('breaks the current streak at a gap but still finds the prior run as best', () => {
+  it('forgives one missed day per calendar month (Gentle Rain) — the run holds across it', () => {
     const today = new Date(2026, 6, 10, 9, 0, 0)
     const dates = [0, 1, 3, 4, 5].map((n) => localDateKey(addDays(today, -n))) // gap at -2
     const { current, best } = computeStreak(dates, DAILY, today)
-    expect(current).toBe(2) // today + yesterday
-    expect(best).toBe(3) // the -3,-4,-5 run
+    expect(current).toBe(5) // the miss rained; 5 completed days count
+    expect(best).toBe(5)
+  })
+
+  it('breaks on the second miss in the same calendar month', () => {
+    const today = new Date(2026, 6, 10, 9, 0, 0)
+    const dates = [0, 1, 4, 5].map((n) => localDateKey(addDays(today, -n))) // misses at -2 and -3
+    const { current } = computeStreak(dates, DAILY, today)
+    expect(current).toBe(2) // today + yesterday; -2 rained, -3 snapped it
+  })
+
+  it('computeStreak.current and computeGraceStreak.current are the same number (one algorithm)', () => {
+    const today = new Date(2026, 6, 10, 9, 0, 0)
+    const dates = [0, 1, 3, 4, 5, 6, 8].map((n) => localDateKey(addDays(today, -n)))
+    expect(computeStreak(dates, DAILY, today).current).toBe(computeGraceStreak(dates, DAILY, today).current)
+  })
+
+  it('best is never smaller than current', () => {
+    const today = new Date(2026, 6, 10, 9, 0, 0)
+    const dates = [0, 1, 3, 4, 5].map((n) => localDateKey(addDays(today, -n)))
+    const { current, best } = computeStreak(dates, DAILY, today)
+    expect(best).toBeGreaterThanOrEqual(current)
   })
 
   it('skips non-scheduled days without breaking the streak (arbitrary off-days)', () => {
@@ -168,6 +188,19 @@ describe('dailyCompletionRatios', () => {
     const r2 = routine({ id: 'r2', cadence: DAILY })
     const completions = completionsFor('r1', [dayKey(0)])
     expect(dailyCompletionRatios([r1, r2], completions, 1, NOW)).toEqual([0.5])
+  })
+})
+
+describe('computeTrellisDays', () => {
+  it("draws today's leaf the moment today is completed", () => {
+    const days = computeTrellisDays([dayKey(0)], DAILY, 3, NOW)
+    expect(days[2].state).toBe('grew')
+  })
+
+  it("today scheduled but not yet done stays 'off' — never a miss while the day is open", () => {
+    const days = computeTrellisDays([dayKey(-1)], DAILY, 3, NOW)
+    expect(days[2].state).toBe('off')
+    expect(days[1].state).toBe('grew')
   })
 })
 

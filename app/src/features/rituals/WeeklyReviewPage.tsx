@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
+import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { computeStreak, completionRate, computeTrellisDays } from '../routines/streaks'
+import { computeStreak, completionRate, computeTrellisDays, localDateKey } from '../routines/streaks'
 import { useSlipping, markReviewed } from '../slipping/api'
+import { useReviewEventsThisWeek } from './api'
 import { logActivity } from '../../lib/activity'
 import { useMotionEnabled } from '../../lib/motion'
 import { FieldLabel, useIsMobile } from './RitualChrome'
-import type { CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
+import type { Area, CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // ── Weekly Review — pixel contract Review.dc.html 1a (desktop sweep + right rail), 1b
 // (iPhone), 3c (the season so far, redone — turn 3's own header says "'the season so far'
@@ -51,21 +54,63 @@ function doneCount(tasks: Task[], start: Date, end: Date): number {
   return tasks.filter((t) => t.completed_at && new Date(t.completed_at) >= start && new Date(t.completed_at) < end).length
 }
 
+/** The four sweep verdicts — Review.dc.html 1a's chips, verbatim labels + styles. "park it"
+ * records a verdict, nothing destructive (punch item 45's explicit ruling — no archive). */
+export type SweepVerdict = 'still moving' | 'park it' | 'needs a look' | 'reviewed ✓'
+const VERDICTS: SweepVerdict[] = ['still moving', 'park it', 'needs a look', 'reviewed ✓']
+const VERDICT_STYLE: Record<SweepVerdict, CSSProperties> = {
+  'still moving': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
+  'park it': { border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' },
+  'needs a look': { background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' },
+  'reviewed ✓': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
+}
+
 export function WeeklyReviewPage() {
   const isMobile = useIsMobile()
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
+  const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: slipping = [] } = useSlipping()
-  const [swept, setSwept] = useState<Set<string>>(new Set())
   const [showSeason, setShowSeason] = useState(false)
 
   const weekStart = startOfWeek(new Date())
   const weekEnd = addDays(weekStart, 7)
   const lastWeekStart = addDays(weekStart, -7)
+  const weekKey = localDateKey(weekStart)
+
+  // Punch item 45: sweep state persists — read this week's events back from the activity
+  // spine, and layer the session's own sweeps/verdicts on top (outbox writes land async).
+  const { data: reviewEvents = [] } = useReviewEventsThisWeek(weekStart.toISOString())
+  const [localSweptAt, setLocalSweptAt] = useState<Map<string, string>>(new Map())
+  const [localVerdicts, setLocalVerdicts] = useState<Map<string, SweepVerdict>>(new Map())
+
+  const sweptAt = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const e of reviewEvents) {
+      if (e.event_type !== 'domain.swept') continue
+      const w = (e.payload as { week?: string } | null)?.week
+      if (w && w !== weekKey) continue
+      m.set(e.entity_id, e.created_at)
+    }
+    for (const [id, t] of localSweptAt) m.set(id, t)
+    return m
+  }, [reviewEvents, localSweptAt, weekKey])
+
+  const verdicts = useMemo(() => {
+    const m = new Map<string, SweepVerdict>()
+    for (const e of reviewEvents) {
+      if (e.event_type !== 'review.verdict') continue
+      const p = e.payload as { week?: string; verdict?: string } | null
+      if (p?.week && p.week !== weekKey) continue
+      if (p?.verdict && (VERDICTS as string[]).includes(p.verdict)) m.set(e.entity_id, p.verdict as SweepVerdict)
+    }
+    for (const [id, v] of localVerdicts) m.set(id, v)
+    return m
+  }, [reviewEvents, localVerdicts, weekKey])
 
   const activeRoutines = routines.filter((r) => r.active)
 
@@ -73,32 +118,45 @@ export function WeeklyReviewPage() {
   const hoursThisWeek = eventHours(events, new Map(tasks.map((t) => [t.id, t])), weekStart, weekEnd)
 
   function markDomainSwept(d: Domain) {
-    setSwept((s) => new Set(s).add(d.id))
-    logActivity('domain.swept', 'domain', d.id, {})
+    setLocalSweptAt((s) => new Map(s).set(d.id, new Date().toISOString()))
+    logActivity('domain.swept', 'domain', d.id, { week: weekKey })
   }
 
-  function projectsOpenTasks(domainId: string): Task[] {
-    return tasks.filter((t) => t.domain_id === domainId && t.status === 'todo')
+  function giveVerdict(entityType: 'project' | 'area', id: string, verdict: SweepVerdict) {
+    setLocalVerdicts((s) => new Map(s).set(id, verdict))
+    logActivity('review.verdict', entityType, id, { verdict, week: weekKey })
   }
 
-  const allSwept = domains.length > 0 && domains.every((d) => swept.has(d.id))
+  const openTasks = tasks.filter((t) => t.status === 'todo')
+  const looseCount = openTasks.filter((t) => !t.project_id && !t.domain_id && !t.someday).length
+
+  const allSwept = domains.length > 0 && domains.every((d) => sweptAt.has(d.id))
+  const currentDomainId = domains.find((d) => !sweptAt.has(d.id))?.id ?? null
 
   return (
     <div style={{ maxWidth: isMobile ? undefined : 1000 }}>
       <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
         <div style={{ minWidth: 0 }}>
-          <SweepHeader domainsSwept={swept.size} domainsTotal={domains.length} isMobile={isMobile} />
+          <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} isMobile={isMobile} />
 
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
             {domains.length === 0 && <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No domains yet.</p>}
-            {domains.map((d) => {
-              const open = projectsOpenTasks(d.id)
-              const domainProjects = projects.filter((p) => p.domain_id === d.id)
-              const isSwept = swept.has(d.id)
-              return (
-                <DomainCard key={d.id} domain={d} projectCount={domainProjects.length} openCount={open.length} swept={isSwept} onSweep={() => markDomainSwept(d)} isMobile={isMobile} />
-              )
-            })}
+            {domains.map((d) => (
+              <DomainCard
+                key={d.id}
+                domain={d}
+                projects={projects.filter((p) => p.domain_id === d.id && p.status === 'active')}
+                areas={areas.filter((a) => a.domain_id === d.id)}
+                tasks={tasks}
+                state={sweptAt.has(d.id) ? 'swept' : d.id === currentDomainId ? 'current' : 'waiting'}
+                sweptTime={sweptAt.get(d.id)}
+                verdicts={verdicts}
+                onVerdict={giveVerdict}
+                onSweep={() => markDomainSwept(d)}
+                looseCount={looseCount}
+                isMobile={isMobile}
+              />
+            ))}
           </div>
 
           {!isMobile && (
@@ -119,7 +177,7 @@ export function WeeklyReviewPage() {
                   cursor: allSwept ? 'pointer' : 'default',
                 }}
               >
-                {allSwept ? 'Close the week ✓' : `Close the week · ${swept.size}/${domains.length}`}
+                {allSwept ? 'Close the week ✓' : `Close the week · ${sweptAt.size}/${domains.length}`}
               </button>
             </div>
           )}
@@ -169,8 +227,10 @@ export function WeeklyReviewPage() {
 // The Weekly Letter (Review 2a/2b/t4) is DROPPED per Kai's 2026-07-19 ruling — no stub,
 // no digest pipeline; the page opens straight into the sweep.
 
-// Effects 2f "weekly flourish": the week's line draws itself left to right, one-shot on
-// open, with a dot popping in per notable day (staggered 900ms) — Effects.dc.html #2f.
+// Effects 2f "weekly flourish": the week's line draws itself left to right, one-shot,
+// with a dot popping in per notable day (staggered 900ms) — Effects.dc.html #2f. Punch
+// item 45: it fires on COMPLETION (the moment every domain is swept), not on mount —
+// the svg only enters the tree once allSwept flips true, which starts the animations.
 const WEEK_DOTS: [number, number, string][] = [
   [6, 74, 'var(--acc-blossom)'],
   [76, 44, 'var(--acc-gold-warm)'],
@@ -179,7 +239,7 @@ const WEEK_DOTS: [number, number, string][] = [
   [254, 16, 'var(--acc-moss)'],
 ]
 
-function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: number; domainsTotal: number; isMobile: boolean }) {
+function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domainsSwept: number; domainsTotal: number; allSwept: boolean; isMobile: boolean }) {
   const motion = useMotionEnabled()
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
@@ -198,7 +258,7 @@ function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: n
           <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The sweep</h1>
         </div>
       </div>
-      {!isMobile && motion && (
+      {!isMobile && motion && allSwept && (
         <svg viewBox="0 0 260 96" style={{ width: 130, height: 48, overflow: 'visible' }}>
           <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="var(--acc-moss)" strokeWidth="1.5" strokeDasharray="220" style={{ animation: 'weekLine 2.2s ease-in-out' }} />
           {WEEK_DOTS.map(([cx, cy, fill], i) => (
@@ -213,40 +273,186 @@ function SweepHeader({ domainsSwept, domainsTotal, isMobile }: { domainsSwept: n
   )
 }
 
+// `.fhelp` — Review.dc.html's small mono helper text
+function FHelp({ children }: { children: ReactNode }) {
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{children}</span>
+}
+
+/** "touched Tue" for fresh rows, "quiet N days" past a week — from the newest updated_at
+ * among the row's tasks (falling back to the project/area's own stamp). */
+function touchedLabel(rowTasks: Task[], fallbackIso: string): string {
+  const last = [fallbackIso, ...rowTasks.map((t) => t.updated_at)].sort().at(-1)!
+  const days = Math.max(0, Math.floor((Date.now() - new Date(last).getTime()) / 86_400_000))
+  if (days < 7) return `touched ${new Date(last).toLocaleDateString('en-US', { weekday: 'short' })}`
+  return `quiet ${days} days`
+}
+
+function countsLine(projectCount: number, areaCount: number, openCount: number): string {
+  const parts: string[] = []
+  if (projectCount > 0) parts.push(`${projectCount} project${projectCount === 1 ? '' : 's'}`)
+  if (areaCount > 0) parts.push(`${areaCount} area${areaCount === 1 ? '' : 's'}`)
+  parts.push(`${openCount} open task${openCount === 1 ? '' : 's'}`)
+  return parts.join(' · ')
+}
+
+const CHIP_BASE: CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 9.5,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  padding: '4px 9px',
+  borderRadius: 999,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+}
+
+/** One row of the expanded (current) domain card — Review.dc.html 1a lines ~695-711:
+ * dot · name · "N open · touched Tue" · verdict chips. A chosen verdict stays highlighted;
+ * the other chips dim but remain clickable so a verdict can be revised. */
+function SweepRow({
+  dot,
+  name,
+  open,
+  touched,
+  verdict,
+  onVerdict,
+  last,
+}: {
+  dot: string
+  name: string
+  open: number
+  touched: string
+  verdict: SweepVerdict | undefined
+  onVerdict: (v: SweepVerdict) => void
+  last?: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px', borderBottom: last ? 'none' : '1px dashed var(--line-dashed)', flexWrap: 'wrap' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none' }} />
+      <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={name} /></span>
+      <FHelp>{open} open · {touched}</FHelp>
+      <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+        {VERDICTS.map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onVerdict(v)}
+            style={{ ...CHIP_BASE, ...VERDICT_STYLE[v], opacity: verdict && verdict !== v ? 0.45 : 1 }}
+          >
+            {v}
+          </button>
+        ))}
+      </span>
+    </div>
+  )
+}
+
 function DomainCard({
   domain,
-  projectCount,
-  openCount,
-  swept,
+  projects,
+  areas,
+  tasks,
+  state,
+  sweptTime,
+  verdicts,
+  onVerdict,
   onSweep,
+  looseCount,
   isMobile,
 }: {
   domain: Domain
-  projectCount: number
-  openCount: number
-  swept: boolean
+  projects: Project[]
+  areas: Area[]
+  tasks: Task[]
+  state: 'swept' | 'current' | 'waiting'
+  sweptTime: string | undefined
+  verdicts: Map<string, SweepVerdict>
+  onVerdict: (entityType: 'project' | 'area', id: string, verdict: SweepVerdict) => void
   onSweep: () => void
+  looseCount: number
   isMobile: boolean
 }) {
-  if (swept) {
+  const projectIds = new Set(projects.map((p) => p.id))
+  const open = tasks.filter((t) => t.status === 'todo' && (t.domain_id === domain.id || (t.project_id && projectIds.has(t.project_id))))
+  const counts = countsLine(projects.length, areas.length, open.length)
+
+  if (state === 'swept') {
+    const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
     return (
       <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '14px 17px', opacity: 0.85, display: 'flex', alignItems: 'center', gap: 11 }}>
         <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
           <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
         </span>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>swept</span>
+        <FHelp>{counts}</FHelp>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
+          swept{time ? ` ${time}` : ''}
+        </span>
       </div>
     )
   }
+
+  if (state === 'waiting') {
+    return (
+      <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11 }}>
+        <span style={{ width: 17, height: 17, border: '1.5px solid #bfb8a3', borderRadius: 5, flex: 'none' }} />
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
+        <FHelp>{counts}</FHelp>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>up next</span>
+      </div>
+    )
+  }
+
+  // current — the expanded sweep card, Review.dc.html 1a "domain 2 — current, expanded"
   return (
-    <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? 14 : '16px 18px' }}>
+    <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? 14 : '16px 18px', transform: 'rotate(-0.2deg)' }}>
+      <span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'rgba(212,199,138,0.5)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <span style={{ width: 17, height: 17, border: '1.5px solid #bfb8a3', borderRadius: 5, flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 17 : 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
-          {projectCount} project{projectCount === 1 ? '' : 's'} · {openCount} open
-        </span>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
+        <FHelp>{counts}</FHelp>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
+      </div>
+      <div style={{ marginTop: 12, borderTop: '1px dashed var(--line-dashed)', paddingTop: 4 }}>
+        {projects.map((p, i) => (
+          <SweepRow
+            key={p.id}
+            dot={p.color || 'var(--acc-moss)'}
+            name={p.name}
+            open={tasks.filter((t) => t.project_id === p.id && t.status === 'todo').length}
+            touched={touchedLabel(tasks.filter((t) => t.project_id === p.id), p.updated_at)}
+            verdict={verdicts.get(p.id)}
+            onVerdict={(v) => onVerdict('project', p.id, v)}
+            last={areas.length === 0 && looseCount === 0 && i === projects.length - 1}
+          />
+        ))}
+        {areas.map((a, i) => (
+          <SweepRow
+            key={a.id}
+            dot={a.color || 'var(--acc-lavender)'}
+            name={`Area · ${a.name}`}
+            open={tasks.filter((t) => t.area_id === a.id && t.status === 'todo').length}
+            touched={touchedLabel(tasks.filter((t) => t.area_id === a.id), a.updated_at)}
+            verdict={verdicts.get(a.id)}
+            onVerdict={(v) => onVerdict('area', a.id, v)}
+            last={looseCount === 0 && i === areas.length - 1}
+          />
+        ))}
+        {projects.length === 0 && areas.length === 0 && looseCount === 0 && (
+          <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0, padding: '8px 2px' }}>Nothing here to sweep.</p>
+        )}
+        {looseCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
+            <span style={{ marginLeft: 'auto' }}>
+              <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
+            </span>
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
         <button type="button" onClick={onSweep} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>
