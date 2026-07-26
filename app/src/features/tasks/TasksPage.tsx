@@ -28,9 +28,9 @@ import type { Area, Domain, Project, Task } from '../../lib/types'
 
 // ── Tasks — pixel contract: Tasks.dc.html 1a (desktop list + rail), 1b (iPhone + filter
 // chips), 2a (Done — fallen petals), 2b (Someday — the quiet shelf), 2c (iPhone Done).
-// The tab row (Today/Upcoming/Someday/Done) is the page's own scoping; the sidebar's Plan
-// drawer additionally deep-links `?list=week|month`, which render the same list body with
-// no tab highlighted. ──
+// The tab row (Today/Overdue/Upcoming/Someday/Done/All) is the page's own scoping; the
+// sidebar's Plan drawer additionally deep-links `?list=week|month`, which render the same
+// list body with no tab highlighted. ──
 
 const A = '/ds/assets'
 
@@ -84,18 +84,22 @@ function parseList(raw: string | null): SmartList | null {
   return SMART_LISTS.includes(raw as SmartList) ? (raw as SmartList) : null
 }
 
-type Tab = 'today' | 'overdue' | 'upcoming' | 'someday' | 'done'
+type Tab = 'today' | 'overdue' | 'upcoming' | 'someday' | 'done' | 'all'
 
+// Punch 27: `/tasks?list=all` is the stable deep-link contract for "every open task" —
+// Today's "View all →" (WA-4), Inbox filing feedback, and search deep links all target it
+// (optionally with `&focus=<taskId>` to scroll + highlight the row).
 function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
   if (rawList === 'done') return 'done'
   if (list === 'overdue') return 'overdue'
   if (rawList === null || list === 'today') return 'today'
   if (list === 'upcoming') return 'upcoming'
   if (list === 'someday') return 'someday'
+  if (list === 'all') return 'all'
   return null
 }
 
-function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
+function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
   const tab = (key: Tab, label: string, count: number, underline: string) => (
     <Link
       key={key}
@@ -122,6 +126,9 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
       {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
       {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
+      {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
+          task lives, undated project filings included. */}
+      {tab('all', 'All', allCount, 'var(--acc-moss)')}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11 }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
@@ -201,12 +208,17 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
   return (
     // deviation(2026-07-18 audit): rail pinned (sticky + own scroll) while the list scrolls —
     // neither the code nor the export pinned it; Kai wants it pinned.
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: '100vh', overflowY: 'auto' }}>
+    // Punch 30: maxHeight was 100vh, but the scrollport is 100dvh minus the 42px topbar and
+    // the content area's 30px top padding — the overhang clipped the bottom of the Projects
+    // card even when the rail's own scrollbar was at the end. Sized to the worst case
+    // (unscrolled page) so all three tape cards render fully at 100% zoom.
+    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(100dvh - 42px - 30px)', overflowY: 'auto' }}>
       {/* R4-19 (2026-07-20 audit): "should be a bit more of a header… the same font as the title
           of the page… make it a bit more subtle, but to still be visible." Was 9.5px uppercase
           mono in --ink-faint, reading as a caption. Now the display face the page titles use,
           at a quiet weight and size — present without shouting. */}
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2 }}>Organize</div>
+      {/* Punch 30: header centered over the card stack (was left-aligned). */}
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2, textAlign: 'center' }}>Organize</div>
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
@@ -344,7 +356,14 @@ export function TasksPage() {
     if (!focusId || tabSwitched.current) return
     const t = tasks.find((x) => x.id === focusId)
     if (!t) return
-    const target = t.status === 'done' ? 'done' : t.someday ? 'someday' : filterByList([t], 'today', now).length > 0 ? 'today' : 'upcoming'
+    // Punch 27: undated (or this-month-dated) tasks render on no other tab — All is the
+    // one place a focus deep link can always find them.
+    const target =
+      t.status === 'done' ? 'done'
+      : t.someday ? 'someday'
+      : filterByList([t], 'today', now).length > 0 ? 'today'
+      : filterByList([t], 'upcoming', now).length > 0 ? 'upcoming'
+      : 'all'
     if (target !== activeTab) {
       tabSwitched.current = true
       const p = new URLSearchParams(searchParams)
@@ -410,6 +429,7 @@ export function TasksPage() {
   const upcomingCount = filterByList(displayTasks, 'upcoming', now).length
   const somedayCount = filterByList(displayTasks, 'someday', now).length
   const doneCount = tasks.filter((t) => t.status === 'done').length
+  const allCount = filterByList(displayTasks, 'all', now).length
 
   const [kbSnoozeId, setKbSnoozeId] = useState<string | null>(null)
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
@@ -519,6 +539,7 @@ export function TasksPage() {
     : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
     : isOverdue ? `${overdueCount} past their date — reschedule what still matters`
+    : activeTab === 'all' ? `every open task in the garden — dated, undated, someday, all ${allCount}`
     : null
 
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
@@ -553,7 +574,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} sort={sort} onSort={setSort} />
+        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
         {/* R4-12 (2026-07-20 audit): "there should be a reschedule button that lets me replan
             the tasks that I missed" — one click pulls every overdue task onto today. */}

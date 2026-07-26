@@ -67,9 +67,10 @@ describe('groupTasks', () => {
     expect(groups.map((g) => g.key)).toEqual(['scheduled'])
   })
 
-  it('undated non-someday tasks fall into Later', () => {
+  it('undated non-someday tasks get their own No date group (punch 27)', () => {
     const groups = groupTasks([task({})], NOW)
-    expect(groups.map((g) => g.key)).toEqual(['later'])
+    expect(groups.map((g) => g.key)).toEqual(['unplanned'])
+    expect(groups[0].label).toBe('No date')
   })
 
   it('someday tasks bucket into Someday regardless of any date', () => {
@@ -133,6 +134,11 @@ describe('filterByList', () => {
     expect(ids).not.toContain('someday')
     expect(ids).not.toContain('done')
     expect(ids).toContain('undated')
+  })
+
+  it('all = every open task, someday and undated included, never done (punch 27)', () => {
+    const ids = filterByList(tasks, 'all', NOW).map((t) => t.id)
+    expect(ids.sort()).toEqual(['nextmonth', 'overdue', 'someday', 'thisweek', 'today', 'top3', 'undated'])
   })
 })
 

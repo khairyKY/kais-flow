@@ -1,10 +1,14 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button, Chip, SectionLabel } from '../../components/kit'
+import { ConfirmCard } from '../projects/ConfirmCard'
+import { useTasks, setRecurrence, deleteTask, restoreTask } from '../tasks/api'
+import { toastUndo } from '../../lib/undo'
 import type { ImportBatch } from './adapters/shared'
 import { parseAkiflow } from './adapters/akiflow'
 import { parseCsv, csvToBatch, guessMapping, CSV_TARGETS, type CsvMapping } from './adapters/csv'
 import { fetchAllExistingRefs, commitBatch, type ExistingRefs, type ImportSummary } from './api'
+import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 
 // P-IMPORT tier-0 wizard: source → file → (csv mapping) → preview → import → summary.
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
@@ -47,6 +51,71 @@ function rememberMapping(name: string, mapping: CsvMapping) {
 function fmtDate(iso: string | null) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' })
+}
+
+// ── Punch 28: recurring-import dedupe assistant ──────────────────────────────
+// Dry-run first: the table below changes NOTHING. Each cluster only merges after its own
+// ConfirmCard — keep one task (+ guessed recurrence_rule), soft-delete the rest through
+// the outbox (deleteTask → Trash), with an Undo toast that restores everything.
+function TidyDuplicates() {
+  const { data: tasks = [] } = useTasks()
+  const clusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
+  const [confirming, setConfirming] = useState<DupeCluster | null>(null)
+
+  function merge(c: DupeCluster) {
+    setConfirming(null)
+    const rest = c.tasks.filter((t) => t.id !== c.keep.id)
+    const prevRule = c.keep.recurrence_rule ?? null
+    if (c.rule) setRecurrence(c.keep, c.rule)
+    rest.forEach(deleteTask) // outbox soft-delete — lands in Trash, restorable
+    toastUndo(
+      `"${c.title}" tidied — kept 1 of ${c.tasks.length}${c.cadence ? `, repeats ${c.cadence}` : ''}.`,
+      () => {
+        rest.forEach(restoreTask)
+        if (c.rule) setRecurrence(c.keep, prevRule)
+      },
+    )
+  }
+
+  const cadenceLabel = (c: DupeCluster) =>
+    c.cadence ? `looks ${c.cadence}` : 'no clear rhythm'
+
+  return (
+    <div style={card}>
+      <SectionLabel style={{ marginBottom: 6 }}>Tidy duplicates</SectionLabel>
+      <p style={{ margin: '0 0 4px', fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+        Imports of recurring tasks often land as one copy per occurrence. Clusters of {MIN_CLUSTER}+
+        open tasks sharing a title can each collapse to a single repeating task — nothing changes
+        until you confirm a cluster, and removals go to the trash.
+      </p>
+      {clusters.length === 0 ? (
+        <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', padding: '10px 0 2px' }}>
+          No duplicate clusters right now — the bed is tidy.
+        </div>
+      ) : (
+        <div style={{ borderTop: '1px dashed var(--line-dashed)', marginTop: 8 }}>
+          {clusters.map((c) => (
+            <div key={c.keep.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</span>
+              <Chip tone="tasks">{c.tasks.length} open</Chip>
+              <span style={help}>{cadenceLabel(c)}</span>
+              <span style={help}>next {fmtDate(c.keep.due_at)}</span>
+              <Button variant="secondary" onClick={() => setConfirming(c)}>Tidy…</Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {confirming && (
+        <ConfirmCard
+          title={`Tidy "${confirming.title}"?`}
+          body={`Keeps 1 of ${confirming.tasks.length}${confirming.cadence ? `, set to repeat ${confirming.cadence}` : ''} — the other ${confirming.tasks.length - 1} move to the trash. Undo is right there after.`}
+          confirmLabel="Tidy"
+          onConfirm={() => merge(confirming)}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+    </div>
+  )
 }
 
 export function ImportPage() {
@@ -280,6 +349,8 @@ export function ImportPage() {
             </div>
           </div>
         )}
+
+        <TidyDuplicates />
       </div>
     </div>
   )
