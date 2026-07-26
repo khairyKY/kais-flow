@@ -4,6 +4,8 @@
 > **Method:** same machine that built the integration — a short serial **Foundation** batch on shared files, then **parallel wave agents each owning one feature folder** in their own worktree (`ws/<name>` off `feature/botanical-integration`), orchestrator reviews + merges, then cross-cutting passes, hardening, deploy, and Kai's judgment loop. Dispatch via fresh-session paste prompts (PROMPT-BANK pattern); prompts get written per workstream on its dispatch day.
 > **Rules carried forward:** $0 · no new paid deps · frozen shared files after Foundation (changes route through orchestrator) · agents never read superseded docs · Kai's dev server at localhost:5195 is the only dev server · session quota is account-wide, pace dispatch.
 
+> **Execution model — DECIDED 2026-07-26: Scenario 2** ("Claude writes, free tier reads"), **automatic dispatch** — the orchestrator launches all workers itself via the Agent tool; Kai pastes nothing. Full routing, prompt skeletons, review gate, and preflight state: `V1-DISPATCH.md`. Codex, if it arrives, upgrades to Scenario 3 (calibrates on WA-11 Focus first) without changing this plan.
+
 ---
 
 ## Timeline at a glance

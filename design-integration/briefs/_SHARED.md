@@ -4,6 +4,26 @@ You are one worker in a parallelized botanical UI integration. This file is the
 context you share with every other worker. Your per-workstream brief (`<WS>.md`)
 adds only what's specific to your surface. **Read both, then build.**
 
+## ⚡ V1 punch-fix mode (2026-07-26) — overrides where it conflicts with the rest of this file
+
+- This is the **v1.0 remediation run** (ship 2026-08-15). You were dispatched
+  automatically by the orchestrator into your own worktree; there is no `<WS>.md`
+  brief file — **your dispatch prompt IS your brief.**
+- **Your DoD source is `design-integration/V1-PUNCHLIST.md`.** Your prompt names your
+  punch items; each item's **Judge:** line is your acceptance test. Run it yourself
+  before finishing.
+- Reading order: dispatch prompt → this file → your punch items → your surface's
+  sections in `design-integration/DRIFT-AUDIT.md` (file:line evidence of what's wrong).
+- **[K-26] rulings override the export** where they conflict — they're marked in
+  `V1-FEATURES.md` and DRIFT-AUDIT's cross-reference table. Everywhere else the
+  export stays the pixel contract exactly as below.
+- The old `W1-today.md` / `W2-tasks.md` briefs are historical — ignore their scope.
+- The "Route transition is automatic" line below predates Foundation F4 (which adds
+  the 160ms route cut). After F4 merges, never add your own page-transition motion.
+- Undo: Foundation F1 ships `lib/undo.ts` + the toast action slot. Every completing/
+  destructive action in your punch items goes through it — never push a bare toast
+  for an undoable action.
+
 ## The one rule
 Reproduce the design export **exactly**. Nothing invented, nothing skipped. The
 `.dc.html` file named in your brief is the **pixel contract** — markup, inline
