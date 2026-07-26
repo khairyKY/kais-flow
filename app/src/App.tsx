@@ -20,7 +20,7 @@ const TaskEditorPage = lazy(() => import('./features/calendar/TaskEditorPage').t
 const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then((m) => ({ default: m.RoutinesPage })))
 const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage').then((m) => ({ default: m.WeeklyReviewPage })))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
-const NotificationsPage = lazy(() => import('./components/Stub').then((m) => ({ default: () => <m.Stub name="Notifications" /> })))
+// [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
 const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
 const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
 const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
@@ -63,7 +63,6 @@ const router = createBrowserRouter([
       { path: 'weekly-review', element: <WeeklyReviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/import', element: <ImportPage /> },
-      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'capture', element: <QuickCapturePage /> },
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
       { path: 'projects', element: <ProjectsPage /> },

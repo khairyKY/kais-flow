@@ -85,9 +85,9 @@ const CULTIVATE: NavItem[] = [
   // one-entry-per-day model is unsettled. Nav entry removed; the route and page stay in the
   // codebase (reachable by URL) so nothing is lost when it comes back.
   // { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
-  // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Library had no nav entry;
-  // it now owns /library active state instead of aliasing onto Journal). Pen = the writing shelf.
-  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },
+  // [K-26] 2026-07-26 (punch 65): Library is PARKED to v2 entirely — nav row out, route stays
+  // URL-only so nothing is lost when it returns (same treatment as Journal below).
+  // { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },
   { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'rgba(201,160,160,0.45)' },
   // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
   { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'rgba(154,123,58,0.45)' },
@@ -661,7 +661,12 @@ export function AppLayout() {
           {collapsed ? '›' : '‹'}
         </button>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
+        {/* F7 fix: overflowY:auto forces overflow-x to auto too, which clipped the collapsed-rail
+            hover flyouts at the 64px edge. Collapsed, the icon column fits without scrolling, so
+            the container goes overflow-visible and the flyouts float over the page.
+            ponytail: on a very short viewport the collapsed rail clips its tail instead of
+            scrolling — flip to a portal if that ever matters. */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
 
         <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>

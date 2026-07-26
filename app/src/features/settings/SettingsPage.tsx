@@ -576,7 +576,8 @@ function IntegrationsPage() {
   )
 }
 
-function SoundCatalogCard() {
+// Exported only to keep it compiling while hidden ([K-26] — returns in v2 with a real audio layer).
+export function SoundCatalogCard() {
   const { sounds, set, masterOn, setMaster } = useSoundSettings()
   return (
     <SCard tapeTint="color-mix(in oklch, var(--acc-hydrangea) 40%, transparent)">
@@ -656,7 +657,8 @@ function DesktopSettings() {
         ) : (
           <>
             <div id="settings-Appearance"><AppearanceCard /></div>
-            <SoundCatalogCard />
+            {/* [K-26] punch 65/54: Sounds are "not designed yet" — section HIDDEN until v2.
+                No fake toggles on screen; SoundCatalogCard + useSoundSettings stay in the file. */}
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>
