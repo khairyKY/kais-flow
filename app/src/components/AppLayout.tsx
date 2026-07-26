@@ -418,7 +418,11 @@ function TopBar() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [popOpen])
 
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
+  // F5b: design format is `Fri 10 Jul` — weekday, day (no zero-pad), month, no commas.
+  const now = new Date()
+  const dateLabel = `${now.toLocaleDateString('en-GB', { weekday: 'short' })} ${now.getDate()} ${now.toLocaleDateString('en-GB', { month: 'short' })}`
+  // The ◌ glyph lives in the status STRING for offline (design position: `Offline ◌ — N saved here`);
+  // the trailing sage ● renders only when truly synced — States 2a: Syncing shows no dot.
   const status = !online ? (n > 0 ? `Offline ◌ — ${n} saved here` : 'Offline ◌') : n > 0 ? `Syncing ↻ ${n}` : 'Synced'
   return (
     <div
@@ -431,13 +435,11 @@ function TopBar() {
           type="button"
           onClick={() => setPopOpen((v) => !v)}
           className="kf-hit"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online && n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online || n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
           {status}
-          {online ? (
+          {online && n === 0 && (
             <span style={{ color: 'var(--acc-sage)', animation: glint ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: glint ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
-          ) : (
-            <span style={{ color: 'var(--ink-faint)' }}>◌</span>
           )}
         </button>
         <SeasonTopbarEcho />

@@ -107,7 +107,7 @@ export async function flushOutbox(): Promise<void> {
         // entry (user_id: '') was enough to wedge the whole outbox: later writes never reached
         // the server, the optimistic cache made them look applied, and the next refetch reverted
         // them. Park the poison row so the queue keeps draining, and say so out loud.
-        const message = (err as { message?: string }).message || 'Unknown error'
+        const message = (err as { message?: string }).message || 'server rejected the write'
         await removeEntry(entry.id, entry.table)
         try {
           const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
@@ -118,7 +118,9 @@ export async function flushOutbox(): Promise<void> {
         const key = `${entry.table}:${entry.id}`
         if (!toastedEntries.has(key)) {
           toastedEntries.add(key)
-          useToastStore.getState().push({ message: `Sync failed for ${entry.table}: ${message}` })
+          // House rule: the word "error" (and raw server text / table names) never reaches the UI.
+          // The full diagnostic lives in the dead-letter record above.
+          useToastStore.getState().push({ message: "One change couldn't be saved — set aside so the rest sync on." })
         }
         // continue — the next entry gets its turn instead of queueing behind a dead one
       }

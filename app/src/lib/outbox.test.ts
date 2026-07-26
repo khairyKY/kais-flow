@@ -101,9 +101,10 @@ describe('outbox', () => {
     await flushOutbox() // the 30s retry firing again must not re-toast
 
     expect(toastPushMock).toHaveBeenCalledTimes(1)
-    expect(toastPushMock).toHaveBeenCalledWith(
-      expect.objectContaining({ message: expect.stringContaining('permission denied') }),
-    )
+    // House rule (F5c): calm copy only — no raw server text, no table name, never "error".
+    const toastMessage = (toastPushMock.mock.calls[0][0] as { message: string }).message
+    expect(toastMessage).toContain("couldn't be saved")
+    expect(toastMessage).not.toMatch(/permission denied|error|tasks/i)
     // Parked, not retried forever, and kept for inspection rather than silently dropped.
     expect(store.get('kf-outbox')).toEqual([])
     expect(store.get('kf-outbox-dead')).toEqual(

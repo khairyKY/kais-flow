@@ -163,7 +163,7 @@ function useSoundSettings() {
 const COMMON_TIMEZONES = ['Africa/Cairo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai']
 
 function AppearanceCard() {
-  const { mode, setMode } = useThemeMode()
+  const { mode, setMode } = useThemeMode()
   const scale = useUiScale((s) => s.scale)
   const setScale = useUiScale((s) => s.setScale)
   const motionOn = useMotionEnabled()
@@ -348,8 +348,9 @@ function PushCard() {
         await subscribeThisDevice()
         setMessage('Subscribed! You should get pushes on this device now.')
       }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Something went wrong.')
+    } catch {
+      // House rule: raw e.message can carry the word "error" / server text — calm copy only.
+      setMessage("That didn't take — check the connection and try again.")
     } finally {
       setBusy(false)
     }
@@ -361,8 +362,8 @@ function PushCard() {
     try {
       const result = await sendTestNotification()
       setMessage(`Sent to ${result.sent} device(s), pruned ${result.pruned} dead subscription(s).`)
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Test send failed.')
+    } catch {
+      setMessage("The test push didn't go out — try again in a moment.")
     } finally {
       setBusy(false)
     }
