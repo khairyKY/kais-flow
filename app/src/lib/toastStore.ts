@@ -4,6 +4,8 @@ export interface Toast {
   id: string
   message: string
   onUndo?: () => void
+  /** Non-undo action rendered like the Undo button, e.g. { label: 'Jump there →', run: () => navigate(...) } */
+  action?: { label: string; run: () => void }
 }
 
 interface ToastState {

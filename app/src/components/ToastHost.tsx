@@ -5,9 +5,8 @@ import { useMotionEnabled } from '../lib/motion'
 // ── Motion 3d — toast rises 14px from the bottom edge, bottom-center, ONE slot
 // (never stacking), always carrying its undo. Motion 5e — on dismissal the corner
 // flower releases a single petal that falls 30px and fades.
-// ponytail: the 6s dwell lives in lib/toastStore (frozen); export says 4s —
-// foundation patch requested. Exit: the departing toast lingers ~600ms locally
-// to play its 160ms drop + 500ms petal.
+// Dwell is 4s in lib/toastStore (Motion 3d). Exit: the departing toast lingers
+// ~600ms locally to play its 160ms drop + 500ms petal.
 export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts)
   const dismiss = useToastStore((s) => s.dismiss)
@@ -66,29 +65,36 @@ export function ToastHost() {
           <circle cx="12" cy="11" r="2.4" fill="#C9A55A" />
         </svg>
         <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{shown.message}</span>
-        {shown.onUndo && !isLeaving && (
-          <button
-            type="button"
-            className="kf-hit"
-            onClick={() => {
-              shown.onUndo?.()
-              dismiss(shown.id)
-            }}
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--acc-terra)',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-            }}
-          >
-            Undo
-          </button>
-        )}
+        {!isLeaving &&
+          [
+            shown.onUndo && { label: 'Undo', run: shown.onUndo },
+            shown.action,
+          ]
+            .filter((a): a is { label: string; run: () => void } => !!a)
+            .map((a) => (
+              <button
+                key={a.label}
+                type="button"
+                className="kf-hit"
+                onClick={() => {
+                  a.run()
+                  dismiss(shown.id)
+                }}
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'var(--acc-terra)',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                {a.label}
+              </button>
+            ))}
       </div>
       {isLeaving && motionOn && (
         <span
