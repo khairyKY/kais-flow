@@ -23,6 +23,19 @@ adds only what's specific to your surface. **Read both, then build.**
 - Undo: Foundation F1 ships `lib/undo.ts` + the toast action slot. Every completing/
   destructive action in your punch items goes through it — never push a bare toast
   for an undoable action.
+- **FOUNDATION IS FROZEN (2026-07-26, complete through F7).** Additional frozen files on
+  top of the list below: `lib/undo.ts`, `lib/growthStages.ts`, `lib/gardenAssets.ts`,
+  `components/icons/NavGlyphs.tsx`, `components/ConfirmCard` (consume only).
+  Foundation provides (import, never re-implement): `toastUndo`/`toastAction` (undo.ts) ·
+  every species threshold (`growthStages.ts`) · `useOverlayExit` + `kf-*--out` 140ms exit
+  classes + canonical 20% `.kf-scrim` · `rowIn`/`rowOutSlide` keyframes + `animateRowRemoval`
+  (motion.ts) · `boxFill`/`checkPop` spec check sequence (kit Checkbox) · 160ms route cut
+  (automatic) · `buildListBindings` incl. the `open` action · ConfirmCard pattern
+  (copy PersonDetailPage's usage).
+- **Worktree sanity check, FIRST action:** run `git log --oneline -1` — if HEAD is not on
+  the `feature/botanical-integration` lineage (July-26 commits), `git reset --hard`
+  your worktree branch onto `feature/botanical-integration` before touching anything
+  (two earlier workers spawned on a stale July-7 commit).
 
 ## The one rule
 Reproduce the design export **exactly**. Nothing invented, nothing skipped. The
