@@ -2,9 +2,9 @@ import { localDateKey } from '../routines/streaks'
 import { daysUntilNextMonday } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
-export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue'
+export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all'
 
-export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue']
+export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue', 'all']
 
 /** Calendar-day difference from `a` to `b` (positive = b is later), computed on local day keys
  * so a task due 23:00 today reads as day 0, not "tomorrow" via a raw ms comparison. */
@@ -38,6 +38,10 @@ function monthEndDiff(now: Date): number {
  */
 export function filterByList(tasks: Task[], list: SmartList | null, now: Date = new Date()): Task[] {
   const open = tasks.filter((t) => t.status === 'todo')
+  // Punch 27: `all` is every open task — dated, undated (project filings), and someday alike.
+  // It's the one list where nothing can hide; groupTasks gives undated rows their own
+  // "No date" group so a fresh Inbox filing is findable in seconds.
+  if (list === 'all') return open
   if (list === 'someday') return open.filter((t) => t.someday)
   const pending = open.filter((t) => !t.someday)
   if (!list) return pending
@@ -85,7 +89,7 @@ export function filterByScope(tasks: Task[], scope: RailScope, now: Date = new D
   }
 }
 
-export type GroupKey = 'overdue' | 'today' | 'scheduled' | 'tomorrow' | 'week' | 'later' | 'someday'
+export type GroupKey = 'overdue' | 'today' | 'scheduled' | 'tomorrow' | 'week' | 'later' | 'unplanned' | 'someday'
 
 export interface TaskGroup {
   key: GroupKey
@@ -102,6 +106,9 @@ const GROUP_ORDER: { key: GroupKey; label: string }[] = [
   { key: 'tomorrow', label: 'Tomorrow' },
   { key: 'week', label: 'This week' },
   { key: 'later', label: 'Later' },
+  // Punch 27: undated tasks get their own group instead of hiding inside "Later",
+  // so a project filing with no date is visible the moment it lands.
+  { key: 'unplanned', label: 'No date' },
   { key: 'someday', label: 'Someday' },
 ]
 
@@ -109,7 +116,7 @@ function bucketOf(task: Task, now: Date): GroupKey {
   if (task.someday) return 'someday'
   if (isScheduledToday(task, now)) return 'scheduled'
   const diff = taskDayDiff(task, now)
-  if (diff === null) return 'later'
+  if (diff === null) return 'unplanned'
   if (diff < 0) return 'overdue'
   if (diff === 0) return 'today'
   if (diff === 1) return 'tomorrow'

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { ContextMenu } from '../../components/ContextMenu'
+import { toastUndo } from '../../lib/undo'
 import { useDomains } from '../domains/api'
 import {
   useTasks,
@@ -139,8 +141,11 @@ export function PerennialsPage() {
   }, [])
 
   // Hover states
+  const navigate = useNavigate()
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  const [editingRule, setEditingRule] = useState<string | null>(null)
+  // Punch 31: "Edit rule" opens the real themed Repeat menu (TaskRow's ContextMenu pattern),
+  // anchored where the link was clicked — not a native <select>.
+  const [ruleMenu, setRuleMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const [confirmEndSeries, setConfirmEndSeries] = useState<string | null>(null)
 
   // Filter tasks to find repeating series
@@ -233,6 +238,14 @@ export function PerennialsPage() {
     <svg width="13" height="14" viewBox="0 0 18 20" style={{ marginRight: 6 }}><path d="M9 18c-3-4-6-5-6-9 0-3 2-5 4-5 .8 0 1.5.3 2 .8.5-.5 1.2-.8 2-.8 2 0 4 2 4 5 0 4-3 5-6 9Z" fill="none" stroke="var(--ink-faint)" strokeWidth="1.4" strokeLinejoin="round" /></svg>
   )
 
+  // Editing a rule is reversible — undo puts the previous rule back (incl. "No repeat",
+  // which removes the row from this page entirely until undone).
+  const applyRule = (task: any, rule: string | null, label: string) => {
+    const prev = task.recurrence_rule ?? null
+    setRecurrence(task, rule)
+    toastUndo(rule ? `Repeat set — ${label.toLowerCase()}.` : 'Repeat removed.', () => setRecurrence(task, prev))
+  }
+
   const handleSkip = (task: any) => {
     skipNextOccurrence(task)
     useToastStore.getState().push({ message: `Skipped next occurrence of "${task.title}".` })
@@ -260,7 +273,7 @@ export function PerennialsPage() {
     const domain = domains.find((d) => d.id === t.domain_id)
 
     const isHovered = hoveredRow === t.id
-    const isEditing = editingRule === t.id
+    const isEditing = ruleMenu?.id === t.id
     const isConfirming = confirmEndSeries === t.id
 
     return (
@@ -300,7 +313,7 @@ export function PerennialsPage() {
           {/* Action controls or Next due date chip */}
           {(isHovered || (isCoarse && hoveredRow === t.id)) && !isConfirming && !isEditing ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
-              <span onClick={() => setEditingRule(t.id)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Edit rule</span>
+              <span onClick={(e) => setRuleMenu({ id: t.id, x: e.clientX, y: e.clientY })} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Edit rule</span>
               <span onClick={() => handleSkip(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Skip next</span>
               <span onClick={() => handlePauseToggle(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>
                 {t.paused ? 'Resume' : 'Pause'}
@@ -324,30 +337,21 @@ export function PerennialsPage() {
           )}
         </div>
 
-        {/* Inline rule edit */}
+        {/* Punch 31: the real Repeat menu — same options as TaskRow's Repeat submenu
+            (TaskRow.tsx Repeat item), anchored to the clicked link, uiZoom-corrected by
+            ContextMenu itself. Custom… opens the task editor, where the full rule lives. */}
         {isEditing && (
-          <div style={{ margin: '4px 0 8px 32px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Repeat rule:</span>
-            <select
-              value={t.recurrence_rule || ''}
-              onChange={(e) => {
-                setRecurrence(t, e.target.value || null)
-                setEditingRule(null)
-                useToastStore.getState().push({ message: 'Recurrence rule updated.' })
-              }}
-              style={{ font: 'inherit', fontSize: 12, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '4px 8px', outline: 'none', color: 'var(--ink-body)' }}
-            >
-              <option value="FREQ=DAILY">Every day</option>
-              <option value="FREQ=WEEKLY;BYDAY=MO,WE">Every Mon, Wed</option>
-              <option value="FREQ=WEEKLY;BYDAY=SU">Every Sun</option>
-              <option value="FREQ=WEEKLY;BYDAY=TH">Every Thu</option>
-              <option value="FREQ=WEEKLY;BYDAY=FR">Every Fri</option>
-              <option value="FREQ=MONTHLY;BYMONTHDAY=1">Monthly on the 1st</option>
-              <option value="FREQ=MONTHLY;BYMONTHDAY=3">Monthly on the 3rd</option>
-              <option value="FREQ=WEEKLY;INTERVAL=6">Every 6 weeks</option>
-            </select>
-            <span onClick={() => setEditingRule(null)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer', textDecoration: 'underline' }}>Cancel</span>
-          </div>
+          <ContextMenu
+            position={{ x: ruleMenu!.x, y: ruleMenu!.y }}
+            onClose={() => setRuleMenu(null)}
+            items={[
+              { label: 'No repeat', onClick: () => applyRule(t, null, 'No repeat') },
+              { label: 'Daily', onClick: () => applyRule(t, 'FREQ=DAILY', 'Daily') },
+              { label: 'Weekly', onClick: () => applyRule(t, 'FREQ=WEEKLY', 'Weekly') },
+              { label: 'Monthly', onClick: () => applyRule(t, 'FREQ=MONTHLY', 'Monthly') },
+              { label: 'Custom…', onClick: () => navigate(`/tasks/${t.id}`) },
+            ]}
+          />
         )}
 
         {/* Inline end-series confirm */}
