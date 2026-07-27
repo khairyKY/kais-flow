@@ -19,6 +19,14 @@ export default defineConfig({
         background_color: '#EFE9DB',
         display: 'standalone',
         start_url: '/',
+        // Punch 24: makes Kai's Flow a real Android share target. GET (not POST) on purpose —
+        // Chrome fills these as query params on a plain navigation, so no service-worker
+        // POST handler is needed and /share is just another SPA route (features/capture/SharePage).
+        share_target: {
+          action: '/share',
+          method: 'GET',
+          params: { title: 'title', text: 'text', url: 'url' },
+        },
         icons: [
           {
             src: 'icon-192.png',
