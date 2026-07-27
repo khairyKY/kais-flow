@@ -33,6 +33,7 @@ import { ProjectPicker } from '../../components/ProjectPicker'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { rowAnchor } from '../../lib/rowAnchor'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
@@ -235,23 +236,30 @@ export function TodayPage() {
   }
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
-  // app's primary surface. Wired to the same handlers its context menu already uses; snooze/
-  // project row-menus aren't registered here (yet — WA-4), so the cheatsheet stays truthful.
+  // app's primary surface. Wired to the same handlers its context menu already uses.
+  // WB-4 (punch 12): s/p were still unwired here while the `?` cheatsheet advertised them for
+  // "Task list" — same row-menu pattern as TasksPage now, so both surfaces match the overlay.
+  const [kbSnoozeId, setKbSnoozeId] = useState<string | null>(null)
+  const [kbProjectId, setKbProjectId] = useState<string | null>(null)
+  const kbSnoozeTask = kbSnoozeId ? selectable.find((t) => t.id === kbSnoozeId) : null
+  const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const listNavigate = useNavigate()
   const listBindings = buildListBindings({
     complete: (t) => completeTask(t),
     open: (t) => listNavigate(`/tasks/${t.id}`),
+    snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
     tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
+    project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => {
       setConfirm({ title: `Delete "${t.title}"?`, body: '', onConfirm: () => { setConfirm(null); deleteTask(t) } })
     },
   })
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos && !confirm,
+    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos && !confirm && !kbSnoozeId && !kbProjectId,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
@@ -565,6 +573,12 @@ export function TodayPage() {
       {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
       {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {kbSnoozeTask && (
+        <SnoozeMenu position={rowAnchor('task-', kbSnoozeTask.id)} title={kbSnoozeTask.title} onClose={() => setKbSnoozeId(null)} onSnooze={(until) => snoozeTask(kbSnoozeTask, until)} onSomeday={() => setSomeday(kbSnoozeTask, true)} />
+      )}
+      {kbProjectTask && (
+        <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
+      )}
       {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
 
       {morningOpen && <MorningRitual onClose={() => setMorningOpen(false)} />}
