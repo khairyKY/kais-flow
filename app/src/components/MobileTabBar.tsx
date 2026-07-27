@@ -71,12 +71,12 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
         className="app-tabbar"
         style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40, borderTop: '1px solid var(--line-card)', background: 'var(--paper-sidebar)', padding: '9px 20px calc(4px + env(safe-area-inset-bottom))', alignItems: 'flex-start', justifyContent: 'space-between' }}
       >
-        <Link to="/today" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+        <Link to="/today" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
           <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-sage)' }} />
           <span style={slotLabel(pathname === '/today')}>Today</span>
         </Link>
 
-        <Link to="/inbox" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+        <Link to="/inbox" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
           <span style={{ position: 'relative', width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-hydrangea)' }}>
             {pendingInbox > 0 && (
               <span style={{ position: 'absolute', top: -4, right: -5, width: 12, height: 12, borderRadius: '50%', background: 'var(--acc-terra)', color: '#fff', fontSize: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -91,7 +91,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
           <VoiceCaptureButton iconOnly />
         </div>
 
-        <Link to="/calendar" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+        <Link to="/calendar" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
           <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-lavender)' }} />
           <span style={slotLabel(pathname === '/calendar')}>Cal</span>
         </Link>
@@ -99,6 +99,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
+          className="kf-hit"
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
         >
           <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: 11 }} />

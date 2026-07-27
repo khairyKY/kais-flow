@@ -66,7 +66,7 @@ function MorningPanel({ wide, children, footer }: { wide?: boolean; children: Re
       <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--paper-parchment)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ height: 6, flex: 'none', background: 'linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))' }} />
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 20px 0', display: 'flex', flexDirection: 'column' }}>{children}</div>
-        <div style={{ flex: 'none', padding: '14px 20px 22px' }}>{footer}</div>
+        <div style={{ flex: 'none', padding: '14px 20px max(22px, calc(14px + env(safe-area-inset-bottom)))' }}>{footer}</div>
       </div>
     )
   }
@@ -394,8 +394,10 @@ function BlockStep() {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Give the day a shape. Drag anything from the beds on the left into an open hour; drop the rest tomorrow.</p>
-      <div style={{ display: 'flex', gap: 18, alignItems: 'stretch' }}>
-        <div style={{ width: 340, flex: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* WB-3 punch 64: basis-not-width + wrap, so the beds and the hour grid stack on a
+          phone instead of pushing the ritual 340px wide. Desktop (940px panel) is unchanged. */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'stretch' }}>
+        <div style={{ flex: '0 1 340px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Bed icon={`${A}/daisy/morning.png`} title="Today · Top-3" tasks={top3} />
           {/* Inbox bed (contract 1d): read-only here — filing+scheduling in one drag needs inbox/api.ts, owned by W4 */}
           <div>
@@ -420,7 +422,7 @@ function BlockStep() {
           </div>
           <Bed icon={`${A}/wisteria/p40.png`} title="This week" tasks={thisWeek} />
         </div>
-        <div style={{ flex: 1, minWidth: 0, border: '1px solid var(--line-solid)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
+        <div style={{ flex: '1 1 320px', minWidth: 0, border: '1px solid var(--line-solid)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
           <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--line-card)', background: 'var(--paper-bone)' }}>
             <FieldLabel>{new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })} · today</FieldLabel>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>

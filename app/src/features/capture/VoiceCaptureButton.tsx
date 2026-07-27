@@ -23,6 +23,7 @@ export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
         type="button"
         variant="cta"
         icon={<MicIcon />}
+        className={iconOnly ? 'kf-btn kf-hit' : undefined}
         onClick={() => setSheetOpen(true)}
         title="Voice capture"
         style={{

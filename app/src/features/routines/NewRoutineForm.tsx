@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createRoutine, createChallenge } from './api'
 import { localDateKey } from './streaks'
 import { useDomains } from '../domains/api'
@@ -43,7 +43,14 @@ function addDays(key: string, n: number): string {
 export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose: () => void; initialChallenge?: boolean }) {
   useEscapeStack(true, onClose)
   useBodyScrollLock(true)
-  const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  useEffect(() => {
+    const mq = matchMedia('(max-width: 767px)')
+    const on = () => setIsMobile(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
   // 2a's fields sit on a parchment modal and use bone for contrast; 2b's sheet is linen and
   // swaps to parchment fields with a bone "raised" tone — same pattern the mock repeats for
   // every field container and its active/highlight state.

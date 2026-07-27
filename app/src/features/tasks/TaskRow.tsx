@@ -245,6 +245,7 @@ export function TaskRow({
           submenu: ({ position, onClose, closeAll }) => (
             <SnoozeMenu
               position={position}
+              title={bulkActive ? undefined : task.title}
               onClose={onClose}
               onSnooze={(until) => { bulkActive ? bulk!.onSnooze(until) : snoozeTask(task, until); closeAll() }}
               onSomeday={() => { bulkActive ? bulk!.onSomeday() : setSomeday(task, true); closeAll() }}
@@ -257,6 +258,7 @@ export function TaskRow({
           submenu: ({ position, onClose, closeAll }) => (
             <ScheduleMenu
               position={position}
+              title={bulkActive ? undefined : task.title}
               onClose={onClose}
               onSchedule={(iso) => { bulkActive ? bulk!.onSchedule(iso) : rescheduleDue(task, iso); closeAll() }}
             />
@@ -475,7 +477,7 @@ export function TaskRow({
         {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
         {confirmCard}
         {popover?.kind === 'schedule' && (
-          <ScheduleMenu position={popover} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null) }} />
+          <ScheduleMenu position={popover} title={task.title} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null) }} />
         )}
       </div>
     )
@@ -520,7 +522,7 @@ export function TaskRow({
         {!hideCheckbox && onToggleSelect && (
           <span
             onClick={onToggleSelect}
-            className={selected ? undefined : 'task-row-hover'}
+            className={selected ? 'kf-hit' : 'task-row-hover kf-hit'}
             style={{ width: 14, height: 14, marginTop: 3, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
           >
             {selected ? '✓' : ''}
@@ -572,6 +574,7 @@ export function TaskRow({
         <span
           onClick={() => toggleTop3(task)}
           title={task.top3 ? 'Remove from Top 3' : 'Add to Top 3'}
+          className="kf-hit"
           style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-solid)', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}
         >
           {task.top3 ? '★' : '☆'}
@@ -581,10 +584,10 @@ export function TaskRow({
       {menu && <ContextMenu position={menu} onClose={() => setMenu(null)} items={menuItems} />}
       {confirmCard}
       {popover?.kind === 'snooze' && (
-        <SnoozeMenu position={popover} onClose={() => setPopover(null)} onSnooze={(until) => { snoozeTask(task, until); setPopover(null); swipe.reset() }} onSomeday={() => { setSomeday(task, true); setPopover(null); swipe.reset() }} />
+        <SnoozeMenu position={popover} title={task.title} onClose={() => setPopover(null)} onSnooze={(until) => { snoozeTask(task, until); setPopover(null); swipe.reset() }} onSomeday={() => { setSomeday(task, true); setPopover(null); swipe.reset() }} />
       )}
       {popover?.kind === 'schedule' && (
-        <ScheduleMenu position={popover} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null); swipe.reset() }} />
+        <ScheduleMenu position={popover} title={task.title} onClose={() => setPopover(null)} onSchedule={(iso) => { rescheduleDue(task, iso); setPopover(null); swipe.reset() }} />
       )}
       {popover?.kind === 'project' && (
         <ProjectPicker position={popover} projects={projects} domains={domains} currentProjectId={task.project_id} onSelect={(projectId, domainId) => { setProject(task, projectId, domainId); setPopover(null); swipe.reset() }} onClose={() => setPopover(null)} />
