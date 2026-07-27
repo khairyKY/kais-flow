@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent } from './api'
+import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent, restoreEvent } from './api'
 import { useTasks, completeTask, uncompleteTask } from '../tasks/api'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -14,11 +15,13 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
-import { useMotionEnabled } from '../../lib/motion'
+import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
+import { toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
 import { localTimeKey } from './eventTime'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
+import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
 import type { ContextMenuItem } from '../../components/ContextMenu'
@@ -100,6 +103,7 @@ interface QuickCreateState {
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
 
 export function CalendarPage() {
+  const navigate = useNavigate()
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [] } = useTasks()
   const { data: settings } = useAppSettings()
@@ -107,6 +111,7 @@ export function CalendarPage() {
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const sidebarRef = useRef<HTMLDivElement>(null)
+  const railRef = useRef<HTMLElement>(null)
   const gridRef = useRef<CalendarGridHandle>(null)
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
@@ -121,6 +126,12 @@ export function CalendarPage() {
   // Effects 21 — the chip created by a rail drop plays settle-in once.
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
+  // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
+  const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
+  const [viewOptsOpen, setViewOptsOpen] = useState(false)
+  // Anchor survives the close so the 140ms exit plays in place (useOverlayExit keeps it mounted).
+  const [viewOptsAnchor, setViewOptsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const viewOptsExit = useOverlayExit(viewOptsOpen)
 
   const railTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
@@ -128,6 +139,30 @@ export function CalendarPage() {
   const conflicts = useMemo(() => computeConflicts(events), [events])
   const load = useMemo(() => todaysLoad(events), [events])
   const dayCount = settings?.calendar_day_count ?? 4
+
+  function patchViewOpts(patch: Partial<CalViewOptions>) {
+    setViewOpts((v) => {
+      const next = { ...v, ...patch }
+      writeViewOptions(next)
+      return next
+    })
+  }
+
+  // The popover's Akiflow view row: 1 = day, 2–6 = N-day, W = week, M = month.
+  const activeViewCell: ViewCell = viewKind === 'day' ? '1' : viewKind === 'week' ? 'W' : viewKind === 'month' ? 'M' : (String(Math.min(6, Math.max(2, dayCount))) as ViewCell)
+  function pickView(cell: ViewCell) {
+    if (cell === '1') setViewKind('day')
+    else if (cell === 'W') setViewKind('week')
+    else if (cell === 'M') setViewKind('month')
+    else {
+      updateAppSetting('calendar_day_count', Number(cell))
+      setViewKind('ndays')
+    }
+  }
+
+  // Punch 32 "Show completed": done task-blocks drop out of the grid when toggled off.
+  const doneTaskIds = useMemo(() => new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id)), [tasks])
+  const visibleEvents = viewOpts.showCompleted ? events : events.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
 
   const scopeValueOptions =
     scope.kind === 'smart'
@@ -168,6 +203,20 @@ export function CalendarPage() {
     if (event) openExisting(event)
   }
 
+  // Punch 6 (calendar slice): every destructive calendar mutation captures prior state and
+  // undoes through the same api fns — never a bare toast.
+  function unscheduleWithUndo(event: CalendarEvent) {
+    const prior = { ...event }
+    deleteEvent(event)
+    toastUndo(`Unscheduled · ${event.title}`, () => restoreEvent(prior))
+  }
+
+  function deleteWithUndo(event: CalendarEvent) {
+    const prior = { ...event }
+    deleteEvent(event)
+    toastUndo(`Deleted · ${event.title}`, () => restoreEvent(prior))
+  }
+
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
     const event = events.find((e) => e.id === id)
@@ -176,13 +225,28 @@ export function CalendarPage() {
     if (event.type === 'task') {
       items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
       items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTask(t) } })
-      items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); deleteEvent(event) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
+      items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
+      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     } else {
       items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteEvent(event) } })
+      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     }
     setContextMenu({ items, x, y })
+  }
+
+  /** Punch 33: a scheduled task block dragged back onto the rail returns to Unscheduled.
+   * Plain events have no "unscheduled" home — they get the soft-no instead (return false). */
+  function handleDragToRail(id: string): boolean {
+    const event = events.find((e) => e.id === id)
+    if (!event?.task_id) return false
+    unscheduleWithUndo(event)
+    return true
+  }
+
+  /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
+  function handleEventDoubleClick(id: string) {
+    const event = events.find((e) => e.id === id)
+    if (event?.task_id) navigate(`/tasks/${event.task_id}`)
   }
 
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
@@ -222,20 +286,16 @@ export function CalendarPage() {
     setQuickCreate({ kind: 'task', slot: null, anchor: { x: e.clientX, y: e.clientY } })
   }
 
-  function handleExternalDrop(taskId: string, start: string) {
+  function handleExternalDrop(taskId: string, start: string, allDay: boolean) {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
-    const end = new Date(new Date(start).getTime() + (task.duration_min ?? 30) * 60000).toISOString()
-    const ev = scheduleTask(task, start, end)
+    const end = new Date(new Date(start).getTime() + (allDay ? 24 * 60 : (task.duration_min ?? 30)) * 60000).toISOString()
+    const ev = scheduleTask(task, start, end, allDay)
+    toastUndo(`Scheduled · ${task.title}`, () => deleteEvent(ev))
     if (motionOn) {
       setJustDroppedId(ev.id)
       window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
     }
-  }
-
-  function cycleDayCount() {
-    updateAppSetting('calendar_day_count', dayCount >= 6 ? 2 : dayCount + 1)
-    setViewKind('ndays')
   }
 
   // R4-16: rail width is user-controlled and remembered across sessions.
@@ -292,7 +352,7 @@ export function CalendarPage() {
       `}</style>
 
       <div className="cal-shell" style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
-        <aside className="cal-rail">
+        <aside className="cal-rail" ref={railRef}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
@@ -408,35 +468,40 @@ export function CalendarPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, overflow: 'hidden' }}>
-                {(['day', 'ndays', 'week', 'month'] as ViewKind[]).map((vk) => {
-                  const on = viewKind === vk
-                  const label = vk === 'day' ? 'Day' : vk === 'ndays' ? `${dayCount}-day` : vk === 'week' ? 'Week' : 'Month'
-                  return (
-                    <span
-                      key={vk}
-                      onClick={() => (vk === 'ndays' ? cycleDayCount() : setViewKind(vk))}
-                      title={vk === 'ndays' ? 'Click to cycle 2–6 days' : undefined}
-                      style={{
-                        padding: '7px 13px',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        // R4-9 (2026-07-20 audit): repeat-clicking the N-day pill to cycle the
-                        // day count was selecting the label text as if dragging over it.
-                        userSelect: 'none',
-                        color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
-                        background: on ? 'var(--paper-parchment)' : 'transparent',
-                        borderLeft: vk !== 'day' ? '1px solid var(--line-card)' : undefined,
-                      }}
-                    >
-                      {label}
-                    </span>
-                  )
-                })}
-              </div>
+              {/* Punch 32 [K-26]: the ⚟ view-options trigger replaces the segmented control +
+                  N-day cycler — view switching now lives in the popover's 1–6/W/M row. */}
+              <span
+                role="button"
+                aria-haspopup="dialog"
+                aria-expanded={viewOptsOpen}
+                // Stop the popover's document-level outside-mousedown from firing first —
+                // otherwise a trigger click while open closes-then-reopens (toggle never closes).
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  setViewOptsAnchor({ x: r.right, y: r.bottom })
+                  setViewOptsOpen((v) => !v)
+                }}
+                style={{
+                  padding: '0 14px',
+                  height: 32,
+                  border: '1px solid var(--line-solid)',
+                  borderRadius: 999,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'var(--ink-body)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                {viewKind === 'day' ? 'Day' : viewKind === 'ndays' ? `${dayCount} days` : viewKind === 'week' ? 'Week' : 'Month'}
+                <span aria-hidden="true" style={{ fontSize: 12, color: 'var(--ink-muted)' }}>⚟</span>
+              </span>
               <span onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</span>
               <span onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer' }}>Today</span>
               <span onClick={() => gridRef.current?.next()} style={pillCircle}>›</span>
@@ -453,22 +518,35 @@ export function CalendarPage() {
               initialView={VIEW_MAP[viewKind]}
               hideToolbar
               onRangeChange={setRangeInfo}
-              events={events.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: tasks.find((t) => t.id === e.task_id)?.status === 'done' }))}
+              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false }))}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
                 if (t) (done ? uncompleteTask : completeTask)(t)
               }}
               onCreate={handleGridCreate}
-              onMove={(id, start, end) => {
+              onMove={(id, start, end, allDay) => {
                 const event = events.find((e) => e.id === id)
-                if (event) moveOrResizeEvent(event, start, end)
+                if (!event) return
+                const prior = { ...event }
+                moveOrResizeEvent(event, start, end, allDay)
+                toastUndo(`Moved · ${event.title}`, () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day))
               }}
               onResize={(id, start, end) => {
                 const event = events.find((e) => e.id === id)
-                if (event) resizeEvent(event, start, end)
+                if (!event) return
+                const prior = { ...event }
+                resizeEvent(event, start, end)
+                toastUndo(`Resized · ${event.title}`, () => resizeEvent(prior, prior.starts_at, prior.ends_at))
               }}
               onEventClick={handleEventClick}
+              onEventDoubleClick={handleEventDoubleClick}
               onExternalDrop={handleExternalDrop}
+              railRef={railRef}
+              onDragToRail={handleDragToRail}
+              hour24={viewOpts.hour24}
+              firstDay={viewOpts.weekStartsMon ? 1 : 0}
+              hiddenDays={viewOpts.showWeekends ? undefined : [0, 6]}
+              density={viewOpts.density}
               justDroppedId={justDroppedId}
               dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
@@ -482,6 +560,17 @@ export function CalendarPage() {
         </div>
       </div>
 
+      {viewOptsExit.mounted && (
+        <ViewOptionsPopover
+          anchor={viewOptsAnchor}
+          closing={viewOptsExit.closing}
+          onClose={() => setViewOptsOpen(false)}
+          activeView={activeViewCell}
+          onPickView={pickView}
+          value={viewOpts}
+          onChange={patchViewOpts}
+        />
+      )}
       {selectedEvent && (
         <EventDetailsPanel
           event={selectedEvent}

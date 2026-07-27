@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { updateEvent, deleteEvent } from './api'
+import { updateEvent, deleteEvent, restoreEvent } from './api'
+import { toastUndo } from '../../lib/undo'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
@@ -66,7 +67,10 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   }
 
   function handleDelete() {
+    // Punch 6 (calendar slice): capture prior state, undo through the same api path.
+    const prior = { ...event }
     deleteEvent(event)
+    toastUndo(`Deleted · ${event.title}`, () => restoreEvent(prior))
     onClose()
   }
 
@@ -145,12 +149,18 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
           </div>
 
           {linkedTask && (
-            <div style={{ marginTop: 12, background: 'var(--paper-event)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 11 }}>
+            // Punch 34: the whole From-task card is the click-through to the full task editor;
+            // the buttons keep the two actions explicit ("Open task ↗" reaches it in one click).
+            <div
+              role="button"
+              onClick={handleOpenTask}
+              style={{ marginTop: 12, background: 'var(--paper-event)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 11, cursor: 'pointer' }}
+            >
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>From task</div>
               <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 3 }}>{linkedTask.title}</div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button type="button" onClick={handleOpenTask} style={{ font: 'inherit', fontSize: 11, color: 'var(--acc-lavender-deep)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Edit Task</button>
-                <button type="button" onClick={handleComplete} style={{ font: 'inherit', fontSize: 11, color: 'var(--ink-body)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Complete</button>
+                <button type="button" onClick={handleOpenTask} style={{ font: 'inherit', fontSize: 11, color: 'var(--acc-lavender-deep)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Open task ↗</button>
+                <button type="button" onClick={(e) => { e.stopPropagation(); handleComplete() }} style={{ font: 'inherit', fontSize: 11, color: 'var(--ink-body)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Complete</button>
               </div>
             </div>
           )}

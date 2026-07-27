@@ -29,13 +29,13 @@ function touchTaskSchedule(taskId: string, start: string | null, end: string | n
 }
 
 /** Click-drag an empty grid slot -> a plain native event, no linked task. */
-export function createEvent(title: string, startsAt: string, endsAt: string, type?: CalendarEvent['type'], color?: string | null): CalendarEvent {
+export function createEvent(title: string, startsAt: string, endsAt: string, type?: CalendarEvent['type'], color?: string | null, allDay = false): CalendarEvent {
   const event: CalendarEvent = {
     id: crypto.randomUUID(),
     title,
     starts_at: startsAt,
     ends_at: endsAt,
-    all_day: false,
+    all_day: allDay,
     task_id: null,
     source: 'native',
     gcal_id: null,
@@ -52,13 +52,13 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
 }
 
 /** Drag a task from the unscheduled sidebar onto the grid -> a block linked to that task. */
-export function scheduleTask(task: Task, startsAt: string, endsAt: string): CalendarEvent {
+export function scheduleTask(task: Task, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
   const event: CalendarEvent = {
     id: crypto.randomUUID(),
     title: task.title,
     starts_at: startsAt,
     ends_at: endsAt,
-    all_day: false,
+    all_day: allDay,
     task_id: task.id,
     source: 'native',
     gcal_id: null,
@@ -87,9 +87,17 @@ export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>)
   }
 }
 
-export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): void {
-  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt })
+/** allDay carries the all-day band ↔ time grid drag conversion (CALENDAR.md §6); omitted = unchanged. */
+export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt: string, allDay?: boolean): void {
+  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt, all_day: allDay ?? event.all_day })
   if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
+}
+
+/** Undo half of deleteEvent: the block comes back and re-links its task's schedule. */
+export function restoreEvent(event: CalendarEvent): void {
+  writeRow('calendar_events', { ...event, deleted_at: null })
+  if (event.task_id) touchTaskSchedule(event.task_id, event.starts_at, event.ends_at)
+  logActivity('calendar_event.restored', 'calendar_event', event.id, {})
 }
 
 /** Resizing a task-linked block is the calendar's estimate editor: the new length writes back to duration_min. */

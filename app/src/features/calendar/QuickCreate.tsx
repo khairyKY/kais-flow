@@ -173,7 +173,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     } else if (kind === 'event') {
       const startsAt = allDay ? `${date}T00:00:00.000Z` : localToIso(date, startTime)
       const endsAt = allDay ? nextDayIso(date) : localToIso(date, endTime)
-      const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color)
+      const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay)
       if (!busy) updateEvent(event, { busy: false })
     } else {
       const startsAt = localToIso(date, startTime)

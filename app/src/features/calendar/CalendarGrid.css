@@ -7,7 +7,10 @@
      block landed at 11:00 at scale 1.1). Undo the inherited zoom so FC measures and writes in
      one space, then re-apply the factor to the calendar own lengths below. */
   zoom: calc(1 / var(--kf-ui-scale, 1));
-  --s: var(--kf-ui-scale, 1);
+  /* Punch 32: the view-options Density (S .8 / M 1 / L 1.2, set as --kf-cal-density on the
+     grid wrapper) rides the same --s scale as the zoom compensation — slot height, type and
+     insets all breathe together. M keeps the contract's 54px/hour exactly. */
+  --s: calc(var(--kf-ui-scale, 1) * var(--kf-cal-density, 1));
   --fc-border-color: var(--line-dashed);
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: var(--bg-input);
@@ -51,35 +54,59 @@
   color: var(--text-on-accent);
 }
 
-/* Column headers — two-line mono weekday / serif date, per dayHeaderContent in CalendarGrid.tsx */
-.fc .fc-col-header-cell { border-color: var(--line-dashed); padding: 0; }
-.fc .fc-col-header-cell-cushion { padding: 0; text-decoration: none; }
-.cal-day-header { padding: 10px 8px 8px; text-align: center; }
+/* ── Column headers — punch 39, WA2 contract "Day headers with daisy" (Calendar 1a):
+   daisy left of a mono weekday / display day-number stack. Past column: past.png 26px + whole
+   cell at 0.62 · today: clock-stage daisy 30px + shadow-drop-sm + lavender text + wash ·
+   future: future.png 26px. Header cells sit on paper-bone with --line-card verticals. ── */
+.fc .fc-col-header-cell { border-color: var(--line-card); background: var(--paper-bone); padding: 0; }
+.fc .fc-col-header-cell-cushion { display: block; padding: 0; text-decoration: none; }
+.cal-day-header {
+  display: flex;
+  align-items: center;
+  gap: calc(9px * var(--s));
+  padding: calc(10px * var(--s)) calc(12px * var(--s));
+  text-align: left;
+}
+.cal-day-header-past { opacity: 0.62; }
+.cal-day-daisy { height: calc(26px * var(--s)); flex: none; }
+.cal-day-header-today .cal-day-daisy { height: calc(30px * var(--s)); filter: var(--shadow-drop-sm); }
 .cal-day-header-name {
   font-family: var(--font-mono);
-  font-size: calc(9.5px * var(--s));
-  letter-spacing: var(--ls-mono-tight);
+  font-size: calc(9px * var(--s));
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
 }
 .cal-day-header-num {
   font-family: var(--font-display);
-  font-size: calc(17px * var(--s));
-  color: var(--text-primary);
-  margin-top: 1px;
+  font-size: calc(18px * var(--s));
+  color: var(--ink-body);
+  line-height: 1;
 }
-.fc .fc-day-today .cal-day-header-name { color: var(--acc-lavender-deep); }
-.fc .fc-day-today .cal-day-header-num { font-weight: var(--fw-semibold); }
+.cal-day-header-past .cal-day-header-num { color: var(--ink-muted); }
+.cal-day-header-today .cal-day-header-name,
+.cal-day-header-today .cal-day-header-num { color: var(--acc-lavender-text); }
+.cal-day-header-today .cal-day-header-num { font-size: calc(20px * var(--s)); font-weight: 600; }
+/* today column wash (contract: rgba(168,160,190,0.1) — same mix the body column uses) */
+.fc .fc-col-header-cell.fc-day-today { background: color-mix(in srgb, var(--acc-lavender) 10%, transparent); }
+/* contract: the header row closes with a 1.5px --line-solid rule */
+.fc .fc-scrollgrid-section-header > * { border-bottom: 1.5px solid var(--line-solid); }
 
-/* Axis + slot labels */
+/* Axis + slot labels. Punch 38: the time gutter is PINNED at the contract's 58px — FC sizes
+   the axis <col> from the widest cushion, so a fixed cushion width pins the column instead of
+   letting "12 AM" vs "08:00" drift it. */
 .fc .fc-timegrid-axis-cushion,
 .fc .fc-timegrid-slot-label-cushion {
   font-family: var(--font-mono);
   font-size: calc(9px * var(--s));
   color: var(--ink-hairline);
+  width: calc(58px * var(--s));
+  box-sizing: border-box;
+  text-align: right;
 }
-/* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm. */
-.fc .fc-timegrid-slot { border-color: var(--line-dashed); height: calc(27px * var(--s)); }
+/* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm.
+   Punch 38: hour line rides --line-card per CALENDAR.md §1 (was --line-dashed). */
+.fc .fc-timegrid-slot { border-color: var(--line-card); height: calc(27px * var(--s)); }
 .fc .fc-timegrid-slot-minor { border-color: transparent; }
 .fc .fc-timegrid-divider { display: none; }
 
@@ -267,6 +294,13 @@
    28x3 lavender grip (rendered via ::after above), so the resizer is now purely a hit area. */
 .fc .fc-event-resizer { border: none; background: none; }
 .fc .fc-timegrid-event .fc-event-resizer-end { height: 10px; bottom: 0; }
+/* Punch 35: top-edge resize (eventResizableFromStart) — hit area only; §2 defines a single
+   visible grip and it stays the bottom bar. */
+.fc .fc-timegrid-event .fc-event-resizer-start { height: 10px; top: 0; }
+
+/* Punch 38: §1 column inset — blocks sit 5px off both column edges (FC default was the
+   asymmetric `0 2.5% 0 2px`; the doubled class outranks FC's runtime-injected sheet). */
+.fc.fc-direction-ltr .fc-timegrid-col-events { margin: 0 calc(5px * var(--s)); }
 
 
 /* Night guard — colors.dark.css has no --paper-event value yet, so event chips would keep
@@ -301,6 +335,21 @@
   to   { transform: scale(1.04); }
 }
 .cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+
+/* Punch 35 / §7 invalid drop — the "soft no": released off-grid, the ghost shakes ±4px
+   decaying over ~320ms, dims to .6 and untilts (the shake replaces the float's rotation);
+   nothing is created. Applied via .kf-cal-softno on the ghost host (CalendarGrid.tsx).
+   Placed after the float rule so it wins the cascade at equal specificity. */
+@keyframes kfCalSoftNo {
+  0% { transform: translateX(0); }
+  15% { transform: translateX(-4px); }
+  30% { transform: translateX(4px); }
+  45% { transform: translateX(-3px); }
+  62% { transform: translateX(2px); }
+  80% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+.kf-cal-softno .kf-cal-ghost { animation: kfCalSoftNo 320ms var(--ease-out); opacity: 0.6; }
 
 /* The stepped placeholder, verbatim from 4c's move panel:
    border-radius 6px · 1.5px dashed --acc-lavender-deep · background rgba(168,160,190,0.1).
