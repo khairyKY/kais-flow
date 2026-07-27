@@ -12,6 +12,10 @@ export function useJournalEntries() {
         .from('journal_entries')
         .select('*')
         .order('entry_date', { ascending: false })
+        // D-1: a date now holds many rows; `created_at` is the entry's timestamp, so the
+        // day reads back in the order it was written (and callers doing `.find(same date)`
+        // — e.g. EveningRitual — land on the day's first entry, not an arbitrary one).
+        .order('created_at', { ascending: true })
       if (error) throw error
       return data as JournalEntry[]
     },
@@ -41,6 +45,9 @@ export function upsertJournalEntry(
     transcript: entry.transcript ?? null,
     media_paths: entry.media_paths ?? [],
     gratitude: entry.gratitude ?? [],
+    // PostgREST upsert replaces the whole row, so omitting this used to NULL it — i.e. any
+    // edit that raced a delete silently resurrected the entry out of Trash. Carry it.
+    deleted_at: entry.deleted_at ?? null,
     created_at: entry.created_at || nowIso(),
     updated_at: nowIso(),
   }
