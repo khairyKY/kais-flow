@@ -520,11 +520,6 @@ export function ProjectsPage() {
             <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand)', transform: 'rotate(-0.8deg)' }}>
               projects finish; areas just keep going — both grow leaves as you tend them ✿
             </div>
-            <div style={{ marginTop: 20 }}>
-              <Link to="/perennials" style={{ fontSize: 13, color: 'var(--acc-terra)', textDecoration: 'underline' }}>
-                View Repeating Perennials Series →
-              </Link>
-            </div>
           </div>
         )}
 
