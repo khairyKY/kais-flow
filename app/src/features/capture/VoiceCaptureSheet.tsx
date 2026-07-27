@@ -203,7 +203,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
 
         {/* Pulsing red Mic button */}
         <div
-          className={recording ? 'kf-mic-pulsing' : ''}
+          className={recording && motion ? 'kf-mic-pulsing' : ''}
           style={{
             width: 78,
             height: 78,
@@ -227,15 +227,11 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
         {/* Visual waveforms */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 3, height: 26, marginTop: 20 }}>
           {recording ? (
-            <>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-              <span className="kf-waveform-bar"></span>
-            </>
+            // WB-1: the bars looped forever regardless of the Effects toggle. The heights/
+            // delays are per-nth-child in capture.css; `animation:none` stills them in place.
+            Array.from({ length: 7 }, (_, i) => (
+              <span key={i} className="kf-waveform-bar" style={motion ? undefined : { animation: 'none' }} />
+            ))
           ) : (
             <span style={{ fontSize: 13, color: 'var(--ink-hairline)', fontStyle: 'italic' }}>—</span>
           )}

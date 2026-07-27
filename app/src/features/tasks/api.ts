@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { nextOccurrence } from './recurrence'
 import type { Task } from '../../lib/types'
@@ -106,9 +107,16 @@ export function uncompleteTask(task: Task): void {
 
 /** Deletes the task and any calendar block scheduled for it (caller should confirm first). */
 export function deleteTask(task: Task): void {
-  deleteEventsForTask(task.id)
-  writeRow('tasks', { ...task, deleted_at: new Date().toISOString() })
-  logActivity('task.deleted', 'task', task.id, {})
+  // Motion 3e (WB-1) — the exit lives here rather than at each call site: every task list
+  // renders id="task-<id>" on its row, so this one wiring point covers the row menu, swipe,
+  // done-row menu, the `#` keyboard delete, bulk delete, Today and Perennials "end series".
+  // animateRowRemoval falls through to an immediate mutation when there's no element on
+  // screen (bulk from a different view, tests) or under reduced motion.
+  animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
+    deleteEventsForTask(task.id)
+    writeRow('tasks', { ...task, deleted_at: new Date().toISOString() })
+    logActivity('task.deleted', 'task', task.id, {})
+  })
 }
 
 export function restoreTask(task: Task): void {

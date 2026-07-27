@@ -277,7 +277,9 @@ export function PerennialsPage() {
     const isConfirming = confirmEndSeries === t.id
 
     return (
-      <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(rowIndex) : {}) }}>
+      // Motion 3e (WB-1): "End series" calls the shared deleteTask(), which plays the row exit
+      // by looking the row up as `task-<id>` — the same scheme every other task list uses.
+      <div key={t.id} id={`task-${t.id}`} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(rowIndex) : {}) }}>
         <div
           onMouseEnter={() => setHoveredRow(t.id)}
           onMouseLeave={() => {

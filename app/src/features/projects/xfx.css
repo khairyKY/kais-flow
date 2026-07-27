@@ -24,6 +24,14 @@
 }
 .kf-lift:active { transform: scale(0.97); transition-duration: 80ms; }
 
+/* Motion 3e — list breathing, the ENTRY half (the exit half is animateRowRemoval in lib/motion).
+   Fresh mounts only: React reuses DOM nodes for unchanged keys, so a row that was already on
+   screen never replays it — which is exactly "new rows breathe in". `backwards` so the finished
+   animation stops pinning transform and the tilt/lift classes own it again.
+   Lists that already carry .kf-stagger-item don't need this — 4b's entryFadeUp is the same
+   arrival gesture, and stacking both on one element would fight over `animation`. */
+.kf-row-in { animation: rowIn 240ms var(--ease-out) backwards; }
+
 /* When a row both staggers in (4b) and lifts on hover (4a): fill `backwards` instead of
    `both`, so the finished animation stops pinning transform/opacity — the hover transition
    works, and no retained transform turns the row into a containing block for fixed
@@ -51,6 +59,16 @@
   pointer-events: none;
   background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
   animation: kfBloomGlow 3.6s ease-in-out infinite;
+}
+
+/* Effects 2e — milestone bloom: the same breath, but ONE, when a project milestone is checked
+   and the wisteria grows a stage. `forwards` matters — the keyframe ends at opacity 0 and
+   without it the glow would settle back to the element's un-animated (fully opaque) state.
+   Remount it with a changing React key to replay. */
+.kf-bloom-once {
+  animation-duration: 1.2s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
 }
 
 /* Effects 1t — amber drift: sparse autumn leaves (≤3) over a slipping plant,

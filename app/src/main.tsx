@@ -17,6 +17,11 @@ import '@fontsource/caveat/400.css'
 import '@fontsource/caveat/500.css'
 import '@fontsource/caveat/600.css'
 import './index.css'
+// Shared X-pass motion/effect classes (.kf-lift, .kf-lift-tilt, .kf-row-in, .kf-bloom, .kf-sway,
+// .kf-ink). Ten unrelated features already import this from features/projects/; WB-1 needs it on
+// surfaces that import no CSS at all (kit chips, task rows, calendar), so it loads once here
+// instead of another six per-file imports. index.css is frozen, hence main.tsx.
+import './features/projects/xfx.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

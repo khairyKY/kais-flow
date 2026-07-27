@@ -341,6 +341,24 @@ export function CalendarPage() {
         .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
         @media (max-width: 767px) { .cal-railsplit { display: none; } }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
+        /* Motion 5b "drag lift" — the one grammar for every draggable, matching lib/motion's
+           dragLift(): pick-up 140ms to scale 1.04 / +1.2deg under a 14/30 shadow, release
+           settles back over 320ms with the spring overshoot. The tilt composes via --kf-tilt.
+           Motion 4a hover/press rides the same transition. */
+        .unscheduled-task {
+          cursor: grab;
+          box-shadow: var(--shadow-crisp);
+          transform: rotate(var(--kf-tilt, 0deg));
+          transition: transform 320ms var(--ease-spring), box-shadow 320ms var(--ease-out);
+        }
+        @media (hover: hover) { .unscheduled-task:hover { box-shadow: var(--shadow-card); } }
+        .motion-on .unscheduled-task:active {
+          cursor: grabbing;
+          opacity: 0.92;
+          transform: rotate(var(--kf-tilt, 0deg)) scale(1.04) rotate(1.2deg);
+          box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
+          transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+        }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
         @media (max-width: 767px) {
           .cal-shell { flex-direction: column; }
@@ -395,14 +413,17 @@ export function CalendarPage() {
                     data-task-id={t.id}
                     data-title={t.title}
                     data-duration={t.duration_min ?? 30}
+                    // Motion 5b (WB-1): the card's pasted-in tilt and its resting shadow moved
+                    // to CSS so the pick-up lift can win the cascade — an inline transform /
+                    // box-shadow can't be overridden by a :active rule. FullCalendar's external
+                    // Draggable never sets a dragging class on the source card, so :active is
+                    // the only pick-up signal available here.
                     style={{
+                      ['--kf-tilt' as string]: `${RAIL_TILTS[i % RAIL_TILTS.length]}deg`,
                       background: 'var(--paper-parchment)',
                       border: '1px solid var(--line-card)',
-                      boxShadow: 'var(--shadow-crisp)',
                       borderRadius: 3,
                       padding: '11px 12px',
-                      cursor: 'grab',
-                      transform: `rotate(${RAIL_TILTS[i % RAIL_TILTS.length]}deg)`,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>

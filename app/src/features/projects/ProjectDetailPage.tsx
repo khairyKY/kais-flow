@@ -333,6 +333,7 @@ export function ProjectDetailPage() {
     navigate(`/projects/${newProj.id}`)
   }
 
+  const [milestoneBloom, setMilestoneBloom] = useState(0)
   const handleToggleMilestone = (milestoneId: string) => {
     if (!project || !project.milestones) return
     const m = project.milestones.find((x) => x.id === milestoneId)
@@ -356,6 +357,10 @@ export function ProjectDetailPage() {
     }
 
     toggleProjectMilestone(project, milestoneId)
+    // Effects 2e (WB-1) — completing a milestone grows the wisteria a stage (milestonePct
+    // already drives the image); this is the short bloom that marks the moment. Counter, not
+    // boolean: it doubles as the React key that replays the one-shot on every completion.
+    if (nextCompleted) setMilestoneBloom((n) => n + 1)
   }
 
   const commitMilestoneEdit = () => {
@@ -519,8 +524,12 @@ export function ProjectDetailPage() {
             <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 26, opacity: 0.6 }} title="p0 — where it started" />
             <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--acc-moss)', opacity: 0.6, margin: '8px 0' }}></span>
             <span style={{ position: 'relative', display: 'inline-flex' }}>
-              {/* Effects 1e — bloom glow: one gold breath when milestones hit 100% */}
+              {/* Effects 1e — bloom glow: one gold breath, looping, while the project sits at 100% */}
               {motion && milestonePct === 100 && <span className="kf-bloom" style={{ inset: -10 }} />}
+              {/* Effects 2e — milestone bloom: a single breath as the plant crosses a stage. */}
+              {motion && milestonePct < 100 && milestoneBloom > 0 && (
+                <span key={milestoneBloom} className="kf-bloom kf-bloom-once" style={{ inset: -10 }} />
+              )}
               <img src={wisteriaImg} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 26, position: 'relative' }} title={`p${milestonePct}`} />
             </span>
             <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--line-dashed)', margin: '8px 0' }}></span>

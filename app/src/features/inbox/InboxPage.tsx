@@ -24,7 +24,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { Button, Chip } from '../../components/kit'
-import { useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, isToday } from './inboxDisplay'
 import type { InboxItem, InboxKind } from '../../lib/types'
 import './Inbox.css'
@@ -38,6 +38,13 @@ const A = '/ds/assets'
 // so the number is duplicated rather than imported.
 const CONFIDENCE_THRESHOLD = 0.75
 const PROJECT_DOTS = ['--acc-moss', '--acc-blossom', '--acc-lavender', '--acc-hydrangea', '--acc-buttercream', '--acc-sage']
+
+// Motion 3e (WB-1) — every inbox removal exits through the F4 primitive: slide 200ms,
+// collapse 180ms, *then* the mutation, so the gap heals instead of snapping shut. Both row
+// types render `id="inbox-<id>"` (already there for roving focus), so the lookup is free.
+function breatheOut(itemId: string, mutate: () => void) {
+  animateRowRemoval(document.getElementById(`inbox-${itemId}`), mutate)
+}
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -208,11 +215,14 @@ export function InboxPage() {
     if (motion) {
       setFilingIds((s) => new Set(s).add(item.id))
       window.setTimeout(() => {
-        fileToTask(item, opts)
-        setFilingIds((s) => {
-          const next = new Set(s)
-          next.delete(item.id)
-          return next
+        // Motion 1c florets have drifted; now 3e closes the gap (2d: "source position heals").
+        breatheOut(item.id, () => {
+          fileToTask(item, opts)
+          setFilingIds((s) => {
+            const next = new Set(s)
+            next.delete(item.id)
+            return next
+          })
         })
       }, 260)
     } else {
@@ -238,7 +248,7 @@ export function InboxPage() {
         advance(item)
       },
     },
-    { keys: ['d'], label: 'Dismiss', run: (item) => { dismissInboxItem(item); advance(item) } },
+    { keys: ['d'], label: 'Dismiss', run: (item) => { breatheOut(item.id, () => dismissInboxItem(item)); advance(item) } },
     { keys: ['s'], label: 'Snooze', run: (item) => setKbSnoozeId(item.id) },
     { keys: ['Enter'], label: 'Open (edit title)', run: (item) => setEditRequestId(item.id) },
   ]
@@ -370,7 +380,7 @@ export function InboxPage() {
                       selectionActive={selectionActive}
                       onToggleSelect={() => toggleSelected(item.id)}
                       onFile={() => fileWithFloret(item, {})}
-                      onDismiss={() => dismissInboxItem(item)}
+                      onDismiss={() => breatheOut(item.id, () => dismissInboxItem(item))}
                     />
                   ))}
                 </div>
@@ -459,11 +469,17 @@ function deepLinkBannerStyle(isMobile: boolean): React.CSSProperties {
 
 // ── 1b — Inbox zero ──
 function EmptyInboxCard() {
+  const motion = useMotionEnabled()
   return (
     <div style={{ padding: '60px 20px 54px', textAlign: 'center' }}>
       {/* D1 (2026-07-18 audit): margin:0 auto — Tailwind Preflight's img{display:block} defeats
           the card's text-align:center; this restores Inbox.dc.html 1b's centered bloom. */}
-      <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, margin: '0 auto', filter: 'var(--shadow-drop-sm)' }} />
+      {/* Effects 1e (WB-1) — bloom glow on a data-driven milestone. Projects use p100; the
+          inbox's milestone is zero itself, which is what "one calm bloom ✿" below names. */}
+      <span style={{ position: 'relative', display: 'inline-block' }}>
+        {motion && <span className="kf-bloom" style={{ inset: -22 }} />}
+        <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, margin: '0 auto', position: 'relative', filter: 'var(--shadow-drop-sm)' }} />
+      </span>
       <div style={{ marginTop: 18, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Inbox zero</div>
       <p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
         Captures land here when the command bar can't tell where they go. Nothing waits on you.
@@ -571,7 +587,10 @@ function TriageCard({
   return (
     <div
       id={`inbox-${item.id}`}
-      className="ib-card"
+      // Motion 4a + 3e (WB-1). kf-lift-TILT, not kf-lift: the card carries a pasted-in
+      // rotation, and the plain lift would erase it on hover. The tilt moves to --kf-tilt so
+      // the class owns `transform` outright (an inline one can't be overridden on :hover).
+      className="ib-card kf-lift-tilt kf-row-in"
       tabIndex={highlighted ? 0 : -1}
       onClick={(e) => {
         // Card-surface click toggles select; anything interactive (buttons, inputs, the Select
@@ -581,6 +600,7 @@ function TriageCard({
         onToggleSelect()
       }}
       style={{
+        ['--kf-tilt' as string]: `${rotate}deg`,
         position: 'relative',
         background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
@@ -589,10 +609,11 @@ function TriageCard({
         borderRadius: 3,
         boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`,
         padding: size.pad,
-        transform: `rotate(${rotate}deg)`,
         overflow: 'hidden',
         opacity: filing ? 0.55 : 1,
-        transition: 'opacity 200ms var(--ease-out)',
+        // Must re-declare transform/box-shadow: an inline `transition` replaces the class's
+        // wholesale, and without them the 4a lift would snap instead of easing.
+        transition: 'opacity 200ms var(--ease-out), transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out)',
       }}
     >
       {filing && (
@@ -685,7 +706,7 @@ function TriageCard({
         <Button type="button" variant="secondary" onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 12px' : '8px 14px' }}>
           Snooze
         </Button>
-        <Button type="button" variant="ghost" onClick={() => dismissInboxItem(item)} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px' }}>
+        <Button type="button" variant="ghost" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px' }}>
           Dismiss
         </Button>
       </div>
@@ -708,7 +729,7 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
   return (
     <div
       id={`inbox-${item.id}`}
-      className="ib-card"
+      className="ib-card kf-lift kf-row-in"
       // Punch 26: these rows are in the same roving-focus list as the triage cards, so they
       // need the same focusable/ringed treatment — without it a keyboard triage that reaches
       // the GitHub group loses all sense of where it is.

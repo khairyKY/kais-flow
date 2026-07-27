@@ -164,6 +164,20 @@
   box-shadow: none;
   overflow: hidden;
 }
+/* Motion 4a (WB-1) — hover & press on the block itself. Restated here rather than adding
+   .kf-lift: the block element is FullCalendar's, built by FC, and the only className we control
+   is on the inner content slot (.kf-ev-row), which would lift the text out of its own box.
+   Values match .kf-lift exactly (xfx.css): -1px + shadow on hover, 0.97 at 80ms on press.
+   FC places blocks with `inset`, not transform, so nothing is fighting for the property —
+   except mid-drag, where the mirror/ghost carry their own transforms and this can't apply. */
+.fc .fc-timegrid-event {
+  transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+@media (hover: hover) {
+  .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+}
+.fc .fc-timegrid-event:active { transform: scale(0.97); transition-duration: 80ms; }
+
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
    can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
    ellipsis and the time is dropped rather than half-drawn. The grip goes too — there's no
@@ -315,9 +329,12 @@
 /* Motion.dc.html 4c "calendar drags" — the ghost floats free while the placeholder snaps to
    the grid. Scoped to `.cal-motion-on` (CalendarPage toggles it via useMotionEnabled) so it's
    a no-op under reduced-motion or the Effects-off setting. */
+/* WB-1: the 1.04 pick-up scale (Motion 5b) is baked into the float rather than sitting in a
+   separate lift-in keyframe — the float owns the `animation` slot on this element, so the
+   old calGridDragLiftIn could never play and was removed as dead code. */
 @keyframes calGridDragFloat {
-  0%, 100% { transform: rotate(-0.8deg) translateY(0); }
-  50% { transform: rotate(1deg) translateY(-2px); }
+  0%, 100% { transform: rotate(-0.8deg) scale(1.04) translateY(0); }
+  50% { transform: rotate(1deg) scale(1.04) translateY(-2px); }
 }
 /* Motion 4c — "the ghost floats free, the placeholder snaps to the grid."
    The two halves are now genuinely different elements:
@@ -329,12 +346,10 @@
   box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
   border-radius: 2px;
 }
-/* Motion 5b lift-in, then the 2c wobble — on the ghost, which is the thing "in hand". */
-@keyframes calGridDragLiftIn {
-  from { transform: scale(1); }
-  to   { transform: scale(1.04); }
-}
+/* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
 .cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+/* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
+.kf-cal-ghost { transform: scale(1.04); }
 
 /* Punch 35 / §7 invalid drop — the "soft no": released off-grid, the ghost shakes ±4px
    decaying over ~320ms, dims to .6 and untilts (the shake replaces the float's rotation);

@@ -12,6 +12,8 @@ import { parseCommand } from '../command-bar/parseCommand'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
+import { useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { writeRow } from '../../lib/outbox'
 
@@ -71,6 +73,7 @@ const REPEAT_OPTIONS = [
 const DURATION_CHIPS = [15, 30, 60, 120]
 
 export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateProps) {
+  const motion = useMotionEnabled()
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
@@ -150,7 +153,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     : []
   const holdsTask = holdsTaskId ? tasks.find((t) => t.id === holdsTaskId) : null
 
-  function submit() {
+  function submit(from?: HTMLElement) {
+    seedPlant(from, motion) // Motion 5f — every calendar create lands with the drop+puff
     if (kind === 'task') {
       const dueAt = date ? localToIso(date, startTime || '09:00') : null
       const task = createTask({
@@ -460,7 +464,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     <>
       <button
         type="button"
-        onClick={submit}
+        onClick={(e) => submit(e.currentTarget)}
         style={{ width: '100%', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 14.5, padding: 14, borderRadius: 999, boxShadow: 'var(--shadow-cta)', marginTop: 16, cursor: 'pointer' }}
       >
         {KIND_META[kind].cta}
@@ -491,7 +495,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         )}
         <button
           type="button"
-          onClick={submit}
+          onClick={(e) => submit(e.currentTarget)}
           style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: expanded ? 13 : 12.5, padding: expanded ? '10px 22px' : '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
         >
           {expanded ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}

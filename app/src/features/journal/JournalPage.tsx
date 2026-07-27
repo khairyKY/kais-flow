@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
-import { useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
 import { ConfirmCard } from '../projects/ConfirmCard'
@@ -156,9 +157,10 @@ export function JournalPage() {
 
   /** "+ New entry" — punch 47: this used to only jump to today. Now it actually adds one,
    * stamped now, focused for typing. */
-  const addEntry = (date = todayStr) => {
+  const addEntry = (date = todayStr, from?: HTMLElement) => {
     setSelectedDate(date)
     const row = upsertJournalEntry({ entry_date: date, body: '' }, true)
+    seedPlant(from, motion) // Motion 5f — "+ New entry" drops a seed into the day's column
     wantFocus.current = row.id
   }
 
@@ -173,17 +175,21 @@ export function JournalPage() {
   /** Delete → Trash, restorable — same soft-delete the four trashable tables share. */
   const removeEntry = (entry: JournalEntry) => {
     // A queued body save would upsert the row back with deleted_at null, i.e. resurrect it.
+    // Cancel it before the exit animation, not inside it — the debounce must die immediately.
     window.clearTimeout(timers.current[entry.id])
     const row = { ...entry, body: bodyOf(entry) }
     const heir = dayEntries.find((e) => e.id !== entry.id)
-    deleteJournalEntry(row)
-    // The day's mood / three small things live on its first entry — hand them down rather
-    // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
-    // `dayField` reads the earliest holder, which is the restored row again.)
-    if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
-      upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
-    }
-    toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+    // Motion 3e (WB-1) — the entry slides out and the day's column closes over it.
+    animateRowRemoval(document.getElementById(`journal-${entry.id}`), () => {
+      deleteJournalEntry(row)
+      // The day's mood / three small things live on its first entry — hand them down rather
+      // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
+      // `dayField` reads the earliest holder, which is the restored row again.)
+      if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
+        upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
+      }
+      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+    })
   }
 
   /** Mood + the three small things are day-level; they ride on the day's first entry. */
@@ -319,7 +325,7 @@ export function JournalPage() {
     )
     if (dayEntries.length === 0) return ta(null, '', startFirstEntry)
     return dayEntries.map((entry, i) => (
-      <div key={entry.id} style={i === 0 ? undefined : { marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+      <div key={entry.id} id={`journal-${entry.id}`} className="kf-row-in" style={i === 0 ? undefined : { marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
             {entryTime(entry.created_at)}
@@ -456,7 +462,7 @@ export function JournalPage() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
-                  <span onClick={() => addEntry(selectedDate)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
+                  <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
                   <span>＋ Photo</span>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
@@ -561,7 +567,7 @@ export function JournalPage() {
         {/* Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
-            onClick={() => addEntry()}
+            onClick={(e) => addEntry(todayStr, e.currentTarget)}
             style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}
           >
             ＋ New entry

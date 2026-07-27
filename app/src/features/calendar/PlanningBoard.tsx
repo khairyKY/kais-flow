@@ -11,6 +11,8 @@ import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
+import { dragLift, useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { scheduleNextWeek, scheduleThisWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
@@ -40,16 +42,23 @@ function applyColumn(task: Task, key: PlanningColumnKey): void {
 
 function DraggableCard({ task, selected, onToggleSelect, bulk }: { task: Task; selected: boolean; onToggleSelect: () => void; bulk?: BulkActions }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+  const motionOn = useMotionEnabled()
+  // Motion 5b via the shared grammar (WB-1) — was a flat 0.35 opacity fade, which reads as
+  // "disabled", not "picked up". dnd-kit owns the follow-the-pointer translate, so the lift's
+  // scale/rotate composes onto it rather than replacing it.
+  const lift = dragLift(isDragging, motionOn)
+  const follow = transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ''
+  const scale = lift.transform && lift.transform !== 'none' ? String(lift.transform) : ''
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
       style={{
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        ...lift,
+        transform: `${follow} ${scale}`.trim() || undefined,
         touchAction: 'none',
-        cursor: 'grab',
-        opacity: isDragging ? 0.35 : 1,
+        cursor: isDragging ? 'grabbing' : 'grab',
         zIndex: isDragging ? 10 : undefined,
         position: 'relative',
       }}
@@ -79,12 +88,14 @@ function BoardColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.key })
   const [quickAdd, setQuickAdd] = useState('')
+  const motionOn = useMotionEnabled()
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     const title = quickAdd.trim()
     if (!title) return
     applyColumn(createTask({ title }), column.key)
+    seedPlant(e.currentTarget as HTMLElement, motionOn) // Motion 5f
     setQuickAdd('')
   }
 

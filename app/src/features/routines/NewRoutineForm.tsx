@@ -5,6 +5,8 @@ import { useDomains } from '../domains/api'
 import { Select } from '../../components/Select'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
+import { useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import type { Cadence } from '../../lib/types'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
@@ -41,6 +43,7 @@ function addDays(key: string, n: number): string {
 }
 
 export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose: () => void; initialChallenge?: boolean }) {
+  const motion = useMotionEnabled()
   useEscapeStack(true, onClose)
   useBodyScrollLock(true)
   const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -66,9 +69,10 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
     setCustomWeekdays((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day].sort()))
   }
 
-  function submit() {
+  function submit(from?: HTMLElement) {
     const trimmed = name.trim()
     if (!trimmed) return
+    seedPlant(from, motion) // Motion 5f — the seed drops out of the plant button
     const cadence = cadenceFor(repeatMode, customWeekdays)
     const timeOfDay = timeMode === 'anytime' ? null : timeMode
     const clockTime = reminderOn ? reminderTime : null
@@ -306,7 +310,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         )}
         <button
           type="button"
-          onClick={submit}
+          onClick={(e) => submit(e.currentTarget)}
           style={{ flex: isMobile ? 1 : 'none', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: isMobile ? 14.5 : 13, padding: isMobile ? '14px' : '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
         >
           <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: isMobile ? 17 : 16 }} />

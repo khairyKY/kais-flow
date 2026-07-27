@@ -21,7 +21,8 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import type { Area, Domain, Project, Task } from '../../lib/types'
@@ -284,6 +285,14 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
 
 // List body only — the shared page header + TabBar above it live in TasksPage, so Done
 // keeps the same tabs as every other view (Tasks.dc.html 2a).
+// Effects 1a — the Done view's ambient petals. Positions/sizes are the export's two originals
+// plus a third (the recipe asks for 3-5); `rest` is the static rotation used when motion is off.
+const DONE_PETALS = [
+  { right: 18, top: -4, w: 11, h: 9, opacity: 0.85, dur: 7, delay: 0, rest: 24 },
+  { right: 120, top: 64, w: 9, h: 7, opacity: 0.55, dur: 9, delay: 2.4, rest: -18 },
+  { right: 66, top: 18, w: 8, h: 6, opacity: 0.45, dur: 8, delay: 4.8, rest: 8 },
+]
+
 function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: boolean; justCompletedId: string | null }) {
   const [expanded, setExpanded] = useState(false)
   const doneRecent = tasks.filter((t) => t.status === 'done' && t.completed_at && daysSince(t.completed_at) <= 30)
@@ -294,8 +303,29 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'relative', marginTop: 16 }}>
-        <span aria-hidden style={{ position: 'absolute', right: 18, top: -4, width: 11, height: 9, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: '70% 30% 60% 40%', transform: 'rotate(24deg)', opacity: 0.85 }} />
-        <span aria-hidden style={{ position: 'absolute', right: 120, top: 64, width: 9, height: 7, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: '70% 30% 60% 40%', transform: 'rotate(-18deg)', opacity: 0.55 }} />
+        {/* Effects 1a (WB-1) — petal fall over the Done view. These were hand-placed statics;
+            the recipe is an ambient drift of 3-5 petals while the view is open, on the token
+            petalFall keyframe. Off entirely when the Effects toggle is off. */}
+        {DONE_PETALS.map((p, i) => (
+          <span
+            key={i}
+            aria-hidden
+            style={{
+              position: 'absolute',
+              right: p.right,
+              top: p.top,
+              width: p.w,
+              height: p.h,
+              background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',
+              borderRadius: '70% 30% 60% 40%',
+              opacity: p.opacity,
+              pointerEvents: 'none',
+              ...(motion
+                ? { animation: `petalFall ${p.dur}s linear ${p.delay}s infinite` }
+                : { transform: `rotate(${p.rest}deg)` }),
+            }}
+          />
+        ))}
 
         {doneToday.length > 0 && (
           <>
@@ -404,7 +434,12 @@ export function TasksPage() {
     }
     setCompletingIds((prev) => new Set(prev).add(task.id))
     window.setTimeout(() => {
-      setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+      // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
+      // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
+      // then the row leaves the list.
+      animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
+        setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+      })
     }, 650)
   }
   const displayTasks = useMemo(
@@ -637,7 +672,10 @@ export function TasksPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              if (title.trim()) createTask({ title: title.trim(), dueAt: activeTab === 'today' ? now.toISOString() : undefined })
+              if (title.trim()) {
+                createTask({ title: title.trim(), dueAt: activeTab === 'today' ? now.toISOString() : undefined })
+                seedPlant(e.currentTarget, motion) // Motion 5f — the seed drops out of the quick-add
+              }
               setTitle('')
             }}
             style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 14px', marginTop: 18 }}

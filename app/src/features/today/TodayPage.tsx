@@ -869,6 +869,10 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   const to = row.entity_type === 'domain' ? '/projects' : `/projects/${row.entity_id}`
   return (
     <div
+      // Motion 3e (WB-1): markReviewed() looks the card up by this id to play the exit
+      // before the stack heals. Same scheme in the Weekly Review sweep.
+      id={`slipping-${row.entity_type}:${row.entity_id}`}
+      className="kf-lift"
       onClick={() => navigate(to)}
       role="link"
       // deviation(punch 15, 2026-07-26): export tilts this card rotate(0.4deg); dropped — the
