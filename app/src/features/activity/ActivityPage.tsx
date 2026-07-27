@@ -324,7 +324,7 @@ export function ActivityPage() {
     .aicon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; z-index:2; box-shadow:var(--shadow-crisp); }
     .aline { flex:1; width:1.5px; border-left:1.5px dashed var(--line-dashed); margin:2px 0; }
     .abody { flex:1; min-width:0; padding-bottom:20px; }
-    button.abody { background:none; border:none; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
+    button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
     button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
     .chip { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
     .fhelp { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.06em; color:var(--ink-hairline); }
