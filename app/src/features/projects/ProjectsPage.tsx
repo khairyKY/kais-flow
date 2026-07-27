@@ -707,7 +707,8 @@ export function ProjectsPage() {
                 Archived projects stay searchable · restore any time
               </span>
               <span style={{ flex: 1 }}></span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Export all ↓</span>
+              {/* Punch 8: "Export all ↓" was styled clickable with no handler and no export
+                  implementation anywhere. Removed rather than faked; the archive still reads. */}
             </div>
           </div>
         )}

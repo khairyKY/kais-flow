@@ -353,7 +353,8 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
         </span>
         <span style={{ flex: 1 }} />
         <button type="button" disabled={!google} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: google ? 'pointer' : 'default', opacity: google ? 1 : 0.5 }}>Sync now</button>
-        <button type="button" disabled={!google} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: google ? 'pointer' : 'default', opacity: google ? 1 : 0.5 }}>Disconnect</button>
+        {/* Punch 8: Disconnect had no handler and there's no disconnect API — integrations
+            are v1.1. Nothing clickable that does nothing; the status above stays truthful. */}
       </div>
       <div style={fhelp}>mirrors events in and out invisibly — never its own UI · scopes: calendar.events read/write</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
@@ -637,7 +638,7 @@ function IntegrationsPage() {
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)' }} />
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Connected · synced {new Date(github.updated_at).toLocaleTimeString()}</span>
               </div>
-              <div style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Disconnect</div>
+              {/* Punch 8: same — no disconnect API exists yet (v1.1). */}
             </div>
           ) : (
             <SoonChip />
