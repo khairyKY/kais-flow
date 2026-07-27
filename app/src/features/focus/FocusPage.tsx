@@ -526,7 +526,7 @@ export function FocusPage() {
           {/* Bed 4: Routines */}
           <div style={{ textAlign: 'center', position: 'relative' }}>
             <img className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 140, animationDelay: '0.9s', filter: 'var(--shadow-drop-sm)' }} />
-            <span className="focus-dew-glint" style={{ position: 'absolute', right: 8, top: 26, width: 9, height: 9, background: 'radial-gradient(circle at 40% 40%, #fff, rgba(255,255,255,0) 65%)', borderRadius: '50%' }}></span>
+            <span className="focus-dew-glint" style={{ position: 'absolute', right: 8, top: 26, width: 9, height: 9, background: 'radial-gradient(circle at 40% 40%, var(--star, #FDFBF4), transparent 65%)', borderRadius: '50%' }}></span>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(1deg)' }}>
               {vineData.note}
             </div>

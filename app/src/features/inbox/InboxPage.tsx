@@ -62,8 +62,8 @@ const KIND_LABEL: Record<InboxKind, string> = { text: 'Typed', voice: 'Voice', g
 const KIND_CHIP_STYLE: Record<InboxKind, { background?: string; color?: string; border?: string }> = {
   text: { border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' },
   email: { border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' },
-  voice: { background: 'rgba(181,101,74,0.12)', color: 'var(--acc-terra)' },
-  github_issue: { background: 'rgba(122,148,110,0.18)', color: 'var(--acc-sage-text)' },
+  voice: { background: 'color-mix(in srgb, var(--acc-terra) 12%, transparent)', color: 'var(--acc-terra)' },
+  github_issue: { background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)' },
 }
 
 function KindChip({ kind }: { kind: InboxKind }) {
@@ -460,8 +460,8 @@ function deepLinkBannerStyle(isMobile: boolean): React.CSSProperties {
     display: 'flex',
     alignItems: 'center',
     gap: 10,
-    background: 'rgba(154,180,190,0.14)',
-    border: '1px solid rgba(154,180,190,0.35)',
+    background: 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--acc-hydrangea) 35%, transparent)',
     borderRadius: 6,
     padding: isMobile ? '8px 11px' : '9px 14px',
     marginTop: isMobile ? 14 : 24,
@@ -605,7 +605,7 @@ function TriageCard({
         position: 'relative',
         background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
-        outline: highlighted ? '2px solid rgba(154,180,190,0.5)' : 'none',
+        outline: highlighted ? '2px solid color-mix(in srgb, var(--acc-hydrangea) 50%, transparent)' : 'none',
         outlineOffset: 2,
         borderRadius: 3,
         boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`,
@@ -646,11 +646,11 @@ function TriageCard({
         </span>
       </div>
 
-      <div style={{ marginTop: 11, display: 'flex', alignItems: 'center', gap: 9, background: confident ? 'rgba(154,180,190,0.14)' : 'var(--paper-bone)', borderRadius: 6, padding: size.barPad, flexWrap: 'wrap' }}>
+      <div style={{ marginTop: 11, display: 'flex', alignItems: 'center', gap: 9, background: confident ? 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)' : 'var(--paper-bone)', borderRadius: 6, padding: size.barPad, flexWrap: 'wrap' }}>
         {parse ? (
           confident ? (
             <>
-              <Chip tone="hydrangea" style={{ background: 'rgba(154,180,190,0.3)' }}>AI · {parse.kind ?? 'note'} · {pct}%</Chip>
+              <Chip tone="hydrangea" style={{ background: 'color-mix(in srgb, var(--acc-hydrangea) 30%, transparent)' }}>AI · {parse.kind ?? 'note'} · {pct}%</Chip>
               <span style={{ fontSize: size.meta, color: 'var(--ink-body)' }}>
                 "<EmojiText text={parse.cleaned_text ?? item.raw_text} />"{dueLabel && <> · due <b style={{ fontWeight: 600 }}>{dueLabel}</b></>}{projectName && <> · → {projectName}</>}
               </span>
@@ -741,7 +741,7 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
         if ((e.target as HTMLElement).closest('button, input, a, [data-no-select]')) return
         onToggleSelect()
       }}
-      style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', outline: highlighted ? '2px solid rgba(154,180,190,0.5)' : 'none', outlineOffset: 2, borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
+      style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', outline: highlighted ? '2px solid color-mix(in srgb, var(--acc-hydrangea) 50%, transparent)' : 'none', outlineOffset: 2, borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
       <KindChip kind="github_issue" />
@@ -784,7 +784,7 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
         dismissed captures rest here, then compost after 30 days ✿
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 9 : 12, padding: compact ? '8px 11px' : '10px 14px', background: 'rgba(154,180,190,0.1)', border: '1px solid rgba(154,180,190,0.28)', borderRadius: compact ? 7 : 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 9 : 12, padding: compact ? '8px 11px' : '10px 14px', background: 'color-mix(in srgb, var(--acc-hydrangea) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-hydrangea) 28%, transparent)', borderRadius: compact ? 7 : 8 }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
           {items.length} dismissed · {compact ? 'clears after 30 days' : 'auto-clears after 30 days'}
@@ -875,7 +875,7 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
       <div className="ib-swipe-actions">
         <div
           onClick={() => { restoreInboxItem(item); swipe.reset() }}
-          style={{ width: SWIPE_MAX, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(122,148,110,0.94)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }}
+          style={{ width: SWIPE_MAX, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'color-mix(in srgb, var(--acc-moss) 94%, transparent)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }}
         >
           <RestoreIcon color="var(--paper-parchment)" />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Restore</span>
@@ -884,7 +884,7 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
       <div
         className="ib-swipe-content"
         {...swipe.handlers}
-        style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : undefined }}
+        style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(var(--kf-shadow-rgb, 60,52,38),0.14)' : undefined }}
       >
         <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 10, flex: 'none' }}>✕</span>
         <div style={{ flex: 1 }}>

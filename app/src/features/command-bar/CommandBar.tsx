@@ -141,7 +141,7 @@ export function CommandBar() {
   return (
     <div
       className="kf-scrim"
-      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96 }}
       onClick={() => setOpen(false)}
     >
       {/* X2 Motion 3c — overlay card arrives with the scrim (kf classes, AppLayout shell CSS).
@@ -218,11 +218,11 @@ export function CommandBar() {
               padding: '8px 10px',
               borderRadius: 6,
               cursor: 'pointer',
-              background: jumpSelected ? 'rgba(168,160,190,0.22)' : 'transparent',
+              background: jumpSelected ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
               border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
             }}
           >
-            <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)' }}>Jump</span>
+            <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
             <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
               {jumpSelected ? '↵' : '↓ then ↵'}
@@ -232,19 +232,19 @@ export function CommandBar() {
         {text.trim() && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
             {parsed.dueAt && (
-              <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'rgba(168,160,190,0.22)' }}>
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
                 {new Date(parsed.dueAt).toLocaleString()}
               </span>
             )}
             {parsed.durationMin != null && (
-              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)' }}>
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' }}>
                 {formatDuration(parsed.durationMin)}
               </span>
             )}
             {parsed.priority != null && (() => {
               const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
               // High's tint is the contract's literal rgba(201,165,90,0.22); other priorities fall back to a computed tint.
-              const background = parsed.priority === 2 ? 'rgba(201,165,90,0.22)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
+              const background = parsed.priority === 2 ? 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
               return (
                 <span style={{ ...CHIP_BASE, color, background }}>
                   {priorityFlag(parsed.priority)} {PRIORITY_NAME[parsed.priority]}
@@ -252,7 +252,7 @@ export function CommandBar() {
               )
             })()}
             {matchChip && (
-              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'rgba(122,148,110,0.2)' }}>
+              <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' }}>
                 → {matchChip}
               </span>
             )}

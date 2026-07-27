@@ -189,7 +189,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
           maxWidth: 440,
           background: 'var(--paper-linen)',
           borderRadius: '22px 22px 0 0',
-          boxShadow: '0 -10px 30px rgba(60,52,38,0.2)',
+          boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',
           padding: '22px 22px calc(30px + env(safe-area-inset-bottom))',
           zIndex: 110,
           textAlign: 'center',
@@ -213,7 +213,7 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto',
-            boxShadow: '0 0 0 8px rgba(181, 101, 74, 0.14), var(--shadow-cta)',
+            boxShadow: '0 0 0 8px color-mix(in srgb, var(--acc-terra) 14%, transparent), var(--shadow-cta)',
             transition: 'box-shadow var(--dur-normal) var(--ease-natural)',
           }}
         >

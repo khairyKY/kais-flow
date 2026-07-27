@@ -19,9 +19,13 @@
       } catch (e) {}
       // Paper texture (punch 53) — same pre-paint treatment so the grain never flashes at the
       // default before the Settings value loads. Consumed by body::before in src/index.css.
+      // punch 57: the null check is load-bearing — Number(null) is 0, so without it every
+      // device that has never touched the slider booted with --kf-grain-opacity: 0 and lost
+      // the grain in BOTH themes. Unset must fall through to index.css's 0.5 default.
       try {
-        var g = Number(localStorage.getItem('kf_grain'))
-        if (Number.isFinite(g) && g >= 0 && g <= 100) {
+        var raw = localStorage.getItem('kf_grain')
+        var g = Number(raw)
+        if (raw !== null && Number.isFinite(g) && g >= 0 && g <= 100) {
           document.documentElement.style.setProperty('--kf-grain-opacity', String(g / 100))
         }
       } catch (e) {}

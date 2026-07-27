@@ -115,7 +115,7 @@ export function dragLift(isDragging: boolean, motionOn = true): React.CSSPropert
   if (!motionOn) return { opacity: isDragging ? 0.6 : 1 }
   return {
     transform: isDragging ? 'scale(1.04) rotate(1.2deg)' : 'none',
-    boxShadow: isDragging ? '0 14px 30px rgba(60,52,38,0.26)' : undefined,
+    boxShadow: isDragging ? '0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.26)' : undefined,
     // Asymmetric on purpose: the pick-up is quick, the release settles with the overshoot.
     transition: isDragging
       ? 'transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out)'

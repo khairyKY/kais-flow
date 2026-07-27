@@ -53,11 +53,11 @@ export function KitReference() {
         <section>
           <SectionLabel>Washi tape &amp; tilt — placed cards</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 26, marginTop: 18, alignItems: 'start' }}>
-            <TapeCard goal tape="rgba(201,165,90,0.42)" tilt={-0.4}>
+            <TapeCard goal tape="color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)" tilt={-0.4}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: '#4a3a1e', lineHeight: 1.3 }}>Deliver the MVP of the forecasting app</div>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>The one thing that makes today a win</div>
             </TapeCard>
-            <TapeCard tape="rgba(138,154,126,0.5)" tilt={0.4}>
+            <TapeCard tape="color-mix(in srgb, var(--acc-sage) 50%, transparent)" tilt={0.4}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>A placed note — tape matches the surface accent, radius 3px, tilt ±0.4°.</div>
             </TapeCard>
           </div>

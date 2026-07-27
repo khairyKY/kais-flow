@@ -111,7 +111,7 @@
 .fc .fc-timegrid-divider { display: none; }
 
 /* Past/future day dimming */
-.fc .fc-timegrid-col.fc-day-past { background: rgba(60, 52, 38, 0.045); }
+.fc .fc-timegrid-col.fc-day-past { background: rgba(var(--kf-shadow-rgb, 60,52,38), 0.045); }
 
 /* Now indicator — Calendar.dc.html:213: 2px lavender line + 9px dot at the left end + mono
    time chip on parchment (chip text rendered live via nowIndicatorContent in CalendarGrid.tsx).
@@ -159,7 +159,7 @@
 .fc .fc-timegrid-event {
   border-radius: 6px;
   border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));
-  background: var(--kf-ev-fill, rgba(168, 160, 190, 0.24));
+  background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
   padding: 7px 10px;
   box-shadow: none;
   overflow: hidden;
@@ -291,7 +291,7 @@
   padding: 5px 7px;
 }
 .fc .fc-day-today .fc-daygrid-day-number { color: var(--acc-lavender-deep); font-weight: var(--fw-semibold); }
-.fc .fc-daygrid-day.fc-day-past { background: rgba(60, 52, 38, 0.045); }
+.fc .fc-daygrid-day.fc-day-past { background: rgba(var(--kf-shadow-rgb, 60,52,38), 0.045); }
 .fc .fc-daygrid-more-link {
   font-family: var(--font-mono);
   font-size: calc(10px * var(--s));
@@ -343,7 +343,7 @@
    Previously the mirror played both parts, so nothing ever moved freely. */
 .kf-cal-ghost {
   opacity: 0.95;
-  box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
+  box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);
   border-radius: 2px;
 }
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
@@ -373,7 +373,7 @@
   opacity: 1;
   border-radius: 6px;
   border: 1.5px dashed var(--acc-lavender-deep);
-  background: rgba(168, 160, 190, 0.1);
+  background: color-mix(in srgb, var(--acc-lavender) 10%, transparent);
   box-shadow: none;
 }
 .fc .fc-event-mirror .fc-event-title,

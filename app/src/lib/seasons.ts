@@ -21,26 +21,26 @@ export const SEASON_META: Record<
 > = {
   spring: {
     label: 'Spring · blossom density',
-    bg: '#F0EBD8',
+    bg: 'var(--sky-panel, #F0EBD8)',
     radial: 'radial-gradient(ellipse 90% 50% at 50% 0%, rgba(216,229,205,0.55), rgba(216,229,205,0) 70%)',
     asset: '/ds/assets/cherry/bloom.png',
   },
   summer: {
     label: 'Summer · high warm light',
-    bg: '#F3EBD2',
+    bg: 'var(--sky-panel, #F3EBD2)',
     radial: 'radial-gradient(ellipse 100% 60% at 50% 0%, rgba(232,217,160,0.6), rgba(232,217,160,0) 72%)',
     asset: '/ds/assets/daisy/midday.png',
   },
   autumn: {
     label: 'Autumn · leaf tint',
-    bg: '#EDE2CC',
-    radial: 'radial-gradient(ellipse 90% 50% at 50% 0%, rgba(201,165,90,0.28), rgba(201,165,90,0) 70%)',
+    bg: 'var(--sky-panel, #EDE2CC)',
+    radial: 'radial-gradient(ellipse 90% 50% at 50% 0%, color-mix(in srgb, var(--acc-gold-warm) 28%, transparent), transparent 70%)',
     asset: '/ds/assets/vine/lush.png',
     assetFilter: 'sepia(0.3) saturate(0.85)',
   },
   winter: {
     label: 'Winter · damp light, dew',
-    bg: '#EAE8E0',
+    bg: 'var(--sky-panel, #EAE8E0)',
     radial: 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(190,200,205,0.4), rgba(190,200,205,0) 70%)',
     asset: '/ds/assets/clover/dewdrop.png',
     assetFilter: 'saturate(0.8)',

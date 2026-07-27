@@ -300,7 +300,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>
         </div>
-        <div style={{ background: fieldBg, border: '1px solid var(--acc-moss)', outline: '2px solid rgba(122,148,110,0.35)', borderRadius: 8, padding: '8px 4px', textAlign: 'center', width: isMobile ? 76 : 96 }}>
+        <div style={{ background: fieldBg, border: '1px solid var(--acc-moss)', outline: '2px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)', borderRadius: 8, padding: '8px 4px', textAlign: 'center', width: isMobile ? 76 : 96 }}>
           <div style={{ height: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <img src={`${A}/vine/flowering.png`} alt="" style={{ maxHeight: 40 }} />
           </div>
@@ -330,11 +330,11 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   if (isMobile) {
     return (
       <>
-        <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.32)', zIndex: 998 }} />
+        <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
         <div
           onClick={(e) => e.stopPropagation()}
           className="kf-sheet"
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(60,52,38,0.22)', padding: '12px 22px calc(26px + env(safe-area-inset-bottom))', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.22)', padding: '12px 22px calc(26px + env(safe-area-inset-bottom))', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
         >
           <div style={{ width: 38, height: 4, borderRadius: 2, background: 'var(--line-solid)', margin: '0 auto 16px' }} />
           {body}
@@ -344,7 +344,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   }
 
   return (
-    <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div onClick={(e) => e.stopPropagation()} className="kf-overlay-card" style={{ width: 620, maxWidth: '100%', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
         {body}
       </div>

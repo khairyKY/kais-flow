@@ -63,32 +63,32 @@ type NavItem = {
 // Focus/Review swap their species PNG renders for line glyphs (icons/NavGlyphs.tsx).
 // Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
 const TEND: NavItem[] = [
-  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="#8A9A7E" center="#C9A55A" />, tape: 'rgba(138,154,126,0.4)' },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'rgba(154,180,190,0.55)' },
+  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" />, tape: 'color-mix(in srgb, var(--acc-sage) 40%, transparent)' },
+  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'color-mix(in srgb, var(--acc-hydrangea) 55%, transparent)' },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
-  // line 225 specifies the 18px five-ellipse glyph (fill #D4A8B0, centre #C98A4B), not
+  // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
   // cherry/bloom.png. Checked every page: Today/Calendar already used the glyph, and
   // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
   // Tasks was the odd one out.
-  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="#D4A8B0" center="#C98A4B" />, tape: 'rgba(212,168,176,0.45)' },
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="#A8A0BE" center="#D9B65C" />, tape: 'rgba(168,160,190,0.45)' },
-  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'rgba(122,148,110,0.45)' },
+  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" />, tape: 'color-mix(in srgb, var(--acc-blossom) 45%, transparent)' },
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
+  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
 ]
 
 const CULTIVATE: NavItem[] = [
-  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph />, tape: 'rgba(122,148,110,0.45)' },
+  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
   // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable).
-  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph />, tape: 'rgba(201,165,90,0.45)' },
-  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'rgba(212,199,138,0.45)' },
+  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph />, tape: 'color-mix(in srgb, var(--acc-gold-warm) 45%, transparent)' },
+  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
   // Journal is back per D-1 (Kai, 2026-07-26): one daily page, many timestamped entries.
-  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
+  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
   // [K-26] 2026-07-26 (punch 65): Library is PARKED to v2 entirely — nav row out, route stays
   // URL-only so nothing is lost when it returns (same treatment as Journal below).
-  // { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },
-  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'rgba(201,160,160,0.45)' },
+  // { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
+  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'color-mix(in srgb, var(--acc-clover) 45%, transparent)' },
   // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
-  { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'rgba(154,123,58,0.45)' },
+  { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'color-mix(in srgb, var(--acc-gold) 45%, transparent)' },
   // Punch 50: the quiet Trash link the design puts at the bottom of the nav (it had no entry
   // point at all — URL-only). Hairline dot keeps it visually last in the list's hierarchy.
   { to: '/trash', label: 'Trash', dot: '--ink-hairline', tape: 'rgba(122,110,94,0.35)' },

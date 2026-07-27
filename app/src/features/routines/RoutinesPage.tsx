@@ -57,7 +57,7 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
         <span
           key={c.key}
           title={c.key}
-          style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: !c.scheduled ? 'var(--line-card)' : c.done ? 'var(--acc-moss)' : 'rgba(181,101,74,0.4)' }}
+          style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: !c.scheduled ? 'var(--line-card)' : c.done ? 'var(--acc-moss)' : 'color-mix(in srgb, var(--acc-terra) 40%, transparent)' }}
         />
       ))}
     </span>
@@ -89,7 +89,7 @@ function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routin
           fontSize: 12,
           color: 'var(--paper-parchment)',
           background: doneToday ? 'var(--acc-moss)' : 'transparent',
-          border: doneToday ? 'none' : '1.5px solid #bfb8a3',
+          border: doneToday ? 'none' : '1.5px solid var(--check-border)',
         }}
       >
         {doneToday ? '✓' : ''}
@@ -235,7 +235,7 @@ export function RoutinesPage() {
 
         <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: isMobile ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18, transform: isMobile ? undefined : 'rotate(-0.3deg)' }}>
           {!isMobile && (
-            <span style={{ position: 'absolute', top: -9, left: 38, width: 60, height: 16, background: 'rgba(122,148,110,0.4)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
+            <span style={{ position: 'absolute', top: -9, left: 38, width: 60, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
           )}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
@@ -332,9 +332,9 @@ function ChallengeCard({ routine, completions }: { routine: Routine; completions
 
   return (
     <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 3, boxShadow: 'var(--shadow-goal)', padding: '14px 16px', transform: 'rotate(0.4deg)' }}>
-      <span style={{ position: 'absolute', top: -9, right: 20, width: 52, height: 16, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
+      <span style={{ position: 'absolute', top: -9, right: 20, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
       <div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>
-      <div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'rgba(154,123,58,0.2)', overflow: 'hidden' }}>
+      <div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'color-mix(in srgb, var(--acc-gold) 20%, transparent)', overflow: 'hidden' }}>
         <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--acc-gold)' }} />
       </div>
       <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>

@@ -175,9 +175,9 @@ export function TrashPage() {
   const renderEmptyState = () => (
     <div style={{ background: 'var(--paper-linen)', padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
       <svg width="120" height="76" viewBox="0 0 120 76">
-        <ellipse cx="60" cy="62" rx="46" ry="12" fill="#b9a98a" opacity="0.55"></ellipse>
-        <path d="M22 60c4-14 18-24 38-24s34 10 38 24" fill="#a3937a" opacity="0.6"></path>
-        <path d="M34 52c8-8 40-10 52-2" stroke="#8b7a5e" strokeWidth={1.5} fill="none" opacity={0.5}></path>
+        <ellipse cx="60" cy="62" rx="46" ry="12" fill="var(--sky-horizon,#b9a98a)" opacity="0.55"></ellipse>
+        <path d="M22 60c4-14 18-24 38-24s34 10 38 24" fill="var(--sky-panel-strong,#a3937a)" opacity="0.6"></path>
+        <path d="M34 52c8-8 40-10 52-2" stroke="var(--sky-horizon,#8b7a5e)" strokeWidth={1.5} fill="none" opacity={0.5}></path>
         <path d="M60 38V22" stroke="var(--acc-moss)" strokeWidth="2.5" strokeLinecap="round"></path>
         <path d="M60 25c-4-.6-6-2.6-6.6-6.6 4 0 6.2 1.8 6.6 6.6Z" fill="var(--acc-moss)"></path>
         <path d="M60 28c4-.6 6-2.6 6.6-6.6-4 0-6.2 1.8-6.6 6.6Z" fill="var(--acc-sage)"></path>

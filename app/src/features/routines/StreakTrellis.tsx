@@ -98,7 +98,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
                     <title>{d.key}</title>
                     <path d="M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z" fill="var(--acc-hydrangea)" opacity={0.92} />
                     <path d="M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z" fill="none" stroke="#7d99a3" strokeWidth={0.8} />
-                    <circle cx={5.4} cy={13.2} r={2} fill="#fff" opacity={0.65} />
+                    <circle cx={5.4} cy={13.2} r={2} fill="var(--star, #FDFBF4)" opacity={0.65} />
                   </svg>
                 )
               }
@@ -145,7 +145,7 @@ function DropletIcon({ size }: { size: number }) {
   return (
     <svg width={size} height={size * 1.375} viewBox="0 0 12 16">
       <path d="M6 1C8 5 11 6.5 11 10a5 5 0 0 1-10 0C1 6.5 4 5 6 1Z" fill="var(--acc-hydrangea)" />
-      <circle cx={4.6} cy={9.4} r={1.3} fill="#fff" opacity={0.7} />
+      <circle cx={4.6} cy={9.4} r={1.3} fill="var(--star, #FDFBF4)" opacity={0.7} />
     </svg>
   )
 }

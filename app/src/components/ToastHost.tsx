@@ -60,14 +60,14 @@ export function ToastHost() {
       >
         {/* corner flower (Motion 5e) — artwork colors, same blossom palette as the petal pile */}
         <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" style={{ position: 'absolute', top: -6, left: -5 }}>
-          <g fill="#D4A8B0">
+          <g fill="var(--acc-blossom)">
             <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
             <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
             <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
             <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
             <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
           </g>
-          <circle cx="12" cy="11" r="2.4" fill="#C9A55A" />
+          <circle cx="12" cy="11" r="2.4" fill="var(--acc-gold-warm)" />
         </svg>
         <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{shown.message}</span>
         {!isLeaving &&

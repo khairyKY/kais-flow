@@ -41,17 +41,21 @@ export function Button({ variant = 'cta', icon, children, style, ...props }: But
 // ── Chip / tag — surface-tinted (§04) ──
 type ChipTone = 'tasks' | 'inbox' | 'routed' | 'sage' | 'overdue' | 'terra' | 'gold' | 'lavender' | 'hydrangea' | 'clover' | 'bordered'
 
+// punch 57: every tint was a hard-coded DAY accent rgba, so at night the chips kept their
+// daylight fill on the dark ground (the "maroon-on-dark chip"). Each literal is exactly its
+// accent token at that alpha, so color-mix over the token is byte-identical in day and flips
+// automatically at night. `tasks` ink is the one value with no --acc-*-text token to reach for.
 const chipTones: Record<ChipTone, CSSProperties> = {
-  tasks: { background: 'rgba(212,168,176,0.16)', color: '#8A4A58' },
-  inbox: { background: 'rgba(154,180,190,0.2)', color: 'var(--acc-hydrangea-deep)' },
-  hydrangea: { background: 'rgba(154,180,190,0.2)', color: 'var(--acc-hydrangea-deep)' },
-  routed: { background: 'rgba(138,154,126,0.18)', color: 'var(--acc-sage-text)' },
-  sage: { background: 'rgba(138,154,126,0.18)', color: 'var(--acc-sage-text)' },
-  overdue: { background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' },
-  terra: { background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' },
-  gold: { background: 'rgba(201,165,90,0.22)', color: 'var(--acc-gold)' },
-  lavender: { background: 'rgba(168,160,190,0.18)', color: 'var(--acc-lavender-text)' },
-  clover: { background: 'rgba(201,160,160,0.18)', color: 'var(--acc-clover-text)' },
+  tasks: { background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: 'var(--kf-chip-tasks, #8A4A58)' },
+  inbox: { background: 'color-mix(in srgb, var(--acc-hydrangea) 20%, transparent)', color: 'var(--acc-hydrangea-deep)' },
+  hydrangea: { background: 'color-mix(in srgb, var(--acc-hydrangea) 20%, transparent)', color: 'var(--acc-hydrangea-deep)' },
+  routed: { background: 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' },
+  sage: { background: 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' },
+  overdue: { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
+  terra: { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
+  gold: { background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: 'var(--acc-gold)' },
+  lavender: { background: 'color-mix(in srgb, var(--acc-lavender) 18%, transparent)', color: 'var(--acc-lavender-text)' },
+  clover: { background: 'color-mix(in srgb, var(--acc-clover) 18%, transparent)', color: 'var(--acc-clover-text)' },
   bordered: { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
 }
 

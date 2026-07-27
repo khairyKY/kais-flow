@@ -248,7 +248,9 @@ export function PeoplePage() {
   return (
     <div style={{ maxWidth: 900 }}>
       <style>{`
+        /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
         .grain { position: absolute; inset: 0; pointer-events: none; z-index: 10; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.5; }
+        [data-theme='night'] .grain { mix-blend-mode: overlay; opacity: 0.25; }
         .chip { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
         .flabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
         .fhelp { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--ink-hairline); }
