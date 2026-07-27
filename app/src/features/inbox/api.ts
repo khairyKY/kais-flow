@@ -137,9 +137,9 @@ export function restoreInboxItem(item: InboxItem, silent = false): void {
   if (!silent) toastUndo('Restored to Inbox', () => writeRow('inbox_items', prior))
 }
 
-/** Permanent delete — the Dismissed tab's "Clear now" (2a). The 30-day auto-compost the
- * copy promises needs a pg_cron purge job; ponytail: out of this wave's scope (no migration
- * shipped here), add when a real backlog of dismissed rows makes manual "Clear now" not enough. */
+/** Permanent delete — the Dismissed tab's "Clear now" (2a). Soft-deletes into Trash; the
+ * 30-day auto-compost the copy promises is now real, done server-side by the `compost-expired`
+ * pg_cron job (migration 0032) rather than anything the client has to remember to run. */
 export function purgeInboxItem(item: InboxItem): void {
   writeRow('inbox_items', { ...item, deleted_at: new Date().toISOString() })
   logActivity('inbox.purged', 'inbox_item', item.id, {})

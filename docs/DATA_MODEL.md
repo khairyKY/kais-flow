@@ -9,6 +9,7 @@
 - `created_at timestamptz default now()` · `updated_at timestamptz default now()` bumped by the shared `set_updated_at()` trigger.
 - All timestamps stored UTC; the client renders Africa/Cairo.
 - Realtime: tables the UI subscribes to must be added to the `supabase_realtime` publication.
+- **Soft delete (0023):** `deleted_at timestamptz?` on `tasks`, `inbox_items`, `calendar_events`, `journal_entries` (partial index `where deleted_at is not null`) — these four are what the Trash page lists. **Compost (0032, V1 punch 25):** `compost_expired()` (`security definer`, `execute` revoked from `public`/`anon`/`authenticated` so only the cron owner can call it) hard-deletes those rows 30 days past `deleted_at`, plus `inbox_items` left `status = 'dismissed'` 30 days past `updated_at`. pg_cron job `compost-expired`, daily 03:30 UTC; returns the row count so it can be verified by hand.
 - **Import idempotency (0027, P-IMPORT):** `external_ref jsonb` (nullable) on `tasks`, `inbox_items`, `journal_entries`, `notes`, `people`, `projects`, `calendar_events` — `{source, id, raw}` — with a partial unique index on `(user_id, external_ref->>'source', external_ref->>'id')`. Re-importing the same file is a no-op; the whole source row survives in `raw`.
 
 **Extensions:** `vector` (pgvector, P0), `pg_cron` (P0), `pg_net` (P4 — lets cron call edge functions over HTTP).
