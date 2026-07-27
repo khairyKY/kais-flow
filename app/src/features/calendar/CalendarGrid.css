@@ -164,6 +164,20 @@
   box-shadow: none;
   overflow: hidden;
 }
+/* Motion 4a (WB-1) — hover & press on the block itself. Restated here rather than adding
+   .kf-lift: the block element is FullCalendar's, built by FC, and the only className we control
+   is on the inner content slot (.kf-ev-row), which would lift the text out of its own box.
+   Values match .kf-lift exactly (xfx.css): -1px + shadow on hover, 0.97 at 80ms on press.
+   FC places blocks with `inset`, not transform, so nothing is fighting for the property —
+   except mid-drag, where the mirror/ghost carry their own transforms and this can't apply. */
+.fc .fc-timegrid-event {
+  transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+@media (hover: hover) {
+  .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+}
+.fc .fc-timegrid-event:active { transform: scale(0.97); transition-duration: 80ms; }
+
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
    can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
    ellipsis and the time is dropped rather than half-drawn. The grip goes too — there's no

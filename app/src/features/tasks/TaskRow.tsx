@@ -401,7 +401,7 @@ export function TaskRow({
     return (
       <div
         id={`task-${task.id}`}
-        className="task-row"
+        className="task-row kf-lift"
         tabIndex={highlighted ? 0 : -1}
         onContextMenu={openMenu}
         style={{ ...rowStyle, alignItems: 'center', padding: '11px 2px', opacity: justCompleted ? 0.55 : 1 }}
@@ -443,7 +443,7 @@ export function TaskRow({
     return (
       <div
         id={`task-${task.id}`}
-        className="task-row tr-someday"
+        className="task-row tr-someday kf-lift"
         tabIndex={highlighted ? 0 : -1}
         onContextMenu={openMenu}
         style={{ ...rowStyle, alignItems: 'center', padding: '12px 10px', margin: '0 -10px' }}
@@ -485,7 +485,10 @@ export function TaskRow({
   return (
     <div
       id={`task-${task.id}`}
-      className={`task-row${checking ? ' tr-checking' : ''}`}
+      // Motion 4a (WB-1): `overflow: hidden` (the swipe panels need it) clips the hover
+      // shadow, so this variant reads the lift as travel only. Accepted — the alternative is
+      // an extra wrapper element on the app's hottest row.
+      className={`task-row kf-lift${checking ? ' tr-checking' : ''}`}
       tabIndex={highlighted ? 0 : -1}
       onContextMenu={openMenu}
       style={{ ...rowStyle, overflow: 'hidden' }}

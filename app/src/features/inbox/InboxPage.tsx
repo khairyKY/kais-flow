@@ -581,7 +581,10 @@ function TriageCard({
   return (
     <div
       id={`inbox-${item.id}`}
-      className="ib-card"
+      // Motion 4a + 3e (WB-1). kf-lift-TILT, not kf-lift: the card carries a pasted-in
+      // rotation, and the plain lift would erase it on hover. The tilt moves to --kf-tilt so
+      // the class owns `transform` outright (an inline one can't be overridden on :hover).
+      className="ib-card kf-lift-tilt kf-row-in"
       tabIndex={highlighted ? 0 : -1}
       onClick={(e) => {
         // Card-surface click toggles select; anything interactive (buttons, inputs, the Select
@@ -591,6 +594,7 @@ function TriageCard({
         onToggleSelect()
       }}
       style={{
+        ['--kf-tilt' as string]: `${rotate}deg`,
         position: 'relative',
         background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
@@ -599,10 +603,11 @@ function TriageCard({
         borderRadius: 3,
         boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`,
         padding: size.pad,
-        transform: `rotate(${rotate}deg)`,
         overflow: 'hidden',
         opacity: filing ? 0.55 : 1,
-        transition: 'opacity 200ms var(--ease-out)',
+        // Must re-declare transform/box-shadow: an inline `transition` replaces the class's
+        // wholesale, and without them the 4a lift would snap instead of easing.
+        transition: 'opacity 200ms var(--ease-out), transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out)',
       }}
     >
       {filing && (
@@ -718,7 +723,7 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
   return (
     <div
       id={`inbox-${item.id}`}
-      className="ib-card"
+      className="ib-card kf-lift kf-row-in"
       // Punch 26: these rows are in the same roving-focus list as the triage cards, so they
       // need the same focusable/ringed treatment — without it a keyboard triage that reaches
       // the GitHub group loses all sense of where it is.
