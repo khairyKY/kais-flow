@@ -44,14 +44,16 @@ as $$
            left(coalesce(fx.txt, ''), 200),
            ts_rank(to_tsvector('english', p.name || ' ' || coalesce(fx.txt, '')), q.tsq)
     from people p, q,
+         -- jsonb_array_elements throws on a non-array; one malformed row must not take the whole
+         -- of search down with it, so anything that isn't an array contributes no fact text.
          lateral (
            select string_agg(coalesce(f ->> 'label', '') || ' ' || coalesce(f ->> 'value', ''), ' · ') as txt
-           from jsonb_array_elements(p.facts) f
+           from jsonb_array_elements(case when jsonb_typeof(p.facts) = 'array' then p.facts else '[]'::jsonb end) f
          ) fx
     where to_tsvector('english', p.name || ' ' || coalesce(fx.txt, '')) @@ q.tsq
     union all
     select 'calendar_event', e.id, e.title,
-           null,
+           null::text,
            ts_rank(to_tsvector('english', e.title), q.tsq)
     from calendar_events e, q
     where e.deleted_at is null and to_tsvector('english', e.title) @@ q.tsq

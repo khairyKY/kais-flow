@@ -346,14 +346,15 @@ export function ActivityPage() {
         {...(entry.info.href ? { type: 'button' as const, onClick: () => navigate(entry.info.href!) } : {})}
         style={{ paddingBottom: isMobile ? 15 : 20 }}
       >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        {/* spans, not divs: this subtree also renders inside a <button> on navigable rows */}
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span style={{ fontSize: isMobile ? 13.5 : 14.5, color: 'var(--ink-body)' }}>{entry.info.text}</span>
           {!isMobile && <span className="fhelp" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>{formatTime(entry.created_at)}</span>}
-        </div>
-        <div style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
+        </span>
+        <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
           <span className="chip" style={{ fontSize: isMobile ? 8 : 9.5, padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
           <span className="fhelp">{isMobile ? formatTime(entry.created_at) : entry.info.details}</span>
-        </div>
+        </span>
       </Body>
     </div>
     )
