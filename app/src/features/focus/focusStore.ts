@@ -82,7 +82,9 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   secondsLeft: loadSettings().focusRoundMin * 60,
   stopwatchSeconds: 0,
   stopwatchStartIso: '',
-  stopwatchStartStr: '9:41',
+  // Punch 52: seeded '9:41' — the export's sample clock — so a stopwatch that had never run
+  // still claimed a start time. Empty until an actual start stamps it.
+  stopwatchStartStr: '',
   currentRound: 1,
   breakType: 'short',
   activeTask: null,

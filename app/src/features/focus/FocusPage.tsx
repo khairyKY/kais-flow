@@ -213,7 +213,8 @@ export function FocusPage() {
     setIsRunning(false)
     setNoteText('')
     setStopwatchStartIso('')
-    
+    setStopwatchStartStr('')
+
     queryClient.invalidateQueries({ queryKey: ['time_entries'] })
     queryClient.invalidateQueries({ queryKey: ['projects'] })
   }
@@ -224,6 +225,7 @@ export function FocusPage() {
     setIsRunning(false)
     setNoteText('')
     setStopwatchStartIso('')
+    setStopwatchStartStr('')
   }
 
   // 4. Botanical Stage Calculations
@@ -834,7 +836,8 @@ export function FocusPage() {
               <span className="focus-bloom-glow" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-terra)' }} />
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
-              {isRunning ? 'recording' : 'paused'} · started {stopwatchStartStr}
+              {isRunning ? 'recording' : 'paused'}
+              {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
             </div>
           </div>
         )}
