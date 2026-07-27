@@ -30,6 +30,15 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+/** punch 42: "this month" figures must actually mean this month — read against the local
+ *  calendar month at call time, so the number rolls over when the month does. */
+export function isThisMonth(iso: string | null | undefined): boolean {
+  if (!iso) return false
+  const d = new Date(iso)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+}
+
 export function createProject(
   name: string,
   domainId: string | null,
