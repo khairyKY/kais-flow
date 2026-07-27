@@ -22,6 +22,7 @@ const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage'
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 // [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
 const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
+const SharePage = lazy(() => import('./features/capture/SharePage').then((m) => ({ default: m.SharePage })))
 const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
 const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
 const ProjectDetailPage = lazy(() => import('./features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
@@ -64,6 +65,8 @@ const router = createBrowserRouter([
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/import', element: <ImportPage /> },
       { path: 'capture', element: <QuickCapturePage /> },
+      // PWA share-target lands here (manifest share_target -> /share)
+      { path: 'share', element: <SharePage /> },
       // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/:id', element: <ProjectDetailPage /> },

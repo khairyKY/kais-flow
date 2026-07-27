@@ -10,6 +10,7 @@ import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
 import { EveningRitual } from '../rituals/EveningRitual'
+import { readSoundCatalog, writeSoundCatalog, previewSound } from '../../lib/sounds'
 import { useTimeEntries, logTimeEntry } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
@@ -92,6 +93,8 @@ export function FocusPage() {
   // 2. Settings — persisted in focusStore (shared with MiniFocus)
   const settings = useFocusStore((s) => s.settings)
   const saveSettings = useFocusStore((s) => s.saveSettings)
+  // The chime row is a view onto the shared sound catalog (see the popover row below).
+  const [chimeOn, setChimeOn] = useState(() => readSoundCatalog().distant_chime)
 
   // 3. Focus session state — R4-D3: owned by focusStore so a running session survives
   // navigation and is shared with the MiniFocus widget on a task's detail page.
@@ -1233,19 +1236,22 @@ export function FocusPage() {
                 <span style={{ position: 'absolute', top: 2, left: settings.gardenViewOnLongBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
               </span>
             </div>
-            {/* Punch 52: the chime is real again — focusStore now rings it through the
-                synthesised sound engine instead of the missing chime.mp3. NOTE for the
-                orchestrator: playSound owns the per-sound gate, so this row's `gentleChime`
-                flag persists but no longer decides whether the chime plays. Either point it at
-                sounds.ts's per-sound setter for `distant_chime`, or drop the row in favour of
-                the Settings sound catalog — as written it's a duplicate control. */}
+            {/* Punch 52 + 8 (orchestrator patch): the chime is real again (synthesised, not the
+                missing chime.mp3), and this row is now the SAME switch as Settings' "Distant
+                chime" — it writes the shared sound catalog rather than a private flag that
+                decided nothing. One sound, one setting, wherever you toggle it. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>
               <span
-                onClick={() => saveSettings({ ...settings, gentleChime: !settings.gentleChime })}
-                style={{ width: 34, height: 20, borderRadius: 999, background: settings.gentleChime ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
+                onClick={() => {
+                  const next = !chimeOn
+                  setChimeOn(next)
+                  writeSoundCatalog({ ...readSoundCatalog(), distant_chime: next })
+                  if (next) previewSound('distant_chime')
+                }}
+                style={{ width: 34, height: 20, borderRadius: 999, background: chimeOn ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
               >
-                <span style={{ position: 'absolute', top: 2, left: settings.gentleChime ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
+                <span style={{ position: 'absolute', top: 2, left: chimeOn ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
               </span>
             </div>
 
