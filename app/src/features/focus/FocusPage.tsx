@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { Link } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useTasks, completeTask } from '../tasks/api'
@@ -8,6 +7,9 @@ import { useProjects } from '../projects/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
 import { useJournalEntries } from '../journal/api'
+import { usePeople, useInteractions } from '../people/api'
+import { useCalendarEvents } from '../calendar/api'
+import { EveningRitual } from '../rituals/EveningRitual'
 import { useTimeEntries, logTimeEntry } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
@@ -48,12 +50,15 @@ function CustomMin({ value, presets, onChange }: { value: number; presets: numbe
   )
 }
 
-// R4-18 (2026-07-20 audit): the old "GearIcon" was a circle with radiating rays — it read as a
-// sun, not a settings control. This is a real cog: toothed rim + hub.
+// Punch 52 (Kai: "the setting icon for the focus page looks like a sun? fix that and use a
+// gear"). The export's glyph really is a sun — hub + six radiating rays. This is a cog in the
+// app's line-icon grammar (NavGlyphs.tsx: 15px, viewBox 24, stroke 1.8, currentColor, round
+// caps): a rim with six teeth cut through it, so at icon size it reads as a gear, not a star.
 const GearIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3.2" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+    <circle cx="12" cy="12" r="2.9" />
+    <circle cx="12" cy="12" r="7.6" />
+    <path d="M12 5.4 12 2.6M17.7 8.7 20.1 7.3M17.7 15.3 20.1 16.7M12 18.6 12 21.4M6.3 15.3 3.9 16.7M6.3 8.7 3.9 7.3" />
   </svg>
 )
 
@@ -68,6 +73,9 @@ export function FocusPage() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: journalEntries = [] } = useJournalEntries()
+  const { data: people = [] } = usePeople()
+  const { data: interactions = [] } = useInteractions()
+  const { data: events = [] } = useCalendarEvents()
 
   const { data: activityLogs = [] } = useQuery<ActivityLogEntry[]>({
     queryKey: ['activity_log'],
@@ -112,6 +120,7 @@ export function FocusPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [taskPickerOpen, setTaskPickerOpen] = useState(false)
+  const [eveningOpen, setEveningOpen] = useState(false)
 
   // Active task selection
   const activeTask = useMemo(() => {
@@ -204,7 +213,8 @@ export function FocusPage() {
     setIsRunning(false)
     setNoteText('')
     setStopwatchStartIso('')
-    
+    setStopwatchStartStr('')
+
     queryClient.invalidateQueries({ queryKey: ['time_entries'] })
     queryClient.invalidateQueries({ queryKey: ['projects'] })
   }
@@ -215,6 +225,7 @@ export function FocusPage() {
     setIsRunning(false)
     setNoteText('')
     setStopwatchStartIso('')
+    setStopwatchStartStr('')
   }
 
   // 4. Botanical Stage Calculations
@@ -316,11 +327,27 @@ export function FocusPage() {
     return { stage, percent: pct, note: `climbing — ${pct}%` }
   }, [activeProject, projects])
 
-  // Clover / People
+  // Clover / People — punch 52: the caption used to be the export's literal "folded for the
+  // night", which is a lie at 10am in the timer's garden strip. The six sibling beds all report
+  // a real number, so this one does too: people who've gone quiet, using PeoplePage's own
+  // 21-day nudge threshold. The *stage* stays `resting` — the export pins resting.png in both
+  // Focus spots and Foundation's growthStages.ts defines no clover threshold to bind to.
   const cloverData = useMemo(() => {
-    // Clover is resting in focus mode or garden dusk mode
-    return { stage: 'resting', note: 'folded for the night' }
-  }, [])
+    if (people.length === 0) return { stage: 'resting', note: 'no people yet' }
+    const latest = new Map<string, string>()
+    for (const i of interactions) {
+      const prev = latest.get(i.person_id)
+      if (!prev || i.occurred_at > prev) latest.set(i.person_id, i.occurred_at)
+    }
+    const quiet = people.filter((p) => {
+      const last = latest.get(p.id)
+      return !last || (Date.now() - new Date(last).getTime()) / 86400000 > 21
+    }).length
+    return {
+      stage: 'resting',
+      note: quiet > 0 ? `${quiet} quiet for a while` : 'everyone recently tended',
+    }
+  }, [people, interactions])
 
   // 5. Stat metrics for Dusk Garden View
   const stats = useMemo(() => {
@@ -344,6 +371,51 @@ export function FocusPage() {
       daysCount,
     }
   }, [tasks, timeEntries, activityLogs])
+
+  // ── Punch 52 / item 9: the top strip used to read `Deep work block · 9:00 – 11:00` and
+  // `session 2 of 3 today` — both design samples. Both now come from real state, and both
+  // disappear when there is nothing true to say (there is no "planned sessions" number
+  // anywhere in the data, so the `of 3` half is gone rather than guessed).
+
+  // The block: the calendar block this task is actually sitting in today — that's where the
+  // design's "Deep work block" name comes from. Falls back to the task's own scheduled window
+  // (times, no name, because nothing in the data names it), then to nothing.
+  const blockLabel = useMemo(() => {
+    if (!activeTask) return null
+    const todayStr = localDateKey(new Date())
+    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
+
+    const block = events.find(
+      (e) => e.task_id === activeTask.id && !e.all_day && localDateKey(new Date(e.starts_at)) === todayStr
+    )
+    if (block) return `${block.title} · ${t(new Date(block.starts_at))} – ${t(new Date(block.ends_at))}`
+
+    if (!activeTask.scheduled_start || !activeTask.scheduled_end) return null
+    const start = new Date(activeTask.scheduled_start)
+    if (localDateKey(start) !== todayStr) return null
+    return `${t(start)} – ${t(new Date(activeTask.scheduled_end))}`
+  }, [activeTask, events])
+
+  // Sessions today: work already logged today, plus the one in progress.
+  const sessionsToday = useMemo(() => {
+    const todayStr = localDateKey(new Date())
+    const logged = timeEntries.filter((e) => localDateKey(new Date(e.started_at)) === todayStr).length
+    const inProgress = pomodoroStartIso !== null || stopwatchSeconds > 0 ? 1 : 0
+    return logged + inProgress
+  }, [timeEntries, pomodoroStartIso, stopwatchSeconds])
+
+  // Subtask progress: real children (migration 0029, one level deep). Falls back to the task's
+  // own notes, and to nothing at all — never to the export's "draft the cohort model".
+  const subtaskLabel = useMemo(() => {
+    if (!activeTask) return null
+    const children = tasks.filter((t) => t.parent_task_id === activeTask.id)
+    if (children.length > 0) {
+      const done = children.filter((t) => t.status === 'done').length
+      const next = children.find((t) => t.status !== 'done')
+      return `subtask ${Math.min(done + 1, children.length)} of ${children.length}${next ? ` · ${next.title}` : ''}`
+    }
+    return activeTask.notes?.trim() || null
+  }, [activeTask, tasks])
 
   // Rhythm preview calculation for Settings
   const rhythmPreviewData = useMemo(() => {
@@ -382,7 +454,8 @@ export function FocusPage() {
 
   // Stopwatch live hours projection calculation
   const stopwatchProjectedHours = useMemo(() => {
-    if (!activeProject) return { before: 11.5, after: 12.1 }
+    // Punch 52: no project, no hours. This used to fall back to the export's 11.5 → 12.1.
+    if (!activeProject) return null
     // Get all time entries for active project
     const projectEntries = timeEntries.filter((e) => e.project_id === activeProject.id)
     const totalMinutes = projectEntries.reduce((sum, e) => sum + e.duration_min, 0)
@@ -538,14 +611,19 @@ export function FocusPage() {
             >
               stay a while
             </span>
-            <Link
-              to="/weekly-review"
-              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)' }}
+            {/* Punch 52: the CTA says "evening ritual" and used to open the *weekly* review.
+                The evening ritual has no route of its own — it's a fixed-inset overlay that
+                Today and Routines mount from local state — so Focus mounts it the same way. */}
+            <button
+              onClick={() => setEveningOpen(true)}
+              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
             >
               Close the day → evening ritual
-            </Link>
+            </button>
           </div>
         </div>
+
+        {eveningOpen && <EveningRitual onClose={() => setEveningOpen(false)} />}
       </div>
     )
   }
@@ -557,11 +635,13 @@ export function FocusPage() {
 
       {/* Quiet top strip */}
       <div style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px dashed var(--line-solid)', position: 'relative', zIndex: 10 }}>
-        <span className="flabel" style={{ fontSize: 10 }}>Focus · Deep work block · 9:00 – 11:00</span>
+        <span className="flabel" style={{ fontSize: 10 }}>Focus{blockLabel ? ` · ${blockLabel}` : ''}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
-            session 2 of 3 today
-          </span>
+          {sessionsToday > 0 && (
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+              session {sessionsToday} today
+            </span>
+          )}
           <span className="flabel">esc leaves quietly</span>
         </div>
       </div>
@@ -734,7 +814,11 @@ export function FocusPage() {
                   {formatTime(secondsLeft)}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
-                  of {settings.focusRoundMin} min · break at{' '}
+                  {/* Punch 52: the export reads `of 25 min · 5-min break at 10:20` — the length
+                      qualifier had been dropped. It's the *next* break, so it's the long one on
+                      the last round of the cycle. */}
+                  of {settings.focusRoundMin} min ·{' '}
+                  {currentRound >= settings.roundsBeforeLongBreak ? settings.longBreakMin : settings.shortBreakMin}-min break at{' '}
                   {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
                 </div>
               </div>
@@ -752,7 +836,8 @@ export function FocusPage() {
               <span className="focus-bloom-glow" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-terra)' }} />
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
-              {isRunning ? 'recording' : 'paused'} · started {stopwatchStartStr}
+              {isRunning ? 'recording' : 'paused'}
+              {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
             </div>
           </div>
         )}
@@ -808,9 +893,11 @@ export function FocusPage() {
                   {activeProject.name}
                 </span>
               )}
-              <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 9px', borderRadius: 3 }}>
-                {activeTask?.notes ? activeTask.notes : 'subtask 2 of 3 · draft the cohort model'}
-              </span>
+              {subtaskLabel && (
+                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 9px', borderRadius: 3 }}>
+                  {subtaskLabel}
+                </span>
+              )}
             </div>
           </>
         )}
@@ -828,9 +915,11 @@ export function FocusPage() {
               <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>
                 Projects → {activeProject ? activeProject.name : 'Unlinked'} → Activity
               </span>
-              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
-                hours {stopwatchProjectedHours.before} → <b style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{stopwatchProjectedHours.after}</b>
-              </span>
+              {stopwatchProjectedHours && (
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
+                  hours {stopwatchProjectedHours.before} → <b style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{stopwatchProjectedHours.after}</b>
+                </span>
+              )}
             </div>
             <input
               type="text"
@@ -1144,6 +1233,12 @@ export function FocusPage() {
                 <span style={{ position: 'absolute', top: 2, left: settings.gardenViewOnLongBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
               </span>
             </div>
+            {/* Punch 52: the chime is real again — focusStore now rings it through the
+                synthesised sound engine instead of the missing chime.mp3. NOTE for the
+                orchestrator: playSound owns the per-sound gate, so this row's `gentleChime`
+                flag persists but no longer decides whether the chime plays. Either point it at
+                sounds.ts's per-sound setter for `distant_chime`, or drop the row in favour of
+                the Settings sound catalog — as written it's a duplicate control. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>
               <span

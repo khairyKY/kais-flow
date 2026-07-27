@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { create } from 'zustand'
 import { logTimeEntry } from '../projects/api'
 import { queryClient } from '../../lib/queryClient'
+import { playSound } from '../../lib/sounds'
 
 // R4-D3 (Kai's 2026-07-20 ruling): Focus needs "multiple ways to enter it" — a Focus action on
 // a task's full-page detail, and a *mini* pomodoro that rides next to the task so he can stay on
@@ -81,7 +82,9 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   secondsLeft: loadSettings().focusRoundMin * 60,
   stopwatchSeconds: 0,
   stopwatchStartIso: '',
-  stopwatchStartStr: '9:41',
+  // Punch 52: seeded '9:41' — the export's sample clock — so a stopwatch that had never run
+  // still claimed a start time. Empty until an actual start stamps it.
+  stopwatchStartStr: '',
   currentRound: 1,
   breakType: 'short',
   activeTask: null,
@@ -160,13 +163,12 @@ export const useFocusStore = create<FocusState>((set, get) => ({
         queryClient.invalidateQueries({ queryKey: ['time_entries'] })
         queryClient.invalidateQueries({ queryKey: ['projects'] })
       }
-      if (s.settings.gentleChime) {
-        try {
-          void new Audio('/ds/assets/chime.mp3').play()
-        } catch {
-          /* autoplay blocked */
-        }
-      }
+      // Punch 52: this used to `new Audio('/ds/assets/chime.mp3')` — a file that never existed
+      // in the build, so the round-end chime was silent no matter what. It now goes through the
+      // synthesised sound engine. Called unconditionally on purpose: playSound owns the master
+      // toggle, the per-sound toggle, volume and quiet hours, so a check here would double-gate.
+      playSound('distant_chime')
+
       const long = s.currentRound >= s.settings.roundsBeforeLongBreak
       const toGarden = long && s.settings.gardenViewOnLongBreaks
       set({
