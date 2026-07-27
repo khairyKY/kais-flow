@@ -6,6 +6,7 @@ import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
+import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import './CalendarGrid.css'
 
@@ -46,10 +47,22 @@ interface CalendarGridProps {
   /** Fires on mount and after every nav/view change — drives CalendarPage's header title. */
   onRangeChange?: (info: { title: string; start: Date; end: Date }) => void
   onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number }) => void
-  onMove: (id: string, start: string, end: string) => void
+  /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
+  onMove: (id: string, start: string, end: string, allDay: boolean) => void
   onResize: (id: string, start: string, end: string) => void
   onEventClick: (id: string) => void
-  onExternalDrop: (taskId: string, start: string) => void
+  /** Punch 34: double-click a task-linked block → straight to the task editor. */
+  onEventDoubleClick?: (id: string) => void
+  onExternalDrop: (taskId: string, start: string, allDay: boolean) => void
+  /** Punch 33: a block dragged off the grid onto this element unschedules. Returns true when
+   * handled — false (or a non-task block) gets the §7 invalid-drop soft-no instead. */
+  railRef?: React.RefObject<HTMLElement | null>
+  onDragToRail?: (eventId: string) => boolean
+  /** Punch 32 view options with grid-level backing. */
+  hour24?: boolean
+  firstDay?: number
+  hiddenDays?: number[]
+  density?: 's' | 'm' | 'l'
   onEventContextMenu?: (eventId: string, x: number, y: number) => void
   /** Right-click on empty grid space (not an existing event) — resolves the exact slot under the cursor. */
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
@@ -154,7 +167,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onMove,
   onResize,
   onEventClick,
+  onEventDoubleClick,
   onExternalDrop,
+  railRef,
+  onDragToRail,
+  hour24,
+  firstDay,
+  hiddenDays,
+  density = 'm',
   onEventContextMenu,
   onGridContextMenu,
   onCompleteTask,
@@ -165,6 +185,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   // CALENDAR.md §5 temporal states (in progress / past / ran over) move with the clock — one
   // re-render per minute keeps them honest without any per-block timers.
   const [, setMinute] = useState(0)
@@ -198,12 +219,28 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   return (
     // 170px per day column + the time axis: below that the grid scrolls horizontally in the
     // page's scroller instead of crushing the last day into a sliver (CALENDAR.md §6 narrow-col).
-    <div onContextMenu={handleGridContextMenu} style={{ height: '100%', minWidth: visibleDays > 1 ? 58 + visibleDays * 170 : undefined }}>
+    // --kf-cal-density folds the view-options Density into the --s scale (CalendarGrid.css);
+    // it's also in the FC key because slot geometry is measured once per mount.
+    <div
+      ref={wrapRef}
+      onContextMenu={handleGridContextMenu}
+      style={{ height: '100%', minWidth: visibleDays > 1 ? 58 + visibleDays * 170 : undefined, ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
+    >
     <FullCalendar
-      key={`${initialView}-${dayCount}`}
+      key={`${initialView}-${dayCount}-${density}`}
       ref={fcRef}
       plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
       initialView={initialView}
+      firstDay={firstDay}
+      hiddenDays={hiddenDays}
+      // Punch 35: top-edge resize — start moves, end stays put. FC's own start handle.
+      eventResizableFromStart
+      // Punch 33/35: an off-grid drop reverts instantly (rail handles deletion, soft-no shakes);
+      // the default 500ms glide-back would fight both.
+      dragRevertDuration={0}
+      // Punch 32: 24-hour toggle drives both the block time rows and the gutter labels.
+      eventTimeFormat={hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit', hour12: true }}
+      slotLabelFormat={hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', hour12: true }}
       views={{
         [customView]: {
           type: 'timeGrid',
@@ -235,17 +272,36 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
       slotDuration="00:30:00"
       snapDuration="00:30:00"
+      // Punch 37: edge auto-scroll while dragging is FC's own AutoScroller — enabled by default,
+      // wired to `.fc-scroller` (the time-grid's vertical scroller), 50px edge zone, quadratic
+      // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
+      dragScroll
       dayMaxEvents
       dayHeaderContent={(arg) => {
-        // Month view's header row is one cell per weekday, not per date — the two-line
-        // day-number header only makes sense in the timeGrid views.
+        // Month view's header row is one cell per weekday, not per date — no daisy, no number.
         if (arg.view.type === 'dayGridMonth') {
-          return <div className="cal-day-header cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+          return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
         }
+        // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
+        // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
+        // future = future.png 26px. Stages come from lib/growthStages (never re-bucketed here).
+        // arg.date is a FC DateMarker — wall-clock encoded AS UTC (same trap the now-chip hit,
+        // R4 2026-07-20) — so its calendar fields read back through the getUTC* getters.
+        const d = arg.date
+        const now = new Date()
+        const dayDelta = (Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86_400_000
+        const stage = daisyColumnStage(dayDelta, now.getHours())
+        const isToday = dayDelta === 0
         return (
-          <div className="cal-day-header">
-            <div className="cal-day-header-name">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-            <div className="cal-day-header-num">{arg.date.getDate()}</div>
+          <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
+            <img src={`/ds/assets/daisy/${stage}.png`} alt="" className="cal-day-daisy" />
+            <div>
+              <div className="cal-day-header-name">
+                {d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}
+                {isToday ? ' · Today' : ''}
+              </div>
+              <div className="cal-day-header-num">{String(d.getUTCDate()).padStart(2, '0')}</div>
+            </div>
           </div>
         )
       }}
@@ -259,7 +315,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       nowIndicatorContent={(arg) =>
         arg.isAxis ? null : (
           <span className="cal-now-chip">
-            {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            {new Date().toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}
           </span>
         )
       }
@@ -334,7 +390,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
         let timeText = arg.timeText
         if (p.kfRanOver) {
-          timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+          timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}`
         } else if (!done && p.kfStart <= now && now < p.kfEnd) {
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
         } else if (p.kfFull && arg.timeText) {
@@ -391,6 +447,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${own} 65%, transparent)`)
         }
 
+        // Punch 34: double-click goes straight to the task editor (single click still opens
+        // the details popover — the navigation unmounts it, so the two don't fight).
+        if (onEventDoubleClick) {
+          info.el.addEventListener('dblclick', () => onEventDoubleClick(info.event.id))
+        }
+
         if (!onEventContextMenu) return
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault()
@@ -407,16 +469,41 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       eventDragStart={(info) => {
         stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
       }}
-      eventDragStop={() => {
-        stopGhostRef.current?.()
+      eventDragStop={(info) => {
+        const stop = stopGhostRef.current
         stopGhostRef.current = null
+        const je = info.jsEvent as MouseEvent | null
+        const contains = (el: Element | null | undefined) => {
+          if (!el || !je) return false
+          const r = el.getBoundingClientRect()
+          return je.clientX >= r.left && je.clientX <= r.right && je.clientY >= r.top && je.clientY <= r.bottom
+        }
+        // The pointer left the grid, so FC reverts (instantly, dragRevertDuration 0).
+        // Rail = punch 33 unschedule; anywhere else = §7 invalid drop → the soft-no:
+        // the ghost shakes ±4px decaying ~320ms and nothing is created.
+        if (je && wrapRef.current && !contains(wrapRef.current)) {
+          const handled = contains(railRef?.current) && (onDragToRail?.(info.event.id) ?? false)
+          if (!handled) {
+            const host = document.getElementById(GHOST_ID)
+            if (host) {
+              host.classList.add('kf-cal-softno')
+              window.setTimeout(() => stop?.(), 340)
+              return
+            }
+          }
+        }
+        stop?.()
       }}
       eventDrop={(info: EventDropArg) => {
         // Motion 4c: the placeholder snaps to the grid on commit — a brief flash marks the moment,
         // scoped in CSS to `.cal-motion-on` so it's a no-op when the caller's motion gate is off.
         flashSnap(info.el)
-        if (info.event.start && info.event.end) {
-          onMove(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
+        if (info.event.start) {
+          // Crossing the all-day boundary nulls the end (FC convention) — restate a real one:
+          // a converted all-day block spans its day; a re-timed chip gets the default hour.
+          const allDay = info.event.allDay
+          const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
+          onMove(info.event.id, info.event.start.toISOString(), end.toISOString(), allDay)
         }
       }}
       // While resizing, FC keeps the original chip visible under the mirror — with both drawn
@@ -428,13 +515,23 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         flashSnap(info.el)
         flashSnapLine(info.el)
         if (info.event.start && info.event.end) {
-          onResize(info.event.id, info.event.start.toISOString(), info.event.end.toISOString())
+          // §7 resizing: min 30 min. Clamp on the edge that moved — a top-edge (start) resize
+          // pushes the start back up; a bottom-edge resize pulls the end back down.
+          let startMs = info.event.start.getTime()
+          let endMs = info.event.end.getTime()
+          const MIN = 30 * 60_000
+          if (!info.event.allDay && endMs - startMs < MIN) {
+            const startMoved = info.startDelta.milliseconds !== 0 || info.startDelta.days !== 0
+            if (startMoved) startMs = endMs - MIN
+            else endMs = startMs + MIN
+          }
+          onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString())
         }
       }}
       drop={(info: DropArg) => {
         const taskId = info.draggedEl.dataset.taskId
         if (!taskId || !info.date) return
-        onExternalDrop(taskId, info.date.toISOString())
+        onExternalDrop(taskId, info.date.toISOString(), info.allDay)
       }}
     />
     </div>
