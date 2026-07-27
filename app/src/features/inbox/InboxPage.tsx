@@ -469,11 +469,17 @@ function deepLinkBannerStyle(isMobile: boolean): React.CSSProperties {
 
 // ── 1b — Inbox zero ──
 function EmptyInboxCard() {
+  const motion = useMotionEnabled()
   return (
     <div style={{ padding: '60px 20px 54px', textAlign: 'center' }}>
       {/* D1 (2026-07-18 audit): margin:0 auto — Tailwind Preflight's img{display:block} defeats
           the card's text-align:center; this restores Inbox.dc.html 1b's centered bloom. */}
-      <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, margin: '0 auto', filter: 'var(--shadow-drop-sm)' }} />
+      {/* Effects 1e (WB-1) — bloom glow on a data-driven milestone. Projects use p100; the
+          inbox's milestone is zero itself, which is what "one calm bloom ✿" below names. */}
+      <span style={{ position: 'relative', display: 'inline-block' }}>
+        {motion && <span className="kf-bloom" style={{ inset: -22 }} />}
+        <img src={`${A}/hydrangea/zero.png`} alt="" style={{ height: 88, margin: '0 auto', position: 'relative', filter: 'var(--shadow-drop-sm)' }} />
+      </span>
       <div style={{ marginTop: 18, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Inbox zero</div>
       <p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
         Captures land here when the command bar can't tell where they go. Nothing waits on you.

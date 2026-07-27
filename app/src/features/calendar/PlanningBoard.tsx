@@ -12,6 +12,7 @@ import { BackLink } from '../../components/kit'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { scheduleNextWeek, scheduleThisWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
@@ -87,12 +88,14 @@ function BoardColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.key })
   const [quickAdd, setQuickAdd] = useState('')
+  const motionOn = useMotionEnabled()
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     const title = quickAdd.trim()
     if (!title) return
     applyColumn(createTask({ title }), column.key)
+    seedPlant(e.currentTarget as HTMLElement, motionOn) // Motion 5f
     setQuickAdd('')
   }
 

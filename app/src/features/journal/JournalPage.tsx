@@ -4,6 +4,7 @@ import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJourn
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
 import { ConfirmCard } from '../projects/ConfirmCard'
@@ -156,9 +157,10 @@ export function JournalPage() {
 
   /** "+ New entry" — punch 47: this used to only jump to today. Now it actually adds one,
    * stamped now, focused for typing. */
-  const addEntry = (date = todayStr) => {
+  const addEntry = (date = todayStr, from?: HTMLElement) => {
     setSelectedDate(date)
     const row = upsertJournalEntry({ entry_date: date, body: '' }, true)
+    seedPlant(from, motion) // Motion 5f — "+ New entry" drops a seed into the day's column
     wantFocus.current = row.id
   }
 
@@ -460,7 +462,7 @@ export function JournalPage() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
-                  <span onClick={() => addEntry(selectedDate)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
+                  <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
                   <span>＋ Photo</span>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
@@ -565,7 +567,7 @@ export function JournalPage() {
         {/* Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
-            onClick={() => addEntry()}
+            onClick={(e) => addEntry(todayStr, e.currentTarget)}
             style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}
           >
             ＋ New entry

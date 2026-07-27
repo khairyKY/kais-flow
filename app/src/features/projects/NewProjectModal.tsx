@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useDomains } from '../domains/api'
 import { createProject } from './api'
 import { createArea } from '../areas/api'
+import { useMotionEnabled } from '../../lib/motion'
+import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
 import './xfx.css'
 
@@ -19,6 +21,7 @@ export function NewProjectModal({
   const { data: fetchedDomains = [] } = useDomains()
   const domains = domainsProp ?? fetchedDomains
   useEscapeStack(true, onClose)
+  const motion = useMotionEnabled()
   const [type, setType] = useState(defaultType)
   const [name, setName] = useState('')
   const [domainId, setDomainId] = useState(domains[0]?.id || '')
@@ -42,8 +45,9 @@ export function NewProjectModal({
     setMilestones(milestones.filter((_, i) => i !== index))
   }
 
-  const handlePlant = () => {
+  const handlePlant = (from?: HTMLElement) => {
     if (!name.trim()) return
+    seedPlant(from, motion) // Motion 5f
 
     const selectedDomain = domainId || domains[0]?.id || null
 
@@ -248,7 +252,7 @@ export function NewProjectModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
             <span style={{ flex: 1 }}></span>
             <button onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handlePlant} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={(e) => handlePlant(e.currentTarget)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 16 }} />
               {type === 'area' ? 'Plant Area' : 'Plant Project'}
             </button>

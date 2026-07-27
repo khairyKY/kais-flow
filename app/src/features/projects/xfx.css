@@ -61,6 +61,16 @@
   animation: kfBloomGlow 3.6s ease-in-out infinite;
 }
 
+/* Effects 2e — milestone bloom: the same breath, but ONE, when a project milestone is checked
+   and the wisteria grows a stage. `forwards` matters — the keyframe ends at opacity 0 and
+   without it the glow would settle back to the element's un-animated (fully opaque) state.
+   Remount it with a changing React key to replay. */
+.kf-bloom-once {
+  animation-duration: 1.2s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
 /* Effects 1t — amber drift: sparse autumn leaves (≤3) over a slipping plant,
    petalFall grammar at 9.5–11s; the plant itself desaturates ~20% (inline filter). */
 @keyframes kfAmberFall {
