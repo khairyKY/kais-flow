@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
 import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
@@ -6,10 +6,7 @@ import { useFocusTicker } from '../features/focus/focusStore'
 import { supabase } from '../lib/supabase'
 import type { OutboxEntry } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
-import { CommandBar } from '../features/command-bar/CommandBar'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
-import { ChatPanel } from '../features/chat/ChatPanel'
-import { SearchOverlay } from '../features/search/SearchOverlay'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
 import { filterByList, type SmartList } from '../features/tasks/grouping'
@@ -17,8 +14,15 @@ import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
 import { FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+// Punch 5 (bundle): these four render only after a keypress, so they have no business in
+// the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
+// hotkey effect below, since CommandBar used to own it and can no longer be always-mounted.
+const CommandBar = lazy(() => import('../features/command-bar/CommandBar').then((m) => ({ default: m.CommandBar })))
+const ChatPanel = lazy(() => import('../features/chat/ChatPanel').then((m) => ({ default: m.ChatPanel })))
+const SearchOverlay = lazy(() => import('../features/search/SearchOverlay').then((m) => ({ default: m.SearchOverlay })))
+const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ default: m.ShortcutOverlay })))
+
 import { ToastHost } from './ToastHost'
-import { ShortcutOverlay } from './ShortcutOverlay'
 import { MobileTabBar } from './MobileTabBar'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 
@@ -510,6 +514,8 @@ export function AppLayout() {
   }, [collapsed])
 
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
+  const toggleCommandBar = useCommandBarStore((s) => s.toggle)
+  const commandBarOpen = useCommandBarStore((s) => s.open)
   const { data: pendingInbox = [] } = usePendingInboxItems()
 
   // Cold boot shouldn't animate content in (nothing else on screen is settling yet) — only
@@ -529,6 +535,10 @@ export function AppLayout() {
         e.preventDefault()
         setChatOpen((v) => !v)
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        toggleCommandBar()
+      }
       if (isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
       if (e.key === 'n') {
         e.preventDefault()
@@ -541,7 +551,7 @@ export function AppLayout() {
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [setCommandBarOpen])
+  }, [setCommandBarOpen, toggleCommandBar])
 
   return (
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
@@ -727,10 +737,12 @@ export function AppLayout() {
         onSignOut={() => void supabase.auth.signOut()}
       />
 
-      <CommandBar />
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
-      <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <Suspense fallback={null}>
+        {commandBarOpen && <CommandBar />}
+        {searchOpen && <SearchOverlay open onClose={() => setSearchOpen(false)} />}
+        {chatOpen && <ChatPanel open onClose={() => setChatOpen(false)} />}
+        {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
+      </Suspense>
       <ToastHost />
     </div>
   )

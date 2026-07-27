@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { Button } from '../../components/kit'
-import { VoiceCaptureSheet } from './VoiceCaptureSheet'
+// Punch 5 (bundle): the button sits in the shell (tab bar + Today header) but the SHEET —
+// and the whole capture/zod parse chain behind it — is only needed once you tap the mic.
+const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
 // Pixel contract: Today.dc.html 1a header CTA (line 132) — mic glyph + pill, kit Button "cta".
 
@@ -34,7 +36,11 @@ export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
         {!iconOnly && 'Voice capture'}
       </Button>
 
-      <VoiceCaptureSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      {sheetOpen && (
+        <Suspense fallback={null}>
+          <VoiceCaptureSheet open onClose={() => setSheetOpen(false)} />
+        </Suspense>
+      )}
     </>
   )
 }

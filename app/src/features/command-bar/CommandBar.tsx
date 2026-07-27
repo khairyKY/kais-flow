@@ -53,7 +53,6 @@ function matchJumpView(input: string): (typeof JUMP_VIEWS)[number] | null {
 export function CommandBar() {
   const open = useCommandBarStore((s) => s.open)
   const setOpen = useCommandBarStore((s) => s.setOpen)
-  const toggle = useCommandBarStore((s) => s.toggle)
   const [text, setText] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [jumpSelected, setJumpSelected] = useState(false)
@@ -74,16 +73,9 @@ export function CommandBar() {
   useEscapeStack(open, () => setOpen(false))
   useBodyScrollLock(open)
 
-  useEffect(() => {
-    function onKeydown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        toggle()
-      }
-    }
-    window.addEventListener('keydown', onKeydown)
-    return () => window.removeEventListener('keydown', onKeydown)
-  }, [toggle])
+  // ⌘K lives in AppLayout's hotkey effect (punch 5): this component is lazy and only
+  // mounted while open, so it can't own the shortcut that opens it. Keeping a copy here
+  // would ALSO double-fire while open — two toggles cancelling to a no-op.
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
