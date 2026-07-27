@@ -195,7 +195,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               overdue.map((t) => (
                 <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
                     {daysOver(t.due_at!)}d over
                   </span>
                   <Pill onClick={() => rescheduleDue(t, tomorrowIso())}>push to tomorrow</Pill>
@@ -342,7 +342,7 @@ function Bed({ icon, title, tasks }: { icon: string; title: string; tasks: Task[
 function HourRow({ hour, isOver, setNodeRef }: { hour: number; isOver: boolean; setNodeRef: (el: HTMLElement | null) => void }) {
   const label = hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : hour === 0 ? '12 AM' : `${hour} AM`
   return (
-    <div ref={setNodeRef} style={{ position: 'relative', height: HOUR_PX, borderBottom: '1px solid var(--line-card)', background: isOver ? 'rgba(168,160,190,0.14)' : undefined }}>
+    <div ref={setNodeRef} style={{ position: 'relative', height: HOUR_PX, borderBottom: '1px solid var(--line-card)', background: isOver ? 'color-mix(in srgb, var(--acc-lavender) 14%, transparent)' : undefined }}>
       <span style={{ position: 'absolute', left: -46, top: -6, width: 40, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{label}</span>
     </div>
   )
@@ -448,7 +448,7 @@ function BlockStep() {
                       left: 7,
                       right: 8,
                       height: Math.max(20, (durMin / 60) * HOUR_PX),
-                      background: 'rgba(168,160,190,0.2)',
+                      background: 'color-mix(in srgb, var(--acc-lavender) 20%, transparent)',
                       borderLeft: '3px solid var(--acc-lavender)',
                       boxShadow: e.task_id ? 'inset 3px 0 0 var(--acc-blossom)' : undefined,
                       borderRadius: 3,

@@ -88,7 +88,7 @@ function EmptyResult({ query }: { query: string }) {
       </div>
       <div style={{ marginTop: 9, alignSelf: 'flex-start', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>0 results</div>
       <div style={{ position: 'relative', marginTop: 34, width: 150, height: 110 }}>
-        <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, #b9a98a, #a3937a 70%)', boxShadow: 'inset 0 3px 6px rgba(60,52,38,0.28)' }} />
+        <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, var(--sky-horizon,#b9a98a), var(--sky-panel-strong,#a3937a) 70%)', boxShadow: 'inset 0 3px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.28)' }} />
         <div style={{ position: 'absolute', left: '50%', bottom: 30, width: 46, height: 46, marginLeft: -30, borderRadius: '50%', border: '3px solid var(--ink-faint)', background: 'rgba(244,241,234,0.35)' }} />
         <div style={{ position: 'absolute', left: '50%', bottom: 14, width: 22, height: 3.5, marginLeft: 10, background: 'var(--ink-faint)', borderRadius: 2, transform: 'rotate(38deg)' }} />
       </div>

@@ -33,8 +33,10 @@ const STYLES = `
      600px, so the taller steps overflowed into an internal scrollbar. min-height keeps the
      roomy proportions for the short steps and lets the tall ones grow; max-height still caps
      it to the viewport, so a genuinely small window scrolls instead of clipping. */
-  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(60,52,38,0.12), 0 18px 44px rgba(60,52,38,0.14); overflow: hidden; }
+  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.12), 0 18px 44px rgba(var(--kf-shadow-rgb, 60,52,38),0.14); overflow: hidden; }
+  /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
   .ob-grain { position: absolute; inset: 0; pointer-events: none; z-index: 40; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
+  [data-theme='night'] .ob-grain { mix-blend-mode: overlay; opacity: 0.25; }
   .ob-header { position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; }
   .ob-dots-mobile { display: none; }
   .ob-body { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 40px; }
@@ -58,8 +60,10 @@ const STYLES = `
   .ob-hand { font-family: var(--font-hand); color: var(--ink-muted); }
   .ob-int-row { display: flex; align-items: center; gap: 13px; border: 1px solid var(--line-card); border-radius: 10px; padding: 13px 16px; background: var(--paper-parchment); }
   .ob-int-btn { border: 1px solid var(--line-solid); background: var(--paper-bone); color: var(--ink-body); font-family: inherit; font-size: 12.5px; padding: 8px 16px; border-radius: 999px; cursor: pointer; text-decoration: none; display: inline-block; }
-  .ob-terrarium { width: 100%; margin-top: 26px; position: relative; height: 170px; background: linear-gradient(180deg,#F4EFE0,#EDE6D3); border: 1px solid var(--line-card); border-radius: 12px; overflow: hidden; }
-  .ob-terrarium-soil { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: linear-gradient(180deg,#b79f77,#8f7a54); }
+  /* punch 57: the glass + soil were light-only literals. The night-token fallback pattern
+     keeps the day hexes byte-exact and swaps in the violet-midnight ground after dark. */
+  .ob-terrarium { width: 100%; margin-top: 26px; position: relative; height: 170px; background: linear-gradient(180deg,var(--sky-panel,#F4EFE0),var(--sky-deep,#EDE6D3)); border: 1px solid var(--line-card); border-radius: 12px; overflow: hidden; }
+  .ob-terrarium-soil { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: linear-gradient(180deg,var(--sky-horizon,#b79f77),var(--sky-panel-strong,#8f7a54)); }
   .ob-terrarium-seeds { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; justify-content: space-around; align-items: flex-end; padding: 0 26px; }
   .ob-pebble { width: 10px; height: 10px; border-radius: 50%; background: #5a4a30; opacity: 0.7; }
   .ob-terrarium-note { position: absolute; top: 12px; right: 16px; font-family: var(--font-hand); font-size: 16px; color: #8f7a54; transform: rotate(-2deg); }
@@ -297,11 +301,11 @@ export function OnboardingPage() {
               <p className="ob-sub" style={{ marginBottom: 24 }}>Show up, pick what matters, give it a shape. Then just follow the day.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
                 <Feature icon={<img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 20 }} />} title="Today & your Top-3" desc="One anchor screen. Choose the three things that would make today count — the rest can wait." />
-                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'rgba(168,160,190,0.25)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Syncs both ways with Google Calendar." />
+                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 25%, transparent)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Syncs both ways with Google Calendar." />
                 <Feature
                   icon={
                     <svg width="18" height="18" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="5" fill="#C9A55A" />
+                      <circle cx="12" cy="12" r="5" fill="var(--acc-gold-warm)" />
                       <g stroke="#9a7b3a" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /></g>
                     </svg>
                   }

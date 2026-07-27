@@ -61,7 +61,7 @@ const VERDICTS: SweepVerdict[] = ['still moving', 'park it', 'needs a look', 're
 const VERDICT_STYLE: Record<SweepVerdict, CSSProperties> = {
   'still moving': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
   'park it': { border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' },
-  'needs a look': { background: 'rgba(181,101,74,0.14)', color: 'var(--acc-terra)' },
+  'needs a look': { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
   'reviewed ✓': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
 }
 
@@ -410,7 +410,7 @@ function DomainCard({
   // current — the expanded sweep card, Review.dc.html 1a "domain 2 — current, expanded"
   return (
     <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? 14 : '16px 18px', transform: 'rotate(-0.2deg)' }}>
-      <span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'rgba(212,199,138,0.5)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
+      <span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'color-mix(in srgb, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <span style={{ width: 17, height: 17, border: '1.5px solid #bfb8a3', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
@@ -487,7 +487,7 @@ function RightRail({
           <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 8 }}>Nothing slipping.</p>
         ) : (
           rows.slice(0, 3).map((row) => (
-            <div key={`${row.entity_type}-${row.entity_id}`} style={{ marginTop: 8, background: 'rgba(181,101,74,0.08)', border: '1px solid rgba(181,101,74,0.25)', borderRadius: 3, padding: '12px 14px' }}>
+            <div key={`${row.entity_type}-${row.entity_id}`} style={{ marginTop: 8, background: 'color-mix(in srgb, var(--acc-terra) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-terra) 25%, transparent)', borderRadius: 3, padding: '12px 14px' }}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>{Math.floor(row.days_since)} days untouched</span>
@@ -637,7 +637,7 @@ function SeasonSoFar({
             <img src={`${A}/fern/coil.png`} alt="" style={{ position: 'absolute', left: 4, bottom: 12, height: 26, opacity: 0.72, transform: 'rotate(-6deg)' }} />
             <svg viewBox="0 0 268 104" preserveAspectRatio="none" style={{ position: 'absolute', left: 22, right: 6, top: 0, width: 'calc(100% - 28px)', height: '100%', overflow: 'visible' }}>
               <line x1="6" y1="84" x2="262" y2="84" stroke="var(--line-dashed)" strokeWidth="1" strokeDasharray="2 3" />
-              <path d={`${linePath} L${lastPoint.x},84 L18,84 Z`} fill="rgba(122,148,110,0.13)" />
+              <path d={`${linePath} L${lastPoint.x},84 L18,84 Z`} fill="color-mix(in srgb, var(--acc-moss) 13%, transparent)" />
               <path d={linePath} fill="none" stroke="var(--acc-sage)" strokeWidth="2.2" strokeLinecap="round" />
               {pathPoints.map((p, i) => (
                 <circle key={i} cx={p.x} cy={p.y} r="2.4" fill="var(--acc-sage)" />

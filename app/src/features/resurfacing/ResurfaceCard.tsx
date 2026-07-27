@@ -48,7 +48,7 @@ export function ResurfaceCard() {
           right: 16,
           width: 42,
           height: 12,
-          background: 'rgba(201,160,160,0.4)',
+          background: 'color-mix(in srgb, var(--acc-clover) 40%, transparent)',
           backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
           transform: 'rotate(3deg)',
           borderRadius: 1,

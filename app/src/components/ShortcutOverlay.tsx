@@ -71,7 +71,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
   return (
     <div
       className="kf-scrim"
-      style={{ position: 'fixed', inset: 0, zIndex: 55, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 55, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96 }}
       onClick={onClose}
     >
       <div

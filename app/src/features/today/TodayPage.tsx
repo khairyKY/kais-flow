@@ -358,7 +358,7 @@ export function TodayPage() {
 
   const terrarium = terrariumOn && (isMobile ? (
     <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '9px 13px', display: 'flex', alignItems: 'center', gap: 11, marginTop: 14, transform: 'rotate(-0.4deg)' }}>
-      <span aria-hidden style={{ position: 'absolute', top: -7, left: 20, width: 40, height: 12, background: 'rgba(138,154,126,0.4)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
+      <span aria-hidden style={{ position: 'absolute', top: -7, left: 20, width: 40, height: 12, background: 'color-mix(in srgb, var(--acc-sage) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 6px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
         <img src={`${A}/hydrangea/${hyd}.png`} alt="Inbox" style={{ height: 30 }} />
         <img src={`${A}/vine/${vine}.png`} alt="Routines" style={{ height: 28 }} />
@@ -371,7 +371,7 @@ export function TodayPage() {
     </div>
   ) : (
     <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '14px 22px', display: 'flex', alignItems: 'center', gap: 26, marginBottom: 26, transform: 'rotate(-0.3deg)' }}>
-      <span aria-hidden style={{ position: 'absolute', top: -9, left: 44, width: 66, height: 16, background: 'rgba(138,154,126,0.36)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
+      <span aria-hidden style={{ position: 'absolute', top: -9, left: 44, width: 66, height: 16, background: 'color-mix(in srgb, var(--acc-sage) 36%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18 }}>
         <img src={`${A}/cherry/${cherryStage(open.length, doneToday)}.png`} alt="Tasks" style={{ height: 58, filter: 'var(--shadow-drop-sm)' }} />
         <img src={`${A}/hydrangea/${hyd}.png`} alt="Inbox" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
@@ -439,13 +439,13 @@ export function TodayPage() {
                   }}
                 >
                   <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}>
-                    <g fill="#8A9A7E">
+                    <g fill="var(--acc-sage)">
                       <ellipse cx="12" cy="6.8" rx="3" ry="4.2" />
                       <ellipse cx="6.8" cy="13.8" rx="3" ry="4.2" transform="rotate(-70 6.8 13.8)" />
                       <ellipse cx="17.2" cy="13.8" rx="3" ry="4.2" transform="rotate(70 17.2 13.8)" />
                     </g>
-                    <circle cx="12" cy="12" r="4" fill="#D4A8B0" />
-                    <circle cx="12" cy="12" r="1.8" fill="#C9A55A" />
+                    <circle cx="12" cy="12" r="4" fill="var(--acc-blossom)" />
+                    <circle cx="12" cy="12" r="1.8" fill="var(--acc-gold-warm)" />
                   </svg>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '14px', color: 'var(--ink-body)' }}>{text}</div>
@@ -638,7 +638,7 @@ function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
       <span aria-hidden style={{ position: 'absolute', left: '50%', top: -40, width: 260, height: 170, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,217,160,0.5), rgba(232,217,160,0) 70%)' }} />
       <div style={{ position: 'relative', width: 190, height: 130 }}>
         <div style={{ position: 'absolute', inset: 0, border: '2.5px solid rgba(107,100,85,0.45)', borderRadius: '14px 14px 10px 10px', background: 'rgba(244,241,234,0.4)' }} />
-        <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,#b9a98a,#a3937a)', boxShadow: 'inset 0 3px 5px rgba(60,52,38,0.25)' }} />
+        <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3937a))', boxShadow: 'inset 0 3px 5px rgba(var(--kf-shadow-rgb, 60,52,38),0.25)' }} />
         <img src={`${A}/clover/seedling.png`} alt="" style={{ position: 'absolute', left: '50%', bottom: 34, height: 52, transform: 'translateX(-50%)', filter: 'var(--shadow-drop-sm)' }} />
       </div>
       <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>
@@ -700,8 +700,8 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   if (compact) {
     return (
       <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
-        <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
+        <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
+        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}><EmojiText text={task.title} /></div>
@@ -712,8 +712,8 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   }
   return (
     <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
-      <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'rgba(201,165,90,0.42)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'rgba(255,255,255,0.5)' }} />}</span>
+      <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
+      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
@@ -757,7 +757,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   ) : null
   const rowExtra: React.CSSProperties = {
     background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
-    boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
+    boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
     outline: 'none',
   }
   // Kai 2026-07-21: no visible select squares, but the row keeps its selection and menu
@@ -942,9 +942,9 @@ function Empty({ line }: { line: string }) {
 }
 
 const SunIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><circle cx="12" cy="12" r="5" fill="#D9B65C" /><g stroke="#C9A55A" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></g></svg>
+  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><circle cx="12" cy="12" r="5" fill="#D9B65C" /><g stroke="var(--acc-gold-warm)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></g></svg>
 )
 const MoonIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="#A8A0BE" /></svg>
+  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--acc-lavender)" /></svg>
 )
 

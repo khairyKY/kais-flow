@@ -185,7 +185,7 @@ export function ImportPage() {
                   style={{
                     font: 'inherit', fontSize: 13, padding: '9px 16px', borderRadius: 999, cursor: 'pointer',
                     border: source === v ? '1px solid var(--acc-sage)' : '1px solid var(--line-solid)',
-                    background: source === v ? 'rgba(138,154,126,0.18)' : 'var(--paper-bone)',
+                    background: source === v ? 'color-mix(in srgb, var(--acc-sage) 18%, transparent)' : 'var(--paper-bone)',
                     color: source === v ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
                     fontWeight: source === v ? 600 : 400,
                   }}

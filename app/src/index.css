@@ -63,8 +63,26 @@ body::before {
   background-image: var(--noise-url);
   mix-blend-mode: multiply;
   /* Foundation patch (punch 53): the Settings paper-texture slider writes --kf-grain-opacity
-     on <html>; 0.5 stays the shipped default when it's unset. */
-  opacity: var(--kf-grain-opacity, 0.5);
+     on <html>; 0.5 stays the shipped default when it's unset. It SCALES the theme's base
+     (punch 57) rather than replacing it, so the slider still works in night. */
+  opacity: calc(var(--kf-grain-opacity, 0.5) * var(--kf-grain-base, 1));
+}
+
+/* Foundation patch (punch 57): multiply over the near-black night paper is a no-op, so the
+   grain — the app's signature texture — disappeared entirely after dark. Night.dc.html
+   specifies overlay @ 0.25, which is the 0.5 slider default × base 0.5. */
+[data-theme='night'] body::before {
+  --kf-grain-base: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* Foundation patch (punch 57): night values for the two literals that have no day/night
+   token pair. Every other site reuses an existing token, or a night-only token via the
+   fallback pattern `var(--night-token, <day literal>)` — so day stays byte-exact against
+   the export and night flips automatically. */
+[data-theme='night'] {
+  --kf-shadow-rgb: 0, 0, 0; /* warm-brown drop shadows → neutral, matching the night shadow set */
+  --kf-chip-tasks: #E9BFC5; /* blossom chip ink (day #8A4A58); there is no --acc-blossom-text */
 }
 
 ::-webkit-scrollbar {

@@ -241,11 +241,11 @@ export function HerbariumPage() {
           {ceremonyBeat === 1 && (<>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
-              <div style={{ width: 210, height: 10, background: '#8b7a5e', borderRadius: 2, boxShadow: '0 2px 4px rgba(60,52,38,0.3)' }}></div>
+              <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div style={{ width: 190, height: 150, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
                 <img src={imgSource} alt="" style={{ height: 140, transform: 'scaleY(0.82)', transformOrigin: '50% 100%', filter: 'saturate(0.7)' }} />
               </div>
-              <div style={{ width: 210, height: 10, background: '#8b7a5e', borderRadius: 2, boxShadow: '0 2px 4px rgba(60,52,38,0.3)' }}></div>
+              <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
@@ -290,9 +290,9 @@ export function HerbariumPage() {
   const renderEmptyState = () => (
     <div style={{ padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <svg width="150" height="96" viewBox="0 0 150 96">
-        <rect x="20" y="70" width="110" height="9" rx="2" fill="#8b7a5e"></rect>
+        <rect x="20" y="70" width="110" height="9" rx="2" fill="var(--sky-horizon,#8b7a5e)"></rect>
         <rect x="30" y="34" width="90" height="36" fill="var(--paper-bone)" stroke="var(--line-solid)" strokeWidth={1.5}></rect>
-        <rect x="20" y="24" width="110" height="9" rx="2" fill="#8b7a5e" transform="rotate(-9 75 28)"></rect>
+        <rect x="20" y="24" width="110" height="9" rx="2" fill="var(--sky-horizon,#8b7a5e)" transform="rotate(-9 75 28)"></rect>
         <circle cx="34" cy="75" r="3" fill="var(--ink-faint)"></circle>
         <circle cx="116" cy="75" r="3" fill="var(--ink-faint)"></circle>
         <path d="M34 20v55M116 20v55" stroke="var(--ink-faint)" strokeWidth={2.5}></path>

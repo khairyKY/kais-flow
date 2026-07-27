@@ -112,7 +112,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(58,50,38,0.32)', paddingTop: 96, animation: 'seOverlayFade 210ms var(--ease-out)' }}
+      className="kf-scrim"
+      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96, animation: 'seOverlayFade 210ms var(--ease-out)' }}
       onClick={onClose}
     >
       {/* Motion 3c — scrim and card arrive together, 210ms up-and-settle */}

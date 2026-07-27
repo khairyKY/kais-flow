@@ -83,7 +83,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         flexDirection: 'column',
         background: 'var(--paper-parchment)',
         borderLeft: '1px solid var(--line-card)',
-        boxShadow: '-1px 0 2px rgba(60,52,38,0.14), -10px 0 26px rgba(60,52,38,0.1)',
+        boxShadow: '-1px 0 2px rgba(var(--kf-shadow-rgb, 60,52,38),0.14), -10px 0 26px rgba(var(--kf-shadow-rgb, 60,52,38),0.1)',
       }}
     >
       {/* X2 Motion 5d — hover lean: the chat sprig leans a few degrees, pinned at the soil line. */}
@@ -136,7 +136,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                         color: 'var(--acc-clover-text)',
-                        background: 'rgba(201,160,160,0.22)',
+                        background: 'color-mix(in srgb, var(--acc-clover) 22%, transparent)',
                         border: 'none',
                         padding: '3px 8px',
                         borderRadius: 999,

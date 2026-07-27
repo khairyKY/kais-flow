@@ -34,11 +34,13 @@ const STYLES = `
   .se-hstage { position: relative; height: 210px; overflow: hidden; }
   .se-hband { position: absolute; left: 20px; right: 20px; bottom: 18px; z-index: 5; }
   .se-hlabel { position: absolute; left: 14px; top: 12px; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); z-index: 6; }
+  /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
   .se-grain { position: absolute; inset: 0; pointer-events: none; z-index: 4; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
+  [data-theme='night'] .se-grain { mix-blend-mode: overlay; opacity: 0.25; }
   .se-petal { position: absolute; top: -14px; background: linear-gradient(135deg,#E8C4CC,#D4A8B0); border-radius: 70% 30% 60% 40%; }
   .se-aleaf { position: absolute; top: -14px; width: 12px; height: 8px; background: linear-gradient(135deg,#C9A55A,#a9803f); border-radius: 80% 20% 70% 30%; }
   .se-wleaf { position: absolute; width: 12px; height: 8px; background: linear-gradient(135deg,#C9A55A,#a9803f); border-radius: 80% 20% 70% 30%; }
-  .se-rain { position: absolute; top: -20px; width: 1.5px; height: 16px; background: linear-gradient(rgba(154,180,190,0),rgba(154,180,190,0.7)); }
+  .se-rain { position: absolute; top: -20px; width: 1.5px; height: 16px; background: linear-gradient(transparent,color-mix(in srgb, var(--acc-hydrangea) 70%, transparent)); }
   .se-shimmer { position: absolute; left: 14%; right: 14%; bottom: 70px; height: 14px; background: linear-gradient(rgba(232,217,160,0),rgba(232,217,160,0.55),rgba(232,217,160,0)); transform-origin: 50% 100%; }
   .motion-on .se-petal { animation: sePFall 8s linear infinite; }
   .motion-on .se-aleaf { animation: sePFall 10s linear infinite; }
@@ -59,7 +61,7 @@ function Sparkles({ sparkles }: { sparkles: Sparkle[] }) {
       {sparkles.map((s, i) => (
         <span
           key={i}
-          style={{ position: 'absolute', top: s.top, left: s.left, right: s.right, width: s.size, height: s.size, background: 'radial-gradient(circle at 40% 40%,#fff,rgba(255,255,255,0) 65%)', borderRadius: '50%' }}
+          style={{ position: 'absolute', top: s.top, left: s.left, right: s.right, width: s.size, height: s.size, background: 'radial-gradient(circle at 40% 40%,var(--star, #FDFBF4),transparent 65%)', borderRadius: '50%' }}
         />
       ))}
     </>
@@ -189,18 +191,18 @@ export function SeasonsPage() {
         <div style={{ marginTop: 16, width: '100%', maxWidth: 1240, border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <SeasonStage
-              bg="#EBE5CE" radial="linear-gradient(rgba(154,180,190,0.18),rgba(154,180,190,0) 60%)"
+              bg="var(--sky-panel, #EBE5CE)" radial="linear-gradient(color-mix(in srgb, var(--acc-hydrangea) 18%, transparent),transparent 60%)"
               label="Rainy summer day" date="Friday · 10 July · rain" greeting="Good morning, Kai"
               asset="/ds/assets/daisy/midday.png" assetFilter="brightness(1.04)" effect="rain" borderRight
               sparkles={[{ top: 10, right: 14, size: 6 }, { top: 22, left: 12, size: 5 }]}
             />
             <SeasonStage
-              bg="#ECEAE1" radial="radial-gradient(ellipse 80% 55% at 30% 0%, rgba(232,222,190,0.5), rgba(232,222,190,0) 70%)"
+              bg="var(--sky-panel, #ECEAE1)" radial="radial-gradient(ellipse 80% 55% at 30% 0%, rgba(232,222,190,0.5), rgba(232,222,190,0) 70%)"
               label="Clear winter morning" date="Thursday · 15 January · clear" greeting="Good morning, Kai"
               asset="/ds/assets/daisy/morning.png" assetFilter="saturate(0.85)" borderRight
             />
             <SeasonStage
-              bg="#E9DDC6" radial="linear-gradient(rgba(90,74,96,0.16), rgba(201,165,90,0.12) 70%)"
+              bg="var(--sky-panel, #E9DDC6)" radial="linear-gradient(rgba(90,74,96,0.16), color-mix(in srgb, var(--acc-gold-warm) 12%, transparent) 70%)"
               label="Windy autumn evening" date="Monday · 19 October · wind" greeting="Good evening, Kai"
               asset="/ds/assets/vine/lush.png" assetFilter="sepia(0.3) saturate(0.8)" assetTransform="rotate(2.5deg)" effect="wind"
             />

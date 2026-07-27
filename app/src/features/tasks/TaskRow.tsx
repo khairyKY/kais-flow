@@ -515,7 +515,7 @@ export function TaskRow({
       <div
         className="tr-swipe-content"
         {...swipe.handlers}
-        style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0, background: swipe.x !== 0 ? 'var(--paper-linen)' : undefined, transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 ? 'transform 200ms var(--ease-spring)' : undefined, boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(60,52,38,0.14)' : swipe.x < 0 ? '9px 0 12px rgba(60,52,38,0.14)' : undefined }}
+        style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0, background: swipe.x !== 0 ? 'var(--paper-linen)' : undefined, transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 ? 'transform 200ms var(--ease-spring)' : undefined, boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(var(--kf-shadow-rgb, 60,52,38),0.14)' : swipe.x < 0 ? '9px 0 12px rgba(var(--kf-shadow-rgb, 60,52,38),0.14)' : undefined }}
       >
         {!hideCheckbox && onToggleSelect && (
           <span

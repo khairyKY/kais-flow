@@ -448,7 +448,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-        <ColorDots value={color ?? '#A8A0BE'} onChange={setColor} size={expanded ? 22 : 16} />
+        <ColorDots value={color ?? 'var(--acc-lavender)'} onChange={setColor} size={expanded ? 22 : 16} />
         <Seg options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} value={busy ? 'busy' : 'free'} onChange={(v) => setBusy(v === 'busy')} style={{ flex: 'none', padding: 2, marginLeft: 'auto' }} />
       </div>
     </>
@@ -522,10 +522,10 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     return (
       <>
         {overlayAnim}
-        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, animation: 'qcFadeIn 210ms var(--ease-out)' }} />
+        <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, animation: 'qcFadeIn 210ms var(--ease-out)' }} />
         <div
           className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(60,52,38,0.28)', padding: '14px 20px calc(22px + env(safe-area-inset-bottom))', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(var(--kf-shadow-rgb, 60,52,38),0.28)', padding: '14px 20px calc(22px + env(safe-area-inset-bottom))', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', animation: 'entryFadeUp 210ms var(--ease-out)' }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0 10px' }}>
             <span style={{ width: 38, height: 4.5, borderRadius: 3, background: 'var(--line-solid)' }} />
@@ -538,7 +538,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
 
   if (expanded || !anchor) {
     return (
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'qcFadeIn 210ms var(--ease-out)' }}>
+      <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'qcFadeIn 210ms var(--ease-out)' }}>
         {overlayAnim}
         <div className="kf-quickcreate" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: '100%', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px', animation: 'entryFadeUp 210ms var(--ease-out)' }}>
           {body}
