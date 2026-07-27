@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
 import { useMotionEnabled } from '../../lib/motion'
@@ -165,6 +165,11 @@ function useIsMobile(): boolean {
 export function OnboardingPage() {
   const { data: settings } = useAppSettings()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // WA-1 punch 3: Settings → Profile links here with ?replant=1 to rerun the welcome on an
+  // already-onboarded account (fields prefill from settings; finishing re-saves them). Without
+  // the flag, a completed account is always bounced to /today — onboarding runs once.
+  const replant = searchParams.has('replant')
   const isMobile = useIsMobile()
   const motionOn = useMotionEnabled()
   const [step, setStep] = useState(0)
@@ -182,7 +187,7 @@ export function OnboardingPage() {
     if (settings.seed_avatar) setSeed(settings.seed_avatar)
   }, [settings])
 
-  if (settings && !needsOnboarding(settings)) return <Navigate to="/today" replace />
+  if (!replant && settings && !needsOnboarding(settings)) return <Navigate to="/today" replace />
 
   const appName = name.trim() ? `${name.trim()}'s Flow` : "Kai's Flow"
   const back = () => setStep((s) => Math.max(0, s - 1))

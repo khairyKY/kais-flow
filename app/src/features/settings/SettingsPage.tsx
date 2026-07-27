@@ -460,6 +460,10 @@ function ProfileCard() {
       <div style={{ ...flabel, marginBottom: 12 }}>Profile</div>
       <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{email || 'signed in'}</div>
       <div style={fhelp}>one person, one garden — no team settings here</div>
+      {/* WA-1 punch 3: quiet re-entry to the first-run wizard (name / workspace / seed). */}
+      <Link to="/onboarding?replant=1" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', textDecoration: 'none', transform: 'rotate(-0.5deg)' }}>
+        Replant your garden — rerun the welcome →
+      </Link>
     </SCard>
   )
 }
