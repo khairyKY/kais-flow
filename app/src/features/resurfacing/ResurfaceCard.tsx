@@ -1,6 +1,6 @@
 import { useTasks } from '../tasks/api'
 import { useAllInboxItems } from '../inbox/api'
-import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced } from './api'
+import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced, type CooldownTier } from './api'
 
 // Pixel contract: Today.dc.html 1a "From a while ago" card (lines 212-217). TodayPage
 // already renders the SectionLabel above this — own only the card body. `#fff` in the
@@ -13,14 +13,17 @@ export function ResurfaceCard() {
 
   if (!row || row.action !== 'pending') return null
 
-  const title =
-    row.entity_type === 'task'
-      ? tasks.find((t) => t.id === row.entity_id)?.title
-      : inboxItems.find((i) => i.id === row.entity_id)?.raw_text
+  const task = row.entity_type === 'task' ? tasks.find((t) => t.id === row.entity_id) : undefined
+  const title = row.entity_type === 'task' ? task?.title : inboxItems.find((i) => i.id === row.entity_id)?.raw_text
   if (!title) return null // entity was deleted since the pick was made
 
   const inboxItem = row.entity_type === 'inbox_item' ? inboxItems.find((i) => i.id === row.entity_id) : undefined
   const canConvert = row.entity_type === 'inbox_item' && inboxItem && inboxItem.status !== 'filed'
+
+  // Punch 21 — "Later" cooldown tier from the task's priority (1 = !!! most urgent → high,
+  // 2 → med, 3 → low); unranked tasks and inbox items take the middle tier.
+  const tier: CooldownTier =
+    task?.priority === 1 ? 'high' : task?.priority === 3 ? 'low' : 'med'
 
   return (
     <div
@@ -59,15 +62,17 @@ export function ResurfaceCard() {
           <button
             type="button"
             onClick={() => convertResurfaced(row, inboxItem)}
-            style={{ background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, border: 'none', cursor: 'pointer', font: 'inherit' }}
+            // punch 22: `font` (shorthand) must precede `fontSize` — later shorthand keys clobber
+            // earlier longhands in React style objects, which reset the chip to the body size.
+            style={{ font: 'inherit', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, border: 'none', cursor: 'pointer' }}
           >
             Still relevant
           </button>
         )}
         <button
           type="button"
-          onClick={() => reviewLaterResurfaced(row)}
-          style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer', font: 'inherit' }}
+          onClick={() => reviewLaterResurfaced(row, tier)}
+          style={{ font: 'inherit', border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer' }}
         >
           Later
         </button>

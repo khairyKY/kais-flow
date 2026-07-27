@@ -1,0 +1,10 @@
+/* today.css — WA-4 local styles */
+
+/* Punch 22: terra hover on the mono link grammar ("Open calendar →", "View all →") —
+   same signal as the active star. */
+.kf-link-terra {
+  transition: color var(--dur-quick) var(--ease-out);
+}
+.kf-link-terra:hover {
+  color: var(--acc-terra);
+}
