@@ -365,7 +365,11 @@ export function InboxPage() {
             {githubItems.length > 0 && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: isMobile ? '22px 0 10px' : '30px 0 10px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub{isMobile ? '' : ' · Shaheen/website'} · ranked by AI</span>
+                  {/* WB-4 punch 9: "· Shaheen/website" was the export's sample repo — hardcoded, so
+                      it would have named the wrong repo for anyone (and Kai's own repo for a stranger).
+                      Nothing stores a repo on an inbox item, so it's dropped rather than guessed —
+                      same treatment as the retainer's "/ 10h · renews 1 Aug" (punch 42). */}
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · ranked by AI</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
                 </div>
