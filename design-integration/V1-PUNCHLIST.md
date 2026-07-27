@@ -7,6 +7,8 @@
 
 ---
 
+> **BUILD STATUS 2026-07-26 (evening):** Foundation F1–F7 complete; Wave A workstreams WA-1 (sign-up), WA-2 (calendar), WA-3 (tasks), WA-4 (today), WA-6 (settings), WA-9 (rituals/review) merged. Boxes ticked below = **built + tsc/tests/build green**, NOT yet judged — Kai's Judge line on the deployed build is what actually closes an item. Remaining unbuilt: 2, 4, 5, 6(sweep), 7, 8, 9, 24, 25, 26, 40, 41, 42, 46–52, 57, 61, 63, 64.
+
 ## 0. Decisions that unblock items below — **decide by Aug 1**
 
 - [x] **D-1 Journal model** — ✅ **DECIDED 2026-07-26:** one daily page, unlimited timestamped entries, delete→Trash; titled notes → v2 with Library. *(unblocks 47)*
@@ -21,11 +23,11 @@
 
 ## 1. Public gate — a stranger can use it
 
-- [ ] **1. Sign-up exists.** Page + logic + email verification per Supabase defaults.
+- [x] **1. Sign-up exists.** Page + logic + email verification per Supabase defaults.
   **Judge:** open the live URL in a private window, create a brand-new account end-to-end, land in onboarding.
 - [ ] **2. Fresh-account first-run is clean.** Every surface shows its designed empty state; zero Kai-specific data, names, or sample literals anywhere.
   **Judge:** with the new account, visit every route; nothing looks broken, borrowed, or pre-filled.
-- [ ] **3. Onboarding runs once.** Never reappears on refresh; re-editable from Settings.
+- [x] **3. Onboarding runs once.** Never reappears on refresh; re-editable from Settings.
   **Judge:** finish onboarding, refresh 3×, sign out/in — never see it again; change the name via Settings.
 - [ ] **4. Public-safety pass.** RLS verified per table with a second account; Groq edge functions rate-limited; capture endpoints require auth.
   **Judge:** account B cannot read account A's data via the app or direct REST calls (spot-check 3 tables).
@@ -42,36 +44,36 @@
   **Judge:** click every visible control on every page; zero silent no-ops.
 - [ ] **9. No design-sample literals.** Focus session strip, "subtask 2 of 3" fallback, Library "resurfaced twice" + chat-flag card, sun-dial dots, retainer "6.5h/10h · renews 1 Aug".
   **Judge:** each of those five spots shows real data or nothing.
-- [ ] **10. Growth stages never lie.** One shared threshold module; hydrangea identical on Today/Inbox; vine lush = 30d everywhere; Slipping shows the project's real wisteria stage.
+- [x] **10. Growth stages never lie.** One shared threshold module; hydrangea identical on Today/Inbox; vine lush = 30d everywhere; Slipping shows the project's real wisteria stage.
   **Judge:** with 4 inbox items, Today and Inbox show the same stage; a 60%-project's slipping card shows p60.
-- [ ] **11. The word "error" never appears.** Calm-copy pass over outbox + settings toasts.
+- [x] **11. The word "error" never appears.** Calm-copy pass over outbox + settings toasts.
   **Judge:** kill the network mid-write and force a rejected write; the toast reads calm, no raw messages.
-- [ ] **12. Keyboard truth.** `?` overlay lists only keys that work; list keys (S/P/X/1/2/3, Enter=detail) live on Today AND Tasks; one Inbox key set matching the strip; Esc closes everything including ⌘J chat.
+- [x] **12. Keyboard truth.** `?` overlay lists only keys that work; list keys (S/P/X/1/2/3, Enter=detail) live on Today AND Tasks; one Inbox key set matching the strip; Esc closes everything including ⌘J chat.
   **Judge:** try every key the `?` overlay shows, on the page it claims — 100% must do what it says.
-- [ ] **13. Escapes bug dead.** No literal `·`-style text anywhere.
+- [x] **13. Escapes bug dead.** No literal `·`-style text anywhere.
   **Judge:** skim Activity, Herbarium, Trash — zero backslash artifacts.
-- [ ] **14. Confirm cards, not `window.confirm`.** All 7 native confirm sites use the in-app ConfirmCard.
+- [x] **14. Confirm cards, not `window.confirm`.** All 7 native confirm sites use the in-app ConfirmCard.
   **Judge:** delete a task from every entry point — never see a browser dialog.
-- [ ] **15. Blur cluster fixed.** Resurface quote, Slipping title, bulk bar render as sharp as the rest at 90/100/110% zoom.
+- [x] **15. Blur cluster fixed.** Resurface quote, Slipping title, bulk bar render as sharp as the rest at 90/100/110% zoom.
   **Judge:** side-by-side squint test at 100% — no soft text anywhere.
-- [ ] **16. Zoom-proof layout.** Projects buttons (and everything else) intact at 90–110%.
+- [x] **16. Zoom-proof layout.** Projects buttons (and everything else) intact at 90–110%.
   **Judge:** walk all pages at 100% and 90% — nothing overlaps, clips, or misaligns.
 
 ## 3. Today
 
-- [ ] **17. "All open" capped** (~50) with "View all →" into the Tasks **All** tab.
+- [x] **17. "All open" capped** (~50) with "View all →" into the Tasks **All** tab.
   **Judge:** with 60+ open tasks, list stops at cap and the link lands filtered correctly.
-- [ ] **18. Row meta on All open** — overdue/due/↻ badges (reuse the Tasks row).
+- [x] **18. Row meta on All open** — overdue/due/↻ badges (reuse the Tasks row).
   **Judge:** an overdue task shows "Overdue Nd" in terra on Today, same as on Tasks.
-- [ ] **19. Multi-select: click-away deselects** (Ctrl-click stays; Esc stays).
+- [x] **19. Multi-select: click-away deselects** (Ctrl-click stays; Esc stays).
   **Judge:** select 2 rows, click empty page space — selection clears.
-- [ ] **20. Slipping: all cards stack, undo on "reviewed".**
+- [x] **20. Slipping: all cards stack, undo on "reviewed".**
   **Judge:** with 2 slipping projects, both show; "reviewed" toasts with Undo.
-- [ ] **21. Resurfacing cooldowns** — priority-based (high ~2d / med ~5d / low ~10–14d), tunable in Settings; "Later" actually snoozes.
+- [x] **21. Resurfacing cooldowns** — priority-based (high ~2d / med ~5d / low ~10–14d), tunable in Settings; "Later" actually snoozes.
   **Judge:** press Later, revisit Today — the card is gone and stays gone; sliders exist in Settings.
-- [ ] **22. "Later" chip sized correctly**; "Open calendar →" has a terra hover; voice-capture button states.
+- [x] **22. "Later" chip sized correctly**; "Open calendar →" has a terra hover; voice-capture button states.
   **Judge:** eyeball all three.
-- [ ] **23. One day-complete celebration.** Single implementation, fires once per day.
+- [x] **23. One day-complete celebration.** Single implementation, fires once per day.
   **Judge:** finish the day on Today, then visit Tasks — no second burst.
 
 ## 4. Capture & Inbox
@@ -85,34 +87,34 @@
 
 ## 5. Tasks
 
-- [ ] **27. All tab.** New view listing every open task incl. undated project filings.
+- [x] **27. All tab.** New view listing every open task incl. undated project filings.
   **Judge:** file an undated item to a project from Inbox — findable in All within seconds.
-- [ ] **28. Recurring-import dedupe assistant.** Detects duplicate-title clusters (the 76× problem), offers merge-into-recurring, user confirms.
+- [x] **28. Recurring-import dedupe assistant.** Detects duplicate-title clusters (the 76× problem), offers merge-into-recurring, user confirms.
   **Judge:** run it on the real data — shower/breakfast collapse to single recurring tasks; nothing merges without consent.
-- [ ] **29. Enter opens task detail** from any focused row (Today + Tasks).
+- [x] **29. Enter opens task detail** from any focused row (Today + Tasks).
   **Judge:** arrow to a row, press Enter — detail opens; Esc returns.
-- [ ] **30. Organize rail: centered header, Projects sticky unclipped.**
+- [x] **30. Organize rail: centered header, Projects sticky unclipped.**
   **Judge:** eyeball at 100% zoom.
-- [ ] **31. Perennials: Edit rule opens the real Repeat menu** (not a native select).
+- [x] **31. Perennials: Edit rule opens the real Repeat menu** (not a native select).
   **Judge:** click Edit rule — themed menu, works.
 
 ## 6. Calendar
 
-- [ ] **32. View-options popover, Akiflow-style.** 1–6/W/M day buttons + density + weekends/declined/done toggles; replaces the N-day cycler; no text selection.
+- [x] **32. View-options popover, Akiflow-style.** 1–6/W/M day buttons + density + weekends/declined/done toggles; replaces the N-day cycler; no text selection.
   **Judge:** against the reference screenshot — same capabilities, our skin; drag across the buttons selects no text.
-- [ ] **33. Drag block → Unscheduled rail** unschedules it.
+- [x] **33. Drag block → Unscheduled rail** unschedules it.
   **Judge:** drag a scheduled task block onto the rail — it returns to Unscheduled, toast + Undo.
-- [ ] **34. Task details from a block.** Click-through (or explicit affordance) reaches the full task editor.
+- [x] **34. Task details from a block.** Click-through (or explicit affordance) reaches the full task editor.
   **Judge:** from a task block, reach its editor in ≤2 clicks without right-click.
-- [ ] **35. Drop feedback trio:** invalid-drop soft-no shake, 30-min minimum on resize, top-edge resize works.
+- [x] **35. Drop feedback trio:** invalid-drop soft-no shake, 30-min minimum on resize, top-edge resize works.
   **Judge:** try each once.
-- [ ] **36. All-day ↔ timed drag conversion.**
+- [x] **36. All-day ↔ timed drag conversion.**
   **Judge:** drag a block into the all-day band → becomes all-day (persists after refresh); drag it back down → timed again.
-- [ ] **37. Edge auto-scroll while dragging.**
+- [x] **37. Edge auto-scroll while dragging.**
   **Judge:** drag a block to the bottom edge — grid scrolls under it.
-- [ ] **38. Alignment/polish pass vs Akiflow reference.** Bounded: gutter widths, header alignment, block insets.
+- [x] **38. Alignment/polish pass vs Akiflow reference.** Bounded: gutter widths, header alignment, block insets.
   **Judge:** side-by-side with Akiflow — nothing feels visibly "off"; remaining gaps get named and accepted, not ignored.
-- [ ] **39. Daisy stages in day headers** (the one designed calendar visual still missing that v1 keeps).
+- [x] **39. Daisy stages in day headers** (the one designed calendar visual still missing that v1 keeps).
   **Judge:** past day muted daisy, today matches the clock, future = bud.
 
 ## 7. Projects
@@ -126,11 +128,11 @@
 
 ## 8. Routines, Rituals, Review
 
-- [ ] **43. Evening ritual per D-2**; "One line" lands in the Journal; `skip` doesn't count a step as done.
+- [x] **43. Evening ritual per D-2**; "One line" lands in the Journal; `skip` doesn't count a step as done.
   **Judge:** write a line at night — it's on the Journal page in the morning; skip a morning step — Today's ritual bar doesn't advance.
-- [ ] **44. One streak algorithm.** Row flame = trellis number; today's check draws today's leaf.
+- [x] **44. One streak algorithm.** Row flame = trellis number; today's check draws today's leaf.
   **Judge:** check a routine — the last trellis column fills now; flame and trellis header agree.
-- [ ] **45. Review sweep persists + real sweep UI** (per-project rows with still-moving / park-it / needs-a-look), flourish on completion.
+- [x] **45. Review sweep persists + real sweep UI** (per-project rows with still-moving / park-it / needs-a-look), flourish on completion.
   **Judge:** sweep a domain, reload — still swept; each project got an explicit verdict.
 
 ## 9. Remaining surfaces
@@ -155,28 +157,28 @@
 
 ## 11. Settings & theming
 
-- [ ] **53. Paper texture slider works.**
+- [x] **53. Paper texture slider works.**
   **Judge:** drag it — the grain visibly changes; persists.
-- [ ] **54. Every remaining row functional or hidden.** Sounds section hidden (v2); capture API hidden; integrations page deduplicated vs in-page sections; push section says what it does.
+- [x] **54. Every remaining row functional or hidden.** Sounds section hidden (v2); capture API hidden; integrations page deduplicated vs in-page sections; push section says what it does.
   **Judge:** every visible settings control does something observable.
-- [ ] **55. Accent row removed** (per D-3; real picker → v2).
+- [x] **55. Accent row removed** (per D-3; real picker → v2).
   **Judge:** Settings shows no Accent row.
-- [ ] **56. "Botanical animations" off = still garden.** All loops gated; toggle decoupled from OS reduced-motion; present on mobile settings.
+- [x] **56. "Botanical animations" off = still garden.** All loops gated; toggle decoupled from OS reduced-motion; present on mobile settings.
   **Judge:** toggle off — waveform bars, fireflies, twinkles all freeze; toggle reads correctly on a reduced-motion OS.
 - [ ] **57. Night sweep.** Grain visible at night (overlay blend); the ~12 hardcoded light-only clusters fixed.
   **Judge:** flip to night, walk every page — no white washes, no vanished grain, no maroon-on-dark chips.
 
 ## 12. Shell & motion
 
-- [ ] **58. Collapsed rail: simple line icons** for Inbox/Projects/Routines/Focus/Review/Library-slot; hover labels verified.
+- [x] **58. Collapsed rail: simple line icons** for Inbox/Projects/Routines/Focus/Review/Library-slot; hover labels verified.
   **Judge:** collapse — icon set is coherent and every icon identifies its page.
-- [ ] **59. ⌘K navigation** (per D-5): typing a view name ("inbox", "calendar"…) offers a jump row; plain quick-add unaffected; G gone from the cheatsheet.
+- [x] **59. ⌘K navigation** (per D-5): typing a view name ("inbox", "calendar"…) offers a jump row; plain quick-add unaffected; G gone from the cheatsheet.
   **Judge:** ⌘K → type "inbox" → Enter on the jump row lands on Inbox; typing "buy milk" still quick-adds.
-- [ ] **60. Topbar fixed:** date `Fri 15 Aug` format, single `◌` offline, syncing colors.
+- [x] **60. Topbar fixed:** date `Fri 15 Aug` format, single `◌` offline, syncing colors.
   **Judge:** eyeball online/offline/syncing.
 - [ ] **61. Motion application wave** per "everything except 1a" (+ D-4 for 2a): the absent motions (list breathing rowIn/rowOut, drag-lift grammar on all draggables, seed plant, mobile stack, drag polish) wired with spec timings; check-pop timings corrected (boxFill 90 → pop 180 → strike 240 → dip 120).
   **Judge:** complete a task, create a task, file an inbox item, drag anything — each has its designed motion; nothing appears/vanishes with zero transition.
-- [ ] **62. Overlay grammar:** 210ms in / 140ms out / 20% scrim, everywhere.
+- [x] **62. Overlay grammar:** 210ms in / 140ms out / 20% scrim, everywhere.
   **Judge:** open+close ⌘K, ⌘/, ?, sheets — exits animate, scrims match.
 
 ## 13. Mobile
@@ -188,7 +190,7 @@
 
 ## 14. Removals (landing = they're gone)
 
-- [ ] **65. Library out of nav** (route may stay URL-only) · **Sounds section hidden** · **Notifications stub route removed** (bell → Activity) · **Planning board hidden** · **Quick-Capture gallery route dev-only**.
+- [x] **65. Library out of nav** (route may stay URL-only) · **Sounds section hidden** · **Notifications stub route removed** (bell → Activity) · **Planning board hidden** · **Quick-Capture gallery route dev-only**.
   **Judge:** none of these reachable by a normal user.
 
 ---
