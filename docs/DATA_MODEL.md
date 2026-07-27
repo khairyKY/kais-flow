@@ -56,7 +56,7 @@
 ### P7 — life-OS
 | Table | Columns |
 |---|---|
-| `journal_entries` | `body text` (md), `entry_date date`, `mood text?`, `transcript text?`, `media_paths text[]` (Supabase Storage) |
+| `journal_entries` | `body text` (md), `entry_date date`, `mood text?`, `transcript text?`, `media_paths text[]` (Supabase Storage), `gratitude text[]` — **one row per _entry_, many rows per day (D-1, migration 0033).** 0021's UNIQUE `(user_id, entry_date)` index is dropped; `created_at` is the entry's timestamp and the day reads back in that order via `(user_id, entry_date, created_at)`. `mood` + `gratitude` are day-level and ride on the day's **first** entry (handed to the next entry when that one is deleted). Deletes are the shared `deleted_at` soft delete → Trash. Titled standalone notes are **not** here — they're `notes`, parked to v2 with Library |
 | `notes` | `title text?`, `body text`, `tags text[]`, `domain_id uuid?` |
 | `quotes` | `text`, `author text?`, `source text?` (book/podcast), `tags text[]` |
 | `commentary` | `parent_type text`, `parent_id uuid`, `body text` — add-thoughts-over-time feed on notes/quotes |
