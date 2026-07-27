@@ -13,6 +13,7 @@ import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { Select } from '../../components/Select'
 import { useIntegrations } from './api'
+import { useDeletedItems } from '../trash/api'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
 // Card shell mirrors the contract's `.scard` class (tape-topped, radius 3, shadow-card).
@@ -574,6 +575,25 @@ function ImportCard() {
   )
 }
 
+// Punch 50: Trash had no entry point anywhere — it was URL-only. Its own header already reads
+// "Kai's Flow · Settings · Trash", so this is where the design says it hangs.
+function TrashCard() {
+  const { data: deletedItems = [] } = useDeletedItems()
+  return (
+    <SCard>
+      <div style={{ ...flabel, marginBottom: 12 }}>Trash · the compost heap</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>
+          {deletedItems.length === 0 ? 'Nothing resting right now.' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting.`}
+        </span>
+        <span style={{ flex: 1 }} />
+        <Link to="/trash" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, textDecoration: 'none' }}>Open trash</Link>
+      </div>
+      <div style={fhelp}>deleted tasks, inbox items, events and journal entries · composts after 30 days</div>
+    </SCard>
+  )
+}
+
 function ProfileCard() {
   const email = (() => {
     try {
@@ -742,7 +762,7 @@ export function SoundCatalogCard() {
 // Punch 54: 'Capture API' + 'Sound' left the page (unbuilt / undesigned) — and a nav row that
 // scrolls to nothing is a dead control, so they leave the sub-nav too. 'Resurfacing' is the new
 // cooldown card (punch 21).
-const SUBNAV_ITEMS = ['Appearance', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Profile'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -801,6 +821,7 @@ function DesktopSettings() {
                 "not set up yet" with dead controls. Hidden until it's real (v1.1). */}
             <ResurfacingCard />
             <ImportCard />
+            <div id="settings-Trash"><TrashCard /></div>
             <div id="settings-Profile"><ProfileCard /></div>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
               everything saves as you touch it — the SAVED chip just says so ✿
@@ -816,6 +837,7 @@ function MobileSettings() {
   const { data: integrations = [] } = useIntegrations()
   const { data: settings } = useAppSettings()
   const { data: subs = [] } = useMyPushSubscriptions()
+  const { data: deletedItems = [] } = useDeletedItems()
   const github = integrations.find((i) => i.provider === 'github')
   const google = integrations.find((i) => i.provider === 'google')
   const { mode, setMode } = useThemeMode()
@@ -826,6 +848,8 @@ function MobileSettings() {
     { label: 'GitHub', value: github ? 'Connected' : 'Not connected' },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
     { label: 'Capture API', value: 'not set up' },
+    // Punch 50: the phone's only way into Trash.
+    { label: 'Trash', value: <Link to="/trash" style={{ color: 'var(--ink-muted)', textDecoration: 'underline' }}>{deletedItems.length} resting →</Link> },
   ]
 
   return (
