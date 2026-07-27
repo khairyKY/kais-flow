@@ -250,8 +250,11 @@ function AppearanceCard() {
   const { mode, setMode } = useThemeMode()
   const scale = useUiScale((s) => s.scale)
   const setScale = useUiScale((s) => s.setScale)
-  const motionOn = useMotionEnabled()
-  const [animOn, setAnimOn] = useState(motionOn)
+  // Punch 56: the toggle shows the STORED effects flag, not useMotionEnabled() (which ANDs in
+  // OS reduced-motion — so the row used to read "off" for a user who never turned it off).
+  const [animOn, setAnimOn] = useState(readEffectsOn)
+  const osReduced = usePrefersReducedMotion()
+  const grain = useGrain()
 
   return (
     <SCard tapeTint="color-mix(in oklch, var(--acc-sage) 40%, transparent)">
@@ -287,21 +290,20 @@ function AppearanceCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Paper texture</div>
-          <div style={fhelp}>the grain over everything · 60%</div>
+          <div style={fhelp}>the grain over everything · {grain.pct}%</div>
         </div>
-        <div style={{ flex: 1, maxWidth: 240, height: 4, borderRadius: 2, background: 'var(--line-solid)', position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', borderRadius: 2, background: 'var(--acc-sage)' }} />
-          <span style={{ position: 'absolute', left: '60%', top: '50%', transform: 'translate(-50%, -50%)', width: 15, height: 15, borderRadius: '50%', background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', boxShadow: 'var(--shadow-crisp)' }} />
-        </div>
+        <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 240 }} />
         <div style={{ width: 64, height: 44, flex: 'none', border: '1px solid var(--line-card)', borderRadius: 5, background: 'var(--paper-linen)', position: 'relative', overflow: 'hidden' }}>
-          <span style={{ position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.6 }} />
+          <span style={{ position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: grain.pct / 100 }} />
           <img src="/ds/assets/clover/awake.png" alt="" style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', height: 22 }} />
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Botanical animations</div>
-          <div style={fhelp}>petal falls, leaf sways · bows to reduced-motion</div>
+          <div style={fhelp}>
+            {osReduced ? 'your system prefers reduced motion — the garden holds still regardless' : 'petal falls, leaf sways · bows to reduced-motion'}
+          </div>
         </div>
         <Toggle
           on={animOn}
@@ -312,18 +314,8 @@ function AppearanceCard() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0 2px' }}>
-        <div>
-          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Accent</div>
-          <div style={fhelp}>terracotta by default — the one warm thing</div>
-        </div>
-        <div style={{ display: 'flex', gap: 7 }}>
-          <span style={{ width: 19, height: 19, borderRadius: '50%', background: 'var(--acc-terra)', outline: '1.5px solid var(--paper-parchment)', boxShadow: '0 0 0 3px var(--acc-terra)' }} />
-          <span style={{ width: 19, height: 19, borderRadius: '50%', background: 'var(--acc-moss)' }} />
-          <span style={{ width: 19, height: 19, borderRadius: '50%', background: 'var(--acc-lavender-deep)' }} />
-          <span style={{ width: 19, height: 19, borderRadius: '50%', background: 'var(--acc-gold)' }} />
-        </div>
-      </div>
+      {/* Punch 55 (D-3, Kai 2026-07-26): the Accent row was four decorative swatches with no
+          handler — removed for v1; a real accent picker ships in v2. */}
     </SCard>
   )
 }
@@ -497,7 +489,59 @@ function PushCard() {
   )
 }
 
-function CaptureApiCard() {
+// ── Resurfacing cooldowns (punch 21, Kai's spec: high ~2d / medium ~5d / low ~10d, tunable).
+// Today's resurfacing engine reads exactly these keys; the values are per-device prefs like
+// theme/scale, so localStorage is the right home until MIG-1 adds the server fields. ──
+const COOLDOWN_KEYS = { high: 'kf.resurfaceCooldown.high', med: 'kf.resurfaceCooldown.med', low: 'kf.resurfaceCooldown.low' } as const
+const COOLDOWN_DEFAULTS = { high: 2, med: 5, low: 10 } as const
+
+function readCooldown(level: keyof typeof COOLDOWN_KEYS): number {
+  try {
+    const n = Number(localStorage.getItem(COOLDOWN_KEYS[level]))
+    if (Number.isFinite(n) && n >= 1 && n <= 30) return Math.round(n)
+  } catch {
+    /* private mode */
+  }
+  return COOLDOWN_DEFAULTS[level]
+}
+
+function ResurfacingCard() {
+  const [days, setDays] = useState(() => ({ high: readCooldown('high'), med: readCooldown('med'), low: readCooldown('low') }))
+  function set(level: keyof typeof COOLDOWN_KEYS, value: number) {
+    setDays((prev) => ({ ...prev, [level]: value }))
+    try {
+      localStorage.setItem(COOLDOWN_KEYS[level], String(value))
+    } catch {
+      /* session-only is fine */
+    }
+  }
+  const row = (level: keyof typeof COOLDOWN_KEYS, label: string, help: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '12px 0', borderBottom: level === 'low' ? 'none' : '1px dashed var(--line-dashed)' }}>
+      <div style={{ flex: 'none' }}>
+        <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{label}</div>
+        <div style={fhelp}>{help}</div>
+      </div>
+      <HairlineSlider ariaLabel={`${label} cooldown in days`} value={days[level]} min={1} max={30} onChange={(v) => set(level, v)} style={{ flex: 1, maxWidth: 200 }} />
+      <div style={{ width: 74, flex: 'none', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
+        rests {days[level]} {days[level] === 1 ? 'day' : 'days'}
+      </div>
+    </div>
+  )
+  return (
+    <SCard tapeTint="color-mix(in oklch, var(--acc-buttercream) 40%, transparent)" style={{ scrollMarginTop: 24 }}>
+      <div style={{ ...flabel, marginBottom: 4 }}>Resurfacing · how long "Later" rests</div>
+      {row('high', 'High priority', 'comes back soonest')}
+      {row('med', 'Medium priority', 'a working week, roughly')}
+      {row('low', 'Low priority', 'the long shelf')}
+      <div style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
+        press Later and it goes quiet — then wanders back ✿
+      </div>
+    </SCard>
+  )
+}
+
+// Punch 54: hidden from the page until the endpoint is real (v1.1); exported so it compiles.
+export function CaptureApiCard() {
   return (
     <SCard>
       <div style={{ ...flabel, marginBottom: 12 }}>Capture API · external capture</div>
@@ -601,7 +645,7 @@ function IntegrationsPage() {
               <div style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Disconnect</div>
             </div>
           ) : (
-            <button type="button" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, cursor: 'pointer', flex: 'none' }}>Connect</button>
+            <SoonChip />
           )
         }
       />
@@ -623,7 +667,7 @@ function IntegrationsPage() {
               </div>
             </div>
           ) : (
-            <button type="button" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, cursor: 'pointer', flex: 'none' }}>Connect</button>
+            <SoonChip />
           )
         }
       />
@@ -636,7 +680,7 @@ function IntegrationsPage() {
         }
         name="Pushover"
         desc="Delivers ritual reminders and due nudges to any device."
-        status={<button type="button" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, cursor: 'pointer', flex: 'none' }}>Connect</button>}
+        status={<SoonChip />}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
@@ -695,7 +739,10 @@ export function SoundCatalogCard() {
   )
 }
 
-const SUBNAV_ITEMS = ['Appearance', 'Timezone', 'Integrations', 'Notifications', 'Capture API', 'Profile', 'Sound'] as const
+// Punch 54: 'Capture API' + 'Sound' left the page (unbuilt / undesigned) — and a nav row that
+// scrolls to nothing is a dead control, so they leave the sub-nav too. 'Resurfacing' is the new
+// cooldown card (punch 21).
+const SUBNAV_ITEMS = ['Appearance', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Profile'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -715,7 +762,7 @@ function DesktopSettings() {
           <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--shadow-drop-sm)' }} />
           <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</h2>
         </div>
-        {SUBNAV_ITEMS.filter((i) => i !== 'Sound').map((item) => {
+        {SUBNAV_ITEMS.map((item) => {
           const on = active === item
           return (
             <div
@@ -750,7 +797,9 @@ function DesktopSettings() {
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>
-            <div id="settings-Capture API"><CaptureApiCard /></div>
+            {/* Punch 54: the Capture API endpoint doesn't exist yet — the card only said
+                "not set up yet" with dead controls. Hidden until it's real (v1.1). */}
+            <ResurfacingCard />
             <ImportCard />
             <div id="settings-Profile"><ProfileCard /></div>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>

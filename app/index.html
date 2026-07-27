@@ -17,6 +17,14 @@
         if (s !== 1) document.documentElement.style.zoom = String(s)
         document.documentElement.style.setProperty('--kf-ui-scale', String(s))
       } catch (e) {}
+      // Paper texture (punch 53) — same pre-paint treatment so the grain never flashes at the
+      // default before the Settings value loads. Consumed by body::before in src/index.css.
+      try {
+        var g = Number(localStorage.getItem('kf_grain'))
+        if (Number.isFinite(g) && g >= 0 && g <= 100) {
+          document.documentElement.style.setProperty('--kf-grain-opacity', String(g / 100))
+        }
+      } catch (e) {}
     </script>
   </head>
   <body>

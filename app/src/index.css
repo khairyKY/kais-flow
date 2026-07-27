@@ -62,7 +62,9 @@ body::before {
   z-index: 1;
   background-image: var(--noise-url);
   mix-blend-mode: multiply;
-  opacity: 0.5;
+  /* Foundation patch (punch 53): the Settings paper-texture slider writes --kf-grain-opacity
+     on <html>; 0.5 stays the shipped default when it's unset. */
+  opacity: var(--kf-grain-opacity, 0.5);
 }
 
 ::-webkit-scrollbar {
