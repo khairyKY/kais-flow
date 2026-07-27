@@ -175,30 +175,31 @@ export function InboxPage() {
     useToastStore.getState().push({ message: `${n} capture${n === 1 ? '' : 's'} ${verb}.` })
   }
   // ponytail: bulk = loop the existing single-item outbox helpers; no batch API needed.
+  // `silent` on each call so N items produce one summary toast, not N stacked ones.
   function bulkFile(projectId: string | null, domainId: string | null) {
     const n = selectedItems.length
     selectedItems.forEach((i) => {
       const parse = i.ai_parse as AiParse | null
-      fileToTask(i, { domainId, projectId, title: parse?.cleaned_text ?? undefined })
+      fileToTask(i, { domainId, projectId, title: parse?.cleaned_text ?? undefined, silent: true })
     })
     bulkToast(n, 'filed')
     clearSelection()
   }
   function bulkSnooze(until: string) {
     const n = selectedItems.length
-    selectedItems.forEach((i) => snoozeInboxItem(i, until))
+    selectedItems.forEach((i) => snoozeInboxItem(i, until, true))
     bulkToast(n, 'snoozed')
     clearSelection()
   }
   function bulkDismiss() {
     const n = selectedItems.length
-    selectedItems.forEach((i) => dismissInboxItem(i))
+    selectedItems.forEach((i) => dismissInboxItem(i, true))
     bulkToast(n, 'dismissed')
     clearSelection()
   }
   function bulkRestore() {
     const n = selectedItems.length
-    selectedItems.forEach((i) => restoreInboxItem(i))
+    selectedItems.forEach((i) => restoreInboxItem(i, true))
     bulkToast(n, 'restored')
     clearSelection()
   }
@@ -219,6 +220,14 @@ export function InboxPage() {
     }
   }
 
+  // Punch 26 — the strip promises E / D / S / ↑↓ / ⏎ and a 5-item triage on those keys alone.
+  // Without this, every action drops focus (useListKeys clears a focusedId that leaves the
+  // list) and the run becomes ↓E↓E↓E…; parking focus on the neighbour makes it E E E E E.
+  // (hoisted; `setFocusedId` below is only read when a key actually fires, after render)
+  function advance(item: InboxItem) {
+    const idx = orderedItems.findIndex((i) => i.id === item.id)
+    setFocusedId(orderedItems[idx + 1]?.id ?? orderedItems[idx - 1]?.id ?? null)
+  }
   const bindings: ListBinding<InboxItem>[] = [
     {
       keys: ['e'],
@@ -226,15 +235,17 @@ export function InboxPage() {
       run: (item) => {
         const parse = item.ai_parse as AiParse | null
         fileWithFloret(item, { domainId: parse?.domain_id ?? null, projectId: parse?.project_id ?? null, title: parse?.cleaned_text ?? undefined })
+        advance(item)
       },
     },
-    { keys: ['d'], label: 'Dismiss', run: (item) => dismissInboxItem(item) },
+    { keys: ['d'], label: 'Dismiss', run: (item) => { dismissInboxItem(item); advance(item) } },
     { keys: ['s'], label: 'Snooze', run: (item) => setKbSnoozeId(item.id) },
     { keys: ['Enter'], label: 'Open (edit title)', run: (item) => setEditRequestId(item.id) },
   ]
-  const { focusedId } = useListKeys(orderedItems, bindings, {
+  const { focusedId, setFocusedId } = useListKeys(orderedItems, bindings, {
     idPrefix: 'inbox-',
-    active: tab === 'waiting',
+    // Pause list keys while the S popover is up, or D would dismiss the row behind it.
+    active: tab === 'waiting' && !kbSnoozeId,
     onSelectAll: () => setSelected(new Set(orderedItems.map((i) => i.id))),
   })
   const kbSnoozeTask = orderedItems.find((i) => i.id === kbSnoozeId)
@@ -354,6 +365,7 @@ export function InboxPage() {
                       key={item.id}
                       item={item}
                       compact={isMobile}
+                      highlighted={item.id === focusId || item.id === focusedId}
                       selected={selected.has(item.id)}
                       selectionActive={selectionActive}
                       onToggleSelect={() => toggleSelected(item.id)}
@@ -385,8 +397,8 @@ export function InboxPage() {
         <SnoozeMenu
           position={rowAnchor('inbox-', kbSnoozeTask.id)}
           onClose={() => setKbSnoozeId(null)}
-          onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); setKbSnoozeId(null) }}
-          onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); setKbSnoozeId(null) }}
+          onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); advance(kbSnoozeTask); setKbSnoozeId(null) }}
+          onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); advance(kbSnoozeTask); setKbSnoozeId(null) }}
         />
       )}
 
@@ -691,18 +703,22 @@ function TriageCard({
 }
 
 // ── GitHub-ranked row ──
-function GithubRow({ item, compact, selected, selectionActive, onToggleSelect, onFile, onDismiss }: { item: InboxItem; compact?: boolean; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void; onFile: () => void; onDismiss: () => void }) {
+function GithubRow({ item, compact, highlighted, selected, selectionActive, onToggleSelect, onFile, onDismiss }: { item: InboxItem; compact?: boolean; highlighted?: boolean; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void; onFile: () => void; onDismiss: () => void }) {
   const payload = item.payload as { number?: number; rank?: number } | null
   return (
     <div
       id={`inbox-${item.id}`}
       className="ib-card"
+      // Punch 26: these rows are in the same roving-focus list as the triage cards, so they
+      // need the same focusable/ringed treatment — without it a keyboard triage that reaches
+      // the GitHub group loses all sense of where it is.
+      tabIndex={highlighted ? 0 : -1}
       onClick={(e) => {
         if (!onToggleSelect) return
         if ((e.target as HTMLElement).closest('button, input, a, [data-no-select]')) return
         onToggleSelect()
       }}
-      style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}var(--shadow-crisp)`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
+      style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', outline: highlighted ? '2px solid rgba(154,180,190,0.5)' : 'none', outlineOffset: 2, borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
       <KindChip kind="github_issue" />
@@ -726,7 +742,9 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
   const earlier = items.filter((i) => !isToday(i.updated_at))
 
   function restoreAll() {
-    items.forEach(restoreInboxItem)
+    // Arrow, not a bare reference: forEach's index would land in `silent`.
+    items.forEach((i) => restoreInboxItem(i, true))
+    useToastStore.getState().push({ message: `${items.length} capture${items.length === 1 ? '' : 's'} restored.` })
   }
   function clearNow() {
     if (items.length === 0) return

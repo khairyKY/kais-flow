@@ -79,7 +79,7 @@ export function useLatestResurfaced() {
  * and re-pends the resurfaced pick. */
 export function convertResurfaced(row: ResurfacedLogRow, item: InboxItem): void {
   const prevItem = { ...item }
-  const task = fileToTask(item)
+  const task = fileToTask(item, { silent: true }) // this call site pushes its own "Kept" undo below
   writeRow('resurfaced_log', { ...row, action: 'converted' })
   logActivity('resurfaced.converted', row.entity_type, row.entity_id, {})
   toastUndo('Kept', () => {
