@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../projects/api', () => ({ logTimeEntry: vi.fn() }))
 vi.mock('../../lib/queryClient', () => ({ queryClient: { invalidateQueries: vi.fn() } }))
+// The tick loop rings the round-end chime; a unit test has no business booting an audio engine.
+vi.mock('../../lib/sounds', () => ({ playSound: vi.fn() }))
 
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 
