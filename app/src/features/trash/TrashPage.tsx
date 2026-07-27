@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDeletedItems, restoreItem, deleteItemForever, type DeletedItem } from './api'
 import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
+import { toastAction } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 
@@ -28,8 +30,18 @@ export function TrashPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const pushToast = useToastStore((s) => s.push)
 
+  const navigate = useNavigate()
+
   const baseKey = (type: DeletedItem['type']) =>
     type === 'Task' ? 'tasks' : type === 'Inbox' ? 'inbox_items' : type === 'Event' ? 'calendar_events' : 'journal_entries'
+
+  // Punch 9 (Trash slice): a restore that only says where it went makes you go find it.
+  const DESTINATION: Record<DeletedItem['type'], { label: string; to: string }> = {
+    Task: { label: 'Tasks', to: '/tasks' },
+    Inbox: { label: 'Inbox', to: '/inbox' },
+    Event: { label: 'Calendar', to: '/calendar' },
+    Journal: { label: 'Journal', to: '/journal' },
+  }
 
   // writeRow only patches the base-table cache, never ['deleted_items'] — remove optimistically
   // here so the row leaves the trash list immediately instead of racing the outbox flush.
@@ -50,9 +62,10 @@ export function TrashPage() {
   }
 
   const handleRestore = (item: DeletedItem) => {
+    const dest = DESTINATION[item.type]
     dropFromTrashCache(new Set([item.id]))
     restoreItem(item)
-    pushToast({ message: `Restored to ${{ Task: 'Tasks', Inbox: 'Inbox', Event: 'Calendar', Journal: 'Journal' }[item.type]}` })
+    toastAction(`Restored to ${dest.label}`, 'Jump there →', () => navigate(dest.to))
     invalidateAfterFlush(['deleted_items', baseKey(item.type)])
   }
 

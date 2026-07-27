@@ -1,12 +1,13 @@
 import { useTasks } from '../tasks/api'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { searchHybrid } from './api'
-import type { SearchHit } from '../../lib/types'
+import { searchHybrid, searchHitHref, SEARCH_GROUPS } from './api'
+import type { SearchHit, SearchEntityType } from '../../lib/types'
 
 // Search.dc.html t1 1a/1b — the full page behind the ⌘/ overlay's "View all results ↵".
-// The backend (search_hybrid) only indexes tasks + inbox_item today, so only those two
-// groups render; People/Events/Journal/Projects/Library join once their waves ship.
+// Punch 49: groups come from SEARCH_GROUPS (people/tasks/events/inbox/journal/projects) and a
+// group with no hits renders nothing, so this page is correct both before and after migration
+// 0031 is pushed. Library has no group: it's cut from v1 (punch 65).
 
 const DEBOUNCE_MS = 250
 
@@ -28,7 +29,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   )
 }
 
-function ResultGroup({ label, tint, hits, query, onGo, offset, activeIndex, onHover }: { label: string; tint: string; hits: SearchHit[]; query: string; onGo: (h: SearchHit) => void; offset: number; activeIndex: number; onHover: (i: number) => void }) {
+function ResultGroup({ label, tint, dot, hits, query, onGo, offset, activeIndex, onHover }: { label: string; tint: string; dot: string; hits: SearchHit[]; query: string; onGo: (h: SearchHit) => void; offset: number; activeIndex: number; onHover: (i: number) => void }) {
   if (hits.length === 0) return null
   return (
     <>
@@ -48,7 +49,8 @@ function ResultGroup({ label, tint, hits, query, onGo, offset, activeIndex, onHo
           // plus a faint lavender outline ring — Kai's explicit "faint blue outline" ask.
           style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 6px', width: '100%', textAlign: 'left', background: offset + i === activeIndex ? 'var(--paper-bone)' : 'none', boxShadow: offset + i === activeIndex ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none', borderRadius: 5, border: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
         >
-          <span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '50%', border: hit.entity_type === 'task' ? '1.5px solid var(--check-border)' : 'none', background: hit.entity_type === 'inbox_item' ? 'var(--acc-hydrangea)' : 'transparent', flex: 'none' }} />
+          {/* Tasks get the export's empty checkbox; every other type gets its group dot. */}
+          <span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '50%', border: hit.entity_type === 'task' ? '1.5px solid var(--check-border)' : 'none', background: hit.entity_type === 'task' ? 'transparent' : dot, flex: 'none' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14.5, color: 'var(--ink-body)' }}>
               <Highlight text={hit.title} query={query} />
@@ -62,6 +64,18 @@ function ResultGroup({ label, tint, hits, query, onGo, offset, activeIndex, onHo
         </button>
       ))}
     </>
+  )
+}
+
+function Chip({ label, count, on, onClick }: { label: string; count: number; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : 'none', color: on ? 'var(--paper-linen)' : 'var(--ink-muted)', border: `1px solid ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}
+    >
+      {label} <b style={{ fontWeight: 400, color: on ? 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' : 'var(--ink-hairline)' }}>{count}</b>
+    </button>
   )
 }
 
@@ -102,6 +116,8 @@ export function SearchPage() {
   const [results, setResults] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  // Punch 49: the chips were decorative. `null` = All.
+  const [typeFilter, setTypeFilter] = useState<SearchEntityType | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -118,6 +134,7 @@ export function SearchPage() {
         .then((hits) => {
           setResults(hits)
           setActiveIndex(0)
+          setTypeFilter(null)
         })
         .catch(() => setResults([]))
         .finally(() => setLoading(false))
@@ -127,17 +144,26 @@ export function SearchPage() {
   }, [query])
 
   function goTo(hit: SearchHit) {
-    // Same project-aware routing as the overlay (Kai 2026-07-21).
-            if (hit.entity_type !== 'task') { navigate(`/inbox?focus=${hit.entity_id}`); return }
-            const task = allTasks.find((t) => t.id === hit.entity_id)
-            if (task?.project_id) navigate(`/projects/${task.project_id}?focus=${hit.entity_id}`)
-            else navigate(`/tasks?focus=${hit.entity_id}`)
+    navigate(searchHitHref(hit, allTasks))
   }
 
-  const tasks = results.filter((r) => r.entity_type === 'task')
-  const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
-  // Flat list in render order (Tasks group, then Inbox) so activeIndex maps 1:1 to visible rows.
-  const ordered = [...tasks, ...inboxItems]
+  // Counts are over everything found; the rendered groups honour the chip.
+  const counts = useMemo(() => {
+    const map = new Map<SearchEntityType, number>()
+    for (const hit of results) map.set(hit.entity_type, (map.get(hit.entity_type) ?? 0) + 1)
+    return map
+  }, [results])
+
+  const groups = useMemo(
+    () =>
+      SEARCH_GROUPS.filter((g) => !typeFilter || g.type === typeFilter).map((g) => ({
+        ...g,
+        hits: results.filter((r) => r.entity_type === g.type),
+      })),
+    [results, typeFilter]
+  )
+  // Flat list in render order so activeIndex maps 1:1 to visible rows.
+  const ordered = useMemo(() => groups.flatMap((g) => g.hits), [groups])
   const trimmed = query.trim()
 
   return (
@@ -172,31 +198,27 @@ export function SearchPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
           <div style={{ display: 'flex', gap: 7, flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
             {/* Active chip inverts with the theme: dark-on-cream by day, cream-on-violet at night */}
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: 'var(--ink-body)', color: 'var(--paper-linen)', border: '1px solid var(--ink-body)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              All <b style={{ fontWeight: 400, color: 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' }}>{results.length}</b>
-            </span>
-            {tasks.length > 0 && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>
-                Tasks <b style={{ fontWeight: 400, color: 'var(--ink-hairline)' }}>{tasks.length}</b>
-              </span>
-            )}
-            {inboxItems.length > 0 && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>
-                Inbox <b style={{ fontWeight: 400, color: 'var(--ink-hairline)' }}>{inboxItems.length}</b>
-              </span>
-            )}
+            <Chip label="All" count={results.length} on={typeFilter === null} onClick={() => setTypeFilter(null)} />
+            {SEARCH_GROUPS.filter((g) => (counts.get(g.type) ?? 0) > 0).map((g) => (
+              <Chip key={g.type} label={g.label} count={counts.get(g.type)!} on={typeFilter === g.type} onClick={() => { setTypeFilter(g.type); setActiveIndex(0) }} />
+            ))}
           </div>
         </div>
       )}
 
       {trimmed && !loading && results.length === 0 && <EmptyResult query={trimmed} />}
 
-      {!loading && (
-        <>
-          <ResultGroup label="Tasks" tint="#a1707c" hits={tasks} query={trimmed} onGo={goTo} offset={0} activeIndex={activeIndex} onHover={setActiveIndex} />
-          <ResultGroup label="Inbox" tint="var(--acc-hydrangea-deep)" hits={inboxItems} query={trimmed} onGo={goTo} offset={tasks.length} activeIndex={activeIndex} onHover={setActiveIndex} />
-        </>
-      )}
+      {!loading &&
+        groups.reduce<{ nodes: React.ReactNode[]; offset: number }>(
+          (acc, g) => {
+            acc.nodes.push(
+              <ResultGroup key={g.type} label={g.label} tint={g.tint} dot={g.dot} hits={g.hits} query={trimmed} onGo={goTo} offset={acc.offset} activeIndex={activeIndex} onHover={setActiveIndex} />
+            )
+            acc.offset += g.hits.length
+            return acc
+          },
+          { nodes: [], offset: 0 }
+        ).nodes}
     </div>
   )
 }

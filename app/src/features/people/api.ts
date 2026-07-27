@@ -36,6 +36,40 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+// ── Punch 46: the nudge "later" chip ──────────────────────────────────────────
+// Snooze ledger `{personId: wakeAt ISO}` on this device. ponytail: a parked nudge is a UI
+// suggestion about data, not data — not worth a table + RLS + migration. Same ledger shape as
+// resurfacing's "Later" (features/resurfacing/api.ts). Upgrade path: a `nudge_snoozed_until`
+// column on `people` if a park has to follow Kai across devices.
+const NUDGE_SNOOZE_KEY = 'kf.peopleNudgeSnoozes'
+export const NUDGE_SNOOZE_DAYS = 7
+
+export function readNudgeSnoozes(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(NUDGE_SNOOZE_KEY) ?? '{}') as Record<string, string>
+  } catch {
+    return {}
+  }
+}
+
+/** Park (`wakeAt` ISO) or un-park (`null`) a person's nudge. Returns the new map, for React state. */
+export function setNudgeSnooze(personId: string, wakeAt: string | null): Record<string, string> {
+  const map = readNudgeSnoozes()
+  if (wakeAt) map[personId] = wakeAt
+  else delete map[personId]
+  try {
+    localStorage.setItem(NUDGE_SNOOZE_KEY, JSON.stringify(map))
+  } catch {
+    /* storage full — the park just won't survive a reload */
+  }
+  return map
+}
+
+export function isNudgeSnoozed(map: Record<string, string>, personId: string, now = Date.now()): boolean {
+  const wake = map[personId]
+  return !!wake && Date.parse(wake) > now
+}
+
 /* Days until the next occurrence of a "MM-DD" or freeform month-day string. Null if unparseable. */
 export function getDaysUntilBirthday(val: string | undefined | null): number | null {
   if (!val) return null

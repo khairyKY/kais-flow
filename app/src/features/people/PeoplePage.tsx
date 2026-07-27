@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, createInteraction, getDaysUntilBirthday } from './api'
+import { usePeople, useInteractions, upsertPerson, createInteraction, getDaysUntilBirthday, readNudgeSnoozes, setNudgeSnooze, isNudgeSnoozed, NUDGE_SNOOZE_DAYS } from './api'
 import { useDomains } from '../domains/api'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button } from '../../components/kit'
+import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 
@@ -90,6 +91,7 @@ export function PeoplePage() {
   const [showNewForm, setShowNewForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDomain, setNewDomain] = useState('')
+  const [nudgeSnoozes, setNudgeSnoozes] = useState(readNudgeSnoozes)
 
   // Compute latest interaction per person
   const latestInteraction = useMemo(() => {
@@ -121,14 +123,15 @@ export function PeoplePage() {
     })
   }, [people, domains])
 
-  // Nudge candidates: people with no interaction for > 21 days
+  // Nudge candidates: people with no interaction for > 21 days, minus the ones parked by "later"
   const nudges = useMemo(() => {
     return people.filter((p) => {
+      if (isNudgeSnoozed(nudgeSnoozes, p.id)) return false
       const latest = latestInteraction.get(p.id)
       if (!latest) return true
       return daysSince(latest.occurred_at) > 21
     }).slice(0, 4) // max 4 nudge cards
-  }, [people, latestInteraction])
+  }, [people, latestInteraction, nudgeSnoozes])
 
   const totalFacts = useMemo(() => people.reduce((s, p) => s + (p.facts?.length || 0), 0), [people])
 
@@ -145,6 +148,21 @@ export function PeoplePage() {
   const handleQuickAction = (personId: string, action: string) => {
     const summary = action === 'call' ? 'Phone call catch up' : action === 'text' ? 'Text message catch up' : 'Met in person'
     createInteraction({ person_id: personId, summary, occurred_at: new Date().toISOString() })
+  }
+
+  // Punch 46: the export varies the nudge action (Mom → call, Tarek → text) but no field on
+  // `people` carries a channel. The one real signal is how Kai last reached this person —
+  // same summary sniff PersonDetailPage renders its interaction history with. Never-contacted
+  // people get the low-friction opener.
+  const nudgeChannel = (personId: string): 'call' | 'text' => {
+    const s = latestInteraction.get(personId)?.summary.toLowerCase() ?? ''
+    return s.includes('call') || s.includes('phone') ? 'call' : 'text'
+  }
+
+  const handleLater = (p: Person) => {
+    const wakeAt = new Date(Date.now() + NUDGE_SNOOZE_DAYS * 86400000).toISOString()
+    setNudgeSnoozes(setNudgeSnooze(p.id, wakeAt))
+    toastUndo(`${p.name} parked for ${NUDGE_SNOOZE_DAYS} days`, () => setNudgeSnoozes(setNudgeSnooze(p.id, null)))
   }
 
   /* ───────── MOBILE LAYOUT (1c) ───────── */
@@ -191,7 +209,7 @@ export function PeoplePage() {
                     <div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
                   </div>
-                  <span onClick={() => handleQuickAction(p.id, 'call')} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, cursor: 'pointer' }}>call</span>
+                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
                 </div>
               )
             })}
@@ -303,8 +321,8 @@ export function PeoplePage() {
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
                     <div className="fhelp" style={{ marginTop: 2 }}>{quietText}{bdayLabel}{nudgeHint}</div>
                   </div>
-                  <span onClick={() => handleQuickAction(p.id, 'call')} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>call</span>
-                  <span className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>later</span>
+                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
+                  <span onClick={() => handleLater(p)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>later</span>
                 </div>
               )
             })}

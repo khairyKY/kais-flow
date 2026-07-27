@@ -91,6 +91,9 @@ const CULTIVATE: NavItem[] = [
   { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'rgba(201,160,160,0.45)' },
   // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
   { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'rgba(154,123,58,0.45)' },
+  // Punch 50: the quiet Trash link the design puts at the bottom of the nav (it had no entry
+  // point at all — URL-only). Hairline dot keeps it visually last in the list's hierarchy.
+  { to: '/trash', label: 'Trash', dot: '--ink-hairline', tape: 'rgba(122,110,94,0.35)' },
 ]
 
 const smartLists: { list: SmartList; label: string }[] = [

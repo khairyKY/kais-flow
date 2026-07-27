@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useRecentActivity } from './api'
+import { useNavigate } from 'react-router'
+import { useRecentActivity } from './api'
 import { FunnelIcon } from '../../components/controlIcons'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -28,19 +29,40 @@ const CATEGORIES = [
   { id: 'calendar', label: 'Calendar', color: 'var(--acc-lavender)' },
   { id: 'people', label: 'People', color: 'var(--acc-clover)' },
   { id: 'journal', label: 'Journal', color: 'var(--acc-sage)' },
+  // Punch 48: project events were already in the ledger with no chip that could select them.
+  { id: 'projects', label: 'Projects', color: 'var(--acc-moss)' },
 ]
 
 const MOBILE_CATEGORIES = ['all', 'tasks', 'inbox', 'people', 'routines']
 
-const RANGES = [
-  { id: 'week', label: 'This week', desc: 'last 7 days', days: 7 },
-  { id: 'month', label: 'This month', desc: 'last 30 days', days: 30 },
-  { id: 'all', label: 'All time', desc: 'all time', days: null as number | null },
+// Punch 48: the chip read "This week" while the filter was a rolling 7-day window and the
+// count line claimed "last 7 days" — three different stories. The labels are the export's;
+// the windows now mean what they say (week-to-date from Monday, month-to-date), and the count
+// line reports the span of what's actually on screen instead of restating the window.
+function startOfWeek(): number {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)) // Monday
+  return d.getTime()
+}
+
+function startOfMonth(): number {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(1)
+  return d.getTime()
+}
+
+const RANGES: { id: string; label: string; since: () => number | null }[] = [
+  { id: 'week', label: 'This week', since: startOfWeek },
+  { id: 'month', label: 'This month', since: startOfMonth },
+  { id: 'all', label: 'All time', since: () => null },
 ]
 
 export function ActivityPage() {
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
+  const navigate = useNavigate()
   const [limit, setLimit] = useState(50)
   const [filter, setFilter] = useState('all')
   const [rangeIdx, setRangeIdx] = useState(0)
@@ -97,9 +119,30 @@ export function ActivityPage() {
     return ''
   }
 
+  // Punch 48: every row is a link back to the thing it happened to. Task rows use the same
+  // project-aware rule as search (Kai 2026-07-21: land inside the project if it has one).
+  // Anything whose source has no page (areas, domains, settings) returns null and stays a
+  // plain div — an unclickable row beats a click that goes nowhere.
+  const resolveHref = (entry: ActivityLogEntry): string | null => {
+    const type = entry.event_type
+    const id = entry.entity_id
+    if (type.startsWith('task.')) {
+      const task = tasks.find((t) => t.id === id)
+      return task?.project_id ? `/projects/${task.project_id}?focus=${id}` : `/tasks?focus=${id}`
+    }
+    if (type.startsWith('inbox.')) return `/inbox?focus=${id}`
+    if (type.startsWith('routine.')) return '/routines'
+    if (type.startsWith('calendar_event.') || type.startsWith('calendar.')) return '/calendar'
+    if (type.startsWith('people.') || type.startsWith('person.')) return `/people/${id}`
+    if (type.startsWith('journal.')) return '/journal'
+    if (type.startsWith('project.')) return `/projects/${id}`
+    return null
+  }
+
   const resolveEntryInfo = (entry: ActivityLogEntry) => {
     const name = getEntityName(entry)
     const type = entry.event_type
+    const href = resolveHref(entry)
     let text = ''
     let details = ''
     let category = 'all'
@@ -202,6 +245,7 @@ export function ActivityPage() {
         details = 'kept'
       }
     } else if (type.startsWith('project.')) {
+      category = 'projects'
       iconBg = 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)'
       icon = (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -210,7 +254,7 @@ export function ActivityPage() {
       )
       if (type === 'project.created') {
         text = `Created project "${name || 'project'}"`
-        details = `${entry.payload?.milestone_count || 12} tasks planted`
+        details = entry.payload?.milestone_count ? `${entry.payload.milestone_count} tasks planted` : ''
       } else if (type === 'project.work_logged') {
         text = `Logged work on "${name || 'project'}"`
         details = `${entry.payload?.duration_min || 90}m \u00b7 ${(entry.payload?.note as string) || ''}`
@@ -222,11 +266,11 @@ export function ActivityPage() {
       text = `Action: ${type}`
       details = name
     }
-    return { text, details, category, icon, iconBg }
+    return { text, details, category, icon, iconBg, href }
   }
 
   const processedEntries = useMemo(() => {
-    const cutoff = range.days ? Date.now() - range.days * 86400000 : null
+    const cutoff = range.since()
     return rawEntries
       .filter((entry) => !cutoff || new Date(entry.created_at).getTime() >= cutoff)
       .map((entry) => ({ ...entry, info: resolveEntryInfo(entry) }))
@@ -245,6 +289,14 @@ export function ActivityPage() {
 
   const totalCount = processedEntries.length
   const handleLoadEarlier = () => setLimit((prev) => prev + 50)
+
+  // The export's "31 events · last 3 days": the span of what's on screen, read off the data.
+  const spanLabel = useMemo(() => {
+    if (processedEntries.length === 0) return 'nothing yet'
+    const oldest = new Date(processedEntries[processedEntries.length - 1].created_at).getTime()
+    const days = Math.max(1, Math.ceil((Date.now() - oldest) / 86400000))
+    return days === 1 ? 'today' : `last ${days} days`
+  }, [processedEntries])
 
   const chipBg = (cat: string) =>
     cat === 'tasks' ? 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)' :
@@ -272,30 +324,41 @@ export function ActivityPage() {
     .aicon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; z-index:2; box-shadow:var(--shadow-crisp); }
     .aline { flex:1; width:1.5px; border-left:1.5px dashed var(--line-dashed); margin:2px 0; }
     .abody { flex:1; min-width:0; padding-bottom:20px; }
+    button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
+    button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
     .chip { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
     .fhelp { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.06em; color:var(--ink-hairline); }
     .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
     .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
   `
 
-  const renderItem = (entry: typeof processedEntries[0], idx: number, groupLen: number) => (
+  const renderItem = (entry: typeof processedEntries[0], idx: number, groupLen: number) => {
+    // A real <button> when the row leads somewhere, so Tab/Enter reach it; a plain div otherwise.
+    const Body = entry.info.href ? 'button' : 'div'
+    return (
     <div className={motion ? 'aitem kf-stagger-item' : 'aitem'} style={motion ? staggerDelay(idx) : undefined} key={entry.id}>
       <div className="arail">
         <span className="aicon" style={{ width: isMobile ? 26 : 30, height: isMobile ? 26 : 30, background: entry.info.iconBg }}>{entry.info.icon}</span>
         {idx < groupLen - 1 && <span className="aline" />}
       </div>
-      <div className="abody" style={{ paddingBottom: isMobile ? 15 : 20 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <Body
+        className="abody"
+        {...(entry.info.href ? { type: 'button' as const, onClick: () => navigate(entry.info.href!) } : {})}
+        style={{ paddingBottom: isMobile ? 15 : 20 }}
+      >
+        {/* spans, not divs: this subtree also renders inside a <button> on navigable rows */}
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span style={{ fontSize: isMobile ? 13.5 : 14.5, color: 'var(--ink-body)' }}>{entry.info.text}</span>
           {!isMobile && <span className="fhelp" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>{formatTime(entry.created_at)}</span>}
-        </div>
-        <div style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
+        </span>
+        <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
           <span className="chip" style={{ fontSize: isMobile ? 8 : 9.5, padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
           <span className="fhelp">{isMobile ? formatTime(entry.created_at) : entry.info.details}</span>
-        </div>
-      </div>
+        </span>
+      </Body>
     </div>
-  )
+    )
+  }
 
   if (isMobile) {
     return (
@@ -363,7 +426,7 @@ export function ActivityPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="fhelp">{totalCount} events · {range.desc}</span>
+              <span className="fhelp">{totalCount} events · {spanLabel}</span>
               <span
                 onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}

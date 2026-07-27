@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useProjects, useTimeEntries } from '../projects/api'
+import { useProjects, useTimeEntries, archiveProject, restoreProject } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { writeRow } from '../../lib/outbox'
+import { toastUndo } from '../../lib/undo'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
@@ -82,7 +83,9 @@ export function HerbariumPage() {
 
   // X2 (Motion 3b): esc obeys immediately on both overlays
   useEscapeStack(!!selectedSpecimen, () => { setSelectedSpecimen(null); setIsEditingLine(false) })
-  useEscapeStack(!!pressingProject, () => setPressingProject(null))
+  // Esc closes the press the same way Skip does: Kai already confirmed the archive on the project
+  // page, so escaping the ceremony must not quietly drop it. The toast's Undo is the way back.
+  useEscapeStack(!!pressingProject, () => finishPressing(null))
 
   useEffect(() => {
     const pressParam = searchParams.get('press')
@@ -147,12 +150,20 @@ export function HerbariumPage() {
     queryClient.invalidateQueries({ queryKey: ['projects'] })
   }
 
-  const handlePressIt = () => {
+  // Punch 51: the ceremony *is* the archive. The project is still live through all three beats —
+  // the write happens here, when the press closes. `line = null` (Skip, or Esc) archives without
+  // writing a field-guide line; the card falls back to "Pressed specimen." rather than inventing
+  // a sentence in Kai's voice.
+  const finishPressing = (line: string | null) => {
     if (!pressingProject) return
-    const updated = { ...pressingProject, status: 'archived', completion_summary: ceremonyLine.trim() || 'Pressed into the field guide.' }
-    writeRow('projects', updated)
+    const before = pressingProject
+    archiveProject(line ? { ...before, completion_summary: line } : before)
     setPressingProject(null)
     queryClient.invalidateQueries({ queryKey: ['projects'] })
+    toastUndo(`"${before.name}" pressed into the Herbarium`, () => {
+      restoreProject(before) // `before` still carries the pre-press summary, so undo restores both
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+    })
   }
 
   const styles = `
@@ -266,8 +277,8 @@ export function HerbariumPage() {
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
-                <span onClick={handlePressIt} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</span>
-                <button onClick={handlePressIt} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
+                <span onClick={() => finishPressing(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</span>
+                <button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
               </div>
             </div>
           </>)}

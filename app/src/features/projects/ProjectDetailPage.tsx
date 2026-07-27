@@ -24,7 +24,6 @@ import {
   logTimeEntry,
   useTimeEntries,
   createProject,
-  archiveProject,
   isThisMonth,
 } from './api'
 import { useAreas } from '../areas/api'
@@ -838,7 +837,8 @@ export function ProjectDetailPage() {
                     confirmLabel: 'Archive',
                     onConfirm: () => {
                       setConfirm(null)
-                      archiveProject(project)
+                      // Punch 51: do NOT archive here — the pressing ceremony performs the
+                      // archive when it finishes, so the specimen is pressed *then* filed.
                       navigate(`/herbarium?press=${project.id}`)
                     },
                   })

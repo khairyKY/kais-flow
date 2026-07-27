@@ -10,7 +10,8 @@ export const corsHeaders = {
 }
 
 export interface SearchHit {
-  entity_type: 'task' | 'inbox_item'
+  // Migration 0031 widened search_hybrid past tasks/inbox to people, events, projects, journal.
+  entity_type: 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'journal_entry'
   entity_id: string
   title: string
   snippet: string | null
