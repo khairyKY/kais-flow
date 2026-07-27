@@ -1,8 +1,13 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import { useJournalEntries, upsertJournalEntry } from './api'
+import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { useMotionEnabled } from '../../lib/motion'
+import { fernByLength } from '../../lib/growthStages'
+import { toastUndo } from '../../lib/undo'
+import { ConfirmCard } from '../projects/ConfirmCard'
+import type { JournalEntry } from '../../lib/types'
 import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
@@ -27,11 +32,10 @@ const PROMPTS = [
 
 const MOODS = ['Calm', 'Focused', 'Grateful', 'Stretched']
 
-function getFernImage(length: number): string {
-  if (length < 50) return '/ds/assets/fern/coil.png'
-  if (length < 150) return '/ds/assets/fern/unfurl1.png'
-  if (length < 300) return '/ds/assets/fern/unfurl2.png'
-  return '/ds/assets/fern/full.png'
+// Fern thresholds are Foundation's (lib/growthStages) — the local copy that used to live
+// here is gone, so Journal can never drift from Review/Library (punch item 10).
+function fernSrc(length: number): string {
+  return `/ds/assets/fern/${fernByLength(length)}.png`
 }
 
 export function JournalPage() {
@@ -43,7 +47,7 @@ export function JournalPage() {
   // Queries
   const { data: entries = [] } = useJournalEntries()
   // States 1d — first-run: the input is the action, this line is the invitation
-  const firstPage = entries.length === 0
+  const firstPage = !entries.some(isWritten)
   const { data: notes = [] } = useNotes()
   const { data: quotes = [] } = useQuotes()
 
@@ -73,131 +77,148 @@ export function JournalPage() {
   const [showAddCommentary, setShowAddCommentary] = useState(false)
   const [mobileTab, setMobileTab] = useState<'journal' | 'notes' | 'quotes'>('journal')
 
-  // Find or create temp entry state
-  const activeEntry = useMemo(() => {
-    return entries.find((e) => e.entry_date === selectedDate) || null
-  }, [entries, selectedDate])
+  // ── D-1 model ────────────────────────────────────────────────────────────────────────
+  // One daily page holding N timestamped entries. `created_at` IS the timestamp; the day is
+  // just every row sharing an `entry_date` (migration 0033 drops the unique index that made
+  // that impossible). Mood + the three small things stay day-level and ride on the day's
+  // first entry.
+  const dayEntries = useMemo(() => entriesForDay(entries, selectedDate), [entries, selectedDate])
 
-  const [bodyText, setBodyText] = useState('')
+  // Body text in flight, keyed by entry id — the cache only catches up after the debounce.
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const bodyOf = (e: JournalEntry) => drafts[e.id] ?? e.body
+  const dayLength = dayEntries.reduce((n, e) => n + bodyOf(e).length, 0)
+
   const [activeMood, setActiveMood] = useState<string | null>(null)
   const [gratitude1, setGratitude1] = useState('')
   const [gratitude2, setGratitude2] = useState('')
   const [gratitude3, setGratitude3] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
+  const [confirmDelete, setConfirmDelete] = useState<JournalEntry | null>(null)
 
-  // Sync state with activeEntry when selectedDate or activeEntry changes
+  const dayMood = dayField(dayEntries, 'mood')
+  const dayGratitude = dayField(dayEntries, 'gratitude')
+
+  // Sync the day-level fields when the page (or its holder row) changes.
   useEffect(() => {
-    if (activeEntry) {
-      setBodyText(activeEntry.body)
-      setActiveMood(activeEntry.mood)
-      setGratitude1(activeEntry.gratitude[0] || '')
-      setGratitude2(activeEntry.gratitude[1] || '')
-      setGratitude3(activeEntry.gratitude[2] || '')
-    } else {
-      setBodyText('')
-      setActiveMood(null)
-      setGratitude1('')
-      setGratitude2('')
-      setGratitude3('')
-    }
+    setActiveMood(dayMood)
+    setGratitude1(dayGratitude?.[0] || '')
+    setGratitude2(dayGratitude?.[1] || '')
+    setGratitude3(dayGratitude?.[2] || '')
     setSaveStatus('Saved')
-  }, [selectedDate, activeEntry])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, dayMood, dayGratitude?.join(' ')])
 
-  // Auto-save debouncer
-  const saveTimeoutRef = useRef<number | null>(null)
+  // Drafts are per-page; drop them when you turn the page.
+  useEffect(() => setDrafts({}), [selectedDate])
 
-  const triggerSave = (
-    nextBody: string,
-    nextMood: string | null,
-    g1: string,
-    g2: string,
-    g3: string
-  ) => {
+  // One debounce per entry (plus one for the day-level fields) so typing in the 9am entry
+  // never cancels the pending save of the 9pm one.
+  const timers = useRef<Record<string, number>>({})
+  const dayTimer = useRef<number>(0)
+  useEffect(() => () => { Object.values(timers.current).forEach(window.clearTimeout); window.clearTimeout(dayTimer.current) }, [])
+
+  // Every upsert sends the WHOLE row, so two debounces firing in either order would each
+  // overwrite the other's field with whatever was on screen when its timer was set. Both
+  // compose from here instead of from their captured render, so the loser of the race only
+  // rewrites what the winner already wrote.
+  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] })
+  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] }
+  const rowNow = (id: string): JournalEntry | undefined => {
+    const e = latest.current.dayEntries.find((x) => x.id === id)
+    return e && { ...e, body: latest.current.drafts[id] ?? e.body }
+  }
+
+  // Focus hand-off: a brand-new entry (or the first keystroke on a blank day) mounts a
+  // different textarea than the one that was focused, so claim it on mount.
+  const wantFocus = useRef<string | null>(null)
+  const claimFocus = (id: string) => (el: HTMLTextAreaElement | null) => {
+    if (!el || wantFocus.current !== id) return
+    wantFocus.current = null
+    el.focus()
+    el.setSelectionRange(el.value.length, el.value.length)
+  }
+
+  const handleBodyChange = (entry: JournalEntry, val: string) => {
+    setDrafts((d) => ({ ...d, [entry.id]: val }))
     setSaveStatus('Saving...')
-    if (saveTimeoutRef.current) {
-      window.clearTimeout(saveTimeoutRef.current)
-    }
+    window.clearTimeout(timers.current[entry.id])
+    timers.current[entry.id] = window.setTimeout(() => {
+      const cur = rowNow(entry.id)
+      if (!cur) return // deleted while the save was pending — don't resurrect it
+      upsertJournalEntry({ ...cur, body: val }, false)
+      // The write is in the cache now, so the draft has served its purpose — drop it, or it
+      // would mask a later update to this row arriving from another device.
+      setDrafts(({ [entry.id]: _saved, ...rest }) => rest)
+      setSaveStatus('Saved · just now')
+    }, 800)
+  }
 
-    saveTimeoutRef.current = window.setTimeout(() => {
-      const isNew = !activeEntry
-      const gratArray = [g1, g2, g3].map(s => s.trim()).filter(Boolean)
+  /** "+ New entry" — punch 47: this used to only jump to today. Now it actually adds one,
+   * stamped now, focused for typing. */
+  const addEntry = (date = todayStr) => {
+    setSelectedDate(date)
+    const row = upsertJournalEntry({ entry_date: date, body: '' }, true)
+    wantFocus.current = row.id
+  }
+
+  /** First keystroke on a day with no entries writes the entry rather than making the user
+   * press "+ New entry" first — the input is the action (design state 1d). */
+  const startFirstEntry = (val: string) => {
+    const row = upsertJournalEntry({ entry_date: selectedDate, body: val }, true)
+    setDrafts((d) => ({ ...d, [row.id]: val }))
+    wantFocus.current = row.id
+  }
+
+  /** Delete → Trash, restorable — same soft-delete the four trashable tables share. */
+  const removeEntry = (entry: JournalEntry) => {
+    // A queued body save would upsert the row back with deleted_at null, i.e. resurrect it.
+    window.clearTimeout(timers.current[entry.id])
+    const row = { ...entry, body: bodyOf(entry) }
+    const heir = dayEntries.find((e) => e.id !== entry.id)
+    deleteJournalEntry(row)
+    // The day's mood / three small things live on its first entry — hand them down rather
+    // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
+    // `dayField` reads the earliest holder, which is the restored row again.)
+    if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
+      upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
+    }
+    toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+  }
+
+  /** Mood + the three small things are day-level; they ride on the day's first entry. */
+  const saveDayFields = () => {
+    setSaveStatus('Saving...')
+    window.clearTimeout(dayTimer.current)
+    dayTimer.current = window.setTimeout(() => {
+      const { mood, grats } = latest.current
+      const gratitude = grats.map((s) => s.trim()).filter(Boolean)
+      const target = latest.current.dayEntries[0]
+      const cur = target && rowNow(target.id)
       upsertJournalEntry(
-        {
-          id: activeEntry?.id,
-          body: nextBody,
-          entry_date: selectedDate,
-          mood: nextMood,
-          gratitude: gratArray,
-          created_at: activeEntry?.created_at,
-          media_paths: activeEntry?.media_paths ?? [],
-          transcript: activeEntry?.transcript ?? null,
-        },
-        isNew
+        cur ? { ...cur, mood, gratitude } : { entry_date: selectedDate, body: '', mood, gratitude },
+        !cur
       )
       setSaveStatus('Saved · just now')
     }, 800)
   }
 
-  const handleBodyChange = (val: string) => {
-    setBodyText(val)
-    triggerSave(val, activeMood, gratitude1, gratitude2, gratitude3)
-  }
-
   const handleMoodSelect = (mood: string) => {
     const nextMood = activeMood === mood ? null : mood
     setActiveMood(nextMood)
-    triggerSave(bodyText, nextMood, gratitude1, gratitude2, gratitude3)
+    latest.current.mood = nextMood
+    saveDayFields()
   }
 
   const handleGratitudeChange = (index: number, val: string) => {
-    if (index === 1) {
-      setGratitude1(val)
-      triggerSave(bodyText, activeMood, val, gratitude2, gratitude3)
-    } else if (index === 2) {
-      setGratitude2(val)
-      triggerSave(bodyText, activeMood, gratitude1, val, gratitude3)
-    } else {
-      setGratitude3(val)
-      triggerSave(bodyText, activeMood, gratitude1, gratitude2, val)
-    }
+    ;[setGratitude1, setGratitude2, setGratitude3][index - 1](val)
+    latest.current.grats[index - 1] = val
+    saveDayFields()
   }
 
-  // Calculate streak from entries list (consecutive days of journals)
-  const streakDays = useMemo(() => {
-    if (entries.length === 0) return 0
-    const dates = entries
-      .map((e) => new Date(e.entry_date).toDateString())
-      .map((str) => new Date(str).getTime())
-      .sort((a, b) => b - a)
-
-    // Remove duplicates
-    const uniqueDates = Array.from(new Set(dates))
-    if (uniqueDates.length === 0) return 0
-
-    let streak = 0
-    const oneDay = 24 * 60 * 60 * 1000
-    let currentCheck = new Date(todayStr).getTime()
-
-    // If they haven't written today, check if they wrote yesterday to keep streak
-    const hasToday = uniqueDates.includes(currentCheck)
-    const hasYesterday = uniqueDates.includes(currentCheck - oneDay)
-
-    if (!hasToday && !hasYesterday) return 0
-
-    if (!hasToday && hasYesterday) {
-      currentCheck -= oneDay
-    }
-
-    for (let i = 0; i < uniqueDates.length; i++) {
-      if (uniqueDates.includes(currentCheck)) {
-        streak++
-        currentCheck -= oneDay
-      } else {
-        break
-      }
-    }
-    return streak
-  }, [entries, todayStr])
+  // Consecutive days with something actually written (an untouched "+ New entry" is not a
+  // day journaled — punch item 10, growth stages never lie).
+  const streakDays = useMemo(() => writtenStreak(entries, todayStr), [entries, todayStr])
 
   // "On this day" logic (returns entry from a year ago if exists, or older ones)
   const onThisDayEntry = useMemo(() => {
@@ -211,6 +232,7 @@ export function JournalPage() {
     const match = entries.find((e) => {
       const d = new Date(e.entry_date)
       return (
+        isWritten(e) &&
         d.getMonth() === targetMonth &&
         d.getDate() === targetDay &&
         d.getFullYear() < targetYear
@@ -250,11 +272,8 @@ export function JournalPage() {
     })
   }
 
-  // Get current day count (total days count or offset)
-  const dayCount = useMemo(() => {
-    // Total entries count
-    return entries.length || 1
-  }, [entries])
+  // "Day N" = which numbered day of journaling this page is — days, not entries (drift J7).
+  const dayCount = useMemo(() => dayOrdinal(entries, selectedDate), [entries, selectedDate])
 
   // Format list items of journal week
   const weekEntries = useMemo(() => {
@@ -270,6 +289,63 @@ export function JournalPage() {
     }
     return result
   }, [todayStr])
+
+  /** The day's entries inside the notebook card, in time order. Shared by 1a and 1b — same
+   * ruled textarea the export specs, one per entry, each with its stamp and its delete. */
+  const renderEntries = (t: { fontSize: number; lineHeight: number; minHeight: number; placeholder: string; stamp: number }) => {
+    // The page's own first entry keeps the export's full page-height; the ones stacked under
+    // it start at three ruled lines and grow (see `field-sizing` above).
+    const ta = (entry: JournalEntry | null, value: string, onChange: (v: string) => void, minHeight = t.minHeight) => (
+      <textarea
+        ref={entry ? claimFocus(entry.id) : undefined}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t.placeholder}
+        className="ruled"
+        style={{
+          width: '100%',
+          minHeight,
+          border: 'none',
+          backgroundColor: 'transparent',
+          fontFamily: 'inherit',
+          fontSize: `${t.fontSize}px`,
+          lineHeight: `${t.lineHeight}px`,
+          color: 'var(--ink-body)',
+          resize: 'none',
+          outline: 'none',
+          padding: 0,
+        }}
+      />
+    )
+    if (dayEntries.length === 0) return ta(null, '', startFirstEntry)
+    return dayEntries.map((entry, i) => (
+      <div key={entry.id} style={i === 0 ? undefined : { marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            {entryTime(entry.created_at)}
+          </span>
+          <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
+          <span
+            onClick={() => setConfirmDelete(entry)}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}
+          >
+            Delete
+          </span>
+        </div>
+        {ta(entry, bodyOf(entry), (v) => handleBodyChange(entry, v), i === 0 ? t.minHeight : t.lineHeight * 3)}
+      </div>
+    ))
+  }
+
+  const confirmCard = confirmDelete && (
+    <ConfirmCard
+      title="Delete this entry?"
+      body="It moves to Trash — you can restore it from there."
+      confirmLabel="Delete"
+      onConfirm={() => { removeEntry(confirmDelete); setConfirmDelete(null) }}
+      onCancel={() => setConfirmDelete(null)}
+    />
+  )
 
   // Renders the mobile sub-panels
   const renderMobileNotes = () => (
@@ -323,6 +399,9 @@ export function JournalPage() {
           .ruled {
             background-image: repeating-linear-gradient(transparent 0px, transparent 25px, var(--line-dashed) 25px, var(--line-dashed) 26px);
             background-attachment: local;
+            /* A day of N entries must not be N fixed 120px boxes. Native auto-grow; where it
+               isn't supported the min-height below is simply the old fixed behaviour. */
+            field-sizing: content;
           }
         `}</style>
         <div className="grain" style={{ borderRadius: 0, pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 5 }} />
@@ -330,7 +409,7 @@ export function JournalPage() {
         <div style={{ flex: 1, padding: '16px 20px 80px', position: 'relative', zIndex: 10 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <img src={getFernImage(bodyText.length)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Journal · Day {dayCount}</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
@@ -373,27 +452,11 @@ export function JournalPage() {
               <div style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
                 
-                <textarea
-                  value={bodyText}
-                  onChange={(e) => handleBodyChange(e.target.value)}
-                  placeholder="Type to write on this quiet page..."
-                  className="ruled"
-                  style={{
-                    width: '100%',
-                    minHeight: 120,
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    fontFamily: 'inherit',
-                    fontSize: '14.5px',
-                    lineHeight: '26px',
-                    color: 'var(--ink-body)',
-                    resize: 'none',
-                    outline: 'none',
-                    padding: 0
-                  }}
-                />
+                {renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+                  {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
+                  <span onClick={() => addEntry(selectedDate)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
                   <span>＋ Photo</span>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
@@ -462,6 +525,7 @@ export function JournalPage() {
             </>
           )}
         </div>
+        {confirmCard}
       </div>
     )
   }
@@ -473,6 +537,8 @@ export function JournalPage() {
         .ruled {
           background-image: repeating-linear-gradient(transparent 0px, transparent 26px, var(--line-dashed) 26px, var(--line-dashed) 27px);
           background-attachment: local;
+          /* See 1b: the day holds N entries, so each one grows to its own content. */
+          field-sizing: content;
         }
         .journal-sidebar-link {
           transition: color var(--dur-quick) var(--ease-natural);
@@ -495,7 +561,7 @@ export function JournalPage() {
         {/* Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
-            onClick={() => setSelectedDate(todayStr)}
+            onClick={() => addEntry()}
             style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}
           >
             ＋ New entry
@@ -506,12 +572,13 @@ export function JournalPage() {
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '4px 0 8px' }}>This week</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {weekEntries.map((dateStr) => {
-            const hasEntry = entries.some((e) => e.entry_date === dateStr)
+            // "kept" means something was actually written that day, not that a row exists.
+            const hasEntry = entries.some((e) => e.entry_date === dateStr && isWritten(e))
             const isSelected = selectedDate === dateStr
             const dateObj = new Date(dateStr)
             const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' })
             const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            const entryForDate = entries.find((e) => e.entry_date === dateStr)
+            const entryForDate = entries.find((e) => e.entry_date === dateStr && e.mood) ?? entries.find((e) => e.entry_date === dateStr)
 
             if (isSelected) {
               return (
@@ -591,9 +658,16 @@ export function JournalPage() {
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '34px 40px 44px', overflowY: 'auto' }}>
           <div style={{ width: '100%', maxWidth: 660 }}>
             
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
-            
-            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
+            {/* Punch 47 item 5: the fern was mobile-only. Same binding here — the day's total
+                written length, through Foundation's shared thresholds. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <img src={fernSrc(dayLength)} alt="" style={{ height: 52, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
+
+                <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
+              </div>
+            </div>
 
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
 
@@ -616,25 +690,7 @@ export function JournalPage() {
             <div style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
               
-              <textarea
-                value={bodyText}
-                onChange={(e) => handleBodyChange(e.target.value)}
-                placeholder="Start writing..."
-                className="ruled"
-                style={{
-                  width: '100%',
-                  minHeight: 180,
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  fontFamily: 'inherit',
-                  fontSize: '15.5px',
-                  lineHeight: '27px',
-                  color: 'var(--ink-body)',
-                  resize: 'none',
-                  outline: 'none',
-                  padding: 0
-                }}
-              />
+              {renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
@@ -796,6 +852,7 @@ export function JournalPage() {
         </section>
 
       </aside>
+      {confirmCard}
     </div>
   )
 }
