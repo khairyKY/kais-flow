@@ -6,7 +6,10 @@ import { useAppSettings, needsOnboarding } from './api'
 // `<OnboardingGate />` (import from './features/onboarding/OnboardingGate') so a first-run
 // account lands on /onboarding once, and every later sign-in skips straight to /today.
 export function OnboardingGate() {
-  const { data: settings } = useAppSettings()
-  if (!settings) return null
-  return <Navigate to={needsOnboarding(settings) ? '/onboarding' : '/today'} replace />
+  const { data: settings, isLoading } = useAppSettings()
+  // Punch 2: `!settings` alone also matched the ERROR case (the query rethrows), so a flaky
+  // first sign-in left "/" permanently blank with no message and no way forward. Only wait
+  // while genuinely loading; otherwise fall through to Today, which handles empty data fine.
+  if (isLoading) return null
+  return <Navigate to={settings && needsOnboarding(settings) ? '/onboarding' : '/today'} replace />
 }

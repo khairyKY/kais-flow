@@ -7,13 +7,15 @@ import './capture.css'
 
 export function QuickCapturePage() {
   // Option 1a & 1b Typing State
-  const [typedText, setTypedText] = useState('ask the print shop about riso for the postcards')
+  // Punch 2/9: these three seeded the export's sample content, so a fresh account saw
+  // fabricated notes. Empty is the honest first state; the placeholders still show the shape.
+  const [typedText, setTypedText] = useState('')
   const [micSheetOpen, setMicSheetOpen] = useState(false)
 
   // Option 1c Share Sheet Pill State
   const [shareSaved, setShareSaved] = useState(false)
-  const [sharingTitle, setSharingTitle] = useState('Risograph printing, explained')
-  const [sharingUrl, setSharingUrl] = useState('stackmagazines.com')
+  const [sharingTitle, setSharingTitle] = useState('')
+  const [sharingUrl, setSharingUrl] = useState('')
 
   // Timer for share confirmation pill
   useEffect(() => {

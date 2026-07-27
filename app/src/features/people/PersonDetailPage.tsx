@@ -17,7 +17,10 @@ function getAvatarBgColor(name: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-function getCloverAsset(days: number): string {
+function getCloverAsset(days: number | null): string {
+  // Never touched → seedling (a new relationship, not a neglected one). The old sentinel
+  // reached this as 9999 and picked seedling by accident; now it's the stated rule.
+  if (days === null) return '/ds/assets/clover/seedling.png'
   if (days === 0) return '/ds/assets/clover/four_leaf.png'
   if (days <= 3) return '/ds/assets/clover/dewdrop.png'
   if (days <= 7) return '/ds/assets/clover/awake.png'
@@ -64,7 +67,9 @@ export function PersonDetailPage() {
   const person = useMemo(() => people.find((p) => p.id === id) ?? null, [people, id])
   const personInteractions = useMemo(() => interactions.filter((i) => i.person_id === id).sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)), [interactions, id])
   const domain = useMemo(() => (person?.domain_id ? domains.find((d) => d.id === person.domain_id) ?? null : null), [person, domains])
-  const lastTouchDays = useMemo(() => personInteractions.length ? daysSince(personInteractions[0].occurred_at) : 9999, [personInteractions])
+  // null = never touched. The old 9999 sentinel flowed straight into the formatter, so a
+  // brand-new person read "last touch 1428w ago" (punch 2, fresh-account sweep).
+  const lastTouchDays = useMemo(() => (personInteractions.length ? daysSince(personInteractions[0].occurred_at) : null), [personInteractions])
 
   const bdayFact = person?.facts?.find((f) => f.label === 'Birthday') ?? null
   const daysUntilBday = bdayFact ? getDaysUntilBirthday(bdayFact.date || bdayFact.value) : null
@@ -141,7 +146,8 @@ export function PersonDetailPage() {
   // Kai audit E2 grammar: in-app ConfirmCard, never a native popup
   const removePerson = () => setConfirmDelete(true)
 
-  const lastTouchLabel = lastTouchDays === 0 ? 'today' : lastTouchDays === 1 ? 'yesterday' : lastTouchDays < 7 ? `${lastTouchDays}d ago` : `${Math.floor(lastTouchDays / 7)}w ago`
+  const lastTouchLabel =
+    lastTouchDays === null ? 'no history yet' : lastTouchDays === 0 ? 'today' : lastTouchDays === 1 ? 'yesterday' : lastTouchDays < 7 ? `${lastTouchDays}d ago` : `${Math.floor(lastTouchDays / 7)}w ago`
 
   return (
     <div style={{ maxWidth: 760 }}>

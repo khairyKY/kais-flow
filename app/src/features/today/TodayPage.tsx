@@ -21,6 +21,7 @@ import { PinIcon } from '../rituals/PinIcon'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
+import { useLatestResurfaced } from '../resurfacing/api'
 import { useGoalStore } from './goalStore'
 import { useTerrariumStore } from './terrariumStore'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
@@ -102,6 +103,8 @@ export function TodayPage() {
   const { data: domains = [] } = useDomains()
   const { data: pendingInbox = [] } = usePendingInboxItems()
   const { data: people = [] } = usePeople()
+  // Punch 2: the heading must not outlive its card — same source the card guards on.
+  const { data: resurfacedRow } = useLatestResurfaced()
   const [dismissedBdays, setDismissedBdays] = useState(() => {
     const s = new Set()
     if (typeof window !== 'undefined') {
@@ -540,8 +543,15 @@ export function TodayPage() {
             </section>
           )}
 
+          {/* Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
+              The section now either carries content or offers the one designed way in. */}
           <section>
-            <SectionLabel style={{ marginBottom: 10 }}>{`Routines · ${routinesDone}/${routinesTotal}`}</SectionLabel>
+            <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
+            {routinesTotal === 0 && (
+              <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
+                nothing on repeat yet — plant one ✿
+              </Link>
+            )}
             {routineGroups.filter((g) => g.items.length > 0).map((g) => (
               <div key={g.key}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
@@ -552,10 +562,14 @@ export function TodayPage() {
             ))}
           </section>
 
-          <section>
-            <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
-            <ResurfaceCard />
-          </section>
+          {/* Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
+              bare heading. The heading now only appears with a card under it. */}
+          {resurfacedRow?.action === 'pending' && (
+            <section>
+              <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
+              <ResurfaceCard />
+            </section>
+          )}
         </div>
       </div>
 

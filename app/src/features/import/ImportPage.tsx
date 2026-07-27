@@ -233,7 +233,9 @@ export function ImportPage() {
             <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-muted)' }}>
               Say what each column means — title is the only one required. Remembered for files named like this one.
             </p>
-            {step.rows[0].map((header, i) => (
+            {/* Punch 2 sweep: an empty CSV made this throw (`rows[0]` undefined) — the one
+                un-guarded index in the app. A file with no rows just maps nothing. */}
+            {(step.rows[0] ?? []).map((header, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{header || `column ${i + 1}`}</span>
                 <span style={{ ...help, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'none' }}>{step.rows[1]?.[i] ?? ''}</span>

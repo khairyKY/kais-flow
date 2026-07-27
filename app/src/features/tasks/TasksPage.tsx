@@ -573,8 +573,8 @@ export function TasksPage() {
     activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
     : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
-    : isOverdue ? `${overdueCount} past their date — reschedule what still matters`
-    : activeTab === 'all' ? `every open task in the garden — dated, undated, someday, all ${allCount}`
+    : isOverdue ? overdueCount > 0 ? `${overdueCount} past their date — reschedule what still matters` : 'Nothing overdue — the garden is current.'
+    : activeTab === 'all' ? allCount > 0 ? `every open task in the garden — dated, undated, someday, all ${allCount}` : 'every open task in the garden — nothing open yet'
     : null
 
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
