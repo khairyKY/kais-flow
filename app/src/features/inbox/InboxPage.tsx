@@ -24,7 +24,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { Button, Chip } from '../../components/kit'
-import { useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, isToday } from './inboxDisplay'
 import type { InboxItem, InboxKind } from '../../lib/types'
 import './Inbox.css'
@@ -38,6 +38,13 @@ const A = '/ds/assets'
 // so the number is duplicated rather than imported.
 const CONFIDENCE_THRESHOLD = 0.75
 const PROJECT_DOTS = ['--acc-moss', '--acc-blossom', '--acc-lavender', '--acc-hydrangea', '--acc-buttercream', '--acc-sage']
+
+// Motion 3e (WB-1) — every inbox removal exits through the F4 primitive: slide 200ms,
+// collapse 180ms, *then* the mutation, so the gap heals instead of snapping shut. Both row
+// types render `id="inbox-<id>"` (already there for roving focus), so the lookup is free.
+function breatheOut(itemId: string, mutate: () => void) {
+  animateRowRemoval(document.getElementById(`inbox-${itemId}`), mutate)
+}
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -208,11 +215,14 @@ export function InboxPage() {
     if (motion) {
       setFilingIds((s) => new Set(s).add(item.id))
       window.setTimeout(() => {
-        fileToTask(item, opts)
-        setFilingIds((s) => {
-          const next = new Set(s)
-          next.delete(item.id)
-          return next
+        // Motion 1c florets have drifted; now 3e closes the gap (2d: "source position heals").
+        breatheOut(item.id, () => {
+          fileToTask(item, opts)
+          setFilingIds((s) => {
+            const next = new Set(s)
+            next.delete(item.id)
+            return next
+          })
         })
       }, 260)
     } else {
@@ -238,7 +248,7 @@ export function InboxPage() {
         advance(item)
       },
     },
-    { keys: ['d'], label: 'Dismiss', run: (item) => { dismissInboxItem(item); advance(item) } },
+    { keys: ['d'], label: 'Dismiss', run: (item) => { breatheOut(item.id, () => dismissInboxItem(item)); advance(item) } },
     { keys: ['s'], label: 'Snooze', run: (item) => setKbSnoozeId(item.id) },
     { keys: ['Enter'], label: 'Open (edit title)', run: (item) => setEditRequestId(item.id) },
   ]
@@ -370,7 +380,7 @@ export function InboxPage() {
                       selectionActive={selectionActive}
                       onToggleSelect={() => toggleSelected(item.id)}
                       onFile={() => fileWithFloret(item, {})}
-                      onDismiss={() => dismissInboxItem(item)}
+                      onDismiss={() => breatheOut(item.id, () => dismissInboxItem(item))}
                     />
                   ))}
                 </div>
@@ -685,7 +695,7 @@ function TriageCard({
         <Button type="button" variant="secondary" onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 12px' : '8px 14px' }}>
           Snooze
         </Button>
-        <Button type="button" variant="ghost" onClick={() => dismissInboxItem(item)} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px' }}>
+        <Button type="button" variant="ghost" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px' }}>
           Dismiss
         </Button>
       </div>

@@ -487,7 +487,8 @@ function RightRail({
           <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 8 }}>Nothing slipping.</p>
         ) : (
           rows.slice(0, 3).map((row) => (
-            <div key={`${row.entity_type}-${row.entity_id}`} style={{ marginTop: 8, background: 'rgba(181,101,74,0.08)', border: '1px solid rgba(181,101,74,0.25)', borderRadius: 3, padding: '12px 14px' }}>
+            // Motion 3e (WB-1): id is how markReviewed() finds the card to slide it out.
+            <div key={`${row.entity_type}-${row.entity_id}`} id={`slipping-${row.entity_type}:${row.entity_id}`} style={{ marginTop: 8, background: 'rgba(181,101,74,0.08)', border: '1px solid rgba(181,101,74,0.25)', borderRadius: 3, padding: '12px 14px' }}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>{Math.floor(row.days_since)} days untouched</span>

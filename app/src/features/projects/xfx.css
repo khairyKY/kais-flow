@@ -24,6 +24,14 @@
 }
 .kf-lift:active { transform: scale(0.97); transition-duration: 80ms; }
 
+/* Motion 3e — list breathing, the ENTRY half (the exit half is animateRowRemoval in lib/motion).
+   Fresh mounts only: React reuses DOM nodes for unchanged keys, so a row that was already on
+   screen never replays it — which is exactly "new rows breathe in". `backwards` so the finished
+   animation stops pinning transform and the tilt/lift classes own it again.
+   Lists that already carry .kf-stagger-item don't need this — 4b's entryFadeUp is the same
+   arrival gesture, and stacking both on one element would fight over `animation`. */
+.kf-row-in { animation: rowIn 240ms var(--ease-out) backwards; }
+
 /* When a row both staggers in (4b) and lifts on hover (4a): fill `backwards` instead of
    `both`, so the finished animation stops pinning transform/opacity — the hover transition
    works, and no retained transform turns the row into a containing block for fixed

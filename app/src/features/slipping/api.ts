@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { animateRowRemoval } from '../../lib/motion'
 import type { SlippingRow } from '../../lib/types'
 
 const DEFAULT_THRESHOLD_DAYS = 7
@@ -43,17 +44,22 @@ const UNDO_WINDOW_MS = 4200
  * ponytail: closing the tab inside the 4.2s window loses the review; a true server-side undo
  * needs a deletable review marker (migration) — not worth it for a 4-second window. */
 export function markReviewed(row: SlippingRow): void {
-  locallyReviewed.add(rowKey(row))
-  queryClient.setQueryData<SlippingRow[]>(['slipping'], (old) =>
-    (old ?? []).filter((r) => rowKey(r) !== rowKey(row)),
-  )
-  const timer = setTimeout(() => logActivity('entity.reviewed', row.entity_type, row.entity_id, {}), UNDO_WINDOW_MS)
-  toastUndo('Marked reviewed', () => {
-    clearTimeout(timer)
-    locallyReviewed.delete(rowKey(row))
-    queryClient.setQueryData<SlippingRow[]>(['slipping'], (old) => {
-      const rows = old ?? []
-      return rows.some((r) => rowKey(r) === rowKey(row)) ? rows : [...rows, row]
+  // Motion 3e (WB-1) — the card slides out and the stack heals before the cache filter drops
+  // it. Both surfaces that render a slipping row (Today's stack, the Weekly Review sweep) tag
+  // it `id="slipping-<rowKey>"`, so wiring the shared mutation covers both.
+  animateRowRemoval(document.getElementById(`slipping-${rowKey(row)}`), () => {
+    locallyReviewed.add(rowKey(row))
+    queryClient.setQueryData<SlippingRow[]>(['slipping'], (old) =>
+      (old ?? []).filter((r) => rowKey(r) !== rowKey(row)),
+    )
+    const timer = setTimeout(() => logActivity('entity.reviewed', row.entity_type, row.entity_id, {}), UNDO_WINDOW_MS)
+    toastUndo('Marked reviewed', () => {
+      clearTimeout(timer)
+      locallyReviewed.delete(rowKey(row))
+      queryClient.setQueryData<SlippingRow[]>(['slipping'], (old) => {
+        const rows = old ?? []
+        return rows.some((r) => rowKey(r) === rowKey(row)) ? rows : [...rows, row]
+      })
     })
   })
 }
