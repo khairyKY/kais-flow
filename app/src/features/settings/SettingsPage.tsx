@@ -10,7 +10,7 @@ import {
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
-import { useMotionEnabled, setEffectsEnabled } from '../../lib/motion'
+import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { Select } from '../../components/Select'
 import { useIntegrations } from './api'
 
@@ -89,6 +89,90 @@ function Seg<T extends string | number>({ value, onChange, options }: { value: T
         )
       })}
     </div>
+  )
+}
+
+// ponytail: mirrors motion.ts's private reader — motion.ts is frozen and doesn't export it.
+// Reads the raw effects flag so the toggle shows the STORED value even under OS reduced-motion
+// (useMotionEnabled conflates the two — punch 56).
+function readEffectsOn(): boolean {
+  try {
+    return localStorage.getItem('kf_effects') !== '0'
+  } catch {
+    return true
+  }
+}
+
+// ── Paper texture (punch 53). Per-device visual pref like theme/uiScale → localStorage.
+// Writes --kf-grain-opacity on <html>; index.css's body::before grain consumes it via a
+// pending one-line foundation patch (`opacity: var(--kf-grain-opacity, 0.5)`). ──
+const GRAIN_KEY = 'kf_grain'
+
+function readGrainPct(): number {
+  try {
+    const raw = localStorage.getItem(GRAIN_KEY)
+    const n = Number(raw)
+    if (raw !== null && Number.isFinite(n)) return Math.min(100, Math.max(0, Math.round(n)))
+  } catch {
+    /* private mode */
+  }
+  return 50 // matches the grain's shipped opacity 0.5
+}
+
+function applyGrainPct(pct: number) {
+  document.documentElement.style.setProperty('--kf-grain-opacity', String(pct / 100))
+}
+
+function useGrain() {
+  const [pct, setPct] = useState(readGrainPct)
+  useEffect(() => {
+    applyGrainPct(pct)
+  }, [pct])
+  function set(next: number) {
+    setPct(next)
+    try {
+      localStorage.setItem(GRAIN_KEY, String(next))
+    } catch {
+      /* session-only is fine */
+    }
+  }
+  return { pct, set }
+}
+
+// The export's hairline slider (4px track, 15px thumb), made real: an invisible native
+// range input overlays the drawn track, so drag + keyboard both work.
+function HairlineSlider({ value, min = 0, max = 100, onChange, style, ariaLabel }: {
+  value: number
+  min?: number
+  max?: number
+  onChange: (v: number) => void
+  style?: CSSProperties
+  ariaLabel: string
+}) {
+  const pct = ((value - min) / (max - min)) * 100
+  return (
+    <span style={{ display: 'inline-block', height: 4, borderRadius: 2, background: 'var(--line-solid)', position: 'relative', ...style }}>
+      <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, borderRadius: 2, background: 'var(--acc-sage)' }} />
+      <span style={{ position: 'absolute', left: `${pct}%`, top: '50%', transform: 'translate(-50%, -50%)', width: 15, height: 15, borderRadius: '50%', background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', boxShadow: 'var(--shadow-crisp)' }} />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '100%', height: 22, margin: 0, opacity: 0, cursor: 'pointer' }}
+      />
+    </span>
+  )
+}
+
+// Disabled action chip — Onboarding's "Soon" pattern (nothing clickable that does nothing).
+function SoonChip({ label = 'Soon' }: { label?: string }) {
+  return (
+    <span aria-disabled="true" title="Coming with integrations — not wired up yet" style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', opacity: 0.45, cursor: 'not-allowed' }}>
+      {label}
+    </span>
   )
 }
 
