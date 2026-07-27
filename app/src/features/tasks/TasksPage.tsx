@@ -21,7 +21,7 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import type { Area, Domain, Project, Task } from '../../lib/types'
@@ -404,7 +404,12 @@ export function TasksPage() {
     }
     setCompletingIds((prev) => new Set(prev).add(task.id))
     window.setTimeout(() => {
-      setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+      // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
+      // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
+      // then the row leaves the list.
+      animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
+        setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+      })
     }, 650)
   }
   const displayTasks = useMemo(

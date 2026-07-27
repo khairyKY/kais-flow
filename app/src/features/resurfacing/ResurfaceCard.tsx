@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+import { animateRowRemoval } from '../../lib/motion'
 import { useTasks } from '../tasks/api'
 import { useAllInboxItems } from '../inbox/api'
 import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced, type CooldownTier } from './api'
@@ -7,6 +9,9 @@ import { useLatestResurfaced, convertResurfaced, reviewLaterResurfaced, type Coo
 // export is swapped for --text-on-accent (house rule: no pure white).
 
 export function ResurfaceCard() {
+  // Motion 3e (WB-1). Only ever one card renders, so a ref beats an id scheme; both triage
+  // chips route their mutation through the exit so the slot closes instead of blinking out.
+  const cardRef = useRef<HTMLDivElement>(null)
   const { data: row } = useLatestResurfaced()
   const { data: tasks = [] } = useTasks()
   const { data: inboxItems = [] } = useAllInboxItems()
@@ -27,6 +32,7 @@ export function ResurfaceCard() {
 
   return (
     <div
+      ref={cardRef}
       // deviation(punch 15, 2026-07-26): export tilts this card rotate(-0.3deg), but the
       // sub-degree transform blurs the 14px quote text (grayscale AA on a rotated baseline,
       // compounded by the 1.25 root zoom) — dropped for crisp rendering, same call as
@@ -61,7 +67,7 @@ export function ResurfaceCard() {
         {canConvert && (
           <button
             type="button"
-            onClick={() => convertResurfaced(row, inboxItem)}
+            onClick={() => animateRowRemoval(cardRef.current, () => convertResurfaced(row, inboxItem))}
             // punch 22: `font` (shorthand) must precede `fontSize` — later shorthand keys clobber
             // earlier longhands in React style objects, which reset the chip to the body size.
             style={{ font: 'inherit', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, border: 'none', cursor: 'pointer' }}
@@ -71,7 +77,7 @@ export function ResurfaceCard() {
         )}
         <button
           type="button"
-          onClick={() => reviewLaterResurfaced(row, tier)}
+          onClick={() => animateRowRemoval(cardRef.current, () => reviewLaterResurfaced(row, tier))}
           style={{ font: 'inherit', border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer' }}
         >
           Later

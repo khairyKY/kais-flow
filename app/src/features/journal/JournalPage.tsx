@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
-import { useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
 import { ConfirmCard } from '../projects/ConfirmCard'
@@ -173,17 +173,21 @@ export function JournalPage() {
   /** Delete → Trash, restorable — same soft-delete the four trashable tables share. */
   const removeEntry = (entry: JournalEntry) => {
     // A queued body save would upsert the row back with deleted_at null, i.e. resurrect it.
+    // Cancel it before the exit animation, not inside it — the debounce must die immediately.
     window.clearTimeout(timers.current[entry.id])
     const row = { ...entry, body: bodyOf(entry) }
     const heir = dayEntries.find((e) => e.id !== entry.id)
-    deleteJournalEntry(row)
-    // The day's mood / three small things live on its first entry — hand them down rather
-    // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
-    // `dayField` reads the earliest holder, which is the restored row again.)
-    if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
-      upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
-    }
-    toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+    // Motion 3e (WB-1) — the entry slides out and the day's column closes over it.
+    animateRowRemoval(document.getElementById(`journal-${entry.id}`), () => {
+      deleteJournalEntry(row)
+      // The day's mood / three small things live on its first entry — hand them down rather
+      // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
+      // `dayField` reads the earliest holder, which is the restored row again.)
+      if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
+        upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
+      }
+      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+    })
   }
 
   /** Mood + the three small things are day-level; they ride on the day's first entry. */
@@ -319,7 +323,7 @@ export function JournalPage() {
     )
     if (dayEntries.length === 0) return ta(null, '', startFirstEntry)
     return dayEntries.map((entry, i) => (
-      <div key={entry.id} style={i === 0 ? undefined : { marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+      <div key={entry.id} id={`journal-${entry.id}`} className="kf-row-in" style={i === 0 ? undefined : { marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
             {entryTime(entry.created_at)}

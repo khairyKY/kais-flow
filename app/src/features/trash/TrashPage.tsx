@@ -5,7 +5,7 @@ import { useDeletedItems, restoreItem, deleteItemForever, type DeletedItem } fro
 import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { toastAction } from '../../lib/undo'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
@@ -61,20 +61,30 @@ export function TrashPage() {
     })
   }
 
+  // Motion 3e (WB-1) — both single-row exits slide + collapse before the cache drop, so the
+  // list heals. handleEmptyEverything is deliberately left instant: animating every row at
+  // once is noise, not breathing.
+  const breatheOut = (item: DeletedItem, mutate: () => void) =>
+    animateRowRemoval(document.getElementById(`trash-${item.id}`), mutate)
+
   const handleRestore = (item: DeletedItem) => {
     const dest = DESTINATION[item.type]
-    dropFromTrashCache(new Set([item.id]))
-    restoreItem(item)
-    toastAction(`Restored to ${dest.label}`, 'Jump there →', () => navigate(dest.to))
-    invalidateAfterFlush(['deleted_items', baseKey(item.type)])
+    breatheOut(item, () => {
+      dropFromTrashCache(new Set([item.id]))
+      restoreItem(item)
+      toastAction(`Restored to ${dest.label}`, 'Jump there →', () => navigate(dest.to))
+      invalidateAfterFlush(['deleted_items', baseKey(item.type)])
+    })
   }
 
   const handleDeleteForever = (item: DeletedItem) => {
-    dropFromTrashCache(new Set([item.id]))
-    deleteItemForever(item)
     setConfirmDeleteId(null)
-    pushToast({ message: 'Gone forever' })
-    invalidateAfterFlush(['deleted_items'])
+    breatheOut(item, () => {
+      dropFromTrashCache(new Set([item.id]))
+      deleteItemForever(item)
+      pushToast({ message: 'Gone forever' })
+      invalidateAfterFlush(['deleted_items'])
+    })
   }
 
   const handleEmptyEverything = () => {
@@ -128,7 +138,7 @@ export function TrashPage() {
   const renderGroupList = (items: DeletedItem[]) => items.map((item, i) => {
     const isConfirming = confirmDeleteId === item.id
     return (
-      <div key={item.id} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(i) : {}) }}>
+      <div key={item.id} id={`trash-${item.id}`} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(i) : {}) }}>
         <div className="trow">
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
