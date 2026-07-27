@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { searchHybrid } from './api'
+import { searchHybrid, searchHitHref, SEARCH_GROUPS } from './api'
 import { useTasks } from '../tasks/api'
 import { EmojiText } from '../../components/EmojiText'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
@@ -51,12 +51,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   function goTo(hit: SearchHit) {
     onClose()
-    // Kai 2026-07-21: "it should take you to the task — if it's inside a project, take you
-    // to that project and highlight where it is." Inbox hits keep their deep-link.
-    if (hit.entity_type !== 'task') { navigate(`/inbox?focus=${hit.entity_id}`); return }
-    const task = allTasks.find((t) => t.id === hit.entity_id)
-    if (task?.project_id) navigate(`/projects/${task.project_id}?focus=${hit.entity_id}`)
-    else navigate(`/tasks?focus=${hit.entity_id}`)
+    navigate(searchHitHref(hit, allTasks))
   }
 
   function viewAll() {
@@ -64,10 +59,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     navigate(`/search?q=${encodeURIComponent(query.trim())}`)
   }
 
-  const tasks = results.filter((r) => r.entity_type === 'task')
-  const inboxItems = results.filter((r) => r.entity_type === 'inbox_item')
-  // Flat list in render order (Tasks group, then Inbox) so activeIndex maps 1:1 to visible rows.
-  const ordered = [...tasks, ...inboxItems]
+  // Punch 49: groups are data-driven — an entity type search_hybrid doesn't return yet (i.e.
+  // before migration 0031 is pushed) simply has no hits and renders no heading.
+  const groups = SEARCH_GROUPS.map((g) => ({ ...g, hits: results.filter((r) => r.entity_type === g.type) })).filter((g) => g.hits.length > 0)
+  // Flat list in render order so activeIndex maps 1:1 to visible rows.
+  const ordered = groups.flatMap((g) => g.hits)
 
   function ResultGroup({ label, dot, hits, offset }: { label: string; dot: string; hits: SearchHit[]; offset: number }) {
     return (
@@ -148,7 +144,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               else if (e.key === 'ArrowUp' && ordered.length > 0) { e.preventDefault(); setActiveIndex((i) => (i - 1 + ordered.length) % ordered.length) }
               else if (e.key === 'Enter' && ordered[activeIndex]) { e.preventDefault(); goTo(ordered[activeIndex]) }
             }}
-            placeholder="Search tasks and inbox…"
+            placeholder="Search the garden…"
             style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 15, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
           />
         </div>
@@ -159,8 +155,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
         {/* R4 (2026-07-20 audit): long result sets need to scroll inside the card, not clip */}
         <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
-          {tasks.length > 0 && <ResultGroup label="Tasks" dot="var(--acc-moss)" hits={tasks} offset={0} />}
-          {inboxItems.length > 0 && <ResultGroup label="Inbox" dot="var(--acc-hydrangea)" hits={inboxItems} offset={tasks.length} />}
+          {groups.reduce<{ nodes: React.ReactNode[]; offset: number }>(
+            (acc, g) => {
+              acc.nodes.push(<ResultGroup key={g.type} label={g.label} dot={g.dot} hits={g.hits} offset={acc.offset} />)
+              acc.offset += g.hits.length
+              return acc
+            },
+            { nodes: [], offset: 0 }
+          ).nodes}
         </div>
 
         {results.length > 0 && (
