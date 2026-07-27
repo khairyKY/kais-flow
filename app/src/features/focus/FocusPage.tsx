@@ -299,8 +299,10 @@ export function FocusPage() {
   // Journal (Fern)
   const fernData = useMemo(() => {
     const todayStr = localDateKey(new Date())
-    const todayEntry = journalEntries.find((e) => e.entry_date === todayStr)
-    const wordCount = todayEntry ? todayEntry.body.trim().split(/\s+/).filter(Boolean).length : 0
+    // D-1: one day = many entries, so sum the day rather than reading only the first.
+    const wordCount = journalEntries
+      .filter((e) => e.entry_date === todayStr)
+      .reduce((n, e) => n + e.body.trim().split(/\s+/).filter(Boolean).length, 0)
 
     let stage = 'coil'
     if (wordCount > 400) stage = 'unfurl2'

@@ -3,7 +3,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { useTasks, toggleTop3, completeTask, uncompleteTask, rescheduleDue } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { useJournalEntries, upsertJournalEntry } from '../journal/api'
+import { upsertJournalEntry } from '../journal/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
 import { playSound, closeTheGarden } from '../../lib/sounds'
 import { vineStage } from '../../lib/growthStages'
@@ -79,7 +79,6 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const { data: events = [] } = useCalendarEvents()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
-  const { data: journalEntries = [] } = useJournalEntries()
   const [line, setLine] = useState('')
   const [seededIds, setSeededIds] = useState<Set<string>>(new Set())
 
@@ -101,11 +100,9 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     const text = line.trim()
     if (text) {
       const todayKey = localDateKey(new Date())
-      const existing = journalEntries.find((e) => e.entry_date === todayKey)
-      upsertJournalEntry(
-        existing ? { ...existing, body: existing.body ? `${existing.body}\n${text}` : text } : { entry_date: todayKey, body: text },
-        !existing,
-      )
+      // D-1: a day holds many timestamped entries, so the night's line becomes its own
+      // entry (stamped when it was written) instead of being appended to an earlier one.
+      upsertJournalEntry({ entry_date: todayKey, body: text }, true)
       logActivity('journal.line_added', 'ritual', todayKey, { text })
     }
     next()

@@ -81,10 +81,8 @@ const CULTIVATE: NavItem[] = [
   // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable).
   { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph />, tape: 'rgba(201,165,90,0.45)' },
   { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'rgba(212,199,138,0.45)' },
-  // R4-D4 (Kai's 2026-07-20 ruling): Journal is PARKED until he redesigns it — the whole
-  // one-entry-per-day model is unsettled. Nav entry removed; the route and page stay in the
-  // codebase (reachable by URL) so nothing is lost when it comes back.
-  // { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
+  // Journal is back per D-1 (Kai, 2026-07-26): one daily page, many timestamped entries.
+  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'rgba(212,199,138,0.45)' },
   // [K-26] 2026-07-26 (punch 65): Library is PARKED to v2 entirely — nav row out, route stays
   // URL-only so nothing is lost when it returns (same treatment as Journal below).
   // { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'rgba(212,199,138,0.45)' },

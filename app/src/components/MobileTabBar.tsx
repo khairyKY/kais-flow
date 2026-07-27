@@ -13,13 +13,13 @@ function slotLabel(active: boolean): CSSProperties {
   return { fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
 }
 
-// [K-26] punch 65: Library parked to v2 (row removed); Journal parked pending its D-1 rebuild
-// (WA-7 restores it here and in the sidebar). Focus (audit-A7 addition Kai kept) appends after
-// the designed rows instead of splitting their order.
+// [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
+// (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
 const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; badge?: boolean }[] = [
   { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
+  { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 20 },
   { to: '/people', label: 'People', dot: '--acc-clover' },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
