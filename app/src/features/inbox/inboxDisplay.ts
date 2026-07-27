@@ -31,6 +31,19 @@ export function formatDue(iso: string): string {
   return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ })
 }
 
+function cairoDay(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: TZ }) // YYYY-MM-DD, sortable + comparable
+}
+
+/** Day-only label for the filing toast (punch 7): "Today" / "Tomorrow" / "Wed, Aug 5".
+ * `now` is injectable so the day boundary is testable without faking the clock. */
+export function dayWord(iso: string, now: Date = new Date()): string {
+  const day = cairoDay(new Date(iso))
+  if (day === cairoDay(now)) return 'Today'
+  if (day === cairoDay(new Date(now.getTime() + 86_400_000))) return 'Tomorrow'
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ })
+}
+
 /** "dismissed 2h ago" while recent, then just the weekday, then a bare date — matches 2a/2b copy. */
 export function dismissedAgo(iso: string): string {
   const hours = (Date.now() - new Date(iso).getTime()) / 3_600_000

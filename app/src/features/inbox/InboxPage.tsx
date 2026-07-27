@@ -175,30 +175,31 @@ export function InboxPage() {
     useToastStore.getState().push({ message: `${n} capture${n === 1 ? '' : 's'} ${verb}.` })
   }
   // ponytail: bulk = loop the existing single-item outbox helpers; no batch API needed.
+  // `silent` on each call so N items produce one summary toast, not N stacked ones.
   function bulkFile(projectId: string | null, domainId: string | null) {
     const n = selectedItems.length
     selectedItems.forEach((i) => {
       const parse = i.ai_parse as AiParse | null
-      fileToTask(i, { domainId, projectId, title: parse?.cleaned_text ?? undefined })
+      fileToTask(i, { domainId, projectId, title: parse?.cleaned_text ?? undefined, silent: true })
     })
     bulkToast(n, 'filed')
     clearSelection()
   }
   function bulkSnooze(until: string) {
     const n = selectedItems.length
-    selectedItems.forEach((i) => snoozeInboxItem(i, until))
+    selectedItems.forEach((i) => snoozeInboxItem(i, until, true))
     bulkToast(n, 'snoozed')
     clearSelection()
   }
   function bulkDismiss() {
     const n = selectedItems.length
-    selectedItems.forEach((i) => dismissInboxItem(i))
+    selectedItems.forEach((i) => dismissInboxItem(i, true))
     bulkToast(n, 'dismissed')
     clearSelection()
   }
   function bulkRestore() {
     const n = selectedItems.length
-    selectedItems.forEach((i) => restoreInboxItem(i))
+    selectedItems.forEach((i) => restoreInboxItem(i, true))
     bulkToast(n, 'restored')
     clearSelection()
   }
@@ -219,6 +220,14 @@ export function InboxPage() {
     }
   }
 
+  // Punch 26 — the strip promises E / D / S / ↑↓ / ⏎ and a 5-item triage on those keys alone.
+  // Without this, every action drops focus (useListKeys clears a focusedId that leaves the
+  // list) and the run becomes ↓E↓E↓E…; parking focus on the neighbour makes it E E E E E.
+  // (hoisted; `setFocusedId` below is only read when a key actually fires, after render)
+  function advance(item: InboxItem) {
+    const idx = orderedItems.findIndex((i) => i.id === item.id)
+    setFocusedId(orderedItems[idx + 1]?.id ?? orderedItems[idx - 1]?.id ?? null)
+  }
   const bindings: ListBinding<InboxItem>[] = [
     {
       keys: ['e'],
@@ -226,15 +235,17 @@ export function InboxPage() {
       run: (item) => {
         const parse = item.ai_parse as AiParse | null
         fileWithFloret(item, { domainId: parse?.domain_id ?? null, projectId: parse?.project_id ?? null, title: parse?.cleaned_text ?? undefined })
+        advance(item)
       },
     },
-    { keys: ['d'], label: 'Dismiss', run: (item) => dismissInboxItem(item) },
+    { keys: ['d'], label: 'Dismiss', run: (item) => { dismissInboxItem(item); advance(item) } },
     { keys: ['s'], label: 'Snooze', run: (item) => setKbSnoozeId(item.id) },
     { keys: ['Enter'], label: 'Open (edit title)', run: (item) => setEditRequestId(item.id) },
   ]
-  const { focusedId } = useListKeys(orderedItems, bindings, {
+  const { focusedId, setFocusedId } = useListKeys(orderedItems, bindings, {
     idPrefix: 'inbox-',
-    active: tab === 'waiting',
+    // Pause list keys while the S popover is up, or D would dismiss the row behind it.
+    active: tab === 'waiting' && !kbSnoozeId,
     onSelectAll: () => setSelected(new Set(orderedItems.map((i) => i.id))),
   })
   const kbSnoozeTask = orderedItems.find((i) => i.id === kbSnoozeId)
@@ -385,8 +396,8 @@ export function InboxPage() {
         <SnoozeMenu
           position={rowAnchor('inbox-', kbSnoozeTask.id)}
           onClose={() => setKbSnoozeId(null)}
-          onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); setKbSnoozeId(null) }}
-          onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); setKbSnoozeId(null) }}
+          onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); advance(kbSnoozeTask); setKbSnoozeId(null) }}
+          onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); advance(kbSnoozeTask); setKbSnoozeId(null) }}
         />
       )}
 
@@ -726,7 +737,9 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
   const earlier = items.filter((i) => !isToday(i.updated_at))
 
   function restoreAll() {
-    items.forEach(restoreInboxItem)
+    // Arrow, not a bare reference: forEach's index would land in `silent`.
+    items.forEach((i) => restoreInboxItem(i, true))
+    useToastStore.getState().push({ message: `${items.length} capture${items.length === 1 ? '' : 's'} restored.` })
   }
   function clearNow() {
     if (items.length === 0) return

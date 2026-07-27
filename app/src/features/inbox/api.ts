@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
 import { createTask } from '../tasks/api'
+import { dayWord, formatDue } from './inboxDisplay'
 import type { InboxItem, Task } from '../../lib/types'
 
 async function fetchInboxItems(): Promise<InboxItem[]> {
@@ -53,11 +56,40 @@ export function captureText(rawText: string): InboxItem {
   return item
 }
 
+// ── Punch 7: destination feedback. Every triage action toasts with a working Undo, and the
+// filing toast names where the thing actually went. The toast lives here rather than in
+// InboxPage so every entry point (cards, keyboard strip, GitHub rows, Morning Ritual triage)
+// gets it from one place. `silent` is for callers that compose these into a bigger action and
+// push their own single toast — bulk loops, resurfacing's "Kept", Trash's restore. ──
+
+function lookupName(table: 'projects' | 'domains', id: string | null | undefined): string | null {
+  if (!id) return null
+  const rows = queryClient.getQueryData<{ id: string; name: string }[]>([table]) ?? []
+  return rows.find((r) => r.id === id)?.name ?? null
+}
+
+/** "Shaheen website · Today" / "Tasks · Tomorrow" / "Tasks" — read off the task that was
+ * actually written, so the toast can't claim a destination the row doesn't have. */
+function destinationOf(task: Task): string {
+  const where = lookupName('projects', task.project_id) ?? lookupName('domains', task.domain_id) ?? 'Tasks'
+  return task.due_at ? `${where} · ${dayWord(task.due_at)}` : where
+}
+
+/** Undoing a *just-created* task hard-deletes it rather than routing it to Trash — same as
+ * the auto-file undo in `capture/api.ts`; a task the user un-made shouldn't need composting. */
+function unfile(item: InboxItem, task: Task): void {
+  writeRow('tasks', task, 'delete')
+  logActivity('task.deleted', 'task', task.id, { reason: 'inbox file undo' })
+  writeRow('inbox_items', item)
+}
+
 /** Hides the item from the triage queue until `until` — a lighter cousin of `tasks.snoozeTask`,
  * no push reminder (that half of SPECS.md's "Snooze" backlog item stays future-phase). */
-export function snoozeInboxItem(item: InboxItem, until: string): void {
+export function snoozeInboxItem(item: InboxItem, until: string, silent = false): void {
+  const prior = { ...item }
   writeRow('inbox_items', { ...item, snoozed_until: until })
   logActivity('inbox.snoozed', 'inbox_item', item.id, { until })
+  if (!silent) toastUndo(`Snoozed until ${formatDue(until)}`, () => writeRow('inbox_items', prior))
 }
 
 /** Manual triage: file a pending inbox item into a task under the chosen domain/project.
@@ -68,31 +100,41 @@ export function snoozeInboxItem(item: InboxItem, until: string): void {
 // Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
 export function fileToTask(
   item: InboxItem,
-  opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null; title?: string } = {},
+  opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null; title?: string; silent?: boolean } = {},
 ): Task {
+  const prior = { ...item }
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
+  // The triage card shows the AI's parsed date as a promise ("→ Sat, 18:00"); no caller was
+  // passing it through, so every manual filing silently dropped it — and the punch-7 toast
+  // could never truthfully say "· Today". Default to the parse; an explicit opt still wins.
+  const parsedDue = (item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null
   const task = createTask({
     title: opts.title?.trim() || item.raw_text,
     domainId: opts.domainId ?? null,
     projectId: opts.projectId ?? null,
-    dueAt: opts.dueAt ?? null,
+    dueAt: opts.dueAt ?? parsedDue,
     priority: overrides?.priority_override ?? null,
     durationMin: overrides?.duration_override ?? null,
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })
+  if (!opts.silent) toastUndo(`Filed to ${destinationOf(task)}`, () => unfile(prior, task))
   return task
 }
 
-export function dismissInboxItem(item: InboxItem): void {
+export function dismissInboxItem(item: InboxItem, silent = false): void {
+  const prior = { ...item }
   writeRow('inbox_items', { ...item, status: 'dismissed' })
   logActivity('inbox.dismissed', 'inbox_item', item.id, {})
+  if (!silent) toastUndo('Dismissed', () => writeRow('inbox_items', prior))
 }
 
 /** Dismissed → pending again (Inbox.dc.html 2a/2b "Restore"). */
-export function restoreInboxItem(item: InboxItem): void {
+export function restoreInboxItem(item: InboxItem, silent = false): void {
+  const prior = { ...item }
   writeRow('inbox_items', { ...item, status: 'pending', snoozed_until: null, deleted_at: null })
   logActivity('inbox.restored', 'inbox_item', item.id, {})
+  if (!silent) toastUndo('Restored to Inbox', () => writeRow('inbox_items', prior))
 }
 
 /** Permanent delete — the Dismissed tab's "Clear now" (2a). The 30-day auto-compost the

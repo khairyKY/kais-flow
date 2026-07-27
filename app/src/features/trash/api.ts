@@ -49,7 +49,7 @@ export function useDeletedItems() {
 export function restoreItem(item: DeletedItem): void {
   const row = item.rawRow
   if (item.type === 'Task') restoreTask(row as Task)
-  else if (item.type === 'Inbox') restoreInboxItem(row as InboxItem)
+  else if (item.type === 'Inbox') restoreInboxItem(row as InboxItem, true) // TrashPage pushes its own "Restored to Inbox"
   else if (item.type === 'Event') writeRow('calendar_events', { ...row, deleted_at: null })
   else if (item.type === 'Journal') restoreJournalEntry(row as JournalEntry)
 }
