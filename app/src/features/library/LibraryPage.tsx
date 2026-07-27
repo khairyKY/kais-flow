@@ -1074,7 +1074,9 @@ export function LibraryPage() {
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span className="fhelp">Quotes Shelf / from {activeQuote.source || 'commonplace'}</span>
-                      <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} · resurfaced twice</span>
+                      {/* WB-4 punch 9: "· resurfaced twice" was a design literal — no resurface
+                          count is stored for a quote. The kept-date beside it is real. */}
+                      <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
                     <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
@@ -1094,12 +1096,10 @@ export function LibraryPage() {
                       </div>
                     </div>
 
-                    {/* Chat alert banner (styled check card from Library.dc.html) */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'color-mix(in oklch, var(--acc-buttercream) 16%, transparent)', border: '1px solid color-mix(in oklch, var(--acc-buttercream) 40%, transparent)', borderRadius: 6, padding: '9px 13px', marginTop: 22 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-buttercream)', flex: 'none' }}></span>
-                      <span style={{ fontSize: '12.5px', color: 'var(--ink-body)' }}>Chat flagged this while you were planning the balcony rebuild — worth a thought?</span>
-                      <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}><span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>keep</span><span className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>dismiss</span></span>
-                    </div>
+                    {/* WB-4 punch 8 + 9: the export's "Chat flagged this…" banner was deleted, not
+                        wired. Its sentence was sample copy about a project that isn't yours, and its
+                        keep/dismiss chips were `cursor: pointer` with no handler. Nothing in the data
+                        flags a quote from chat, so the honest render is nothing at all. */}
 
                     {/* Commentary */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 6px' }}>

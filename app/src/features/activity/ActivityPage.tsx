@@ -204,7 +204,8 @@ export function ActivityPage() {
       icon = <img src="/ds/assets/vine/flowering.png" alt="" style={{ height: 18 }} />
       if (type === 'routine.checked') {
         text = `Kept the streak on "${name || 'routine'}"`
-        details = `day ${entry.payload?.streak || 6} \u00b7 the vine grew a leaf`
+        // WB-4 punch 9: `|| 6` invented a streak day for any event logged without one.
+        details = entry.payload?.streak ? `day ${entry.payload.streak} \u00b7 the vine grew a leaf` : 'the vine grew a leaf'
       } else {
         text = `Routine updated: "${name || 'routine'}"`
       }
@@ -238,8 +239,13 @@ export function ActivityPage() {
       iconBg = 'color-mix(in oklch, var(--acc-moss) 20%, transparent)'
       icon = <img src="/ds/assets/fern/full.png" alt="" style={{ height: 17 }} />
       if (type === 'journal.created') {
-        text = `Wrote a journal entry \u2014 "${name || 'A slow, good morning'}"`
-        details = `${entry.payload?.word_count || 148} words \u00b7 mood: ${entry.payload?.mood || 'settled'}`
+        // WB-4 punch 9: the export's sample title ("A slow, good morning"), word count (148)
+        // and mood ("settled") were standing in for missing payload fields.
+        text = name ? `Wrote a journal entry \u2014 "${name}"` : 'Wrote a journal entry'
+        details = [
+          entry.payload?.word_count ? `${entry.payload.word_count} words` : '',
+          entry.payload?.mood ? `mood: ${entry.payload.mood}` : '',
+        ].filter(Boolean).join(' \u00b7 ')
       } else {
         text = `Updated journal entry \u2014 "${name || 'journal'}"`
         details = 'kept'
@@ -257,7 +263,11 @@ export function ActivityPage() {
         details = entry.payload?.milestone_count ? `${entry.payload.milestone_count} tasks planted` : ''
       } else if (type === 'project.work_logged') {
         text = `Logged work on "${name || 'project'}"`
-        details = `${entry.payload?.duration_min || 90}m \u00b7 ${(entry.payload?.note as string) || ''}`
+        // WB-4 punch 9: `|| 90` reported 90 minutes of work that never happened.
+        details = [
+          entry.payload?.duration_min ? `${entry.payload.duration_min}m` : '',
+          (entry.payload?.note as string) || '',
+        ].filter(Boolean).join(' \u00b7 ')
       } else {
         text = `Project: ${type.replace('project.', '')}`
         details = name

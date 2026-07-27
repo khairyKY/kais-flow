@@ -307,8 +307,17 @@ function GardenBeat({
             </g>
             <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(240,235,221,0.1)" strokeWidth="2.5" />
             <circle cx="80" cy="80" r="72" fill="none" stroke="#E4C36B" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${lit} ${circumference - lit}`} transform="rotate(-90 80 80)" />
-            <circle cx="80" cy="8" r="3" fill="#E4C36B" />
-            <circle cx="142.4" cy="44" r="3" fill="#E4C36B" />
+            {/* WB-4 punch 9: these two gold dots were hardcoded at 0°/60° — the export's sample
+                "2 hours lit", frozen no matter how the day actually went. Each of the 12 ticks is
+                one waking hour; a tick lights once the arc above has swept past it. */}
+            <g fill="#E4C36B">
+              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
+                .filter((_, i) => i < focusedHours)
+                .map((deg) => {
+                  const rad = (deg - 90) * (Math.PI / 180)
+                  return <circle key={deg} cx={80 + 72 * Math.cos(rad)} cy={80 + 72 * Math.sin(rad)} r="3" />
+                })}
+            </g>
             <g style={{ transformOrigin: '80px 80px', animation: motion ? 'sunTurn 140s linear infinite' : undefined }}>
               <g fill="#D9B65C">
                 <path d="M80 30 L83 46 Q80 49 77 46 Z" /><path d="M80 130 L77 114 Q80 111 83 114 Z" />
