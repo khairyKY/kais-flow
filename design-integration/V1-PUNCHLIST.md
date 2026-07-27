@@ -7,7 +7,7 @@
 
 ---
 
-> **BUILD STATUS 2026-07-26 (evening):** Foundation F1–F7 complete; Wave A workstreams WA-1 (sign-up), WA-2 (calendar), WA-3 (tasks), WA-4 (today), WA-6 (settings), WA-9 (rituals/review) merged. Boxes ticked below = **built + tsc/tests/build green**, NOT yet judged — Kai's Judge line on the deployed build is what actually closes an item. Remaining unbuilt: 2, 4, 5, 6(sweep), 7, 8, 9, 24, 25, 26, 40, 41, 42, 46–52, 57, 61, 63, 64.
+> **BUILD STATUS 2026-07-27:** Foundation F1–F7 complete · **Wave A complete — all 11 workstreams merged** (+ WA-12 Sound). Ticked boxes = built + tsc/tests/build green, NOT judged — your Judge line on the deployed build is what closes an item. **Still open: 2, 4, 5, 6, 57, 61, 63, 64** (Wave B passes + hardening + the fresh-account walkthrough). Per-workstream detail: `WAVE-A-BRIEFS.md`.
 
 ## 0. Decisions that unblock items below — **decide by Aug 1**
 
@@ -39,11 +39,11 @@
 
 - [ ] **6. Undo everywhere.** Complete, file, dismiss, delete, snooze, calendar drop/move/resize, slipping "reviewed", resurface chips — every one toasts with a working Undo.
   **Judge:** perform each of those 9 actions once; every toast has Undo; every Undo restores exactly.
-- [ ] **7. Destination feedback.** Filing from Inbox says where it went ("Filed to Shaheen website — Undo").
+- [x] **7. Destination feedback.** Filing from Inbox says where it went ("Filed to Shaheen website — Undo").
   **Judge:** file 3 items (with date, without date, to a project) — each toast names the destination truthfully.
-- [ ] **8. Nothing dead on screen.** Connect/Disconnect, search chips, People "later", Library keep/dismiss, Timeline tab, filter buttons — each works or is gone.
+- [x] **8. Nothing dead on screen.** Connect/Disconnect, search chips, People "later", Library keep/dismiss, Timeline tab, filter buttons — each works or is gone.
   **Judge:** click every visible control on every page; zero silent no-ops.
-- [ ] **9. No design-sample literals.** Focus session strip, "subtask 2 of 3" fallback, Library "resurfaced twice" + chat-flag card, sun-dial dots, retainer "6.5h/10h · renews 1 Aug".
+- [x] **9. No design-sample literals.** Focus session strip, "subtask 2 of 3" fallback, Library "resurfaced twice" + chat-flag card, sun-dial dots, retainer "6.5h/10h · renews 1 Aug".
   **Judge:** each of those five spots shows real data or nothing.
 - [x] **10. Growth stages never lie.** One shared threshold module; hydrangea identical on Today/Inbox; vine lush = 30d everywhere; Slipping shows the project's real wisteria stage.
   **Judge:** with 4 inbox items, Today and Inbox show the same stage; a 60%-project's slipping card shows p60.
@@ -79,11 +79,11 @@
 
 ## 4. Capture & Inbox
 
-- [ ] **24. Android share-target.** Share a URL from Chrome → lands in Inbox.
+- [x] **24. Android share-target.** Share a URL from Chrome → lands in Inbox.
   **Judge:** on the phone (installed PWA), share any page to Kai's Flow; it's in Inbox in <5s.
-- [ ] **25. 30-day auto-compost cron** live for dismissed items + Trash.
+- [x] **25. 30-day auto-compost cron** live for dismissed items + Trash.
   **Judge:** pg_cron job exists and a backdated test row composts on next run.
-- [ ] **26. Bulk bar sharp + triage keys = strip.** (covered by 12/15 — verify here in context.)
+- [x] **26. Bulk bar sharp + triage keys = strip.** (covered by 12/15 — verify here in context.)
   **Judge:** run a 5-item triage entirely by keyboard using only the keys the strip shows.
 
 ## 5. Tasks
@@ -120,11 +120,11 @@
 
 ## 7. Projects
 
-- [ ] **40. Milestone "edit" edits.** (Delete moves to an explicit control.)
+- [x] **40. Milestone "edit" edits.** (Delete moves to an explicit control.)
   **Judge:** click edit — rename inline; the milestone survives.
-- [ ] **41. List view verbatim vs export** (board + detail already accepted).
+- [x] **41. List view verbatim vs export** (board + detail already accepted).
   **Judge:** side-by-side with Projects.dc.html 1a.
-- [ ] **42. Detail open-tasks parity.** Bulk select, right-click, schedule from the project's task list; real month-window stats; no hardcoded retainer numbers.
+- [x] **42. Detail open-tasks parity.** Bulk select, right-click, schedule from the project's task list; real month-window stats; no hardcoded retainer numbers.
   **Judge:** select 3 tasks inside a project and schedule them; "This month" changes when the month does.
 
 > **Judging note (item 41):** "+ New area" now carries the export's soft bone fill rather than the outlined style an earlier pass gave it. Your *"four big pills of buttons"* complaint was really about crowding — that's fixed differently now (the view switcher / Finished / domain filter moved to their own row, so the header holds two buttons, not four). Eyeball it: if the fill still shouts, say so and it goes back to outlined.
@@ -140,22 +140,22 @@
 
 ## 9. Remaining surfaces
 
-- [ ] **46. People:** "later" nudge works (snoozes the nudge); call/text action varies.
+- [x] **46. People:** "later" nudge works (snoozes the nudge); call/text action varies.
   **Judge:** press later — nudge gone today, returns later.
-- [ ] **47. Journal per D-1**, nav row restored.
+- [x] **47. Journal per D-1**, nav row restored.
   **Judge:** per the decided model — create, edit, delete→Trash, restore.
-- [ ] **48. Activity rows navigate to their source**; Projects filter chip; correct range label.
+- [x] **48. Activity rows navigate to their source**; Projects filter chip; correct range label.
   **Judge:** click a "Completed X" row — lands on that task.
-- [ ] **49. Search index covers people/events/projects/journal** (+ tasks/inbox); overlay scrolls; chips filter or go.
+- [x] **49. Search index covers people/events/projects/journal** (+ tasks/inbox); overlay scrolls; chips filter or go.
   **Judge:** search a person's name in ⌘/ — they appear; 30 results scroll.
-- [ ] **50. Trash reachable** (Settings row + sidebar ghost link) and fed by journal deletes.
+- [x] **50. Trash reachable** (Settings row + sidebar ghost link) and fed by journal deletes.
   **Judge:** find Trash without typing a URL; a deleted journal entry is restorable there.
-- [ ] **51. Herbarium: press then archive**, escapes fixed.
+- [x] **51. Herbarium: press then archive**, escapes fixed.
   **Judge:** complete a project — ceremony plays before it reads as archived.
 
 ## 10. Focus
 
-- [ ] **52. Real session data.** Block time, session count, subtask line from actual state or hidden; gear icon for settings; chime plays or the toggle is gone.
+- [x] **52. Real session data.** Block time, session count, subtask line from actual state or hidden; gear icon for settings; chime plays or the toggle is gone.
   **Judge:** start a pomodoro on a real task — everything on screen is true.
 
 ## 11. Settings & theming
