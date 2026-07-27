@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
+import { playSound } from '../lib/sounds'
 import { useMotionEnabled } from '../lib/motion'
 
 // ── Shared component kit — Design System.dc.html §04. The design-system atoms
@@ -149,7 +150,12 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style }:
       type="button"
       role="checkbox"
       aria-checked={checked}
-      onClick={() => onChange?.(!checked)}
+      onClick={() => {
+        // Sound map (MOTION_RETROFIT §E): paper rustle on task complete. Silent unless the
+        // user turned it on — playSound gates itself, so no settings branch here.
+        if (!checked) playSound('paper_rustle')
+        onChange?.(!checked)
+      }}
       className="kf-checkbox"
       style={{
         width: size,

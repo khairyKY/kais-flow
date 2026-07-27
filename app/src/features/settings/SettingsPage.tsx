@@ -11,6 +11,7 @@ import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
+import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
 import { useIntegrations } from './api'
 
@@ -206,7 +207,6 @@ function useThemeMode() {
 
 // ── Sound catalog — local preference, no audio pipeline shipped yet (out of a reskin wave's
 // scope); toggles persist so the eventual player has real state to read. ──
-const SOUND_KEY = 'kf_sounds'
 const SOUND_CATALOG = [
   { id: 'paper_rustle', label: 'Paper rustle', help: 'Completing a task', defaultOn: true },
   { id: 'petal_fall', label: 'Petal fall', help: 'A bloom moment (project / streak milestone)', defaultOn: true },
@@ -216,33 +216,8 @@ const SOUND_CATALOG = [
   { id: 'pencil_scratch', label: 'Pencil scratch', help: 'Saving a journal line', defaultOn: false },
 ] as const
 
-function readSounds(): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(SOUND_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {
-    /* ignore */
-  }
-  return Object.fromEntries(SOUND_CATALOG.map((s) => [s.id, s.defaultOn]))
-}
 
-function useSoundSettings() {
-  const [sounds, setSounds] = useState(readSounds)
-  function set(id: string, on: boolean) {
-    setSounds((prev) => {
-      const next = { ...prev, [id]: on }
-      localStorage.setItem(SOUND_KEY, JSON.stringify(next))
-      return next
-    })
-  }
-  const masterOn = Object.values(sounds).some(Boolean)
-  function setMaster(on: boolean) {
-    const next = Object.fromEntries(SOUND_CATALOG.map((s) => [s.id, on]))
-    setSounds(next)
-    localStorage.setItem(SOUND_KEY, JSON.stringify(next))
-  }
-  return { sounds, set, masterOn, setMaster }
-}
+// (the old local sound store lived here — superseded by lib/sounds.ts)
 
 const COMMON_TIMEZONES = ['Africa/Cairo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai']
 
@@ -709,31 +684,87 @@ function IntegrationsPage() {
 }
 
 // Exported only to keep it compiling while hidden ([K-26] — returns in v2 with a real audio layer).
+// Settings.dc.html 3a — master row with the whisper↔full meter, six sounds each with a
+// working preview, quiet hours. Kai un-cut Sounds on 2026-07-26; the voices are synthesised
+// in lib/sounds.ts (no audio files — $0 and weightless).
 export function SoundCatalogCard() {
-  const { sounds, set, masterOn, setMaster } = useSoundSettings()
+  const [sounds, setSounds] = useState(readSoundCatalog)
+  const [volume, setVolume] = useState(readVolume)
+  const [quiet, setQuiet] = useState(readQuietHours)
+  const masterOn = volume > 0
+
+  function toggleSound(id: SoundId, on: boolean) {
+    const next = { ...sounds, [id]: on }
+    setSounds(next)
+    writeSoundCatalog(next)
+    if (on) previewSound(id) // turning one on should let you hear what you just agreed to
+  }
+  function setVol(v: number) {
+    setVolume(v)
+    writeVolume(v)
+  }
+
   return (
-    <SCard tapeTint="color-mix(in oklch, var(--acc-hydrangea) 40%, transparent)">
+    <SCard tapeTint="color-mix(in oklch, var(--acc-hydrangea) 40%, transparent)" style={{ scrollMarginTop: 24 }}>
       <div style={{ ...flabel, marginBottom: 4 }}>Sound · the garden's voice</div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-        <div>
+        <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Sound</div>
           <div style={fhelp}>quiet, papery, never musical</div>
         </div>
-        <Toggle on={masterOn} onToggle={() => setMaster(!masterOn)} />
-      </div>
-      {SOUND_CATALOG.map((s) => (
-        <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: sounds[s.id] ? 1 : 0.6 }}>
-          <span style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-            <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
+        {/* The design's whisper↔full meter: three bars that fill with the volume. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginLeft: 'auto' }}>
+          <span style={{ ...flabel, fontSize: 8 }}>whisper</span>
+          <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 3, height: 16 }}>
+            {[0.34, 0.67, 1].map((step, i) => (
+              <button
+                key={step}
+                type="button"
+                aria-label={`Volume ${i + 1} of 3`}
+                onClick={() => {
+                  setVol(step)
+                  previewSound('paper_rustle')
+                }}
+                style={{
+                  width: 5, height: 6 + i * 5, padding: 0, border: 'none', borderRadius: 1, cursor: 'pointer',
+                  background: volume >= step - 0.01 ? 'var(--acc-sage)' : 'var(--line-solid)',
+                }}
+              />
+            ))}
           </span>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)', width: 120, flex: 'none' }}>{s.label}</span>
-          <span style={{ ...flabel, fontSize: 8.5, flex: 1 }}>{s.help}</span>
-          <Toggle on={sounds[s.id] ?? s.defaultOn} onToggle={() => set(s.id, !(sounds[s.id] ?? s.defaultOn))} />
+          <span style={{ ...flabel, fontSize: 8 }}>full</span>
+          <Toggle on={masterOn} onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
         </div>
-      ))}
+      </div>
+      {SOUND_CATALOG.map((s) => {
+        const on = sounds[s.id as SoundId] ?? s.defaultOn
+        return (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: masterOn && on ? 1 : 0.6 }}>
+            <button
+              type="button"
+              aria-label={`Preview ${s.label}`}
+              title={`Preview ${s.label}`}
+              onClick={() => previewSound(s.id as SoundId)}
+              style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', background: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+            >
+              <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
+            </button>
+            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)', width: 120, flex: 'none' }}>{s.label}</span>
+            <span style={{ ...flabel, fontSize: 8.5, flex: 1 }}>{s.help}</span>
+            <Toggle on={on} onToggle={() => toggleSound(s.id as SoundId, !on)} />
+          </div>
+        )
+      })}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--ink-hairline)" /></svg>
-        <span style={fhelp}>The garden is silent after you close it.</span>
+        <span style={{ ...fhelp, marginTop: 0, flex: 1 }}>The garden is silent after you close it.</span>
+        <Toggle
+          on={quiet}
+          onToggle={() => {
+            setQuiet(!quiet)
+            writeQuietHours(!quiet)
+          }}
+        />
       </div>
     </SCard>
   )
@@ -742,7 +773,7 @@ export function SoundCatalogCard() {
 // Punch 54: 'Capture API' + 'Sound' left the page (unbuilt / undesigned) — and a nav row that
 // scrolls to nothing is a dead control, so they leave the sub-nav too. 'Resurfacing' is the new
 // cooldown card (punch 21).
-const SUBNAV_ITEMS = ['Appearance', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Profile'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Profile'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -792,8 +823,8 @@ function DesktopSettings() {
         ) : (
           <>
             <div id="settings-Appearance"><AppearanceCard /></div>
-            {/* [K-26] punch 65/54: Sounds are "not designed yet" — section HIDDEN until v2.
-                No fake toggles on screen; SoundCatalogCard + useSoundSettings stay in the file. */}
+            {/* Sounds un-cut by Kai 2026-07-26 — now a real synthesised layer (lib/sounds.ts). */}
+            <div id="settings-Sound"><SoundCatalogCard /></div>
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>

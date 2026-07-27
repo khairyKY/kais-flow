@@ -5,6 +5,7 @@ import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { useJournalEntries, upsertJournalEntry } from '../journal/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
+import { playSound, closeTheGarden } from '../../lib/sounds'
 import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
@@ -96,6 +97,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   // "lands in the journal" — literally (punch item 43): append the line to today's real
   // journal entry, not just the activity log.
   function commitLine() {
+    playSound('pencil_scratch') // sound map: pencil scratch on saving a journal line
     const text = line.trim()
     if (text) {
       const todayKey = localDateKey(new Date())
@@ -114,7 +116,14 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     beat === 'garden' ? <GardenBeat tasks={tasks} events={events} routines={routines} completions={completions} onSkip={onClose} onNext={next} /> :
     beat === 'line' ? <LineBeat line={line} onChange={setLine} onSkip={onClose} onNext={commitLine} /> :
     beat === 'seeds' ? <SeedsBeat tasks={tasks} seededIds={seededIds} onSeed={(id) => setSeededIds((s) => new Set(s).add(id))} onSkip={onClose} onNext={next} /> :
-    <GoodnightBeat onDone={next} />
+    <GoodnightBeat
+      onDone={() => {
+        // Settings 3a: "The garden is silent after you close it." Closing is what starts
+        // quiet hours — they lift on their own when the date turns over.
+        closeTheGarden(localDateKey(new Date()))
+        next()
+      }}
+    />
   }</DuskPanel>
 }
 
