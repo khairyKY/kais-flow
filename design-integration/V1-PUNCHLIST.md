@@ -30,6 +30,7 @@
 - [x] **3. Onboarding runs once.** Never reappears on refresh; re-editable from Settings.
   **Judge:** finish onboarding, refresh 3×, sign out/in — never see it again; change the name via Settings.
 - [ ] **4. Public-safety pass.** RLS verified per table with a second account; Groq edge functions rate-limited; capture endpoints require auth.
+  **Also in scope (found by WA-10, 2026-07-27):** several `security definer` functions (`do_resurface`, `reload_retainers`, the 0008 search helpers) never had `execute` revoked from `anon`/`authenticated` — PostgREST would expose them cross-tenant. `0032`'s `compost_expired` already revokes; the older ones need the same treatment.
   **Judge:** account B cannot read account A's data via the app or direct REST calls (spot-check 3 tables).
 - [ ] **5. Performance.** Lighthouse ≥ 90 on the deployed build; initial JS ≤ 200KB gz; airplane-mode boot works.
   **Judge:** run Lighthouse on the live URL; toggle airplane mode and reload — app boots and shows cached data.
@@ -125,6 +126,8 @@
   **Judge:** side-by-side with Projects.dc.html 1a.
 - [ ] **42. Detail open-tasks parity.** Bulk select, right-click, schedule from the project's task list; real month-window stats; no hardcoded retainer numbers.
   **Judge:** select 3 tasks inside a project and schedule them; "This month" changes when the month does.
+
+> **Judging note (item 41):** "+ New area" now carries the export's soft bone fill rather than the outlined style an earlier pass gave it. Your *"four big pills of buttons"* complaint was really about crowding — that's fixed differently now (the view switcher / Finished / domain filter moved to their own row, so the header holds two buttons, not four). Eyeball it: if the fill still shouts, say so and it goes back to outlined.
 
 ## 8. Routines, Rituals, Review
 
