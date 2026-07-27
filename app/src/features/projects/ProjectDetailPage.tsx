@@ -22,7 +22,6 @@ import {
   logTimeEntry,
   useTimeEntries,
   createProject,
-  archiveProject,
 } from './api'
 import { useAreas } from '../areas/api'
 import { useTasks, completeTask, createTask } from '../tasks/api'
@@ -686,7 +685,9 @@ export function ProjectDetailPage() {
                     confirmLabel: 'Archive',
                     onConfirm: () => {
                       setConfirm(null)
-                      archiveProject(project)
+                      // WA-10 punch 51: press THEN archive. The Herbarium ceremony owns the
+                      // archive write (HerbariumPage.finishPressing) — archiving here first made
+                      // the ceremony play over an already-archived project.
                       navigate(`/herbarium?press=${project.id}`)
                     },
                   })
