@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, useTimeEntries, restoreProject } from './api'
+import { useProjects, useTimeEntries, restoreProject, isThisMonth } from './api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from './NewProjectModal'
 import { useTasks } from '../tasks/api'
@@ -11,7 +11,13 @@ import { BackLink, SectionLabel } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { wisteriaStage } from '../../lib/growthStages'
 import './xfx.css'
+
+// Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month.
+function dayMonth(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
 
 function localUseIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -23,13 +29,18 @@ function localUseIsMobile() {
   return isMobile
 }
 
+const EMPTY_STAT = { hours: 0, monthHours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, weight: 0, doneWeight: 0, hasTop3Task: false }
+
+// Projects.dc.html `.mchip` / `.chip` verbatim (the export's canvas CSS has no counterpart in the app).
+const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const mchipLast: React.CSSProperties = { ...mchip, width: 96, textAlign: 'right' }
+const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
+// Section count on the right of the rule (`<span style="color:var(--ink-hairline)">2</span>`).
+const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--ink-hairline)' }}>{n}</span>
+
+// F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
-  if (pct === 0) return '/ds/assets/wisteria/p0.png'
-  if (pct <= 20) return '/ds/assets/wisteria/p20.png'
-  if (pct <= 40) return '/ds/assets/wisteria/p40.png'
-  if (pct <= 60) return '/ds/assets/wisteria/p60.png'
-  if (pct <= 80) return '/ds/assets/wisteria/p80.png'
-  return '/ds/assets/wisteria/p100.png'
+  return `/ds/assets/wisteria/${wisteriaStage(pct)}.png`
 }
 
 export function ProjectsPage() {
@@ -66,15 +77,22 @@ export function ProjectsPage() {
   const activeCount = activeProjects.length
   const totalCount = allProjects.length
 
+  // The list view's three sections (contract 1a): Active · Retainers · Areas.
+  const listActive = filteredProjects.filter((p) => p.type === 'standard')
+  const listRetainers = filteredProjects.filter((p) => p.type === 'retainer')
+
   // Computed data
   const projectStats = useMemo(() => {
-    const stats: Record<string, { hours: number; doneMilestones: number; totalMilestones: number; pct: number; hasTop3Task: boolean }> = {}
+    const stats: Record<string, { hours: number; monthHours: number; doneMilestones: number; totalMilestones: number; pct: number; weight: number; doneWeight: number; hasTop3Task: boolean }> = {}
 
     for (const p of allProjects) {
       // Sum hours from time_entries
       const entries = timeEntries.filter((e) => e.project_id === p.id)
       const minutes = entries.reduce((acc, curr) => acc + curr.duration_min, 0)
       const hours = Math.round((minutes / 60) * 10) / 10
+      // punch 42: retainers report the CURRENT month, not all time.
+      const monthMinutes = entries.filter((e) => isThisMonth(e.started_at)).reduce((acc, curr) => acc + curr.duration_min, 0)
+      const monthHours = Math.round((monthMinutes / 60) * 10) / 10
 
       // Calculate milestone completion
       const milestones = p.milestones ?? []
@@ -101,14 +119,29 @@ export function ProjectsPage() {
 
       stats[p.id] = {
         hours,
+        monthHours,
         doneMilestones,
         totalMilestones,
         pct,
+        weight: totalWeight,
+        doneWeight: completedWeight,
         hasTop3Task,
       }
     }
     return stats
   }, [allProjects, timeEntries, tasks])
+
+  // Header wisteria = the whole set's real stage (weighted milestones across active projects),
+  // not a fixed p60. House rule: never show a stage that contradicts the data.
+  const forestPct = useMemo(() => {
+    let weight = 0
+    let done = 0
+    for (const p of activeProjects) {
+      weight += projectStats[p.id]?.weight ?? 0
+      done += projectStats[p.id]?.doneWeight ?? 0
+    }
+    return weight > 0 ? Math.round((done / weight) * 100) : 0
+  }, [activeProjects, projectStats])
 
   const areaOpenTaskCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -156,7 +189,7 @@ export function ProjectsPage() {
         <div style={{ flex: 1, padding: '16px 18px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <img src="/ds/assets/wisteria/p60.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
+              <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</div>
             </div>
             {/* X4: 44px touch target */}
@@ -183,7 +216,7 @@ export function ProjectsPage() {
           {filteredProjects
             .filter((p) => p.type === 'standard')
             .map((p, i) => {
-              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
+              const stat = projectStats[p.id] ?? EMPTY_STAT
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -217,7 +250,7 @@ export function ProjectsPage() {
           {filteredProjects
             .filter((p) => p.type === 'retainer')
             .map((p, i) => {
-              const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
+              const stat = projectStats[p.id] ?? EMPTY_STAT
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -233,7 +266,7 @@ export function ProjectsPage() {
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
-                      {stat.hours}h / 10h this month
+                      {stat.monthHours}h this month
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
@@ -286,14 +319,13 @@ export function ProjectsPage() {
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
       <main style={{ position: 'relative', zIndex: 10, padding: '10px 8px 40px' }}>
-        {/* Toggle header */}
-        {/* punch 16 (2026-07-26): both rows wrap — the 1.25 root zoom shrinks the layout
-            viewport to innerWidth/1.25, so at 100% browser zoom this fixed-width control row
-            overflowed the title (fine at 90%, where innerWidth grows). Wrapping drops the
-            controls under the title instead of clipping. */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, rowGap: 14, marginBottom: 28 }}>
+        {/* punch 41: header is Projects.dc.html 1a node-for-node — plant at the set's live stage,
+            eyebrow, 40px display title, then exactly `{n} active · {n} total` + New area + New project.
+            The app-only navigation (List/Board, Finished, domain filter) moved to its own quiet row
+            below: six pills never fit this row (punch 16's wrap), and the export's header has three. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, rowGap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="/ds/assets/wisteria/p60.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Projects &amp; areas · the forest
@@ -304,74 +336,16 @@ export function ProjectsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, rowGap: 10 }}>
-            {(view === 'board' || view === 'list') && (
-              <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-                <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
-                <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
-                <span style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: 'var(--ink-hairline)', cursor: 'default', opacity: 0.5, fontFamily: 'inherit' }}>Timeline</span>
-              </span>
-            )}
-            {view === 'archive' && (
-              <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
-                ← Back to Active
-              </span>
-            )}
-            <span
-              className="fhelp"
-              onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-              style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', paddingRight: 6 }}
-            >
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 10 }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
               {activeCount} active · {totalCount} total
             </span>
-            {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
-            {/* R4-33a (2026-07-20 audit): "four big pills of buttons" all shouted equally. This is
-                a quiet navigation toggle, not an action — ghost text unless it's the active view,
-                so "+ New project" is the only filled CTA in the row. */}
-            <button
-              onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-              style={{
-                border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
-                background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
-                color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
-                fontFamily: 'inherit',
-                fontSize: '12.5px',
-                padding: '9px 13px',
-                borderRadius: '999px',
-                cursor: 'pointer',
-                boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
-              }}
-            >
-              Finished · {archivedProjects.length}
-            </button>
-            {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
-                was a styled div with a transparent native <select> laid over it — the trigger
-                looked right, but opening it handed you the OS dropdown. The themed Select keeps
-                the pill (it merges `style` onto its trigger) and brings our own popover. */}
-            <Select
-              value={selectedDomainId || ''}
-              onChange={(v) => setSelectedDomainId(v || null)}
-              options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
-              ariaLabel="Filter by domain"
-              placeholder="Domain"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '9.5px',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'var(--ink-muted)',
-                border: '1px solid var(--line-solid)',
-                borderRadius: '999px',
-                padding: '8px 13px',
-              }}
-            />
             <button
               onClick={() => {
                 setNewType('area')
                 setShowNewModal(true)
               }}
-              // R4-33a: the secondary create — outlined, not filled, so it reads below the CTA.
-              style={{ border: '1px solid var(--line-solid)', background: 'transparent', color: 'var(--ink-muted)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
+              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
             >
               + New area
             </button>
@@ -387,128 +361,164 @@ export function ProjectsPage() {
           </div>
         </div>
 
+        {/* App-only navigation — not in the export. Kept quiet (R4-33a: only one filled CTA per view). */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, rowGap: 10, marginTop: 18, marginBottom: 4 }}>
+          {view !== 'archive' && (
+            /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
+            <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
+              <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
+              <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
+            </span>
+          )}
+          {view === 'archive' && (
+            <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
+              ← Back to Active
+            </span>
+          )}
+          {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
+          <button
+            onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
+            style={{
+              border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
+              background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
+              color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
+              fontFamily: 'inherit',
+              fontSize: '12.5px',
+              padding: '9px 13px',
+              borderRadius: '999px',
+              cursor: 'pointer',
+              boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
+            }}
+          >
+            Finished · {archivedProjects.length}
+          </button>
+          {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
+              was a styled div with a transparent native <select> laid over it — the trigger
+              looked right, but opening it handed you the OS dropdown. The themed Select keeps
+              the pill (it merges `style` onto its trigger) and brings our own popover. */}
+          <Select
+            value={selectedDomainId || ''}
+            onChange={(v) => setSelectedDomainId(v || null)}
+            options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+            ariaLabel="Filter by domain"
+            placeholder="Domain"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '9.5px',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-muted)',
+              border: '1px solid var(--line-solid)',
+              borderRadius: '999px',
+              padding: '8px 13px',
+            }}
+          />
+        </div>
+
         {/* LIST VIEW */}
         {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{renderEmptyState()}</div>}
         {view === 'list' && !isEmpty && (
           <div style={{ maxWidth: 900 }}>
-            {/* Active Projects */}
-            <SectionLabel style={{ margin: '26px 0 4px' }}>
+            {/* ACTIVE */}
+            <SectionLabel style={{ margin: '26px 0 4px' }} action={sectionCount(listActive.length)}>
               <span style={{ color: 'var(--acc-sage-text)' }}>Active</span>
             </SectionLabel>
-            {filteredProjects
-              .filter((p) => p.type === 'standard')
-              .map((p, i) => {
-                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
-                const domain = domains.find((d) => d.id === p.domain_id)
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => navigate(`/projects/${p.id}`)}
-                    className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: '1px dashed var(--line-dashed)', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
-                  >
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                        {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Project'}</div>
+            {listActive.map((p, i) => {
+              const stat = projectStats[p.id] ?? EMPTY_STAT
+              const domain = domains.find((d) => d.id === p.domain_id)
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                  className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                >
+                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                      {stat.hours}h logged
-                    </span>
-                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                      {stat.doneMilestones} / {stat.totalMilestones} milestones
-                    </span>
-                    <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                      {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
-                    </span>
+                    {/* Contract sub-line is the domain ("Freelance" / "Personal"); engagement model is the fallback. */}
+                    <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
                   </div>
-                )
-              })}
+                  <span style={mchip}>{stat.hours}h logged</span>
+                  <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)' }}>
+                    {stat.doneMilestones} / {stat.totalMilestones} milestones
+                  </span>
+                  <span style={mchipLast}>{p.target_date ? `target ${dayMonth(p.target_date)}` : 'no date'}</span>
+                </div>
+              )
+            })}
 
-            {/* Retainers */}
-            <SectionLabel style={{ margin: '24px 0 4px' }}>
+            {/* RETAINERS */}
+            <SectionLabel style={{ margin: '24px 0 4px' }} action={sectionCount(listRetainers.length)}>
               <span>Retainers</span>
             </SectionLabel>
-            {filteredProjects
-              .filter((p) => p.type === 'retainer')
-              .map((p, i) => {
-                const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
-                const domain = domains.find((d) => d.id === p.domain_id)
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => navigate(`/projects/${p.id}`)}
-                    className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
-                  >
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                        {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{p.engagement_model ?? 'Retainer'}</div>
+            {listRetainers.map((p, i) => {
+              const stat = projectStats[p.id] ?? EMPTY_STAT
+              const domain = domains.find((d) => d.id === p.domain_id)
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                  className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                >
+                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                      {stat.hours}h / 10h this month
-                    </span>
-                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                      retainer
-                    </span>
-                    <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                      renews 1 Aug
-                    </span>
+                    <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
                   </div>
-                )
-              })}
+                  {/* punch 42: real hours for THIS month. The contract's "/ 10h" allowance and
+                      "renews 1 Aug" have no field behind them — nothing is rendered rather than a
+                      design literal (the 96px cell stays so the columns still line up). */}
+                  <span style={mchip}>{stat.monthHours}h this month</span>
+                  <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)' }}>
+                    retainer
+                  </span>
+                  <span style={mchipLast} />
+                </div>
+              )
+            })}
 
-            {/* Areas */}
-            <SectionLabel style={{ margin: '24px 0 4px' }}>
+            {/* AREAS */}
+            <SectionLabel style={{ margin: '24px 0 4px' }} action={sectionCount(filteredAreas.length)}>
               <span>Areas</span>
             </SectionLabel>
             {filteredAreas.map((a, i) => {
               const count = areaOpenTaskCounts[a.id] || 0
               const domain = domains.find((d) => d.id === a.domain_id)
-              const isSlipping = slippingList.some((s) => s.entity_type === 'area' && s.entity_id === a.id)
               const slippingItem = slippingList.find((s) => s.entity_type === 'area' && s.entity_id === a.id)
               return (
                 <div
                   key={a.id}
                   onClick={() => navigate(`/projects/${a.id}`)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 600 }}><EmojiText text={a.name} /></span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain?.name ?? 'No Domain'}</span>
+                    <span style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
+                    {domain && <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain.name}</span>}
                   </div>
-                  {isSlipping && slippingItem ? (
-                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+                  {slippingItem ? (
+                    <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
                       slipping · {Math.floor(slippingItem.days_since)}d
                     </span>
                   ) : (
-                    <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '4px 9px', borderRadius: 3 }}>
-                      area
-                    </span>
+                    <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>area</span>
                   )}
-                  <span style={{ width: 96, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                    {count} open
-                  </span>
+                  <span style={mchipLast}>{count} open</span>
                 </div>
               )
             })}
 
-            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>
+            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand)', transform: 'rotate(-0.8deg)' }}>
               projects finish; areas just keep going — both grow leaves as you tend them ✿
-            </div>
-            <div style={{ marginTop: 20 }}>
-              <Link to="/perennials" style={{ fontSize: 13, color: 'var(--acc-terra)', textDecoration: 'underline' }}>
-                View Repeating Perennials Series →
-              </Link>
             </div>
           </div>
         )}
@@ -535,7 +545,7 @@ export function ProjectsPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                       {domainProjects.map((p, idx) => {
-                        const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, hasTop3Task: false }
+                        const stat = projectStats[p.id] ?? EMPTY_STAT
                         const cardTilt = idx % 2 === 0 ? -0.4 : 0.3
                         const imgSource = getWisteriaImage(stat.pct)
 
@@ -659,7 +669,7 @@ export function ProjectsPage() {
                     <span style={{ color: 'var(--ink-hairline)' }}>{yearProjs.length}</span>
                   </div>
                   {yearProjs.map((p) => {
-                    const stat = projectStats[p.id] || { hours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0 }
+                    const stat = projectStats[p.id] ?? EMPTY_STAT
                     return (
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                         <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 30, flex: 'none' }} />

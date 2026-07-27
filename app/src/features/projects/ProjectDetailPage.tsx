@@ -16,6 +16,8 @@ import {
   addProjectMilestone,
   toggleProjectMilestone,
   removeProjectMilestone,
+  renameProjectMilestone,
+  setProjectMilestones,
   addProjectChecklistItem,
   toggleProjectChecklistItem,
   removeProjectChecklistItem,
@@ -23,10 +25,29 @@ import {
   useTimeEntries,
   createProject,
   archiveProject,
+  isThisMonth,
 } from './api'
 import { useAreas } from '../areas/api'
-import { useTasks, completeTask, createTask } from '../tasks/api'
+import {
+  useTasks,
+  completeTask,
+  uncompleteTask,
+  createTask,
+  snoozeTask,
+  setSomeday,
+  setProject,
+  rescheduleDue,
+  deleteTask,
+  restoreTask,
+} from '../tasks/api'
+import { TaskRow, type BulkActions } from '../tasks/TaskRow'
+import { BulkBar } from '../../components/BulkBar'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
 import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { ConfirmCard } from './ConfirmCard'
@@ -76,6 +97,9 @@ export function ProjectDetailPage() {
   // Form states
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('')
   const [newMilestoneWeight, setNewMilestoneWeight] = useState(1)
+  // punch 40: the `edit` chip used to call removeProjectMilestone — it deleted. It now opens
+  // this inline rename; deletion moved to its own ✕, guarded by ConfirmCard + undo.
+  const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
@@ -155,6 +179,97 @@ export function ProjectDetailPage() {
 
     return weeks
   }, [area, activityLogs, tasks])
+
+  // punch 42: a project's / area's open tasks get the Tasks page's affordances — multi-select +
+  // BulkBar, right-click ContextMenu, schedule/snooze — by rendering the SAME TaskRow and the same
+  // shared overlays. No fork: every action below is the tasks feature's own mutation, looped.
+  // Hoisted above the project/area early returns (E7 — hooks must not sit inside a branch).
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
+  const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
+  const selectedTasks = tasks.filter((t) => selected.has(t.id))
+  const clearSelection = () => setSelected(new Set())
+  useEscapeStack(selected.size > 0, clearSelection)
+  const toggleSelected = (taskId: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(taskId)) next.delete(taskId)
+      else next.add(taskId)
+      return next
+    })
+
+  const plural = (n: number) => `${n} task${n === 1 ? '' : 's'}`
+
+  const bulkComplete = () => {
+    const batch = selectedTasks
+    batch.forEach((t) => completeTask(t))
+    toastUndo(`${plural(batch.length)} completed.`, () => batch.forEach((t) => uncompleteTask(t)))
+    clearSelection()
+  }
+  const bulkSnooze = (until: string) => {
+    const batch = selectedTasks
+    batch.forEach((t) => snoozeTask(t, until))
+    toastUndo(`${plural(batch.length)} snoozed.`, () => batch.forEach((t) => writeRow('tasks', t)))
+    clearSelection()
+  }
+  const bulkSomeday = () => {
+    const batch = selectedTasks
+    batch.forEach((t) => setSomeday(t, true))
+    toastUndo(`${plural(batch.length)} parked for someday.`, () => batch.forEach((t) => setSomeday(t, false)))
+    clearSelection()
+  }
+  const bulkSchedule = (iso: string) => {
+    const batch = selectedTasks
+    batch.forEach((t) => rescheduleDue(t, iso))
+    toastUndo(`${plural(batch.length)} scheduled.`, () => batch.forEach((t) => rescheduleDue(t, t.due_at)))
+    clearSelection()
+  }
+  const bulkMove = (projectId: string | null, domainId: string | null) => {
+    const batch = selectedTasks
+    batch.forEach((t) => setProject(t, projectId, domainId))
+    toastUndo(`${plural(batch.length)} moved.`, () => batch.forEach((t) => setProject(t, t.project_id, t.domain_id)))
+    clearSelection()
+  }
+  const bulkDelete = () => {
+    const batch = selectedTasks
+    setConfirm({
+      title: `Delete ${plural(batch.length)}?`,
+      body: 'Any calendar blocks scheduled for them go too.',
+      confirmLabel: 'Delete',
+      onConfirm: () => {
+        setConfirm(null)
+        batch.forEach((t) => deleteTask(t))
+        toastUndo(`${plural(batch.length)} deleted.`, () => batch.forEach((t) => restoreTask(t)))
+        clearSelection()
+      },
+    })
+  }
+
+  const bulkActions: BulkActions | undefined =
+    selected.size > 1
+      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      : undefined
+
+  // Rendered by both the project and the area branch.
+  const taskOverlays = (
+    <>
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onComplete={bulkComplete}
+          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
+          onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
+        />
+      )}
+      {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} />}
+      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+    </>
+  )
 
   if (!project && !area) {
     return (
@@ -242,6 +357,29 @@ export function ProjectDetailPage() {
     }
 
     toggleProjectMilestone(project, milestoneId)
+  }
+
+  const commitMilestoneEdit = () => {
+    if (!project || !editingMilestone) return
+    const title = editingMilestone.title.trim()
+    const prior = project.milestones?.find((m) => m.id === editingMilestone.id)
+    if (title && prior && title !== prior.title) renameProjectMilestone(project, editingMilestone.id, title)
+    setEditingMilestone(null)
+  }
+
+  const askRemoveMilestone = (m: { id: string; title: string }) => {
+    if (!project) return
+    const prior = project.milestones ?? []
+    setConfirm({
+      title: `Delete "${m.title}"?`,
+      body: 'The milestone goes. Tasks linked to it stay where they are.',
+      confirmLabel: 'Delete',
+      onConfirm: () => {
+        setConfirm(null)
+        removeProjectMilestone(project, m.id)
+        toastUndo('Milestone deleted', () => setProjectMilestones(project, prior))
+      },
+    })
   }
 
   const handleAddMilestoneClick = () => {
@@ -460,9 +598,24 @@ export function ProjectDetailPage() {
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                       {/* R4-24: milestones keep the bloom — Kai's one exception alongside Top-3/Goal */}
                       <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} bloom />
-                      <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
+                      {editingMilestone?.id === m.id ? (
+                        <input
+                          autoFocus
+                          value={editingMilestone.title}
+                          onChange={(e) => setEditingMilestone({ id: m.id, title: e.target.value })}
+                          onBlur={commitMilestoneEdit}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitMilestoneEdit() }
+                            if (e.key === 'Escape') { e.preventDefault(); setEditingMilestone(null) }
+                          }}
+                          style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
+                      )}
                       <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
-                      <span onClick={() => removeProjectMilestone(project, m.id)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
                     </div>
                   ))}
                 </div>
@@ -513,17 +666,16 @@ export function ProjectDetailPage() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {openTasks.map((t) => (
-                <div key={t.id} id={`task-${t.id}`} style={{ boxShadow: focusTaskId === t.id ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                  <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
-                  {t.due_at && (
-                    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                      {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                    </span>
-                  )}
-                  {t.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 14 }}>★</span>}
-                </div>
+              {openTasks.map((t, i) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  highlighted={focusTaskId === t.id}
+                  selected={selected.has(t.id)}
+                  onToggleSelect={() => toggleSelected(t.id)}
+                  bulk={bulkActions}
+                  border={i < openTasks.length - 1}
+                />
               ))}
             </div>
 
@@ -701,6 +853,7 @@ export function ProjectDetailPage() {
             </div>
           </div>
         </div>
+        {taskOverlays}
         {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )
@@ -712,7 +865,9 @@ export function ProjectDetailPage() {
   if (area) {
     const areaTasks = tasks.filter((t) => t.area_id === area.id)
     const openTasks = areaTasks.filter((t) => t.status === 'todo')
-    const completedTasks = areaTasks.filter((t) => t.status === 'done')
+    // punch 42: "This month" counted every task ever closed in this area. Window it to the
+    // current calendar month, so the number actually resets when the month rolls over.
+    const closedThisMonth = areaTasks.filter((t) => t.status === 'done' && isThisMonth(t.completed_at))
 
     // Find repeating tasks
     const repeatingTasks = areaTasks.filter((t) => t.recurrence_rule && t.status === 'todo')
@@ -792,7 +947,7 @@ export function ProjectDetailPage() {
               <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This month</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>
-                  {completedTasks.length}
+                  {closedThisMonth.length}
                 </span>
                 <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>tasks closed</span>
               </div>
@@ -824,16 +979,16 @@ export function ProjectDetailPage() {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {openTasks.map((t) => (
-              <div key={t.id} id={`task-${t.id}`} style={{ boxShadow: focusTaskId === t.id ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                <Checkbox checked={t.status === 'done'} onChange={() => completeTask(t)} size={16} />
-                <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
-                {t.due_at && (
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 12%, transparent)', color: 'var(--acc-terra)', fontSize: 9, padding: '3px 8px', borderRadius: 999 }}>
-                    {new Date(t.due_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                  </span>
-                )}
-              </div>
+            {openTasks.map((t, i) => (
+              <TaskRow
+                key={t.id}
+                task={t}
+                highlighted={focusTaskId === t.id}
+                selected={selected.has(t.id)}
+                onToggleSelect={() => toggleSelected(t.id)}
+                bulk={bulkActions}
+                border={i < openTasks.length - 1}
+              />
             ))}
           </div>
 
@@ -898,6 +1053,7 @@ export function ProjectDetailPage() {
             </span>
           </div>
         </div>
+        {taskOverlays}
         {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )

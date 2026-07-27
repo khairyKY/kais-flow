@@ -30,6 +30,15 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+/** punch 42: "this month" figures must actually mean this month — read against the local
+ *  calendar month at call time, so the number rolls over when the month does. */
+export function isThisMonth(iso: string | null | undefined): boolean {
+  if (!iso) return false
+  const d = new Date(iso)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+}
+
 export function createProject(
   name: string,
   domainId: string | null,
@@ -133,11 +142,27 @@ export function toggleProjectMilestone(project: Project, milestoneId: string): v
   }
 }
 
+/** The one milestone-array writer — rename, remove and their undos all route through it,
+ *  so an undo replays the exact prior array through the same outbox path as the original write. */
+export function setProjectMilestones(project: Project, milestones: NonNullable<Project['milestones']>): void {
+  writeRow('projects', { ...project, milestones, updated_at: nowIso() })
+}
+
+export function renameProjectMilestone(project: Project, milestoneId: string, title: string): void {
+  if (!project.milestones) return
+  setProjectMilestones(
+    project,
+    project.milestones.map((m) => (m.id === milestoneId ? { ...m, title } : m))
+  )
+  logActivity('project.milestone_renamed', 'project', project.id, { milestone_id: milestoneId, title })
+}
+
 export function removeProjectMilestone(project: Project, milestoneId: string): void {
   if (!project.milestones) return
-  const milestones = project.milestones.filter((m) => m.id !== milestoneId)
-  const updated = { ...project, milestones, updated_at: nowIso() }
-  writeRow('projects', updated)
+  setProjectMilestones(
+    project,
+    project.milestones.filter((m) => m.id !== milestoneId)
+  )
   logActivity('project.milestone_removed', 'project', project.id, { milestone_id: milestoneId })
 }
 
