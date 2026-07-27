@@ -63,3 +63,12 @@ select cron.schedule(
   '30 3 * * *',
   $$select compost_expired()$$
 );
+
+-- Verifying by hand (punch 25's Judge line). Backdate on `deleted_at`, not `updated_at`:
+-- the shared `set_updated_at()` trigger rewrites `updated_at` on every UPDATE, so trying to
+-- age a dismissed row with a plain UPDATE silently stamps it `now()` and it won't compost.
+--   update inbox_items set deleted_at = now() - interval '31 days' where id = '<some id>';
+--   select compost_expired();            -- returns the number of rows removed (expect ≥ 1)
+--   select * from cron.job where jobname = 'compost-expired';
+-- To exercise the dismissed-without-Trash branch instead, disable the trigger for the
+-- statement: `alter table inbox_items disable trigger user;` … re-enable after.
