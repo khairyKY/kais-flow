@@ -617,7 +617,7 @@ export function TasksPage() {
           <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
             <span
               onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? '#8A4A58' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
             >
               All
             </span>
@@ -625,7 +625,7 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? '#8A4A58' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
                 {d.name}
               </span>

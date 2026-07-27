@@ -65,8 +65,8 @@ const STYLES = `
   .ob-terrarium { width: 100%; margin-top: 26px; position: relative; height: 170px; background: linear-gradient(180deg,var(--sky-panel,#F4EFE0),var(--sky-deep,#EDE6D3)); border: 1px solid var(--line-card); border-radius: 12px; overflow: hidden; }
   .ob-terrarium-soil { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: linear-gradient(180deg,var(--sky-horizon,#b79f77),var(--sky-panel-strong,#8f7a54)); }
   .ob-terrarium-seeds { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; justify-content: space-around; align-items: flex-end; padding: 0 26px; }
-  .ob-pebble { width: 10px; height: 10px; border-radius: 50%; background: #5a4a30; opacity: 0.7; }
-  .ob-terrarium-note { position: absolute; top: 12px; right: 16px; font-family: var(--font-hand); font-size: 16px; color: #8f7a54; transform: rotate(-2deg); }
+  .ob-pebble { width: 10px; height: 10px; border-radius: 50%; background: var(--sky-deep,#5a4a30); opacity: 0.7; }
+  .ob-terrarium-note { position: absolute; top: 12px; right: 16px; font-family: var(--font-hand); font-size: 16px; color: var(--moon-muted,#8f7a54); transform: rotate(-2deg); }
   .ob-mobile-only { display: none; }
   /* Effects 9 "Ink bleed" — onboarding lines sharpen from a soft blur, 480ms, 180ms stagger.
      Effects 21 "Settle-in" — the step-7 seeds drop in and settle (700ms, overshoot, ends at

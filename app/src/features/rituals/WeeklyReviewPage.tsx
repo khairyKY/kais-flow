@@ -399,7 +399,7 @@ function DomainCard({
   if (state === 'waiting') {
     return (
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, border: '1.5px solid #bfb8a3', borderRadius: 5, flex: 'none' }} />
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>up next</span>
@@ -412,7 +412,7 @@ function DomainCard({
     <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? 14 : '16px 18px', transform: 'rotate(-0.2deg)' }}>
       <span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'color-mix(in srgb, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, border: '1.5px solid #bfb8a3', borderRadius: 5, flex: 'none' }} />
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>

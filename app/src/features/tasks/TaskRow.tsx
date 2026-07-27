@@ -550,7 +550,7 @@ export function TaskRow({
               </span>
             )}
             {overdue && <span style={{ color: 'var(--acc-terra)' }}>Overdue {overdueDays}d</span>}
-            {inProgress && <span style={{ color: '#8A4A58' }}>In progress</span>}
+            {inProgress && <span style={{ color: 'var(--kf-chip-tasks, #8A4A58)' }}>In progress</span>}
             {inProgress && task.scheduled_start && (
               <span>
                 {new Date(task.scheduled_start).toLocaleDateString([], { weekday: 'short' })}{' '}

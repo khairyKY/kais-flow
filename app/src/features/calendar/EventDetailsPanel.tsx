@@ -128,7 +128,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {linkedTask ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: '#8A4A58' }}>Task</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: 'var(--kf-chip-tasks, #8A4A58)' }}>Task</span>
             ) : (
               (['event', 'time_block'] as CalendarEventType[]).map((t) => (
                 <button

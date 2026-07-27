@@ -89,7 +89,7 @@ function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routin
           fontSize: 12,
           color: 'var(--paper-parchment)',
           background: doneToday ? 'var(--acc-moss)' : 'transparent',
-          border: doneToday ? 'none' : '1.5px solid #bfb8a3',
+          border: doneToday ? 'none' : '1.5px solid var(--check-border)',
         }}
       >
         {doneToday ? '✓' : ''}
