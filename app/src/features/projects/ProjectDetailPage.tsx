@@ -16,6 +16,8 @@ import {
   addProjectMilestone,
   toggleProjectMilestone,
   removeProjectMilestone,
+  renameProjectMilestone,
+  setProjectMilestones,
   addProjectChecklistItem,
   toggleProjectChecklistItem,
   removeProjectChecklistItem,
@@ -27,6 +29,7 @@ import {
 import { useAreas } from '../areas/api'
 import { useTasks, completeTask, createTask } from '../tasks/api'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
 import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { ConfirmCard } from './ConfirmCard'
@@ -76,6 +79,9 @@ export function ProjectDetailPage() {
   // Form states
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('')
   const [newMilestoneWeight, setNewMilestoneWeight] = useState(1)
+  // punch 40: the `edit` chip used to call removeProjectMilestone — it deleted. It now opens
+  // this inline rename; deletion moved to its own ✕, guarded by ConfirmCard + undo.
+  const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
@@ -242,6 +248,29 @@ export function ProjectDetailPage() {
     }
 
     toggleProjectMilestone(project, milestoneId)
+  }
+
+  const commitMilestoneEdit = () => {
+    if (!project || !editingMilestone) return
+    const title = editingMilestone.title.trim()
+    const prior = project.milestones?.find((m) => m.id === editingMilestone.id)
+    if (title && prior && title !== prior.title) renameProjectMilestone(project, editingMilestone.id, title)
+    setEditingMilestone(null)
+  }
+
+  const askRemoveMilestone = (m: { id: string; title: string }) => {
+    if (!project) return
+    const prior = project.milestones ?? []
+    setConfirm({
+      title: `Delete "${m.title}"?`,
+      body: 'The milestone goes. Tasks linked to it stay where they are.',
+      confirmLabel: 'Delete',
+      onConfirm: () => {
+        setConfirm(null)
+        removeProjectMilestone(project, m.id)
+        toastUndo('Milestone deleted', () => setProjectMilestones(project, prior))
+      },
+    })
   }
 
   const handleAddMilestoneClick = () => {
@@ -460,9 +489,24 @@ export function ProjectDetailPage() {
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                       {/* R4-24: milestones keep the bloom — Kai's one exception alongside Top-3/Goal */}
                       <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} bloom />
-                      <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
+                      {editingMilestone?.id === m.id ? (
+                        <input
+                          autoFocus
+                          value={editingMilestone.title}
+                          onChange={(e) => setEditingMilestone({ id: m.id, title: e.target.value })}
+                          onBlur={commitMilestoneEdit}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitMilestoneEdit() }
+                            if (e.key === 'Escape') { e.preventDefault(); setEditingMilestone(null) }
+                          }}
+                          style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
+                      )}
                       <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
-                      <span onClick={() => removeProjectMilestone(project, m.id)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
                     </div>
                   ))}
                 </div>

@@ -133,11 +133,27 @@ export function toggleProjectMilestone(project: Project, milestoneId: string): v
   }
 }
 
+/** The one milestone-array writer — rename, remove and their undos all route through it,
+ *  so an undo replays the exact prior array through the same outbox path as the original write. */
+export function setProjectMilestones(project: Project, milestones: NonNullable<Project['milestones']>): void {
+  writeRow('projects', { ...project, milestones, updated_at: nowIso() })
+}
+
+export function renameProjectMilestone(project: Project, milestoneId: string, title: string): void {
+  if (!project.milestones) return
+  setProjectMilestones(
+    project,
+    project.milestones.map((m) => (m.id === milestoneId ? { ...m, title } : m))
+  )
+  logActivity('project.milestone_renamed', 'project', project.id, { milestone_id: milestoneId, title })
+}
+
 export function removeProjectMilestone(project: Project, milestoneId: string): void {
   if (!project.milestones) return
-  const milestones = project.milestones.filter((m) => m.id !== milestoneId)
-  const updated = { ...project, milestones, updated_at: nowIso() }
-  writeRow('projects', updated)
+  setProjectMilestones(
+    project,
+    project.milestones.filter((m) => m.id !== milestoneId)
+  )
   logActivity('project.milestone_removed', 'project', project.id, { milestone_id: milestoneId })
 }
 
