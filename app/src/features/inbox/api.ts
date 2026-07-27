@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { createTask } from '../tasks/api'
-import type { InboxItem } from '../../lib/types'
+import type { InboxItem, Task } from '../../lib/types'
 
 async function fetchInboxItems(): Promise<InboxItem[]> {
   const { data, error } = await supabase.from('inbox_items').select('*').order('created_at', { ascending: false })
@@ -65,10 +65,11 @@ export function snoozeInboxItem(item: InboxItem, until: string): void {
  * (the AI's `cleaned_text` used to be shown but never actually filed). Priority/duration typed
  * locally at capture time (command bar `!`/`30m` syntax) ride along on `item.payload` when the
  * item didn't auto-file — applied here so a deferred manual filing doesn't lose them either. */
+// Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
 export function fileToTask(
   item: InboxItem,
   opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null; title?: string } = {},
-): void {
+): Task {
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
   const task = createTask({
     title: opts.title?.trim() || item.raw_text,
@@ -80,6 +81,7 @@ export function fileToTask(
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })
+  return task
 }
 
 export function dismissInboxItem(item: InboxItem): void {

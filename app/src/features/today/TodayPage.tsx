@@ -3,6 +3,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { buildListBindings } from '../tasks/listShortcuts'
+import { daysOverdue } from '../tasks/taskDisplay'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
@@ -34,7 +35,10 @@ import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
-import type { Task, CalendarEvent, Routine, SlippingRow } from '../../lib/types'
+import { wisteriaStage } from '../../lib/growthStages'
+import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
+import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
+import './today.css'
 
 // ── Today — pixel contract: Today.dc.html 1a (desktop, design lines 107-221) and 1b
 // (iPhone ≤767px, lines 227-306) + States.dc.html 1a/1b (empty/done). The shell owns
@@ -43,6 +47,23 @@ import type { Task, CalendarEvent, Routine, SlippingRow } from '../../lib/types'
 const A = '/ds/assets'
 const TZ = 'Africa/Cairo'
 const PROJECT_DOTS = ['--acc-moss', '--acc-blossom', '--acc-lavender', '--acc-hydrangea', '--acc-buttercream', '--acc-sage']
+// Punch 17: Today is a glance surface — "All open" stops here; the full list lives on /tasks.
+const ALL_OPEN_CAP = 50
+
+// Punch 20: same weighted-milestone % as ProjectsPage's projectStats (a milestone counts when
+// flagged complete, or when it has linked tasks and they're all done) — the slipping card's
+// wisteria must show the project's REAL stage, never a hardcoded one.
+function weightedMilestonePct(project: Project, tasks: Task[]): number {
+  let totalWeight = 0
+  let completedWeight = 0
+  for (const m of project.milestones ?? []) {
+    totalWeight += m.weight
+    const linked = tasks.filter((t) => t.milestone_id === m.id)
+    const complete = linked.length > 0 ? linked.every((t) => t.status === 'done') : m.completed
+    if (complete) completedWeight += m.weight
+  }
+  return totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0
+}
 
 function isToday(iso: string | null): boolean {
   if (!iso) return false
@@ -136,18 +157,17 @@ export function TodayPage() {
   const allDone = open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
-  // handwritten banner over the Top-3 section. Fires once per calendar day, ever.
+  // handwritten banner over the Top-3 section. Punch 23: the once-per-day gate lives in
+  // ./dayComplete (single key, 3s dwell) — the one implementation for the whole app.
   const motion = useMotionEnabled()
   const wasAllDone = useRef(allDone)
   useEffect(() => {
     const was = wasAllDone.current
     wasAllDone.current = allDone
     if (was || !allDone || !motion) return
-    const today = localDateKey(new Date())
-    if (localStorage.getItem('kf.dayDoneShown') === today) return
-    localStorage.setItem('kf.dayDoneShown', today)
+    if (!claimDayComplete()) return
     setCelebrate(true)
-    const t = setTimeout(() => setCelebrate(false), 4200)
+    const t = setTimeout(() => setCelebrate(false), DAY_DONE_DWELL_MS)
     return () => clearTimeout(t)
   }, [allDone, motion])
 
@@ -171,6 +191,22 @@ export function TodayPage() {
     setSelected(new Set())
   }
   useEscapeStack(selected.size > 0, clearSelection)
+
+  // Punch 19: click-away deselects. A click on empty page space clears the multi-select;
+  // clicks that land on a task row, the BulkBar, any menu/popover, or an overlay card/scrim
+  // keep it (Ctrl-click toggling and Esc behave as before). Document-level so "empty space"
+  // includes the shell around the page, not just this component's box.
+  const hasSelection = selected.size > 0
+  useEffect(() => {
+    if (!hasSelection) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Element | null
+      if (t?.closest('[id^="task-"], [role="toolbar"], [role="menu"], [role="dialog"], .kf-overlay-card, .kf-overlay-scrim')) return
+      setSelected(new Set())
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [hasSelection])
 
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
@@ -452,7 +488,7 @@ export function TodayPage() {
           </section>
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
-            <SectionLabel action={!isMobile && <Link to="/calendar" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
+            <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
             {todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
               <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
@@ -464,12 +500,18 @@ export function TodayPage() {
               <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
               {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
               <div className="kf-dim">
-                {allOpen.map((t, i) => (
+                {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
                   <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
                     <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                   </div>
                 ))}
               </div>
+              {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
+              {allOpen.length > ALL_OPEN_CAP && (
+                <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
+                  View all →
+                </Link>
+              )}
             </section>
           )}
         </div>
@@ -478,7 +520,15 @@ export function TodayPage() {
           {slipping.length > 0 && (
             <section>
               <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
-              <SlippingCard row={slipping[0]} />
+              {/* Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A). */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {slipping.map((row) => {
+                  const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+                  // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
+                  const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
+                  return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
+                })}
+              </div>
             </section>
           )}
 
@@ -695,6 +745,16 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
 function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
+  // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
+  // via the shared taskDisplay helper — same "Overdue Nd" terra treatment, same ↻ glyph.
+  const dueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : null
+  const dueBadges = dueDays !== null || task.recurrence_rule ? (
+    <>
+      {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--acc-terra)' }}>Overdue {dueDays}d</span>}
+      {dueDays === 0 && <span>Due today</span>}
+      {task.recurrence_rule && <span>↻</span>}
+    </>
+  ) : null
   const rowExtra: React.CSSProperties = {
     background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
     boxShadow: highlighted ? '0 0 0 3px rgba(138,154,126,0.28)' : undefined,
@@ -734,9 +794,12 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
-          {(projectName || task.duration_min != null) && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              {[projectName, task.duration_min != null ? `${task.duration_min}m` : null].filter(Boolean).join(' · ')}
+          {(projectName || task.duration_min != null || dueBadges) && (
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {(projectName || task.duration_min != null) && (
+                <span>{[projectName, task.duration_min != null ? `${task.duration_min}m` : null].filter(Boolean).join(' · ')}</span>
+              )}
+              {dueBadges}
             </div>
           )}
         </div>
@@ -754,7 +817,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
       {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
-        {metaRow(projectName, dot, task.duration_min)}
+        {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
       {!done && (
         <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
@@ -798,7 +861,7 @@ function EventRow({ event, task, first, border, compact }: { event: CalendarEven
   )
 }
 
-function SlippingCard({ row }: { row: SlippingRow }) {
+function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   const navigate = useNavigate()
   // A4 (2026-07-18 audit): the card body opens the slipping entity itself. Projects and
   // areas both live at /projects/:id (ProjectDetailPage renders either); a domain has no
@@ -812,7 +875,8 @@ function SlippingCard({ row }: { row: SlippingRow }) {
       // sub-degree transform blurred the title + mono caption (see QuickCreate's 07-18 deviation).
       style={{ position: 'relative', border: '1px solid var(--line-goal)', background: 'var(--paper-goal)', padding: '12px 14px', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
     >
-      <img src={`${A}/wisteria/p20.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
+      {/* punch 20: the wisteria is the entity's real growth stage, computed by the caller. */}
+      <img src={`${A}/wisteria/${stage}.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
       <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} days untouched</div>
       <button onClick={(e) => { e.stopPropagation(); markReviewed(row) }} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>reviewed</button>
