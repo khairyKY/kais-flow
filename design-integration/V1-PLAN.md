@@ -73,6 +73,12 @@ Common DoD per workstream: its punch items' **Judge lines pass locally**, undo w
 
 ## Hardening + deploy (Aug 8–10)
 
+### Measured 2026-07-27 (orchestrator, in parallel with Wave B)
+- **Initial JS = 232.7 KB gz vs the 200 KB budget** (index 100.6 · tanstack-query split across `activity` 55.1 + `useQuery` 11.0 · hooks 22.2 · schemas 17.2 · api 14.4 · rest ~10). FullCalendar/rrule/chrono are correctly OUT (CalendarPage is its own 316 KB chunk), so the overage is the shell itself.
+  **The fix, deferred to avoid racing Wave B's edits to AppLayout:** `AppLayout` eagerly imports `CommandBar`, `ChatPanel`, `SearchOverlay`, `ShortcutOverlay` — four surfaces that render only after a keypress. `React.lazy` them behind their open-state (they already have one) and the shell chunk drops materially. Do this first in hardening, then re-measure.
+- **Assets:** 38 PNGs / 5.2 MB, intrinsic ~350px against display sizes of 16–96px. At 1.25 root zoom on a 2× screen the largest use needs ~240px, so only the big-render cases are near-honest and the small ones are heavily oversized. Downscaling changes pixels Kai judges, so it needs his eye or a same-size lossless recompress — **not** a blind resize. PWA precache is 188 entries / 8.3 MB; leaving the botanicals precached is deliberate (a garden app with missing plants offline is worse than a heavier install).
+- **Security (punch 4):** `0034_revoke_cron_function_grants.sql` written — see the migrations register.
+
 - Perf: Lighthouse ≥ 90 deployed, initial JS ≤ 200KB gz (currently ~232 — route-split the new surfaces, verify FullCalendar stays out of initial), airplane-mode boot. *(item 5)*
 - Safety: RLS spot-checks with account B via REST, edge-function rate limits, capture endpoints auth-gated. *(item 4)*
 - **Merge `feature/botanical-integration` → `master`** (= live deploy) once Wave B is green. Earlier is fine if Kai wants mid-flight judging — he's the only prod user.
@@ -91,6 +97,10 @@ Kai walks `V1-PUNCHLIST.md` top to bottom on the live URL, checking boxes; every
 | MIG-1 | Resurface cooldown fields (priority-based intervals + settings values) — the parked R4-6 work | item 21 |
 | MIG-2 | pg_cron: 30-day compost for dismissed inbox items + trash | item 25 |
 | MIG-3 | `search_hybrid` expansion: people, events, projects, journal | item 49 |
+| 0030 | `app_settings` PK global-singleton → per-user (a 2nd account could never save) | item 1/3 |
+| 0032 | pg_cron 30-day compost | item 25 |
+| 0033 | journal `(user_id, entry_date)` UNIQUE dropped → many entries per day | item 47 |
+| 0034 | revoke EXECUTE on the cron-only SECURITY DEFINER functions + pin `reload_retainers` search_path | item 4 |
 
 (Journal D-1 needs no migration — `journal_entries` from P7a already fits the model; entry shape is client-side.)
 
