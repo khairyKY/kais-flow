@@ -406,6 +406,7 @@ export function InboxPage() {
       {kbSnoozeTask && (
         <SnoozeMenu
           position={rowAnchor('inbox-', kbSnoozeTask.id)}
+          title={kbSnoozeTask.raw_text}
           onClose={() => setKbSnoozeId(null)}
           onSnooze={(until) => { snoozeInboxItem(kbSnoozeTask, until); advance(kbSnoozeTask); setKbSnoozeId(null) }}
           onSomeday={() => { snoozeInboxItem(kbSnoozeTask, new Date(Date.now() + 365 * 86_400_000).toISOString()); advance(kbSnoozeTask); setKbSnoozeId(null) }}
@@ -714,6 +715,7 @@ function TriageCard({
       {snoozePos && (
         <SnoozeMenu
           position={snoozePos}
+          title={item.raw_text}
           onClose={() => setSnoozePos(null)}
           onSnooze={(until) => { snoozeInboxItem(item, until); setSnoozePos(null) }}
           onSomeday={() => { snoozeInboxItem(item, new Date(Date.now() + 365 * 86_400_000).toISOString()); setSnoozePos(null) }}

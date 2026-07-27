@@ -1,9 +1,12 @@
 import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
+import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
 
 export interface SnoozeMenuProps {
   position: { x: number; y: number }
+  /** Names the thing being snoozed in the phone sheet's heading (Overlays §03). */
+  title?: string
   onClose: () => void
   onSnooze: (until: string) => void
   onSomeday: () => void
@@ -53,27 +56,32 @@ const headerStyle = {
   padding: '4px 10px 6px',
 }
 
-/** Same popover, three call sites (Tasks rows, Today, the bulk bar) — always this component, never re-derived. */
-export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMenuProps) {
+/** Same popover, three call sites (Tasks rows, Today, the bulk bar) — always this component, never re-derived.
+ * At ≤767px it becomes the Overlays §03 bottom sheet instead; the presets and handlers are shared. */
+export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: SnoozeMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [pickDate, setPickDate] = useState('')
+  const isMobile = useIsMobile()
 
-  useEscapeStack(true, onClose)
+  useEscapeStack(!isMobile, onClose) // the sheet registers its own (BottomSheet)
 
   useEffect(() => {
+    if (isMobile) return // the sheet's scrim handles dismissal
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
+  }, [onClose, isMobile])
 
   const now = new Date()
-  const presets = [
-    { label: 'Later today', dot: 'var(--acc-hydrangea)', at: new Date(now.getTime() + 3 * 60 * 60 * 1000) },
-    { label: 'This evening', dot: 'var(--acc-lavender)', at: thisEvening(now) },
-    { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: atTime(addDays(now, 1), 9) },
-    { label: 'Next week', dot: 'var(--acc-moss)', at: nextMonday(now) },
+  // `sheet` mirrors Overlays §03, which shows three rows with literal metas and drops
+  // "This evening" (sheetLabel null = desktop-only row).
+  const presets: { label: string; dot: string; at: Date; sheetLabel: string | null; sheetMeta: string }[] = [
+    { label: 'Later today', dot: 'var(--acc-hydrangea)', at: new Date(now.getTime() + 3 * 60 * 60 * 1000), sheetLabel: 'Later today', sheetMeta: '+3h' },
+    { label: 'This evening', dot: 'var(--acc-lavender)', at: thisEvening(now), sheetLabel: null, sheetMeta: '' },
+    { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: atTime(addDays(now, 1), 9), sheetLabel: 'Tomorrow morning', sheetMeta: '09:00' },
+    { label: 'Next week', dot: 'var(--acc-moss)', at: nextMonday(now), sheetLabel: 'Next week', sheetMeta: 'Mon' },
   ]
 
   const rows = presets.length + 3 // header + Someday row + Pick-date row
@@ -86,6 +94,54 @@ export function SnoozeMenu({ position, onClose, onSnooze, onSomeday }: SnoozeMen
   function fire(at: Date) {
     onSnooze(at.toISOString())
     onClose()
+  }
+
+  // ── Overlays.dc.html §03 "Snooze / schedule sheet" ──
+  if (isMobile) {
+    return (
+      <BottomSheet onClose={onClose}>
+        {(close) => (
+          <>
+            <div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>
+              {title ? `Snooze "${title}"` : 'Snooze'}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+              Until…
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {presets.filter((p) => p.sheetLabel).map((p) => (
+                <SheetRow
+                  key={p.label}
+                  dot={p.dot}
+                  label={p.sheetLabel}
+                  meta={p.sheetMeta}
+                  onClick={() => { onSnooze(p.at.toISOString()); close() }}
+                />
+              ))}
+              <SheetRow
+                dot="var(--ink-hairline)"
+                label="Someday"
+                onClick={() => { onSomeday(); close() }}
+              />
+              {/* Not in §03, kept from the desktop popover: without it the phone can't
+                  reach an arbitrary date, and every other snooze surface can. */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 4px', borderTop: '1px dashed var(--line-dashed)', fontSize: 14.5, color: 'var(--ink-muted)' }}>
+                <span style={{ flex: 1 }}>Pick a date…</span>
+                <input
+                  type="date"
+                  value={pickDate}
+                  onChange={(e) => {
+                    setPickDate(e.target.value)
+                    if (e.target.value) { onSnooze(atTime(new Date(`${e.target.value}T00:00:00`), 9).toISOString()); close() }
+                  }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: 'none', border: 'none', color: 'var(--ink-faint)', padding: 0 }}
+                />
+              </label>
+            </div>
+          </>
+        )}
+      </BottomSheet>
+    )
   }
 
   return (

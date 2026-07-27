@@ -441,7 +441,7 @@ function SeedsBeat({
           </div>
         ))}
       </div>
-      <div style={{ flex: 'none', padding: '14px 24px 32px' }}>
+      <div style={{ flex: 'none', padding: '14px 24px max(32px, calc(14px + env(safe-area-inset-bottom)))' }}>
         <div style={{ position: 'relative', background: 'rgba(244,241,234,0.08)', border: '1.5px dashed rgba(201,165,90,0.5)', borderRadius: 10, padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9b485' }}>For tomorrow</div>

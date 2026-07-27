@@ -188,9 +188,9 @@
 
 ## 13. Mobile
 
-- [ ] **63. Bottom sheets** for snooze/schedule + task detail (no desktop popovers on phones).
+- [x] **63. Bottom sheets** for snooze/schedule + task detail (no desktop popovers on phones).
   **Judge:** on the phone: snooze a task and open a task — both are thumbable sheets.
-- [ ] **64. Phone walkthrough clean.** Tab bar, More sheet, swipe actions, capture FAB, safe areas.
+- [x] **64. Phone walkthrough clean.** Tab bar, More sheet, swipe actions, capture FAB, safe areas.
   **Judge:** full capture→triage→plan→do loop on the installed PWA without pinch-zooming once.
 
 ## 14. Removals (landing = they're gone)

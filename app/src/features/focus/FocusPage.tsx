@@ -635,7 +635,19 @@ export function FocusPage() {
 
   // 6. Base Timer layout (Pomodoro / Break / Stopwatch)
   return (
-    <div style={{ position: 'relative', width: '100%', height: 'calc(100dvh - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
+    <div className="focus-bleed" style={{ position: 'relative', width: '100%', height: 'calc(100dvh - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
+      {/* WB-3 punch 64: the negative margins cancel `.app-main-content`'s DESKTOP padding
+          (30/40/64). At ≤767px that padding is 20/16/tab-bar, so -40px bled 24px past each
+          edge and gave /focus a horizontal scrollbar. Re-state the bleed against the phone
+          padding, and stop short of the tab bar instead of under it. */}
+      <style>{`
+        @media (max-width: 767px) {
+          .focus-bleed {
+            margin: -20px -16px 0 !important;
+            height: calc(100dvh - 42px - 88px - env(safe-area-inset-bottom)) !important;
+          }
+        }
+      `}</style>
       <div className="grain" style={{ pointerEvents: 'none' }}></div>
 
       {/* Quiet top strip */}

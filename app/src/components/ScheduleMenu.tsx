@@ -2,9 +2,12 @@ import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../lib/dateShortcuts'
+import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
 
 export interface ScheduleMenuProps {
   position: { x: number; y: number }
+  /** Names the thing being scheduled in the phone sheet's heading (Overlays §03). */
+  title?: string
   onClose: () => void
   onSchedule: (iso: string) => void
 }
@@ -37,24 +40,26 @@ const headerStyle = {
 
 /** The "Schedule ▸" submenu opened from the task context menu — same grouped-popover shape as
  * SnoozeMenu, reusing the same today/tomorrow/next-week math so keyboard (1/2/3) and mouse agree. */
-export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProps) {
+export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [pickDate, setPickDate] = useState('')
+  const isMobile = useIsMobile()
 
-  useEscapeStack(true, onClose)
+  useEscapeStack(!isMobile, onClose) // the sheet registers its own (BottomSheet)
 
   useEffect(() => {
+    if (isMobile) return // the sheet's scrim handles dismissal
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
+  }, [onClose, isMobile])
 
   const presets = [
-    { label: 'Today', key: '1', at: scheduleToday() },
-    { label: 'Tomorrow', key: '2', at: scheduleTomorrow() },
-    { label: 'Next week', key: '3', at: scheduleNextWeek() },
+    { label: 'Today', key: '1', at: scheduleToday(), dot: 'var(--acc-hydrangea)' },
+    { label: 'Tomorrow', key: '2', at: scheduleTomorrow(), dot: 'var(--acc-blossom)' },
+    { label: 'Next week', key: '3', at: scheduleNextWeek(), dot: 'var(--acc-moss)' },
   ]
 
   const rows = presets.length + 2
@@ -67,6 +72,41 @@ export function ScheduleMenu({ position, onClose, onSchedule }: ScheduleMenuProp
   function fire(iso: string) {
     onSchedule(iso)
     onClose()
+  }
+
+  // ── Overlays.dc.html §03 "Snooze / schedule sheet" — same chrome, the schedule verb. ──
+  if (isMobile) {
+    return (
+      <BottomSheet onClose={onClose}>
+        {(close) => (
+          <>
+            <div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>
+              {title ? `Schedule "${title}"` : 'Schedule'}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+              For…
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {presets.map((p) => (
+                <SheetRow key={p.label} dot={p.dot} label={p.label} onClick={() => { onSchedule(p.at); close() }} />
+              ))}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 4px', borderTop: '1px dashed var(--line-dashed)', fontSize: 14.5, color: 'var(--ink-muted)' }}>
+                <span style={{ flex: 1 }}>Pick a date…</span>
+                <input
+                  type="date"
+                  value={pickDate}
+                  onChange={(e) => {
+                    setPickDate(e.target.value)
+                    if (e.target.value) { onSchedule(new Date(`${e.target.value}T09:00:00`).toISOString()); close() }
+                  }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: 'none', border: 'none', color: 'var(--ink-faint)', padding: 0 }}
+                />
+              </label>
+            </div>
+          </>
+        )}
+      </BottomSheet>
+    )
   }
 
   return (
