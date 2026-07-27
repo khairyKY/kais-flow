@@ -159,6 +159,8 @@
 
 - [x] **53. Paper texture slider works.**
   **Judge:** drag it — the grain visibly changes; persists.
+- [x] **54b. Sounds — UN-CUT by Kai 2026-07-26 and BUILT.** Six synthesised voices (Web Audio, no files), master + whisper↔full meter, per-row previews, quiet hours after the garden closes; wired to task check, journal line, Focus round end.
+  **Judge:** turn Sound on, check a task (paper rustle), save an evening line (pencil scratch), preview all six, then close the garden and confirm silence until tomorrow.
 - [x] **54. Every remaining row functional or hidden.** Sounds section hidden (v2); capture API hidden; integrations page deduplicated vs in-page sections; push section says what it does.
   **Judge:** every visible settings control does something observable.
 - [x] **55. Accent row removed** (per D-3; real picker → v2).
