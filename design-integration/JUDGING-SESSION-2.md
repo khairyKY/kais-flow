@@ -8,7 +8,9 @@
 
 ---
 
-## J-5 · 🔴 Root `zoom` breaks `position: fixed` — prime suspect for the whole floating-UI family
+## J-5 · 🔴 CONFIRMED — Root `zoom` breaks `position: fixed` (the whole floating-UI family)
+
+> **Confirmed live by Kai, 2026-07-28:** "the bulk bar scrolls with the page." No longer a hypothesis — this is the proven root cause. Fix at the source; do NOT patch the bars individually.
 
 **Symptoms (Kai):** "the bulk action bar is not centered… the zoom is 100%" · "the bulk bar is covering and scrolling. Like it's not stuck to the bottom area of the page" · "the context menu is clipped, I can't see half of it."
 
