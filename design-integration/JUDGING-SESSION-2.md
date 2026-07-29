@@ -22,7 +22,16 @@
 
 **Why it survived every pass.** The codebase already knows this family — every *coordinate-taking* popover divides by `uiZoom()` (`ContextMenu:76`, Snooze/Schedule/ProjectPicker/Select). What was never corrected is the **percentage/edge-anchored** elements, because `left: 50%` and `bottom: 16` look like they should just work. F6 studied this zoom for *blur*, not for containment.
 
-**Confirm in 60 seconds before touching anything downstream:** select two rows on the live app and scroll. If the bulk bar travels with the page, it's confirmed. Then fix once at the source rather than patching each bar — either drop root `zoom` for a `rem`-based scale (F6 spec'd this and deliberately didn't implement it), or render the fixed layer through a portal outside the zoomed subtree.
+**Two fix paths — this is a [KAI] decision, because they behave differently:**
+
+| | **A · Drop root `zoom`, scale by `rem`** | **B · Portal the fixed layer out of the zoomed subtree** |
+|---|---|---|
+| Blast radius | Whole app re-scales; every hardcoded `px` stops tracking the size setting | Contained to the ~6 fixed components |
+| Also fixes | J-5, J-6, **and the entire `uiZoom()` compensation layer disappears** (~7 files stop dividing by z) | J-5, J-6 only |
+| Risk | Highest — changes every surface's proportions, needs a full re-judge | Low, but leaves the landmine armed for the next fixed element someone adds |
+| F6's verdict | Spec'd this and deliberately did **not** implement it — too big to do blind | — |
+
+**A** is the honest fix; **B** is the safe one. With Aug 15 in view, *B now / A in v2* is defensible — but that's your call, not mine.
 
 ## J-6 · 🔴 Context menu clips — half the menu unreachable
 

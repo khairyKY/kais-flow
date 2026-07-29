@@ -100,13 +100,13 @@
 - [ ] `🔨 built` **27. All tab.** New view listing every open task incl. undated project filings.
   **Judge:** file an undated item to a project from Inbox — findable in All within seconds.
 - [ ] `🔨 built` **28. Recurring-import dedupe assistant.** Detects duplicate-title clusters (the 76× problem), offers merge-into-recurring, user confirms.
-  **Judge:** run it on the real data — shower/breakfast collapse to single recurring tasks; nothing merges without consent.
+  **Judge:** **Settings → Import (`/settings/import`) → "Tidy duplicates"** — run it on the real data; shower/breakfast collapse to single recurring tasks; nothing merges without consent. *(J-18: it being findable only here is itself a flagged problem.)*
 - [ ] `🔨 built` **29. Enter opens task detail** from any focused row (Today + Tasks).
   **Judge:** arrow to a row, press Enter — detail opens; Esc returns.
 - [ ] `🔨 built` **30. Organize rail: centered header, Projects sticky unclipped.**
   **Judge:** eyeball at 100% zoom.
 - [ ] `🔨 built` **31. Perennials: Edit rule opens the real Repeat menu** (not a native select).
-  **Judge:** click Edit rule — themed menu, works.
+  **Judge:** go to `/perennials` (Tasks → `↻ Repeating`), hover a row, click **Edit rule** — a themed menu opens, not an OS dropdown. *(If you can't find the row actions, that's the finding.)*
 
 ## 6. Calendar
 
@@ -116,14 +116,14 @@
   **Judge:** drag a scheduled task block onto the rail — it returns to Unscheduled, toast + Undo.
 - [ ] `🔨 built` **34. Task details from a block.** Click-through (or explicit affordance) reaches the full task editor.
   **Judge:** from a task block, reach its editor in ≤2 clicks without right-click.
-- [ ] `🔨 built` **35. Drop feedback trio:** invalid-drop soft-no shake, 30-min minimum on resize, top-edge resize works.
-  **Judge:** try each once.
+- [ ] `🔨 built` **35. Drop feedback trio** on the calendar.
+  **Judge:** three separate drags — (a) drop a block somewhere invalid: it should *shake and refuse*, not silently snap back; (b) drag a block's BOTTOM edge shorter than 30 min: it should stop at 30; (c) drag a block's TOP edge: the start time moves, the end stays put.
 - [ ] `🔨 built` **36. All-day ↔ timed drag conversion.**
   **Judge:** drag a block into the all-day band → becomes all-day (persists after refresh); drag it back down → timed again.
 - [ ] `🔨 built` **37. Edge auto-scroll while dragging.**
   **Judge:** drag a block to the bottom edge — grid scrolls under it.
-- [ ] `🔨 built` **38. Alignment/polish pass vs Akiflow reference.** Bounded: gutter widths, header alignment, block insets.
-  **Judge:** side-by-side with Akiflow — nothing feels visibly "off"; remaining gaps get named and accepted, not ignored.
+- [ ] `🔨 built` **38. Calendar alignment/polish.** ~~vs Akiflow reference~~ — **STRUCK by Kai 2026-07-29: "that shouldn't be here, we are our own app."** Judged on its own terms now. Bounded: gutter widths, header alignment, block insets — folded into J-13's calendar work.
+  **Judge:** nothing in the grid reads as misaligned or accidental to you.
 - [ ] `🔨 built` **39. Daisy stages in day headers** (the one designed calendar visual still missing that v1 keeps).
   **Judge:** past day muted daisy, today matches the clock, future = bud.
 
@@ -178,7 +178,7 @@
 - [ ] `🔨 built` **55. Accent row removed** (per D-3; real picker → v2).
   **Judge:** Settings shows no Accent row.
 - [ ] `🔨 built` **56. "Botanical animations" off = still garden.** All loops gated; toggle decoupled from OS reduced-motion; present on mobile settings.
-  **Judge:** toggle off — waveform bars, fireflies, twinkles all freeze; toggle reads correctly on a reduced-motion OS.
+  **Judge:** toggle off — waveform bars, fireflies, twinkles stop moving but **stay visible in place** (nothing disappears); toggle reads correctly on a reduced-motion OS.
 - [ ] `🚧 not built` **57. Night sweep.** Grain visible at night (overlay blend); the ~12 hardcoded light-only clusters fixed.
   **Judge:** flip to night, walk every page — no white washes, no vanished grain, no maroon-on-dark chips.
 
