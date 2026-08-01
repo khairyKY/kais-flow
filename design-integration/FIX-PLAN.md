@@ -1,6 +1,7 @@
 # v1.0 Fix Plan — everything the judging sessions found
 
 > **Input:** every finding from the three judging registers — `JUDGING-2026-07-28.md` (J-1…J-4), `JUDGING-SESSION-2.md` (J-5…J-15), `JUDGING-SESSION-3.md` (J-16…J-28) — plus the punch items Kai explicitly failed or commented. Unjudged punch items are NOT here; they stay in the judging walkthrough.
+> **Second input (added 2026-08-01):** `docs/SECURITY-AUDIT-2026-08-01.md` (S-1…S-10, B1–B2, D1–D5, H1–H4). **This file is now the single sequence for both registers** — the judging findings ask "does it feel right", the audit asks "is it safe to make public", and they share a blocker (`K-c` ≡ `S2`) and a lead (`H1` → `J-16`). Do not run them as two plans.
 > **Execution model:** Scenario 2 (`V1-DISPATCH.md`) still applies — the orchestrator can auto-dispatch every wave. But each wave below also carries a **ready-to-run prompt header** and a **skills line** so Kai can run any wave himself in a fresh session (PROMPT-BANK style). Either path lands on `feature/botanical-integration` → push to master → re-judge on live.
 > **Rule unchanged:** fix waves work top-down; nothing merges without tsc + tests + build green; every fix cites its J-number in the commit.
 
@@ -12,11 +13,31 @@
 |---|---|---|
 | K-a | **J-5 fix path: A (drop root `zoom`, rem scale) or B (portal the fixed layer)** — decision table is in `JUDGING-SESSION-2.md`. Recommendation: **B now, A in v2** | ⛓ FIX-1 |
 | K-b | **Run the dead-letter dump** (console snippet in J-16). Paste the output | ⛓ FIX-3's shape: if inbox writes dead-letter, the fix is outbox hardening, not inbox code |
-| K-c | **`supabase login` + `supabase db push`** (migrations 0030–0034) | ⛓ FIX-4, unblocks punch 1/3/4/25/47/49 |
+| K-c | **`supabase login` + `supabase db push`** (migrations 0030–0034) — **≡ audit `S2`, and the audit ranks it #1 of everything.** Until it runs, `0034`'s revoke isn't live and any signed-in account can RPC `do_resurface()` | ⛓ FIX-4, FIX-5, **FIX-0**, unblocks punch 1/3/4/25/47/49 |
 | K-d | **J-3 ruling:** keep right-click-selects-row, or menu only? | ⛓ part of FIX-1 |
 | K-e | **J-14 + J-23 + J-24 pointers:** which calendar button has the wrong icon; one screenshot of a blurry board title; confirm the board flower against the export | ⛓ small parts of FIX-2/FIX-5 |
+| K-f | **S4** — `do_resurface()` user-scoping changes *which* item resurfaces. SQL shown before applying | ⛓ FIX-0 |
+| K-g | **S8** — filter journal/people out of the IndexedDB persister, or keep them for offline access? Genuine trade-off: CLAUDE.md's privacy rule vs. offline journal | ⛓ FIX-0 (or explicitly recorded as accepted) |
+| K-h | **B2** — correct day-bucketing from device-local to Cairo. Changes *which tasks appear* in Today/Overdue | ⛓ FIX-3 |
+| K-i | **S10** — check the hosted Supabase dashboard's auth settings (password length ≥8, email confirmation ON). `config.toml` is local-only; production can't be read from here | ⛓ public launch |
 
 ---
+
+## FIX-0 · Security — S1, S3, S5, S4, S2 · **runs before or beside FIX-1, not after**
+**Why it's first:** v1.0 is an explicitly public, multi-user release (`V1-FEATURES.md:137`, `V1-PLAN.md:55`) and `SignInPage.tsx:76` already ships a live `supabase.auth.signUp`. Everything below was harmless while Kai was the only account and stops being harmless at launch.
+
+**The load-bearing fact:** `verify_jwt = true` is **not authentication**. The anon key is a valid project-signed JWT and is public in the deployed bundle. None of the six edge functions checks that a real *user* is behind the request.
+
+- **S2 / K-c** — `supabase db push`. **[KAI] only, zero code, highest value in the repo.** Ships the already-written `0034` revoke.
+- **S1** (HIGH) — `notify` runs service-role with no authz and fans **one payload to every push subscription**: `{"kind":"morning_digest"}` from anyone pushes user A's Top-3 titles to user B's phone. Also a write primitive (`task_reminder` updates + inserts across all users). Fix: require a real user JWT, scope every query and the `push_subscriptions` fetch by `user.id`, keep a separate service-role branch for the pg_cron caller — **the cron path must keep working.**
+- **S3** (HIGH) — `transcribe` / `parse-capture` / `chat` are an open Groq proxy on Kai's key. Under the hard `$0` rule an exhausted free tier means capture, voice and chat are simply dead. ~4 lines each: reject a JWT with no `sub`.
+- **S5** — `embed`'s `{"backfill":true}` is an unauthenticated trigger for a cross-tenant write job. Only pg_cron calls it; require the service-role key or drop the public handler.
+- **S4** (needs **K-f**) — `do_resurface()` picks candidates with no `user_id` predicate and hardcodes `limit 1` on `auth.users`, so **every account except the oldest silently never resurfaces**. New migration `0035`. The `0034` revoke does *not* fix this — the leak is on the cron path.
+- **S6 / S9** — cheap defence-in-depth while in there: a redundant `and user_id = auth.uid()` per `search_hybrid` branch (zero query cost, survives a future `SECURITY DEFINER` "optimisation"), and tighten CORS off `*` to the Pages origin.
+
+**Verify:** the audit's §1.9 curl (a `200` confirms S1/S3; `401` drops their severity) · then a second account sees only its own data.
+**Skills:** **`supabase`** + `/ponytail`. **`security-review`** over the diff before merge.
+> ⚠️ **No test covers any of this.** The 203 tests are pure-function only — nothing touches RLS, SQL, edge functions or auth. Write one integration check before changing the handlers, and verify live. A green suite means nothing here.
 
 ## FIX-1 · The floating & pointer cluster — J-5, J-6, J-2, J-1, J-9, J-4a
 **The biggest win: six findings, two root causes.**
@@ -44,7 +65,8 @@
 **Prompt header:** *"FIX-2 from FIX-PLAN.md — calendar. Read J-13/J-15 in JUDGING-SESSION-2.md and CALENDAR.md §6. The Akiflow benchmark is struck (Kai: 'we are our own app') — judge the grid on its own terms."*
 
 ## FIX-3 · Trust & persistence — J-16, J-10, J-8, J-18
-- **J-16:** *shape depends on K-b's dump.* If dead-letters exist: fix the rejected write's cause (prime suspect: round-tripping `embedding` on inbox upserts — strip it like `search_tsv`), then make dead-letters LOUD (a "Needs a look" surface, punch 4's sibling) instead of silent. If the dump is empty, escalate — do not guess.
+- **J-16:** *shape depends on K-b's dump.* ✅ **The prime suspect is already removed** — `writeRow` now strips `embedding` as well as `search_tsv` (commit `63df737`, audit H1). That does **not** close J-16: it removes the suspect, it doesn't prove the cause. Still needed: K-b's dump. If dead-letters exist, make them LOUD (a "Needs a look" surface, punch 4's sibling) instead of silent. If the dump is empty, escalate — do not guess.
+- **B2** (needs **K-h**) — `isToday` buckets days in **device-local** time in a file whose header declares Cairo and which defines a correct `cairoDay()` twenty lines below it, unused. The same broken body is copied to `TodayPage.tsx:70` and `TasksPage.tsx:38`, and `localDateKey` (`routines/streaks.ts:4`) shares the flaw — that one buckets **every smart list**. On any non-Cairo laptop, "Today" and "Overdue" are off by a day near midnight while the timestamps beside them disagree. Fix: export `cairoDay()`, call it from all four. Also: `lib/settings.ts:12` stores a user `timezone` nothing reads.
 - **J-10:** Today's empty gate waits for `isLoading === false` (same class as the OnboardingGate fix). Also profile the slow first paint (he felt it) — likely the eager query fan-out; cheap wins only, no perf project.
 - **J-8:** task title click (and row double-click) opens the editor — mouse parity with Enter.
 - **J-18:** surface the dedupe assistant from Tasks when clusters exist ("N repeating duplicates — tidy them →" linking to `/settings/import`).
@@ -95,6 +117,7 @@ Deploy after each wave (push to master). Kai re-runs the failed Judge lines + co
 
 | You're running | Load these skills first | Why |
 |---|---|---|
+| FIX-0 security | `supabase` + `/ponytail`, then **`security-review`** | Edge-function auth + RLS semantics; the review gate matters most where no test runs |
 | FIX-1 floating/pointer | `/ponytail` | Plumbing; the ladder keeps the diff surgical |
 | FIX-2 calendar | `/ponytail` (+ `frontend-design` if the `+N more` UI needs taste) | Layout algorithm + spec fidelity |
 | FIX-3 trust/persistence | `/ponytail` + `supabase` | Outbox ↔ PostgREST semantics is exactly what the supabase skill knows |
@@ -107,10 +130,27 @@ Deploy after each wave (push to master). Kai re-runs the failed Judge lines + co
 
 **If I dispatch instead of you:** same mapping, minus the slash-invocations — my workers get the skill content folded into their briefs, and `/code-review` stays my merge gate either way.
 
-## Suggested order (with Aug 15 unchanged)
+## Suggested order (with Aug 15 unchanged) — **one sequence, both registers**
 
-1. **Today:** K-a…K-e (five minutes of rulings + one console paste) → FIX-1 dispatch.
-2. K-c same day if possible → FIX-4 + FIX-5 become unblocked.
-3. FIX-2 + FIX-3 in parallel with FIX-1's review.
-4. FIX-6 after, FIX-7 design in parallel any time (it's Kai-driven).
-5. Rolling deploys; judging session 4 on whatever's landed.
+**Two weeks left as of 2026-08-01. The ordering rule: nothing that makes the app *nicer* outranks anything that makes it *safe to be public*.**
+
+0. ✅ **Landed 2026-08-01** (`63df737`, branch `fix/audit-ungated-2026-08-01`): B1 crash, S7 outbox-on-sign-out, H1 embedding strip, `npm audit fix` + `date-fns` dropped. tsc + 203 tests + build green. Needed no rulings.
+1. **Today, ~10 minutes of Kai:** K-c (`supabase db push`) first — it is simultaneously the judging blocker and the audit's #1. Then K-a, K-b's console paste, K-d, K-e. K-f/K-g/K-h can follow within the week.
+2. **FIX-0** the moment K-c lands. This is the gate on shipping publicly at all; it is also the only wave with no test safety net, so it wants the most care and a live verification with a second account.
+3. **FIX-1** (biggest UX win: six findings, two root causes) — dispatch as soon as K-a is ruled; it does not wait on FIX-0.
+4. **FIX-4 + FIX-5** unblocked by the same K-c. FIX-2 + FIX-3 in parallel with FIX-1's review.
+5. **FIX-6** after. **FIX-7** design half runs any time (Kai-driven); if the mocks aren't approved by ~Aug 8 the native pickers ship and J-25 moves to v2.
+6. **Group C cleanups** (audit D1–D4, dead code) — deliberately **last**, after the next live re-judge. D2 alone deletes 13 duplicate `useIsMobile` definitions and silences the last 2 oxlint errors; D1 gives bulk delete undo on three surfaces where it currently has none (**needs K-6/D1 ruling — that asymmetry is itself the bug**).
+7. Rolling deploys; judging session 4 on whatever's landed.
+
+> **Standing caveat inherited from the audit:** the 203 tests are pure-function unit tests. Zero touch RLS, SQL, edge functions, auth, or component integration. No FIX-0 change can be called "functionally equivalent" on a green run.
+
+## Deferred with a reason (not forgotten)
+
+| Item | Why it's not in a wave |
+|---|---|
+| **H2** pagination | ~25 list queries have no `.limit()`; PostgREST's `max_rows = 1000` makes them *silently truncate*. At 655 tasks you're under it. **After v1.0** — but it fails quietly when you cross it, so it is a real clock. |
+| **D5** `ParseResultSchema` duplicated across the trust boundary | 12 lines with a "keep in sync" comment. Machinery costs more than the copy. Add one test importing both. |
+| `@fullcalendar` 6→7, `typescript` 6→7 | Major bumps. Calendar is the most bug-prone surface; **not before v1.0.** |
+| **The Today badge drift** | `AppLayout.tsx:119` counts *top-3 OR scheduled today OR due ≤ today*; `TodayPage.tsx:157` renders every open non-someday task capped at 50. `grouping.ts:39` documents the invariant this violates. **A product decision, not a refactor** — either Today renders the filtered list, or the badge stops claiming to count what Today shows. |
+| **H4** 343MB `.claude/worktrees/` | Two stale July-26 *copies* (not real git worktrees — no `.git` file, byte-identical to HEAD). Safe to delete; disk only. |
