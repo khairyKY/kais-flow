@@ -183,6 +183,7 @@ export function ProjectDetailPage() {
   // BulkBar, right-click ContextMenu, schedule/snooze — by rendering the SAME TaskRow and the same
   // shared overlays. No fork: every action below is the tasks feature's own mutation, looped.
   // Hoisted above the project/area early returns (E7 — hooks must not sit inside a branch).
+  const [milestoneBloom, setMilestoneBloom] = useState(0)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
@@ -333,7 +334,6 @@ export function ProjectDetailPage() {
     navigate(`/projects/${newProj.id}`)
   }
 
-  const [milestoneBloom, setMilestoneBloom] = useState(0)
   const handleToggleMilestone = (milestoneId: string) => {
     if (!project || !project.milestones) return
     const m = project.milestones.find((x) => x.id === milestoneId)

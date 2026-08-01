@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
+import { OUTBOX_KEY, DEAD_KEY } from '../../lib/outbox'
 
 interface AuthContextValue {
   session: Session | null
@@ -27,9 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // account. Without this, the next account to sign in on this browser hydrates the previous
       // account's rows — including a stale `app_settings.onboarded_at` that routes a brand-new
       // account straight past onboarding. Clearing on sign-out keeps the stranger flow honest.
+      // The outbox is the same story one drawer over: pending and dead-lettered rows carry the
+      // previous account's full row payloads and survive sign-out on a shared device (audit S7).
       if (event === 'SIGNED_OUT') {
         queryClient.clear()
         void del('kais-flow-query-cache')
+        void del(OUTBOX_KEY)
+        void del(DEAD_KEY)
       }
     })
 

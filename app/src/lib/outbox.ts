@@ -4,10 +4,10 @@ import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { useToastStore } from './toastStore'
 
-const OUTBOX_KEY = 'kf-outbox'
+export const OUTBOX_KEY = 'kf-outbox'
 /** Rows the server permanently rejected. Kept (not silently dropped) so a failure is
  * inspectable, but out of the live queue so it can't block anything behind it. */
-const DEAD_KEY = 'kf-outbox-dead'
+export const DEAD_KEY = 'kf-outbox-dead'
 
 export interface OutboxEntry {
   id: string
@@ -183,7 +183,14 @@ export function writeRow<T extends { id: string }>(
   // comes back on every `select('*')`, and this app's whole write pattern is "spread a fetched
   // row, change a field, upsert the full object" — so it must never be sent back, or Postgres
   // 400s on every write to those tables ("cannot insert/update a generated column").
-  const { search_tsv: _searchTsv, ...payload } = row as unknown as Record<string, unknown>
+  // `embedding` (P5, `vector(384)`) rides along for the same reason: `select('*')` returns it,
+  // no client code reads or declares it, and the embed pipeline is the only thing allowed to
+  // write it — so echoing 384 floats back on every task/inbox edit is pure waste at best and a
+  // rejected write at worst. Server owns it; strip it. (Audit H1 / lead on J-16.)
+  const { search_tsv: _searchTsv, embedding: _embedding, ...payload } = row as unknown as Record<
+    string,
+    unknown
+  >
   void enqueue({
     id: row.id,
     table,

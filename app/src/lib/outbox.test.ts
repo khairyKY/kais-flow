@@ -188,6 +188,21 @@ describe('outbox', () => {
     })
   })
 
+  it('strips server-owned columns from the payload it sends', async () => {
+    // `search_tsv` is a generated column (Postgres 400s if you echo it back); `embedding` is
+    // written only by the embed pipeline. Both arrive via `select('*')` and would otherwise
+    // ride the read-modify-write pattern straight back to the server. (Audit H1.)
+    upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep the item queued
+    const { writeRow } = await import('./outbox')
+    writeRow('tasks', { id: 't-strip', title: 'keep me', search_tsv: 'xyz', embedding: [0.1, 0.2] })
+    await flushMicrotasks()
+    const queue = store.get('kf-outbox') as { id: string; payload: Record<string, unknown> }[]
+    const entry = queue.find((e) => e.id === 't-strip')!
+    expect(entry.payload.title).toBe('keep me')
+    expect(entry.payload).not.toHaveProperty('search_tsv')
+    expect(entry.payload).not.toHaveProperty('embedding')
+  })
+
   it('replaces a queued write for the same row instead of stacking duplicates', async () => {
     upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep items queued
     const { writeRow } = await import('./outbox')
