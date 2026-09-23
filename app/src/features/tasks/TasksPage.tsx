@@ -590,7 +590,7 @@ export function TasksPage() {
         }
       `}</style>
       <div className={singleCol ? undefined : 'tasks-grid'} style={{ display: singleCol ? 'block' : undefined, maxWidth: singleCol ? 780 : undefined }}>
-        <div style={{ minWidth: 0, maxWidth: 780 }}>
+        <div className="kf-bulk-anchor" style={{ minWidth: 0, maxWidth: 780 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />

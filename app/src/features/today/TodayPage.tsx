@@ -422,7 +422,7 @@ export function TodayPage() {
       {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 264px', gap: isMobile ? 30 : 44, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 26 : 34 }}>
+        <div className="kf-bulk-anchor" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 26 : 34 }}>
           {upcomingBirthdays.map(({ person, days }) => {
             const text = days === 0 
               ? `${person.name}'s birthday is today!` 

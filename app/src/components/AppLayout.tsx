@@ -649,10 +649,14 @@ export function AppLayout() {
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 
-        /* J-5/J-2 — bulk bars sit bottom-centre of the CONTENT column (window centre + half the
-           sidebar: 242 → 121, collapsed 64 → 32), and clear the phone tab bar like the toast. */
-        .kf-bulkbar { left: calc(50% + 121px); bottom: 16px; }
-        .app-sidebar.collapsed ~ main .kf-bulkbar { left: calc(50% + 32px); }
+        /* J-5/J-2 — bulk bars sit bottom-centre of the LIST they act on: a page marks its list
+           column .kf-bulk-anchor and CSS anchor positioning centres the bar on it (so Tasks'
+           Organize rail / Today's side column don't pull it right). Unmarked pages, and browsers
+           without anchor(), fall back to the content-area centre (window centre + half the
+           sidebar: 242 → 121, collapsed 64 → 32). Clears the phone tab bar like the toast. */
+        .kf-bulk-anchor { anchor-name: --kf-bulk; }
+        .kf-bulkbar { left: calc(50% + 121px); left: anchor(--kf-bulk center, calc(50% + 121px)); bottom: 16px; }
+        .app-sidebar.collapsed ~ main .kf-bulkbar { left: calc(50% + 32px); left: anchor(--kf-bulk center, calc(50% + 32px)); }
         @media (max-width: 767px) {
           /* The bar is ~540px of actions — wider than any phone, so both ends (Delete, ✕) used to
              clip off-screen. Cap it to the screen and let it scroll sideways. */

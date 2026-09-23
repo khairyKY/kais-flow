@@ -536,7 +536,7 @@ export function ProjectDetailPage() {
             <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 22, opacity: 0.45 }} title="p100" />
           </div>
 
-          <div style={{ flex: 1, minWidth: 0, padding: '30px 36px 36px' }}>
+          <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: '30px 36px 36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <BackLink to="/projects">All projects</BackLink>
               <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
