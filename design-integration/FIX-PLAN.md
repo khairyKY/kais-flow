@@ -7,6 +7,19 @@
 
 ---
 
+## ➤ Status 2026-09-24 — resumed; Phase 0 ruled; FIX-1 shipped + live
+
+Kai delegated the rulings ("you answer them and review — smoothest UX"):
+- **K-a → neither A nor B.** J-5's premise was wrong — root `zoom` does **not** break `position: fixed` (a probe held through a 1500px scroll at 1.25, Chromium 152). Real causes: a finished `fill-mode: both` entry animation ending at `transform: none` still computes to `matrix(1,0,0,1,0,0)` (`.kf-route` after any client nav, every `.kf-stagger-item`), and `.kf-lift:hover`'s `translateY(-1px)` on task rows whose menus render inside them. Fixes: fill `backwards`; `components/Float.tsx` portal for the shared popovers. Rem-scaling (old path A) is no longer needed for correctness.
+- **K-d → menu-only** (Today's 07-21 pattern): right-click never selects; Ctrl/Cmd+click + a Select menu item select.
+- **K-e →** J-24 closed (export 2a = "each card a growing wisteria"; code matches). J-14 + J-23 move to FIX-8's re-judge.
+- **K-f yes · K-g exclude** journal/people/interactions/notes/push_subscriptions from the persister · **K-h yes.**
+- **Still Kai-physical:** K-b (DevTools dump), K-c (`npm i -g supabase` → `supabase login` → `db push`; the CLI isn't installed on this machine), K-i (dashboard auth settings).
+
+**FIX-1 done** — `cc02216`, `26462fd`, `941a59a`, `2567b88`; live-verified on Kai's account (bar moved 0px through a 1200px scroll and centres on the content column; a bottom-edge right-click menu + its submenu fully on-screen; no bulk bar from right-click; mouse drag never swipes; phone bar above the tab bar and within the screen). Deployed (master `2567b88`). Touch swipe itself wasn't exercisable here (the pane sends mouse events) — re-judge it on the phone.
+
+**Next:** FIX-3 (trust & persistence) and FIX-0 security code (S1/S3/S5 need no gate) · FIX-2 calendar · FIX-6 visual.
+
 ## Phase 0 — decisions & inputs only Kai has (blocks everything marked ⛓)
 
 | # | What | Why it blocks |
