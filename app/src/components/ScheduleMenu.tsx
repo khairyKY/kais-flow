@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../lib/dateShortcuts'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
+import { Float } from './Float'
 
 export interface ScheduleMenuProps {
   position: { x: number; y: number }
@@ -77,6 +78,7 @@ export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleM
   // ── Overlays.dc.html §03 "Snooze / schedule sheet" — same chrome, the schedule verb. ──
   if (isMobile) {
     return (
+      <Float>
       <BottomSheet onClose={onClose}>
         {(close) => (
           <>
@@ -106,10 +108,12 @@ export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleM
           </>
         )}
       </BottomSheet>
+      </Float>
     )
   }
 
   return (
+    <Float>
     <div
       ref={ref}
       role="menu"
@@ -163,5 +167,6 @@ export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleM
         />
       </div>
     </div>
+    </Float>
   )
 }

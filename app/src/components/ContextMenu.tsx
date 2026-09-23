@@ -1,6 +1,7 @@
 import { uiZoom } from '../lib/uiScale'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
+import { Float } from './Float'
 
 export interface ContextMenuItem {
   label: string
@@ -86,27 +87,39 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
     return { x: flip ? Math.max(8 * z, rect.left - SUBMENU_WIDTH * z) : rect.right, y: rect.top }
   }
 
-  const itemHeight = 34
-  const maxY = window.innerHeight / z - 12
-  const left = Math.min(position.x / z, window.innerWidth / z - 220)
-  const top = Math.min(position.y / z, maxY - items.length * itemHeight)
+  // J-6: clamp to the viewport from the menu's real painted size, not an item-height guess —
+  // separators and hint rows made the guess short, and the bottom rows (Delete) got clipped.
+  // Layout effect = measured and nudged before first paint, so it never visibly jumps.
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [nudge, setNudge] = useState({ x: 0, y: 0 })
+  useLayoutEffect(() => {
+    const r = menuRef.current?.getBoundingClientRect()
+    if (!r) return
+    const zoom = uiZoom()
+    setNudge({
+      x: Math.max(0, r.right - (window.innerWidth - 8 * zoom)) / zoom,
+      y: Math.max(0, r.bottom - (window.innerHeight - 12 * zoom)) / zoom,
+    })
+  }, [])
 
   const openItem = openIndex !== null ? items[openIndex] : null
 
   return (
-    // Plain wrapper (no transform of its own) so the submenu's `position: fixed` popover anchors to
-    // the viewport, not to this menu's box — a `transform` on any ancestor turns it into the
-    // containing block for fixed descendants (same class of bug Select.tsx's portal works around).
+    <Float>
+    {/* Plain wrapper (no transform of its own) so the submenu's `position: fixed` popover anchors to
+        the viewport, not to this menu's box — a `transform` on any ancestor turns it into the
+        containing block for fixed descendants. */}
     <div ref={ref}>
       {/* kf-fade (opacity only) — kfOverlayIn's transform would make this menu the
           containing block for its fixed submenu while animating. */}
       <div
+        ref={menuRef}
         role="menu"
         className="kf-fade"
         style={{
           position: 'fixed',
-          top: Math.max(12, top),
-          left: Math.max(8, left),
+          top: Math.max(12, position.y / z - nudge.y),
+          left: Math.max(8, position.x / z - nudge.x),
           zIndex: 1000,
           background: 'var(--paper-parchment)',
           border: '1px solid var(--line-card)',
@@ -164,11 +177,17 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
           </div>
         ))}
       </div>
-      {openItem?.submenu?.({
-        position: submenuPosition(openIndex as number),
-        onClose: () => setOpenIndex(null),
-        closeAll,
-      })}
+      {openItem?.submenu && (
+        // Keyed so hopping Repeat → Remind remounts the child menu and it re-measures its clamp.
+        <Fragment key={openIndex}>
+          {openItem.submenu({
+            position: submenuPosition(openIndex as number),
+            onClose: () => setOpenIndex(null),
+            closeAll,
+          })}
+        </Fragment>
+      )}
     </div>
+    </Float>
   )
 }

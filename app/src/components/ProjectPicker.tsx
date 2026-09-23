@@ -2,6 +2,7 @@ import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { EmojiText } from './EmojiText'
+import { Float } from './Float'
 import type { Domain, Project } from '../lib/types'
 
 export interface ProjectPickerProps {
@@ -65,6 +66,7 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
   }
 
   return (
+    <Float>
     <div
       ref={ref}
       role="menu"
@@ -144,5 +146,6 @@ export function ProjectPicker({ position, projects, domains, currentProjectId, o
       </button>
       </div>
     </div>
+    </Float>
   )
 }

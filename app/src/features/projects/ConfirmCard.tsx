@@ -2,6 +2,7 @@
 // parchment card, display title, muted body, Keep + terra destructive action.
 // X2 (Motion 3b): scrim+card enter together via .kf-overlay-*; exit is a cut, esc obeys.
 import { useEscapeStack } from '../../lib/overlayStack'
+import { Float } from '../../components/Float'
 import './xfx.css'
 
 export function ConfirmCard({
@@ -21,6 +22,7 @@ export function ConfirmCard({
 }) {
   useEscapeStack(true, onCancel)
   return (
+    <Float>
     <div
       onClick={onCancel}
       className="kf-overlay-scrim"
@@ -49,5 +51,6 @@ export function ConfirmCard({
         </div>
       </div>
     </div>
+    </Float>
   )
 }

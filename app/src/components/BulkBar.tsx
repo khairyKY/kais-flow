@@ -35,12 +35,12 @@ export function BulkBar({ count, onComplete, onSnooze, onSchedule, onMoveToProje
   return (
     <div
       role="toolbar"
+      // left/bottom live in .kf-bulkbar (AppLayout) — centred on the content column, above the phone tab bar.
+      className="kf-bulkbar"
       // deviation(punch 15/26, 2026-07-26): export tilts the bar rotate(-0.4deg); dropped — the
       // sub-degree transform blurred the 10px mono labels (see QuickCreate's 07-18 deviation).
       style={{
         position: 'fixed',
-        left: '50%',
-        bottom: 16,
         transform: 'translateX(-50%)',
         zIndex: 900,
         display: 'inline-flex',

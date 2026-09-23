@@ -2,6 +2,7 @@ import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
+import { Float } from './Float'
 
 export interface SnoozeMenuProps {
   position: { x: number; y: number }
@@ -99,6 +100,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
   // ── Overlays.dc.html §03 "Snooze / schedule sheet" ──
   if (isMobile) {
     return (
+      <Float>
       <BottomSheet onClose={onClose}>
         {(close) => (
           <>
@@ -141,10 +143,12 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
           </>
         )}
       </BottomSheet>
+      </Float>
     )
   }
 
   return (
+    <Float>
     <div
       ref={ref}
       role="menu"
@@ -211,5 +215,6 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
         />
       </div>
     </div>
+    </Float>
   )
 }

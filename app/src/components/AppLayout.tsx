@@ -649,6 +649,14 @@ export function AppLayout() {
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 
+        /* J-5/J-2 — bulk bars sit bottom-centre of the CONTENT column (window centre + half the
+           sidebar: 242 → 121, collapsed 64 → 32), and clear the phone tab bar like the toast. */
+        .kf-bulkbar { left: calc(50% + 121px); bottom: 16px; }
+        .app-sidebar.collapsed ~ main .kf-bulkbar { left: calc(50% + 32px); }
+        @media (max-width: 767px) {
+          .kf-bulkbar, .app-sidebar.collapsed ~ main .kf-bulkbar { left: 50%; bottom: calc(74px + env(safe-area-inset-bottom)); }
+        }
+
         /* X5 States 2b — sync queue popover; bottom sheet on mobile. */
         .kf-sync-pop { position: absolute; top: 38px; left: 40px; z-index: 200; width: 300px; }
         @media (max-width: 767px) {
