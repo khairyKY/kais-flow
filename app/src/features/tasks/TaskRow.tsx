@@ -96,7 +96,7 @@ export interface TaskRowProps {
   onToggleSelect?: () => void
   /** When 2+ tasks are selected, the row's actions menu acts on all of them instead of just this row. */
   bulk?: BulkActions
-  /** Selection still works (right-click/⋯ selects the row, bulk actions in the menu) — this only
+  /** Selection still works (Ctrl/Cmd+click or the menu's Select, bulk actions in the menu) — this only
    * hides the visible checkbox, for surfaces (the Planning board) that select without one. */
   hideCheckbox?: boolean
   /** Dashed bottom hairline — off for the last row in a group. Default true. */
@@ -135,7 +135,11 @@ function useRowSwipe() {
       // The gesture only becomes a drag (and only captures the pointer) after ~8px of
       // horizontal travel — so plain clicks on child controls (selection checkbox,
       // complete checkbox, star) stay ordinary clicks.
+      // J-1/J-9: swipe is a touch gesture. A mouse (any button) never arms it — desktop drags
+      // and right-clicks used to swipe rows, and an escaped press left a row armed so a later
+      // plain hover dragged it (the "third row moves" report).
       onPointerDown(e: React.PointerEvent) {
+        if (e.pointerType !== 'touch' || e.button !== 0) return
         armed.current = true
         dragging.current = false
         startClientX.current = e.clientX
@@ -146,6 +150,7 @@ function useRowSwipe() {
       },
       onPointerMove(e: React.PointerEvent) {
         if (!armed.current) return
+        if ((e.buttons & 1) === 0) { settle(); return }
         const dx = e.clientX - startClientX.current
         if (!dragging.current) {
           if (Math.abs(dx) < DRAG_THRESHOLD) return
@@ -160,6 +165,8 @@ function useRowSwipe() {
       },
       onPointerUp: settle,
       onPointerCancel: settle,
+      onLostPointerCapture: settle,
+      onPointerLeave: settle,
     },
   }
 }
@@ -203,14 +210,24 @@ export function TaskRow({
   const inProgress = !done && !!task.scheduled_start
   const isGoal = task.top3 && !!goalTaskId && task.id === goalTaskId
   const justCompleted = done && !!justCompletedId && task.id === justCompletedId
-  // Right-clicking (or opening the ⋯ menu on) an unselected row selects it, so it's always clear
-  // which task(s) the menu is about to act on — an already-multi-selected row is left as-is.
+  // J-3 (K-d, 2026-09-24 — matches Today's 07-21 rows): right-click never changes the selection.
+  // The menu acts on this row, or on the whole selection when this row is part of it; the row
+  // wears the selection tint while its menu is open so the target stays obvious.
   const bulkActive = !!bulk && !!selected
 
   function openMenu(e: React.MouseEvent) {
     e.preventDefault()
-    if (!selected) onToggleSelect?.()
     setMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
+  // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks
+  // bubbling up (via the React tree) from this row's portaled menus.
+  function selectClick(e: React.MouseEvent) {
+    if (!(e.ctrlKey || e.metaKey) || !onToggleSelect || !e.currentTarget.contains(e.target as Node)) return
+    e.preventDefault()
+    e.stopPropagation()
+    onToggleSelect()
   }
 
   function handleCheck() {
@@ -360,6 +377,7 @@ export function TaskRow({
             />
           ),
         },
+        ...(onToggleSelect ? [{ label: selected ? 'Deselect' : 'Select', onClick: onToggleSelect, shortcut: '⌃click' }] : []),
         {
           label: bulkActive ? `Delete (${bulk!.count})` : 'Delete',
           danger: true,
@@ -394,7 +412,7 @@ export function TaskRow({
     padding: '13px 2px',
     borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
     boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
-    background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
+    background: selected || menu ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
     outline: 'none',
   }
 
@@ -448,6 +466,7 @@ export function TaskRow({
         className="task-row tr-someday kf-lift"
         tabIndex={highlighted ? 0 : -1}
         onContextMenu={openMenu}
+        onClickCapture={selectClick}
         style={{ ...rowStyle, alignItems: 'center', padding: '12px 10px', margin: '0 -10px' }}
       >
         <Checkbox checked={false} size={18} onChange={handleCheck} />
@@ -493,6 +512,7 @@ export function TaskRow({
       className={`task-row kf-lift${checking ? ' tr-checking' : ''}`}
       tabIndex={highlighted ? 0 : -1}
       onContextMenu={openMenu}
+      onClickCapture={selectClick}
       style={{ ...rowStyle, overflow: 'hidden' }}
     >
       {swipe.x !== 0 && (

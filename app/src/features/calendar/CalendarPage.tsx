@@ -309,6 +309,7 @@ export function CalendarPage() {
   }, [railWidth])
 
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
     const startX = e.clientX
     const startW = railWidth
