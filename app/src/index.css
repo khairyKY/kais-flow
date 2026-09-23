@@ -20,13 +20,13 @@ body,
 
 /* Route transition wrapper — Motion 2a route cut (D-4 ruling, 2026-07-26): the incoming
    page rises 6px over 160ms on every client-side route change; [data-initial] suppresses
-   it (and the stagger) on cold boot. The keyframe ends at transform:none so fixed-position
-   popovers aren't containing-block-trapped after landing. Definite height (not auto) so
-   height-bounded pages (calendar) inherit a real viewport-relative size. */
+   it (and the stagger) on cold boot. Fill is `backwards`, never `both` — see tokens/motion.css
+   (J-5). Definite height (not auto) so height-bounded pages (calendar) inherit a real
+   viewport-relative size. */
 .kf-route {
   height: 100%;
   min-height: 0;
-  animation: routeCut 160ms var(--ease-out) both;
+  animation: routeCut 160ms var(--ease-out) backwards;
 }
 .kf-route[data-initial] {
   animation: none;
@@ -38,7 +38,7 @@ body,
 /* Entry stagger item — content settles up in source order (Motion 4b).
    Use with staggerDelay(i) from lib/motion for the per-item delay. */
 .kf-stagger-item {
-  animation: entryFadeUp 240ms var(--ease-out) both;
+  animation: entryFadeUp 240ms var(--ease-out) backwards;
 }
 
 /* Reduced-motion already neutralized globally in tokens/motion.css. */

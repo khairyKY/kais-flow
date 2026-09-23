@@ -70,10 +70,11 @@
   100% { opacity: 1; transform: none; }
 }
 
-/* Entry keyframes MUST end at `transform: none`, not translateY(0): a retained transform
-   (fill-mode both/forwards) — even an identity one — makes the element a containing block
-   for position:fixed descendants, so row-anchored popovers (ContextMenu, SnoozeMenu, …)
-   would position relative to the row instead of the viewport. A filled `none` does not. */
+/* Entry animations on anything that can hold a position:fixed descendant MUST fill
+   `backwards`, never `both`/`forwards`. Verified in Chromium 152 (J-5, 2026-09-24): a filled
+   end keyframe of `transform: none` still computes to matrix(1,0,0,1,0,0), which makes the
+   element a containing block — bulk bars scrolled with the page and row menus landed offset.
+   `backwards` keeps the hidden pre-delay state the stagger needs and releases on finish. */
 @keyframes entryFadeUp {
   0%   { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: none; }
