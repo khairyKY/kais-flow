@@ -22,7 +22,21 @@ import './index.css'
 // surfaces that import no CSS at all (kit chips, task rows, calendar), so it loads once here
 // instead of another six per-file imports. index.css is frozen, hence main.tsx.
 import './features/projects/xfx.css'
+import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
+
+// Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build
+// until a second reload. In autoUpdate mode this reloads the page as soon as the new version
+// takes over; queued writes survive in the outbox, a half-typed draft does not (accepted).
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, registration) {
+    // Browsers only look for a new build on navigation — also look whenever the tab comes back.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void registration?.update()
+    })
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
