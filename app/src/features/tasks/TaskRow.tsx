@@ -38,6 +38,7 @@ import {
   FolderMenuIcon,
   RepeatMenuIcon,
   ScheduleMenuIcon,
+  SelectMenuIcon,
   TrashMenuIcon,
   UndoMenuIcon,
 } from '../../components/icons/MenuIcons'
@@ -377,7 +378,7 @@ export function TaskRow({
             />
           ),
         },
-        ...(onToggleSelect ? [{ label: selected ? 'Deselect' : 'Select', onClick: onToggleSelect, shortcut: '⌃click' }] : []),
+        ...(onToggleSelect ? [{ label: selected ? 'Deselect' : 'Select', icon: <SelectMenuIcon />, onClick: onToggleSelect, shortcut: '⌃click' }] : []),
         {
           label: bulkActive ? `Delete (${bulk!.count})` : 'Delete',
           danger: true,

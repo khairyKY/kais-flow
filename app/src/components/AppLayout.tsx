@@ -654,7 +654,9 @@ export function AppLayout() {
         .kf-bulkbar { left: calc(50% + 121px); bottom: 16px; }
         .app-sidebar.collapsed ~ main .kf-bulkbar { left: calc(50% + 32px); }
         @media (max-width: 767px) {
-          .kf-bulkbar, .app-sidebar.collapsed ~ main .kf-bulkbar { left: 50%; bottom: calc(74px + env(safe-area-inset-bottom)); }
+          /* The bar is ~540px of actions — wider than any phone, so both ends (Delete, ✕) used to
+             clip off-screen. Cap it to the screen and let it scroll sideways. */
+          .kf-bulkbar, .app-sidebar.collapsed ~ main .kf-bulkbar { left: 50%; bottom: calc(74px + env(safe-area-inset-bottom)); max-width: calc(100% - 16px); overflow-x: auto; scrollbar-width: none; }
         }
 
         /* X5 States 2b — sync queue popover; bottom sheet on mobile. */

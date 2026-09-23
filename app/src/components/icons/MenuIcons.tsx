@@ -10,6 +10,14 @@ export function CheckMenuIcon() {
   )
 }
 
+export function SelectMenuIcon() {
+  return (
+    <svg {...base}>
+      <rect x="2.75" y="2.75" width="10.5" height="10.5" rx="2.5" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  )
+}
+
 export function UndoMenuIcon() {
   return (
     <svg {...base}>
