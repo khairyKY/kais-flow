@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-route
 import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
-import { supabase } from '../lib/supabase'
+import { signOut } from '../features/auth/AuthProvider'
 import type { OutboxEntry } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
@@ -728,7 +728,7 @@ export function AppLayout() {
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
-          {footerRow(SignOutGlyph, 'Sign out', undefined, () => void supabase.auth.signOut(), true)}
+          {footerRow(SignOutGlyph, 'Sign out', undefined, () => void signOut(), true)}
         </div>
         </div>
       </aside>
@@ -748,7 +748,7 @@ export function AppLayout() {
         pendingInbox={pendingInbox.length}
         onSearch={() => setSearchOpen(true)}
         onChat={() => setChatOpen(true)}
-        onSignOut={() => void supabase.auth.signOut()}
+        onSignOut={() => void signOut()}
       />
 
       <Suspense fallback={null}>
