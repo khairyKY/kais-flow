@@ -1,5 +1,4 @@
-import { localDateKey } from '../routines/streaks'
-import { daysUntilNextMonday } from '../../lib/dateShortcuts'
+import { cairoDateKey, daysUntilNextMonday } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
 export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all'
@@ -18,17 +17,17 @@ function dayDiff(aKey: string, bKey: string): number {
 function taskDayDiff(task: Task, now: Date): number | null {
   const iso = task.due_at ?? task.scheduled_start
   if (!iso) return null
-  return dayDiff(localDateKey(now), localDateKey(new Date(iso)))
+  return dayDiff(cairoDateKey(now), cairoDateKey(new Date(iso)))
 }
 
 function isScheduledToday(task: Task, now: Date): boolean {
-  return !!task.scheduled_start && localDateKey(new Date(task.scheduled_start)) === localDateKey(now)
+  return !!task.scheduled_start && cairoDateKey(new Date(task.scheduled_start)) === cairoDateKey(now)
 }
 
 /** Day-offset of this month's last day from today — the upper bound for the "month" list. */
 function monthEndDiff(now: Date): number {
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return dayDiff(localDateKey(now), localDateKey(end))
+  const [y, m, d] = cairoDateKey(now).split('-').map(Number)
+  return new Date(Date.UTC(y, m, 0)).getUTCDate() - d
 }
 
 /**

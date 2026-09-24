@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
-import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -69,7 +69,7 @@ function weightedMilestonePct(project: Project, tasks: Task[]): number {
 
 function isToday(iso: string | null): boolean {
   if (!iso) return false
-  return new Date(iso).toDateString() === new Date().toDateString()
+  return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
 }
 
 function cherryStage(open: number, done: number): string {
@@ -92,8 +92,10 @@ function useIsMobile(): boolean {
 }
 
 export function TodayPage() {
-  const { data: tasks = [] } = useTasks()
-  const { data: events = [] } = useCalendarEvents()
+  // J-10: `isPending` (no data yet), not `isLoading` — while the IndexedDB cache is still being
+  // restored the query is pending but not fetching, so isLoading is false and the empty states lied.
+  const { data: tasks = [], isPending: tasksPending } = useTasks()
+  const { data: events = [], isPending: eventsPending } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
@@ -157,8 +159,8 @@ export function TodayPage() {
   const allOpen = visible.filter((t) => !t.top3).sort(doneAfterOpen)
   const openCount = allOpen.filter((t) => !t.completed_at).length
   const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
-  const nothingPlanned = open.length === 0 && doneToday === 0
-  const allDone = open.length === 0 && doneToday > 0
+  const nothingPlanned = !tasksPending && open.length === 0 && doneToday === 0
+  const allDone = !tasksPending && open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
   // handwritten banner over the Top-3 section. Punch 23: the once-per-day gate lives in
@@ -483,7 +485,7 @@ export function TodayPage() {
           <section className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             <SectionLabel style={{ marginTop: isMobile ? 16 : 0, marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
-            {nothingPlanned ? (
+            {tasksPending ? null : nothingPlanned ? (
               <EmptyTodayCard onPlan={() => setCommandBarOpen(true)} />
             ) : allDone ? (
               <DoneTodayCard />
@@ -500,13 +502,13 @@ export function TodayPage() {
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
-            {todayEvents.length === 0 && <Empty line="A clear afternoon." />}
+            {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
               <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
             ))}
           </section>
 
-          {!nothingPlanned && !allDone && (
+          {!tasksPending && !nothingPlanned && !allDone && (
             <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
               <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
               {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
@@ -725,6 +727,8 @@ function useBloomCheck(task: Task) {
 function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName?: string; dot: string; compact?: boolean }) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
+  const navigate = useNavigate()
+  const openDetail = () => navigate(`/tasks/${task.id}`) // J-8
   if (compact) {
     return (
       <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
@@ -732,7 +736,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
         <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}><EmojiText text={task.title} /></div>
+          <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         </div>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
@@ -744,7 +748,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
       <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
+        <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
       <div style={{ textAlign: 'center', flex: 'none' }}>
@@ -821,7 +825,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         {menuNode}
         {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
+          <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null || dueBadges) && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {(projectName || task.duration_min != null) && (
@@ -844,7 +848,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
       {menuNode}
       {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}><EmojiText text={task.title} /></div>
+        <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
       {!done && (

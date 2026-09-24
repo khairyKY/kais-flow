@@ -1,6 +1,8 @@
 // Pure display helpers for InboxPage — colocated + unit-tested, same convention as
 // tasks/taskDisplay.ts. TZ Africa/Cairo per house convention (store UTC, render Cairo).
 
+import { cairoDateKey } from '../../lib/dateShortcuts'
+
 const TZ = 'Africa/Cairo'
 
 const NUMBER_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -12,7 +14,7 @@ export function countWord(n: number): string {
 }
 
 export function isToday(iso: string): boolean {
-  return new Date(iso).toDateString() === new Date().toDateString()
+  return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
 }
 
 export function formatCaptured(iso: string): string {
@@ -31,16 +33,12 @@ export function formatDue(iso: string): string {
   return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ })
 }
 
-function cairoDay(d: Date): string {
-  return d.toLocaleDateString('en-CA', { timeZone: TZ }) // YYYY-MM-DD, sortable + comparable
-}
-
 /** Day-only label for the filing toast (punch 7): "Today" / "Tomorrow" / "Wed, Aug 5".
  * `now` is injectable so the day boundary is testable without faking the clock. */
 export function dayWord(iso: string, now: Date = new Date()): string {
-  const day = cairoDay(new Date(iso))
-  if (day === cairoDay(now)) return 'Today'
-  if (day === cairoDay(new Date(now.getTime() + 86_400_000))) return 'Tomorrow'
+  const day = cairoDateKey(new Date(iso))
+  if (day === cairoDateKey(now)) return 'Today'
+  if (day === cairoDateKey(new Date(now.getTime() + 86_400_000))) return 'Tomorrow'
   return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ })
 }
 

@@ -1,3 +1,13 @@
+// B2 (audit 2026-08-01, Kai ruled yes 2026-09-24): the app's one day boundary is Cairo's,
+// not the device's — "Today"/"Overdue" used device-local days while every date beside them
+// rendered in Cairo. One cached formatter: grouping calls this thousands of times a render.
+const cairoDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' })
+
+/** YYYY-MM-DD of the Cairo calendar day `d` falls on. */
+export function cairoDateKey(d: Date): string {
+  return cairoDay.format(d)
+}
+
 function atHour(base: Date, hour: number): Date {
   const d = new Date(base)
   d.setHours(hour, 0, 0, 0)

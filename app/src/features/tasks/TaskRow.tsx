@@ -231,6 +231,13 @@ export function TaskRow({
     onToggleSelect()
   }
 
+  // J-8: the mouse path to task detail (Enter was the only way). A row swiped open on a phone
+  // closes on a title tap instead of navigating out from under the user.
+  function openDetail() {
+    if (swipe.x !== 0) swipe.reset()
+    else navigate(`/tasks/${task.id}`)
+  }
+
   function handleCheck() {
     setChecking(true)
     onComplete(task)
@@ -433,7 +440,7 @@ export function TaskRow({
         >
           ✓
         </span>
-        <span style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}><EmojiText text={task.title} /></span>
+        <span onClick={openDetail} style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through', cursor: 'pointer' }}><EmojiText text={task.title} /></span>
         {justCompleted ? (
           // deviation(2026-07-19 X3): hand notes ride --ink-muted so night matches Night.dc (#c9c0d8)
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>just now ✿</span>
@@ -472,7 +479,7 @@ export function TaskRow({
       >
         <Checkbox checked={false} size={18} onChange={handleCheck} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></div>
+          <div onClick={openDetail} style={{ fontSize: 15, color: 'var(--ink-body)', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {tag && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
@@ -565,7 +572,7 @@ export function TaskRow({
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className={checking ? 'tr-title-strike' : undefined} style={{ fontSize: 15.5, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></span>
+            <span onClick={openDetail} className={checking ? 'tr-title-strike' : undefined} style={{ fontSize: 15.5, color: 'var(--ink-body)', cursor: 'pointer' }}><EmojiText text={task.title} /></span>
             {inProgress && <img src={`${A}/cherry/opening.png`} alt="in progress" style={{ height: 19, filter: 'var(--shadow-drop-sm)' }} />}
           </div>
           <div style={metaStyle}>

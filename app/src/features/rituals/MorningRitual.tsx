@@ -8,6 +8,7 @@ import { localToIso } from '../calendar/eventTime'
 import { localDateKey } from '../routines/streaks'
 import { logRitualStep } from './api'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import type { Task } from '../../lib/types'
 
@@ -374,7 +375,7 @@ function BlockStep() {
   )
 
   const todayEvents = events
-    .filter((e) => !e.all_day && new Date(e.starts_at).toDateString() === new Date().toDateString())
+    .filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === cairoDateKey(new Date()))
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
   const plantedToday = todayEvents.filter((e) => e.task_id)
   const totalMin = todayEvents.reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)

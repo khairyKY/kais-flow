@@ -18,13 +18,14 @@ import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
 // ── Tasks — pixel contract: Tasks.dc.html 1a (desktop list + rail), 1b (iPhone + filter
@@ -37,7 +38,7 @@ const A = '/ds/assets'
 
 function isToday(iso: string | null): boolean {
   if (!iso) return false
-  return new Date(iso).toDateString() === new Date().toDateString()
+  return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
 }
 
 function daysSince(iso: string): number {
@@ -372,6 +373,9 @@ export function TasksPage() {
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
+  // J-18: an import that exploded a repeating task into copies buried Kai's real tasks for weeks;
+  // the tidy tool existed but lived three clicks deep in Settings. Point at it when it's needed.
+  const dupeClusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
   const [title, setTitle] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -611,6 +615,14 @@ export function TasksPage() {
 
         <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
+        {dupeClusters.length > 0 && (
+          <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
+            {dupeClusters.length === 1
+              ? `"${dupeClusters[0].title}" is here ${dupeClusters[0].tasks.length} times`
+              : `${dupeClusters.length} tasks are repeated as copies`}{' '}
+            — tidy them →
+          </Link>
+        )}
         {/* R4-12 (2026-07-20 audit): "there should be a reschedule button that lets me replan
             the tasks that I missed" — one click pulls every overdue task onto today. */}
         {isOverdue && overdueCount > 0 && (
