@@ -155,7 +155,21 @@ export function ProjectsPage() {
 
   // Effects 1e bloom glow — never on more than one plant at once.
   const bloomId = activeProjects.find((p) => projectStats[p.id]?.pct === 100)?.id ?? null
-  const isSlippingProject = (pid: string) => slippingList.some((s) => s.entity_type === 'project' && s.entity_id === pid)
+  const slippingProject = (pid: string) => slippingList.find((s) => s.entity_type === 'project' && s.entity_id === pid)
+  const isSlippingProject = (pid: string) => !!slippingProject(pid)
+  // J-19: the area rows' slipping chip, now shared with project rows (the list used to flag a
+  // slipping area but not a slipping project — only the board knew). Desktop carries the days
+  // like the export's `slipping · 21d`; the phone branch keeps its shorter `slipping`.
+  const slippingChip = (days: number) => (
+    <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
+      slipping · {Math.floor(days)}d
+    </span>
+  )
+  const mobileSlippingChip = (
+    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+      slipping
+    </span>
+  )
 
   const isEmpty = allProjects.length === 0 && areas.length === 0
 
@@ -233,8 +247,10 @@ export function ProjectsPage() {
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
+                    {/* J-19: on the meta line, not beside the name — the title row has no room at 390px. */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones
+                      {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
@@ -267,8 +283,9 @@ export function ProjectsPage() {
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.monthHours}h this month
+                      {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
@@ -297,9 +314,7 @@ export function ProjectsPage() {
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                 <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
                 {isSlipping ? (
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                    slipping
-                  </span>
+                  mobileSlippingChip
                 ) : (
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>
                     {count} open
@@ -427,6 +442,7 @@ export function ProjectsPage() {
             </SectionLabel>
             {listActive.map((p, i) => {
               const stat = projectStats[p.id] ?? EMPTY_STAT
+              const slip = slippingProject(p.id)
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -440,6 +456,7 @@ export function ProjectsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      {slip && slippingChip(slip.days_since)}
                     </div>
                     {/* Contract sub-line is the domain ("Freelance" / "Personal"); engagement model is the fallback. */}
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
@@ -459,6 +476,7 @@ export function ProjectsPage() {
             </SectionLabel>
             {listRetainers.map((p, i) => {
               const stat = projectStats[p.id] ?? EMPTY_STAT
+              const slip = slippingProject(p.id)
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -472,6 +490,7 @@ export function ProjectsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      {slip && slippingChip(slip.days_since)}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
                   </div>
@@ -508,9 +527,7 @@ export function ProjectsPage() {
                     {domain && <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain.name}</span>}
                   </div>
                   {slippingItem ? (
-                    <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
-                      slipping · {Math.floor(slippingItem.days_since)}d
-                    </span>
+                    slippingChip(slippingItem.days_since)
                   ) : (
                     <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>area</span>
                   )}
