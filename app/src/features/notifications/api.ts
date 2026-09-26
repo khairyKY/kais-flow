@@ -86,6 +86,29 @@ export async function unsubscribeThisDevice(): Promise<void> {
   if (row) writeRow('push_subscriptions', row, 'delete')
 }
 
+/** Resolves to `undefined` if `p` hasn't settled within `ms` (or rejects). */
+function within<T>(p: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([p.catch(() => undefined), new Promise<undefined>((r) => setTimeout(r, ms))])
+}
+
+/** Sign-out: this device stops receiving the account's notifications. Deletes this device's
+ * `push_subscriptions` row by endpoint — directly, not through the outbox, because sign-out
+ * clears the outbox and ends the session right after — then drops the browser subscription.
+ * Best-effort: never throws, and every step is time-boxed so it can't hold sign-out up
+ * (`serviceWorker.ready` never settles without a service worker, e.g. on the dev server). */
+export async function dropThisDevicePush(ms = 2000): Promise<void> {
+  try {
+    if (!isPushSupported()) return
+    const registration = await within(navigator.serviceWorker.ready, ms)
+    const subscription = registration && (await within(registration.pushManager.getSubscription(), ms))
+    if (!subscription) return
+    await within(Promise.resolve(supabase.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint)), ms)
+    await within(subscription.unsubscribe(), ms)
+  } catch {
+    /* best effort — sign-out goes ahead regardless */
+  }
+}
+
 export async function sendTestNotification(): Promise<{ sent: number; pruned: number }> {
   const { data, error } = await supabase.functions.invoke('notify', { body: { kind: 'test' } })
   if (error) throw error
