@@ -1,5 +1,5 @@
 import { useEscapeStack } from '../../lib/overlayStack'
-import { computeGraceStreak, computeTrellisDays, type TrellisDay } from './streaks'
+import { computeGraceStreak, computeTrellisDays, routineStartKey, type TrellisDay } from './streaks'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
@@ -34,8 +34,10 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
   useEscapeStack(true, onClose)
 
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-  const { current, rainedDates } = computeGraceStreak(dates, routine.cadence)
-  const days = computeTrellisDays(dates, routine.cadence, DAYS)
+  // Polish B: days before the routine was planted are 'off', never rain or a break.
+  const since = routineStartKey(routine.created_at, dates)
+  const { current, rainedDates } = computeGraceStreak(dates, routine.cadence, new Date(), since)
+  const days = computeTrellisDays(dates, routine.cadence, DAYS, new Date(), since)
 
   const lastRain = [...days].reverse().find((d) => d.state === 'rained')
   const lastBreak = [...days].reverse().find((d) => d.state === 'broke')
