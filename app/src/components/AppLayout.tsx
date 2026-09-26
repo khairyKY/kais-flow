@@ -54,9 +54,13 @@ type NavItem = {
 // Punch 58 (Kai's V1 ruling): rail icons ALL simple — Inbox/Projects/Routines/
 // Focus/Review swap their species PNG renders for line glyphs (icons/NavGlyphs.tsx).
 // Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
+// Loop B (docs/DAILY-CYCLE.md, 2026-09-26): Tend reads in the daily loop's order — capture lands in
+// Inbox, the day is planned onto the Calendar, then the lists behind it: Today · Inbox · Calendar ·
+// Tasks · Projects. Only the order changed; each row's icon, dot and tape are its own.
 const TEND: NavItem[] = [
   { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" />, tape: 'color-mix(in srgb, var(--acc-sage) 40%, transparent)' },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'color-mix(in srgb, var(--acc-hydrangea) 55%, transparent)' },
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
   // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
@@ -64,7 +68,6 @@ const TEND: NavItem[] = [
   // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
   // Tasks was the odd one out.
   { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" />, tape: 'color-mix(in srgb, var(--acc-blossom) 45%, transparent)' },
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
   { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
 ]
 
