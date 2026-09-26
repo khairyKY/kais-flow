@@ -168,23 +168,27 @@ export function todayTally(routines: Routine[], completions: RoutineCompletion[]
   return { due: dueToday.length, done, remaining: dueToday.length - done }
 }
 
-function scheduledAndDone(cadence: Cadence, completedDates: string[], days: number, today: Date): { scheduled: number; done: number } {
+function scheduledAndDone(cadence: Cadence, completedDates: string[], days: number, today: Date, since?: string): { scheduled: number; done: number } {
   const completed = new Set(completedDates)
   let scheduled = 0
   let done = 0
   for (let n = 0; n < days; n++) {
     const d = addDays(today, -n)
     if (!isScheduled(d, cadence)) continue
+    const key = localDateKey(d)
+    if (since && key < since) continue // the routine didn't exist yet — not a miss
     scheduled++
-    if (completed.has(localDateKey(d))) done++
+    if (completed.has(key)) done++
   }
   return { scheduled, done }
 }
 
 /** Percent of scheduled days actually completed in the trailing `days`-day window (today
- * inclusive). 0 when the cadence never schedules a day in that window, rather than NaN. */
-export function completionRate(completedDates: string[], cadence: Cadence, days: 7 | 30, today: Date = new Date()): number {
-  const { scheduled, done } = scheduledAndDone(cadence, completedDates, days, today)
+ * inclusive). 0 when the cadence never schedules a day in that window, rather than NaN. Pass
+ * `since` (`routineStartKey`) so days before the routine was planted don't count against it —
+ * the same rule `computeTrellisDays` draws beside it (Polish D). */
+export function completionRate(completedDates: string[], cadence: Cadence, days: 7 | 30, today: Date = new Date(), since?: string): number {
+  const { scheduled, done } = scheduledAndDone(cadence, completedDates, days, today, since)
   return scheduled === 0 ? 0 : Math.round((done / scheduled) * 100)
 }
 

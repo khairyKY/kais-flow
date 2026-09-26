@@ -151,6 +151,19 @@ describe('completionRate', () => {
     expect(completionRate([], NEVER, 7, NOW)).toBe(0)
   })
 
+  // Polish D: Weekly Review's "Routine consistency · last 30 days" row for a routine planted
+  // three days ago and tended every day since read 10% (27 pre-planting days counted as misses).
+  it('with `since`, days before the routine was planted are not counted against it', () => {
+    const tended = [dayKey(-3), dayKey(-2), dayKey(-1)]
+    const since = routineStartKey(new Date(NOW.getTime() - 3 * 86_400_000).toISOString(), tended)
+    expect(completionRate(tended, DAILY, 30, NOW)).toBe(10) // the old reading: 3 of 30
+    expect(completionRate(tended, DAILY, 30, NOW, since)).toBe(75) // 3 of 4 (today still open)
+    // …and the trellis beside it agrees: nothing before `since` reads as rain or a break.
+    const cells = computeTrellisDays(tended, DAILY, 30, NOW, since)
+    expect(cells.slice(0, 26).every((c) => c.state === 'off')).toBe(true)
+    expect(cells.slice(26).map((c) => c.state)).toEqual(['grew', 'grew', 'grew', 'off'])
+  })
+
   it('returns 100 when every scheduled day in the window was completed', () => {
     const completed = [dayKey(-6), dayKey(-5), dayKey(-4), dayKey(-3), dayKey(-2), dayKey(-1), dayKey(0)]
     expect(completionRate(completed, DAILY, 7, NOW)).toBe(100)
