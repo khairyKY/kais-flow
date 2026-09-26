@@ -61,6 +61,12 @@ describe('dayPhase — Now', () => {
   it('with nothing on the clock, the first unfinished Top 3', () => {
     expect(dayPhase(input({ morning: { done: 4, total: 4 }, firstOpenTop3: goal }))).toEqual({ phase: 'now', item: { kind: 'task', task: goal } })
   })
+  it('an event hours away yields to an open Top 3 you can work now', () => {
+    expect(dayPhase(input({ morning: { done: 4, total: 4 }, nextUp: standup, nextUpSoon: false, firstOpenTop3: goal }))).toEqual({ phase: 'now', item: { kind: 'task', task: goal } })
+  })
+  it('a far event is still Now when no Top 3 is left open', () => {
+    expect(dayPhase(input({ morning: { done: 4, total: 4 }, nextUp: standup, nextUpSoon: false }))).toEqual({ phase: 'now', item: { kind: 'event', event: standup } })
+  })
   it('with neither, an empty Now', () => {
     expect(dayPhase(input({ morning: { done: 4, total: 4 } }))).toEqual({ phase: 'now', item: null })
   })

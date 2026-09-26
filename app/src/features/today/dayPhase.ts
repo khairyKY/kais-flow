@@ -6,9 +6,12 @@
 //   evening ritual finished today                               Day closed ✿ (tomorrow's seeds)
 //   18:00 or later, or every picked Top 3 done — not shut down   Shut down the day · ~3 min
 //   not planned, before 17:00                                   Plan your day · ~5 min
-//   otherwise (planned, or 17:00–18:00 unplanned)               Now — the running/next item
+//   otherwise (planned, or 17:00–18:00 unplanned)               Now — the next move (below)
 //
 //   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later.
+//
+//   Now's item: an event that is running or starts within NOW_SOON_MIN; otherwise the first
+//   unfinished Top 3 (you can work it right now); otherwise the next event, however far off.
 //
 // Earlier rows win: a closed day stays closed; an evening (or a finished Top 3) is for shutting
 // down even if the morning was never planned. All clock rules read Cairo's wall clock, whatever
@@ -36,6 +39,8 @@ export interface DayPhaseInput<E, T> {
   top3: { picked: number; done: number }
   /** The running or next Up next item still to do (Up next order), or null. */
   nextUp: E | null
+  /** `nextUp` is running or starts within NOW_SOON_MIN. Defaults to true. */
+  nextUpSoon?: boolean
   /** The first unfinished Top 3 task, or null. */
   firstOpenTop3: T | null
   /** Which rituals the card may prompt (R4-5a pins). Both by default. */
@@ -54,6 +59,8 @@ export type DayCardState<E, T> =
 export const PLANNED_BY_TOP3_FROM = 12 * 60
 export const PLAN_UNTIL = 17 * 60
 export const SHUTDOWN_FROM = 18 * 60
+/** An event this close (minutes) outranks the Top 3 as Now's item. */
+export const NOW_SOON_MIN = 30
 
 const cairoClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 
@@ -83,11 +90,14 @@ export function dayPhase<E, T>(input: DayPhaseInput<E, T>): DayCardState<E, T> {
   const top3AllDone = input.top3.picked >= 1 && input.top3.done >= input.top3.picked
   if (prompts.evening && (minutes >= SHUTDOWN_FROM || top3AllDone)) return { phase: 'shutdown' }
   if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL) return { phase: 'plan' }
-  const item: NowItem<E, T> | null = input.nextUp
+  const soon = input.nextUp && (input.nextUpSoon ?? true)
+  const item: NowItem<E, T> | null = soon && input.nextUp
     ? { kind: 'event', event: input.nextUp }
     : input.firstOpenTop3
       ? { kind: 'task', task: input.firstOpenTop3 }
-      : null
+      : input.nextUp
+        ? { kind: 'event', event: input.nextUp }
+        : null
   return { phase: 'now', item }
 }
 

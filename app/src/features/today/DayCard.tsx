@@ -6,7 +6,7 @@ import { cairoDateKey } from '../../lib/dateShortcuts'
 import { completeTaskWithUndo } from '../tasks/api'
 import { RITUAL_STEP_COUNT, useRitualsFinishedToday, useSeedsFor, type RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
-import { dayPhase, eveningState, morningState, ritualFinished, type RitualState } from './dayPhase'
+import { NOW_SOON_MIN, dayPhase, eveningState, morningState, ritualFinished, type RitualState } from './dayPhase'
 import { top3Tally } from './top3Today'
 import { upNextClock, upNextEvents, isInProgress } from './upNext'
 import { useMinuteNow } from './useMinuteNow'
@@ -57,7 +57,9 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
   const openTop3 = top3.filter((t) => !t.completed_at)
   // "The running or next item": Up next's own list, minus blocks whose task is already done.
   const nextUp = upNextEvents(events, now).find((e) => !(e.task_id && taskById.get(e.task_id)?.status === 'done')) ?? null
-  const state = dayPhase({ now, morning, evening, top3: tally, nextUp, firstOpenTop3: openTop3[0] ?? null, prompts })
+  // An event running or starting within NOW_SOON_MIN is the move; further off, an open Top 3 is.
+  const nextUpSoon = !!nextUp && new Date(nextUp.starts_at).getTime() - now.getTime() <= NOW_SOON_MIN * 60_000
+  const state = dayPhase({ now, morning, evening, top3: tally, nextUp, nextUpSoon, firstOpenTop3: openTop3[0] ?? null, prompts })
 
   const btn: CSSProperties = { fontSize: 12.5, padding: '7px 14px', ...(compact ? { minHeight: 44 } : null) }
   const links = <RitualLinks morning={morning} evening={evening} onOpen={onOpenRitual} />
@@ -124,7 +126,11 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
   const caption = item.kind === 'task' ? 'Next · Top 3' : running ? 'Now' : `Next · ${upNextClock(item.event.starts_at)}`
   const meta = item.kind === 'event'
     ? [`${upNextClock(item.event.starts_at)}–${upNextClock(item.event.ends_at)}`]
-    : [item.task.duration_min != null ? `${item.task.duration_min}m` : null, tally.picked > 0 ? `Top 3 ${tally.done}/${tally.picked} done` : null].filter((m): m is string => !!m)
+    : [
+        item.task.duration_min != null ? `${item.task.duration_min}m` : null,
+        tally.picked > 0 ? `Top 3 ${tally.done}/${tally.picked} done` : null,
+        nextUp ? `then ${upNextClock(nextUp.starts_at)} · ${nextUp.title}` : null,
+      ].filter((m): m is string => !!m)
   const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
   return (
     <Shell compact={compact} icon={<img src={`${A}/daisy/midday.png`} alt="" style={{ height: 26, flex: 'none' }} />} links={links}
@@ -204,14 +210,16 @@ function Minutes({ children }: { children: ReactNode }) {
 }
 
 // "A small secondary link on the card opens either ritual any time" — both, with the step count
-// the old pinned cards showed.
+// the old pinned cards showed, or ✓ once finished (the count is per calendar date, the finish per
+// loop day — so after midnight a closed evening would otherwise read 0/5).
+const progress = (r: RitualState) => (ritualFinished(r) ? '✓' : `${r.done}/${r.total}`)
 function RitualLinks({ morning, evening, onOpen }: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void }) {
   const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {morning.done}/{morning.total}</button>
+      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {progress(morning)}</button>
       <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 9 }}>·</span>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {evening.done}/{evening.total}</button>
+      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {progress(evening)}</button>
     </div>
   )
 }
