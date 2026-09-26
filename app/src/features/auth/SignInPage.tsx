@@ -20,7 +20,9 @@ export function SignInPage() {
   // Non-null once an email is on its way — swaps the form for the matching "sent" state.
   const [sent, setSent] = useState<{ kind: 'signup' | 'reset'; to: string } | null>(null)
 
-  if (!loading && session) return <Navigate to="/today" replace />
+  // Polish A: into the app through "/" — its index OnboardingGate sends a brand-new account to
+  // /onboarding once and everyone else on to /today (it waits for settings, so no flash).
+  if (!loading && session) return <Navigate to="/" replace />
 
   function rememberEmail() {
     try {

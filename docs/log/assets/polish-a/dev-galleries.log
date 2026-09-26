@@ -1,0 +1,5 @@
+/design-system (signed out): kit reference renders
+after sign-in: /today
+/capture: renders (found "lock screen and share sheet") | not-found shown: false
+/seasons: renders (found "Good morning, Kai") | not-found shown: false
+/nope: renders (found "This page isn't here") | not-found shown: true
