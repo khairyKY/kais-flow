@@ -18,7 +18,7 @@ import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { useGoalStore } from '../today/goalStore'
-import { BackLink, Checkbox, Chip } from '../../components/kit'
+import { BackLink, Checkbox, Chip, KeyCombo } from '../../components/kit'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
@@ -419,7 +419,8 @@ export function TaskEditorPage() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>⌘⏎</span>
+              {/* J-17 / 2026-09-26 decision: every shortcut hint is the kit's keycap (was hand-rolled mono text). */}
+              <KeyCombo keys={['⌘', '⏎']} size="sm" />
               <button type="button" onClick={handleSave} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Save</button>
             </div>
           </div>
