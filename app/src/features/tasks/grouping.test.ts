@@ -3,8 +3,10 @@ import { filterByList, filterByScope, groupTasks, planningColumns } from './grou
 import { scheduleNextWeek } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
-// Fixed "now": Wed 2026-07-08, mid-afternoon local.
-const NOW = new Date('2026-07-08T15:00:00')
+// Fixed "now": Wed 2026-07-08, mid-afternoon Cairo (UTC+3 in July). Pinned to Cairo, not
+// device-local, because grouping buckets by Cairo day (B2) — a device-local fixture fails on
+// any non-Cairo machine (CI, cloud sessions).
+const NOW = new Date('2026-07-08T15:00:00+03:00')
 
 function task(over: Partial<Task>): Task {
   return {
@@ -34,12 +36,9 @@ function task(over: Partial<Task>): Task {
   }
 }
 
-/** local-midnight ISO for a day offset from NOW, at the given hour */
+/** ISO for a day offset from NOW, at the given Cairo wall-clock hour */
 function at(dayOffset: number, hour = 9): string {
-  const d = new Date(NOW)
-  d.setDate(d.getDate() + dayOffset)
-  d.setHours(hour, 0, 0, 0)
-  return d.toISOString()
+  return new Date(Date.UTC(2026, 6, 8 + dayOffset, hour - 3)).toISOString()
 }
 
 describe('groupTasks', () => {
