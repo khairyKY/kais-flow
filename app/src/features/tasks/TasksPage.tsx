@@ -448,7 +448,12 @@ export function TasksPage() {
   // in its group a beat longer so the check/petal animation (Motion 3b/5a, Tasks 2a) has
   // somewhere to play before the row actually leaves the list.
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null)
-  const [completingIds, setCompletingIds] = useState<Set<string>>(new Set())
+  // Rows in that grace window → the Top-3 flag each had when checked. Polish F2a: completing
+  // clears top3, and the grace row only put `status` back — so it re-rendered as a plain row the
+  // moment it was checked: no Top-3 bloom or glow, ☆ instead of ★, no ✶ Goal, and the live petal
+  // (`checking && task.top3`) never rendered. A Top-3 task not due today even left the Today tab
+  // at once (its list keeps it by top3). The grace row now keeps the flag it had.
+  const [completing, setCompleting] = useState<Map<string, boolean>>(new Map())
   // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
   // hand banner. Fires once per calendar day, ever (localStorage gate).
   const [dayComplete, setDayComplete] = useState(false)
@@ -460,9 +465,9 @@ export function TasksPage() {
     if (timer !== undefined) window.clearTimeout(timer)
     exitTimers.current.delete(id)
     cancelRowRemoval(document.getElementById(`task-${id}`))
-    setCompletingIds((prev) => {
+    setCompleting((prev) => {
       if (!prev.has(id)) return prev
-      const next = new Set(prev)
+      const next = new Map(prev)
       next.delete(id)
       return next
     })
@@ -484,14 +489,14 @@ export function TasksPage() {
         }
       } catch { /* private mode — skip the ceremony */ }
     }
-    setCompletingIds((prev) => new Set(prev).add(task.id))
+    setCompleting((prev) => new Map(prev).set(task.id, task.top3))
     const timer = window.setTimeout(() => {
       exitTimers.current.delete(task.id)
       // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
       // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
       // then the row leaves the list.
       animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
-        setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+        setCompleting((prev) => { const next = new Map(prev); next.delete(task.id); return next })
       })
     }, 650)
     exitTimers.current.set(task.id, timer)
@@ -504,8 +509,14 @@ export function TasksPage() {
     reopenTaskWithUndo(task)
   }
   const displayTasks = useMemo(
-    () => (completingIds.size === 0 ? tasks : tasks.map((t) => (completingIds.has(t.id) ? { ...t, status: 'todo' as const } : t))),
-    [tasks, completingIds],
+    () =>
+      completing.size === 0
+        ? tasks
+        : tasks.map((t) => {
+            const top3 = completing.get(t.id)
+            return top3 === undefined ? t : { ...t, status: 'todo' as const, top3 }
+          }),
+    [tasks, completing],
   )
 
   const [domainChip, setDomainChip] = useState<string | null>(null)
@@ -602,7 +613,7 @@ export function TasksPage() {
 
   const bindings = buildListBindings({
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
-    complete: (t) => (checkAction(t.status === 'done', completingIds.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
+    complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
