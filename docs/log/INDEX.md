@@ -10,3 +10,4 @@
 - 2026-09-26 05:10 · correction · container restart: workers lost, FIX-0 WIP saved, recovery recipe; two filename times overstated — `2026-09-26-0510-bohr-correction-restart.md`
 - 2026-09-26 05:05 · test-run · release-1 partial (T-1/T-2/T-3) green in 4 TZs — `2026-09-26-0505-bohr-test-run-release1-partial.md`
 - 2026-09-26 05:15 · decision · bar = strongly polished + publish-ready for Kai and new users → Phase A/B audits join the goal — `2026-09-26-0515-bohr-decision-publish-bar.md`
+- 2026-09-26 05:35 · decision · J-11 merged into release-1; K-j: public email delivery needs free custom SMTP before confirmation ON — `2026-09-26-0535-bohr-decision-email-delivery.md`
