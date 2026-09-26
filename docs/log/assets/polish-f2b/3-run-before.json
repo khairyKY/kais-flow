@@ -1,0 +1,38 @@
+{
+ "which": "before",
+ "clock": "10:50:23",
+ "report": {
+  "day-landing": {
+   "railBar": false,
+   "railShown": true,
+   "gridVisiblePx": 0,
+   "landsOn": "08:30:00",
+   "nowLineY": 946,
+   "nowLineVisible": false,
+   "tabbarTop": 783,
+   "stored": null
+  },
+  "night-landing": {
+   "railBar": false,
+   "railShown": true,
+   "gridVisiblePx": 0,
+   "landsOn": "08:30:00",
+   "nowLineY": 946,
+   "nowLineVisible": false,
+   "tabbarTop": 783,
+   "stored": null
+  },
+  "desktop": {
+   "railBar": false,
+   "railShown": false,
+   "gridVisiblePx": 479,
+   "landsOn": "08:30:00",
+   "nowLineY": 478,
+   "nowLineVisible": true,
+   "tabbarTop": null,
+   "stored": null
+  }
+ },
+ "realErrors": [],
+ "meteo": 12
+}

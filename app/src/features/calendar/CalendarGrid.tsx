@@ -9,7 +9,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
-import { headerDay, scrollTimeNear } from './gridClock'
+import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import './CalendarGrid.css'
@@ -78,6 +78,8 @@ interface CalendarGridProps {
   failedIds?: string[]
   /** Effects 21 — id of an event just created by an external drop; its chip plays the settle-in. */
   justDroppedId?: string | null
+  /** How far above the now-line the grid lands (gridClock.ts): 2h on desktop, 1h on a phone. */
+  scrollLeadMinutes?: number
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -186,6 +188,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   pendingIds,
   failedIds,
   justDroppedId,
+  scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
@@ -261,7 +264,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       const api = fcRef.current?.getApi()
       if (!api) return
       api.today()
-      api.scrollToTime(scrollTimeNear(new Date()))
+      api.scrollToTime(scrollTimeNear(new Date(), scrollLeadMinutes))
     },
   }))
 
@@ -329,10 +332,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
       }}
       height="100%"
-      // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime
-      // once per mount (each view switch remounts via `key`); prev/next keep the hour you're
-      // looking at, and Today re-scrolls explicitly (the handle above).
-      scrollTime={scrollTimeNear(new Date())}
+      // J-15: land two hours above the now-line instead of a fixed 08:00 (one hour on a phone,
+      // Polish F2b). FC reads scrollTime once per mount (each view switch remounts via `key`);
+      // prev/next keep the hour you're looking at, and Today re-scrolls explicitly (the handle above).
+      scrollTime={scrollTimeNear(new Date(), scrollLeadMinutes)}
       scrollTimeReset={false}
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
       // relying on FullCalendar's defaults happening to be 30min — state the contract instead,

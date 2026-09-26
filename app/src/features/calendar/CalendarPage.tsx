@@ -23,6 +23,7 @@ import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
+import { SCROLL_LEAD_DESKTOP_MIN, SCROLL_LEAD_PHONE_MIN } from './gridClock'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
@@ -33,6 +34,11 @@ const RAIL_W_KEY = 'kf.calRailWidth'
 // Polish D: '1' = the user folded the Unscheduled rail, '0' = they opened it; unset = automatic
 // (folded only when the visible days wouldn't keep their minimum width beside it — weekFit.ts).
 const RAIL_FOLD_KEY = 'kf.calRailFolded'
+// Polish F2b (conductor decision 2026-09-26): on a phone the rail stacked above the grid left the
+// grid ~211px tall, so there it starts folded to one tap-to-open strip. '0' = the user opened it,
+// '1' = they folded it again; unset = folded. Its own key: the phone rail is a different control
+// (a strip above the grid, not the desktop's side strip) with a different default.
+const RAIL_FOLD_PHONE_KEY = 'kf.calRailFoldedPhone'
 const DEFAULT_RAIL_W = 244
 const RAIL_MIN = 150
 const RAIL_MAX = 760
@@ -340,12 +346,23 @@ export function CalendarPage() {
     }
   })
   const isMobile = useIsMobile()
-  const railFolded =
-    !isMobile && (railPref ? railPref === 'folded' : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends)))
-  function setRailFolded(folded: boolean) {
-    setRailPref(folded ? 'folded' : 'open')
+  const [phoneRailOpen, setPhoneRailOpen] = useState(() => {
     try {
-      localStorage.setItem(RAIL_FOLD_KEY, folded ? '1' : '0')
+      return localStorage.getItem(RAIL_FOLD_PHONE_KEY) === '0'
+    } catch {
+      return false
+    }
+  })
+  const railFolded = isMobile
+    ? !phoneRailOpen
+    : railPref
+      ? railPref === 'folded'
+      : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
+  function setRailFolded(folded: boolean) {
+    if (isMobile) setPhoneRailOpen(!folded)
+    else setRailPref(folded ? 'folded' : 'open')
+    try {
+      localStorage.setItem(isMobile ? RAIL_FOLD_PHONE_KEY : RAIL_FOLD_KEY, folded ? '1' : '0')
     } catch {
       /* private mode — the choice lasts this visit */
     }
@@ -412,6 +429,11 @@ export function CalendarPage() {
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
+        /* Polish F2b: the phone's folded rail — one strip in 1b's own language (the chip strip's
+           mono label between dashed rules), the round knob pointing down to open it. */
+        .cal-rail-bar { flex: none; width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border: none; border-bottom: 1px dashed var(--line-solid); background: none; font: inherit; cursor: pointer; }
+        .cal-rail-bar-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
+        .cal-rail-knob .cal-rail-knob-glyph { display: inline-block; }
         @media (max-width: 767px) {
           .cal-shell { flex-direction: column; }
           .cal-rail { width: 100%; border-right: none; border-bottom: 1px dashed var(--line-solid); padding: 16px; }
@@ -422,15 +444,29 @@ export function CalendarPage() {
       `}</style>
 
       <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
-        {railFolded && (
+        {railFolded && !isMobile && (
           <button type="button" className="cal-rail-tab" onClick={() => setRailFolded(false)} title="Show unscheduled" aria-label={`Show unscheduled tasks (${railTasks.length})`}>
             <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true">›</span>
             <span className="cal-rail-tab-label">Unscheduled · {railTasks.length}</span>
           </button>
         )}
+        {railFolded && isMobile && (
+          <button type="button" className="cal-rail-bar" onClick={() => setRailFolded(false)} aria-expanded={false} aria-label={`Show unscheduled tasks (${railTasks.length})`}>
+            <span className="cal-rail-bar-label">Unscheduled · {railTasks.length}</span>
+            <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true"><span className="cal-rail-knob-glyph" style={{ transform: 'rotate(90deg)' }}>›</span></span>
+          </button>
+        )}
         {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
         <aside className={railFolded ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
+            {/* Polish F2b: the phone rail folds back up from here (desktop folds from the splitter). */}
+            {isMobile && (
+              <button type="button" className="cal-rail-knob kf-collapse-btn kf-hit" aria-expanded={true} aria-label="Hide unscheduled tasks" onClick={() => setRailFolded(true)}>
+                <span className="cal-rail-knob-glyph" style={{ transform: 'rotate(-90deg)' }}>›</span>
+              </button>
+            )}
+          </div>
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -644,6 +680,7 @@ export function CalendarPage() {
               hiddenDays={viewOpts.showWeekends ? undefined : WEEKEND_DAYS}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
+              scrollLeadMinutes={isMobile ? SCROLL_LEAD_PHONE_MIN : SCROLL_LEAD_DESKTOP_MIN}
               dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}

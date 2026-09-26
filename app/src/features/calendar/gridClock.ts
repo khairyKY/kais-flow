@@ -19,10 +19,16 @@ export function headerDay(date: Date, now: Date): { delta: number; weekday: stri
   }
 }
 
-/** Where the grid opens: two hours above the now-line, floored to its 30-min slot (so the top
- * edge sits on a grid line), never before midnight. FullCalendar `scrollTime` / `scrollToTime`. */
-export function scrollTimeNear(now: Date): string {
-  const minutes = Math.max(0, now.getHours() * 60 + now.getMinutes() - 120)
+/** How far above the now-line the grid opens. A phone's day grid is short (Polish F2b, conductor
+ * decision 2026-09-26: with a 2h lead the now-line landed behind the tab bar), so it gets 1h. */
+export const SCROLL_LEAD_DESKTOP_MIN = 120
+export const SCROLL_LEAD_PHONE_MIN = 60
+
+/** Where the grid opens: `leadMinutes` (2h by default) above the now-line, floored to its 30-min
+ * slot (so the top edge sits on a grid line), never before midnight. FullCalendar `scrollTime` /
+ * `scrollToTime`. */
+export function scrollTimeNear(now: Date, leadMinutes: number = SCROLL_LEAD_DESKTOP_MIN): string {
+  const minutes = Math.max(0, now.getHours() * 60 + now.getMinutes() - leadMinutes)
   const slot = minutes - (minutes % 30)
   return `${String(Math.floor(slot / 60)).padStart(2, '0')}:${String(slot % 60).padStart(2, '0')}:00`
 }

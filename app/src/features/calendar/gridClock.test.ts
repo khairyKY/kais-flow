@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { headerDay, scrollTimeNear } from './gridClock'
+import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN, SCROLL_LEAD_PHONE_MIN } from './gridClock'
 
 // Run under TZ=UTC and TZ=Africa/Cairo. The pre-fix header read local-midnight Dates through
 // getUTC*, which only breaks east of Greenwich — the Cairo run is the one that caught it.
@@ -36,5 +36,14 @@ describe('scrollTimeNear (J-15)', () => {
 
   it('never scrolls before midnight', () => {
     expect(scrollTimeNear(new Date(2026, 8, 26, 1, 10))).toBe('00:00:00')
+  })
+
+  it('a phone opens one hour above now (Polish F2b), same flooring', () => {
+    expect(SCROLL_LEAD_PHONE_MIN).toBe(60)
+    expect(scrollTimeNear(new Date(2026, 8, 26, 8, 19), SCROLL_LEAD_PHONE_MIN)).toBe('07:00:00')
+    expect(scrollTimeNear(new Date(2026, 8, 26, 14, 45), SCROLL_LEAD_PHONE_MIN)).toBe('13:30:00')
+    expect(scrollTimeNear(new Date(2026, 8, 26, 0, 40), SCROLL_LEAD_PHONE_MIN)).toBe('00:00:00')
+    // and the desktop default is still the 2h lead
+    expect(scrollTimeNear(new Date(2026, 8, 26, 14, 45), SCROLL_LEAD_DESKTOP_MIN)).toBe(scrollTimeNear(new Date(2026, 8, 26, 14, 45)))
   })
 })
