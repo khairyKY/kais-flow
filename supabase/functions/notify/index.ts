@@ -342,6 +342,8 @@ Deno.serve(async (req) => {
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
     return await runForAllUsers(req, kind)
   } catch (e) {
-    return jsonResponse(req, { error: String(e) }, 400)
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('notify:', e)
+    return jsonResponse(req, { error: 'bad_request' }, 400)
   }
 })

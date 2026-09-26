@@ -71,7 +71,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('embed:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
