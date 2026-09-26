@@ -660,12 +660,28 @@ function SeasonSoFar({
 
   return (
     <div style={{ marginTop: 22, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 3, padding: '20px 22px' }}>
+      {/* Polish F2b: 3c draws these four widgets 2×2 on an 880px card. Beside the sidebar and the
+          right rail at 1280 (and on a phone) each widget got ~194px, and the 30 routine cells
+          crushed to 0–1px. The widgets now wrap to one column when two can't each keep 260px,
+          and a trellis row whose card is too narrow puts its 30 cells on their own full-width
+          line under the name and % instead of shrinking them (all 30 days stay — the % beside
+          them counts the same 30). */}
+      <style>{`
+        .kf-season-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; margin-top: 18px; }
+        .kf-trellis-card { container-type: inline-size; }
+        .kf-trellis-row { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; row-gap: 6px; }
+        .kf-trellis-cells { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; }
+        @container (max-width: 320px) {
+          .kf-trellis-row { grid-template-columns: minmax(0, 1fr) auto; }
+          .kf-trellis-row .kf-trellis-cells { grid-row: 2; grid-column: 1 / -1; }
+        }
+      `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
         <img src={`${A}/fern/full.png`} alt="" style={{ height: 30, filter: 'var(--shadow-drop-sm)' }} />
         <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)' }}>The season so far</h2>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 18 }}>
+      <div className="kf-season-grid">
         <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
           <FieldLabel>Hours by area</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -711,7 +727,7 @@ function SeasonSoFar({
           </div>
         </div>
 
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
+        <div className="kf-trellis-card" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
           <FieldLabel>Routine consistency · last 30 days</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {topRoutines.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No routines yet.</p>}
@@ -723,9 +739,9 @@ function SeasonSoFar({
               const days = computeTrellisDays(dates, r.cadence, 30, new Date(), since)
               const rate = completionRate(dates, r.cadence, 30, new Date(), since)
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 62, fontSize: 12, color: 'var(--ink-muted)', flex: 'none' }}>{r.name}</span>
-                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(30,1fr)', gap: 2 }}>
+                <div key={r.id} className="kf-trellis-row">
+                  <span style={{ fontSize: 12, color: 'var(--ink-muted)', minWidth: 0, overflowWrap: 'anywhere' }}>{r.name}</span>
+                  <div className="kf-trellis-cells">
                     {days.map((d) => (
                       <span
                         key={d.key}
@@ -737,7 +753,7 @@ function SeasonSoFar({
                       />
                     ))}
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', flex: 'none' }}>{rate}%</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', textAlign: 'right' }}>{rate}%</span>
                 </div>
               )
             })}
