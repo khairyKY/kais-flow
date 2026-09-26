@@ -1,0 +1,20 @@
+build: {"commit":"912b52678bd46bc8f0b77566de7ceabfdc686719","builtAt":"2026-09-26T06:56:03.966Z"}
+      shot ./shots/after-activity-desktop-day-audit-rows.png
+      shot ./shots/after-activity-desktop-night-audit-rows.png
+      shot ./shots/after-activity-phone-day-audit-rows.png
+
+console/request lines: 12 total, 0 other than open-meteo
+  activity-desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-day /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-desktop-night /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-phone-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-phone-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-phone-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  activity-phone-day /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+0/0 checks passed

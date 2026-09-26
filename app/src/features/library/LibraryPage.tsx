@@ -684,11 +684,8 @@ export function LibraryPage() {
       {/* 2. CENTER/RIGHT PANEL: Reader/Detail Columns */}
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', zIndex: 15 }}>
         
-        {/* Top Header */}
-        <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          <span>Kai's Flow · Journal · Library</span>
-          <span>Africa/Cairo</span>
-        </div>
+        {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Journal · Library" strip — that
+            was Library.dc.html's mock of the shell topbar, which the real shell already draws. */}
 
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
           

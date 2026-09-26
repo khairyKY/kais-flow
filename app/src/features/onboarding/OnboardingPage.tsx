@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
 import { useMotionEnabled } from '../../lib/motion'
+import { flowName, workspaceName as workspaceLabel } from '../../lib/owner'
 
 // ── Pixel contract: design-export/Onboarding.dc.html — 1a-1g (the seven steps) + 1h
 // (iPhone, full-screen, CTA pinned). One React tree; the phone chrome from 1h (dots-only
@@ -193,7 +194,8 @@ export function OnboardingPage() {
 
   if (!replant && settings && !needsOnboarding(settings)) return <Navigate to="/today" replace />
 
-  const appName = name.trim() ? `${name.trim()}'s Flow` : "Kai's Flow"
+  // Same rule the shell uses (lib/owner.ts), so this preview is exactly what the app will say.
+  const appName = flowName(name)
   const back = () => setStep((s) => Math.max(0, s - 1))
   const next = () => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1))
   const finish = () => {
@@ -274,7 +276,7 @@ export function OnboardingPage() {
               </div>
               <div style={{ width: '100%', marginTop: 22, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
                 <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                  <span>Kai's Flow · <b style={{ color: 'var(--acc-terra)', fontWeight: 600 }}>{workspaceName.trim() || 'Personal'}</b> · Cairo</span><span>preview</span>
+                  <span>{appName} · <b style={{ color: 'var(--acc-terra)', fontWeight: 600 }}>{workspaceLabel(workspaceName)}</b> · Cairo</span><span>preview</span>
                 </div>
                 <div style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>…the strip you'll see everywhere</div>
               </div>

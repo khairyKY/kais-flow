@@ -1,7 +1,9 @@
 import { useTasks } from '../tasks/api'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { searchHybrid, searchHitHref, SEARCH_GROUPS } from './api'
+import { searchHitHref, SEARCH_GROUPS } from './api'
+import { useSearch } from './useSearch'
+import { resultCountLine, SEARCH_RESTING } from './searchState'
 import type { SearchHit, SearchEntityType } from '../../lib/types'
 
 // Search.dc.html t1 1a/1b — the full page behind the ⌘/ overlay's "View all results ↵".
@@ -9,11 +11,11 @@ import type { SearchHit, SearchEntityType } from '../../lib/types'
 // group with no hits renders nothing, so this page is correct both before and after migration
 // 0031 is pushed. Library has no group: it's cut from v1 (punch 65).
 
-const DEBOUNCE_MS = 250
-
 function openChat() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', metaKey: true, ctrlKey: true, bubbles: true }))
 }
+
+const PILL: React.CSSProperties = { marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', background: 'none', cursor: 'pointer', font: 'inherit' }
 
 function Highlight({ text, query }: { text: string; query: string }) {
   const q = query.trim()
@@ -79,15 +81,13 @@ function Chip({ label, count, on, onClick }: { label: string; count: number; on:
   )
 }
 
-function EmptyResult({ query }: { query: string }) {
+// Search.dc.html 1b — bare soil, one action toward the chat. The export's frame also draws the
+// search box and its "0 results" line, but on this page those ARE the real box and count line
+// above it (2026-09-26 audit: the page drew both, so two search boxes stacked).
+function EmptyResult() {
   return (
     <div style={{ width: '100%', maxWidth: 560, margin: '40px auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: '100%', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 16, color: 'var(--ink-faint)' }}>⌕</span>
-        <span style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 19, color: 'var(--ink-body)' }}>{query}</span>
-      </div>
-      <div style={{ marginTop: 9, alignSelf: 'flex-start', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>0 results</div>
-      <div style={{ position: 'relative', marginTop: 34, width: 150, height: 110 }}>
+      <div style={{ position: 'relative', width: 150, height: 110 }}>
         <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, var(--sky-horizon,#b9a98a), var(--sky-panel-strong,#a3937a) 70%)', boxShadow: 'inset 0 3px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.28)' }} />
         <div style={{ position: 'absolute', left: '50%', bottom: 30, width: 46, height: 46, marginLeft: -30, borderRadius: '50%', border: '3px solid var(--ink-faint)', background: 'rgba(244,241,234,0.35)' }} />
         <div style={{ position: 'absolute', left: '50%', bottom: 14, width: 22, height: 3.5, marginLeft: 10, background: 'var(--ink-faint)', borderRadius: 2, transform: 'rotate(38deg)' }} />
@@ -96,12 +96,26 @@ function EmptyResult({ query }: { query: string }) {
       <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }}>
         Nothing's come up for that — try fewer words, or let the chat dig deeper.
       </div>
-      <button
-        type="button"
-        onClick={openChat}
-        style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', background: 'none', cursor: 'pointer', font: 'inherit' }}
-      >
+      <button type="button" onClick={openChat} style={PILL}>
         Ask the garden (chat) →
+      </button>
+    </div>
+  )
+}
+
+// The search didn't answer (offline, or the search function is unwell) — which is NOT "nothing
+// found", so it must not wear that copy (2026-09-26 audit). No design exists for this state
+// (Phase C); it's built from the empty state's own parts: an existing plant where the soil was
+// (clover/resting.png), the same hand note, the same pill — here a retry.
+function RestingResult({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="status" style={{ width: '100%', maxWidth: 560, margin: '40px auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <img src="/ds/assets/clover/resting.png" alt="" style={{ height: 64, filter: 'var(--shadow-drop-sm)' }} />
+      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }}>
+        {SEARCH_RESTING}
+      </div>
+      <button type="button" onClick={onRetry} style={PILL}>
+        Try again
       </button>
     </div>
   )
@@ -113,35 +127,30 @@ export function SearchPage() {
   const { data: allTasks = [] } = useTasks()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
-  const [results, setResults] = useState<SearchHit[]>([])
-  const [loading, setLoading] = useState(false)
+  const search = useSearch(query)
+  const { results, status } = search
   const [activeIndex, setActiveIndex] = useState(0)
   // Punch 49: the chips were decorative. `null` = All.
   const [typeFilter, setTypeFilter] = useState<SearchEntityType | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // The address keeps the query (shareable, survives a reload), on the search's own debounce.
   useEffect(() => {
     const trimmed = query.trim()
     if (!trimmed) {
-      setResults([])
       setParams({}, { replace: true })
       return
     }
-    setLoading(true)
-    const handle = setTimeout(() => {
-      setParams({ q: trimmed }, { replace: true })
-      searchHybrid(trimmed)
-        .then((hits) => {
-          setResults(hits)
-          setActiveIndex(0)
-          setTypeFilter(null)
-        })
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false))
-    }, DEBOUNCE_MS)
+    const handle = setTimeout(() => setParams({ q: trimmed }, { replace: true }), 250)
     return () => clearTimeout(handle)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
+
+  // A fresh answer starts on its first row, under All.
+  useEffect(() => {
+    setActiveIndex(0)
+    setTypeFilter(null)
+  }, [results])
 
   function goTo(hit: SearchHit) {
     navigate(searchHitHref(hit, allTasks))
@@ -188,13 +197,14 @@ export function SearchPage() {
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>esc clears</span>
       </div>
 
-      {trimmed && (
+      {/* One count line, and none while resting — a search that didn't answer knows no count. */}
+      {trimmed && resultCountLine(search) && (
         <div style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          {loading ? 'searching…' : `${results.length} result${results.length === 1 ? '' : 's'} for '${trimmed}'`}
+          {resultCountLine(search)}
         </div>
       )}
 
-      {trimmed && !loading && results.length > 0 && (
+      {trimmed && status === 'done' && results.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
           <div style={{ display: 'flex', gap: 7, flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
             {/* Active chip inverts with the theme: dark-on-cream by day, cream-on-violet at night */}
@@ -206,9 +216,10 @@ export function SearchPage() {
         </div>
       )}
 
-      {trimmed && !loading && results.length === 0 && <EmptyResult query={trimmed} />}
+      {trimmed && status === 'done' && results.length === 0 && <EmptyResult />}
+      {trimmed && status === 'resting' && <RestingResult onRetry={search.retry} />}
 
-      {!loading &&
+      {status === 'done' &&
         groups.reduce<{ nodes: React.ReactNode[]; offset: number }>(
           (acc, g) => {
             acc.nodes.push(

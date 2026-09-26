@@ -4,7 +4,8 @@ import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
-import type { OutboxEntry } from '../lib/outbox'
+import { unsyncedChanges, type OutboxEntry } from '../lib/outbox'
+import { syncHeader, syncRows } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
@@ -13,7 +14,8 @@ import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
-import { FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { useOwner } from '../lib/settings'
+import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
 // hotkey effect below, since CommandBar used to own it and can no longer be always-mounted.
@@ -37,22 +39,6 @@ import { splitKeyCombo } from '../lib/shortcuts'
 // active, washi tape tinted per page. ──
 
 const A = '/ds/assets'
-
-// Reference's "terrarium species" flower glyph — same five-ellipse shape, fill/center vary per page.
-function FlowerIcon({ fill, center }: { fill: string; center: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flex: 'none' }}>
-      <g fill={fill}>
-        <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
-        <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
-        <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
-        <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
-        <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
-      </g>
-      <circle cx="12" cy="11" r="2.4" fill={center} />
-    </svg>
-  )
-}
 
 type NavItem = {
   to: string
@@ -368,12 +354,17 @@ function useOnline(): boolean {
 // ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue.
 // Event-driven via outbox's 'kf-outbox-change' (foundation patch landed); the slow
 // interval is only a belt-and-braces fallback.
-// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection. ──
-function useOutboxQueue(): OutboxEntry[] {
-  const [queue, setQueue] = useState<OutboxEntry[]>([])
+// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection.
+// polish-c (2026-09-26 audit): `waiting` is P0-B's unsyncedChanges() — user actions, not queue
+// rows — so one capture reads "1", not "2" (every action also queues an activity_log row). ──
+function useOutboxQueue(): { queue: OutboxEntry[]; waiting: number } {
+  const [state, setState] = useState<{ queue: OutboxEntry[]; waiting: number }>({ queue: [], waiting: 0 })
   useEffect(() => {
     let alive = true
-    const read = () => void get<OutboxEntry[]>('kf-outbox').then((q) => { if (alive) setQueue(q ?? []) })
+    const read = () =>
+      void Promise.all([get<OutboxEntry[]>('kf-outbox'), unsyncedChanges()]).then(([q, waiting]) => {
+        if (alive) setState({ queue: q ?? [], waiting })
+      })
     read()
     const t = setInterval(read, 30_000)
     window.addEventListener('kf-outbox-change', read)
@@ -387,12 +378,9 @@ function useOutboxQueue(): OutboxEntry[] {
       window.removeEventListener('offline', read)
     }
   }, [])
-  return queue
+  return state
 }
 
-const QUEUE_KIND: Record<string, string> = {
-  tasks: 'task', inbox_items: 'inbox', journal_entries: 'journal', calendar_events: 'event', routines: 'routine',
-}
 function queueAgo(ts: number): string {
   const min = Math.max(1, Math.round((Date.now() - ts) / 60_000))
   return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
@@ -400,9 +388,10 @@ function queueAgo(ts: number): string {
 
 function TopBar() {
   const online = useOnline()
+  const owner = useOwner()
   const motionOn = useMotionEnabled()
-  const queue = useOutboxQueue()
-  const n = queue.length
+  const { queue, waiting: n } = useOutboxQueue()
+  const rows = useMemo(() => syncRows(queue), [queue])
   const [popOpen, setPopOpen] = useState(false)
   const popRef = useRef<HTMLDivElement>(null)
 
@@ -440,7 +429,12 @@ function TopBar() {
       style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        <span>Kai's Flow · {dateLabel} ·</span>
+        {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
+            (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
+            boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
+        <span>
+          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
+        </span>
         <button
           type="button"
           onClick={() => setPopOpen((v) => !v)}
@@ -466,25 +460,19 @@ function TopBar() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
           ) : (
             <>
+              {/* polish-c (2026-09-26 audit): human rows only — one per change, never a table
+                  name, never the change's bookkeeping activity row alongside it (components/syncQueue.ts). */}
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
-                {online ? `Syncing ↻ ${n}` : `Offline ◌ · ${n} saved here`}
+                {syncHeader(n, online)}
               </div>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {queue.map((e) => {
-                  const p = e.payload as Record<string, unknown>
-                  const label = (p.title ?? p.raw_text ?? p.name ?? '') as string
-                  return (
-                    <div key={`${e.table}-${e.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
-                        {QUEUE_KIND[e.table] ?? e.table}
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {label ? `'${label}'` : ''} {e.op === 'delete' ? 'removed' : 'saved'}
-                      </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(e.queuedAt)}</span>
-                    </div>
-                  )
-                })}
+                {rows.map((r) => (
+                  <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+                  </div>
+                ))}
               </div>
               <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>
                 {online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back."}
@@ -518,6 +506,7 @@ export function AppLayout() {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
 
+  const owner = useOwner()
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
@@ -565,6 +554,9 @@ export function AppLayout() {
         @media (max-width: 767px) {
           .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
+          /* The phone topbar already clips from the right; a long owner name would push the date
+             off too, so the name alone caps (~12 chars) and ellipsizes. "Kai's Flow" fits. */
+          .app-topbar-owner { display: inline-block; vertical-align: top; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
           .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
           .app-tabbar { display: flex !important; }
         }
@@ -698,9 +690,13 @@ export function AppLayout() {
             scrolling — flip to a portal if that ever matters. */}
         <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
 
-        <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>
-          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Personal · Cairo</div>
+        {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
+            answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
+            boundary is Cairo for everyone (B2), and the timezone setting isn't read yet. Names
+            are user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
+        <div className="app-sidebar-header" style={{ padding: '0 22px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
+          <div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
+          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · Cairo</div>
           <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
