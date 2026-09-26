@@ -1,0 +1,41 @@
+✗ before desktop 1 /today {"zoom":"1","win":800,"doc":800,"signOutBottom":1161,"signOutVisible":false,"shell":true}
+✗ before desktop 1 /calendar {"zoom":"1","win":800,"doc":800,"signOutBottom":1161,"signOutVisible":false,"shell":true}
+✗ before desktop 1 /journal {"zoom":"1","win":800,"doc":800,"signOutBottom":1161,"signOutVisible":false,"shell":true}
+✗ before desktop 1 /settings {"zoom":"1","win":800,"doc":800,"signOutBottom":1161,"signOutVisible":false,"shell":true}
+✗ before desktop 1.1 /today {"zoom":"1.1","win":800,"doc":880,"signOutBottom":1272,"signOutVisible":false,"shell":true}
+✗ before desktop 1.1 /calendar {"zoom":"1.1","win":800,"doc":880,"signOutBottom":1272,"signOutVisible":false,"shell":true}
+✗ before desktop 1.1 /journal {"zoom":"1.1","win":800,"doc":880,"signOutBottom":1272,"signOutVisible":false,"shell":true}
+✗ before desktop 1.1 /settings {"zoom":"1.1","win":800,"doc":880,"signOutBottom":1272,"signOutVisible":false,"shell":true}
+✗ before desktop 1.25 /today {"zoom":"1.25","win":800,"doc":1000,"signOutBottom":1441,"signOutVisible":false,"shell":true}
+✗ before desktop 1.25 /calendar {"zoom":"1.25","win":800,"doc":1000,"signOutBottom":1441,"signOutVisible":false,"shell":true}
+✗ before desktop 1.25 /journal {"zoom":"1.25","win":800,"doc":1000,"signOutBottom":1441,"signOutVisible":false,"shell":true}
+✗ before desktop 1.25 /settings {"zoom":"1.25","win":800,"doc":1000,"signOutBottom":1441,"signOutVisible":false,"shell":true}
+✗ before desktop 1.5 /today {"zoom":"1.5","win":800,"doc":1200,"signOutBottom":1722,"signOutVisible":false,"shell":true}
+✗ before desktop 1.5 /calendar {"zoom":"1.5","win":800,"doc":1200,"signOutBottom":1722,"signOutVisible":false,"shell":true}
+✗ before desktop 1.5 /journal {"zoom":"1.5","win":800,"doc":1200,"signOutBottom":1722,"signOutVisible":false,"shell":true}
+✗ before desktop 1.5 /settings {"zoom":"1.5","win":800,"doc":1200,"signOutBottom":1722,"signOutVisible":false,"shell":true}
+✗ before desktop 1.75 /today {"zoom":"1.75","win":800,"doc":1400,"signOutBottom":2002,"signOutVisible":false,"shell":true}
+✗ before desktop 1.75 /calendar {"zoom":"1.75","win":800,"doc":1400,"signOutBottom":2002,"signOutVisible":false,"shell":true}
+✗ before desktop 1.75 /journal {"zoom":"1.75","win":800,"doc":1400,"signOutBottom":2002,"signOutVisible":false,"shell":true}
+✗ before desktop 1.75 /settings {"zoom":"1.75","win":800,"doc":1400,"signOutBottom":2002,"signOutVisible":false,"shell":true}
+✓ before phone 1 /today {"zoom":"1","win":844,"doc":844,"shell":true,"tabTop":795,"underTab":null,"clearOfTab":true}
+✓ before phone 1 /calendar {"zoom":"1","win":844,"doc":844,"shell":true,"tabTop":795,"underTab":null,"clearOfTab":true}
+✓ before phone 1 /journal {"zoom":"1","win":844,"doc":844,"shell":true,"tabTop":795,"underTab":null,"clearOfTab":true}
+✓ before phone 1 /settings {"zoom":"1","win":844,"doc":844,"shell":true,"tabTop":795,"underTab":null,"clearOfTab":true}
+✗ before phone 1.1 /today {"zoom":"1.1","win":844,"doc":928,"shell":true,"tabTop":790,"underTab":{"bottom":848,"el":"A.","text":"nothing on repeat yet — "},"clearOfTab":false}
+✗ before phone 1.1 /calendar {"zoom":"1.1","win":844,"doc":928,"shell":true,"tabTop":790,"underTab":{"bottom":1545,"el":"DIV.fc-timegrid-slot-label-c","text":"11 PM"},"clearOfTab":false}
+✗ before phone 1.1 /journal {"zoom":"1.1","win":844,"doc":928,"shell":true,"tabTop":790,"underTab":{"bottom":794,"el":"SPAN.","text":"✿"},"clearOfTab":false}
+✗ before phone 1.1 /settings {"zoom":"1.1","win":844,"doc":928,"shell":true,"tabTop":790,"underTab":null,"clearOfTab":true}
+✗ before phone 1.25 /today {"zoom":"1.25","win":844,"doc":1055,"shell":true,"tabTop":783,"underTab":{"bottom":968,"el":"A.","text":"nothing on repeat yet — "},"clearOfTab":false}
+✗ before phone 1.25 /calendar {"zoom":"1.25","win":844,"doc":1055,"shell":true,"tabTop":783,"underTab":{"bottom":1748,"el":"DIV.fc-timegrid-slot-label-c","text":"11 PM"},"clearOfTab":false}
+✗ before phone 1.25 /journal {"zoom":"1.25","win":844,"doc":1055,"shell":true,"tabTop":783,"underTab":{"bottom":918,"el":"SPAN.","text":"✿"},"clearOfTab":false}
+✗ before phone 1.25 /settings {"zoom":"1.25","win":844,"doc":1055,"shell":true,"tabTop":783,"underTab":null,"clearOfTab":true}
+✗ before phone 1.5 /today {"zoom":"1.5","win":844,"doc":1266,"shell":true,"tabTop":771,"underTab":{"bottom":1266,"el":"A.","text":"nothing on repeat yet — "},"clearOfTab":false}
+✗ before phone 1.5 /calendar {"zoom":"1.5","win":844,"doc":1266,"shell":true,"tabTop":771,"underTab":{"bottom":2131,"el":"DIV.fc-timegrid-slot-label-c","text":"11 PM"},"clearOfTab":false}
+✗ before phone 1.5 /journal {"zoom":"1.5","win":844,"doc":1266,"shell":true,"tabTop":771,"underTab":{"bottom":1139,"el":"SPAN.","text":"✿"},"clearOfTab":false}
+✗ before phone 1.5 /settings {"zoom":"1.5","win":844,"doc":1266,"shell":true,"tabTop":771,"underTab":{"bottom":951,"el":"DIV.","text":"everything saves as you "},"clearOfTab":false}
+✗ before phone 1.75 /today {"zoom":"1.75","win":844,"doc":1477,"shell":true,"tabTop":759,"underTab":{"bottom":1477,"el":"A.","text":"nothing on repeat yet — "},"clearOfTab":false}
+✗ before phone 1.75 /calendar {"zoom":"1.75","win":844,"doc":1477,"shell":true,"tabTop":759,"underTab":{"bottom":2550,"el":"DIV.fc-timegrid-slot-label-c","text":"11 PM"},"clearOfTab":false}
+✗ before phone 1.75 /journal {"zoom":"1.75","win":844,"doc":1477,"shell":true,"tabTop":759,"underTab":{"bottom":1329,"el":"SPAN.","text":"✿"},"clearOfTab":false}
+✗ before phone 1.75 /settings {"zoom":"1.75","win":844,"doc":1477,"shell":true,"tabTop":759,"underTab":{"bottom":1107,"el":"DIV.","text":"everything saves as you "},"clearOfTab":false}
+before: 4 pass, 36 fail

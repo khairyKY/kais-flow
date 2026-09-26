@@ -329,6 +329,8 @@ function footerRow(icon: React.ReactNode, label: string, shortcut: string | unde
       type="button"
       onClick={onClick}
       className="kf-side-row"
+      title={label}
+      aria-label={label}
       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 6, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
     >
       <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
@@ -575,6 +577,18 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* Shell fit (2026-09-26): the footer is pinned, so on a short sidebar (1280×800 at the
+           default 125% is only 640 layout px tall) its five labelled rows (194px) pushed Tasks,
+           Calendar and Projects out of view. Below 800px of sidebar height it becomes one row of
+           icons (~47px) — same controls, titled + labelled, the collapsed rail's own treatment.
+           A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
+        .app-sidebar { container: kf-sidebar / size; }
+        @container kf-sidebar (max-height: 799px) {
+          .app-sidebar:not(.collapsed) .app-sidebar-footer { flex-direction: row !important; justify-content: space-between; padding: 4px 12px 12px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .app-footer-label { display: none !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row { padding: 8px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row:hover { transform: none; }
+        }
         /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
            width and the label floats over the page. Styled to the export's nav row: parchment,
            card border, crisp shadow, 14px --ink-body. */
@@ -702,7 +716,7 @@ export function AppLayout() {
             the container goes overflow-visible and the flyouts float over the page.
             ponytail: on a very short viewport the collapsed rail clips its tail instead of
             scrolling — flip to a portal if that ever matters. */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
 
         {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
             answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
@@ -730,13 +744,19 @@ export function AppLayout() {
         <div style={{ flex: 1 }} />
 
         <StreakWidget />
+        </div>
 
-        <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {/* Shell fit (2026-09-26): the footer rows are pinned below the scrolling column. At the
+            default 125% size a 1280×800 window is only ~640 layout px tall, so inside the scroll
+            Settings / Sign out sat ~290px below the fold. Pinned, they're always one tap away. */}
+        <div className="app-sidebar-footer" style={{ flex: 'none', padding: '4px 14px 18px', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {footerRow(PlusGlyph, 'Capture', '⌘K', () => setCommandBarOpen(true))}
           {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
           {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
           <NavLink
             to="/settings"
+            title="Settings"
+            aria-label="Settings"
             className="kf-side-row"
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
           >
@@ -744,7 +764,6 @@ export function AppLayout() {
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
           {footerRow(SignOutGlyph, 'Sign out', undefined, signOutFlow.request, true)}
-        </div>
         </div>
       </aside>
 
