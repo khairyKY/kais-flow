@@ -411,5 +411,8 @@ expect "do_resurface: no execute for anon/authenticated/public" "f|f|f" \
   "$(sql -F '|' -c "select has_function_privilege('anon','public.do_resurface()','execute'), has_function_privilege('authenticated','public.do_resurface()','execute'), exists(select 1 from pg_proc, aclexplode(proacl) a where oid = 'public.do_resurface'::regproc and a.grantee = 0)")"
 expect "search_hybrid: security invoker" "f" "$(sql -c "select prosecdef from pg_proc where oid = 'public.search_hybrid'::regproc")"
 
+# The seeded push devices point at this script's mock service, which stops with it.
+sql -c "delete from push_subscriptions where user_id in ('$A_ID', '$B_ID')"
+
 printf '\n%d passed, %d failed, %d skipped\n' "$PASS" "$FAIL" "$SKIP"
 [ "$FAIL" = 0 ]
