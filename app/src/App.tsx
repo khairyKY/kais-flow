@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, RouterProvider, useMatches } from 'react-router'
+import { createBrowserRouter, RouterProvider, useMatches, type RouteObject } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
 import { AuthProvider, useAuth } from './features/auth/AuthProvider'
@@ -24,7 +24,6 @@ const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then(
 // [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
 const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
 const SharePage = lazy(() => import('./features/capture/SharePage').then((m) => ({ default: m.SharePage })))
-const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
 const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
 const ProjectDetailPage = lazy(() => import('./features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const PerennialsPage = lazy(() => import('./features/projects/PerennialsPage').then((m) => ({ default: m.PerennialsPage })))
@@ -38,10 +37,27 @@ const PeoplePage = lazy(() => import('./features/people/PeoplePage').then((m) =>
 const PersonDetailPage = lazy(() => import('./features/people/PersonDetailPage').then((m) => ({ default: m.PersonDetailPage })))
 const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
 const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate').then((m) => ({ default: m.OnboardingGate })))
-const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
 const ImportPage = lazy(() => import('./features/import/ImportPage').then((m) => ({ default: m.ImportPage })))
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = lazy(() => import('./features/auth/ResetPage').then((m) => ({ default: m.ResetPage })))
+
+// Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
+// (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,
+// Kai" on sample dates) and the §04 kit reference (/design-system, no auth). Only the dev server
+// registers them. A production build never calls this, so the routes and their code are dropped
+// and those addresses reach the not-found page. (/share, the real share target, is not a gallery.)
+function designGalleryRoutes(): { public: RouteObject[]; shell: RouteObject[] } {
+  const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
+  const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
+  return {
+    public: [{ path: '/design-system', element: <KitReference />, errorElement: <RouteErrorPage bare /> }],
+    shell: [
+      { path: 'capture', element: <QuickCapturePage /> },
+      { path: 'seasons', element: <SeasonsPage /> },
+    ],
+  }
+}
+const galleries = import.meta.env.DEV ? designGalleryRoutes() : { public: [], shell: [] }
 
 // The `*` catch-all's route id — Shell looks for it to tell an unknown address apart.
 const NOT_FOUND = 'not-found'
@@ -65,7 +81,7 @@ function Shell() {
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage />, errorElement: <RouteErrorPage bare /> },
   { path: '/reset', element: <ResetPage />, errorElement: <RouteErrorPage bare /> },
-  { path: '/design-system', element: <KitReference />, errorElement: <RouteErrorPage bare /> }, // §04 kit reference (no auth)
+  ...galleries.public,
   {
     path: '/',
     element: <Shell />,
@@ -86,7 +102,6 @@ const router = createBrowserRouter([
           { path: 'weekly-review', element: <WeeklyReviewPage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'settings/import', element: <ImportPage /> },
-          { path: 'capture', element: <QuickCapturePage /> },
           // PWA share-target lands here (manifest share_target -> /share)
           { path: 'share', element: <SharePage /> },
           // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
@@ -99,10 +114,10 @@ const router = createBrowserRouter([
           { path: 'activity', element: <ActivityPage /> },
           { path: 'herbarium', element: <HerbariumPage /> },
           { path: 'focus', element: <FocusPage /> },
-          { path: 'seasons', element: <SeasonsPage /> },
           { path: 'trash', element: <TrashPage /> },
           { path: 'search', element: <SearchPage /> },
           { path: 'perennials', element: <PerennialsPage /> },
+          ...galleries.shell,
           { id: NOT_FOUND, path: '*', element: <NotFoundPage /> },
         ],
       },
