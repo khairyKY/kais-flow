@@ -133,6 +133,9 @@ jobs:
     needs: apk
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
       - uses: actions/download-artifact@v4
         with:
           path: apk
@@ -148,7 +151,30 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: bash -c 'set -x; mkdir -p shots; adb install -r apk/*.apk && adb shell am start -W -n com.kaisflow.garden/.MainActivity; sleep 25; adb exec-out screencap -p > shots/1-launch.png; adb shell cmd uimode night yes; sleep 8; adb exec-out screencap -p > shots/2-launch-night.png; adb shell dumpsys window | grep -iE "mCurrentFocus|InsetsSource" | head -20 > shots/window.txt; adb logcat -d | grep -iE "chromium|console|tauri|webview|kaisflow" | tail -200 > shots/logcat.txt; ls -la shots'
+          script: bash .github/scripts/android-smoke.sh
+      # Artifacts aren't reachable from the conductor's sandbox, so the screens also go to the log
+      # as small base64 JPEGs between markers (plus the UI tree and the WebView's console).
+      - name: Screens to the log
+        if: always()
+        run: |
+          sudo apt-get install -y -qq python3-pil > /dev/null
+          python3 - <<'PY'
+          import base64, glob, io
+          from PIL import Image
+          for p in sorted(glob.glob('shots/*.png')):
+              im = Image.open(p).convert('RGB')
+              full = im.size
+              im.thumbnail((432, 960))
+              buf = io.BytesIO(); im.save(buf, 'JPEG', quality=72)
+              b = base64.b64encode(buf.getvalue()).decode()
+              print(f'=====BEGIN {p} full={full} small={im.size}=====')
+              for i in range(0, len(b), 160):
+                  print(b[i:i + 160])
+              print(f'=====END {p}=====')
+          PY
+          echo '----- window insets'; cat shots/window.txt || true
+          echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
+          echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
