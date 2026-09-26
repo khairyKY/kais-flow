@@ -542,6 +542,13 @@
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
+/* §6 narrow column (< 170px, Polish D): "short-tier type scale, start time only. Width never
+   changes what the block is." Same scale as the overlap tier above; CalendarGrid puts
+   .kf-cal-narrow on its wrapper and trims the time to the start (weekFit.ts decides). */
+.kf-cal-narrow .fc .fc-timegrid-event:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
 .fc .fc-timegrid-event .kf-ev-more { cursor: pointer; }
 @media (hover: hover) {
   .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }
