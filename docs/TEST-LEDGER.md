@@ -49,3 +49,7 @@ _Check these by hand on live right after the deploy. The runbook's step 7 is the
 | R-13 | Anon-key curl to any function (audit §1.9) | 401 | `fix0-auth.sh` | branch | 2026-09-26 harness |
 
 _2026-09-26 (conductor): R-1 … R-13 re-verified together on the release candidate `6663c83` (app code `7b50920`). See `docs/log/2026-09-26-0834-bohr-test-run-release1-candidate.md`. State stays "branch" until the deploy; then add a dated "live" note per row._
+
+| # | Steps | Expected | Covered by | State | Last verified |
+|---|---|---|---|---|---|
+| B-1 | Release v1.0.1 migration 0038: on the 1st of a month (first: 1 Oct 00:00 UTC) open a retainer project with ticked checklist items | All items unticked; Activity shows "retainer reloaded" | `docs/log/assets/v1.0.1/0038-pglite-check.mjs` + manual | branch `claude/release-v1.0.1` | 2026-09-26 PGlite |
