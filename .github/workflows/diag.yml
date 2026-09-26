@@ -34,4 +34,7 @@ jobs:
           q "all public functions" "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by 1"
           q "tables the pending migrations touch" "select t, to_regclass('public.' || t) is not null as exists from unnest(array['projects','time_entries','resurfaced_log','areas','domains','people','journal_entries','inbox_items','calendar_events','tasks','activity_log','push_subscriptions','ai_usage','app_settings']) t"
           q "projects columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'projects' order by ordinal_position"
+          q "migration fingerprints" "select version, md5(array_to_string(statements, chr(10))) as md5 from supabase_migrations.schema_migrations order by version"
+          q "slipping view columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'slipping' order by ordinal_position"
+          q "push_subscriptions columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'push_subscriptions' order by ordinal_position"
           q "cron jobs" "select jobname, schedule, left(command, 120) as command from cron.job order by jobname"
