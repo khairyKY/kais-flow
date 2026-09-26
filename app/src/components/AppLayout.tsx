@@ -553,7 +553,7 @@ export function AppLayout() {
   }, [setCommandBarOpen, toggleCommandBar])
 
   return (
-    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
         .app-topbar-echo { display: contents; }
