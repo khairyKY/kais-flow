@@ -170,6 +170,11 @@ describe('listState', () => {
 
   it('is away when offline and the list never loaded on this device', () => {
     expect(listState({ data: undefined, isError: false, fetchStatus: 'paused' })).toBe('away')
+    // The first offline write cancels the paused query (outbox cancelQueries) — it then reads
+    // idle, and only the connection still says why the list isn't here.
+    expect(listState({ data: undefined, isError: false, fetchStatus: 'idle' }, false)).toBe('away')
+    // Offline with the list already in hand is still simply ready.
+    expect(listState({ data: [], isError: false, fetchStatus: 'paused' }, false)).toBe('ready')
   })
 
   it('is resting when the request failed with nothing cached, including while it retries', () => {

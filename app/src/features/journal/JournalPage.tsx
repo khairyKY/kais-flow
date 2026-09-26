@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router'
+import { onlineManager } from '@tanstack/react-query'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
@@ -33,6 +34,11 @@ const PROMPTS = [
 ]
 
 const MOODS = ['Calm', 'Focused', 'Grateful', 'Stretched']
+
+/** The connection as the query layer sees it (the same signal that pauses a query offline). */
+function useOnline(): boolean {
+  return useSyncExternalStore((cb) => onlineManager.subscribe(cb), () => onlineManager.isOnline())
+}
 
 // Fern thresholds are Foundation's (lib/growthStages) — the local copy that used to live
 // here is gone, so Journal can never drift from Review/Library (punch item 10).
@@ -76,7 +82,8 @@ function PastNote({ state, retrying, onRetry, size }: { state: Extract<ListState
  * nowhere to send anyone. Loading shows nothing; it's brief, and an unloaded shelf isn't empty. */
 type ShelfQuery = { data: unknown[] | undefined; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle'; isFetching: boolean; refetch: () => unknown }
 function ShelfState({ q, what }: { q: ShelfQuery; what: 'notes' | 'quotes' }) {
-  const s = listState(q)
+  const online = useOnline()
+  const s = listState(q, online)
   if (s === 'loading' || (s === 'ready' && (q.data?.length ?? 0) > 0)) return null
   const line = s === 'ready' ? `No ${what} on the shelf yet.` : s === 'away' ? "The shelf will be here when you're back online." : "The shelf didn't come through just now."
   return (
@@ -102,7 +109,8 @@ export function JournalPage() {
   const journalQ = useJournalEntries()
   const listed = journalQ.data
   // Polish G: until the list has arrived, nothing derived from it is claimed (see `listState`).
-  const past = listState(journalQ)
+  const online = useOnline()
+  const past = listState(journalQ, online)
   const known = past === 'ready'
   const pastUnread = past === 'away' || past === 'resting'
   const pastNote = (size: number) =>

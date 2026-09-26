@@ -84,17 +84,19 @@ export function withHeldRows(listed: JournalEntry[], held: HeldRows): JournalEnt
 /** Polish G (audit 2026-09-26): where a list the page reads from stands.
  *  - `ready`: it arrived (a later refetch failing doesn't un-arrive it);
  *  - `loading`: on its way;
- *  - `away`: offline, and it never loaded on this device (the query is paused);
+ *  - `away`: offline, and it never loaded on this device. Read from the connection as well as the
+ *    query: the query says `paused`, but the outbox cancels it on the first write (writeRow's
+ *    cancelQueries), after which it only says `idle`;
  *  - `resting`: the request failed and there's nothing cached.
  * Until the journal list is `ready`, nothing derived from it is claimed — "Day N", the first-page
  * line, the kept/empty markers, the streak, On this day. A cold offline load used to greet a
  * returning writer with "The first page is the hardest", "Day 1" and "0 days". The notebook stays
  * writable in every state: P0-B's `holdRow` keeps what's typed until the list catches up. */
 export type ListState = 'ready' | 'loading' | 'away' | 'resting'
-export function listState(q: { data: unknown; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle' }): ListState {
+export function listState(q: { data: unknown; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle' }, online = true): ListState {
   if (q.data !== undefined) return 'ready'
   if (q.isError) return 'resting'
-  if (q.fetchStatus === 'paused') return 'away'
+  if (q.fetchStatus === 'paused' || !online) return 'away'
   return 'loading'
 }
 
