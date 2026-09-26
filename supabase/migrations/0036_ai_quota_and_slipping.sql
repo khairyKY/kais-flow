@@ -10,6 +10,13 @@
 --     the functions' env (AI_DAILY_LIMIT_CHAT / _PARSE / _STT), not here. `search` is not
 --     Groq-backed (Supabase.ai embeddings), so it has no kind.
 --
+-- 2 · push_subscriptions.endpoint must be a known Web Push service (LOW, SSRF). The endpoint is
+--     user-supplied, and `notify` POSTs to it — so `{kind:'test'}` made the edge runtime POST to
+--     any URL a user had stored. notify now skips any endpoint whose host is not FCM, Mozilla
+--     autopush, Apple (*.push.apple.com) or WNS (*.notify.windows.com); this constraint is the
+--     same rule at write time. NOT VALID: rows stored before this migration are not checked (and
+--     can't block it) — notify skips them instead. Every new or updated row is checked.
+
 
 -- ---------------------------------------------------------------------------------------------
 -- 1 · ai_usage
@@ -52,3 +59,13 @@ $$;
 revoke execute on function ai_usage_bump(uuid, text) from public, anon, authenticated;
 grant execute on function ai_usage_bump(uuid, text) to service_role;
 
+-- ---------------------------------------------------------------------------------------------
+-- 2 · push_subscriptions.endpoint: known push services only (mirrors notify/push-endpoint.ts)
+-- ---------------------------------------------------------------------------------------------
+-- https only, host anchored at both ends (the host must be followed by the path's '/'), so
+-- `fcm.googleapis.com.evil.example`, `user@host`, ports, IP literals and plain http all fail.
+-- Browsers only ever hand out lowercase https endpoints on these hosts.
+alter table push_subscriptions
+  add constraint push_subscriptions_endpoint_known_service check (
+    endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+push\.apple\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+notify\.windows\.com)/'
+  ) not valid;

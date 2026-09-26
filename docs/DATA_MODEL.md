@@ -46,6 +46,7 @@
 | `app_settings` | single row **per user** (pk `user_id` since migration 0030 — was a table-wide `id boolean` singleton that locked out every account after the first): `timezone text default 'Africa/Cairo'`, `digest_hour int`, `confidence_threshold real default 0.75`, `slipping_default_days int default 7`, `display_name text?`, `workspace_name text default 'Personal'`, `seed_avatar text?`, `onboarded_at timestamptz?` (N6 onboarding, migration 0025 — null until the first-run wizard is completed) |
 
 **View `slipping`** — last `activity_log` touch per domain/project/area vs threshold → rows that are going stale. (`slipping_areas` migration 0013 added the `area_id` variant).
+- **`push_subscriptions.endpoint` (migration 0036, SEC-2):** check constraint `push_subscriptions_endpoint_known_service` — `https://` on a known Web Push host only (`fcm.googleapis.com`, `updates.push.services.mozilla.com`, `*.push.apple.com`, `*.notify.windows.com`; anchored). Added `NOT VALID`, so rows from before 0036 aren't checked; `notify` skips (never contacts) any endpoint off that list and reports `skipped_endpoints`.
 
 ### P5 — search & chat
 - `tsvector` generated columns (`search_tsv`) + `embedding vector(384)` (gte-small) added to `tasks` (title+notes), `inbox_items` (raw_text) — GIN index on `search_tsv`, HNSW (`vector_cosine_ops`) on `embedding`. `search_tsv` is `generated always as (...) stored` — **never include it in a client upsert payload** (`lib/outbox.ts`'s `writeRow` strips it automatically; Postgres 400s if a write tries to set it).
