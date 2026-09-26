@@ -217,10 +217,38 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
   const [stackMore, setStackMore] = useState<{ ids: string[]; left: number; bottom: number } | null>(null)
   const closeStackMore = useCallback(() => setStackMore(null), [])
+  // Polish F2b (conductor decision 2026-09-26): "the block you just dropped always stays visible".
+  // A drop, move or resize that makes a block the 4th+ at once used to hide it under "+N more"
+  // right where the user let go. It stays on the top lane until the next interaction instead.
+  const [pinnedId, setPinnedId] = useState<string | null>(null)
+  // An external (rail) drop is created by CalendarPage, which reports its id as justDroppedId.
+  // Adjust-state-during-render (React's pattern for "state follows a prop change"), not an effect.
+  const [seenDropId, setSeenDropId] = useState(justDroppedId ?? null)
+  if ((justDroppedId ?? null) !== seenDropId) {
+    setSeenDropId(justDroppedId ?? null)
+    if (justDroppedId) setPinnedId(justDroppedId)
+  }
+  useEffect(() => {
+    if (!pinnedId) return
+    // "Until the next interaction": any key, or a press anywhere except on the pinned block itself
+    // (pressing it to open it or to drag it again must not make it vanish under the pointer).
+    const release = (e: Event) => {
+      const target = e.target as Element | null
+      if (e.type === 'pointerdown' && target?.closest?.(`[data-kf-id="${CSS.escape(pinnedId)}"]`)) return
+      setPinnedId(null)
+    }
+    document.addEventListener('pointerdown', release, true)
+    document.addEventListener('keydown', release, true)
+    return () => {
+      document.removeEventListener('pointerdown', release, true)
+      document.removeEventListener('keydown', release, true)
+    }
+  }, [pinnedId])
   // J-13 — §6 overlap geometry, decided here and drawn by CalendarGrid.css (FC's own shingle
   // overprinted titles). All-day chips live in the band above the grid and never collide.
   const overlap = layoutOverlaps(
     events.filter((e) => !e.allDay).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
+    pinnedId,
   )
   const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })
 
@@ -420,6 +448,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfFull: drawnPx >= 81,
           kfOv: !!slot,
           kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
+          kfPinned: e.id === pinnedId,
         }
         return ev
       })}
@@ -430,7 +459,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
-          kfOv: boolean; kfMore: string[] | null
+          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -456,6 +485,27 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
 
         // Month view has no shingle — its pills never trade the title for "+N more".
         const more = arg.view.type !== 'dayGridMonth' && !arg.isMirror ? p.kfMore : null
+        // §6: the topmost shingle reads "+N more" when blocks are fully hidden under it.
+        // dragGuard: a tap here opens the list instead of starting a drag or eventClick.
+        const moreLink = more && (
+          <span
+            className="kf-ev-more"
+            role="button"
+            aria-label={`${more.length - 1} more blocks here — show all`}
+            ref={(el) => {
+              dragGuard(() => {
+                if (!el) return
+                const r = el.getBoundingClientRect()
+                setStackMore((cur) => (cur ? null : { ids: more, left: r.left, bottom: r.bottom }))
+              })(el)
+            }}
+          >
+            +{more.length - 1} more
+          </span>
+        )
+        // Polish F2b: a just-dropped block on the top lane keeps its own title (that's what the
+        // user must see); its "+N more" rides the time row until the pin lets go.
+        const pinnedMore = !!(more && p.kfPinned)
 
         // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal.
         const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : null
@@ -483,34 +533,24 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
               </span>
             )}
             <div className="kf-ev-text">
-              {more ? (
-                // §6: the topmost shingle reads "+N more" when blocks are fully hidden under it.
-                // dragGuard: a tap here opens the list instead of starting a drag or eventClick.
-                <div className="fc-event-title" title={arg.event.title}>
-                  <span
-                    className="kf-ev-more"
-                    role="button"
-                    aria-label={`${more.length - 1} more blocks here — show all`}
-                    ref={(el) => {
-                      dragGuard(() => {
-                        if (!el) return
-                        const r = el.getBoundingClientRect()
-                        setStackMore((cur) => (cur ? null : { ids: more, left: r.left, bottom: r.bottom }))
-                      })(el)
-                    }}
-                  >
-                    +{more.length - 1} more
-                  </span>
-                </div>
+              {more && !pinnedMore ? (
+                <div className="fc-event-title" title={arg.event.title}>{moreLink}</div>
               ) : (
                 <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
               )}
-              {timeText && <div className="fc-event-time">{timeText}</div>}
+              {pinnedMore ? (
+                <div className="fc-event-time">{timeText ? `${timeText} · ` : ''}{moreLink}</div>
+              ) : (
+                timeText && <div className="fc-event-time">{timeText}</div>
+              )}
             </div>
           </div>
         )
       }}
       eventDidMount={(info) => {
+        // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
+        // itself (keep it) from a press anywhere else (let go).
+        info.el.dataset.kfId = info.event.id
         // Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender
         // values (fill .24 / edge .35 / grip .5); a coloured event restates them in its colour
         // at the same alphas, so nothing about the block's shape or weight changes.
@@ -579,6 +619,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           // a converted all-day block spans its day; a re-timed chip gets the default hour.
           const allDay = info.event.allDay
           const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
+          setPinnedId(info.event.id) // Polish F2b: where it landed stays in view
           onMove(info.event.id, info.event.start.toISOString(), end.toISOString(), allDay)
         }
       }}
@@ -601,6 +642,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             if (startMoved) startMs = endMs - MIN
             else endMs = startMs + MIN
           }
+          setPinnedId(info.event.id) // Polish F2b: a resize into a stack stays in view too
           onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString())
         }
       }}

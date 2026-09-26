@@ -301,10 +301,10 @@ export function CalendarPage() {
     const end = new Date(new Date(start).getTime() + (allDay ? 24 * 60 : (task.duration_min ?? 30)) * 60000).toISOString()
     const ev = scheduleTask(task, start, end, allDay)
     toastUndo(`Scheduled · ${task.title}`, () => deleteEvent(ev))
-    if (motionOn) {
-      setJustDroppedId(ev.id)
-      window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
-    }
+    // Always reported, motion or not: CalendarGrid keeps this block visible until the next
+    // interaction (Polish F2b). The settle-in it also drives is gated in CSS by .cal-motion-on.
+    setJustDroppedId(ev.id)
+    window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
   }
 
   // R4-16: rail width is user-controlled and remembered across sessions.

@@ -29,15 +29,21 @@ export type OverlapSlot =
 const STACK_DEPTH = 3
 
 /** Clusters overlapping blocks, packs each cluster into lanes, and maps every block that shares
- * time with another to its slot. Blocks that overlap nothing are absent from the map. */
-export function layoutOverlaps(blocks: OverlapInput[]): Map<string, OverlapSlot> {
+ * time with another to its slot. Blocks that overlap nothing are absent from the map.
+ *
+ * `keepVisible` (Polish F2b, conductor decision 2026-09-26: "the block you just dropped always
+ * stays visible"): if that block would be hidden past the third index, it takes the topmost
+ * visible lane instead, and the topmost block(s) it overlaps there go under it — together with
+ * whatever they were hiding, so its "+N more" still reaches every block. The caller keeps it
+ * pinned only until the next interaction, then the plain §6 order comes back. */
+export function layoutOverlaps(blocks: OverlapInput[], keepVisible?: string | null): Map<string, OverlapSlot> {
   const out = new Map<string, OverlapSlot>()
   // §6: "earlier start left, longer wins ties" — sort once, then lanes fill left to right.
   const sorted = [...blocks]
     .filter((b) => b.end > b.start)
     .sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 
-  let cluster: { id: string; lane: number; under: string | null }[] = []
+  let cluster: { id: string; start: number; end: number; lane: number; under: string | null }[] = []
   let laneEnd: number[] = [] // end of the latest block in each lane
   let laneLast: string[] = [] // id of that block
   let clusterEnd = -Infinity
@@ -56,10 +62,27 @@ export function layoutOverlaps(blocks: OverlapInput[]): Map<string, OverlapSlot>
         const top = out.get(b.under)
         if (top?.kind === 'stack') top.hidden.push(b.id)
       }
+      const pinned = keepVisible ? cluster.find((b) => b.id === keepVisible && b.lane >= STACK_DEPTH) : undefined
+      if (pinned) promote(pinned)
     }
     cluster = []
     laneEnd = []
     laneLast = []
+  }
+
+  /** `keepVisible`: the pinned block takes the topmost lane where it sits; every topmost-lane block
+   * sharing its time goes under it, handing over the blocks it was hiding. */
+  const promote = (pinned: (typeof cluster)[number]) => {
+    const hidden: string[] = []
+    for (const top of cluster) {
+      if (top.lane !== STACK_DEPTH - 1 || top.start >= pinned.end || pinned.start >= top.end) continue
+      const slot = out.get(top.id)
+      const under = slot?.kind === 'stack' ? slot.hidden.filter((id) => id !== pinned.id) : []
+      hidden.push(top.id, ...under)
+      out.set(top.id, { kind: 'hidden', under: pinned.id })
+      for (const id of under) out.set(id, { kind: 'hidden', under: pinned.id })
+    }
+    out.set(pinned.id, { kind: 'stack', lane: (STACK_DEPTH - 1) as 2, hidden })
   }
 
   for (const b of sorted) {
@@ -68,7 +91,7 @@ export function layoutOverlaps(blocks: OverlapInput[]): Map<string, OverlapSlot>
     if (lane === -1) lane = laneEnd.length
     // Lane ≥ 3 only happens when lanes 0–2 are all still busy at b.start, so the block in the
     // topmost visible lane covers b's start — that is the block whose "+N more" owns it.
-    cluster.push({ id: b.id, lane, under: lane >= STACK_DEPTH ? laneLast[STACK_DEPTH - 1] : null })
+    cluster.push({ id: b.id, start: b.start, end: b.end, lane, under: lane >= STACK_DEPTH ? laneLast[STACK_DEPTH - 1] : null })
     laneEnd[lane] = b.end
     laneLast[lane] = b.id
     clusterEnd = Math.max(clusterEnd, b.end)
