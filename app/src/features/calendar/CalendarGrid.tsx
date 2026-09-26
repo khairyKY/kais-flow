@@ -9,6 +9,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
+import { headerDay, scrollTimeNear } from './gridClock'
 import { StackMorePopover } from './StackMorePopover'
 import './CalendarGrid.css'
 
@@ -214,7 +215,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   useImperativeHandle(ref, () => ({
     prev: () => fcRef.current?.getApi().prev(),
     next: () => fcRef.current?.getApi().next(),
-    today: () => fcRef.current?.getApi().today(),
+    // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
+    // which would scroll every ancestor too).
+    today: () => {
+      const api = fcRef.current?.getApi()
+      if (!api) return
+      api.today()
+      api.scrollToTime(scrollTimeNear(new Date()))
+    },
   }))
 
   function handleGridContextMenu(e: React.MouseEvent) {
@@ -277,7 +285,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
       }}
       height="100%"
-      scrollTime="08:00:00"
+      // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime
+      // once per mount (each view switch remounts via `key`); prev/next keep the hour you're
+      // looking at, and Today re-scrolls explicitly (the handle above).
+      scrollTime={scrollTimeNear(new Date())}
+      scrollTimeReset={false}
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
       // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
       // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
@@ -296,22 +308,21 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
         // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
         // future = future.png 26px. Stages come from lib/growthStages (never re-bucketed here).
-        // arg.date is a FC DateMarker — wall-clock encoded AS UTC (same trap the now-chip hit,
-        // R4 2026-07-20) — so its calendar fields read back through the getUTC* getters.
-        const d = arg.date
+        // J-15: arg.date is a real local-midnight Date, read with local getters (gridClock.ts
+        // explains how the old getUTC* read put "Today" one column late east of Greenwich).
         const now = new Date()
-        const dayDelta = (Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86_400_000
-        const stage = daisyColumnStage(dayDelta, now.getHours())
-        const isToday = dayDelta === 0
+        const day = headerDay(arg.date, now)
+        const stage = daisyColumnStage(day.delta, now.getHours())
+        const isToday = day.delta === 0
         return (
           <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
             <img src={`/ds/assets/daisy/${stage}.png`} alt="" className="cal-day-daisy" />
             <div>
               <div className="cal-day-header-name">
-                {d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}
+                {day.weekday}
                 {isToday ? ' · Today' : ''}
               </div>
-              <div className="cal-day-header-num">{String(d.getUTCDate()).padStart(2, '0')}</div>
+              <div className="cal-day-header-num">{day.day}</div>
             </div>
           </div>
         )

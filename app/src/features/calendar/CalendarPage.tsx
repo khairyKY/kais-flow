@@ -101,6 +101,10 @@ interface QuickCreateState {
 }
 
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
+// J-15 (view-options interplay): one array for the whole module. A fresh `[0, 6]` every render
+// read to FullCalendar as a changed option → new date profile → datesSet → setRangeInfo →
+// re-render → another fresh array… "Show weekends" off crashed the page (max update depth).
+const WEEKEND_DAYS = [0, 6]
 
 export function CalendarPage() {
   const navigate = useNavigate()
@@ -567,7 +571,7 @@ export function CalendarPage() {
               onDragToRail={handleDragToRail}
               hour24={viewOpts.hour24}
               firstDay={viewOpts.weekStartsMon ? 1 : 0}
-              hiddenDays={viewOpts.showWeekends ? undefined : [0, 6]}
+              hiddenDays={viewOpts.showWeekends ? undefined : WEEKEND_DAYS}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
               dayCount={dayCount}
