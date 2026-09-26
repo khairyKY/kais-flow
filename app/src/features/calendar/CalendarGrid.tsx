@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -8,6 +8,9 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
+import { layoutOverlaps } from './overlapLayout'
+import { headerDay, scrollTimeNear } from './gridClock'
+import { StackMorePopover } from './StackMorePopover'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -199,11 +202,27 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
   useEffect(() => () => stopGhostRef.current?.(), []) // never strand a ghost on unmount
+  // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
+  const [stackMore, setStackMore] = useState<{ ids: string[]; left: number; bottom: number } | null>(null)
+  const closeStackMore = useCallback(() => setStackMore(null), [])
+  // J-13 — §6 overlap geometry, decided here and drawn by CalendarGrid.css (FC's own shingle
+  // overprinted titles). All-day chips live in the band above the grid and never collide.
+  const overlap = layoutOverlaps(
+    events.filter((e) => !e.allDay).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
+  )
+  const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })
 
   useImperativeHandle(ref, () => ({
     prev: () => fcRef.current?.getApi().prev(),
     next: () => fcRef.current?.getApi().next(),
-    today: () => fcRef.current?.getApi().today(),
+    // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
+    // which would scroll every ancestor too).
+    today: () => {
+      const api = fcRef.current?.getApi()
+      if (!api) return
+      api.today()
+      api.scrollToTime(scrollTimeNear(new Date()))
+    },
   }))
 
   function handleGridContextMenu(e: React.MouseEvent) {
@@ -266,7 +285,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
       }}
       height="100%"
-      scrollTime="08:00:00"
+      // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime
+      // once per mount (each view switch remounts via `key`); prev/next keep the hour you're
+      // looking at, and Today re-scrolls explicitly (the handle above).
+      scrollTime={scrollTimeNear(new Date())}
+      scrollTimeReset={false}
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
       // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
       // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
@@ -285,22 +308,21 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
         // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
         // future = future.png 26px. Stages come from lib/growthStages (never re-bucketed here).
-        // arg.date is a FC DateMarker — wall-clock encoded AS UTC (same trap the now-chip hit,
-        // R4 2026-07-20) — so its calendar fields read back through the getUTC* getters.
-        const d = arg.date
+        // J-15: arg.date is a real local-midnight Date, read with local getters (gridClock.ts
+        // explains how the old getUTC* read put "Today" one column late east of Greenwich).
         const now = new Date()
-        const dayDelta = (Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86_400_000
-        const stage = daisyColumnStage(dayDelta, now.getHours())
-        const isToday = dayDelta === 0
+        const day = headerDay(arg.date, now)
+        const stage = daisyColumnStage(day.delta, now.getHours())
+        const isToday = day.delta === 0
         return (
           <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
             <img src={`/ds/assets/daisy/${stage}.png`} alt="" className="cal-day-daisy" />
             <div>
               <div className="cal-day-header-name">
-                {d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}
+                {day.weekday}
                 {isToday ? ' · Today' : ''}
               </div>
-              <div className="cal-day-header-num">{String(d.getUTCDate()).padStart(2, '0')}</div>
+              <div className="cal-day-header-num">{day.day}</div>
             </div>
           </div>
         )
@@ -357,6 +379,13 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (pendingIds?.includes(e.id)) classes.push('kf-pending')
         if (failedIds?.includes(e.id)) classes.push('kf-failed')
         if (e.id === justDroppedId) classes.push('kf-settle-in')
+        // Layout (§6) geometry: pair = side by side, stack = 56% shingle, hidden = under the
+        // topmost's "+N more". CalendarGrid.css positions FC's harness from these.
+        const slot = overlap.get(e.id)
+        if (slot) {
+          classes.push('kf-ov')
+          classes.push(slot.kind === 'pair' ? `kf-ov-p${slot.lane}` : slot.kind === 'stack' ? `kf-ov-s${slot.lane}` : 'kf-ov-hide')
+        }
 
         const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
         // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
@@ -373,6 +402,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfPending: pendingIds?.includes(e.id) ?? false,
           kfFailed: failedIds?.includes(e.id) ?? false,
           kfFull: drawnPx >= 81,
+          kfOv: !!slot,
+          kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
         }
         return ev
       })}
@@ -383,6 +414,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
+          kfOv: boolean; kfMore: string[] | null
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -393,6 +425,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}`
         } else if (!done && p.kfStart <= now && now < p.kfEnd) {
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
+        } else if (p.kfOv && arg.timeText) {
+          // §6 overlap/stack tier: "time start-only" — half a column can't hold a range.
+          timeText = clockTime(p.kfStart)
         } else if (p.kfFull && arg.timeText) {
           // full tier has room for the duration suffix (§2 "as space allows")
           const mins = Math.round((p.kfEnd - p.kfStart) / 60_000)
@@ -401,6 +436,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // §7 outbox suffixes ride the time row
         if (p.kfPending) timeText = `${timeText || ''} · saving ◌`
         if (p.kfFailed) timeText = `${timeText || ''} · retry`
+
+        // Month view has no shingle — its pills never trade the title for "+N more".
+        const more = arg.view.type !== 'dayGridMonth' && !arg.isMirror ? p.kfMore : null
 
         // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal.
         const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : null
@@ -428,7 +466,28 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
               </span>
             )}
             <div className="kf-ev-text">
-              <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
+              {more ? (
+                // §6: the topmost shingle reads "+N more" when blocks are fully hidden under it.
+                // dragGuard: a tap here opens the list instead of starting a drag or eventClick.
+                <div className="fc-event-title" title={arg.event.title}>
+                  <span
+                    className="kf-ev-more"
+                    role="button"
+                    aria-label={`${more.length - 1} more blocks here — show all`}
+                    ref={(el) => {
+                      dragGuard(() => {
+                        if (!el) return
+                        const r = el.getBoundingClientRect()
+                        setStackMore((cur) => (cur ? null : { ids: more, left: r.left, bottom: r.bottom }))
+                      })(el)
+                    }}
+                  >
+                    +{more.length - 1} more
+                  </span>
+                </div>
+              ) : (
+                <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
+              )}
               {timeText && <div className="fc-event-time">{timeText}</div>}
             </div>
           </div>
@@ -534,6 +593,17 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         onExternalDrop(taskId, info.date.toISOString(), info.allDay)
       }}
     />
+    {stackMore && (
+      <StackMorePopover
+        anchor={stackMore}
+        items={stackMore.ids.flatMap((id) => {
+          const e = events.find((x) => x.id === id)
+          return e ? [{ id, title: e.title, time: `${clockTime(new Date(e.start).getTime())}–${clockTime(new Date(e.end).getTime())}` }] : []
+        })}
+        onPick={onEventClick}
+        onClose={closeStackMore}
+      />
+    )}
     </div>
   )
 })
