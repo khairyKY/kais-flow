@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planCompletion, planUndo } from './completion'
+import { checkAction, planCompletion, planUndo, planUndoReopen } from './completion'
 import type { Task } from '../../lib/types'
 
 // Sat 26 Sep 2026 09:00 Cairo (UTC+3) — a "Water the plants" that repeats Saturdays and Tuesdays.
@@ -72,6 +72,25 @@ describe('planCompletion', () => {
     expect(planCompletion(task(), [openCopy], NOW, newId).next).toBeNull()
   })
 
+  it('Polish F2a: the next occurrence reminds again — same lead before its due, not yet sent', () => {
+    // 15 min before Saturday 09:00, already sent by the notify sweep.
+    const reminded = task({ reminder_at: '2026-09-26T05:45:00.000Z', reminder_sent: true })
+    const { done, next } = planCompletion(reminded, [], NOW, newId)
+    expect(next).toMatchObject({ due_at: NEXT_DUE, reminder_at: '2026-09-29T05:45:00.000Z', reminder_sent: false })
+    // The completed row keeps its own reminder history.
+    expect(done).toMatchObject({ reminder_at: '2026-09-26T05:45:00.000Z', reminder_sent: true })
+  })
+
+  it('Polish F2a: a reminder not yet sent moves with the occurrence too', () => {
+    const { next } = planCompletion(task({ reminder_at: '2026-09-26T05:00:00.000Z', reminder_sent: false }), [], NOW, newId)
+    expect(next).toMatchObject({ reminder_at: '2026-09-29T05:00:00.000Z', reminder_sent: false })
+  })
+
+  it('Polish F2a: no reminder on the original → none on the copy', () => {
+    const { next } = planCompletion(task({ reminder_at: null, reminder_sent: false }), [], NOW, newId)
+    expect(next).toMatchObject({ reminder_at: null, reminder_sent: false })
+  })
+
   it('a done or trashed copy of that occurrence does not block the spawn', () => {
     const doneCopy = task({ id: 'd', due_at: NEXT_DUE, status: 'done' })
     const trashed = task({ id: 't', due_at: NEXT_DUE, deleted_at: NOW })
@@ -140,5 +159,71 @@ describe('complete → undo on the table', () => {
     db.upsert({ ...orig, status: 'todo', completed_at: null }) // e.g. Reopen after a reload
     complete(db, 'orig', LATER)
     expect(openOccurrences(db)).toHaveLength(1)
+  })
+})
+
+describe('checkAction — what a checkbox click does (Polish F2a)', () => {
+  it('an open row completes', () => {
+    expect(checkAction(false, false)).toBe('complete')
+  })
+  it('a second click on a just-checked row reopens it, even while it is still drawn open', () => {
+    expect(checkAction(false, true)).toBe('reopen') // Tasks' grace window / Today's bloom before the write lands
+    expect(checkAction(true, true)).toBe('reopen') // Today: the held bloom box on a done row
+  })
+  it('a done row reopens', () => {
+    expect(checkAction(true, false)).toBe('reopen')
+  })
+})
+
+describe('planUndoReopen', () => {
+  const done = () => planCompletion(task(), [], NOW, () => 'spawn').done
+
+  it('puts the completion back exactly — same completed_at, on the task as it is now', () => {
+    const before = done()
+    const current = { ...before, status: 'todo' as const, completed_at: null, notes: 'edited meanwhile' }
+    const { restore } = planUndoReopen(current, before, null, [current])
+    expect(restore).toMatchObject({ status: 'done', completed_at: NOW, top3: false, notes: 'edited meanwhile' })
+  })
+
+  it('puts back the next occurrence the Reopen removed', () => {
+    const { done: before, next } = planCompletion(task(), [], NOW, () => 'spawn')
+    const current = { ...before, status: 'todo' as const, completed_at: null }
+    expect(planUndoReopen(current, before, next, [current]).reinsert).toEqual(next)
+  })
+
+  it('never makes two: nothing to put back when that occurrence is on the list again', () => {
+    const { done: before, next } = planCompletion(task(), [], NOW, () => 'spawn')
+    const current = { ...before, status: 'todo' as const, completed_at: null }
+    expect(planUndoReopen(current, before, next, [current, next!]).reinsert).toBeNull()
+    const otherCopy = { ...next!, id: 'other', due_at: '2026-09-29T06:00:00+00:00' }
+    expect(planUndoReopen(current, before, next, [current, otherCopy]).reinsert).toBeNull()
+  })
+
+  it('a Reopen that removed nothing puts nothing back', () => {
+    const before = done()
+    expect(planUndoReopen({ ...before, status: 'todo', completed_at: null }, before, null, []).reinsert).toBeNull()
+  })
+})
+
+describe('check → second click → Undo on the table (Polish F2a)', () => {
+  it('check → reopen → Undo leaves the table exactly as the check left it', () => {
+    const db = table([task()])
+    // check
+    const t = db.rows().find((r) => r.id === 'orig')!
+    const plan = planCompletion(t, db.rows(), NOW, () => 'spawn')
+    db.upsert(plan.done)
+    db.upsert(plan.next!)
+    const afterCheck = db.rows()
+    // second click: reopen takes the check back, spawned copy and all
+    const beforeReopen = db.rows().find((r) => r.id === 'orig')!
+    const { restore, removeId } = planUndo(beforeReopen, t, plan.next, db.rows().find((r) => r.id === 'spawn'))
+    db.upsert(restore)
+    if (removeId) db.remove(removeId)
+    expect(db.rows()).toEqual([t])
+    // Undo on the "Reopened" toast
+    const u = planUndoReopen(db.rows().find((r) => r.id === 'orig')!, beforeReopen, db.rows().find((r) => r.id === removeId) ?? plan.next, db.rows())
+    db.upsert(u.restore)
+    if (u.reinsert) db.upsert(u.reinsert)
+    expect(db.rows()).toEqual(afterCheck)
   })
 })

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
@@ -40,7 +41,7 @@ import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
-import { upNextClock, upNextLabel } from './upNext'
+import { upNextClock, upNextEvents, upNextLabel } from './upNext'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -286,10 +287,6 @@ export function TodayPage() {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
 
-  const todayEvents = events
-    .filter((e) => !e.all_day && isToday(e.starts_at))
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-
   // Polish D (2026-09-26 audit): the rail counted and listed EVERY active routine — a Sunday-only
   // "Plan the week" on a Saturday, "1/5" where Routines said "1 of 3". The count and the rows now
   // both come from the Routines page's own definition of today (streaks.ts todayTally /
@@ -523,10 +520,7 @@ export function TodayPage() {
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
-            {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
-            {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={isMobile} />
-            ))}
+            <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} />
           </section>
 
           {!tasksPending && !nothingPlanned && !allDone && (
@@ -729,6 +723,8 @@ function DoneTodayCard() {
 
 // Holds a bloomed checkbox on screen for the length of Motion 5a before the row settles into
 // its done treatment. Without it the swap to DoneCheck is instant and nothing animates.
+// Polish F2a: the held box stays checked, so a second click on it used to run the completion
+// again ("Done" twice). A click on a checked box now reopens the task, with Undo (checkAction).
 function useBloomCheck(task: Task) {
   const [checking, setChecking] = useState(false)
   const done = !!task.completed_at
@@ -739,7 +735,12 @@ function useBloomCheck(task: Task) {
   }, [done])
   return {
     checking,
-    check: () => {
+    toggle: () => {
+      if (checkAction(done, checking) === 'reopen') {
+        setChecking(false)
+        reopenTaskWithUndo(task) // "Reopened" toast + Undo (puts the check back exactly)
+        return
+      }
       setChecking(true)
       completeTaskWithUndo(task) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
     },
@@ -755,7 +756,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
     return (
       <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
+        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
@@ -767,7 +768,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   return (
     <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
+      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
         <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
@@ -782,11 +783,11 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
 }
 
 // A3 — the design's done treatment (Today.dc.html:204, same as routine rows): filled
-// --sig-done check, struck-through title. Click reopens.
+// --sig-done check, struck-through title. Click reopens (Polish F2a: with Undo).
 function DoneCheck({ task, size }: { task: Task; size: number }) {
   return (
     <span
-      onClick={() => uncompleteTask(task)}
+      onClick={() => reopenTaskWithUndo(task)}
       title="Reopen"
       className="kf-hit"
       style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', cursor: 'pointer' }}
@@ -830,7 +831,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   }
   const menuItems: ContextMenuItem[] = [
     done
-      ? { label: 'Reopen', onClick: () => uncompleteTask(task) }
+      ? { label: 'Reopen', onClick: () => reopenTaskWithUndo(task) }
       : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
     { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
     { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
@@ -845,7 +846,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     return (
       <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
         {menuNode}
-        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
+        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.toggle} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null || dueBadges) && (
@@ -868,7 +869,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   return (
     <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
       {menuNode}
-      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
+      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.toggle} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
@@ -882,21 +883,36 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   )
 }
 
+// Polish F2a (2026-09-26 decision): Up next lists what's running and what's still to come today —
+// an event drops off the minute it ends (upNext.ts). The list owns the minute tick, so it re-reads
+// the clock without re-rendering the whole page, and its rows' "Now" flips on the same tick.
+function UpNextList({ events, eventsPending, tasks, compact }: { events: CalendarEvent[]; eventsPending: boolean; tasks: Task[]; compact: boolean }) {
+  const now = useMinuteNow()
+  const upNext = upNextEvents(events, now)
+  return (
+    <>
+      {!eventsPending && upNext.length === 0 && <Empty line="A clear afternoon." />}
+      {upNext.map((e, i) => (
+        <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={compact} now={now} />
+      ))}
+    </>
+  )
+}
+
 // Kai 2026-07-21: "where are the checkboxes for the top 3 tasks and the entire task behaviour" —
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
-function EventRow({ event, task, border, compact }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean }) {
+function EventRow({ event, task, border, compact, now }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date }) {
   const clock = upNextClock
   // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
   // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
-  // minute tick flips it on time without a reload.
-  const now = useMinuteNow()
+  // list's minute tick (UpNextList) flips it on time without a reload.
   const label = upNextLabel(event.starts_at, event.ends_at, now)
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
   const check = task && (
-    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTaskWithUndo(task))} />
+    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
   )
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
   if (compact) {
