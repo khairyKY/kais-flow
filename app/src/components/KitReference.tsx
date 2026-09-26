@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Chip, SectionLabel, TapeCard, Checkbox } from './kit'
+import { Button, Chip, SectionLabel, TapeCard, Checkbox, KeyChip, KeyCombo } from './kit'
 import { useTheme } from '../lib/theme'
 
 // Living reference for the §04 component kit — reachable at /design-system (no auth).
@@ -38,6 +38,17 @@ export function KitReference() {
             <Chip tone="overdue">Overdue 3d</Chip>
             <Chip tone="gold">!! High</Chip>
             <Chip tone="bordered">Meeting</Chip>
+          </div>
+        </section>
+
+        <section>
+          <SectionLabel>Keycaps — every shortcut hint (J-17)</SectionLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'center', marginTop: 14 }}>
+            <KeyCombo keys={['⌘', 'K']} />
+            <KeyChip text="?" />
+            <KeyCombo keys={['⌘', 'K']} size="sm" />
+            <KeyChip text="E" size="sm" />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>md · overlays — sm · menus, footer, strips</span>
           </div>
         </section>
 

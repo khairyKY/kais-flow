@@ -91,6 +91,53 @@ export function SectionLabel({ children, action, style }: { children: ReactNode;
   )
 }
 
+// ── KeyChip — one keyboard key drawn as a keycap: Overlays.dc.html §04 `.kbd`, verbatim.
+// J-17 (Kai, 2026-07-29): "the same exact thing globally — anywhere you're using a keyboard
+// shortcut", so every shortcut display composes this instead of plain mono text. `sm` is the
+// same cap scaled down for dense rows (menu items, sidebar footer, the Inbox strip) so it sits
+// inside the row's existing height instead of growing it. `<kbd>` for the semantics; every
+// UA default it carries (monospace font) is overridden below. ──
+export function KeyChip({ text, size = 'md', style }: { text: string; size?: 'md' | 'sm'; style?: CSSProperties }) {
+  const sm = size === 'sm'
+  return (
+    <kbd
+      style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: sm ? 'var(--fs-mono-xs)' : 'var(--fs-mono)',
+        lineHeight: 1,
+        letterSpacing: 0,
+        textTransform: 'none',
+        color: 'var(--ink-body)',
+        background: 'var(--paper-bone)',
+        border: '1px solid var(--line-card)',
+        borderBottomWidth: 2,
+        borderRadius: sm ? 4 : 5,
+        padding: sm ? '2px var(--sp-1)' : '5px 7px',
+        minWidth: sm ? 16 : 22,
+        textAlign: 'center',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: 'var(--shadow-crisp)',
+        ...style,
+      }}
+    >
+      {text}
+    </kbd>
+  )
+}
+
+/** A chord — one KeyChip per key, e.g. `['⌘', 'K']` (the `?` overlay's `.kkeys` row). */
+export function KeyCombo({ keys, size = 'md', className, style }: { keys: readonly string[]; size?: 'md' | 'sm'; className?: string; style?: CSSProperties }) {
+  return (
+    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'sm' ? 3 : 5, flex: 'none', ...style }}>
+      {keys.map((k, i) => (
+        <KeyChip key={`${k}-${i}`} text={k} size={size} />
+      ))}
+    </span>
+  )
+}
+
 // ── TapeCard — the placed-note feel (§04). Tape ONLY on placed standalone cards. ──
 export function TapeCard({
   children,
