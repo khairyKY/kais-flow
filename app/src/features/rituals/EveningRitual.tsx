@@ -103,7 +103,10 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       // D-1: a day holds many timestamped entries, so the night's line becomes its own
       // entry (stamped when it was written) instead of being appended to an earlier one.
       upsertJournalEntry({ entry_date: todayKey, body: text }, true)
-      logActivity('journal.line_added', 'ritual', todayKey, { text })
+      // S8 (polish-f1): the event says a line was written, never what it says. activity_log is
+      // kept in the persisted IndexedDB cache (Focus, Activity and notifications need it
+      // offline) and journal words must not be — the line itself lives in the journal entry above.
+      logActivity('journal.line_added', 'ritual', todayKey, { date: todayKey })
     }
     next()
   }

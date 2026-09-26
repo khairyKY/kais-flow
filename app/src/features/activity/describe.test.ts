@@ -44,6 +44,15 @@ describe('describeActivity — the four audit mislabels (2026-09-26)', () => {
     expect(describeActivity(entry('journal.created', 'journal_entry', JOURNAL, { entry_date: '2026-09-26' })).text).toBe('Wrote a journal entry')
   })
 
+  it("the evening line is noted without its words (S8) — even on rows written before the payload dropped them", () => {
+    const now = describeActivity(entry('journal.line_added', 'ritual', RANDOM, { date: '2026-09-26', entity_key: '2026-09-26' }))
+    expect(now.text).toBe("Added a line to today's journal")
+    expect(now.details).toBe('evening ritual')
+    const legacy = describeActivity(entry('journal.line_added', 'ritual', RANDOM, { text: 'the fig tree finally fruited' }))
+    expect(legacy.text).toBe("Added a line to today's journal")
+    expect(`${legacy.text} ${legacy.details}`).not.toContain('fig tree')
+  })
+
   it('a new routine is planted, not "updated"', () => {
     const line = describeActivity(entry('routine.created', 'routine', ROUTINE, { name: 'Evening stretch', time_of_day: 'evening' }), NAMES)
     expect(line.text).toBe('Planted a new routine — "Evening stretch"')
@@ -145,7 +154,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['people.created', 'people', { name: 'x' }], ['people.updated', 'people', { name: 'x' }], ['people.deleted', 'people', {}],
   ['people.interaction_logged', 'people', { summary: 'x' }], ['people.interaction_deleted', 'people', {}],
   ['journal.created', 'journal_entry', { entry_date: '2026-09-26' }], ['journal.updated', 'journal_entry', { entry_date: '2026-09-26' }],
-  ['journal.deleted', 'journal_entry', {}], ['journal.restored', 'journal_entry', {}], ['journal.line_added', 'ritual', { text: 'x' }],
+  ['journal.deleted', 'journal_entry', {}], ['journal.restored', 'journal_entry', {}], ['journal.line_added', 'ritual', { date: '2026-09-26' }],
   ['project.created', 'project', { name: 'x', domain_id: null, type: 'standard' }], ['project.renamed', 'project', { name: 'x' }], ['project.reparented', 'project', { domain_id: RANDOM }],
   ['project.archived', 'project', {}], ['project.restored', 'project', {}], ['project.color_changed', 'project', { color: '#fff' }],
   ['project.engagement_changed', 'project', { engagement_model: 'Freelance' }], ['project.target_date_changed', 'project', { target_date: null }],
