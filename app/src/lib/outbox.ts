@@ -15,6 +15,32 @@ export interface OutboxEntry {
   op: 'upsert' | 'delete'
   payload: Record<string, unknown>
   queuedAt: number
+  /** The account signed in when the write was queued. It only ever goes out under that account's
+   * session. Missing on entries queued before this field existed — those keep the old rule. */
+  uid?: string
+}
+
+/** The signed-in account right now. writeRow is synchronous and supabase-js's session read is
+ * not, so this follows the auth events instead of asking at queue time. */
+let account: string | undefined
+supabase.auth.onAuthStateChange((_event, session) => {
+  account = session?.user.id
+  // Writes held while there was no session go out as soon as their account is back. Deferred
+  // so the flush's own session read happens outside supabase-js's event dispatch.
+  if (account && typeof window !== 'undefined') setTimeout(() => void flushOutbox(), 0)
+})
+
+/** Whose writes may go out under `uid`'s session: its own, plus untagged legacy entries. */
+function belongsTo(uid: string) {
+  return (e: { uid?: string }) => !e.uid || e.uid === uid
+}
+
+async function sessionUid(): Promise<string | undefined> {
+  try {
+    return (await supabase.auth.getSession()).data.session?.user.id
+  } catch {
+    return undefined
+  }
 }
 
 async function getQueue(): Promise<OutboxEntry[]> {
@@ -91,10 +117,17 @@ export function flushOutbox(): Promise<void> {
 }
 
 async function drain(): Promise<void> {
+  // Writes go out only under the account that queued them. With no session (signed out, or it
+  // expired) nothing goes: sent with the anon key, RLS rejects them and they'd be dead-lettered —
+  // the loss 3ff5c86 set out to prevent. They wait for that account to sign back in. Another
+  // account's entries are skipped, never sent as this one's and never touched.
+  const uid = await sessionUid()
+  if (!uid) return
+  const mine = belongsTo(uid)
   for (;;) {
     const queue = await peekQueue()
-    if (queue.length === 0) break
-    const entry = queue[0]
+    const entry = queue.find(mine)
+    if (!entry) break
     try {
       const { error } =
         entry.op === 'delete'
@@ -166,7 +199,8 @@ function applyEntry(old: unknown, entry: OutboxEntry): unknown {
  * top of every fresh fetch makes the cache read "server state + what we still owe it". */
 export async function reapplyPendingWrites(table: string): Promise<void> {
   const queue = await peekQueue()
-  const pending = queue.filter((e) => e.table === table)
+  // Only this account's pending writes belong on top of this account's rows.
+  const pending = queue.filter((e) => e.table === table && (!account || belongsTo(account)(e)))
   if (pending.length === 0) return
   queryClient.setQueryData([table], (old: unknown) => pending.reduce(applyEntry, old))
 }
@@ -200,11 +234,18 @@ export async function rescueEmptyUserIdWrites(): Promise<number> {
   if (rescuing) return 0
   rescuing = true
   try {
+    const uid = await sessionUid()
+    if (!uid) return 0
+    // A dead letter tagged with its account is rescued only for that account. Untagged ones were
+    // parked before entries carried an account (pre-2026-09-26). Until 2026-09-24 this was a
+    // single-user app, so those are Kai's, and the rule stays what it was: the account signed in
+    // on this device, which AuthProvider only calls this for when it owns the outbox.
+    const rescuable = (e: DeadEntry) => e.op === 'upsert' && e.payload?.user_id === '' && belongsTo(uid)(e)
     const dead = (await get<DeadEntry[]>(DEAD_KEY)) ?? []
     // Latest failure per row only — an older copy of the same row is superseded.
     const latest = new Map<string, DeadEntry>()
     for (const e of dead) {
-      if (e.op !== 'upsert' || e.payload?.user_id !== '') continue
+      if (!rescuable(e)) continue
       const key = `${e.table}:${e.id}`
       const prev = latest.get(key)
       if (!prev || (e.failedAt ?? 0) >= (prev.failedAt ?? 0)) latest.set(key, e)
@@ -225,14 +266,14 @@ export async function rescueEmptyUserIdWrites(): Promise<number> {
     for (const [key, e] of latest) {
       // A newer write for the row is already queued (it wins), or the row exists server-side.
       if (queued.has(key) || existing.has(key)) continue
-      await enqueue({ id: e.id, table: e.table, op: 'upsert', payload: networkPayload(e.payload), queuedAt: Date.now() })
+      await enqueue({ id: e.id, table: e.table, op: 'upsert', payload: networkPayload(e.payload), queuedAt: Date.now(), uid })
       rescued++
     }
-    // Drop every empty-user_id upsert from the dead letters: rescued, superseded, or already
-    // on the server — none of them is a failure anyone needs to inspect any more.
+    // Drop this account's empty-user_id upserts from the dead letters: rescued, superseded, or
+    // already on the server — none of them is a failure anyone needs to inspect any more.
     await set(
       DEAD_KEY,
-      dead.filter((e) => !(e.op === 'upsert' && e.payload?.user_id === '')),
+      dead.filter((e) => !rescuable(e)),
     )
     if (rescued > 0) {
       useToastStore.getState().push({
@@ -280,6 +321,7 @@ export function writeRow<T extends { id: string }>(
     op,
     payload,
     queuedAt: Date.now(),
+    ...(account ? { uid: account } : {}),
   }).then(() => void flushOutbox())
 }
 
