@@ -1,0 +1,80 @@
+{
+  "$type": "color",
+  "paper": {
+    "linen": { "$value": "#EFE9DB" },
+    "parchment": { "$value": "#FBF6E9" },
+    "bone": { "$value": "#F6F0E1" },
+    "sidebar": { "$value": "#EAE3D2" },
+    "goal": { "$value": "#F8EFD3" },
+    "event": { "$value": "#F4EFE0" }
+  },
+  "ink": {
+    "body": { "$value": "#2a2420" },
+    "muted": { "$value": "#6b6455" },
+    "faint": { "$value": "#8b8471" },
+    "hairline": { "$value": "#a49d87" }
+  },
+  "line": {
+    "solid": { "$value": "#cfc7b0" },
+    "dashed": { "$value": "#d5cdb5" },
+    "sidebar": { "$value": "#c9c1aa" },
+    "card": { "$value": "#e0d8c2" },
+    "goal": { "$value": "#dcc48e" }
+  },
+  "block": {
+    "lavender": { "$value": "rgba(168,160,190,0.20)" },
+    "moss": { "$value": "rgba(122,148,110,0.18)" },
+    "blossom": { "$value": "rgba(212,168,176,0.22)" },
+    "sage": { "$value": "rgba(138,154,126,0.20)" },
+    "hydrangea": { "$value": "rgba(154,180,190,0.22)" },
+    "buttercream": { "$value": "rgba(212,199,138,0.24)" }
+  },
+  "accent": {
+    "sage": { "$value": "#8A9A7E" },
+    "moss": { "$value": "#7A946E" },
+    "terra": { "$value": "#B5654A" },
+    "blossom": { "$value": "#D4A8B0" },
+    "lavender": { "$value": "#A8A0BE" },
+    "hydrangea": { "$value": "#9AB4BE" },
+    "buttercream": { "$value": "#D4C78A" },
+    "clover": { "$value": "#C9A0A0" },
+    "gold": { "$value": "#9a7b3a" },
+    "gold-warm": { "$value": "#C9A55A" },
+    "lavender-deep": { "$value": "#7c6a9a" },
+    "lavender-text": { "$value": "#5a5170" },
+    "sage-text": { "$value": "#4d6650" },
+    "hydrangea-deep": { "$value": "#4d6a75" },
+    "clover-text": { "$value": "#8a5a5a" },
+    "buttercream-text": { "$value": "#9a8b52" }
+  },
+  "signal": {
+    "overdue": { "$value": "{accent.terra}" },
+    "streak": { "$value": "{accent.terra}" },
+    "done": { "$value": "{ink.body}" }
+  },
+  "check": {
+    "border": { "$value": "#b3ac95" },
+    "bg": { "$value": "{paper.bone}" },
+    "fill": { "$value": "{accent.sage}" },
+    "mark": { "$value": "{paper.parchment}" }
+  },
+  "bg": {
+    "app": { "$value": "{paper.linen}" },
+    "surface": { "$value": "{paper.parchment}" },
+    "input": { "$value": "{paper.bone}" },
+    "sidebar": { "$value": "{paper.sidebar}" }
+  },
+  "text": {
+    "primary": { "$value": "{ink.body}" },
+    "secondary": { "$value": "{ink.muted}" },
+    "tertiary": { "$value": "{ink.faint}" }
+  },
+  "border": {
+    "default": { "$value": "{line.solid}" },
+    "dashed": { "$value": "{line.dashed}" }
+  },
+  "semantic": {
+    "accent-primary": { "$value": "{accent.terra}" },
+    "accent-plant": { "$value": "{accent.sage}" }
+  }
+}

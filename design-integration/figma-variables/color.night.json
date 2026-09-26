@@ -1,0 +1,80 @@
+{
+  "$type": "color",
+  "paper": {
+    "linen": { "$value": "#211D30" },
+    "parchment": { "$value": "#262233" },
+    "bone": { "$value": "#2E2942" },
+    "sidebar": { "$value": "#1C1929" },
+    "goal": { "$value": "#322B22" },
+    "event": { "$value": "#2A2639" }
+  },
+  "ink": {
+    "body": { "$value": "#F0EBDD" },
+    "muted": { "$value": "#C9C0D8" },
+    "faint": { "$value": "#8E88A0" },
+    "hairline": { "$value": "#6E687F" }
+  },
+  "line": {
+    "solid": { "$value": "rgba(240,235,221,0.2)" },
+    "dashed": { "$value": "rgba(240,235,221,0.16)" },
+    "sidebar": { "$value": "rgba(240,235,221,0.14)" },
+    "card": { "$value": "rgba(240,235,221,0.12)" },
+    "goal": { "$value": "rgba(228,195,107,0.45)" }
+  },
+  "block": {
+    "lavender": { "$value": "rgba(192,183,224,0.22)" },
+    "moss": { "$value": "rgba(154,190,140,0.18)" },
+    "blossom": { "$value": "rgba(233,191,197,0.18)" },
+    "sage": { "$value": "rgba(168,196,152,0.18)" },
+    "hydrangea": { "$value": "rgba(169,197,211,0.18)" },
+    "buttercream": { "$value": "rgba(232,220,160,0.18)" }
+  },
+  "accent": {
+    "sage": { "$value": "#A8C09A" },
+    "moss": { "$value": "#8FB098" },
+    "terra": { "$value": "#E29473" },
+    "blossom": { "$value": "#E9BFC5" },
+    "lavender": { "$value": "#C0B7E0" },
+    "hydrangea": { "$value": "#A9C5D3" },
+    "buttercream": { "$value": "#E8DCA0" },
+    "clover": { "$value": "#DDB3B3" },
+    "gold": { "$value": "#E4C36B" },
+    "gold-warm": { "$value": "#C9A55A" },
+    "lavender-deep": { "$value": "#C9C0D8" },
+    "lavender-text": { "$value": "#D8D2E8" },
+    "sage-text": { "$value": "#C6D8BA" },
+    "hydrangea-deep": { "$value": "#C2D8E0" },
+    "clover-text": { "$value": "#E4C4C4" },
+    "buttercream-text": { "$value": "#DCCFA0" }
+  },
+  "signal": {
+    "overdue": { "$value": "{accent.terra}" },
+    "streak": { "$value": "#E4C36B" },
+    "done": { "$value": "{ink.body}" }
+  },
+  "check": {
+    "border": { "$value": "rgba(168,192,154,0.65)" },
+    "bg": { "$value": "rgba(168,192,154,0.08)" },
+    "fill": { "$value": "{accent.sage}" },
+    "mark": { "$value": "{paper.linen}" }
+  },
+  "bg": {
+    "app": { "$value": "{paper.linen}" },
+    "surface": { "$value": "{paper.parchment}" },
+    "input": { "$value": "{paper.bone}" },
+    "sidebar": { "$value": "{paper.sidebar}" }
+  },
+  "text": {
+    "primary": { "$value": "{ink.body}" },
+    "secondary": { "$value": "{ink.muted}" },
+    "tertiary": { "$value": "{ink.faint}" }
+  },
+  "border": {
+    "default": { "$value": "{line.solid}" },
+    "dashed": { "$value": "{line.dashed}" }
+  },
+  "semantic": {
+    "accent-primary": { "$value": "{accent.terra}" },
+    "accent-plant": { "$value": "{accent.sage}" }
+  }
+}
