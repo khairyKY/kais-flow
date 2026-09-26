@@ -1,0 +1,37 @@
+name: Production schema diagnostic
+
+# Read-only. Prints schema facts only (no user data) so the conductor can see why a migration
+# failed: the recorded migrations and what production's copy of them ran, which functions /
+# tables the pending migrations depend on exist, and the cron jobs.
+on:
+  push:
+    branches: ['claude/diag-*']
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      REF: eqbbkitofgyxxrfggpbu
+    steps:
+      - name: Queries (read-only)
+        run: |
+          set -uo pipefail
+          q() {
+            echo "===== $1"
+            jq -n --arg q "$2" '{query: $q, read_only: true}' > body.json
+            curl -sS -X POST "https://api.supabase.com/v1/projects/$REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+              --data @body.json | jq -c '.[]?' 2>/dev/null | head -80 || true
+          }
+          q "migrations recorded" "select version, name, coalesce(array_length(statements,1),0) as n from supabase_migrations.schema_migrations order by version"
+          q "production's 0020 statements (first 160 chars each)" "select left(s, 160) as stmt from supabase_migrations.schema_migrations, unnest(statements) s where version = '0020'"
+          q "functions the pending migrations touch" "select p.proname, pg_get_function_identity_arguments(p.oid) as args, p.prosecdef as definer from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('reload_retainers','do_resurface','search_hybrid','ai_usage_bump','set_updated_at','slipping_for','compost') order by 1"
+          q "all public functions" "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by 1"
+          q "tables the pending migrations touch" "select t, to_regclass('public.' || t) is not null as exists from unnest(array['projects','time_entries','resurfaced_log','areas','domains','people','journal_entries','inbox_items','calendar_events','tasks','activity_log','push_subscriptions','ai_usage','app_settings']) t"
+          q "projects columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'projects' order by ordinal_position"
+          q "cron jobs" "select jobname, schedule, left(command, 120) as command from cron.job order by jobname"
