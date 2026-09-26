@@ -5,7 +5,7 @@
 >
 > This file is the entry point. The details live in the append-only journal `docs/log/` (index: `docs/log/INDEX.md`); this file tells you what exists, where it is, what state production is in, and what to do next.
 >
-> **Release result:** see §3.1. It was filled in after the v1.0.0 run finished; if it says "in flight", read the newest `docs/log/*release*` entry.
+> **Release result:** v1.0.0 is **LIVE** (§3.1).
 
 ---
 
@@ -225,9 +225,18 @@ It merges these branches (each has a handoff on its branch and a line in `docs/l
 
 ## 3 · Production state (as of this writing)
 
-### 3.1 v1.0.0 release result
-<!-- RESULT: filled in after run 36264266175 finished; see the final chat message and the release log entry. -->
-In flight when this was written. Run: https://github.com/khairyKY/kais-flow/actions/runs/36264266175. The final status is in the release log entry written right after this file.
+### 3.1 v1.0.0 release result — ✅ LIVE (2026-09-26 18:59 UTC)
+
+| Item | Value |
+|---|---|
+| Live commit | `master` = **`b164720`** ("release v1.0.0: merge 312bb13 into master"); its tree is identical to `claude/release-v1` @ `312bb13` |
+| Live check | the pipeline saw `https://kais-flow.kaidagoat.workers.dev/version.json` report `b164720` about 75 s after the push |
+| Database | production migration history now matches files **0001–0037** (0030–0033 in run 1, 0034–0037 in run 2) |
+| Functions | notify, embed, transcribe, parse-capture, chat, search: all "Deployed Functions on project eqbbkitofgyxxrfggpbu" |
+| Backups | private Storage bucket `backups`, two `kais-flow-2026-09-26T18xxZ-v1.0.0.tar.gz` files (run 1 before any migration; run 2 after 0030–0033) |
+| Runs | run 1: https://github.com/khairyKY/kais-flow/actions/runs/36263388296 (stopped at 0034) · run 2: https://github.com/khairyKY/kais-flow/actions/runs/36264266175 (green) |
+| Release entry | `docs/log/2026-09-26-1900-bohr-release-v1.0.0.md` |
+| Rollback point | `fd54d42` |
 
 ### 3.2 Database
 - **Before today:** migrations 0001–0029 were applied (recorded).
@@ -235,7 +244,7 @@ In flight when this was written. Run: https://github.com/khairyKY/kais-flow/acti
   - Postgres rolled 0034 back, so nothing of 0034 was applied.
   - 0032 = the 30-day **compost** cron (`compost-expired`, 03:30 UTC daily). It **permanently deletes** trash older than 30 days and dismissed captures untouched for 30 days.
   - The backup was taken **before** anything ran.
-- **Run 2** carries the guarded 0034 (`312bb13`), plus 0035–0037.
+- **Run 2** applied the guarded 0034 (`312bb13`), plus 0035–0037. Production history now = files 0001–0037.
 - **Drift found** by fingerprinting production's `supabase_migrations.schema_migrations.statements` against a clean local apply:
 
 | Migration | What differs in production | Consequence |
@@ -265,11 +274,11 @@ In flight when this was written. Run: https://github.com/khairyKY/kais-flow/acti
 
 ### 3.3 Edge functions
 - **Before run 2:** the old versions (pre FIX-0).
-- **After a green run 2:** notify, embed, transcribe, parse-capture, chat and search from the release, all `verify_jwt = true` (`supabase/config.toml`).
+- **Now (v1.0.0):** notify, embed, transcribe, parse-capture, chat and search from the release, all `verify_jwt = true` (`supabase/config.toml`). Deployed 18:58 UTC.
 
 ### 3.4 Frontend
 - **Before:** `master` = `fd54d42` (README commit). The live site served old code: Kai's screenshot showed the UTC calendar header bug and no overlap layout, both fixed in release-1.
-- **After a green run 2:** `master` = the merge of `312bb13`. `https://kais-flow.kaidagoat.workers.dev/version.json` shows that commit.
+- **Now:** `master` = **`b164720`** (the merge of `312bb13`), and `https://kais-flow.kaidagoat.workers.dev/version.json` shows it.
 - **Rollback point:** `fd54d42`.
 - **Rollback command:** `git revert -m 1 <merge>` + push, or Cloudflare → Deployments → roll back. Migrations have no down scripts; fix forward.
 
@@ -444,11 +453,7 @@ In flight when this was written. Run: https://github.com/khairyKY/kais-flow/acti
 
 ## 8 · Next steps (prioritized)
 
-1. **Confirm v1.0.0 is fully live** (§3.1).
-   - If run 2 failed, read its log: `mcp` / `gh run view`.
-     - Before `db push`, a failure leaves production untouched.
-     - After it, functions and app must follow promptly.
-   - Then Kai does the runbook step 7 live checks and step 5 SMTP.
+1. **v1.0.0 is live** (§3.1). Next is Kai's part: the runbook step 7 live checks (include the next-morning `net._http_response` check after 03:30 UTC) and step 5 SMTP.
 2. **Data follow-ups from the drift** (§3.2). Each is a new migration, gated like any release:
    - (a) create `reload_retainers()` + the `retainer-reload-monthly` cron job, or decide it's unwanted;
    - (b) add the missing `people`/`interactions` indexes;
