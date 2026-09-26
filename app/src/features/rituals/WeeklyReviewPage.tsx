@@ -9,7 +9,7 @@ import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, completionRate, computeTrellisDays, localDateKey } from '../routines/streaks'
 import { useSlipping, markReviewed } from '../slipping/api'
-import { useReviewEventsThisWeek } from './api'
+import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { logActivity } from '../../lib/activity'
 import { useMotionEnabled } from '../../lib/motion'
 import { FieldLabel, useIsMobile } from './RitualChrome'
@@ -119,12 +119,12 @@ export function WeeklyReviewPage() {
 
   function markDomainSwept(d: Domain) {
     setLocalSweptAt((s) => new Map(s).set(d.id, new Date().toISOString()))
-    logActivity('domain.swept', 'domain', d.id, { week: weekKey })
+    logReviewEvent(weekStart.toISOString(), 'domain.swept', 'domain', d.id, { week: weekKey })
   }
 
   function giveVerdict(entityType: 'project' | 'area', id: string, verdict: SweepVerdict) {
     setLocalVerdicts((s) => new Map(s).set(id, verdict))
-    logActivity('review.verdict', entityType, id, { verdict, week: weekKey })
+    logReviewEvent(weekStart.toISOString(), 'review.verdict', entityType, id, { verdict, week: weekKey })
   }
 
   const openTasks = tasks.filter((t) => t.status === 'todo')
@@ -351,6 +351,66 @@ function SweepRow({
   )
 }
 
+/** The sweep list — one SweepRow per project/area plus the loose-task line. Shared by the
+ * current domain's card and (J-27) a re-opened swept domain. */
+function SweepList({
+  projects,
+  areas,
+  tasks,
+  verdicts,
+  onVerdict,
+  looseCount,
+  style,
+}: {
+  projects: Project[]
+  areas: Area[]
+  tasks: Task[]
+  verdicts: Map<string, SweepVerdict>
+  onVerdict: (entityType: 'project' | 'area', id: string, verdict: SweepVerdict) => void
+  looseCount: number
+  style?: CSSProperties
+}) {
+  return (
+    <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 4, ...style }}>
+      {projects.map((p, i) => (
+        <SweepRow
+          key={p.id}
+          dot={p.color || 'var(--acc-moss)'}
+          name={p.name}
+          open={tasks.filter((t) => t.project_id === p.id && t.status === 'todo').length}
+          touched={touchedLabel(tasks.filter((t) => t.project_id === p.id), p.updated_at)}
+          verdict={verdicts.get(p.id)}
+          onVerdict={(v) => onVerdict('project', p.id, v)}
+          last={areas.length === 0 && looseCount === 0 && i === projects.length - 1}
+        />
+      ))}
+      {areas.map((a, i) => (
+        <SweepRow
+          key={a.id}
+          dot={a.color || 'var(--acc-lavender)'}
+          name={`Area · ${a.name}`}
+          open={tasks.filter((t) => t.area_id === a.id && t.status === 'todo').length}
+          touched={touchedLabel(tasks.filter((t) => t.area_id === a.id), a.updated_at)}
+          verdict={verdicts.get(a.id)}
+          onVerdict={(v) => onVerdict('area', a.id, v)}
+          last={looseCount === 0 && i === areas.length - 1}
+        />
+      ))}
+      {projects.length === 0 && areas.length === 0 && looseCount === 0 && (
+        <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0, padding: '8px 2px' }}>Nothing here to sweep.</p>
+      )}
+      {looseCount > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
+          <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
+          <span style={{ marginLeft: 'auto' }}>
+            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DomainCard({
   domain,
   projects,
@@ -376,22 +436,53 @@ function DomainCard({
   looseCount: number
   isMobile: boolean
 }) {
+  // J-27 (Kai, 2026-07-29): "I should be able to open a swept one so I can edit the sweeping I've
+  // done." A swept domain folds to its summary row; pressing the row re-opens the same sweep list
+  // with every verdict still editable (each change logs a fresh review.verdict — the latest wins).
+  const [reopened, setReopened] = useState(false)
   const projectIds = new Set(projects.map((p) => p.id))
   const open = tasks.filter((t) => t.status === 'todo' && (t.domain_id === domain.id || (t.project_id && projectIds.has(t.project_id))))
   const counts = countsLine(projects.length, areas.length, open.length)
+  const sweepList = (style?: CSSProperties) => (
+    <SweepList projects={projects} areas={areas} tasks={tasks} verdicts={verdicts} onVerdict={onVerdict} looseCount={looseCount} style={style} />
+  )
 
   if (state === 'swept') {
     const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
     return (
-      <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '14px 17px', opacity: 0.85, display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-          <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
-        </span>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
-        <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
-          swept{time ? ` ${time}` : ''}
-        </span>
+      <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, opacity: reopened ? 1 : 0.85 }}>
+        {/* J-27: the summary row itself is the toggle — same look as before, plus a ▾/▴ hint. */}
+        <button
+          type="button"
+          aria-expanded={reopened}
+          title={reopened ? 'Fold this sweep back' : 'Re-open this sweep'}
+          onClick={() => setReopened((o) => !o)}
+          style={{ width: '100%', minHeight: 44, padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'inherit' }}
+        >
+          <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+            <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+          </span>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
+          <FHelp>{counts}</FHelp>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+            swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
+          </span>
+        </button>
+        {reopened && (
+          <div style={{ padding: isMobile ? '0 14px 14px' : '0 18px 16px' }}>
+            {sweepList()}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+              <button
+                type="button"
+                className="kf-hit"
+                onClick={() => setReopened(false)}
+                style={{ ...CHIP_BASE, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}
+              >
+                fold it back ↑
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -417,43 +508,7 @@ function DomainCard({
         <FHelp>{counts}</FHelp>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
       </div>
-      <div style={{ marginTop: 12, borderTop: '1px dashed var(--line-dashed)', paddingTop: 4 }}>
-        {projects.map((p, i) => (
-          <SweepRow
-            key={p.id}
-            dot={p.color || 'var(--acc-moss)'}
-            name={p.name}
-            open={tasks.filter((t) => t.project_id === p.id && t.status === 'todo').length}
-            touched={touchedLabel(tasks.filter((t) => t.project_id === p.id), p.updated_at)}
-            verdict={verdicts.get(p.id)}
-            onVerdict={(v) => onVerdict('project', p.id, v)}
-            last={areas.length === 0 && looseCount === 0 && i === projects.length - 1}
-          />
-        ))}
-        {areas.map((a, i) => (
-          <SweepRow
-            key={a.id}
-            dot={a.color || 'var(--acc-lavender)'}
-            name={`Area · ${a.name}`}
-            open={tasks.filter((t) => t.area_id === a.id && t.status === 'todo').length}
-            touched={touchedLabel(tasks.filter((t) => t.area_id === a.id), a.updated_at)}
-            verdict={verdicts.get(a.id)}
-            onVerdict={(v) => onVerdict('area', a.id, v)}
-            last={looseCount === 0 && i === areas.length - 1}
-          />
-        ))}
-        {projects.length === 0 && areas.length === 0 && looseCount === 0 && (
-          <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0, padding: '8px 2px' }}>Nothing here to sweep.</p>
-        )}
-        {looseCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
-            <span style={{ marginLeft: 'auto' }}>
-              <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
-            </span>
-          </div>
-        )}
-      </div>
+      {sweepList({ marginTop: 12 })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
         <button type="button" onClick={onSweep} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>
           Mark {domain.name} swept

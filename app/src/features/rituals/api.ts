@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import { queryClient } from '../../lib/queryClient'
 import { localDateKey } from '../routines/streaks'
 import type { ActivityLogEntry } from '../../lib/types'
 
@@ -55,10 +56,33 @@ export function useReviewEventsThisWeek(weekStartIso: string) {
         .select('*')
         .in('event_type', ['domain.swept', 'review.verdict'])
         .gte('created_at', weekStartIso)
+        // J-27: a re-opened sweep can revise a verdict, and the page folds these rows into a
+        // Map in order — oldest first so the LATEST verdict is the one that survives a reload.
+        .order('created_at', { ascending: true })
       if (error) throw error
       return data as ActivityLogEntry[]
     },
   })
+}
+
+/** J-27: log a sweep / verdict AND fold it into this week's cached review events. A re-opened
+ * sweep exists to revise verdicts; without the cache write, leaving the page and coming back
+ * inside the 30s staleTime (or reloading — the cache is persisted) re-read the pre-edit list,
+ * so a revised verdict looked lost until the next refetch. The outbox's write-behind re-apply
+ * only covers a table's own `[table]` key, not this `['activity_log', 'review_week', …]` one. */
+export function logReviewEvent(
+  weekStartIso: string,
+  eventType: 'domain.swept' | 'review.verdict',
+  entityType: string,
+  entityId: string,
+  payload: Record<string, unknown>,
+): void {
+  logActivity(eventType, entityType, entityId, payload)
+  queryClient.setQueryData<ActivityLogEntry[]>(['activity_log', 'review_week', weekStartIso], (old) =>
+    old
+      ? [...old, { id: crypto.randomUUID(), event_type: eventType, entity_type: entityType, entity_id: entityId, payload, created_at: new Date().toISOString() }]
+      : old,
+  )
 }
 
 export function logRitualStep(ritual: RitualKind, step: string): void {
