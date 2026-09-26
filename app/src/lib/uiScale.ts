@@ -26,17 +26,60 @@ export const UI_SCALES = [1, 1.1, 1.25, 1.5, 1.75] as const
 export type UiScale = (typeof UI_SCALES)[number]
 
 export const UI_SCALE_KEY = 'kf_ui_scale'
-/** 125%. 110% was still "kinda zoomed out / small" (2026-07-21), and 125 is also a cleaner
- * ratio than 110 — fewer fractional device pixels, so hairlines and text land crisper. */
-export const DEFAULT_UI_SCALE: UiScale = 1.25
+/** 125% on a computer. 110% was still "kinda zoomed out / small" (2026-07-21), and 125 is also a
+ * cleaner ratio than 110 — fewer fractional device pixels, so hairlines and text land crisper. */
+export const DESKTOP_UI_SCALE: UiScale = 1.25
+/** 100% on phones and touch-first screens (Polish F2b, conductor decision 2026-09-26): the phone
+ * `.dc.html` designs are drawn at 390 CSS px, and 125% laid a 390px phone out at ~312. */
+export const TOUCH_UI_SCALE: UiScale = 1
+/** A screen whose SHORT side is under this many CSS px is a phone (the biggest phones are ~440;
+ * a 7" tablet starts at 600). Screen, not window: resizing a desktop window never flips it. */
+export const SMALL_SCREEN_MAX = 600
+
+export interface UiScaleEnv {
+  /** `(pointer: coarse)`: the PRIMARY pointer is a finger (phones, tablets). A touchscreen laptop
+   * whose primary pointer is its trackpad reads `fine` and keeps the desktop default. */
+  coarsePointer: boolean
+  /** min(screen.width, screen.height) in CSS px, so rotating the phone doesn't change it. 0 = unknown. */
+  screenShortSide: number
+}
+
+/** The scale a device gets until its user picks one. Pure. index.html's pre-paint script repeats
+ * this exact rule in ES5 — keep the two in sync. */
+export function defaultUiScale(env: UiScaleEnv): UiScale {
+  const smallScreen = env.screenShortSide > 0 && env.screenShortSide < SMALL_SCREEN_MAX
+  return env.coarsePointer || smallScreen ? TOUCH_UI_SCALE : DESKTOP_UI_SCALE
+}
+
+/** A saved choice (the raw `kf_ui_scale` value) always wins; anything else gets the device default. */
+export function resolveUiScale(stored: string | null, env: UiScaleEnv): UiScale {
+  // Number(null) and Number('') are both 0, which is no scale, but say so rather than rely on it.
+  const raw = stored === null || stored === '' ? NaN : Number(stored)
+  return (UI_SCALES as readonly number[]).includes(raw) ? (raw as UiScale) : defaultUiScale(env)
+}
+
+/** This device's pointer and screen, read live (no window = a desktop: tests, SSR). */
+export function readUiScaleEnv(): UiScaleEnv {
+  if (typeof window === 'undefined') return { coarsePointer: false, screenShortSide: 0 }
+  let coarsePointer = false
+  try {
+    coarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+  } catch {
+    /* no media queries: treat it as a desktop */
+  }
+  const w = window.screen?.width ?? 0
+  const h = window.screen?.height ?? 0
+  return { coarsePointer, screenShortSide: w > 0 && h > 0 ? Math.min(w, h) : 0 }
+}
 
 export function readUiScale(): UiScale {
+  let stored: string | null = null
   try {
-    const raw = Number(localStorage.getItem(UI_SCALE_KEY))
-    return (UI_SCALES as readonly number[]).includes(raw) ? (raw as UiScale) : DEFAULT_UI_SCALE
+    stored = localStorage.getItem(UI_SCALE_KEY)
   } catch {
-    return DEFAULT_UI_SCALE
+    /* private mode: no saved choice, so the device default applies */
   }
+  return resolveUiScale(stored, readUiScaleEnv())
 }
 
 export function applyUiScale(scale: UiScale): void {
