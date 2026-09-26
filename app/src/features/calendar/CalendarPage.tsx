@@ -4,7 +4,10 @@ import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent, restoreEvent } from './api'
-import { useTasks, completeTask, uncompleteTask } from '../tasks/api'
+// Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
+// checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
+// completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
+import { useTasks, completeTaskWithUndo, uncompleteTask } from '../tasks/api'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Checkbox } from '../../components/kit'
@@ -246,7 +249,7 @@ export function CalendarPage() {
     const items: ContextMenuItem[] = []
     if (event.type === 'task') {
       items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
-      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTask(t) } })
+      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     } else {
@@ -530,7 +533,7 @@ export function CalendarPage() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                       {/* R4 (Kai 2026-07-20): tick a task off without scheduling it first. The
                           guard swallows pointerdown so FullCalendar's Draggable never sees it. */}
-                      <span ref={dragGuard(() => completeTask(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
+                      <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
                         <Checkbox checked={false} size={15} />
                       </span>
                       <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
@@ -659,7 +662,9 @@ export function CalendarPage() {
               events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false }))}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
-                if (t) (done ? uncompleteTask : completeTask)(t)
+                if (!t) return
+                if (done) uncompleteTask(t)
+                else completeTaskWithUndo(t)
               }}
               onCreate={handleGridCreate}
               onMove={(id, start, end, allDay) => {
