@@ -4,8 +4,9 @@ import { Button } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { completeTaskWithUndo } from '../tasks/api'
-import { RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
-import { dayPhase, eveningState, morningState, type RitualState } from './dayPhase'
+import { RITUAL_STEP_COUNT, useRitualsFinishedToday, useSeedsFor, type RitualKind } from '../rituals/api'
+import { seedTargetDate } from '../rituals/loopDay'
+import { dayPhase, eveningState, morningState, ritualFinished, type RitualState } from './dayPhase'
 import { top3Tally } from './top3Today'
 import { upNextClock, upNextEvents, isInProgress } from './upNext'
 import { useMinuteNow } from './useMinuteNow'
@@ -43,8 +44,15 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const today = cairoDateKey(now)
   const hasTaskBlockToday = events.some((e) => !!e.task_id && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today)
-  const morning = morningState(ritualSteps.morning, RITUAL_STEP_COUNT.morning, hasTaskBlockToday)
-  const evening = eveningState(ritualSteps.evening, RITUAL_STEP_COUNT.evening)
+  // Loop B's contract: a ritual walked past its last step logs `ritual.finished` for the Cairo loop
+  // day (04:00 rollover), so a 00:30 shutdown still reads as tonight's. Step counts stay a fallback.
+  const finishedToday = useRitualsFinishedToday(now)
+  const m = morningState(ritualSteps.morning, RITUAL_STEP_COUNT.morning, hasTaskBlockToday)
+  const e = eveningState(ritualSteps.evening, RITUAL_STEP_COUNT.evening)
+  const morning: RitualState = { ...m, finished: finishedToday.morning || ritualFinished(m) }
+  const evening: RitualState = { ...e, finished: finishedToday.evening || ritualFinished(e) }
+  // What the evening seeded for the coming morning (ritual.seeded rows, still open tasks).
+  const seeds = useSeedsFor(seedTargetDate(now))
   const tally = top3Tally(top3)
   const openTop3 = top3.filter((t) => !t.completed_at)
   // "The running or next item": Up next's own list, minus blocks whose task is already done.
@@ -77,16 +85,16 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
   }
 
   if (state.phase === 'closed') {
-    // Tomorrow's seeds = what's starred and still open once the evening ritual is done — exactly
-    // what the morning ritual will find "seeded" (its Top-3 step reads the same flag).
+    // Tomorrow's seeds = what the evening's seeds beat planted for the coming loop day — exactly
+    // what the morning ritual's Top-3 step will pre-select (rituals/loopDay.ts).
     return (
       <Shell compact={compact} icon={<MoonIcon />} links={links}
         title="Day closed ✿"
-        body={openTop3.length > 0 ? (
+        body={seeds.length > 0 ? (
           <div style={{ marginTop: 5 }}>
             <Caption>Tomorrow's seeds</Caption>
             <div style={{ marginTop: 3, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>
-              {openTop3.map((t, i) => (
+              {seeds.map((t, i) => (
                 <span key={t.id}>{i > 0 && <span style={{ color: 'var(--ink-hairline)' }}> · </span>}<EmojiText text={t.title} /></span>
               ))}
             </div>

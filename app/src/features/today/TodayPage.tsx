@@ -440,6 +440,87 @@ export function TodayPage() {
     </div>
   ))
 
+  // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): Day card → Top 3 → Up next → Routines
+  // lead; the lists that don't drive the next move rest under one quiet "More for today" fold.
+  // Desktop keeps its rail (Routines first, then Slipping / From a while ago — already peripheral);
+  // the phone's single column gets Routines before the fold and everything else inside it.
+  const showAllOpen = !tasksPending && !nothingPlanned && !allDone
+  const resurfacing = resurfacedRow?.action === 'pending'
+  const allOpenSection = showAllOpen && (
+    <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
+      <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
+      {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
+      <div className="kf-dim">
+        {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
+          <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
+            <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+          </div>
+        ))}
+      </div>
+      {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
+      {allOpen.length > ALL_OPEN_CAP && (
+        <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
+          View all →
+        </Link>
+      )}
+    </section>
+  )
+  const slippingSection = slipping.length > 0 && (
+    <section>
+      <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
+      {/* Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A). */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {slipping.map((row) => {
+          const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+          // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
+          const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
+          return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
+        })}
+      </div>
+    </section>
+  )
+  // Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
+  // The section now either carries content or offers the one designed way in.
+  const routinesSection = (
+    <section>
+      <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
+      {routinesTotal === 0 && (
+        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
+          {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
+          {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
+        </Link>
+      )}
+      {routineGroups.filter((g) => g.items.length > 0).map((g) => (
+        <div key={g.key}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
+          {g.items.map((r) => (
+            <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
+          ))}
+        </div>
+      ))}
+    </section>
+  )
+  // Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
+  // bare heading. The heading now only appears with a card under it.
+  const resurfaceSection = resurfacing && (
+    <section>
+      <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
+      <ResurfaceCard />
+    </section>
+  )
+  const moreSummary = [
+    showAllOpen && openCount > 0 ? `${openCount} open` : null,
+    isMobile && slipping.length > 0 ? `${slipping.length} slipping` : null,
+    isMobile && resurfacing ? 'a memory' : null,
+  ].filter(Boolean).join(' · ')
+  const moreForToday = (showAllOpen || (isMobile && (slipping.length > 0 || resurfacing))) && (
+    <MoreForToday summary={moreSummary}>
+      {allOpenSection}
+      {isMobile && slippingSection}
+      {isMobile && resurfaceSection}
+    </MoreForToday>
+  )
+
   return (
     <div style={{ maxWidth: 1010, margin: '0 auto' }}>
       {isMobile ? (
@@ -554,72 +635,15 @@ export function TodayPage() {
             <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} />
           </section>
 
-          {!tasksPending && !nothingPlanned && !allDone && (
-            <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
-              <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
-              {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
-              <div className="kf-dim">
-                {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
-                  <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
-                  </div>
-                ))}
-              </div>
-              {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
-              {allOpen.length > ALL_OPEN_CAP && (
-                <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
-                  View all →
-                </Link>
-              )}
-            </section>
-          )}
+          {isMobile && routinesSection}
+          {moreForToday}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
-          {slipping.length > 0 && (
-            <section>
-              <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
-              {/* Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A). */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {slipping.map((row) => {
-                  const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
-                  // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
-                  const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
-                  return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
-              The section now either carries content or offers the one designed way in. */}
-          <section>
-            <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
-            {routinesTotal === 0 && (
-              <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
-                {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
-                {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
-              </Link>
-            )}
-            {routineGroups.filter((g) => g.items.length > 0).map((g) => (
-              <div key={g.key}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
-                {g.items.map((r) => (
-                  <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
-                ))}
-              </div>
-            ))}
-          </section>
-
-          {/* Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
-              bare heading. The heading now only appears with a card under it. */}
-          {resurfacedRow?.action === 'pending' && (
-            <section>
-              <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
-              <ResurfaceCard />
-            </section>
-          )}
-        </div>
+        {!isMobile && <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+          {routinesSection}
+          {slippingSection}
+          {resurfaceSection}
+        </div>}
       </div>
 
       {selected.size > 0 && (
@@ -1061,6 +1085,33 @@ function RoutineRow({ routine, done }: { routine: Routine; done: boolean }) {
       <Checkbox checked={done} size={16} onChange={() => toggleCompletion(routine)} />
       <span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>
     </div>
+  )
+}
+
+// Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
+// remembered per device; SectionLabel's look, as a button.
+const MORE_OPEN_KEY = 'kf.today.more-open'
+
+function MoreForToday({ summary, children }: { summary: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(MORE_OPEN_KEY) === '1' } catch { return false }
+  })
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    try { localStorage.setItem(MORE_OPEN_KEY, next ? '1' : '0') } catch { /* storage off: this visit only */ }
+  }
+  return (
+    <section>
+      <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+          More for today{summary && <span style={{ color: 'var(--ink-hairline)' }}> · {summary}</span>}
+        </span>
+        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+        <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
+      </button>
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 12 }}>{children}</div>}
+    </section>
   )
 }
 
