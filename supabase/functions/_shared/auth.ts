@@ -31,7 +31,8 @@ export interface AuthedUser {
 /**
  * Resolves the signed-in user from the bearer token, or returns the response to send instead:
  * 401 for no token / the anon key / the service-role key / an expired or revoked session (none of
- * those resolve to a user), 503 if the auth server itself couldn't be reached — a signed-in client
+ * those resolve to a user) / an anonymous user (SEC-2), 503 if the auth server itself couldn't be
+ * reached — a signed-in client
  * shouldn't be told its session is bad because of an outage.
  *
  *   const auth = await requireUser(req)
@@ -45,7 +46,14 @@ export async function requireUser(req: Request): Promise<AuthedUser | Response> 
   // too — not just a bad signature. The auth server verifies the signature itself, so this works
   // for legacy HS256 and asymmetric (ES256 — what the local stack issues) user tokens alike.
   const { data, error } = await authClient.auth.getUser(token)
-  if (data?.user) return { user: data.user, token }
+  if (data?.user) {
+    // SEC-2: an anonymous sign-in is a real session with no account behind it — one request mints
+    // one. Anonymous sign-ins are off in config.toml; this keeps the Groq functions and notify
+    // closed to them if that switch is ever flipped (locally or in the hosted dashboard). getUser
+    // reads the flag from the user row, so an anonymous user who later links an email passes.
+    if (data.user.is_anonymous) return jsonResponse(req, { error: 'unauthorized' }, 401)
+    return { user: data.user, token }
+  }
 
   const status = (error as { status?: number } | null)?.status
   if (error && (!status || status >= 500)) {
