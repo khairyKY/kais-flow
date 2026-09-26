@@ -78,7 +78,10 @@ async function callGroq(rawText: string, systemPrompt: string): Promise<unknown>
       temperature: 0.2,
     }),
   })
-  if (!res.ok) throw new Error(`Groq error ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    console.error('parse-capture: groq', res.status, await res.text())
+    throw new Error('upstream_failed')
+  }
   const data = await res.json()
   const content = data.choices?.[0]?.message?.content
   if (!content) throw new Error('Groq returned no content')
@@ -140,7 +143,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('parse-capture:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

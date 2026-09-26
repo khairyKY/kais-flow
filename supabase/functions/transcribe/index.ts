@@ -52,17 +52,21 @@ Deno.serve(async (req) => {
       body: groqForm,
     })
     if (!res.ok) {
-      return new Response(
-        JSON.stringify({ error: `Groq error ${res.status}: ${await res.text()}` }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      )
+      // Upstream detail stays in the function log; the caller only needs to know it failed.
+      console.error('transcribe: groq', res.status, await res.text())
+      return new Response(JSON.stringify({ error: 'upstream_failed' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
     const data = await res.json()
     return new Response(JSON.stringify({ text: data.text ?? '' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('transcribe:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
