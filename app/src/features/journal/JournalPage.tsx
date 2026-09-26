@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, type HeldRows } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
@@ -46,7 +46,11 @@ export function JournalPage() {
 
 
   // Queries
-  const { data: entries = [] } = useJournalEntries()
+  const { data: listed } = useJournalEntries()
+  // P0-B: rows this page wrote that the cached list doesn't have yet (it never loaded on this
+  // device — offline, or typing before the first fetch lands). See `holdRow`.
+  const [held, setHeld] = useState<HeldRows>({})
+  const entries = useMemo(() => withHeldRows(listed ?? [], held), [listed, held])
   // States 1d — first-run: the input is the action, this line is the invitation
   const firstPage = !entries.some(isWritten)
   const { data: notes = [] } = useNotes()
@@ -123,11 +127,20 @@ export function JournalPage() {
   // overwrite the other's field with whatever was on screen when its timer was set. Both
   // compose from here instead of from their captured render, so the loser of the race only
   // rewrites what the winner already wrote.
-  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] })
-  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] }
+  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] })
+  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] }
   const rowNow = (id: string): JournalEntry | undefined => {
     const e = latest.current.dayEntries.find((x) => x.id === id)
     return e && { ...e, body: latest.current.drafts[id] ?? e.body }
+  }
+
+  /** Every journal write on this page goes through `hold`, so the page always sees the row it
+   * just wrote — same id, latest body — even when the cached list can't take it yet. */
+  const hold = (row: JournalEntry) => setHeld((h) => holdRow(h, row, latest.current.listed))
+  const save = (entry: Parameters<typeof upsertJournalEntry>[0], isNew: boolean) => {
+    const row = upsertJournalEntry(entry, isNew)
+    hold(row)
+    return row
   }
 
   // Focus hand-off: a brand-new entry (or the first keystroke on a blank day) mounts a
@@ -147,7 +160,7 @@ export function JournalPage() {
     timers.current[entry.id] = window.setTimeout(() => {
       const cur = rowNow(entry.id)
       if (!cur) return // deleted while the save was pending — don't resurrect it
-      upsertJournalEntry({ ...cur, body: val }, false)
+      save({ ...cur, body: val }, false)
       // The write is in the cache now, so the draft has served its purpose — drop it, or it
       // would mask a later update to this row arriving from another device.
       setDrafts(({ [entry.id]: _saved, ...rest }) => rest)
@@ -159,7 +172,7 @@ export function JournalPage() {
    * stamped now, focused for typing. */
   const addEntry = (date = todayStr, from?: HTMLElement) => {
     setSelectedDate(date)
-    const row = upsertJournalEntry({ entry_date: date, body: '' }, true)
+    const row = save({ entry_date: date, body: '' }, true)
     seedPlant(from, motion) // Motion 5f — "+ New entry" drops a seed into the day's column
     wantFocus.current = row.id
   }
@@ -167,7 +180,7 @@ export function JournalPage() {
   /** First keystroke on a day with no entries writes the entry rather than making the user
    * press "+ New entry" first — the input is the action (design state 1d). */
   const startFirstEntry = (val: string) => {
-    const row = upsertJournalEntry({ entry_date: selectedDate, body: val }, true)
+    const row = save({ entry_date: selectedDate, body: val }, true)
     setDrafts((d) => ({ ...d, [row.id]: val }))
     wantFocus.current = row.id
   }
@@ -181,14 +194,14 @@ export function JournalPage() {
     const heir = dayEntries.find((e) => e.id !== entry.id)
     // Motion 3e (WB-1) — the entry slides out and the day's column closes over it.
     animateRowRemoval(document.getElementById(`journal-${entry.id}`), () => {
-      deleteJournalEntry(row)
+      hold(deleteJournalEntry(row))
       // The day's mood / three small things live on its first entry — hand them down rather
       // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
       // `dayField` reads the earliest holder, which is the restored row again.)
       if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
-        upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
+        save({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
       }
-      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => hold(restoreJournalEntry(row)))
     })
   }
 
@@ -201,7 +214,7 @@ export function JournalPage() {
       const gratitude = grats.map((s) => s.trim()).filter(Boolean)
       const target = latest.current.dayEntries[0]
       const cur = target && rowNow(target.id)
-      upsertJournalEntry(
+      save(
         cur ? { ...cur, mood, gratitude } : { entry_date: selectedDate, body: '', mood, gratitude },
         !cur
       )

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { streamChat } from './api'
+import { AI_ALLOWANCE_USED_UP } from '../capture/aiAllowance'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
 
@@ -53,8 +54,12 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             })
           },
           onDone: (citations) => updateLast({ citations }),
-          // X5 States rule — the word "error" never appears; calm copy, no raw message.
-          onError: () => updateLast({ content: "That one got lost on the breeze — try asking again." }),
+          // X5 States rule — the word "error" never appears; calm copy, no raw message. SEC-2: a
+          // used-up daily AI allowance says so plainly instead of inviting a retry.
+          onError: (_message, reason) =>
+            updateLast({
+              content: reason === 'daily_limit' ? AI_ALLOWANCE_USED_UP : 'That one got lost on the breeze — try asking again.',
+            }),
         },
         controller.signal,
       )

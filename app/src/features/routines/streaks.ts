@@ -28,8 +28,10 @@ const MAX_LOOKBACK_DAYS = 3650 // ~10 years safety bound against pathological ca
 /** Backward grace walk shared by computeStreak and computeGraceStreak — Routines.dc.html
  * turn 4 ("Gentle Rain"): one missed scheduled day per calendar month doesn't break the
  * streak (it "rains" instead); the second miss in a month snaps it. Today, if scheduled but
- * not yet completed, doesn't break the current streak — the day isn't over. */
-function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date): { current: number; rainedDates: string[] } {
+ * not yet completed, doesn't break the current streak — the day isn't over. `since` (a
+ * routine's first day, see `routineStartKey`) ends the walk: days before a routine existed are
+ * neither misses nor rain. It can never change `current` — no completion predates `since`. */
+function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date, since?: string): { current: number; rainedDates: string[] } {
   if (cadence.weekdays.length === 0) return { current: 0, rainedDates: [] }
   const rainUsedByMonth = new Set<string>()
   const rainedDates: string[] = []
@@ -41,6 +43,7 @@ function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date
   }
   let steps = 0
   while (steps < MAX_LOOKBACK_DAYS) {
+    if (since && localDateKey(cursor) < since) break
     if (isScheduled(cursor, cadence)) {
       const key = localDateKey(cursor)
       if (completed.has(key)) {
@@ -105,6 +108,60 @@ export function computeStreak(completedDates: string[], cadence: Cadence, today:
   return { current, best: Math.max(best, current) }
 }
 
+/** 'growing' — a live streak (current > 0). 'lost' — current is 0 but a streak existed once.
+ * 'new' — no scheduled day has ever been checked off: nothing was ever there to lose, so a
+ * routine planted today (or never yet tended) must not read as a broken streak. */
+export type StreakStatus = 'growing' | 'new' | 'lost'
+
+export interface RoutineStreak extends StreakResult {
+  status: StreakStatus
+}
+
+/** `computeStreak` plus the honest reading of a zero — the one place the row label and the
+ * garden card decide between "no streak yet" and "streak lost". */
+export function routineStreak(completedDates: string[], cadence: Cadence, today: Date = new Date()): RoutineStreak {
+  const { current, best } = computeStreak(completedDates, cadence, today)
+  const status: StreakStatus = current > 0 ? 'growing' : best > 0 ? 'lost' : 'new'
+  return { current, best, status }
+}
+
+/** A routine's first real day (local YYYY-MM-DD): the earlier of the day it was planted
+ * (`created_at`) and its oldest completion — history may predate `created_at` (a backfilled
+ * check-off), and it must never be hidden. Undefined when neither is known. Uses the same
+ * device-local day as every other key in this file (the Cairo-day gap is T-2's, not widened here). */
+export function routineStartKey(createdAt: string | null | undefined, completedDates: string[]): string | undefined {
+  const created = createdAt ? new Date(createdAt) : null
+  const createdKey = created && !Number.isNaN(created.getTime()) ? localDateKey(created) : undefined
+  const earliest = completedDates.length > 0 ? [...completedDates].sort()[0] : undefined
+  if (createdKey && earliest) return createdKey < earliest ? createdKey : earliest
+  return createdKey ?? earliest
+}
+
+export interface TodayTally {
+  /** Routines that belong to today: scheduled by their cadence, or already checked off today. */
+  due: number
+  done: number
+  remaining: number
+}
+
+/** The "N of M tended" count. Only active routines count, and only when today is theirs: a
+ * routine whose cadence rests today is neither due nor remaining. One checked off on a resting
+ * day still counts as tended (and so as due), so `done` never exceeds `due`. */
+export function todayTally(routines: Routine[], completions: RoutineCompletion[], today: Date = new Date()): TodayTally {
+  const todayKey = localDateKey(today)
+  const doneIds = new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id))
+  let due = 0
+  let done = 0
+  for (const routine of routines) {
+    if (!routine.active) continue
+    const isDone = doneIds.has(routine.id)
+    if (!isDone && !isScheduled(today, routine.cadence)) continue
+    due++
+    if (isDone) done++
+  }
+  return { due, done, remaining: due - done }
+}
+
 function scheduledAndDone(cadence: Cadence, completedDates: string[], days: number, today: Date): { scheduled: number; done: number } {
   const completed = new Set(completedDates)
   let scheduled = 0
@@ -167,17 +224,19 @@ export interface TrellisDay {
 
 /** Same grace walk as `computeStreak`'s current, but also returns which days rained — the
  * streak-trellis (4a) draws a droplet on each. Punch item 44: `current` here and
- * `computeStreak().current` are the SAME number by construction (one shared walk). */
-export function computeGraceStreak(completedDates: string[], cadence: Cadence, today: Date = new Date()): { current: number; rainedDates: string[] } {
-  return walkCurrentStreak(new Set(completedDates), cadence, today)
+ * `computeStreak().current` are the SAME number by construction (one shared walk). Pass
+ * `since` (`routineStartKey`) so days before the routine existed don't read as rain. */
+export function computeGraceStreak(completedDates: string[], cadence: Cadence, today: Date = new Date(), since?: string): { current: number; rainedDates: string[] } {
+  return walkCurrentStreak(new Set(completedDates), cadence, today, since)
 }
 
 /** Per-day states for the trailing `days`-day trellis (4a): 'grew' (scheduled + done —
  * including today, the moment it's checked), 'rained' (scheduled + missed, forgiven — first
  * miss of its calendar month), 'broke' (scheduled + missed, grace already spent), 'off'
- * (not scheduled, or today-scheduled-but-not-yet-done: the day isn't over, so it never reads
- * as a miss). Oldest first, fixed length — same shape convention as `dailyCompletionRatios`. */
-export function computeTrellisDays(completedDates: string[], cadence: Cadence, days: number, today: Date = new Date()): TrellisDay[] {
+ * (not scheduled, before `since` — the routine didn't exist yet — or today-scheduled-but-not-
+ * yet-done: the day isn't over, so it never reads as a miss). Oldest first, fixed length —
+ * same shape convention as `dailyCompletionRatios`. */
+export function computeTrellisDays(completedDates: string[], cadence: Cadence, days: number, today: Date = new Date(), since?: string): TrellisDay[] {
   const completed = new Set(completedDates)
   const todayKey = localDateKey(today)
   const rainUsedByMonth = new Set<string>()
@@ -186,7 +245,7 @@ export function computeTrellisDays(completedDates: string[], cadence: Cadence, d
   for (let n = 0; n < days; n++) {
     const d = addDays(start, n)
     const key = localDateKey(d)
-    if (!isScheduled(d, cadence) || (key === todayKey && !completed.has(key))) {
+    if (!isScheduled(d, cadence) || (since && key < since) || (key === todayKey && !completed.has(key))) {
       out.push({ key, state: 'off' })
       continue
     }

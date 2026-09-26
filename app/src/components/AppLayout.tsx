@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-route
 import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
-import { signOut } from '../features/auth/AuthProvider'
+import { useSignOut } from '../features/auth/useSignOut'
 import type { OutboxEntry } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
@@ -502,6 +502,8 @@ export function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  // P0-B: both Sign out buttons (sidebar + phone More sheet) share one flow and one prompt.
+  const signOutFlow = useSignOut()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('kf.sidebarCollapsed') === '1')
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
@@ -730,7 +732,7 @@ export function AppLayout() {
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
-          {footerRow(SignOutGlyph, 'Sign out', undefined, () => void signOut(), true)}
+          {footerRow(SignOutGlyph, 'Sign out', undefined, signOutFlow.request, true)}
         </div>
         </div>
       </aside>
@@ -750,7 +752,7 @@ export function AppLayout() {
         pendingInbox={pendingInbox.length}
         onSearch={() => setSearchOpen(true)}
         onChat={() => setChatOpen(true)}
-        onSignOut={() => void signOut()}
+        onSignOut={signOutFlow.request}
       />
 
       <Suspense fallback={null}>
@@ -760,6 +762,7 @@ export function AppLayout() {
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
       </Suspense>
       <ToastHost />
+      {signOutFlow.prompt}
     </div>
   )
 }

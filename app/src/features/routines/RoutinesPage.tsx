@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
-import { computeStreak, localDateKey } from './streaks'
+import { computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, todayTally, type StreakStatus } from './streaks'
 import { vineStage } from '../../lib/growthStages'
 import { groupRoutinesByTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
@@ -20,6 +20,11 @@ import type { Routine, RoutineCompletion } from '../../lib/types'
 
 const A = '/ds/assets'
 const STAGE_LABEL: Record<string, string> = { bare: 'Bare', sprouting: 'Sprouting', flowering: 'Flowering', lush: 'Lush' }
+// Polish B: a zero streak reads by its StreakStatus (streaks.ts). "streak lost" / "start again"
+// are the export's (#1a Meditate); "no streak yet" is the export's own caption for the bare
+// vine (Design System.dc.html, Vine · bare) — a routine that was never tended has lost nothing.
+const ZERO_ROW_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'no streak yet', lost: 'streak lost' }
+const ZERO_CARD_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'Bare · no streak yet', lost: 'Bare · start again' }
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -41,32 +46,28 @@ function FlameIcon({ size = 8 }: { size?: number }) {
   )
 }
 
+// Last 7 days as the trellis sees them (computeTrellisDays): 'off' — not scheduled, before the
+// routine was planted, or today while it's still open — stays neutral; only a real scheduled
+// miss is tinted. Polish B: a routine planted today no longer shows a week of misses.
 function DayDots({ routine, completions, onOpen }: { routine: Routine; completions: RoutineCompletion[]; onOpen: () => void }) {
-  const done = new Set(completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on))
-  const today = new Date()
-  const cells: { key: string; scheduled: boolean; done: boolean }[] = []
-  for (let n = 6; n >= 0; n--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - n)
-    const key = localDateKey(d)
-    cells.push({ key, scheduled: routine.cadence.weekdays.includes(d.getDay()), done: done.has(key) })
-  }
+  const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
+  const cells = computeTrellisDays(dates, routine.cadence, 7, new Date(), routineStartKey(routine.created_at, dates))
   return (
     <span onClick={onOpen} title="14-day trellis" style={{ display: 'inline-flex', gap: 3, flex: 'none', cursor: 'pointer' }}>
       {cells.map((c) => (
         <span
           key={c.key}
           title={c.key}
-          style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: !c.scheduled ? 'var(--line-card)' : c.done ? 'var(--acc-moss)' : 'color-mix(in srgb, var(--acc-terra) 40%, transparent)' }}
+          style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: c.state === 'off' ? 'var(--line-card)' : c.state === 'grew' ? 'var(--acc-moss)' : 'color-mix(in srgb, var(--acc-terra) 40%, transparent)' }}
         />
       ))}
     </span>
   )
 }
 
-function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; onOpenTrellis: () => void }) {
+function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-  const { current } = computeStreak(dates, routine.cadence)
+  const { current, status } = routineStreak(dates, routine.cadence)
 
   function toggle() {
     toggleCompletion(routine)
@@ -98,8 +99,10 @@ function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routin
         <span style={{ fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>{routine.name}</span>
       </div>
       {routine.clock_time && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{routine.clock_time}</span>}
-      {current === 0 ? (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>streak lost</span>
+      {status !== 'growing' ? (
+        // Phone rows follow #1b, whose zero-streak row (Meditate) carries no label: in the ~300px
+        // phone row it could only wrap over the routine's name.
+        !isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{ZERO_ROW_LABEL[status]}</span>
       ) : (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--sig-streak)' }}>
           <FlameIcon />
@@ -116,9 +119,9 @@ function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routin
 
 function GardenCard({ routine, completions, compact }: { routine: Routine; completions: RoutineCompletion[]; compact: boolean }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-  const { current } = computeStreak(dates, routine.cadence)
+  const { current, status } = routineStreak(dates, routine.cadence)
   const stage = vineStage(current)
-  const sub = stage === 'bare' ? 'Bare · start again' : `${STAGE_LABEL[stage]} · ${current}d`
+  const sub = status !== 'growing' ? ZERO_CARD_LABEL[status] : `${STAGE_LABEL[stage]} · ${current}d`
   return (
     <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: compact ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -145,8 +148,9 @@ export function RoutinesPage() {
   const active = routines.filter((r) => r.active)
   const todayKey = localDateKey(new Date())
   const doneKeys = useMemo(() => new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id)), [completions, todayKey])
-  const doneToday = active.filter((r) => doneKeys.has(r.id)).length
-  const remaining = active.length - doneToday
+  // Polish B: "N of M tended" counts only routines whose day it is (todayTally) — one resting
+  // today (a Mon/Wed/Fri routine on a Saturday) is neither due nor "left before the day's done".
+  const { due, done: doneToday, remaining } = todayTally(active, completions)
 
   const bestStreak = useMemo(() => {
     let best = 0
@@ -154,7 +158,9 @@ export function RoutinesPage() {
     return best
   }, [active, completions])
 
-  const groups = groupRoutinesByTime(active).filter((g) => g.items.length > 0)
+  const groups = groupRoutinesByTime(active)
+    .filter((g) => g.items.length > 0)
+    .map((g) => ({ ...g, tally: todayTally(g.items, completions) }))
 
   const activeChallenge = active.find((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
 
@@ -239,11 +245,11 @@ export function RoutinesPage() {
           )}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {active.length} tended</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>
               {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>{heroCaption}</span>}
             </div>
             <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
-              <span style={{ display: 'block', width: active.length ? `${Math.round((doneToday / active.length) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
+              <span style={{ display: 'block', width: due ? `${Math.round((doneToday / due) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px dashed var(--line-dashed)' }}>
@@ -278,13 +284,14 @@ export function RoutinesPage() {
           <div key={g.key} style={{ marginTop: isMobile ? 20 : 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9.5 : 10.5, letterSpacing: isMobile ? '0.16em' : '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
-                {isMobile ? `${g.label} · ${g.items.filter((r) => doneKeys.has(r.id)).length}/${g.items.length}` : g.label}
+                {/* a group with nothing due today carries no "0/0" count — it's resting, not behind */}
+                {isMobile && g.tally.due > 0 ? `${g.label} · ${g.tally.done}/${g.tally.due}` : g.label}
               </span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.items.filter((r) => doneKeys.has(r.id)).length} / {g.items.length}</span>}
+              {!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}
             </div>
             {g.items.map((r) => (
-              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} onOpenTrellis={() => setTrellisRoutine(r)} />
+              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} />
             ))}
           </div>
         ))}

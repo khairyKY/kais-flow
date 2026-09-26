@@ -1,10 +1,13 @@
 import { supabase } from '../../lib/supabase'
 import type { ChatMessage, Citation } from '../../lib/types'
+import { isDailyLimitResponse } from '../capture/aiAllowance'
 
 export interface StreamChatHandlers {
   onDelta: (delta: string) => void
   onDone: (citations: Citation[]) => void
-  onError: (message: string) => void
+  /** `reason` is 'daily_limit' when today's AI allowance is used up (SEC-2) — a known state with
+   * its own calm copy, not a failure. */
+  onError: (message: string, reason?: 'daily_limit') => void
 }
 
 /** Raw fetch (not supabase.functions.invoke) because the response body must be read as a stream. */
@@ -23,7 +26,8 @@ export async function streamChat(
     signal,
   })
   if (!res.ok || !res.body) {
-    handlers.onError(`chat failed: ${res.status}`)
+    if (await isDailyLimitResponse(res)) handlers.onError('daily_limit', 'daily_limit')
+    else handlers.onError(`chat failed: ${res.status}`)
     return
   }
 
