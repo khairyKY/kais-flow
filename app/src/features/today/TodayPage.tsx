@@ -33,7 +33,7 @@ import { BulkBar } from '../../components/BulkBar'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
@@ -43,6 +43,8 @@ import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { upNextClock, upNextEvents, upNextLabel } from './upNext'
+import { taskMenuItems, upNextMenuItems } from './rowMenus'
+import { useStartFocus } from './startFocus'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -513,7 +515,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} focusable />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -753,22 +755,35 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   const openDetail = () => navigate(`/tasks/${task.id}`) // J-8
+  // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — same right-click menu and
+  // ▶ Start focus as the rows under it ("every row that shows a task behaves like a task").
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const onMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY })
+  }
+  const menuNode = menu && <ContextMenu items={taskMenuItems(task, { open: openDetail, startFocus })} position={menu} onClose={() => setMenu(null)} />
+  const focusBtn = !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
-      <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
+      <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
+        {menuNode}
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
         <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         </div>
+        {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
     )
   }
   return (
-    <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
+    <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
+      {menuNode}
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -776,6 +791,7 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
         <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
+      {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
       <div style={{ textAlign: 'center', flex: 'none' }}>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>
@@ -799,7 +815,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
+function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted, focusable }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean; focusable?: boolean }) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
@@ -820,6 +836,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   // Kai 2026-07-21: no visible select squares, but the row keeps its selection and menu
   // behaviours — Ctrl/Cmd+click toggles selection, right-click opens the actions menu.
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   function rowClick(e: React.MouseEvent) {
     if ((e.ctrlKey || e.metaKey) && !done && onToggleSelect) {
@@ -831,19 +848,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     e.preventDefault()
     setMenu({ x: e.clientX, y: e.clientY })
   }
-  const menuItems: ContextMenuItem[] = [
-    done
-      ? { label: 'Reopen', onClick: () => reopenTaskWithUndo(task) }
-      : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
-    { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
-    { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
-    { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
-    { label: 'Someday', onClick: () => setSomeday(task, true), disabled: done },
-    ...(onToggleSelect && !done ? [{ label: selected ? 'Deselect' : 'Select', onClick: onToggleSelect, shortcut: '⌃click' }] : []),
-    { label: 'Open details', onClick: () => navigate(`/tasks/${task.id}`) },
-    { label: 'Delete', danger: true, onClick: () => deleteTask(task) },
-  ]
+  // Loop A: the menu lives in ./rowMenus (shared with the goal card), Start focus on top.
+  const menuItems = taskMenuItems(task, { open: () => navigate(`/tasks/${task.id}`), startFocus, selected, onToggleSelect })
   const menuNode = menu && <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
+  // Loop A: Top 3 rows carry a ▶ Start focus beside the star; the resting "All open" list doesn't.
+  const focusBtn = focusable && !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
       <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
@@ -860,6 +869,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
             </div>
           )}
         </div>
+        {focusBtn}
         {!done && (
           <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
             {task.top3 ? '★' : '☆'}
@@ -876,6 +886,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
+      {focusBtn}
       {!done && (
         <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
           {task.top3 ? '★' : '☆'}
@@ -905,37 +916,88 @@ function UpNextList({ events, eventsPending, tasks, compact }: { events: Calenda
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
+//
+// Loop A (2026-09-26, Kai: "I can't right click what is in the up next section"): the rows were
+// display-only. Now every row behaves like a task row — a click opens it (the task editor, or the
+// calendar for a plain event; the calendar has no per-event deep link), right-click opens the row
+// menu (./rowMenus), and a task-backed row carries ▶ Start focus.
 function EventRow({ event, task, border, compact, now }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date }) {
   const clock = upNextClock
+  const navigate = useNavigate()
+  const startFocus = useStartFocus()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
   // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
   // list's minute tick (UpNextList) flips it on time without a reload.
   const label = upNextLabel(event.starts_at, event.ends_at, now)
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
+  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
+  const onMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY })
+  }
+  // The checkbox and ▶ act on their own; their clicks must not also open the row.
+  const own = (e: React.MouseEvent) => e.stopPropagation()
   const check = task && (
-    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
+    <span onClick={own} style={{ display: 'inline-flex', flex: 'none' }}>
+      <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
+    </span>
   )
+  const focusBtn = task && !done && <FocusButton title={event.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
+  // A sibling of the row, not a child: the menu portals to <body>, but React events still bubble
+  // through the component tree, and a menu click reaching the row would also open it.
+  const menuNode = menu && <ContextMenu items={upNextMenuItems(event, task, { open, startFocus })} position={menu} onClose={() => setMenu(null)} />
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
+  const rowProps = { id: `upnext-${event.id}`, onClick: open, onContextMenu: onMenu, title: task ? 'Open task' : 'Open in calendar' }
   if (compact) {
     return (
-      <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
-        {check}
-        <div style={{ flex: 1, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-      </div>
+      <>
+        <div {...rowProps} style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
+          <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
+          {check}
+          <div style={{ flex: 1, minWidth: 0, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+          {focusBtn}
+        </div>
+        {menuNode}
+      </>
     )
   }
   return (
-    <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
-      {check}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
+    <>
+      <div {...rowProps} style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
+        <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
+        {check}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+        {focusBtn}
       </div>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-    </div>
+      {menuNode}
+    </>
+  )
+}
+
+// Loop A — ▶ Start focus, the row affordance (Top 3, the goal card, Up next, the Day card). A
+// drawn triangle rather than the ▶ character, which some platforms paint as a colour emoji.
+// Quiet (hairline) until hovered; .kf-hit gives it a 44px target on touch screens.
+function FocusButton({ title, onStart, size = 11 }: { title: string; onStart: () => void; size?: number }) {
+  return (
+    <button
+      type="button"
+      className="kf-hit kf-focus-btn"
+      title="Start focus"
+      aria-label={`Start focus: ${title}`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onStart()
+      }}
+      style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size + 10, height: size + 10, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+    >
+      <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor" /></svg>
+    </button>
   )
 }
 

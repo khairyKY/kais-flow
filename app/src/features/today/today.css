@@ -8,3 +8,15 @@
 .kf-link-terra:hover {
   color: var(--acc-terra);
 }
+
+/* Loop A (2026-09-26 daily cycle): the ▶ Start focus row affordance — hairline at rest,
+   terra on hover/focus, the same signal as the active star. */
+.kf-focus-btn {
+  color: var(--ink-hairline);
+  border-radius: 999px;
+  transition: color var(--dur-quick) var(--ease-out);
+}
+.kf-focus-btn:hover,
+.kf-focus-btn:focus-visible {
+  color: var(--acc-terra);
+}
