@@ -149,3 +149,48 @@ Cloudflare builds and deploys automatically.
 **Data problem:** restore the relevant tables from the step 1 dumps.
 - Migrations have no "down" scripts; fixes go forward as a new migration.
 - Tell the conductor before restoring anything.
+
+---
+
+## 2026-09-26 16:45 — Hands-free release (replaces steps 0–4, 6 and the first live check)
+
+Kai asked for no laptop steps. `.github/workflows/release.yml` now does the whole backend + frontend order on GitHub's runners (Docker is there, nothing installed on the laptop):
+
+**gate** (`ci.yml`: tests ×4 TZ + build) → **cron-key check** (step 2a, fails if the Vault key isn't `eyJ…`) → **backup** (step 1: schema + data dump, uploaded to a private Storage bucket `backups` in the same project) → **`db push`** (step 3) → **6 functions** (step 4, server-side bundling) → **merge into `master`** (step 6, only if the merge tree = the tested tree; prepared before anything touches production, pushed last) → **waits until `/version.json` shows the merge commit**.
+
+### Once: the token (1 min)
+1. https://supabase.com/dashboard/account/tokens → **Generate new token** → name it `GitHub Actions` → copy it.
+2. https://github.com/khairyKY/kais-flow/settings/secrets/actions → **New repository secret** → name `SUPABASE_ACCESS_TOKEN` → paste → **Add secret**.
+
+Revoke it any time from the same Supabase page. Fork PRs never see it, and only the repo owner's run can deploy.
+
+### Each release
+Push a `v*` tag on the release branch's tested commit (the conductor does this when asked to deploy). Or publish a Release by hand:
+
+#### By hand (30 s)
+https://github.com/khairyKY/kais-flow/releases/new →
+1. **Choose a tag** → type `v1.0` → *Create new tag on publish*.
+2. **Target** → `claude/release-1`.
+3. Title `v1.0` → **Generate release notes**.
+4. **Publish release**.
+
+Then watch Actions → Release. Green = backend and app are live. The run's summary names the backup file and the live commit.
+
+### If a step fails
+Everything stops at that step. Nothing after it runs.
+
+| Failed step | What's true |
+|---|---|
+| Up to and including the backup | Production untouched. |
+| Database | Nothing after it ran. |
+| Functions | Database is new, functions and app are still old. Re-publish soon; don't leave it half-done. |
+| Wait (last step) | Backend + master done; check Cloudflare → Workers Builds. |
+
+Tell the conductor the failed step; re-publishing (a new tag, e.g. `v1.0.1`) is safe. Pushes already applied are skipped.
+
+### Restoring the backup
+Dashboard → Storage → `backups` → download the `.tar.gz` → it holds `schema.sql` + `data.sql`. Tell the conductor before restoring anything.
+
+### Still manual
+- Step 5 (Gmail SMTP + URL config): needs the new Gmail account's app password, so it's yours.
+- Step 7's human checks.

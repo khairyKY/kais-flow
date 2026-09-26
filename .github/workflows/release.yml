@@ -1,0 +1,146 @@
+name: Release
+
+# One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
+#   gate → cron-key check → backup → database → edge functions → app (merge into master) → live check.
+# Nothing touches production until the gate is green and the merge into master is proven to be
+# exactly the tested tree. Trigger: push a `v*` tag on the release branch's tested commit, publish a
+# GitHub Release targeting it, or (once this file is on master) Actions → Release → Run workflow.
+# The repo is public, so this job never prints data or keys; the backup goes to a private
+# Storage bucket in the same Supabase project (personal data never leaves Supabase).
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_REF: eqbbkitofgyxxrfggpbu
+  APP_URL: https://kais-flow.kaidagoat.workers.dev
+  FUNCTIONS: notify embed transcribe parse-capture chat search
+
+jobs:
+  gate:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy
+    needs: gate
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      LABEL: ${{ github.event.release.tag_name || github.ref_name }}
+    steps:
+      - name: Token present
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Add the SUPABASE_ACCESS_TOKEN repository secret first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare the merge into master (pushed last)
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          RELEASED="$(git rev-parse HEAD)"
+          git checkout -B master origin/master
+          git merge --no-ff --no-edit -m "release $LABEL: merge ${RELEASED:0:7} into master" "$RELEASED"
+          if [ "$(git rev-parse 'HEAD^{tree}')" != "$(git rev-parse "$RELEASED^{tree}")" ]; then
+            echo "::error::master has commits this release doesn't. Merge master into the release branch, let CI pass, then release again."
+            exit 1
+          fi
+          echo "- Release: \`$LABEL\` at \`${RELEASED:0:7}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.118.0
+
+      - name: Link the project
+        run: supabase link --project-ref "$PROJECT_REF"
+
+      - name: Check the cron key (must be the legacy service_role JWT)
+        run: |
+          set -euo pipefail
+          prefix="$(curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+            -d "{\"query\":\"select left(decrypted_secret, 3) as p from vault.decrypted_secrets where name = 'service_role_key'\"}" \
+            | jq -r '.[0].p // empty')"
+          if [ "$prefix" != "eyJ" ]; then
+            echo "::error::Vault 'service_role_key' is not the legacy service_role JWT (starts with '${prefix:-nothing}'). Put the legacy key in Vault first, or the cron jobs get 401."
+            exit 1
+          fi
+          echo "- Cron key: legacy JWT ✓" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Backup → private Storage bucket "backups"
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/backup"; mkdir -p "$dir"
+          supabase db dump --linked -f "$dir/schema.sql"
+          supabase db dump --linked --data-only -f "$dir/data.sql"
+          test -s "$dir/schema.sql" && test -s "$dir/data.sql"
+          name="kais-flow-$(date -u +%Y-%m-%dT%H%MZ)-$LABEL.tar.gz"; name="${name//\//-}"
+          tar -czf "$RUNNER_TEMP/$name" -C "$dir" schema.sql data.sql
+
+          key="$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT_REF/api-keys?reveal=true" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '[.[] | select(.name == "service_role")][0].api_key // empty')"
+          if [ -z "$key" ]; then echo "::error::No legacy service_role key on the project."; exit 1; fi
+          echo "::add-mask::$key"
+          storage="https://$PROJECT_REF.supabase.co/storage/v1"
+          auth=(-H "Authorization: Bearer $key" -H "apikey: $key")
+
+          # A missing bucket answers 400 here, not 404. Created private with no policies: only the service role reads it.
+          if [ "$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$storage/bucket/backups")" != 200 ]; then
+            curl -fsS "${auth[@]}" -H 'Content-Type: application/json' -X POST "$storage/bucket" \
+              -d '{"id":"backups","name":"backups","public":false}' > /dev/null
+          fi
+          curl -sS --fail-with-body "${auth[@]}" -H 'Content-Type: application/gzip' -X POST \
+            --data-binary @"$RUNNER_TEMP/$name" "$storage/object/backups/$name" > /dev/null
+          echo "- Backup: Storage → \`backups/$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Database migrations
+        run: |
+          set -euo pipefail
+          supabase migration list --linked
+          supabase db push --linked --include-all --skip-vault --yes
+          supabase migration list --linked
+          echo "- Database: migrations pushed ✓" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Edge functions
+        run: |
+          set -euo pipefail
+          for f in $FUNCTIONS; do
+            supabase functions deploy "$f" --project-ref "$PROJECT_REF" --use-api
+          done
+          echo "- Functions: $FUNCTIONS ✓" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Ship the app (push the merge to master)
+        run: git push origin master
+
+      - name: Wait until the live site serves this commit
+        run: |
+          want="$(git rev-parse HEAD)"
+          for i in $(seq 1 40); do
+            live="$(curl -fsS -A "Mozilla/5.0 (X11; Linux x86_64) kais-flow-ci" "$APP_URL/version.json?t=$(date +%s)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+            if [ "$live" = "$want" ]; then
+              echo "- App: live at \`${want:0:7}\` → $APP_URL/version.json ✓" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::The live site still serves '${live:-nothing}' after 10 minutes, expected ${want:0:7}. Check Cloudflare → Workers Builds."
+          exit 1
