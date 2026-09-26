@@ -9,3 +9,4 @@
 - 2026-09-26 05:20 · decision · K-c not run; 0030–0035 ride the first backend release; 0032 compost is destructive — needs backup + Kai OK — `2026-09-26-0520-bohr-decision-kc-rides-release.md`
 - 2026-09-26 05:10 · correction · container restart: workers lost, FIX-0 WIP saved, recovery recipe; two filename times overstated — `2026-09-26-0510-bohr-correction-restart.md`
 - 2026-09-26 05:05 · test-run · release-1 partial (T-1/T-2/T-3) green in 4 TZs — `2026-09-26-0505-bohr-test-run-release1-partial.md`
+- 2026-09-26 05:15 · decision · bar = strongly polished + publish-ready for Kai and new users → Phase A/B audits join the goal — `2026-09-26-0515-bohr-decision-publish-bar.md`
