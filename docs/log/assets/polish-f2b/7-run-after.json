@@ -1,0 +1,111 @@
+{
+ "which": "after",
+ "report": {
+  "p390-day": [
+   {
+    "text": "Call Omar re: pricing",
+    "cardW": 359,
+    "titleW": 299,
+    "titleLines": 1
+   },
+   {
+    "text": "balcony plants — ask Salma",
+    "cardW": 358,
+    "titleW": 299,
+    "titleLines": 1
+   },
+   {
+    "text": "look into moving the backups to ",
+    "cardW": 359,
+    "titleW": 299,
+    "titleLines": 2
+   },
+   {
+    "text": "GITHUB\nCoupon field drops on Saf",
+    "cardW": 358,
+    "titleW": null,
+    "titleLines": null
+   }
+  ],
+  "p390-night": [
+   {
+    "text": "Call Omar re: pricing",
+    "cardW": 359,
+    "titleW": 299,
+    "titleLines": 1
+   },
+   {
+    "text": "balcony plants — ask Salma",
+    "cardW": 358,
+    "titleW": 299,
+    "titleLines": 1
+   },
+   {
+    "text": "look into moving the backups to ",
+    "cardW": 359,
+    "titleW": 299,
+    "titleLines": 2
+   },
+   {
+    "text": "GITHUB\nCoupon field drops on Saf",
+    "cardW": 358,
+    "titleW": null,
+    "titleLines": null
+   }
+  ],
+  "p390-day-125": [
+   {
+    "text": "Call Omar re: pricing",
+    "cardW": 351,
+    "titleW": 277,
+    "titleLines": 1
+   },
+   {
+    "text": "balcony plants — ask Salma",
+    "cardW": 351,
+    "titleW": 277,
+    "titleLines": 1
+   },
+   {
+    "text": "look into moving the backups to ",
+    "cardW": 351,
+    "titleW": 277,
+    "titleLines": 3
+   },
+   {
+    "text": "GITHUB\nCoupon field drops on Saf",
+    "cardW": 350,
+    "titleW": null,
+    "titleLines": null
+   }
+  ],
+  "d1280-day": [
+   {
+    "text": "Call Omar re: pricing",
+    "cardW": 878,
+    "titleW": 581,
+    "titleLines": 1
+   },
+   {
+    "text": "balcony plants — ask Salma",
+    "cardW": 878,
+    "titleW": 581,
+    "titleLines": 1
+   },
+   {
+    "text": "look into moving the backups to ",
+    "cardW": 878,
+    "titleW": 581,
+    "titleLines": 2
+   },
+   {
+    "text": "GITHUB\nCoupon field drops on Saf",
+    "cardW": 878,
+    "titleW": null,
+    "titleLines": null
+   }
+  ]
+ },
+ "realErrors": [],
+ "meteo": 16
+}
