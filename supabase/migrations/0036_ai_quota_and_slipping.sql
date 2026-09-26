@@ -71,10 +71,12 @@ grant execute on function ai_usage_bump(uuid, text) to service_role;
 -- ---------------------------------------------------------------------------------------------
 -- https only, host anchored at both ends (the host must be followed by the path's '/'), so
 -- `fcm.googleapis.com.evil.example`, `user@host`, ports, IP literals and plain http all fail.
--- Browsers only ever hand out lowercase https endpoints on these hosts.
+-- Case-insensitive, as hostnames are (notify's URL parser lowercases them). notify applies the
+-- same host rule to the parsed URL; this string check is, if anything, the stricter of the two
+-- (it also refuses an explicit `:443` or a missing path, which browsers never produce).
 alter table push_subscriptions
   add constraint push_subscriptions_endpoint_known_service check (
-    endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+push\.apple\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+notify\.windows\.com)/'
+    endpoint ~* '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+push\.apple\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+notify\.windows\.com)/'
   ) not valid;
 
 -- ---------------------------------------------------------------------------------------------

@@ -2,17 +2,20 @@
 # FIX-0 integration checks — security audit 2026-08-01 findings S1 S3 S4 S5 S6 S9.
 # LOCAL Supabase stack only: refuses to run unless the API URL is 127.0.0.1/localhost.
 #
-#   supabase/tests/fix0-auth.sh             functions at $API_URL/functions/v1, i.e. behind the
-#                                           local gateway (`supabase functions serve`)
 #   supabase/tests/fix0-auth.sh --harness   serves the six functions under plain Deno on
-#                                           127.0.0.1 instead — no gateway, no Docker changes, so
-#                                           it can run beside other people's use of a shared stack.
-#                                           Needs `deno` on PATH (or $DENO) with the functions'
-#                                           npm/jsr deps reachable, and api.groq.com is NOT
-#                                           allowed (Groq calls fail on purpose).
+#                                           127.0.0.1 (supabase/tests/harness/runner.ts) — no
+#                                           gateway, no Docker changes, so it can run beside other
+#                                           people's use of a shared stack. Needs `deno` on PATH
+#                                           (or $DENO) with the functions' npm/jsr deps reachable;
+#                                           api.groq.com is NOT reachable (Groq calls fail on
+#                                           purpose).
+#   supabase/tests/fix0-auth.sh             (functions behind the local gateway) — refused since
+#                                           SEC-2: migration 0036 only admits real Web Push hosts
+#                                           in push_subscriptions, and only the harness can route
+#                                           those to the mock push service below.
 #
-# Needs curl, jq, psql, node (a mock push service that decrypts what it receives), and
-# supabase/functions/.env with VAPID_KEYS (gitignored; any throwaway P-256 JWK pair).
+# Needs curl, jq, psql and node (a mock push service that decrypts what it receives). The harness
+# generates a throwaway VAPID key pair per run (harness/vapid.ts); no .env is read.
 #
 # Side effects, all limited to the two test accounts fix0-a@example.com / fix0-b@example.com
 # (created on first run): their tasks/domains/push_subscriptions/resurfaced_log/embed_queue rows
@@ -25,6 +28,11 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 MODE=serve
 [ "${1:-}" = "--harness" ] && MODE=harness
+if [ "$MODE" != harness ]; then
+  echo "run with --harness: since migration 0036 the seeded push devices must use real Web Push hosts," >&2
+  echo "which only the harness can route to the mock push service" >&2
+  exit 2
+fi
 
 STATUS=$(cd "$ROOT" && npx supabase status -o env 2>/dev/null)
 val() { printf '%s\n' "$STATUS" | sed -n "s/^$1=\"\(.*\)\"$/\1/p" | head -1; }
@@ -59,59 +67,13 @@ wait_port() { # url
 }
 
 # ---------------------------------------------------------------------------------------------
-# Mock push service: generates three subscriptions' keys (a1, a2 for user A; b1 for user B),
-# decrypts every RFC 8291 aes128gcm push it receives, and appends {device, payload} to a log.
+# Mock push service (harness/mock-push.mjs): generates three subscriptions' keys (a1, a2 for user
+# A; b1 for user B), decrypts every RFC 8291 aes128gcm push it receives, and appends
+# {device, payload} to a log. The harness routes pushes for real push hosts to it.
 # ---------------------------------------------------------------------------------------------
 PUSH_PORT=${PUSH_PORT:-54392}
-if [ "$MODE" = harness ]; then PUSH_HOST=${PUSH_HOST:-127.0.0.1}; LISTEN=127.0.0.1
-else PUSH_HOST=${PUSH_HOST:-host.docker.internal}; LISTEN=0.0.0.0; fi
 PUSH_LOG=$TMP/push.log; : > "$PUSH_LOG"
-cat > "$TMP/mock-push.mjs" <<'JS'
-import http from 'node:http'
-import crypto from 'node:crypto'
-import fs from 'node:fs'
-const [, , port, host, subsFile, logFile] = process.argv
-const devices = {}
-for (const name of ['a1', 'a2', 'b1']) {
-  const ecdh = crypto.createECDH('prime256v1')
-  ecdh.generateKeys()
-  devices[name] = { ecdh, auth: crypto.randomBytes(16) }
-}
-fs.writeFileSync(subsFile, JSON.stringify(Object.fromEntries(Object.entries(devices).map(([n, d]) =>
-  [n, { p256dh: d.ecdh.getPublicKey().toString('base64url'), auth: d.auth.toString('base64url') }]))))
-const hkdf = (ikm, salt, info, len) => Buffer.from(crypto.hkdfSync('sha256', ikm, salt, info, len))
-function decrypt(dev, body) {
-  const salt = body.subarray(0, 16)
-  const idlen = body[20]
-  const asPublic = body.subarray(21, 21 + idlen)
-  const ct = body.subarray(21 + idlen)
-  const uaPublic = dev.ecdh.getPublicKey()
-  const ikm = hkdf(dev.ecdh.computeSecret(asPublic), dev.auth,
-    Buffer.concat([Buffer.from('WebPush: info\0'), uaPublic, asPublic]), 32)
-  const cek = hkdf(ikm, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16)
-  const nonce = hkdf(ikm, salt, Buffer.from('Content-Encoding: nonce\0'), 12)
-  const d = crypto.createDecipheriv('aes-128-gcm', cek, nonce)
-  d.setAuthTag(ct.subarray(ct.length - 16))
-  const pt = Buffer.concat([d.update(ct.subarray(0, ct.length - 16)), d.final()])
-  let end = pt.length - 1
-  while (end >= 0 && pt[end] === 0) end-- // RFC 8188 padding: 0x02 delimiter, then zeros
-  return pt.subarray(0, end).toString('utf8')
-}
-http.createServer((req, res) => {
-  const chunks = []
-  req.on('data', (c) => chunks.push(c))
-  req.on('end', () => {
-    const device = req.url.split('/').pop()
-    let payload = null
-    let error = null
-    try { payload = JSON.parse(decrypt(devices[device], Buffer.concat(chunks))) } catch (e) { error = String(e) }
-    fs.appendFileSync(logFile, JSON.stringify({ device, payload, error }) + '\n')
-    res.writeHead(201)
-    res.end()
-  })
-}).listen(Number(port), host)
-JS
-node "$TMP/mock-push.mjs" "$PUSH_PORT" "$LISTEN" "$TMP/subs.json" "$PUSH_LOG" &
+node "$ROOT/supabase/tests/harness/mock-push.mjs" "$PUSH_PORT" 127.0.0.1 a1,a2,b1 "$TMP/subs.json" "$PUSH_LOG" &
 PIDS+=($!)
 for _ in $(seq 1 40); do [ -s "$TMP/subs.json" ] && break; sleep 0.25; done
 
@@ -120,42 +82,15 @@ for _ in $(seq 1 40); do [ -s "$TMP/subs.json" ] && break; sleep 0.25; done
 # ---------------------------------------------------------------------------------------------
 if [ "$MODE" = harness ]; then
   DENO=${DENO:-deno}
-  ENV_FILE="$ROOT/supabase/functions/.env"
-  [ -f "$ENV_FILE" ] || { echo "missing $ENV_FILE (VAPID_KEYS)" >&2; exit 2; }
-  cat > "$TMP/runner.ts" <<'TS'
-// Serves edge functions under plain Deno: each module's Deno.serve(handler) is captured and routed
-// by the first path segment, like the edge runtime's main service (minus its verify_jwt check).
-const handlers = new Map<string, (req: Request) => Response | Promise<Response>>()
-let current = ''
-const realServe = Deno.serve
-// deno-lint-ignore no-explicit-any
-;(Deno as any).serve = (h: any) => {
-  handlers.set(current, typeof h === 'function' ? h : h.handler)
-  return { finished: Promise.resolve(), shutdown: () => Promise.resolve(), ref() {}, unref() {} }
-}
-// Supabase.ai exists only inside the edge runtime. Test stub: a fixed unit vector, so search/chat
-// reach search_hybrid (the vector branch then matches nothing; the FTS branch does the work).
-// deno-lint-ignore no-explicit-any
-;(globalThis as any).Supabase = { ai: { Session: class {
-  run() { const v = new Array(384).fill(0); v[0] = 1; return Promise.resolve(v) }
-} } }
-const [root, port, ...names] = Deno.args
-for (const name of names) {
-  current = name
-  await import(`file://${root}/${name}/index.ts`)
-}
-realServe({ port: Number(port), hostname: '127.0.0.1', onListen() {} }, (req) => {
-  const handler = handlers.get(new URL(req.url).pathname.split('/')[1])
-  return handler ? handler(req) : new Response('Function not found', { status: 404 })
-})
-TS
+  VAPID_KEYS=$("$DENO" run --no-lock --quiet "$ROOT/supabase/tests/harness/vapid.ts") || { echo "could not generate VAPID keys" >&2; exit 2; }
   FN_PORT=${FN_PORT:-54390}
   EMBED_PORT=${EMBED_PORT:-54391}
   run_harness() { # supabase_url port names...
     local url=$1 port=$2; shift 2
     SUPABASE_URL=$url SUPABASE_ANON_KEY=$ANON_KEY SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY \
+      VAPID_KEYS=$VAPID_KEYS HARNESS_PUSH_MOCK="http://127.0.0.1:$PUSH_PORT/push" \
       "$DENO" run --no-lock --no-prompt --quiet --allow-env --allow-read --allow-net=127.0.0.1,localhost \
-      --env-file="$ENV_FILE" "$TMP/runner.ts" "$ROOT/supabase/functions" "$port" "$@" \
+      "$ROOT/supabase/tests/harness/runner.ts" "$ROOT/supabase/functions" "$port" "$@" \
       > "$TMP/harness-$port.log" 2>&1 &
     PIDS+=($!)
   }
@@ -222,7 +157,9 @@ info "user A=$A_ID  user B=$B_ID"
 
 SUBS=$(cat "$TMP/subs.json")
 sub_keys() { printf '%s' "$SUBS" | jq -c ".$1"; }
-sql -v a="$A_ID" -v b="$B_ID" -v e="http://$PUSH_HOST:$PUSH_PORT/push" \
+# Real push-service hosts (0036's check constraint admits nothing else); the harness delivers them
+# to the mock by the last path segment.
+sql -v a="$A_ID" -v b="$B_ID" \
   -v ka1="$(sub_keys a1)" -v ka2="$(sub_keys a2)" -v kb1="$(sub_keys b1)" <<'SQL' >/dev/null
 delete from push_subscriptions where user_id in (:'a', :'b');
 delete from resurfaced_log where user_id in (:'a', :'b');
@@ -239,9 +176,9 @@ insert into tasks (user_id, title, reminder_at) values
   (:'b', 'FIX0 bravo stale reminder', now() - interval '20 minutes');
 insert into domains (user_id, name, created_at) values (:'a', 'FIX0 alpha domain', now() - interval '10 days');
 insert into push_subscriptions (user_id, endpoint, keys, device_label) values
-  (:'a', :'e' || '/a1', (:'ka1')::jsonb, 'fix0 a1'),
-  (:'a', :'e' || '/a2', (:'ka2')::jsonb, 'fix0 a2'),
-  (:'b', :'e' || '/b1', (:'kb1')::jsonb, 'fix0 b1');
+  (:'a', 'https://fcm.googleapis.com/fcm/send/fix0/a1', (:'ka1')::jsonb, 'fix0 a1'),
+  (:'a', 'https://updates.push.services.mozilla.com/wpush/v2/fix0/a2', (:'ka2')::jsonb, 'fix0 a2'),
+  (:'b', 'https://web.push.apple.com/fix0/b1', (:'kb1')::jsonb, 'fix0 b1');
 SQL
 info "seeded: A has 2 push devices (a1,a2), B has 1 (b1); top3/old/reminder tasks each; A has one 10-day-old domain"
 
