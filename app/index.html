@@ -10,10 +10,20 @@
       // Apply saved theme before first paint — no flash of day for night users.
       try { document.documentElement.dataset.theme = localStorage.getItem('kf_theme') === 'night' ? 'night' : 'day' } catch (e) {}
       // Same deal for UI scale — applied pre-paint so the app never flashes at the wrong size.
-      // Keep the allowed values in sync with UI_SCALES in src/lib/uiScale.ts.
+      // Keep the allowed values and the default rule in sync with src/lib/uiScale.ts
+      // (UI_SCALES, defaultUiScale): a saved choice wins; otherwise 100% on a phone or a
+      // touch-first screen (coarse primary pointer, or a screen whose short side is < 600 CSS px)
+      // and 125% on a computer.
       try {
-        var s = Number(localStorage.getItem('kf_ui_scale'))
-        if ([1, 1.1, 1.25, 1.5, 1.75].indexOf(s) === -1) s = 1.25
+        var rawScale = null
+        try { rawScale = localStorage.getItem('kf_ui_scale') } catch (e) {}
+        var s = rawScale === null || rawScale === '' ? NaN : Number(rawScale)
+        if ([1, 1.1, 1.25, 1.5, 1.75].indexOf(s) === -1) {
+          var coarse = false
+          try { coarse = window.matchMedia('(pointer: coarse)').matches } catch (e) {}
+          var short = Math.min(screen.width || 0, screen.height || 0)
+          s = coarse || (short > 0 && short < 600) ? 1 : 1.25
+        }
         if (s !== 1) document.documentElement.style.zoom = String(s)
         document.documentElement.style.setProperty('--kf-ui-scale', String(s))
       } catch (e) {}

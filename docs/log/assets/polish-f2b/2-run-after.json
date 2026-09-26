@@ -1,0 +1,123 @@
+{
+ "which": "after",
+ "report": {
+  "railDrop": {
+   "toast": 1,
+   "stack": [
+    {
+     "text": "⚠ Design review 2:00 PM",
+     "lane": "kf-ov-s0",
+     "visible": true
+    },
+    {
+     "text": "⚠ Budget check 2:00 PM",
+     "lane": "kf-ov-s1",
+     "visible": true
+    },
+    {
+     "text": "⚠1:1 Omar2:30 PM",
+     "lane": "kf-ov-hide",
+     "visible": false
+    },
+    {
+     "text": "Water the balcony plants 2:30 PM · +1 more",
+     "lane": "kf-ov-s2",
+     "visible": true
+    }
+   ]
+  },
+  "railAfterNextPress": [
+   {
+    "text": "⚠ Design review 2:00 PM",
+    "lane": "kf-ov-s0",
+    "visible": true
+   },
+   {
+    "text": "⚠ Budget check 2:00 PM",
+    "lane": "kf-ov-s1",
+    "visible": true
+   },
+   {
+    "text": "⚠ +1 more 2:30 PM",
+    "lane": "kf-ov-s2",
+    "visible": true
+   },
+   {
+    "text": "Water the balcony plants2:30 PM",
+    "lane": "kf-ov-hide",
+    "visible": false
+   }
+  ],
+  "move": {
+   "toast": 1,
+   "stack": [
+    {
+     "text": "⚠ Design review 2:00 PM",
+     "lane": "kf-ov-s0",
+     "visible": true
+    },
+    {
+     "text": "⚠ Budget check 2:00 PM",
+     "lane": "kf-ov-s1",
+     "visible": true
+    },
+    {
+     "text": "⚠1:1 Omar2:30 PM",
+     "lane": "kf-ov-hide",
+     "visible": false
+    },
+    {
+     "text": "⚠ Standup with the team 2:30 PM · +1 more",
+     "lane": "kf-ov-s2",
+     "visible": true
+    }
+   ]
+  },
+  "moveAfterPressingItself": [
+   {
+    "text": "⚠ Design review 2:00 PM",
+    "lane": "kf-ov-s0",
+    "visible": true
+   },
+   {
+    "text": "⚠ Budget check 2:00 PM",
+    "lane": "kf-ov-s1",
+    "visible": true
+   },
+   {
+    "text": "⚠1:1 Omar2:30 PM",
+    "lane": "kf-ov-hide",
+    "visible": false
+   },
+   {
+    "text": "⚠ Standup with the team 2:30 PM · +1 more",
+    "lane": "kf-ov-s2",
+    "visible": true
+   }
+  ],
+  "moveAfterKey": [
+   {
+    "text": "⚠ Design review 2:00 PM",
+    "lane": "kf-ov-s0",
+    "visible": true
+   },
+   {
+    "text": "⚠ Budget check 2:00 PM",
+    "lane": "kf-ov-s1",
+    "visible": true
+   },
+   {
+    "text": "⚠ +1 more 2:30 PM",
+    "lane": "kf-ov-s2",
+    "visible": true
+   },
+   {
+    "text": "⚠Standup with the team2:30 PM",
+    "lane": "kf-ov-hide",
+    "visible": false
+   }
+  ]
+ },
+ "realErrors": [],
+ "meteo": 8
+}

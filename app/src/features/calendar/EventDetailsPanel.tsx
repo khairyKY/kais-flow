@@ -6,7 +6,7 @@ import { toastUndo } from '../../lib/undo'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
-import { completeTask } from '../tasks/api'
+import { completeTaskWithUndo } from '../tasks/api'
 import { ColorDots } from './formFields'
 import { TimeField } from './TimeField'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
@@ -75,7 +75,8 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   }
 
   function handleComplete() {
-    if (linkedTask) completeTask(linkedTask)
+    // Polish F2b (punch 6): "Done" with Undo, like every other place a task completes.
+    if (linkedTask) completeTaskWithUndo(linkedTask)
     onClose()
   }
 

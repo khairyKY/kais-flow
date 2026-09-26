@@ -1,0 +1,79 @@
+{
+ "which": "before",
+ "report": {
+  "railDrop": {
+   "toast": 1,
+   "stack": [
+    {
+     "text": "⚠ Design review 2:00 PM",
+     "lane": "kf-ov-s0",
+     "visible": true
+    },
+    {
+     "text": "⚠ Budget check 2:00 PM",
+     "lane": "kf-ov-s1",
+     "visible": true
+    },
+    {
+     "text": "⚠ +1 more 2:30 PM",
+     "lane": "kf-ov-s2",
+     "visible": true
+    },
+    {
+     "text": "Water the balcony plants2:30 PM",
+     "lane": "kf-ov-hide",
+     "visible": false
+    }
+   ]
+  },
+  "railAfterNextPress": [
+   {
+    "text": "⚠ Design review 2:00 PM",
+    "lane": "kf-ov-s0",
+    "visible": true
+   },
+   {
+    "text": "⚠ Budget check 2:00 PM",
+    "lane": "kf-ov-s1",
+    "visible": true
+   },
+   {
+    "text": "⚠ +1 more 2:30 PM",
+    "lane": "kf-ov-s2",
+    "visible": true
+   },
+   {
+    "text": "Water the balcony plants2:30 PM",
+    "lane": "kf-ov-hide",
+    "visible": false
+   }
+  ],
+  "move": {
+   "toast": 1,
+   "stack": [
+    {
+     "text": "⚠ Design review 2:00 PM",
+     "lane": "kf-ov-s0",
+     "visible": true
+    },
+    {
+     "text": "⚠ Budget check 2:00 PM",
+     "lane": "kf-ov-s1",
+     "visible": true
+    },
+    {
+     "text": "⚠ +1 more 2:30 PM",
+     "lane": "kf-ov-s2",
+     "visible": true
+    },
+    {
+     "text": "⚠Standup with the team2:30 PM",
+     "lane": "kf-ov-hide",
+     "visible": false
+    }
+   ]
+  }
+ },
+ "realErrors": [],
+ "meteo": 8
+}
