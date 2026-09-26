@@ -12,6 +12,7 @@ import { toastUndo } from '../../lib/undo'
 import { logRitualStep } from './api'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
+import { KeyChip } from '../../components/kit'
 import type { Task } from '../../lib/types'
 
 // ── The Closing Ritual — pixel contract Rituals.dc.html 2c/2d/2e (the four beats) with
@@ -399,7 +400,11 @@ function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: 
           />
           <div style={{ marginTop: 34, borderTop: '1px dashed var(--line-dashed)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <FieldLabel color="var(--ink-hairline)">lands in the journal</FieldLabel>
-            <FieldLabel>↵ continues</FieldLabel>
+            {/* polish-f1: the key is a keycap, like every other shortcut hint (J-17). */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <KeyChip text="↵" size="sm" />
+              <FieldLabel>continues</FieldLabel>
+            </span>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useSearch } from './useSearch'
 import { SEARCH_RESTING } from './searchState'
 import { useTasks } from '../tasks/api'
 import { EmojiText } from '../../components/EmojiText'
+import { KeyChip } from '../../components/kit'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
 
@@ -161,7 +162,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {results.length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
+            <KeyChip text="↵" size="sm" />
           </div>
         )}
         {query.trim() && (
@@ -171,7 +172,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             style={{ marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
           >
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
+            <KeyChip text="↵" size="sm" />
           </button>
         )}
       </div>
