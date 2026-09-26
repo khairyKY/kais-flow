@@ -47,3 +47,5 @@ _Check these by hand on live right after the deploy. The runbook's step 7 is the
 | R-11 | Settings → Send test notification (two accounts) | Only your own devices buzz | `fix0-auth.sh` 79/79, `notify-prune.sh` 12/12 (harness) | branch | 2026-09-26 harness — real push unverified |
 | R-12 | Chat / voice after heavy use | Past the daily allowance: calm "refills tomorrow", no crash | `sec2.sh` 110/110 (harness) | branch | 2026-09-26 harness |
 | R-13 | Anon-key curl to any function (audit §1.9) | 401 | `fix0-auth.sh` | branch | 2026-09-26 harness |
+
+_2026-09-26 (conductor): R-1 … R-13 re-verified together on the release candidate `6663c83` (app code `7b50920`). See `docs/log/2026-09-26-0834-bohr-test-run-release1-candidate.md`. State stays "branch" until the deploy; then add a dated "live" note per row._
