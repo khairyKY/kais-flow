@@ -30,7 +30,7 @@ import { useAreas } from '../areas/api'
 import {
   useTasks,
   completeTask,
-  uncompleteTask,
+  undoCompletion,
   createTask,
   snoozeTask,
   setSomeday,
@@ -203,8 +203,9 @@ export function ProjectDetailPage() {
 
   const bulkComplete = () => {
     const batch = selectedTasks
-    batch.forEach((t) => completeTask(t))
-    toastUndo(`${plural(batch.length)} completed.`, () => batch.forEach((t) => uncompleteTask(t)))
+    // Polish D: undoCompletion also takes back each recurring task's spawned next occurrence.
+    const undos = batch.map((t) => completeTask(t))
+    toastUndo(`${plural(batch.length)} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
   const bulkSnooze = (until: string) => {

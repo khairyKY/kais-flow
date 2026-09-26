@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
-import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
@@ -9,7 +9,7 @@ import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
-import { computeStreak, localDateKey } from '../routines/streaks'
+import { computeStreak, localDateKey, routinesForToday, todayTally } from '../routines/streaks'
 import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
@@ -36,9 +36,11 @@ import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
+import { upNextClock, upNextLabel } from './upNext'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -89,6 +91,16 @@ function useIsMobile(): boolean {
     return () => mq.removeEventListener('change', on)
   }, [])
   return isMobile
+}
+
+/** The current time, refreshed every minute — enough for "Now" to arrive and leave on time. */
+function useMinuteNow(): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+  return now
 }
 
 export function TodayPage() {
@@ -222,7 +234,12 @@ export function TodayPage() {
 
   const bulkToast = (verb: string) =>
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
-  function bulkComplete() { selectedTasks.forEach((t) => completeTask(t)); bulkToast('completed'); clearSelection() }
+  // Punch 6 (Polish D): completing gets the same Undo as a single check — see completeTaskWithUndo.
+  function bulkComplete() {
+    const undos = selectedTasks.map((t) => completeTask(t))
+    toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
+    clearSelection()
+  }
   function bulkSnooze(until: string) { selectedTasks.forEach((t) => snoozeTask(t, until)); bulkToast('snoozed'); clearSelection() }
   function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
@@ -250,7 +267,7 @@ export function TodayPage() {
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const listNavigate = useNavigate()
   const listBindings = buildListBindings({
-    complete: (t) => completeTask(t),
+    complete: (t) => completeTaskWithUndo(t),
     open: (t) => listNavigate(`/tasks/${t.id}`),
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
@@ -273,13 +290,17 @@ export function TodayPage() {
     .filter((e) => !e.all_day && isToday(e.starts_at))
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
 
-  const routineGroups = groupRoutinesByTime(routines.filter((r) => r.active))
+  // Polish D (2026-09-26 audit): the rail counted and listed EVERY active routine — a Sunday-only
+  // "Plan the week" on a Saturday, "1/5" where Routines said "1 of 3". The count and the rows now
+  // both come from the Routines page's own definition of today (streaks.ts todayTally /
+  // routinesForToday: scheduled today, or already checked off today), so the two pages agree.
+  const routineGroups = groupRoutinesByTime(routinesForToday(routines, completions))
   const doneKeys = useMemo(() => {
     const today = localDateKey(new Date())
     return new Set(completions.filter((c) => c.completed_on === today).map((c) => c.routine_id))
   }, [completions])
-  const routinesDone = routines.filter((r) => r.active && doneKeys.has(r.id)).length
-  const routinesTotal = routines.filter((r) => r.active).length
+  const { due: routinesTotal, done: routinesDone } = todayTally(routines, completions)
+  const hasActiveRoutines = routines.some((r) => r.active)
 
   // R4-D1 (Kai's 2026-07-20 ruling (a)): a ritual's progress is its own steps walked today,
   // never a count of `time_of_day`-tagged routines — those are a separate surface entirely.
@@ -504,7 +525,7 @@ export function TodayPage() {
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
             {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
+              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={isMobile} />
             ))}
           </section>
 
@@ -551,7 +572,8 @@ export function TodayPage() {
             <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
             {routinesTotal === 0 && (
               <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
-                nothing on repeat yet — plant one ✿
+                {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
+                {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
               </Link>
             )}
             {routineGroups.filter((g) => g.items.length > 0).map((g) => (
@@ -719,7 +741,7 @@ function useBloomCheck(task: Task) {
     checking,
     check: () => {
       setChecking(true)
-      completeTask(task)
+      completeTaskWithUndo(task) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
     },
   }
 }
@@ -809,7 +831,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   const menuItems: ContextMenuItem[] = [
     done
       ? { label: 'Reopen', onClick: () => uncompleteTask(task) }
-      : { label: 'Complete', onClick: () => completeTask(task) },
+      : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
     { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
     { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
     { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
@@ -864,17 +886,23 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
-function EventRow({ event, task, first, border, compact }: { event: CalendarEvent; task?: Task; first: boolean; border: boolean; compact?: boolean }) {
-  const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+function EventRow({ event, task, border, compact }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean }) {
+  const clock = upNextClock
+  // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
+  // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
+  // minute tick flips it on time without a reload.
+  const now = useMinuteNow()
+  const label = upNextLabel(event.starts_at, event.ends_at, now)
+  const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
   const check = task && (
-    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTask(task))} />
+    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTaskWithUndo(task))} />
   )
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
   if (compact) {
     return (
       <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
+        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
         {check}
         <div style={{ flex: 1, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
@@ -883,7 +911,7 @@ function EventRow({ event, task, first, border, compact }: { event: CalendarEven
   }
   return (
     <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
+      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
       {check}
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>

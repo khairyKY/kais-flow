@@ -7,7 +7,7 @@ import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { computeStreak, completionRate, computeTrellisDays, localDateKey } from '../routines/streaks'
+import { computeStreak, completionRate, computeTrellisDays, localDateKey, routineStartKey } from '../routines/streaks'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { logActivity } from '../../lib/activity'
@@ -717,8 +717,11 @@ function SeasonSoFar({
             {topRoutines.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No routines yet.</p>}
             {topRoutines.map((r) => {
               const dates = completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on)
-              const days = computeTrellisDays(dates, r.cadence, 30)
-              const rate = completionRate(dates, r.cadence, 30)
+              // Polish D: days before the routine was planted are "off", not misses — in the
+              // trellis and in the rate beside it (same `since` as Routines' own trellis).
+              const since = routineStartKey(r.created_at, dates)
+              const days = computeTrellisDays(dates, r.cadence, 30, new Date(), since)
+              const rate = completionRate(dates, r.cadence, 30, new Date(), since)
               return (
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ width: 62, fontSize: 12, color: 'var(--ink-muted)', flex: 'none' }}>{r.name}</span>

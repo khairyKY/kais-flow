@@ -22,12 +22,17 @@ import { localTimeKey } from './eventTime'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
+import { railYields, visibleDayCount } from './weekFit'
+import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import type { CalendarEvent } from '../../lib/types'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
+// Polish D: '1' = the user folded the Unscheduled rail, '0' = they opened it; unset = automatic
+// (folded only when the visible days wouldn't keep their minimum width beside it — weekFit.ts).
+const RAIL_FOLD_KEY = 'kf.calRailFolded'
 const DEFAULT_RAIL_W = 244
 const RAIL_MIN = 150
 const RAIL_MAX = 760
@@ -312,6 +317,40 @@ export function CalendarPage() {
     localStorage.setItem(RAIL_W_KEY, String(railWidth))
   }, [railWidth])
 
+  // Polish D (2026-09-26 audit): at the default 125% interface size a 1280px window lays the
+  // page out at ~1024px, and the 244px rail beside a week left two of seven days on screen.
+  // Calendar.dc.html keeps the rail on desktop, so it stays wherever the week still fits beside
+  // it; where it doesn't, it folds to a strip (the week gets the room) and one click brings it
+  // back. Phones keep their own layout (rail above the grid, 1b) and never fold.
+  const shellRef = useRef<HTMLDivElement>(null)
+  const [shellWidth, setShellWidth] = useState(0)
+  useEffect(() => {
+    const el = shellRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([entry]) => setShellWidth(Math.round(entry.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const [railPref, setRailPref] = useState<'open' | 'folded' | null>(() => {
+    try {
+      const v = localStorage.getItem(RAIL_FOLD_KEY)
+      return v === '1' ? 'folded' : v === '0' ? 'open' : null
+    } catch {
+      return null
+    }
+  })
+  const isMobile = useIsMobile()
+  const railFolded =
+    !isMobile && (railPref ? railPref === 'folded' : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends)))
+  function setRailFolded(folded: boolean) {
+    setRailPref(folded ? 'folded' : 'open')
+    try {
+      localStorage.setItem(RAIL_FOLD_KEY, folded ? '1' : '0')
+    } catch {
+      /* private mode — the choice lasts this visit */
+    }
+  }
+
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
@@ -345,6 +384,14 @@ export function CalendarPage() {
         .cal-railsplit::after { content: ""; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }
         .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
         @media (max-width: 767px) { .cal-railsplit { display: none; } }
+        /* Polish D: the folded rail — a strip with the sidebar's own round collapse button
+           (AppLayout's .kf-collapse-btn look) and the rail's own mono label, read upward. */
+        .cal-rail.is-folded { display: none; }
+        .cal-rail-tab { flex: none; width: 34px; border: none; border-right: 1px dashed var(--line-solid); background: none; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; font: inherit; color: var(--ink-faint); }
+        .cal-rail-knob { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line-card); background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-faint); font-size: 12px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+        .cal-rail-tab:hover .cal-rail-tab-label { color: var(--ink-muted); }
+        .cal-railsplit .cal-rail-knob { position: absolute; top: 18px; left: -9px; z-index: 2; }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
         /* Motion 5b "drag lift" — the one grammar for every draggable, matching lib/motion's
            dragLift(): pick-up 140ms to scale 1.04 / +1.2deg under a 14/30 shadow, release
@@ -374,8 +421,15 @@ export function CalendarPage() {
         }
       `}</style>
 
-      <div className="cal-shell" style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
-        <aside className="cal-rail" ref={railRef}>
+      <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
+        {railFolded && (
+          <button type="button" className="cal-rail-tab" onClick={() => setRailFolded(false)} title="Show unscheduled" aria-label={`Show unscheduled tasks (${railTasks.length})`}>
+            <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true">›</span>
+            <span className="cal-rail-tab-label">Unscheduled · {railTasks.length}</span>
+          </button>
+        )}
+        {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
+        <aside className={railFolded ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
@@ -470,15 +524,31 @@ export function CalendarPage() {
         </aside>
 
         {/* R4-16: drag to rebalance rail vs. grid; double-click restores the default. */}
-        <div
-          className="cal-railsplit"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize unscheduled panel"
-          data-dragging={railDragging ? "" : undefined}
-          onPointerDown={startRailDrag}
-          onDoubleClick={() => setRailWidth(DEFAULT_RAIL_W)}
-        />
+        {!railFolded && (
+          <div
+            className="cal-railsplit"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize unscheduled panel"
+            data-dragging={railDragging ? "" : undefined}
+            onPointerDown={startRailDrag}
+            onDoubleClick={() => setRailWidth(DEFAULT_RAIL_W)}
+          >
+            {/* Polish D: fold the rail away (the week takes the room). Its own pointer/dblclick
+                events stay off the splitter so a click never starts a resize or a width reset. */}
+            <button
+              type="button"
+              className="cal-rail-knob kf-collapse-btn"
+              title="Hide unscheduled"
+              aria-label="Hide unscheduled tasks"
+              onPointerDown={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
+              onClick={() => setRailFolded(true)}
+            >
+              ‹
+            </button>
+          </div>
+        )}
 
         <div className="cal-main">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>

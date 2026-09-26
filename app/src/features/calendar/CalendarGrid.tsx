@@ -10,6 +10,7 @@ import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
 import { headerDay, scrollTimeNear } from './gridClock'
+import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import './CalendarGrid.css'
 
@@ -199,6 +200,17 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   // Rendered day-column count, from datesSet — drives the min-width that makes the grid
   // horizontally scrollable instead of crushing columns (Kai: "why cant I scroll horizontally").
   const [visibleDays, setVisibleDays] = useState(initialView === 'timeGridDay' ? 1 : 7)
+  // Polish D: the wrapper's laid-out width (page CSS px, zoom already inside) decides whether the
+  // day columns are §6-narrow (< 170px) — then blocks draw the narrow tier (see weekFit.ts).
+  const [gridWidth, setGridWidth] = useState(0)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([entry]) => setGridWidth(Math.round(entry.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const narrow = initialView !== 'dayGridMonth' && isNarrow(gridWidth, visibleDays)
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
   useEffect(() => () => stopGhostRef.current?.(), []) // never strand a ghost on unmount
@@ -236,14 +248,18 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   }
 
   return (
-    // 170px per day column + the time axis: below that the grid scrolls horizontally in the
-    // page's scroller instead of crushing the last day into a sliver (CALENDAR.md §6 narrow-col).
+    // MIN_COL_W per day column + the time axis: below that the grid scrolls horizontally in the
+    // page's scroller instead of crushing the last day into a sliver. Polish D: that floor was
+    // 170px — §6's narrow-column THRESHOLD, not a floor — so at the default 125% zoom a 1280px
+    // window showed two days of seven. Between MIN_COL_W and 170 a column now draws §6's narrow
+    // tier (`kf-cal-narrow`: short-tier type scale, start time only). weekFit.ts has the numbers.
     // --kf-cal-density folds the view-options Density into the --s scale (CalendarGrid.css);
     // it's also in the FC key because slot geometry is measured once per mount.
     <div
       ref={wrapRef}
+      className={narrow ? 'kf-cal-narrow' : undefined}
       onContextMenu={handleGridContextMenu}
-      style={{ height: '100%', minWidth: visibleDays > 1 ? 58 + visibleDays * 170 : undefined, ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
+      style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
     >
     <FullCalendar
       key={`${initialView}-${dayCount}-${density}`}
@@ -425,8 +441,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}`
         } else if (!done && p.kfStart <= now && now < p.kfEnd) {
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
-        } else if (p.kfOv && arg.timeText) {
-          // §6 overlap/stack tier: "time start-only" — half a column can't hold a range.
+        } else if ((p.kfOv || narrow) && arg.timeText) {
+          // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The
+          // narrow-column tier (< 170px) reads the same way (Polish D).
           timeText = clockTime(p.kfStart)
         } else if (p.kfFull && arg.timeText) {
           // full tier has room for the duration suffix (§2 "as space allows")

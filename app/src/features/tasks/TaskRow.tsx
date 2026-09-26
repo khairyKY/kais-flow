@@ -4,7 +4,7 @@ import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
 import { settleSwipeX, DRAG_THRESHOLD, SWIPE_LEFT, SWIPE_RIGHT } from './swipe'
 import {
-  completeTask,
+  completeTaskWithUndo,
   uncompleteTask,
   toggleTop3,
   snoozeTask,
@@ -106,8 +106,9 @@ export interface TaskRowProps {
   goalTaskId?: string | null
   /** Most recently completed task id this session — shows "just now ✿" + a loose petal instead of a time. */
   justCompletedId?: string | null
-  /** Defaults to `completeTask`. TasksPage supplies one that also tracks the grace window
-   * a just-checked row needs to stay visible in its group so the check/petal animation can play. */
+  /** Defaults to `completeTaskWithUndo` (punch 6: toast "Done" + Undo). TasksPage supplies one
+   * that also tracks the grace window a just-checked row needs to stay visible in its group so
+   * the check/petal animation can play. */
   onComplete?: (task: Task) => void
 }
 
@@ -182,7 +183,7 @@ export function TaskRow({
   border = true,
   goalTaskId,
   justCompletedId,
-  onComplete = completeTask,
+  onComplete = (t: Task) => void completeTaskWithUndo(t),
 }: TaskRowProps) {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()

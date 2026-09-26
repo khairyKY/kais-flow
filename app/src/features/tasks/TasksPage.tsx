@@ -8,7 +8,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { ConfirmCard } from '../projects/ConfirmCard'
-import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
@@ -22,7 +22,8 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
@@ -104,12 +105,25 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
 }
 
 function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
+  const stripRef = useRef<HTMLDivElement>(null)
+  // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
+  // (a deep link to Done/All would otherwise land on a tab scrolled out of sight).
+  useEffect(() => {
+    const strip = stripRef.current
+    const el = strip?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!strip || !el || strip.scrollWidth <= strip.clientWidth) return
+    const left = el.offsetLeft - strip.offsetLeft
+    if (left < strip.scrollLeft || left + el.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = Math.max(0, left - 16)
+  }, [active])
   const tab = (key: Tab, label: string, count: number, underline: string) => (
     <Link
       key={key}
       to={key === 'done' ? '/tasks?list=done' : `/tasks?list=${key}`}
+      aria-current={active === key ? 'page' : undefined}
       style={{
         position: 'relative',
+        flex: 'none',
+        whiteSpace: 'nowrap',
         paddingBottom: 11,
         fontSize: 14,
         fontWeight: active === key ? 600 : 400,
@@ -122,18 +136,28 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       {active === key && <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: underline, borderRadius: 2 }} />}
     </Link>
   )
+  // Polish D (2026-09-26 audit): this was ONE unbreakable line (~640px: six tabs + Repeating +
+  // Sort). Wherever the list column is narrower — 1280/1440 at the default 125% interface size,
+  // every phone — it ran on under the Organize rail (All, Repeating and Sort unclickable) or off
+  // the screen. Now the tools wrap onto their own line ABOVE the tabs (wrap-reverse keeps the
+  // tabs on the bar's bottom border), and only if the tabs alone still don't fit does their strip
+  // scroll sideways inside itself (phones). One line, as drawn in Tasks.dc.html 1a, whenever it fits.
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
-      {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
-      {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
-      {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
-      {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
-      {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
-      {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
-      {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
-          task lives, undated project filings included. */}
-      {tab('all', 'All', allCount, 'var(--acc-moss)')}
-      <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
+      {/* paddingBottom 1 + marginBottom -1: the active underline (bottom -1) stays inside the
+          scroller's clip box and still lands on the bar's border, exactly as before. */}
+      <div ref={stripRef} style={{ display: 'flex', alignItems: 'flex-end', gap: 22, flex: '1 1 auto', minWidth: 0, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', paddingBottom: 1, marginBottom: -1 }}>
+        {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
+        {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
+        {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
+        {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
+        {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
+        {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
+        {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
+            task lives, undated project filings included. */}
+        {tab('all', 'All', allCount, 'var(--acc-moss)')}
+      </div>
+      <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
             with the `⚟` glyph, then a click-cycler. J-12 (Kai): "a popover listing the options"
@@ -427,10 +451,27 @@ export function TasksPage() {
   // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
   // hand banner. Fires once per calendar day, ever (localStorage gate).
   const [dayComplete, setDayComplete] = useState(false)
-  function handleRowComplete(task: Task) {
-    completeTask(task)
+  // Pending 650ms hand-offs to the row exit, per task — an Undo cancels its own.
+  const exitTimers = useRef(new Map<string, number>())
+  /** Undo landed: stop the row's exit (or undo a finished one) so it stands back in its group. */
+  function keepRow(id: string) {
+    const timer = exitTimers.current.get(id)
+    if (timer !== undefined) window.clearTimeout(timer)
+    exitTimers.current.delete(id)
+    cancelRowRemoval(document.getElementById(`task-${id}`))
+    setCompletingIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+  // Punch 6 (Polish D): a single check toasts "Done" with Undo; `toast: false` is the bulk path,
+  // which puts up one toast for the whole selection instead.
+  function handleRowComplete(task: Task, { toast = true }: { toast?: boolean } = {}): CompletionUndo {
+    const undo = toast ? completeTaskWithUndo(task, () => keepRow(task.id)) : completeTask(task)
     setJustCompletedId(task.id)
-    if (!motion) return
+    if (!motion) return undo
     const todayOpen = filterByList(tasks, 'today', now).filter((t) => t.status === 'todo')
     if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id)) {
       const dayKey = new Date().toDateString()
@@ -443,7 +484,8 @@ export function TasksPage() {
       } catch { /* private mode — skip the ceremony */ }
     }
     setCompletingIds((prev) => new Set(prev).add(task.id))
-    window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      exitTimers.current.delete(task.id)
       // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
       // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
       // then the row leaves the list.
@@ -451,6 +493,8 @@ export function TasksPage() {
         setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
       })
     }, 650)
+    exitTimers.current.set(task.id, timer)
+    return undo
   }
   const displayTasks = useMemo(
     () => (completingIds.size === 0 ? tasks : tasks.map((t) => (completingIds.has(t.id) ? { ...t, status: 'todo' as const } : t))),
@@ -502,8 +546,13 @@ export function TasksPage() {
   const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   function bulkComplete() {
-    selectedTasks.forEach((t) => handleRowComplete(t))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    const undos = selectedTasks.map((t) => handleRowComplete(t, { toast: false }))
+    toastUndo(`${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.`, () =>
+      undos.forEach((u) => {
+        undoCompletion(u)
+        keepRow(u.before.id)
+      }),
+    )
     clearSelection()
   }
   function bulkSnooze(until: string) {
@@ -590,13 +639,21 @@ export function TasksPage() {
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
   // (Tasks.dc.html:253-256) so the Organize rail starts level with the header.
   return (
-    <div style={{ maxWidth: 1180 }}>
-      {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only. */}
+    <div className="tasks-page" style={{ maxWidth: 1180 }}>
+      {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only.
+          Polish D (2026-09-26 audit): the switch was `@media (max-width: 767px)`, but media
+          queries read the WINDOW, which the root 125% zoom (lib/uiScale.ts) doesn't shrink — a
+          1280px window lays out only ~1024 CSS px, so the 288px rail kept its place and left the
+          list ~414px. A container query reads the page's real laid-out width instead: the rail
+          shows only when the list beside it keeps ≥472px (room for the six tabs on one line).
+          Below that the page is single-column, the layout Someday/Done (2a/2b) and phone already use. */}
       <style>{`
-        .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr) 288px; }
-        @media (max-width: 767px) {
-          .tasks-grid { grid-template-columns: 1fr; }
-          .tasks-rail { display: none; }
+        .tasks-page { container: tasks-page / inline-size; }
+        .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr); }
+        .tasks-rail { display: none; }
+        @container tasks-page (min-width: 760px) {
+          .tasks-grid { grid-template-columns: minmax(0,1fr) 288px; }
+          .tasks-rail { display: block; }
         }
       `}</style>
       <div className={singleCol ? undefined : 'tasks-grid'} style={{ display: singleCol ? 'block' : undefined, maxWidth: singleCol ? 780 : undefined }}>
