@@ -1,0 +1,61 @@
+PASS  baseline: OLD password works before the reset
+PASS  desktop: sign-in shows underlined "Create an account" + "Forgot password?"
+PASS  desktop: sign-up button keeps the garden voice
+      shot desktop-day-1-signin.png (487893 B) at /sign-in
+      shot desktop-day-2-request.png (496592 B) at /sign-in
+      shot desktop-day-3-request-sent.png (497871 B) at /sign-in
+PASS  desktop: reset email arrived in Mailpit  — "Reset your password" → http://127.0.0.1:54321/auth/v1/verify?token=…&type=recovery&redirect_to=http://127.0.0.1:3000/reset
+PASS  desktop: link redirects to /reset
+PASS  unknown email → the same confirmation  — "If there's an account for nobody-j11@example.com, a link to set a new password is on its way."
+PASS  unknown email → nothing mailed
+PASS  desktop: link lands on /reset with the new-password form  — url=http://127.0.0.1:3000/reset#
+PASS  desktop: tokens are gone from the address bar
+PASS  desktop: form names the account
+      shot desktop-day-4-reset-form.png (491610 B) at /reset
+PASS  desktop: form survives a reload mid-reset
+PASS  desktop: 7 characters is refused client-side
+PASS  desktop: mismatched confirmation gets a calm line
+PASS  desktop: lands in the app signed in  — at /onboarding
+PASS  signed out
+PASS  OLD password fails in the sign-in form
+PASS  NEW password works in the sign-in form
+PASS  reused link (signed in) → error state on /reset  — url=http://127.0.0.1:3000/reset#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid
+PASS  reused link (signed in) → still signed in, offers the way back
+PASS  reused link (fresh browser) → error state
+      shot desktop-day-5-expired.png (505337 B) at /reset
+PASS  "Send a new link" → the request step
+PASS  trap (root redirect): recovery re-pointed to /reset, not bounced to /today  — recover=200
+PASS  trap (non-allow-listed redirect): recovery re-pointed to /reset, not bounced to /today  — recover=200
+PASS  phone: sign-in shows underlined "Create an account" + "Forgot password?"
+PASS  phone: sign-up button keeps the garden voice
+      shot phone-night-1-signin.png (42320 B) at /sign-in
+      shot phone-night-2-request.png (39791 B) at /sign-in
+      shot phone-night-3-request-sent.png (44142 B) at /sign-in
+PASS  phone: reset email arrived in Mailpit  — "Reset your password" → http://127.0.0.1:54321/auth/v1/verify?token=…&type=recovery&redirect_to=http://127.0.0.1:3000/reset
+PASS  phone: link redirects to /reset
+PASS  phone: link lands on /reset with the new-password form  — url=http://127.0.0.1:3000/reset#
+PASS  phone: tokens are gone from the address bar
+PASS  phone: form names the account
+      shot phone-night-4-reset-form.png (41807 B) at /reset
+PASS  phone: form survives a reload mid-reset
+PASS  phone: 7 characters is refused client-side
+PASS  phone: mismatched confirmation gets a calm line
+PASS  phone: lands in the app signed in  — at /onboarding
+PASS  phone: reused link → error state
+      shot phone-night-5-expired.png (44289 B) at /reset
+PASS  API: OLD password rejected
+PASS  API: first new password rejected after the second reset
+PASS  API: latest new password accepted
+
+38/38 checks passed
+console/network errors: 10 total, 0 unexpected
+  (expected) desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  (expected) desktop /onboarding: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED @ https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather=true
+  (expected) desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  (expected) desktop /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED @ https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather=true
+  (expected) desktop FAILED http://127.0.0.1:54321/auth/v1/logout?scope=global net::ERR_ABORTED
+  (expected) desktop /sign-in: Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:54321/auth/v1/token?grant_type=password
+  (expected) desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  (expected) desktop /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED @ https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather=true
+  (expected) phone FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  (expected) phone /onboarding: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED @ https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather=true

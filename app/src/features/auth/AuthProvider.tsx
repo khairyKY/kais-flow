@@ -4,6 +4,8 @@ import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { OUTBOX_KEY, DEAD_KEY, flushOutbox } from '../../lib/outbox'
+// Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
+import { forgetRecovery, rememberRecovery } from './recovery'
 
 interface AuthContextValue {
   session: Session | null
@@ -31,7 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === 'SIGNED_OUT') {
         queryClient.clear()
         void del('kais-flow-query-cache')
+        forgetRecovery()
       }
+      // J-11: /reset only offers the new-password form to a session that arrived this way.
+      if (event === 'PASSWORD_RECOVERY') rememberRecovery()
       // The outbox is NOT cleared here: supabase-js also fires SIGNED_OUT when a refresh token
       // fails, and wiping then would silently discard writes queued before the expiry. They
       // flush when the same account signs back in; the Sign out button clears it on purpose
@@ -43,6 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (owner && owner !== uid) {
           void del(OUTBOX_KEY)
           void del(DEAD_KEY)
+          // J-11: an email link (password reset, sign-up confirmation) can swap accounts with
+          // no SIGNED_OUT in between — so the cache clear above never ran for this switch.
+          queryClient.clear()
+          void del('kais-flow-query-cache')
         }
         localStorage.setItem(OUTBOX_OWNER_KEY, uid)
       }
