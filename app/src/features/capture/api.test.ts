@@ -19,7 +19,7 @@ vi.mock('../../lib/activity', () => ({ logActivity: vi.fn() }))
 vi.mock('../../lib/toastStore', () => ({ useToastStore: { getState: () => ({ push }) } }))
 vi.mock('../tasks/api', () => ({ createTask: (...args: unknown[]) => createTask(...args) }))
 
-const { captureWithAI, transcribeAudio } = await import('./api')
+const { captureWithAI, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
 const { AI_ALLOWANCE_USED_UP, DailyLimitError, INBOX_WITHOUT_AI } = await import('./aiAllowance')
 
 const json = (status: number, body: unknown) =>
@@ -91,5 +91,40 @@ describe('transcribeAudio', () => {
 
   it('the voice copy for this state is the calm allowance line', () => {
     expect(AI_ALLOWANCE_USED_UP).toBe("Today's AI allowance is used up — it refills tomorrow.")
+  })
+})
+
+describe('saveUntranscribedVoiceNote (Polish E: never lose a recording)', () => {
+  it('writes one pending voice item to the Inbox through the outbox, with no transcript', () => {
+    const item = saveUntranscribedVoiceNote()
+
+    expect(writeRow).toHaveBeenCalledTimes(1)
+    const [table, row] = writeRow.mock.calls[0] as [string, Record<string, unknown>]
+    expect(table).toBe('inbox_items')
+    expect(row).toBe(item)
+    expect(row).toMatchObject({
+      kind: 'voice',
+      raw_text: 'Voice note (not transcribed yet)',
+      transcript: null,
+      ai_parse: null,
+      confidence: null,
+      status: 'pending',
+      filed_task_id: null,
+      snoozed_until: null,
+    })
+    expect(push).toHaveBeenCalledWith({ message: 'Saved to Inbox — not transcribed yet.' })
+  })
+
+  it("isn't queued for the reconnect parser — there's no text to parse", () => {
+    const item = saveUntranscribedVoiceNote()
+    expect((item.payload as { needs_parse?: boolean } | null)?.needs_parse).toBeUndefined()
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('only uses columns inbox_items already has', () => {
+    const item = saveUntranscribedVoiceNote()
+    expect(Object.keys(item).sort()).toEqual(
+      ['id', 'kind', 'raw_text', 'transcript', 'ai_parse', 'confidence', 'status', 'filed_task_id', 'payload', 'snoozed_until', 'created_at', 'updated_at'].sort(),
+    )
   })
 })

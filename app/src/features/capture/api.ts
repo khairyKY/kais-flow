@@ -6,6 +6,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
 import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
+import { SAVED_UNTRANSCRIBED, UNTRANSCRIBED_VOICE_NOTE } from './voiceCopy'
 import type { Domain, Project, InboxItem } from '../../lib/types'
 
 // TODO(P4): read from app_settings.confidence_threshold once settings UI exists.
@@ -147,6 +148,18 @@ export async function captureWithAI(
   writeRow('inbox_items', item)
   logActivity('inbox.captured', 'inbox_item', item.id, { kind })
   useToastStore.getState().push({ message: aiAllowanceUsedUp ? INBOX_WITHOUT_AI : 'Added to Inbox for review' })
+}
+
+/** Polish E: a recording that couldn't be transcribed still lands in the Inbox — as a voice item
+ * with no transcript, through the same row shape and outbox write as every other capture. No
+ * audio is stored (the project has no storage bucket for it), so the row is a reminder, and it
+ * carries no `needs_parse`: there's no text for the reconnect parser to read. */
+export function saveUntranscribedVoiceNote(): InboxItem {
+  const item = newInboxItem(UNTRANSCRIBED_VOICE_NOTE, 'voice', null, null, { untranscribed: true })
+  writeRow('inbox_items', item)
+  logActivity('inbox.captured', 'inbox_item', item.id, { kind: 'voice', untranscribed: true })
+  useToastStore.getState().push({ message: SAVED_UNTRANSCRIBED })
+  return item
 }
 
 /** Reconnect hook: parse any captures that were queued while offline. */
