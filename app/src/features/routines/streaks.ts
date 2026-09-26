@@ -264,6 +264,38 @@ export function computeTrellisDays(completedDates: string[], cadence: Cadence, d
   return out
 }
 
+/** The rains the trellis header may claim ("N rain held"): only rains that are holding a live
+ * streak. A 0-day streak has nothing held up, so "0 days · 1 rain held" read as a contradiction
+ * (conductor decision 2026-09-26, polish-f1) — none are shown then. */
+export function rainHeld(current: number, rainedDates: string[]): string[] {
+  return current > 0 ? rainedDates : []
+}
+
+/** Which handwritten caption the streak trellis (4a) closes with — the words live in
+ * StreakTrellis. A live streak keeps its story: the latest rain it survived, else the latest
+ * snap, else a clean run. A 0-day streak never tells the rain story ("the vine held on" when it
+ * didn't): a routine never tended keeps its "starts bare" hint, one that snapped says when, and
+ * one whose snap is older than the window is simply bare. */
+export type TrellisCaption =
+  | { kind: 'rained'; key: string }
+  | { kind: 'broke'; key: string }
+  | { kind: 'new' }
+  | { kind: 'bare' }
+  | { kind: 'clean' }
+
+export function trellisCaption(days: TrellisDay[], current: number, status: StreakStatus): TrellisCaption {
+  const lastRain = [...days].reverse().find((d) => d.state === 'rained')
+  const lastBreak = [...days].reverse().find((d) => d.state === 'broke')
+  if (current > 0) {
+    if (lastRain) return { kind: 'rained', key: lastRain.key }
+    if (lastBreak) return { kind: 'broke', key: lastBreak.key }
+    return { kind: 'clean' }
+  }
+  if (status === 'new') return { kind: 'new' }
+  if (lastBreak) return { kind: 'broke', key: lastBreak.key }
+  return { kind: 'bare' }
+}
+
 /** No `goal` field exists on a routine, so "streak vs. goal" is read as "streak vs. today":
  * flags the routine with the longest streak that's scheduled today, not yet done, and would
  * break if skipped. Null when nothing active is actually at risk right now. */
