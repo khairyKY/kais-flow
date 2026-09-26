@@ -1,14 +1,10 @@
 // P2 AI capture: text -> structured parse (Groq, JSON-schema-constrained via prompt + Zod validation).
 import { z } from 'npm:zod@^4'
+import { requireUser } from '../_shared/auth.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 const GROQ_PARSE_MODEL = Deno.env.get('GROQ_PARSE_MODEL') ?? 'llama-3.3-70b-versatile'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 const RequestSchema = z.object({
   raw_text: z.string().min(1).max(4000),
@@ -104,9 +100,14 @@ function fallbackResult(rawText: string) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+
+  // FIX-0 / S3: a signed-in user, not merely the public anon key, before anything reaches Groq.
+  const auth = await requireUser(req)
+  if (auth instanceof Response) return auth
 
   let rawText = ''
   try {
