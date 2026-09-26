@@ -278,7 +278,7 @@ function describePeople(e: ActivityLogEntry, names: ActivityNames): ActivityLine
 }
 
 function describeJournal(e: ActivityLogEntry): ActivityLine {
-  const { event_type: type, payload } = e
+  const { event_type: type } = e
   const line = (text: string, details = '', href: string | null = '/journal'): ActivityLine => ({ text, details, category: 'journal', icon: 'fern', href })
   switch (type) {
     case 'journal.created':
