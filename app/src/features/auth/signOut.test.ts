@@ -27,6 +27,8 @@ vi.mock('../../lib/supabase', () => ({
   },
 }))
 vi.mock('../../lib/queryClient', () => ({ queryClient: { clear: vi.fn() } }))
+const dropPushMock = vi.fn(async () => {})
+vi.mock('../notifications/api', () => ({ dropThisDevicePush: () => dropPushMock() }))
 vi.mock('./recovery', () => ({ forgetRecovery: vi.fn(), rememberRecovery: vi.fn() }))
 
 const net = { onLine: true }
@@ -47,6 +49,7 @@ describe('signOut', () => {
     unsyncedMock.mockResolvedValue(0)
     authSignOutMock.mockReset()
     authSignOutMock.mockResolvedValue({ error: null })
+    dropPushMock.mockClear()
     local.clear()
     local.set('sb-test-auth-token', '{"access_token":"t"}')
     local.set('kf-outbox-owner', 'u-1')
@@ -60,6 +63,7 @@ describe('signOut', () => {
     expect(flushMock).toHaveBeenCalledTimes(1)
     expect(delMock).not.toHaveBeenCalled()
     expect(authSignOutMock).not.toHaveBeenCalled()
+    expect(dropPushMock).not.toHaveBeenCalled() // still signed in: keeps its notifications
     expect(local.get('kf-outbox-owner')).toBe('u-1')
   })
 
@@ -71,6 +75,13 @@ describe('signOut', () => {
     expect(authSignOutMock).toHaveBeenCalledTimes(1)
     expect(authSignOutMock).toHaveBeenCalledWith(undefined) // global: the server session is revoked
     expect(local.has('kf-outbox-owner')).toBe(false)
+  })
+
+  it("drops this device's push subscription before the session ends (scope 4)", async () => {
+    const { signOut } = await import('./AuthProvider')
+    await signOut()
+    expect(dropPushMock).toHaveBeenCalledTimes(1)
+    expect(dropPushMock.mock.invocationCallOrder[0]).toBeLessThan(authSignOutMock.mock.invocationCallOrder[0])
   })
 
   it('"Sign out anyway" discards the unsynced changes and signs out', async () => {

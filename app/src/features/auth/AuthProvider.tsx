@@ -4,6 +4,7 @@ import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { OUTBOX_KEY, DEAD_KEY, flushOutbox, rescueEmptyUserIdWrites, unsyncedChanges } from '../../lib/outbox'
+import { dropThisDevicePush } from '../notifications/api'
 // Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
 import { forgetRecovery, rememberRecovery } from './recovery'
 
@@ -73,13 +74,16 @@ const OUTBOX_OWNER_KEY = 'kf-outbox-owner'
  * this used to delete them silently and then fail to sign out offline, leaving the user signed in.
  * With an empty queue, or `discardUnsynced` (the user chose to), it clears this device's copy of
  * the account — query cache via the SIGNED_OUT listener, outbox + dead letters here (audit S7) —
- * and signs out, offline included. Resolves to 0 once signed out. */
+ * and signs out, offline included. A real sign-out also stops this device's push notifications
+ * for the account (best-effort, time-boxed, while the session can still delete its row).
+ * Resolves to 0 once signed out. */
 export async function signOut({ discardUnsynced = false } = {}): Promise<number> {
   await flushOutbox()
   if (!discardUnsynced) {
     const waiting = await unsyncedChanges()
     if (waiting > 0) return waiting
   }
+  await dropThisDevicePush()
   await Promise.all([del(OUTBOX_KEY), del(DEAD_KEY)])
   localStorage.removeItem(OUTBOX_OWNER_KEY)
   await endSession()
