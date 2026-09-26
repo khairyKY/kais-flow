@@ -1,0 +1,130 @@
+{
+  "tag": "after",
+  "base": "http://127.0.0.1:5247",
+  "run": "zngx",
+  "chip_cairo": {
+    "deviceNow": "Sat Sep 26 2026 10:13:39 GMT+0300 (Eastern European Summer Time)",
+    "chips": [
+      "TOMORROW · 10:00 AM"
+    ],
+    "stored": [
+      {
+        "title": "Chip check cairo after zngx",
+        "due_at": "2026-09-27T07:00:00+00:00"
+      }
+    ]
+  },
+  "chip_cairo_errors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [],
+    "other": []
+  },
+  "chip_la": {
+    "deviceNow": "Sat Sep 26 2026 00:13:46 GMT-0700 (Pacific Daylight Time)",
+    "chips": [
+      "TOMORROW · 10:00 AM"
+    ],
+    "stored": [
+      {
+        "title": "Chip check la after zngx",
+        "due_at": "2026-09-27T07:00:00+00:00"
+      }
+    ]
+  },
+  "chip_la_errors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [],
+    "other": []
+  },
+  "persisted": {
+    "roots": [
+      "activity_log",
+      "app_settings",
+      "calendar_events",
+      "domains",
+      "inbox_items",
+      "projects",
+      "resurfaced_log",
+      "routine_completions",
+      "routines",
+      "slipping",
+      "tasks"
+    ],
+    "hasJournal": false,
+    "hasPeople": false,
+    "containsJournalText": false,
+    "bytes": 15021
+  },
+  "journalOnServer": [
+    {
+      "body": "Private words for S8 (afterPrivate words for S8 bePrivate words for S8 after zngxfore xxrd)Private words for S8 after tmrv",
+      "entry_date": "2026-09-26"
+    }
+  ],
+  "outboxAfter": 0,
+  "persistErrors": {
+    "meteoRequests": 5,
+    "tunnelConsole": 5,
+    "expected": [],
+    "other": []
+  },
+  "signout_desktop-day": {
+    "buttons": [
+      {
+        "label": "Stay signed in",
+        "lines": 1,
+        "height": 36,
+        "width": 106
+      },
+      {
+        "label": "Discard & sign out",
+        "lines": 1,
+        "height": 36,
+        "width": 128
+      }
+    ],
+    "title": "1 change hasn’t synced yet\nIt’s kept on this device and will sync once you’re connected. Signing out now would discard it.\nStay signed in\nDiscard & sign out",
+    "stillSignedIn": true,
+    "captureOnServer": 1
+  },
+  "signout_desktop-day_errors": {
+    "meteoRequests": 3,
+    "tunnelConsole": 3,
+    "expected": [],
+    "other": []
+  },
+  "signout_phone-night": {
+    "buttons": [
+      {
+        "label": "Stay signed in",
+        "lines": 1,
+        "height": 36,
+        "width": 106
+      },
+      {
+        "label": "Discard & sign out",
+        "lines": 1,
+        "height": 36,
+        "width": 128
+      }
+    ],
+    "title": "1 change hasn’t synced yet\nIt’s kept on this device and will sync once you’re connected. Signing out now would discard it.\nStay signed in\nDiscard & sign out",
+    "stillSignedIn": true,
+    "captureOnServer": 1
+  },
+  "signout_phone-night_errors": {
+    "meteoRequests": 3,
+    "tunnelConsole": 3,
+    "expected": [
+      "signout-phone-night requestfailed http://127.0.0.1:5247/ds/assets/vine/flowering.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night requestfailed http://127.0.0.1:5247/ds/assets/fern/unfurl2.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night requestfailed http://127.0.0.1:5247/ds/assets/daisy/midday.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ],
+    "other": []
+  }
+}

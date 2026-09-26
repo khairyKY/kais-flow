@@ -1,0 +1,181 @@
+{
+  "tag": "before",
+  "base": "http://127.0.0.1:5248",
+  "run": "xxrd",
+  "cancelBefore": {
+    "transcribeCallsAfterCancel": 1,
+    "statuses": [
+      400,
+      400
+    ]
+  },
+  "failureBefore": {
+    "toast": [
+      "Voice capture failed"
+    ],
+    "sheetStillOpen": 0
+  },
+  "cancelBeforeErrors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [
+      "cancel-before console /today: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "cancel-before console /today: Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "other": [
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routines?select=*&order=name.asc net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/calendar_events?select=*&order=starts_at.asc net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routines?select=*&order=name.asc net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/tasks?select=*&order=due_at.asc.nullslast net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/calendar_events?select=*&order=starts_at.asc net::ERR_ABORTED",
+      "cancel-before requestfailed http://127.0.0.1:54321/rest/v1/routine_completions?select=* net::ERR_ABORTED",
+      "cancel-before console /today: Error: transcribe failed: 400\n    at v (http://127.0.0.1:5248/assets/api-CYZo00Ly.js:1:1375)\n    at async D (http://127.0.0.1:5248/assets/VoiceCaptureSheet-BMQrFbdS.js:1:1444)",
+      "cancel-before console /today: Error: transcribe failed: 400\n    at v (http://127.0.0.1:5248/assets/api-CYZo00Ly.js:1:1375)\n    at async D (http://127.0.0.1:5248/assets/VoiceCaptureSheet-BMQrFbdS.js:1:1444)"
+    ]
+  },
+  "chip_cairo": {
+    "deviceNow": "Sat Sep 26 2026 10:12:31 GMT+0300 (Eastern European Summer Time)",
+    "chips": [
+      "9/27/2026, 10:00:00 AM"
+    ],
+    "stored": [
+      {
+        "title": "Chip check cairo before xxrd",
+        "due_at": "2026-09-27T07:00:00+00:00"
+      }
+    ]
+  },
+  "chip_cairo_errors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [],
+    "other": []
+  },
+  "chip_la": {
+    "deviceNow": "Sat Sep 26 2026 00:12:39 GMT-0700 (Pacific Daylight Time)",
+    "chips": [
+      "9/26/2026, 10:00:00 AM"
+    ],
+    "stored": [
+      {
+        "title": "Chip check la before xxrd",
+        "due_at": "2026-09-26T17:00:00+00:00"
+      }
+    ]
+  },
+  "chip_la_errors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [],
+    "other": []
+  },
+  "persisted": {
+    "roots": [
+      "activity_log",
+      "app_settings",
+      "calendar_events",
+      "domains",
+      "inbox_items",
+      "interactions",
+      "journal_entries",
+      "notes",
+      "people",
+      "projects",
+      "quotes",
+      "resurfaced_log",
+      "routine_completions",
+      "routines",
+      "slipping",
+      "tasks"
+    ],
+    "hasJournal": true,
+    "hasPeople": true,
+    "containsJournalText": true,
+    "bytes": 14685
+  },
+  "journalOnServer": [
+    {
+      "body": "Private words for S8 (afterPrivate words for S8 before xxrd)Private words for S8 after tmrv",
+      "entry_date": "2026-09-26"
+    }
+  ],
+  "outboxAfter": 0,
+  "persistErrors": {
+    "meteoRequests": 5,
+    "tunnelConsole": 5,
+    "expected": [],
+    "other": []
+  },
+  "signout_desktop-day": {
+    "buttons": [
+      {
+        "label": "Stay signed in",
+        "lines": 2,
+        "height": 55,
+        "width": 94
+      },
+      {
+        "label": "Sign out anyway (discard it)",
+        "lines": 2,
+        "height": 55,
+        "width": 155
+      }
+    ],
+    "title": "1 change hasn’t synced yet\nIt’s kept on this device and will sync once you’re connected. Signing out now would discard it.\nStay signed in\nSign out anyway (discard it)",
+    "stillSignedIn": true,
+    "captureOnServer": 1
+  },
+  "signout_desktop-day_errors": {
+    "meteoRequests": 3,
+    "tunnelConsole": 3,
+    "expected": [],
+    "other": []
+  },
+  "signout_phone-night": {
+    "buttons": [
+      {
+        "label": "Stay signed in",
+        "lines": 2,
+        "height": 55,
+        "width": 94
+      },
+      {
+        "label": "Sign out anyway (discard it)",
+        "lines": 2,
+        "height": 55,
+        "width": 155
+      }
+    ],
+    "title": "1 change hasn’t synced yet\nIt’s kept on this device and will sync once you’re connected. Signing out now would discard it.\nStay signed in\nSign out anyway (discard it)",
+    "stillSignedIn": true,
+    "captureOnServer": 1
+  },
+  "signout_phone-night_errors": {
+    "meteoRequests": 3,
+    "tunnelConsole": 3,
+    "expected": [
+      "signout-phone-night requestfailed http://127.0.0.1:5248/ds/assets/vine/flowering.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night requestfailed http://127.0.0.1:5248/ds/assets/fern/unfurl2.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night requestfailed http://127.0.0.1:5248/ds/assets/daisy/midday.png net::ERR_INTERNET_DISCONNECTED",
+      "signout-phone-night console /inbox: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ],
+    "other": []
+  }
+}

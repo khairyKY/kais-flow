@@ -1,0 +1,74 @@
+{
+  "kept": {
+    "phase": "kept",
+    "text": "—\nNOT TRANSCRIBED YET · 0:02\nyour recording is still here\nIt couldn’t be transcribed just now.\nThe audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.\nDiscard\nTry again\nSave to Inbox untranscribed",
+    "transcribeStatuses": [
+      400
+    ]
+  },
+  "afterOutsideTapAndEsc": "kept",
+  "afterRetry": {
+    "phase": "kept",
+    "transcribeCalls": 2
+  },
+  "saved": {
+    "rowsBefore": 1,
+    "rowsAfter": 2,
+    "newest": {
+      "kind": "voice",
+      "raw_text": "Voice note (not transcribed yet)",
+      "transcript": null,
+      "status": "pending",
+      "ai_parse": null,
+      "payload": {
+        "untranscribed": true
+      }
+    }
+  },
+  "cancel": {
+    "transcribeCallsDuringCancel": 0,
+    "sheetOpen": 0,
+    "inboxNotes": 2
+  },
+  "limitKept": {
+    "text": "—\nNOT TRANSCRIBED YET · 0:01\nyour recording is still here\nToday's voice allowance is used up — it refills tomorrow.\nThe audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.\nDiscard\nTry again\nSave to Inbox untranscribed",
+    "remembered": "{\"day\":\"2026-09-26\",\"uid\":\"953b7e03-149a-4a1e-af31-0aad0cf48d39\"}"
+  },
+  "resting": {
+    "phase": "resting",
+    "text": "—\nVOICE IS USED UP FOR TODAY\ntype it instead?\nToday's voice allowance is used up — it refills tomorrow.\nClose\nType it instead",
+    "micRequests": 0,
+    "transcribeCalls": 0
+  },
+  "typeInstead": {
+    "commandBarOpen": true,
+    "focused": "Send the quote tomorrow 3pm #shaheen"
+  },
+  "restingAfterReload": "resting",
+  "desktopErrors": {
+    "meteoRequests": 5,
+    "tunnelConsole": 5,
+    "expected": [
+      "voice-desktop console /today: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "voice-desktop console /today: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "voice-desktop console /today: Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "other": []
+  },
+  "transcribeStatuses": [
+    400,
+    400,
+    429
+  ],
+  "phoneKept": "kept",
+  "phoneResting": "resting",
+  "phoneErrors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [
+      "voice-phone console /today: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "voice-phone console /today: Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "other": []
+  }
+}
