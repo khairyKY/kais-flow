@@ -706,22 +706,13 @@ export function JournalPage() {
 
       {/* 2. MAIN COLUMN: Writing Columns */}
       <main className="jn-main">
-
-        {/* Top Header info */}
-        <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>Kai's Flow</span>
-            <span>·</span>
-            <span>{headerDateStr}</span>
-            <span>·</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              Synced
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc-sage)' }}></span>
-            </span>
-          </div>
-          <div>Africa/Cairo</div>
-        </div>
-
+        {/* Polish G (2026-09-26 audit): no in-page "Kai's Flow · {date} · Synced ● / Africa/Cairo"
+            strip. In Journal.dc.html 1a it is <main>'s first child, 42px, in the topbar's exact
+            style — the export's mock of the shell topbar, which the real shell already draws above
+            this page (owner name, date, live sync state, zone). Nothing on it was Journal's own:
+            the selected day is the title below. Its "Synced ●" was hard-coded, so it stayed on
+            while the topbar said Offline. Same leftover Polish C removed from Activity, Herbarium,
+            Trash and Library. */}
         <div className="jn-write">
           <div style={{ width: '100%', maxWidth: 660 }}>
             
