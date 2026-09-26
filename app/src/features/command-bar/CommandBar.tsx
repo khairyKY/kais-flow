@@ -7,6 +7,7 @@ import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDispla
 import { captureText } from '../inbox/api'
 import { captureWithAI } from '../capture/api'
 import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCommand'
+import { formatDueChip } from './dueChip'
 import { useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 
@@ -85,7 +86,8 @@ export function CommandBar() {
     }
   }, [open])
 
-  const parsed = useMemo(() => parseCommand(text, domains, projects), [text, domains, projects])
+  // T-4: "10am" means 10:00 in Cairo on any device — the zone every date in the app renders in.
+  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo' }), [text, domains, projects])
   const jumpView = useMemo(() => matchJumpView(text), [text])
 
   function jumpTo(view: NonNullable<ReturnType<typeof matchJumpView>>) {
@@ -225,7 +227,7 @@ export function CommandBar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
             {parsed.dueAt && (
               <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
-                {new Date(parsed.dueAt).toLocaleString()}
+                {formatDueChip(parsed.dueAt)}
               </span>
             )}
             {parsed.durationMin != null && (

@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import {
   AI_ALLOWANCE_USED_UP,
   DailyLimitError,
   INBOX_WITHOUT_AI,
+  VOICE_ALLOWANCE_USED_UP,
   isDailyLimitError,
   isDailyLimitResponse,
+  rememberVoiceLimitReached,
+  voiceLimitReachedToday,
 } from './aiAllowance'
 
 const json = (status: number, body: unknown) =>
@@ -55,7 +58,7 @@ describe('isDailyLimitError', () => {
 
 describe('copy (X5 States rule)', () => {
   it('never says "error" and never shows raw text', () => {
-    for (const line of [AI_ALLOWANCE_USED_UP, INBOX_WITHOUT_AI]) {
+    for (const line of [AI_ALLOWANCE_USED_UP, INBOX_WITHOUT_AI, VOICE_ALLOWANCE_USED_UP]) {
       expect(line.toLowerCase()).not.toContain('error')
       expect(line).not.toContain('daily_limit')
       expect(line).not.toContain('429')
@@ -65,5 +68,59 @@ describe('copy (X5 States rule)', () => {
   it('the Inbox toast does not claim the AI step happened', () => {
     expect(INBOX_WITHOUT_AI).toMatch(/^Added to Inbox\./)
     expect(INBOX_WITHOUT_AI).toContain(AI_ALLOWANCE_USED_UP)
+  })
+})
+
+describe('voice daily limit, remembered for the rest of the Cairo day (Polish E)', () => {
+  const store = new Map<string, string>()
+  beforeEach(() => {
+    store.clear()
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    })
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  // Cairo is UTC+3 until late October 2026, so 21:30 UTC on the 26th is already the 27th there.
+  const lateEvening = new Date('2026-09-26T20:30:00Z') // 23:30 Cairo, the 26th
+  const afterCairoMidnight = new Date('2026-09-26T21:30:00Z') // 00:30 Cairo, the 27th
+
+  it('is not set until a daily-limit reply has been remembered', () => {
+    expect(voiceLimitReachedToday('u1', lateEvening)).toBe(false)
+  })
+
+  it('holds for the rest of that Cairo day, for the same account', () => {
+    rememberVoiceLimitReached('u1', new Date('2026-09-26T06:00:00Z'))
+    expect(voiceLimitReachedToday('u1', lateEvening)).toBe(true)
+  })
+
+  it("lifts at Cairo midnight, even though it's still the 26th in UTC", () => {
+    rememberVoiceLimitReached('u1', lateEvening)
+    expect(voiceLimitReachedToday('u1', afterCairoMidnight)).toBe(false)
+  })
+
+  it("doesn't tell another account on this browser that its allowance is gone", () => {
+    rememberVoiceLimitReached('u1', lateEvening)
+    expect(voiceLimitReachedToday('u2', lateEvening)).toBe(false)
+    expect(voiceLimitReachedToday(undefined, lateEvening)).toBe(false)
+  })
+
+  it('treats unreadable or blocked storage as "not remembered" instead of throwing', () => {
+    store.set('kf-voice-limit-day', '{not json')
+    expect(voiceLimitReachedToday('u1', lateEvening)).toBe(false)
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('blocked')
+      },
+      setItem: () => {
+        throw new Error('blocked')
+      },
+    })
+    expect(() => rememberVoiceLimitReached('u1', lateEvening)).not.toThrow()
+    expect(voiceLimitReachedToday('u1', lateEvening)).toBe(false)
   })
 })

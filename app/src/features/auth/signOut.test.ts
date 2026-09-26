@@ -84,7 +84,7 @@ describe('signOut', () => {
     expect(dropPushMock.mock.invocationCallOrder[0]).toBeLessThan(authSignOutMock.mock.invocationCallOrder[0])
   })
 
-  it('"Sign out anyway" discards the unsynced changes and signs out', async () => {
+  it('"Discard & sign out" discards the unsynced changes and signs out', async () => {
     unsyncedMock.mockResolvedValue(3)
     const { signOut } = await import('./AuthProvider')
     expect(await signOut({ discardUnsynced: true })).toBe(0)
@@ -129,10 +129,19 @@ describe('signOut', () => {
 describe('unsyncedSignOutCopy', () => {
   it('names the count, singular and plural', () => {
     expect(unsyncedSignOutCopy(1).title).toBe('1 change hasn’t synced yet')
-    expect(unsyncedSignOutCopy(1).confirmLabel).toBe('Sign out anyway (discard it)')
     expect(unsyncedSignOutCopy(4).title).toBe('4 changes haven’t synced yet')
-    expect(unsyncedSignOutCopy(4).confirmLabel).toBe('Sign out anyway (discard them)')
-    expect(unsyncedSignOutCopy(4).cancelLabel).toBe('Stay signed in')
+  })
+
+  it('short button labels that fit one line in the 300px card (Polish E)', () => {
+    for (const n of [1, 4]) {
+      expect(unsyncedSignOutCopy(n).confirmLabel).toBe('Discard & sign out')
+      expect(unsyncedSignOutCopy(n).cancelLabel).toBe('Stay signed in')
+    }
+  })
+
+  it('the body still says the changes would be discarded', () => {
+    expect(unsyncedSignOutCopy(1).body).toMatch(/discard it\.$/)
+    expect(unsyncedSignOutCopy(4).body).toMatch(/discard them\.$/)
   })
 
   it('never says "error" (house rule)', () => {

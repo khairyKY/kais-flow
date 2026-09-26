@@ -1,4 +1,5 @@
 import * as chrono from 'chrono-node'
+import { cairoOffsetMinutes, cairoWallTimeToIso } from '../../lib/dateShortcuts'
 import type { Domain, Project } from '../../lib/types'
 
 export interface ParsedCommand {
@@ -62,22 +63,53 @@ export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 
   return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null)
 }
 
+export interface ParseCommandOptions {
+  /** Reference instant for "tomorrow"/"friday"/"10am" (tests pin it). Defaults to now. */
+  now?: Date
+  /** Whose wall clock a typed time is read on. The command bar reads Cairo's (T-4: the app's one
+   * day boundary and render zone). `device` keeps the old reading for callers whose own form is
+   * device-local — the calendar's QuickCreate. */
+  zone?: 'cairo' | 'device'
+}
+
+/** T-4: chrono read the text against Cairo's clock (see the reference in `parseCommand`), so its
+ * components are Cairo wall-clock: turn them into the instant with the tz database, which gets
+ * a date across a DST switch right. An explicit zone in the text ("3pm UTC") or a relative time
+ * ("in 2 hours") is already an exact instant, so chrono's own answer stands. */
+function cairoInstant(start: chrono.ParsedComponents): string {
+  if (start.isCertain('timezoneOffset')) return start.date().toISOString()
+  return cairoWallTimeToIso(
+    start.get('year') ?? 0,
+    start.get('month') ?? 1,
+    start.get('day') ?? 1,
+    start.get('hour') ?? 12,
+    start.get('minute') ?? 0,
+    start.get('second') ?? 0,
+  )
+}
+
 /**
  * Pure text -> structured-command parser (no AI). Extracts the first date/time mention via
  * chrono-node, a `30m`/`1h`/`1h30m` duration, a `!`/`!!`/`!!!` priority flag, and the first `#tag`
  * fuzzy-matched against project names, falling back to domain names. Whatever's left after
  * stripping all of those becomes the title.
  */
-export function parseCommand(input: string, domains: Domain[], projects: Project[]): ParsedCommand {
+export function parseCommand(
+  input: string,
+  domains: Domain[],
+  projects: Project[],
+  { now = new Date(), zone = 'device' }: ParseCommandOptions = {},
+): ParsedCommand {
   const stripped = stripPriorityAndDuration(input)
   let text = stripped.text
   const { priority, durationMin } = stripped
 
   let dueAt: string | null = null
-  const results = chrono.parse(text, new Date(), { forwardDate: true })
+  const reference = zone === 'cairo' ? { instant: now, timezone: cairoOffsetMinutes(now) } : now
+  const results = chrono.parse(text, reference, { forwardDate: true })
   if (results.length > 0) {
     const first = results[0]
-    dueAt = first.start.date().toISOString()
+    dueAt = zone === 'cairo' ? cairoInstant(first.start) : first.start.date().toISOString()
     text = (text.slice(0, first.index) + text.slice(first.index + first.text.length)).trim()
   }
 

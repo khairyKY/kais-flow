@@ -140,3 +140,57 @@ describe('hasStructure', () => {
     expect(hasStructure({ dueAt: null, domainId: null, projectId: null, priority: null, durationMin: null })).toBe(false)
   })
 })
+
+// T-4: the command bar reads a typed time on Cairo's clock, whatever zone the device is in.
+// Every expectation here is an exact UTC instant, so the suite proves it under TZ=UTC,
+// TZ=Africa/Cairo and TZ=America/Los_Angeles alike. Cairo is UTC+3 until the last Thursday of
+// October 2026 (Oct 29), UTC+2 after.
+describe('parseCommand, zone: cairo (T-4)', () => {
+  const cairo = (input: string, now: Date) => parseCommand(input, domains, projects, { now, zone: 'cairo' }).dueAt
+  const morning = new Date('2026-09-26T06:00:00Z') // 09:00 Cairo, Sat Sep 26
+
+  it('"10am" is 10:00 in Cairo, not 10:00 on the device', () => {
+    expect(cairo('call Omar 10am', morning)).toBe('2026-09-26T07:00:00.000Z')
+  })
+
+  it('"tomorrow 3pm" is 15:00 Cairo the next Cairo day', () => {
+    expect(cairo('call Omar tomorrow 3pm #shaheen', morning)).toBe('2026-09-27T12:00:00.000Z')
+  })
+
+  it('a time already past in Cairo today rolls to tomorrow (forwardDate)', () => {
+    const lateMorning = new Date('2026-09-26T08:00:00Z') // 11:00 Cairo
+    expect(cairo('call Omar 10am', lateMorning)).toBe('2026-09-27T07:00:00.000Z')
+  })
+
+  it('"tomorrow" counts from the Cairo day, even when the device is still on yesterday', () => {
+    // 00:30 Sun Sep 27 in Cairo = 14:30 Sat Sep 26 in Los Angeles, 21:30 Sat in UTC.
+    const afterCairoMidnight = new Date('2026-09-26T21:30:00Z')
+    expect(cairo('pay rent tomorrow 9am', afterCairoMidnight)).toBe('2026-09-28T06:00:00.000Z')
+  })
+
+  it('a date across the October DST switch uses that date’s own offset (UTC+2)', () => {
+    expect(cairo('dentist nov 5 10am', morning)).toBe('2026-11-05T08:00:00.000Z')
+  })
+
+  it('a relative time is an exact offset from now', () => {
+    expect(cairo('stretch in 2 hours', morning)).toBe('2026-09-26T08:00:00.000Z')
+  })
+
+  it('a date with no time keeps the noon default, in Cairo', () => {
+    expect(cairo('submit report friday', morning)).toBe('2026-10-02T09:00:00.000Z')
+  })
+
+  it('still strips the date from the title', () => {
+    const result = parseCommand('call Omar tomorrow 3pm #shaheen', domains, projects, { now: morning, zone: 'cairo' })
+    expect(result.title).toBe('call Omar')
+    expect(result.projectId).toBe('p1')
+  })
+
+  it('the default (device) reading is unchanged for the calendar’s QuickCreate', () => {
+    const device = parseCommand('call Omar 10am', domains, projects, { now: morning }).dueAt
+    const expected = new Date(morning)
+    expected.setHours(10, 0, 0, 0)
+    if (expected < morning) expected.setDate(expected.getDate() + 1)
+    expect(device).toBe(expected.toISOString())
+  })
+})

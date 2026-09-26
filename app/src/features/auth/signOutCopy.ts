@@ -7,7 +7,9 @@ export function unsyncedSignOutCopy(n: number) {
       (n === 1 ? 'It’s' : 'They’re') +
       ' kept on this device and will sync once you’re connected. Signing out now would discard ' +
       (n === 1 ? 'it.' : 'them.'),
-    confirmLabel: n === 1 ? 'Sign out anyway (discard it)' : 'Sign out anyway (discard them)',
+    // Polish E: short enough that both labels sit on one line in the 300px ConfirmCard. The body
+    // above already says what gets discarded, so the button needn't repeat "it"/"them".
+    confirmLabel: 'Discard & sign out',
     cancelLabel: 'Stay signed in',
   }
 }
