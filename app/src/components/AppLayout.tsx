@@ -4,7 +4,8 @@ import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
-import type { OutboxEntry } from '../lib/outbox'
+import { unsyncedChanges, type OutboxEntry } from '../lib/outbox'
+import { syncHeader, syncRows } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
@@ -353,12 +354,17 @@ function useOnline(): boolean {
 // ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue.
 // Event-driven via outbox's 'kf-outbox-change' (foundation patch landed); the slow
 // interval is only a belt-and-braces fallback.
-// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection. ──
-function useOutboxQueue(): OutboxEntry[] {
-  const [queue, setQueue] = useState<OutboxEntry[]>([])
+// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection.
+// polish-c (2026-09-26 audit): `waiting` is P0-B's unsyncedChanges() — user actions, not queue
+// rows — so one capture reads "1", not "2" (every action also queues an activity_log row). ──
+function useOutboxQueue(): { queue: OutboxEntry[]; waiting: number } {
+  const [state, setState] = useState<{ queue: OutboxEntry[]; waiting: number }>({ queue: [], waiting: 0 })
   useEffect(() => {
     let alive = true
-    const read = () => void get<OutboxEntry[]>('kf-outbox').then((q) => { if (alive) setQueue(q ?? []) })
+    const read = () =>
+      void Promise.all([get<OutboxEntry[]>('kf-outbox'), unsyncedChanges()]).then(([q, waiting]) => {
+        if (alive) setState({ queue: q ?? [], waiting })
+      })
     read()
     const t = setInterval(read, 30_000)
     window.addEventListener('kf-outbox-change', read)
@@ -372,12 +378,9 @@ function useOutboxQueue(): OutboxEntry[] {
       window.removeEventListener('offline', read)
     }
   }, [])
-  return queue
+  return state
 }
 
-const QUEUE_KIND: Record<string, string> = {
-  tasks: 'task', inbox_items: 'inbox', journal_entries: 'journal', calendar_events: 'event', routines: 'routine',
-}
 function queueAgo(ts: number): string {
   const min = Math.max(1, Math.round((Date.now() - ts) / 60_000))
   return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
@@ -387,8 +390,8 @@ function TopBar() {
   const online = useOnline()
   const owner = useOwner()
   const motionOn = useMotionEnabled()
-  const queue = useOutboxQueue()
-  const n = queue.length
+  const { queue, waiting: n } = useOutboxQueue()
+  const rows = useMemo(() => syncRows(queue), [queue])
   const [popOpen, setPopOpen] = useState(false)
   const popRef = useRef<HTMLDivElement>(null)
 
@@ -457,25 +460,19 @@ function TopBar() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
           ) : (
             <>
+              {/* polish-c (2026-09-26 audit): human rows only — one per change, never a table
+                  name, never the change's bookkeeping activity row alongside it (components/syncQueue.ts). */}
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
-                {online ? `Syncing ↻ ${n}` : `Offline ◌ · ${n} saved here`}
+                {syncHeader(n, online)}
               </div>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {queue.map((e) => {
-                  const p = e.payload as Record<string, unknown>
-                  const label = (p.title ?? p.raw_text ?? p.name ?? '') as string
-                  return (
-                    <div key={`${e.table}-${e.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
-                        {QUEUE_KIND[e.table] ?? e.table}
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {label ? `'${label}'` : ''} {e.op === 'delete' ? 'removed' : 'saved'}
-                      </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(e.queuedAt)}</span>
-                    </div>
-                  )
-                })}
+                {rows.map((r) => (
+                  <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+                  </div>
+                ))}
               </div>
               <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>
                 {online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back."}
