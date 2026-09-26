@@ -1,0 +1,50 @@
+import { readAuthRedirect, type AuthRedirect } from './authLogic'
+
+// J-11 · the browser half of password recovery. AuthProvider imports this eagerly, so the
+// module runs at boot — before the router exists and before supabase-js has finished with the
+// URL. (supabase-js blanks the hash only after a network round-trip to /auth/v1/user, so this
+// synchronous read always sees the link as it arrived.)
+
+/** What the address bar said when the app booted. */
+export const bootAuthRedirect: AuthRedirect =
+  typeof window === 'undefined' ? { kind: 'none' } : readAuthRedirect(window.location.href)
+
+// "This tab is mid-reset" survives a reload (phones discard tabs; the build-refresh reloads
+// open tabs) — by then the hash is gone but the recovery session is still in storage.
+const FLAG = 'kf.recovery'
+
+export function rememberRecovery(): void {
+  try {
+    sessionStorage.setItem(FLAG, '1')
+  } catch {
+    /* private mode: the boot hash still covers the common case */
+  }
+}
+
+export function forgetRecovery(): void {
+  try {
+    sessionStorage.removeItem(FLAG)
+  } catch {
+    /* nothing to forget */
+  }
+}
+
+export function isRecovering(): boolean {
+  if (bootAuthRedirect.kind === 'recovery') return true
+  try {
+    return sessionStorage.getItem(FLAG) === '1'
+  } catch {
+    return false
+  }
+}
+
+if (bootAuthRedirect.kind === 'recovery' && typeof window !== 'undefined') {
+  rememberRecovery()
+  // The trap: a recovery link that lands anywhere but /reset — GoTrue falls back to the Site URL
+  // when the redirect isn't allow-listed — would walk through RequireAuth → OnboardingGate →
+  // /today holding a live session and no new password. Re-point the address before the router
+  // reads it; the hash rides along, so supabase-js still finds the tokens.
+  if (window.location.pathname !== '/reset') {
+    window.history.replaceState(window.history.state, '', `/reset${window.location.hash}`)
+  }
+}

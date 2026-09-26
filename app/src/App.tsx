@@ -39,10 +39,13 @@ const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage')
 const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate').then((m) => ({ default: m.OnboardingGate })))
 const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
 const ImportPage = lazy(() => import('./features/import/ImportPage').then((m) => ({ default: m.ImportPage })))
+// J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
+const ResetPage = lazy(() => import('./features/auth/ResetPage').then((m) => ({ default: m.ResetPage })))
 
 
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage /> },
+  { path: '/reset', element: <ResetPage /> },
   { path: '/design-system', element: <KitReference /> }, // §04 kit reference (no auth)
   {
     path: '/',
