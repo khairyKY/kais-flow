@@ -10,6 +10,7 @@ import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCom
 import { formatDueChip } from './dueChip'
 import { useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
+import { KeyChip, KeyCombo } from '../../components/kit'
 
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
@@ -218,8 +219,15 @@ export function CommandBar() {
           >
             <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
             <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
-            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
-              {jumpSelected ? '↵' : '↓ then ↵'}
+            {/* Polish F2b (conductor decision 2026-09-26, J-17): shortcut hints are keycaps. */}
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+              {jumpSelected ? (
+                <KeyChip text="↵" size="sm" />
+              ) : (
+                <>
+                  <KeyChip text="↓" size="sm" /> then <KeyChip text="↵" size="sm" />
+                </>
+              )}
             </span>
           </div>
         )}
@@ -258,8 +266,12 @@ export function CommandBar() {
           </div>
         )}
 
-        <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          Enter = quick add · ⌘Enter = AI capture
+        {/* Polish F2b (J-17): the same keys as the `?` overlay's Command bar rows (↵ quick add,
+            ⌘ ↵ AI capture), drawn as keycaps instead of "Enter = …" text. */}
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          <KeyChip text="↵" size="sm" /> quick add
+          <span aria-hidden="true">·</span>
+          <KeyCombo keys={['⌘', '↵']} size="sm" /> AI capture
         </div>
       </div>
     </div>
