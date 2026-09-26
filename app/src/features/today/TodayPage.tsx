@@ -39,6 +39,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
+import { upNextClock, upNextLabel } from './upNext'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -89,6 +90,16 @@ function useIsMobile(): boolean {
     return () => mq.removeEventListener('change', on)
   }, [])
   return isMobile
+}
+
+/** The current time, refreshed every minute — enough for "Now" to arrive and leave on time. */
+function useMinuteNow(): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+  return now
 }
 
 export function TodayPage() {
@@ -504,7 +515,7 @@ export function TodayPage() {
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
             {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
             {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
+              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={isMobile} />
             ))}
           </section>
 
@@ -864,8 +875,14 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
-function EventRow({ event, task, first, border, compact }: { event: CalendarEvent; task?: Task; first: boolean; border: boolean; compact?: boolean }) {
-  const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+function EventRow({ event, task, border, compact }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean }) {
+  const clock = upNextClock
+  // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
+  // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
+  // minute tick flips it on time without a reload.
+  const now = useMinuteNow()
+  const label = upNextLabel(event.starts_at, event.ends_at, now)
+  const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
   const check = task && (
     <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTask(task))} />
@@ -874,7 +891,7 @@ function EventRow({ event, task, first, border, compact }: { event: CalendarEven
   if (compact) {
     return (
       <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
+        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
         {check}
         <div style={{ flex: 1, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
@@ -883,7 +900,7 @@ function EventRow({ event, task, first, border, compact }: { event: CalendarEven
   }
   return (
     <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
+      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
       {check}
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
