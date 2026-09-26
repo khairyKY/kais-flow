@@ -1,5 +1,5 @@
 import { uiZoom } from '../lib/uiScale'
-import { useEffect, useRef, useState, type CSSProperties, type Ref } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
 
@@ -23,6 +23,11 @@ interface SelectProps {
   triggerRef?: Ref<HTMLButtonElement>
   /** When the popover is closed, Enter calls this instead of opening — lets Inbox keep "focus, Enter files". */
   onEnterClosed?: () => void
+  /** Replaces the trigger's whole contents (selected label + ▾) — for a trigger that keeps its
+   * own look, e.g. Tasks' `⇅ Sort · Smart` (J-12). The popover still lists the plain labels. */
+  display?: ReactNode
+  /** Extra class on the trigger — e.g. `kf-hit` for a 44px coarse-pointer hit area. */
+  className?: string
 }
 
 const ITEM_H = 32
@@ -33,7 +38,7 @@ const ITEM_H = 32
  * it escapes the transformed (rotated) cards it often lives inside — `position:fixed` inside a
  * `transform`ed ancestor would otherwise anchor to the card, not the viewport.
  */
-export function Select({ value, onChange, options, style, title, ariaLabel, placeholder, triggerRef, onEnterClosed }: SelectProps) {
+export function Select({ value, onChange, options, style, title, ariaLabel, placeholder, triggerRef, onEnterClosed, display, className }: SelectProps) {
   const localRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -120,6 +125,7 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
       <button
         type="button"
         ref={setTriggerNode}
+        className={className}
         title={title}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -141,8 +147,12 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
           ...style,
         }}
       >
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-        <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
+        {display ?? (
+          <>
+            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+            <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
+          </>
+        )}
       </button>
 
       {open &&
