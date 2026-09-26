@@ -65,6 +65,15 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
           },
+          // Interim icon (design-integration/PLAN.md SHIP P1: "interim clover four_leaf" until
+          // Kai's art): the clover sits inside the central safe zone, so the same file serves as
+          // the maskable icon Android crops into its own shape.
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
         ],
       },
       workbox: {

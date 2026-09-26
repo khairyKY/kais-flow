@@ -1,0 +1,117 @@
+name: Android APK
+
+# M1 (docs/phases/M1-android.md): the real Android app — the same dist/ as the web app inside a
+# Tauri v2 shell, built on GitHub's runners (Android SDK + NDK are preinstalled; nothing on Kai's
+# laptop). Builds on the mobile branches for review; a published Release gets the APK attached.
+on:
+  push:
+    branches: ['claude/mobile-*']
+    paths: ['app/**', '.github/workflows/android.yml', '.github/scripts/**']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_URL: https://kais-flow.kaidagoat.workers.dev
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only used to attach the APK to a published Release
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      - run: npm ci
+
+      - name: Supabase public config
+        env:
+          VARS_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VARS_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: python3 ../.github/scripts/supabase-public-config.py
+
+      - name: Generate the Android project
+        run: |
+          set -euo pipefail
+          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          npx tauri android init --ci
+          res=src-tauri/gen/android/app/src/main/res
+          cp -r src-tauri/icons/android/. "$res/"
+          # Voice capture: the WebView asks for the mic through the shell, which needs these declared.
+          manifest=src-tauri/gen/android/app/src/main/AndroidManifest.xml
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
+          grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
+          grep -n 'uses-permission' "$manifest"
+
+      - name: Build (arm64 — every Android phone from the last ~8 years)
+        run: npx tauri android build --apk --target aarch64
+
+      - name: Sign
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          unsigned="$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -1)"
+          test -n "$unsigned" || { echo "::error::no release APK was produced"; find src-tauri/gen/android/app/build/outputs -type f | head -20; exit 1; }
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"; pass="$KEYSTORE_PASSWORD"
+            echo "Signing with the project key (in-place updates work)."
+          else
+            pass="$(openssl rand -hex 16)"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -alias kaisflow -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$pass" -keypass "$pass" -dname "CN=Kai's Flow" > /dev/null 2>&1
+            echo "::warning::No ANDROID_KEYSTORE_B64 secret: signed with a one-off key. Installing a later build over this one needs an uninstall first."
+          fi
+          name="kais-flow-${GITHUB_SHA::7}.apk"
+          "$tools/zipalign" -f -p 4 "$unsigned" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass "pass:$pass" --out "$RUNNER_TEMP/$name" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/$name" | head -3
+          echo "APK=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
+          echo "APK_NAME=$name" >> "$GITHUB_ENV"
+          echo "- APK: \`$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK }}
+          retention-days: 30
+
+      - name: Attach to the Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$APK" --clobber

@@ -1,0 +1,3 @@
+# Rust build output and the generated platform projects (CI regenerates gen/ each build).
+/target/
+/gen/
