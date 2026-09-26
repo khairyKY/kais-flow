@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects, useTimeEntries, restoreProject, isThisMonth } from './api'
@@ -12,23 +12,12 @@ import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
+import { useIsMobile } from '../../components/BottomSheet'
 import './xfx.css'
 
 // Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month.
 function dayMonth(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-}
-
-function localUseIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
 }
 
 // Effects 1t amber drift: three leaves per slipping board card, staggered 0 / 3.4 / 6.2s inside
@@ -65,7 +54,7 @@ export function getWisteriaImage(pct: number): string {
 
 export function ProjectsPage() {
   const navigate = useNavigate()
-  const isMobile = localUseIsMobile()
+  const isMobile = useIsMobile()
   const motion = useMotionEnabled()
 
   // State
