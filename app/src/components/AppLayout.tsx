@@ -430,7 +430,7 @@ function TopBar() {
             (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
             boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
         <span>
-          <span style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
+          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
         </span>
         <button
           type="button"
@@ -555,6 +555,9 @@ export function AppLayout() {
         @media (max-width: 767px) {
           .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
+          /* The phone topbar already clips from the right; a long owner name would push the date
+             off too, so the name alone caps (~12 chars) and ellipsizes. "Kai's Flow" fits. */
+          .app-topbar-owner { display: inline-block; vertical-align: top; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
           .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
           .app-tabbar { display: flex !important; }
         }

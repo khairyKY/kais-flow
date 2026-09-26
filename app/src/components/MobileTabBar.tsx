@@ -43,19 +43,22 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        {/* minmax(0, 1fr): three equal columns that never grow past the sheet. Plain 1fr let the
+            widest label widen its column, so the right column ran off a 390px screen once
+            "Projects" joined (polish-c); a label that still can't fit ellipsizes. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
           {MORE_ITEMS.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
               {/* Line glyphs stroke currentColor — same muted ink as the rail's resting icons. */}
               {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
-              <span style={{ fontSize: 13, color: 'var(--ink-body)' }}>{item.label}</span>
+              <span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               {item.badge && pendingInbox > 0 && (
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
               )}
