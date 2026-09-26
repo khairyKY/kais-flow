@@ -2,7 +2,8 @@
 // tasks/inbox_items + a small live snapshot. SSE out, terminated by a `done` event with citations.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
-import { corsHeadersFor } from '../_shared/cors.ts'
+import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
+import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch, type SearchHit } from '../_shared/retrieval.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -36,6 +37,14 @@ Deno.serve(async (req) => {
   // Retrieval below still runs as that user (their JWT is forwarded), so RLS scopes every row.
   const auth = await requireUser(req)
   if (auth instanceof Response) return auth
+
+  // SEC-2: today's AI allowance, before the body is read, retrieval runs or Groq is called.
+  // Fails CLOSED: if the allowance can't be checked, chat does not call Groq. Nothing is lost by
+  // saying "not right now" to a question, while an unmetered path during a database blip is the
+  // one gap a quota-draining script would lean on.
+  const allowance = await takeAiAllowance(auth.user.id, 'chat')
+  if (allowance === 'over') return dailyLimitResponse(req)
+  if (allowance === 'unavailable') return jsonResponse(req, { error: 'allowance unavailable' }, 503)
 
   try {
     const authHeader = `Bearer ${auth.token}`

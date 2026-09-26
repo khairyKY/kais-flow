@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { transcribeAudio, captureWithAI } from './api'
+import { AI_ALLOWANCE_USED_UP, DailyLimitError } from './aiAllowance'
 import { useToastStore } from '../../lib/toastStore'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled } from '../../lib/motion'
@@ -110,8 +111,13 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
         useToastStore.getState().push({ message: "Didn't catch that — try again" })
       }
     } catch (err) {
-      console.error(err)
-      useToastStore.getState().push({ message: 'Voice capture failed' })
+      if (err instanceof DailyLimitError) {
+        // SEC-2: today's speech-to-text allowance is used up — a known state, not a failure.
+        useToastStore.getState().push({ message: AI_ALLOWANCE_USED_UP })
+      } else {
+        console.error(err)
+        useToastStore.getState().push({ message: 'Voice capture failed' })
+      }
     } finally {
       setBusy(false)
       cleanupRecording()
