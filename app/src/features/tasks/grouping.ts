@@ -76,7 +76,13 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
  */
 export function todayListTasks(tasks: Task[], now: Date = new Date()): Task[] {
   const today = cairoDateKey(now)
-  return tasks.filter((t) => !t.someday && (!t.completed_at || cairoDateKey(new Date(t.completed_at)) === today))
+  return tasks.filter((t) => {
+    if (t.someday || t.status === 'cancelled') return false
+    // Finished rows stay listed (struck through) on the Cairo day they were finished. A `done` row
+    // with no completed_at (e.g. a CSV import) can't be placed on a day — never show it as open.
+    if (t.completed_at) return cairoDateKey(new Date(t.completed_at)) === today
+    return t.status !== 'done'
+  })
 }
 
 /** The sidebar's Today badge: the rows `todayListTasks` lists that are still open — Today's open

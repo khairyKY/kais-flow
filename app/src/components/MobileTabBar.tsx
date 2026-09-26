@@ -47,7 +47,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
       >
         {/* Three columns where three fit, two where they don't (the export's caption for this
             sheet says "2-column grid"; its card draws three at 500px). A fixed repeat(3, 1fr)
-            overflowed: at the default 125% interface size (lib/uiScale.ts) a 390px phone lays out
+            overflowed: at a 125% interface size (lib/uiScale.ts; the phone default was 125% until F2b) a 390px phone lays out
             ~312 CSS px, so the right column ran past the screen edge — worse once "Projects"
             joined (polish-c). 112px is the widest row's content (icon + "Projects"/"Routines");
             the ellipsis below is only a last resort for extreme zooms. */}

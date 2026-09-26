@@ -96,7 +96,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
       <style>{'@keyframes edpFadeIn{from{opacity:0}}'}</style>
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 280, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ width: 280, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         <div style={{ height: 6, background: stripColor }} />
         <div style={{ padding: '16px 18px' }}>

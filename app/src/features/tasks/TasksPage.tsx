@@ -248,7 +248,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
     // the content area's 30px top padding — the overhang clipped the bottom of the Projects
     // card even when the rail's own scrollbar was at the end. Sized to the worst case
     // (unscrolled page) so all three tape cards render fully at 100% zoom.
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(100dvh - 42px - 30px)', overflowY: 'auto' }}>
+    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(var(--kf-vh) - 42px - 30px)', overflowY: 'auto' }}>
       {/* R4-19 (2026-07-20 audit): "should be a bit more of a header… the same font as the title
           of the page… make it a bit more subtle, but to still be visible." Was 9.5px uppercase
           mono in --ink-faint, reading as a caption. Now the display face the page titles use,

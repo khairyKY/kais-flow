@@ -30,7 +30,7 @@ export function ToastHost() {
   const isLeaving = !current
 
   return (
-    <div className="kf-toast-host" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: 'calc(100vw - 24px)' }}>
+    <div className="kf-toast-host" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: 'calc(var(--kf-vw) - 24px)' }}>
       <style>{`
         /* WB-3 punch 64: at bottom:16 the toast — and its Undo — sat *under* the phone tab
            bar. Lift it clear of the bar the same way the sync popover does. */

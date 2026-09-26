@@ -87,7 +87,7 @@ export function NewProjectModal({
 
   return (
     <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-      <div className="dv-card kf-overlay-card" style={{ width: 620, maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-popover)' }}>
+      <div className="dv-card kf-overlay-card" style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-popover)' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.3 }} />
         <div style={{ padding: '26px 30px 28px', position: 'relative', zIndex: 10 }}>
 

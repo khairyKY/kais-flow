@@ -169,8 +169,18 @@ describe('todayListTasks / todayOpenCount (the Today page and its sidebar badge)
     expect(ids.sort()).toEqual(['doneToday', 'dueToday', 'in20days', 'in5days', 'overdue', 'scheduledToday', 'top3', 'undated'])
   })
 
-  it("is exactly the Today page's row set", () => {
+  it("is the Today page's row set for ordinary tasks (TodayPage now calls it directly)", () => {
     expect(todayListTasks(tasks, NOW)).toEqual(todayPageRows(tasks, NOW))
+  })
+
+  it('never lists a cancelled task, or a done task with no completion time (e.g. a CSV import), as open', () => {
+    const odd = [
+      task({ id: 'cancelled', status: 'cancelled' }),
+      task({ id: 'doneNoTime', status: 'done', completed_at: null }),
+      task({ id: 'open' }),
+    ]
+    expect(todayListTasks(odd, NOW).map((t) => t.id)).toEqual(['open'])
+    expect(todayOpenCount(odd, NOW)).toBe(1)
   })
 
   it('the badge counts the listed rows that are still open — not the done-today row, never someday', () => {

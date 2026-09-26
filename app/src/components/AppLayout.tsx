@@ -553,7 +553,7 @@ export function AppLayout() {
   }, [setCommandBarOpen, toggleCommandBar])
 
   return (
-    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
         .app-topbar-echo { display: contents; }
@@ -563,7 +563,7 @@ export function AppLayout() {
           /* The phone topbar already clips from the right; a long owner name would push the date
              off too, so the name alone caps (~12 chars) and ellipsizes. "Kai's Flow" fits. */
           .app-topbar-owner { display: inline-block; vertical-align: top; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
-          /* polish-f1: at 390px and the default 125% size the strip is ~280 CSS px wide, and the
+          /* polish-f1: at 390px and a 125% size (the phone default until F2b) the strip is ~280 CSS px wide, and the
              sync status (3rd) was pushed out entirely by the weather echo and the zone. The
              iPhone exports carry neither (their app bar is flower · date · search), so both drop
              here; the status never shrinks, and if anything still has to give (a long name while

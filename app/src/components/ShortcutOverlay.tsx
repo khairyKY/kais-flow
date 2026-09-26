@@ -55,7 +55,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
         style={{
           width: '100%',
           maxWidth: 660,
-          maxHeight: 'calc(100dvh - 160px)',
+          maxHeight: 'calc(var(--kf-vh) - 160px)',
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           margin: '0 16px',

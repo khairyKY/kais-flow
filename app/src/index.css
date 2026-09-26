@@ -94,3 +94,13 @@ body::before {
   border-radius: 6px;
   border: 3px solid var(--bg-app);
 }
+
+/* Viewport lengths under the root UI zoom (lib/uiScale.ts sets `zoom` + --kf-ui-scale on <html>).
+   `100dvh` / `100vw` are laid out in unzoomed px and then scaled by the zoom, so at the default 125%
+   a "full-height" shell was 125% of the window: a second scrollbar on every page, the sidebar
+   footer below the fold, the last phone card behind the tab bar (Polish G finding, 2026-09-26).
+   Full-screen layouts use these instead of raw viewport units. */
+:root {
+  --kf-vh: calc(100dvh / var(--kf-ui-scale, 1));
+  --kf-vw: calc(100vw / var(--kf-ui-scale, 1));
+}

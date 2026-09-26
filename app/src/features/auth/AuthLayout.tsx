@@ -27,7 +27,7 @@ const FIELD_INPUT: CSSProperties = {
 /** The whole page: paper ground, faded botanicals (desktop only), the taped card and its logo. */
 export function AuthShell({ onSubmit, children }: { onSubmit: (e: FormEvent) => void; children: ReactNode }) {
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: 'var(--kf-vh)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)', position: 'relative', overflow: 'hidden' }}>
       <style>{'@media (max-width: 767px) { .signin-bg-illustration { display: none; } }'}</style>
       <img className="signin-bg-illustration" src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', left: 120, top: 120, height: 640, width: 'auto', opacity: 0.16, transform: 'rotate(-6deg)', pointerEvents: 'none' }} />
       <img className="signin-bg-illustration" src="/ds/assets/cherry/opening.png" alt="" style={{ position: 'absolute', right: 150, bottom: 110, height: 420, width: 'auto', opacity: 0.13, transform: 'rotate(7deg)', pointerEvents: 'none' }} />

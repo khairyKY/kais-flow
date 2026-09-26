@@ -10,7 +10,7 @@ export function KitReference() {
   const theme = useTheme((s) => s.theme)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper-linen)', padding: '48px 56px', color: 'var(--ink-body)' }}>
+    <div style={{ minHeight: 'var(--kf-vh)', background: 'var(--paper-linen)', padding: '48px 56px', color: 'var(--ink-body)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 8 }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600 }}>Component kit</h1>
         <button onClick={toggleTheme} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-faint)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 12px', cursor: 'pointer' }}>

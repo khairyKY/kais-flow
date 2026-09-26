@@ -549,7 +549,7 @@ export function JournalPage() {
 
                 {renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}
 
-                {/* Polish G: at the default 125% interface size a 390px phone lays this card out
+                {/* Polish G: at a 125% interface size (the phone default until F2b) a 390px phone lays this card out
                     ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
                     stay whole; the save state takes its own line only when it doesn't fit. */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
