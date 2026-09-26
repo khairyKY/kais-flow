@@ -1,11 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { useRecentActivity } from './api'
 import { FunnelIcon } from '../../components/controlIcons'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
-import type { ActivityLogEntry } from '../../lib/types'
+import { usePeople } from '../people/api'
+import { useRoutines } from '../routines/api'
+import { useAllInboxItems } from '../inbox/api'
+import { useDomains } from '../domains/api'
+import { useCalendarEvents } from '../calendar/api'
+import { describeActivity, plural, type ActivityIcon, type ActivityNames } from './describe'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 
@@ -34,6 +39,56 @@ const CATEGORIES = [
 ]
 
 const MOBILE_CATEGORIES = ['all', 'tasks', 'inbox', 'people', 'routines']
+
+// The row marks the page already drew, keyed by describe.ts's icon kind. `seedling` is new: an
+// existing asset for onboarding (it used to get an empty hydrangea disc).
+const ICONS: Record<ActivityIcon, { icon: ReactNode; iconBg: string }> = {
+  check: {
+    iconBg: 'var(--sig-done)',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12.5l5 5L20 6" stroke="var(--paper-parchment)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+    ),
+  },
+  cross: {
+    iconBg: 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    ),
+  },
+  inbox: {
+    iconBg: 'color-mix(in oklch, var(--acc-hydrangea) 28%, transparent)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7h16M4 12h16M4 17h10"/>
+      </svg>
+    ),
+  },
+  vine: { iconBg: 'color-mix(in oklch, var(--acc-moss) 26%, transparent)', icon: <img src="/ds/assets/vine/flowering.png" alt="" style={{ height: 18 }} /> },
+  calendar: {
+    iconBg: 'color-mix(in oklch, var(--acc-lavender) 30%, transparent)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-lavender-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="5" width="16" height="16" rx="2"/>
+        <path d="M4 9h16M9 3v4M15 3v4"/>
+      </svg>
+    ),
+  },
+  clover: { iconBg: 'color-mix(in oklch, var(--acc-clover) 32%, transparent)', icon: <img src="/ds/assets/clover/dewdrop.png" alt="" style={{ height: 16 }} /> },
+  fern: { iconBg: 'color-mix(in oklch, var(--acc-moss) 20%, transparent)', icon: <img src="/ds/assets/fern/full.png" alt="" style={{ height: 17 }} /> },
+  plus: {
+    iconBg: 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    ),
+  },
+  seedling: { iconBg: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', icon: <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 16 }} /> },
+}
 
 // Punch 48: the chip read "This week" while the filter was a rolling 7-day window and the
 // count line claimed "last 7 days" — three different stories. The labels are the export's;
@@ -72,6 +127,11 @@ export function ActivityPage() {
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
+  const { data: domains = [] } = useDomains()
+  const { data: people = [] } = usePeople()
+  const { data: routines = [] } = useRoutines()
+  const { data: inboxItems = [] } = useAllInboxItems()
+  const { data: events = [] } = useCalendarEvents()
 
   const formatTime = (isoString: string) => {
     const d = new Date(isoString)
@@ -101,191 +161,42 @@ export function ActivityPage() {
     return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
   }
 
-  const getEntityName = (entry: ActivityLogEntry) => {
-    const payloadTitle = entry.payload?.title || entry.payload?.name || entry.payload?.note
-    if (payloadTitle) return String(payloadTitle)
-    if (entry.entity_type === 'task') {
-      const task = tasks.find((t) => t.id === entry.entity_id)
-      if (task) return task.title
+  // 2026-09-26 audit (a new person read "Logged an interaction with…", a capture "Captured
+  // "inbox item"", a journal save "Updated journal entry — "journal"", a new routine "Routine
+  // updated"): the copy now lives in describe.ts — one entry per event type the app writes,
+  // unit-tested. This page only lends it the names it already holds and draws the marks.
+  const names = useMemo<ActivityNames>(() => {
+    const byId = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, r]))
+    const taskMap = byId(tasks)
+    const projectMap = byId(projects)
+    const areaMap = byId(areas)
+    const domainMap = byId(domains)
+    const personMap = byId(people)
+    const routineMap = byId(routines)
+    const inboxMap = byId(inboxItems)
+    const eventMap = byId(events)
+    return {
+      task: (id) => taskMap.get(id),
+      project: (id) => projectMap.get(id)?.name,
+      area: (id) => areaMap.get(id)?.name,
+      domain: (id) => domainMap.get(id)?.name,
+      person: (id) => personMap.get(id)?.name,
+      routine: (id) => routineMap.get(id)?.name,
+      inbox: (id) => inboxMap.get(id)?.raw_text,
+      event: (id) => eventMap.get(id)?.title,
     }
-    if (entry.entity_type === 'project') {
-      const project = projects.find((p) => p.id === entry.entity_id)
-      if (project) return project.name
-    }
-    if (entry.entity_type === 'area') {
-      const area = areas.find((a) => a.id === entry.entity_id)
-      if (area) return area.name
-    }
-    return ''
-  }
-
-  // Punch 48: every row is a link back to the thing it happened to. Task rows use the same
-  // project-aware rule as search (Kai 2026-07-21: land inside the project if it has one).
-  // Anything whose source has no page (areas, domains, settings) returns null and stays a
-  // plain div — an unclickable row beats a click that goes nowhere.
-  const resolveHref = (entry: ActivityLogEntry): string | null => {
-    const type = entry.event_type
-    const id = entry.entity_id
-    if (type.startsWith('task.')) {
-      const task = tasks.find((t) => t.id === id)
-      return task?.project_id ? `/projects/${task.project_id}?focus=${id}` : `/tasks?focus=${id}`
-    }
-    if (type.startsWith('inbox.')) return `/inbox?focus=${id}`
-    if (type.startsWith('routine.')) return '/routines'
-    if (type.startsWith('calendar_event.') || type.startsWith('calendar.')) return '/calendar'
-    if (type.startsWith('people.') || type.startsWith('person.')) return `/people/${id}`
-    if (type.startsWith('journal.')) return '/journal'
-    if (type.startsWith('project.')) return `/projects/${id}`
-    return null
-  }
-
-  const resolveEntryInfo = (entry: ActivityLogEntry) => {
-    const name = getEntityName(entry)
-    const type = entry.event_type
-    const href = resolveHref(entry)
-    let text = ''
-    let details = ''
-    let category = 'all'
-    let icon = null
-    let iconBg = 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)'
-
-    if (type.startsWith('task.')) {
-      category = 'tasks'
-      iconBg = 'var(--sig-done)'
-      icon = (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-          <path d="M4 12.5l5 5L20 6" stroke="var(--paper-parchment)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path>
-        </svg>
-      )
-      if (type === 'task.completed') {
-        text = `Completed "${name || 'task'}"`
-        const projId = entry.payload?.project_id
-        const project = projects.find(p => p.id === projId)
-        details = project ? `${project.name} \u00b7 dropped a petal` : 'dropped a petal'
-      } else if (type === 'task.created') {
-        text = `Created task "${name || 'task'}"`
-        details = 'added to tasks'
-      } else if (type === 'task.deleted') {
-        text = `Deleted task "${name || 'task'}"`
-        details = 'removed'
-        iconBg = 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)'
-        icon = (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
-        )
-      } else {
-        text = `Updated task "${name || 'task'}"`
-        details = type.replace('task.', '')
-      }
-    } else if (type.startsWith('inbox.')) {
-      category = 'inbox'
-      iconBg = 'color-mix(in oklch, var(--acc-hydrangea) 28%, transparent)'
-      icon = (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 7h16M4 12h16M4 17h10"/>
-        </svg>
-      )
-      if (type === 'inbox.captured') {
-        text = `Captured "${name || (entry.payload?.raw_text as string) || 'inbox item'}"`
-        details = entry.payload?.kind === 'voice' ? 'voice capture' : 'quick capture'
-      } else if (type === 'inbox.filed') {
-        text = `Filed "${name || 'item'}" to task`
-        details = 'sorted to garden'
-      } else if (type === 'inbox.dismissed') {
-        text = `Dismissed "${name || 'item'}"`
-        details = 'moved to trash archive'
-      } else {
-        text = `Inbox action: ${type.replace('inbox.', '')}`
-      }
-    } else if (type.startsWith('routine.')) {
-      category = 'routines'
-      iconBg = 'color-mix(in oklch, var(--acc-moss) 26%, transparent)'
-      icon = <img src="/ds/assets/vine/flowering.png" alt="" style={{ height: 18 }} />
-      if (type === 'routine.checked') {
-        text = `Kept the streak on "${name || 'routine'}"`
-        // WB-4 punch 9: `|| 6` invented a streak day for any event logged without one.
-        details = entry.payload?.streak ? `day ${entry.payload.streak} \u00b7 the vine grew a leaf` : 'the vine grew a leaf'
-      } else {
-        text = `Routine updated: "${name || 'routine'}"`
-      }
-    } else if (type.startsWith('calendar_event.') || type.startsWith('calendar.')) {
-      category = 'calendar'
-      iconBg = 'color-mix(in oklch, var(--acc-lavender) 30%, transparent)'
-      icon = (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-lavender-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="5" width="16" height="16" rx="2"/>
-          <path d="M4 9h16M9 3v4M15 3v4"/>
-        </svg>
-      )
-      if (type === 'calendar_event.created') {
-        text = `Scheduled event "${name || 'event'}"`
-        details = 'added to calendar'
-      } else if (type === 'calendar_event.deleted') {
-        text = `Removed event "${name || 'event'}"`
-        details = 'cleared schedule block'
-      } else {
-        text = `Calendar: "${name || 'event'}"`
-        details = type.replace('calendar_event.', '').replace('calendar.', '')
-      }
-    } else if (type.startsWith('people.') || type.startsWith('person.')) {
-      category = 'people'
-      iconBg = 'color-mix(in oklch, var(--acc-clover) 32%, transparent)'
-      icon = <img src="/ds/assets/clover/dewdrop.png" alt="" style={{ height: 16 }} />
-      text = `Logged an interaction with "${name || 'someone'}"`
-      details = (entry.payload?.interaction_type as string) || 'interaction logged'
-    } else if (type.startsWith('journal.')) {
-      category = 'journal'
-      iconBg = 'color-mix(in oklch, var(--acc-moss) 20%, transparent)'
-      icon = <img src="/ds/assets/fern/full.png" alt="" style={{ height: 17 }} />
-      if (type === 'journal.created') {
-        // WB-4 punch 9: the export's sample title ("A slow, good morning"), word count (148)
-        // and mood ("settled") were standing in for missing payload fields.
-        text = name ? `Wrote a journal entry \u2014 "${name}"` : 'Wrote a journal entry'
-        details = [
-          entry.payload?.word_count ? `${entry.payload.word_count} words` : '',
-          entry.payload?.mood ? `mood: ${entry.payload.mood}` : '',
-        ].filter(Boolean).join(' \u00b7 ')
-      } else {
-        text = `Updated journal entry \u2014 "${name || 'journal'}"`
-        details = 'kept'
-      }
-    } else if (type.startsWith('project.')) {
-      category = 'projects'
-      iconBg = 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)'
-      icon = (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc-clover-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-      )
-      if (type === 'project.created') {
-        text = `Created project "${name || 'project'}"`
-        details = entry.payload?.milestone_count ? `${entry.payload.milestone_count} tasks planted` : ''
-      } else if (type === 'project.work_logged') {
-        text = `Logged work on "${name || 'project'}"`
-        // WB-4 punch 9: `|| 90` reported 90 minutes of work that never happened.
-        details = [
-          entry.payload?.duration_min ? `${entry.payload.duration_min}m` : '',
-          (entry.payload?.note as string) || '',
-        ].filter(Boolean).join(' \u00b7 ')
-      } else {
-        text = `Project: ${type.replace('project.', '')}`
-        details = name
-      }
-    } else {
-      text = `Action: ${type}`
-      details = name
-    }
-    return { text, details, category, icon, iconBg, href }
-  }
+  }, [tasks, projects, areas, domains, people, routines, inboxItems, events])
 
   const processedEntries = useMemo(() => {
     const cutoff = range.since()
     return rawEntries
       .filter((entry) => !cutoff || new Date(entry.created_at).getTime() >= cutoff)
-      .map((entry) => ({ ...entry, info: resolveEntryInfo(entry) }))
+      .map((entry) => {
+        const line = describeActivity(entry, names)
+        return { ...entry, info: { ...line, ...ICONS[line.icon] } }
+      })
       .filter((entry) => filter === 'all' || entry.info.category === filter)
-  }, [rawEntries, filter, range, projects, tasks, areas])
+  }, [rawEntries, filter, range, names])
 
   const groupedEntries = useMemo(() => {
     const groups: Record<string, typeof processedEntries> = {}
@@ -435,7 +346,7 @@ export function ActivityPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="fhelp">{totalCount} events · {spanLabel}</span>
+              <span className="fhelp">{plural(totalCount, 'event')} · {spanLabel}</span>
               <span
                 onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
@@ -462,7 +373,7 @@ export function ActivityPage() {
                 <div className="slabel" style={{ margin: '24px 0 16px' }}>
                   <span style={{ color: 'var(--ink-body)' }}>{formatDateHeader(dateKey)}</span>
                   <span className="r" />
-                  <span style={{ color: 'var(--ink-hairline)' }}>{group.length} events</span>
+                  <span style={{ color: 'var(--ink-hairline)' }}>{plural(group.length, 'event')}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
