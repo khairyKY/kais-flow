@@ -30,12 +30,12 @@ const PILLARS = {
 }
 
 const STYLES = `
-  .ob-page { min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: var(--paper-sidebar); padding: 24px; }
+  .ob-page { min-height: var(--kf-vh); display: flex; align-items: center; justify-content: center; background: var(--paper-sidebar); padding: 24px; }
   /* R4-28b (2026-07-20 audit): "There's even a vertical one here, too." height was pinned at
      600px, so the taller steps overflowed into an internal scrollbar. min-height keeps the
      roomy proportions for the short steps and lets the tall ones grow; max-height still caps
      it to the viewport, so a genuinely small window scrolls instead of clipping. */
-  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.12), 0 18px 44px rgba(var(--kf-shadow-rgb, 60,52,38),0.14); overflow: hidden; }
+  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: min(600px, calc(var(--kf-vh) - 48px)); max-height: calc(var(--kf-vh) - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.12), 0 18px 44px rgba(var(--kf-shadow-rgb, 60,52,38),0.14); overflow: hidden; }
   /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
   .ob-grain { position: absolute; inset: 0; pointer-events: none; z-index: 40; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
   [data-theme='night'] .ob-grain { mix-blend-mode: overlay; opacity: 0.25; }
@@ -90,7 +90,7 @@ const STYLES = `
   .ob-motion .ob-terrarium-seeds > *:nth-child(5) { animation-delay: 360ms; }
   @media (max-width: 767px) {
     .ob-page { padding: 0; background: var(--paper-linen); }
-    .ob-card { width: 100%; height: 100dvh; max-height: none; border-radius: 0; border: none; box-shadow: none; }
+    .ob-card { width: 100%; height: var(--kf-vh); max-height: none; border-radius: 0; border: none; box-shadow: none; }
     .ob-header { display: none; }
     .ob-dots-mobile { display: flex; justify-content: center; padding: calc(14px + env(safe-area-inset-top)) 0 0; position: relative; z-index: 2; }
     .ob-body { padding: 14px 22px 0; }

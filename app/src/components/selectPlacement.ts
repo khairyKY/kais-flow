@@ -1,7 +1,7 @@
 // Where a <Select>'s popover goes. Pure, and entirely in LAYOUT px: the caller divides the
 // trigger rect and the viewport by the root zoom first (lib/uiScale.ts — rects and
 // window.innerWidth are visual px, `position: fixed` offsets are layout px). At the default
-// 125% a 390px phone is ~312 layout px wide, and the old clamp against the raw innerWidth let
+// 125% (a user choice; the phone default until F2b) a 390px phone is ~312 layout px wide, and the old clamp against the raw innerWidth let
 // the popover run off the right edge (FIX-6 follow-up, conductor decision 2026-09-26).
 
 /** Gap kept between the popover and every viewport edge. */
