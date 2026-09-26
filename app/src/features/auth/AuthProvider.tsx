@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
-import { OUTBOX_KEY, DEAD_KEY, flushOutbox, rescueEmptyUserIdWrites } from '../../lib/outbox'
+import { OUTBOX_KEY, DEAD_KEY, flushOutbox, rescueEmptyUserIdWrites, unsyncedChanges } from '../../lib/outbox'
 // Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
 import { forgetRecovery, rememberRecovery } from './recovery'
 
@@ -67,13 +67,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 const OUTBOX_OWNER_KEY = 'kf-outbox-owner'
 
-/** The Sign out button: push what's queued (best effort), then clear this device's copy of the
- * account — query cache via the SIGNED_OUT listener, outbox + dead letters here (audit S7). */
-export async function signOut(): Promise<void> {
+/** The Sign out button (every one of them goes through `useSignOut`). Pushes what's queued
+ * first. If changes are still waiting after that — offline, or the server couldn't be reached —
+ * it does NOT sign out: it resolves to how many, so the caller can ask. P0-B (audit 2026-09-26):
+ * this used to delete them silently and then fail to sign out offline, leaving the user signed in.
+ * With an empty queue, or `discardUnsynced` (the user chose to), it clears this device's copy of
+ * the account — query cache via the SIGNED_OUT listener, outbox + dead letters here (audit S7) —
+ * and signs out, offline included. Resolves to 0 once signed out. */
+export async function signOut({ discardUnsynced = false } = {}): Promise<number> {
   await flushOutbox()
+  if (!discardUnsynced) {
+    const waiting = await unsyncedChanges()
+    if (waiting > 0) return waiting
+  }
   await Promise.all([del(OUTBOX_KEY), del(DEAD_KEY)])
   localStorage.removeItem(OUTBOX_OWNER_KEY)
-  await supabase.auth.signOut()
+  await endSession()
+  return 0
+}
+
+/** Revokes the session on the server when it can, and always ends it on this device. */
+async function endSession(): Promise<void> {
+  if (navigator.onLine) {
+    try {
+      if (!(await supabase.auth.signOut()).error) return
+    } catch {
+      /* fall through to the local sign-out below */
+    }
+  }
+  // supabase-js 2.110 keeps the stored session when /logout can't be reached, and
+  // `scope: 'local'` calls that same endpoint, so it fails offline too (verified, see the P0-B
+  // handoff). Drop the stored session first: signOut then has no token to send, so it clears
+  // the rest locally and fires SIGNED_OUT. The server-side session can't be revoked offline,
+  // but this device no longer holds its tokens.
+  const key = (supabase.auth as unknown as { storageKey?: string }).storageKey
+  if (key) localStorage.removeItem(key)
+  await supabase.auth.signOut({ scope: 'local' })
 }
 
 export function useAuth() {

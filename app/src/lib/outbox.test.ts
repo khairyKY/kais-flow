@@ -325,4 +325,56 @@ describe('outbox', () => {
       expect(store.get('kf-outbox-dead')).toHaveLength(1)
     })
   })
+
+  describe('sign-out support (P0-B: offline sign-out deleted unsent writes)', () => {
+    it("counts unsynced changes without doubling each action's activity_log row", async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep items queued
+      const { writeRow, unsyncedChanges } = await import('./outbox')
+      expect(await unsyncedChanges()).toBe(0)
+      writeRow('inbox_items', { id: 'i1', raw_text: 'one' })
+      writeRow('activity_log', { id: 'a1', event_type: 'inbox.captured' })
+      writeRow('tasks', { id: 't1', title: 'two' })
+      writeRow('activity_log', { id: 'a2', event_type: 'task.created' })
+      await flushMicrotasks()
+      expect(await unsyncedChanges()).toBe(2)
+    })
+
+    it('still counts activity rows when they are all that is waiting', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') })
+      const { writeRow, unsyncedChanges } = await import('./outbox')
+      writeRow('activity_log', { id: 'a1', event_type: 'journal.updated' })
+      await flushMicrotasks()
+      expect(await unsyncedChanges()).toBe(1)
+    })
+
+    it('a flush requested mid-flush waits for the queue to drain instead of returning early', async () => {
+      let release!: (v: { error: null }) => void
+      upsertMock.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)))
+      upsertMock.mockResolvedValue({ error: null })
+      const { writeRow, flushOutbox, unsyncedChanges } = await import('./outbox')
+      writeRow('tasks', { id: 't-slow', title: 'x' }) // starts a flush that stalls on the upsert
+      await flushMicrotasks()
+      let joined = false
+      const second = flushOutbox().then(() => (joined = true))
+      await flushMicrotasks()
+      expect(joined).toBe(false) // the old early `return` resolved here with the write still queued
+      release({ error: null })
+      await second
+      expect(await unsyncedChanges()).toBe(0)
+    })
+
+    it('does not try to flush while offline', async () => {
+      vi.stubGlobal('navigator', { onLine: false })
+      try {
+        const { writeRow, flushOutbox, unsyncedChanges } = await import('./outbox')
+        writeRow('tasks', { id: 't-off', title: 'x' })
+        await flushMicrotasks()
+        await flushOutbox()
+        expect(upsertMock).not.toHaveBeenCalled()
+        expect(await unsyncedChanges()).toBe(1)
+      } finally {
+        vi.stubGlobal('navigator', { onLine: true })
+      }
+    })
+  })
 })

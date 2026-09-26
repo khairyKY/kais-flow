@@ -69,7 +69,7 @@ function removeEntry(id: string, table: string): Promise<void> {
   }))
 }
 
-let flushing = false
+let flushing: Promise<void> | null = null
 
 // R4 P0 (2026-07-20 audit): a write the server permanently rejects — expired session, RLS
 // denial, a column the client's still-unpushed migration hasn't created — used to be caught
@@ -79,55 +79,68 @@ let flushing = false
 // every 30s retry) so a permanent failure is now visible instead of invisible.
 const toastedEntries = new Set<string>()
 
-export async function flushOutbox(): Promise<void> {
-  if (flushing || !navigator.onLine) return
-  flushing = true
-  try {
-    for (;;) {
-      const queue = await peekQueue()
-      if (queue.length === 0) break
-      const entry = queue[0]
-      try {
-        const { error } =
-          entry.op === 'delete'
-            ? await supabase.from(entry.table).delete().eq('id', entry.id)
-            : await supabase.from(entry.table).upsert(entry.payload)
-        if (error) throw error
-        await removeEntry(entry.id, entry.table)
-        toastedEntries.delete(`${entry.table}:${entry.id}`)
-      } catch (err) {
-        // A PostgrestError means the server actually responded and rejected the write —
-        // a real, likely-permanent failure, not connectivity. A raw fetch failure (offline,
-        // DNS, timeout) has no `.code`/`.message` shape and stays silent as before.
-        const isServerRejection = !!err && typeof err === 'object' && 'code' in err && 'message' in err
-        if (!isServerRejection) break // offline/transient — stop, keep the queue, retry later
+/** Pushes the queue to the server, oldest first. A call made while a flush is already running
+ * joins it (P0-B), so `await flushOutbox()` really means "the queue has had its turn" — sign-out
+ * counts what's left right after. */
+export function flushOutbox(): Promise<void> {
+  if (!navigator.onLine) return Promise.resolve()
+  flushing ??= drain().finally(() => {
+    flushing = null
+  })
+  return flushing
+}
 
-        // R4 (2026-07-20): a permanently-rejected row used to stay at the head of the queue and
-        // `break`, so it blocked EVERY write queued behind it — forever. One malformed journal
-        // entry (user_id: '') was enough to wedge the whole outbox: later writes never reached
-        // the server, the optimistic cache made them look applied, and the next refetch reverted
-        // them. Park the poison row so the queue keeps draining, and say so out loud.
-        const message = (err as { message?: string }).message || 'server rejected the write'
-        await removeEntry(entry.id, entry.table)
-        try {
-          const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
-          await set(DEAD_KEY, [...dead, { ...entry, error: message, failedAt: Date.now() }])
-        } catch {
-          /* storage full/unavailable — dropping it still beats wedging every later write */
-        }
-        const key = `${entry.table}:${entry.id}`
-        if (!toastedEntries.has(key)) {
-          toastedEntries.add(key)
-          // House rule: the word "error" (and raw server text / table names) never reaches the UI.
-          // The full diagnostic lives in the dead-letter record above.
-          useToastStore.getState().push({ message: "One change couldn't be saved — set aside so the rest sync on." })
-        }
-        // continue — the next entry gets its turn instead of queueing behind a dead one
+async function drain(): Promise<void> {
+  for (;;) {
+    const queue = await peekQueue()
+    if (queue.length === 0) break
+    const entry = queue[0]
+    try {
+      const { error } =
+        entry.op === 'delete'
+          ? await supabase.from(entry.table).delete().eq('id', entry.id)
+          : await supabase.from(entry.table).upsert(entry.payload)
+      if (error) throw error
+      await removeEntry(entry.id, entry.table)
+      toastedEntries.delete(`${entry.table}:${entry.id}`)
+    } catch (err) {
+      // A PostgrestError means the server actually responded and rejected the write —
+      // a real, likely-permanent failure, not connectivity. A raw fetch failure (offline,
+      // DNS, timeout) has no `.code`/`.message` shape and stays silent as before.
+      const isServerRejection = !!err && typeof err === 'object' && 'code' in err && 'message' in err
+      if (!isServerRejection) break // offline/transient — stop, keep the queue, retry later
+
+      // R4 (2026-07-20): a permanently-rejected row used to stay at the head of the queue and
+      // `break`, so it blocked EVERY write queued behind it — forever. One malformed journal
+      // entry (user_id: '') was enough to wedge the whole outbox: later writes never reached
+      // the server, the optimistic cache made them look applied, and the next refetch reverted
+      // them. Park the poison row so the queue keeps draining, and say so out loud.
+      const message = (err as { message?: string }).message || 'server rejected the write'
+      await removeEntry(entry.id, entry.table)
+      try {
+        const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
+        await set(DEAD_KEY, [...dead, { ...entry, error: message, failedAt: Date.now() }])
+      } catch {
+        /* storage full/unavailable — dropping it still beats wedging every later write */
       }
+      const key = `${entry.table}:${entry.id}`
+      if (!toastedEntries.has(key)) {
+        toastedEntries.add(key)
+        // House rule: the word "error" (and raw server text / table names) never reaches the UI.
+        // The full diagnostic lives in the dead-letter record above.
+        useToastStore.getState().push({ message: "One change couldn't be saved — set aside so the rest sync on." })
+      }
+      // continue — the next entry gets its turn instead of queueing behind a dead one
     }
-  } finally {
-    flushing = false
   }
+}
+
+/** How many changes on this device haven't reached the server yet (P0-B: sign-out asks before
+ * discarding them). Every action also queues an `activity_log` row, so those only count when
+ * nothing else is waiting: one capture reads as one change, and a lone activity row still counts. */
+export async function unsyncedChanges(): Promise<number> {
+  const queue = await peekQueue()
+  return queue.filter((e) => e.table !== 'activity_log').length || queue.length
 }
 
 /** Applies one queued write onto a cached value, mirroring writeRow's optimistic update. */
