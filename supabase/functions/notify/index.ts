@@ -29,7 +29,7 @@ interface Subscription {
   id: string
   user_id: string
   endpoint: string
-  keys: Record<string, string>
+  keys: { p256dh: string; auth: string } // PushSubscription.toJSON().keys, as the client stores it
 }
 
 interface SendResult {
@@ -277,7 +277,7 @@ async function runTestForUser(req: Request, userId: string, token: string): Prom
     .select('id, user_id, endpoint, keys')
     .eq('user_id', userId)
   if (error) throw error
-  const payload = (await buildPayload(supabase, 'test', userId, runClock(), async () => []))!
+  const payload = (await buildPayload(supabase, 'test', userId, runClock(), () => Promise.resolve([])))!
   const result = await sendToSubscriptions(supabase, userId, (subs ?? []) as Subscription[], payload)
   // `sent`/`pruned` at the top level are what Settings' "send test" reads (notifications/api.ts).
   return jsonResponse(req, { ...result, users: [{ user_id: userId, skipped: false, ...result }] })
