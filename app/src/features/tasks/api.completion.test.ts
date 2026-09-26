@@ -24,7 +24,7 @@ vi.mock('../../lib/activity', () => ({
 }))
 vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn() }))
 
-const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence } = await import('./api')
+const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo } = await import('./api')
 const { useToastStore } = await import('../../lib/toastStore')
 
 function task(over: Partial<Task> = {}): Task {
@@ -112,6 +112,86 @@ describe('uncompleteTask ("Reopen")', () => {
     uncompleteTask(cache.find((x) => x.id === t.id)!)
     completeTask(cache.find((x) => x.id === t.id)!)
     expect(cache.filter((x) => x.status === 'todo' && x.due_at === '2026-09-29T06:00:00.000Z')).toHaveLength(1)
+  })
+})
+
+describe('reopenTaskWithUndo — a second click on a just-checked row (Polish F2a)', () => {
+  const row = (id: string) => cache.find((x) => x.id === id)!
+
+  it('check → second click reopens: the task is open again and the spawned copy is gone', () => {
+    const t = task()
+    cache = [t]
+    completeTaskWithUndo(t)
+    expect(cache).toHaveLength(2)
+    reopenTaskWithUndo(t) // the row may still hand over its pre-check props
+    expect(cache).toEqual([t])
+    expect(lastToast().message).toBe('Reopened')
+    expect(activity.map((a) => a.type)).toEqual(['task.completed', 'task.created', 'task.reopened'])
+  })
+
+  it('the "Reopened" Undo puts the check back exactly — same completed_at, same next occurrence', async () => {
+    const t = task()
+    cache = [t]
+    completeTaskWithUndo(t)
+    const afterCheck = [...cache].sort((a, b) => a.id.localeCompare(b.id))
+    reopenTaskWithUndo(row(t.id))
+    lastToast().onUndo!()
+    await flush()
+    expect([...cache].sort((a, b) => a.id.localeCompare(b.id))).toEqual(afterCheck)
+  })
+
+  it('after that Undo, reopening again still takes the next occurrence back (no stray copy)', async () => {
+    const t = task()
+    cache = [t]
+    completeTaskWithUndo(t)
+    reopenTaskWithUndo(row(t.id))
+    lastToast().onUndo!()
+    await flush()
+    reopenTaskWithUndo(row(t.id))
+    expect(cache).toEqual([t])
+  })
+
+  it('a task done in an earlier session reopens, and Undo puts its completed_at back', async () => {
+    const t = task({ status: 'done', completed_at: '2026-09-20T06:00:00.000Z', recurrence_rule: null, top3: false })
+    cache = [t]
+    reopenTaskWithUndo(t)
+    expect(cache).toEqual([{ ...t, status: 'todo', completed_at: null }])
+    lastToast().onUndo!()
+    await flush()
+    expect(cache).toEqual([t])
+    expect(writes.filter((w) => w.op === 'delete')).toEqual([])
+  })
+
+  it('reads the task from the cache, so a row still drawn open (Tasks\' grace window) reopens the real one', () => {
+    const t = task({ recurrence_rule: null })
+    cache = [t]
+    completeTaskWithUndo(t)
+    const drawnOpen = { ...row(t.id), status: 'todo' as const } // TasksPage's grace override
+    reopenTaskWithUndo(drawnOpen)
+    expect(cache).toEqual([t])
+  })
+
+  it('runs the caller\'s afterUndo', async () => {
+    const t = task({ status: 'done', completed_at: '2026-09-20T06:00:00.000Z' })
+    cache = [t]
+    let ran = false
+    reopenTaskWithUndo(t, () => { ran = true })
+    lastToast().onUndo!()
+    await flush()
+    expect(ran).toBe(true)
+  })
+})
+
+describe('toggleTaskWithUndo — a box bound to the status (Up next, task editor)', () => {
+  it('an open task completes with "Done"; a done one reopens with "Reopened"', () => {
+    const t = task({ recurrence_rule: null })
+    cache = [t]
+    toggleTaskWithUndo(t)
+    expect(lastToast().message).toBe('Done')
+    expect(cache[0].status).toBe('done')
+    toggleTaskWithUndo(cache[0])
+    expect(lastToast().message).toBe('Reopened')
+    expect(cache).toEqual([t])
   })
 })
 

@@ -8,7 +8,8 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { ConfirmCard } from '../projects/ConfirmCard'
-import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
+import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
@@ -496,6 +497,12 @@ export function TasksPage() {
     exitTimers.current.set(task.id, timer)
     return undo
   }
+  // Polish F2a: a second click on a just-checked row (still in its grace window) reopens it —
+  // the row stays in its group instead of sliding out, and the toast's Undo checks it again.
+  function handleRowReopen(task: Task) {
+    keepRow(task.id)
+    reopenTaskWithUndo(task)
+  }
   const displayTasks = useMemo(
     () => (completingIds.size === 0 ? tasks : tasks.map((t) => (completingIds.has(t.id) ? { ...t, status: 'todo' as const } : t))),
     [tasks, completingIds],
@@ -594,7 +601,8 @@ export function TasksPage() {
       : undefined
 
   const bindings = buildListBindings({
-    complete: (t) => handleRowComplete(t),
+    // Pressing the complete key again on a just-checked row reopens it, like a second click.
+    complete: (t) => (checkAction(t.status === 'done', completingIds.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
@@ -803,6 +811,7 @@ export function TasksPage() {
                       goalTaskId={goalTaskId}
                       justCompletedId={justCompletedId}
                       onComplete={handleRowComplete}
+                      onReopen={handleRowReopen}
                     />
                   </div>
                 ))}

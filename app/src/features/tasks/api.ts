@@ -7,7 +7,7 @@ import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
 import { nextOccurrence, nextReminderAt } from './recurrence'
-import { planCompletion, planUndo } from './completion'
+import { planCompletion, planUndo, planUndoReopen } from './completion'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -105,6 +105,11 @@ export function completeTask(task: Task): CompletionUndo {
  * occurrence it spawned removed (a hard delete — it never should have existed, so it doesn't go
  * to Trash). Same outbox path as the completion, so it works offline too. */
 export function undoCompletion(undo: CompletionUndo): void {
+  takeBackCompletion(undo)
+}
+
+/** undoCompletion's writes; returns the id of the next occurrence it removed, if any. */
+function takeBackCompletion(undo: CompletionUndo): string | null {
   recentCompletions.delete(undo.before.id)
   const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
   const current = tasks.find((t) => t.id === undo.before.id) ?? undo.before
@@ -113,6 +118,7 @@ export function undoCompletion(undo: CompletionUndo): void {
   writeRow('tasks', restore)
   logActivity('task.reopened', 'task', restore.id, {})
   if (removeId) writeRow('tasks', { id: removeId }, 'delete')
+  return removeId
 }
 
 /** Punch 6: a single check toasts "Done" with Undo (PAGE_BEHAVIORS.md: "Check → check pop (3b) +
@@ -126,14 +132,71 @@ export function completeTaskWithUndo(task: Task, afterUndo?: () => void): Comple
   return undo
 }
 
-export function uncompleteTask(task: Task): void {
-  const recent = recentCompletions.get(task.id)
+/** Everything needed to take a Reopen back (Polish F2a). */
+export interface ReopenUndo {
+  /** The row as it was just before the Reopen (done). */
+  before: Task
+  /** The completion the Reopen took back, when it was this session's — Undo re-arms it, so a
+   * later Reopen still takes the next occurrence away. */
+  completion: CompletionUndo | null
+  /** The next occurrence the Reopen removed, which Undo puts back. */
+  removed: Task | null
+}
+
+/** Reopens a done task. Right after this session's check it takes that completion back exactly,
+ * spawned next occurrence and all (undoCompletion); otherwise it just flips the row back to open.
+ * Reads the row from the cache, so a list that still draws it open (Tasks' grace window) can pass
+ * the row it has. */
+export function reopenTask(task: Task): ReopenUndo {
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const before = tasks.find((t) => t.id === task.id) ?? task
+  const recent = recentCompletions.get(task.id) ?? null
   if (recent) {
-    undoCompletion(recent)
-    return
+    const removedId = takeBackCompletion(recent)
+    const removed = removedId ? (tasks.find((t) => t.id === removedId) ?? recent.spawned) : null
+    return { before, completion: recent, removed }
   }
-  writeRow('tasks', { ...task, status: 'todo', completed_at: null })
+  writeRow('tasks', { ...before, status: 'todo', completed_at: null })
   logActivity('task.reopened', 'task', task.id, {})
+  return { before, completion: null, removed: null }
+}
+
+/** Takes a Reopen back: the completion as it was (same completed_at), and the next occurrence the
+ * Reopen removed put back — unless an open copy of it is on the list again. */
+export function undoReopen(undo: ReopenUndo): void {
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const current = tasks.find((t) => t.id === undo.before.id) ?? undo.before
+  const { restore, reinsert } = planUndoReopen(current, undo.before, undo.removed, tasks)
+  writeRow('tasks', restore)
+  logActivity('task.completed', 'task', restore.id, {})
+  if (reinsert) {
+    writeRow('tasks', reinsert)
+    logActivity('task.created', 'task', reinsert.id, { recurrence_parent: restore.id })
+  }
+  if (undo.completion) recentCompletions.set(restore.id, undo.completion)
+}
+
+/** Polish F2a (2026-09-26 decision): a second click on a just-checked row reopens it, with the
+ * same Undo a check gets. Also every other "Reopen" a person clicks (the filled ✓, the menu). */
+export function reopenTaskWithUndo(task: Task, afterUndo?: () => void): ReopenUndo {
+  const undo = reopenTask(task)
+  toastUndo('Reopened', () => {
+    undoReopen(undo)
+    afterUndo?.()
+  })
+  return undo
+}
+
+/** A checkbox bound straight to the task's status (Up next, the task editor): done reopens, open
+ * completes — each with its Undo. */
+export function toggleTaskWithUndo(task: Task): void {
+  if (task.status === 'done') reopenTaskWithUndo(task)
+  else completeTaskWithUndo(task)
+}
+
+/** Reopen without a toast — surfaces that put up their own (or none). */
+export function uncompleteTask(task: Task): void {
+  reopenTask(task)
 }
 
 /** Deletes the task and any calendar block scheduled for it (caller should confirm first). */
