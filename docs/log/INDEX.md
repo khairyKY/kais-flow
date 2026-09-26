@@ -16,3 +16,4 @@
 - 2026-09-26 05:57 · status · release-1 = T-1/2/3, J-11, FIX-2, FIX-6, 2×P0, FIX-0; security review running — `2026-09-26-0557-bohr-status.md`
 - 2026-09-26 06:06 · decision · new-user audit triage — 3 fixed, 6 in progress, rest queued — `2026-09-26-0606-bohr-decision-audit-triage.md`
 - 2026-09-26 06:08 · audit · security review of release-1: SHIP WITH FIXES; fixes routed to SEC-2 + P0-B — `2026-09-26-0608-bohr-audit-security-review.md`
+- 2026-09-26 06:09 · test-run · Polish A merged into release-1 @ 0116ce0: 28 files / 279 tests UTC+Cairo, lint baseline, build green (worker e2e 49/49 + crash 17/17; handoff 2026-09-26-0607-polish-a-handoff.md on that branch)
