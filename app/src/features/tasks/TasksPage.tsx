@@ -171,7 +171,10 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
           title="Change sort order"
           ariaLabel="Sort order"
           className="kf-hit"
-          display={<><SortIcon /> {SORT_LABELS[sort]}</>}
+          // Polish F2a (FIX-6 decision "add a subtle ▾"): the trigger opens a menu, so it shows the
+          // caret the app's other menu triggers carry (BulkBar, Inbox bulk, People) — hairline ink,
+          // the label's own size.
+          display={<><SortIcon /> {SORT_LABELS[sort]} <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span></>}
           style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
         />
       </span>
