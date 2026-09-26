@@ -10,7 +10,7 @@ import { queryClient } from '../../lib/queryClient'
 import { BackLink, SectionLabel } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import './xfx.css'
 
@@ -29,6 +29,24 @@ function localUseIsMobile() {
     return () => mq.removeEventListener('change', on)
   }, [])
   return isMobile
+}
+
+// Effects 1t amber drift: three leaves per slipping board card, staggered 0 / 3.4 / 6.2s inside
+// the card. J-22 (Kai, 2026-07-29): those same constants ran on EVERY card, so the whole board
+// fell in lockstep. Each card now shifts the cycle by its id's phase (a negative delay starts the
+// fall mid-way, so no card waits empty) and stretches its durations by up to 16%. The stagger
+// inside a card is kept; only transform/opacity animate (kfAmberFall in xfx.css).
+const AMBER_LEAVES = [
+  { left: '18%', delay: 0, duration: 9.5 },
+  { left: '52%', delay: 3.4, duration: 11 },
+  { left: '78%', delay: 6.2, duration: 10.2 },
+] as const
+function amberLeafTiming(leaf: (typeof AMBER_LEAVES)[number], phase: number): React.CSSProperties {
+  return {
+    left: leaf.left,
+    animationDelay: `${(leaf.delay - phase * 10).toFixed(2)}s`,
+    animationDuration: `${(leaf.duration * (0.92 + 0.16 * phase)).toFixed(2)}s`,
+  }
 }
 
 const EMPTY_STAT = { hours: 0, monthHours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, weight: 0, doneWeight: 0, hasTop3Task: false }
@@ -604,13 +622,9 @@ export function ProjectsPage() {
                             }}
                           >
                             {/* Effects 1t — amber drift over a slipping card, <=3 leaves; plant desaturates ~20% */}
-                            {motion && slipping && (
-                              <>
-                                <span className="kf-amber-leaf" style={{ left: '18%', animationDelay: '0s', animationDuration: '9.5s' }} />
-                                <span className="kf-amber-leaf" style={{ left: '52%', animationDelay: '3.4s', animationDuration: '11s' }} />
-                                <span className="kf-amber-leaf" style={{ left: '78%', animationDelay: '6.2s', animationDuration: '10.2s' }} />
-                              </>
-                            )}
+                            {motion && slipping && AMBER_LEAVES.map((leaf) => (
+                              <span key={leaf.left} className="kf-amber-leaf" style={amberLeafTiming(leaf, idPhase(p.id))} />
+                            ))}
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
                               <span style={{ position: 'relative', flex: 'none', display: 'inline-flex' }}>
                                 {/* Effects 1e — bloom glow at 100%, never more than one plant */}
