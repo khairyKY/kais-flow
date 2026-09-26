@@ -33,3 +33,6 @@
 - 2026-09-26 08:34 · test-run + status · release-1 CANDIDATE 6663c83: 659 tests ×4 TZ, fix0 79, sec2 110, prune 12, fix5 31, sweep 80/80, flows OK → READY, waiting on Kai
 - 2026-09-26 11:43 · handoff · shell-fit merged into release-1: sidebar footer pinned/compact, kf-route min-height; matrix master 4/40 → 40/40, sweep 80/80, 659 tests ×2 TZ — handoff on claude/shell-fit (docs/log/*-bohr-handoff-shell-fit.md). Candidate now acd52a7
 - 2026-09-26 13:13 · decision · daily cycle (docs/DAILY-CYCLE.md) → release-2 'the loop'; Kai's screenshot = live old code, fixed in release-1 — `2026-09-26-1313-bohr-decision-daily-cycle.md`
+- 2026-09-26 17:11 · handoff · Loop B (nav in loop order, evening seeds → next morning's Top 3, ritual.finished contract) finished by the conductor after the worker's usage limit — `2026-09-26-1649-loop-b-handoff.md`
+- 2026-09-26 17:11 · handoff · Loop A (Up next rows act like tasks, Day card, Routines lead + 'More for today' fold, Now prefers open Top 3 over far events) — `2026-09-26-1705-loop-a-handoff.md`
+- 2026-09-26 17:11 · test-run + status · release-2 CANDIDATE (claude/release-2): 742 tests ×4 TZ, lint baseline, build, sweep 80/80, shell-fit 40/40, whole-day flow OK; frontend only, superset of release-1 → READY, waiting on the release-1 backend deploy + Kai — `2026-09-26-1711-bohr-test-run-release2-candidate.md`
