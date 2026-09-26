@@ -473,7 +473,10 @@ export function JournalPage() {
                 
                 {renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+                {/* Polish G: at the default 125% interface size a 390px phone lays this card out
+                    ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
+                    stay whole; the save state takes its own line only when it doesn't fit. */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
@@ -551,7 +554,7 @@ export function JournalPage() {
 
   // Desktop layout (1a)
   return (
-    <div style={{ display: 'flex', width: '100%', minHeight: '85vh', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className="jn" style={{ width: '100%', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .ruled {
           background-image: repeating-linear-gradient(transparent 0px, transparent 26px, var(--line-dashed) 26px, var(--line-dashed) 27px);
@@ -565,20 +568,65 @@ export function JournalPage() {
         .journal-sidebar-link:hover, .journal-sidebar-link:hover * {
           color: var(--acc-terra) !important;
         }
+
+        /* Polish G (2026-09-26 audit): Journal.dc.html 1a is three FIXED columns — a 230px entry
+           tree, the writing page, a 262px rail — drawn on a 1300px card. In the app they sit inside
+           the shell (242px sidebar + 40px padding each side), and the default 125% interface size
+           (lib/uiScale.ts) lays a 1280px window out in ~1024 CSS px, so the two rails left the page
+           ~210 CSS px: the title clipped mid-word and the notebook was a strip. Media queries read
+           the WINDOW, which that zoom doesn't shrink, so the columns now follow the page's own
+           laid-out width (container queries, the same fix Polish D gave Tasks):
+             ≥1000px   the export's three columns, verbatim;
+             560–999   the tree stays beside the page and the rail folds under the writing
+                       (1280 and 1440 at 125%, 1600 when the sidebar is open);
+             <560      one column — the page, then the rail, then the tree; the card footer
+                       carries "＋ New entry", as 1b's does.
+           Phone (≤767px window) keeps its own 1b layout above. */
+        .jn { container: journal / inline-size; }
+        .jn-grid {
+          display: grid; min-height: 85vh; position: relative; z-index: 15;
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: "write" "rail" "tree";
+        }
+        .jn-tree { grid-area: tree; position: relative; display: flex; flex-direction: column; min-width: 0; padding: 22px 20px 28px; border-top: 1px dashed var(--line-solid); }
+        .jn-tree-new, .jn-gutter { display: none; }
+        .jn-main { grid-area: write; min-width: 0; display: flex; flex-direction: column; }
+        .jn-write { flex: 1; display: flex; justify-content: center; padding: 26px 20px 32px; container: jn-write / inline-size; }
+        .jn-title { font-size: clamp(28px, 7.8cqi, 40px); text-wrap: balance; }
+        .jn-rail {
+          grid-area: rail; min-width: 0; padding: 26px 20px 30px; border-top: 1px dashed var(--line-solid);
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 28px; align-content: start;
+        }
+        .jn-rail-pair { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+        @container journal (min-width: 560px) {
+          .jn-grid { grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "tree write" "tree rail"; }
+          .jn-tree { padding: 22px 18px; border-top: none; border-right: 1px dashed var(--line-solid); }
+          .jn-tree-new { display: flex; }
+          .jn-gutter { display: block; }
+          .jn-write { padding: 30px 28px 36px; }
+          .jn-rail { padding: 28px 28px 36px; }
+          .jn-card-new { display: none; }
+        }
+        @container journal (min-width: 1000px) {
+          .jn-grid { grid-template-columns: 230px minmax(0, 1fr) 262px; grid-template-rows: auto; grid-template-areas: "tree write rail"; }
+          .jn-write { padding: 34px 40px 44px; }
+          .jn-rail { display: flex; flex-direction: column; gap: 28px; padding: 30px 22px; border-top: none; border-left: 1px dashed var(--line-solid); }
+        }
       `}</style>
       <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
-      
+
+      <div className="jn-grid">
       {/* 1. LEFT RAIL: Entry tree + Gutter */}
-      <aside style={{ width: 230, flex: 'none', borderRight: '1px dashed var(--line-solid)', position: 'relative', padding: '22px 18px', display: 'flex', flexDirection: 'column', zIndex: 15 }}>
-        
+      <aside className="jn-tree">
+
         {/* Floating Fern Gutter */}
-        <img src="/ds/assets/fern/coil.png" alt="" style={{ position: 'absolute', right: 6, top: 78, height: 30, opacity: 0.45 }} />
-        <img src="/ds/assets/fern/unfurl1.png" alt="" style={{ position: 'absolute', right: 4, top: 250, height: 38, opacity: 0.5 }} />
-        <img src="/ds/assets/fern/unfurl2.png" alt="" style={{ position: 'absolute', right: 2, top: 470, height: 46, opacity: 0.55 }} />
-        <img src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', right: 0, bottom: 26, height: 60, opacity: 0.6, filter: 'var(--shadow-drop-sm)' }} />
+        <img className="jn-gutter" src="/ds/assets/fern/coil.png" alt="" style={{ position: 'absolute', right: 6, top: 78, height: 30, opacity: 0.45 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/unfurl1.png" alt="" style={{ position: 'absolute', right: 4, top: 250, height: 38, opacity: 0.5 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/unfurl2.png" alt="" style={{ position: 'absolute', right: 2, top: 470, height: 46, opacity: 0.55 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', right: 0, bottom: 26, height: 60, opacity: 0.6, filter: 'var(--shadow-drop-sm)' }} />
 
         {/* Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div className="jn-tree-new" style={{ alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
             onClick={(e) => addEntry(todayStr, e.currentTarget)}
             style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}
@@ -657,8 +705,8 @@ export function JournalPage() {
       </aside>
 
       {/* 2. MAIN COLUMN: Writing Columns */}
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', zIndex: 15 }}>
-        
+      <main className="jn-main">
+
         {/* Top Header info */}
         <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -674,7 +722,7 @@ export function JournalPage() {
           <div>Africa/Cairo</div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '34px 40px 44px', overflowY: 'auto' }}>
+        <div className="jn-write">
           <div style={{ width: '100%', maxWidth: 660 }}>
             
             {/* Punch 47 item 5: the fern was mobile-only. Same binding here — the day's total
@@ -684,7 +732,9 @@ export function JournalPage() {
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
 
-                <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
+                {/* Size from .jn-title: the export's 40px wherever the page is wide enough, easing
+                    down (never below 28px) so the date keeps to one line in a narrower column. */}
+                <h1 className="jn-title" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
               </div>
             </div>
 
@@ -711,15 +761,18 @@ export function JournalPage() {
               
               {renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 10px', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', whiteSpace: 'nowrap' }}>
+                {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
+                    so the card carries the day's "＋ New entry", as 1b's footer does. */}
+                <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>＋ Photo</span>
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>
 
-            {/* Mood picker */}
-            <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* Mood picker — the chips drop under "Today felt —" when they don't fit beside it. */}
+            <div style={{ marginTop: 26, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' }}>
               <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>Today felt —</span>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {MOODS.map((m) => {
@@ -775,9 +828,10 @@ export function JournalPage() {
         </div>
       </main>
 
-      {/* 3. RIGHT RAIL: Quote of the Day, On This Day, Streak */}
-      <aside style={{ width: 262, flex: 'none', borderLeft: '1px dashed var(--line-solid)', padding: '30px 22px', display: 'flex', flexDirection: 'column', gap: 28, zIndex: 15 }}>
-        
+      {/* 3. RIGHT RAIL: Quote of the Day, On This Day, Streak — a column beside the page when
+          there's room, otherwise folded under the writing (quote | on this day + kept). */}
+      <aside className="jn-rail">
+
         {/* Quote of the day */}
         {commonplaceQuote && (
           <section>
@@ -828,6 +882,7 @@ export function JournalPage() {
           </section>
         )}
 
+        <div className="jn-rail-pair">
         {/* On this day */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -869,8 +924,10 @@ export function JournalPage() {
             </div>
           </div>
         </section>
+        </div>
 
       </aside>
+      </div>
       {confirmCard}
     </div>
   )
