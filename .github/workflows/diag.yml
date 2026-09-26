@@ -26,7 +26,7 @@ jobs:
             jq -n --arg q "$2" '{query: $q, read_only: true}' > body.json
             curl -sS -X POST "https://api.supabase.com/v1/projects/$REF/database/query" \
               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
-              --data @body.json | jq -c '.[]?' 2>/dev/null | head -80 || true
+              --data @body.json | jq -c '.[]?' 2>/dev/null | head -120 || true
           }
           q "migrations recorded" "select version, name, coalesce(array_length(statements,1),0) as n from supabase_migrations.schema_migrations order by version"
           q "production's 0020 statements (first 160 chars each)" "select left(s, 160) as stmt from supabase_migrations.schema_migrations, unnest(statements) s where version = '0020'"
@@ -37,4 +37,5 @@ jobs:
           q "migration fingerprints" "select version, md5(array_to_string(statements, chr(10))) as md5 from supabase_migrations.schema_migrations order by version"
           q "slipping view columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'slipping' order by ordinal_position"
           q "push_subscriptions columns" "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'push_subscriptions' order by ordinal_position"
+          q "drifted statements 0014/0020/0022 (full DDL)" "select version, ord, s from supabase_migrations.schema_migrations, unnest(statements) with ordinality as u(s, ord) where version in ('0014','0020','0022') order by version, ord"
           q "cron jobs" "select jobname, schedule, left(command, 120) as command from cron.job order by jobname"
