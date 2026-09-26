@@ -65,3 +65,16 @@ One codebase. The same `app/dist/` the web app serves, wrapped in a **Tauri v2**
 - 2026-09-26 17:32 — **Windows installer failed in makensis.** NSIS treats `'` as a string quote, so "Kai's Flow" split `IsShortcutTarget`'s parameters (7 for 4). Fix: `tauri.windows.conf.json` names the Windows app `Kai’s Flow` (U+2019).
 - 2026-09-26 17:40 — **Emulator smoke test** (API 34, x86_64): the APK now carries arm64 + x86_64 so the emulator runs the same file.
   - Blob-storage artifacts are unreachable from the conductor's sandbox (403). So the job also prints small base64 JPEGs of the screens, the UI tree with bounds, and the WebView console to its log.
+- 2026-09-26 17:50 — **The emulator launch works.**
+  - The APK installs and opens straight to the sign-in card: paper, clover, no browser chrome.
+  - The UI tree showed the WebView at `[0,0][320,640]` under a **24dp status bar**. Tauri's generated `MainActivity` calls `enableEdgeToEdge()` and nothing handled the insets, so Today's top line would sit under the clock.
+- 2026-09-26 18:06 — **Status bar fixed and guarded** (f494e83).
+  - `src-tauri/android/MainActivity.kt`, copied over the generated one in CI, pads the content by system bars + cutout + keyboard.
+  - The strips take the page's colour through `KaisFlowShell.setChrome` (`lib/platform.ts`, called on every Day/Night change and on load).
+  - Emulator: **WebView top edge 24px**; the strip is paper with dark icons; logcat shows no crash and no console errors.
+  - The smoke test now fails if the WebView starts at 0.
+  - The Windows installer builds green (run 36260810236) with `Kai’s Flow` as its name.
+- **Next:**
+  - [KAI] install the APK from the newest green Android run (docs/INSTALL.md);
+  - sign in and check Today on a real phone: the status-bar strip in Night, voice, offline launch;
+  - a persistent signing key when Kai wants in-place updates.
