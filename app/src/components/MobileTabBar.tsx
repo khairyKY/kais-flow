@@ -43,10 +43,13 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* minmax(0, 1fr): three equal columns that never grow past the sheet. Plain 1fr let the
-            widest label widen its column, so the right column ran off a 390px screen once
-            "Projects" joined (polish-c); a label that still can't fit ellipsizes. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
+        {/* Three columns where three fit, two where they don't (the export's caption for this
+            sheet says "2-column grid"; its card draws three at 500px). A fixed repeat(3, 1fr)
+            overflowed: at the default 125% interface size (lib/uiScale.ts) a 390px phone lays out
+            ~312 CSS px, so the right column ran past the screen edge — worse once "Projects"
+            joined (polish-c). 112px is the widest row's content (icon + "Projects"/"Routines");
+            the ellipsis below is only a last resort for extreme zooms. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 10 }}>
           {MORE_ITEMS.map((item) => (
             <Link
               key={item.to}
