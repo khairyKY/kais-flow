@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
-import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
@@ -36,6 +36,7 @@ import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
@@ -233,7 +234,12 @@ export function TodayPage() {
 
   const bulkToast = (verb: string) =>
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
-  function bulkComplete() { selectedTasks.forEach((t) => completeTask(t)); bulkToast('completed'); clearSelection() }
+  // Punch 6 (Polish D): completing gets the same Undo as a single check — see completeTaskWithUndo.
+  function bulkComplete() {
+    const undos = selectedTasks.map((t) => completeTask(t))
+    toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
+    clearSelection()
+  }
   function bulkSnooze(until: string) { selectedTasks.forEach((t) => snoozeTask(t, until)); bulkToast('snoozed'); clearSelection() }
   function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
@@ -261,7 +267,7 @@ export function TodayPage() {
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const listNavigate = useNavigate()
   const listBindings = buildListBindings({
-    complete: (t) => completeTask(t),
+    complete: (t) => completeTaskWithUndo(t),
     open: (t) => listNavigate(`/tasks/${t.id}`),
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
@@ -735,7 +741,7 @@ function useBloomCheck(task: Task) {
     checking,
     check: () => {
       setChecking(true)
-      completeTask(task)
+      completeTaskWithUndo(task) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
     },
   }
 }
@@ -825,7 +831,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   const menuItems: ContextMenuItem[] = [
     done
       ? { label: 'Reopen', onClick: () => uncompleteTask(task) }
-      : { label: 'Complete', onClick: () => completeTask(task) },
+      : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
     { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
     { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
     { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
@@ -890,7 +896,7 @@ function EventRow({ event, task, border, compact }: { event: CalendarEvent; task
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
   const check = task && (
-    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTask(task))} />
+    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTaskWithUndo(task))} />
   )
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
   if (compact) {

@@ -119,6 +119,20 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
   }
 }
 
+/** Puts back a row `animateRowRemoval` was taking away — an Undo that lands mid-exit (Polish D,
+ * punch 6). Its slide/collapse run with `fill: forwards`, so once finished they'd hold the row at
+ * opacity 0 / height 0 even after it's back in the list. Cancelling them (onDone never fires) and
+ * clearing the inline styles it set restores the row as it was; CSS animations and transitions
+ * on the row are left alone. */
+export function cancelRowRemoval(el: HTMLElement | null) {
+  if (!el) return
+  for (const a of el.getAnimations?.() ?? []) {
+    if (!('animationName' in a) && !('transitionProperty' in a)) a.cancel()
+  }
+  el.style.pointerEvents = ''
+  el.style.overflow = ''
+}
+
 // Motion 5b "Drag lift" — R4-23 (Kai's 2026-07-20 audit). The export calls this "the one
 // grammar for every draggable", so it lives here rather than being re-typed per surface:
 // lift in 140ms, settle back over 320ms with an overshoot. Draggables previously just faded

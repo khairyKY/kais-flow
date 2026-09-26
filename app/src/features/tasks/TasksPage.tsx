@@ -8,7 +8,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { ConfirmCard } from '../projects/ConfirmCard'
-import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
@@ -22,7 +22,8 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
@@ -450,10 +451,27 @@ export function TasksPage() {
   // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
   // hand banner. Fires once per calendar day, ever (localStorage gate).
   const [dayComplete, setDayComplete] = useState(false)
-  function handleRowComplete(task: Task) {
-    completeTask(task)
+  // Pending 650ms hand-offs to the row exit, per task — an Undo cancels its own.
+  const exitTimers = useRef(new Map<string, number>())
+  /** Undo landed: stop the row's exit (or undo a finished one) so it stands back in its group. */
+  function keepRow(id: string) {
+    const timer = exitTimers.current.get(id)
+    if (timer !== undefined) window.clearTimeout(timer)
+    exitTimers.current.delete(id)
+    cancelRowRemoval(document.getElementById(`task-${id}`))
+    setCompletingIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+  // Punch 6 (Polish D): a single check toasts "Done" with Undo; `toast: false` is the bulk path,
+  // which puts up one toast for the whole selection instead.
+  function handleRowComplete(task: Task, { toast = true }: { toast?: boolean } = {}): CompletionUndo {
+    const undo = toast ? completeTaskWithUndo(task, () => keepRow(task.id)) : completeTask(task)
     setJustCompletedId(task.id)
-    if (!motion) return
+    if (!motion) return undo
     const todayOpen = filterByList(tasks, 'today', now).filter((t) => t.status === 'todo')
     if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id)) {
       const dayKey = new Date().toDateString()
@@ -466,7 +484,8 @@ export function TasksPage() {
       } catch { /* private mode — skip the ceremony */ }
     }
     setCompletingIds((prev) => new Set(prev).add(task.id))
-    window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      exitTimers.current.delete(task.id)
       // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
       // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
       // then the row leaves the list.
@@ -474,6 +493,8 @@ export function TasksPage() {
         setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
       })
     }, 650)
+    exitTimers.current.set(task.id, timer)
+    return undo
   }
   const displayTasks = useMemo(
     () => (completingIds.size === 0 ? tasks : tasks.map((t) => (completingIds.has(t.id) ? { ...t, status: 'todo' as const } : t))),
@@ -525,8 +546,13 @@ export function TasksPage() {
   const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   function bulkComplete() {
-    selectedTasks.forEach((t) => handleRowComplete(t))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    const undos = selectedTasks.map((t) => handleRowComplete(t, { toast: false }))
+    toastUndo(`${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.`, () =>
+      undos.forEach((u) => {
+        undoCompletion(u)
+        keepRow(u.before.id)
+      }),
+    )
     clearSelection()
   }
   function bulkSnooze(until: string) {

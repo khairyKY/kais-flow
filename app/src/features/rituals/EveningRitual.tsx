@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { useTasks, toggleTop3, completeTask, uncompleteTask, rescheduleDue } from '../tasks/api'
+import { useTasks, toggleTop3, completeTask, undoCompletion, rescheduleDue } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { upsertJournalEntry } from '../journal/api'
@@ -151,8 +151,9 @@ function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSki
   const doneToday = tasks.filter((t) => t.completed_at && new Date(t.completed_at) >= todayStart && new Date(t.completed_at) <= todayEnd)
 
   function markDone(t: Task) {
-    completeTask(t)
-    toastUndo('Task completed', () => uncompleteTask(t))
+    // Polish D: undoCompletion also takes back a recurring task's spawned next occurrence.
+    const undo = completeTask(t)
+    toastUndo('Task completed', () => undoCompletion(undo))
   }
 
   function roll(t: Task) {

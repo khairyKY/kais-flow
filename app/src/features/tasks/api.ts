@@ -5,7 +5,9 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
+import { toastUndo } from '../../lib/undo'
 import { nextOccurrence } from './recurrence'
+import { planCompletion, planUndo } from './completion'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -74,33 +76,62 @@ export function createTask(input: CreateTaskInput): Task {
   return task
 }
 
-/** Completing a recurring task materializes its next occurrence as a fresh task. */
-export function completeTask(task: Task): void {
-  writeRow('tasks', { ...task, status: 'done', completed_at: nowIso(), top3: false })
-  logActivity('task.completed', 'task', task.id, {})
+/** Everything needed to take a completion back: the row as it was, and the occurrence it spawned. */
+export interface CompletionUndo {
+  before: Task
+  spawned: Task | null
+}
 
-  if (task.recurrence_rule && task.due_at) {
-    const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
-    if (next) {
-      const nextTask: Task = {
-        ...task,
-        id: crypto.randomUUID(),
-        status: 'todo',
-        completed_at: null,
-        due_at: next.toISOString(),
-        scheduled_start: null,
-        scheduled_end: null,
-        top3: false,
-        created_at: nowIso(),
-        updated_at: nowIso(),
-      }
-      writeRow('tasks', nextTask)
-      logActivity('task.created', 'task', nextTask.id, { recurrence_parent: task.id })
-    }
+// This session's completions, so "Reopen" right after a check (Today's filled check, the Done
+// list's menu) takes the spawned occurrence back just like the toast's Undo does. A reload
+// forgets it; planCompletion's already-open check still stops a second copy then.
+const recentCompletions = new Map<string, CompletionUndo>()
+
+/** Completing a recurring task materializes its next occurrence as a fresh task (completion.ts). */
+export function completeTask(task: Task): CompletionUndo {
+  const plan = planCompletion(task, queryClient.getQueryData<Task[]>(['tasks']) ?? [], nowIso(), () => crypto.randomUUID())
+  writeRow('tasks', plan.done)
+  logActivity('task.completed', 'task', task.id, {})
+  if (plan.next) {
+    writeRow('tasks', plan.next)
+    logActivity('task.created', 'task', plan.next.id, { recurrence_parent: task.id })
   }
+  const undo: CompletionUndo = { before: task, spawned: plan.next }
+  recentCompletions.set(task.id, undo)
+  return undo
+}
+
+/** Takes a completion back exactly: status, completed_at and top3 as they were, and the next
+ * occurrence it spawned removed (a hard delete — it never should have existed, so it doesn't go
+ * to Trash). Same outbox path as the completion, so it works offline too. */
+export function undoCompletion(undo: CompletionUndo): void {
+  recentCompletions.delete(undo.before.id)
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const current = tasks.find((t) => t.id === undo.before.id) ?? undo.before
+  const spawnedNow = undo.spawned ? tasks.find((t) => t.id === undo.spawned!.id) : undefined
+  const { restore, removeId } = planUndo(current, undo.before, undo.spawned, spawnedNow)
+  writeRow('tasks', restore)
+  logActivity('task.reopened', 'task', restore.id, {})
+  if (removeId) writeRow('tasks', { id: removeId }, 'delete')
+}
+
+/** Punch 6: a single check toasts "Done" with Undo (PAGE_BEHAVIORS.md: "Check → check pop (3b) +
+ * toast 'Done — Undo'"). `afterUndo` lets a list put back what it animated away. */
+export function completeTaskWithUndo(task: Task, afterUndo?: () => void): CompletionUndo {
+  const undo = completeTask(task)
+  toastUndo('Done', () => {
+    undoCompletion(undo)
+    afterUndo?.()
+  })
+  return undo
 }
 
 export function uncompleteTask(task: Task): void {
+  const recent = recentCompletions.get(task.id)
+  if (recent) {
+    undoCompletion(recent)
+    return
+  }
   writeRow('tasks', { ...task, status: 'todo', completed_at: null })
   logActivity('task.reopened', 'task', task.id, {})
 }
