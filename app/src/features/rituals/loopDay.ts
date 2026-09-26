@@ -17,6 +17,7 @@ export const MAX_SEEDS = 3
 
 export const SEED_EVENT = 'ritual.seeded'
 export const UNSEED_EVENT = 'ritual.unseeded'
+export const FINISHED_EVENT = 'ritual.finished'
 
 const cairoHour = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', hourCycle: 'h23', hour: 'numeric' })
 
@@ -105,4 +106,29 @@ export function top3Diff(selected: readonly string[], tasks: readonly Task[]): {
     unstar: tasks.filter((t) => t.top3 && !want.has(t.id)),
     star: selected.map((id) => byId.get(id)).filter((t): t is Task => !!t && !t.top3 && t.status === 'todo' && !t.deleted_at),
   }
+}
+
+// ── Finished: `ritual.finished`, one row each time a ritual is walked to its end. ──
+
+export interface FinishedPayload {
+  ritual: RitualKind
+  /** The loop day it finished on (Cairo, 04:00 rollover) — what "finished today" compares. */
+  date: string
+  /** The steps actually done on this run, in order (skipped steps are left out). */
+  steps: string[]
+}
+
+export function finishedPayload(ritual: RitualKind, steps: readonly string[], now: Date): FinishedPayload {
+  return { ritual, date: loopDayKey(now), steps: [...steps] }
+}
+
+/** True when `ritual` was walked to its end on the loop day `now` falls in. The evening one
+ * finished at 23:10 still reads as finished at 00:30; at 04:00 the new day starts unfinished. */
+export function ritualFinishedToday(rows: readonly ActivityLogEntry[], ritual: RitualKind, now: Date): boolean {
+  const today = loopDayKey(now)
+  return rows.some((r) => r.event_type === FINISHED_EVENT && r.payload?.ritual === ritual && r.payload?.date === today)
+}
+
+export function ritualsFinishedToday(rows: readonly ActivityLogEntry[], now: Date): Record<RitualKind, boolean> {
+  return { morning: ritualFinishedToday(rows, 'morning', now), evening: ritualFinishedToday(rows, 'evening', now) }
 }

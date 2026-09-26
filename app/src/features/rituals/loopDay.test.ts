@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  FINISHED_EVENT,
   MAX_SEEDS,
   SEED_EVENT,
   UNSEED_EVENT,
   addDaysToKey,
+  finishedPayload,
   liveSeeds,
   loopDayKey,
   morningPreselection,
+  ritualFinishedToday,
+  ritualsFinishedToday,
   seedPayload,
   seedTargetDate,
   seededTaskIds,
@@ -184,5 +188,40 @@ describe('top3Diff', () => {
   it('never stars a task that is done, deleted or unknown', () => {
     const tasks = [task('done', { status: 'done' }), task('trashed', { deleted_at: 'x' })]
     expect(top3Diff(['done', 'trashed', 'gone'], tasks).star).toEqual([])
+  })
+})
+
+function finished(ritual: 'morning' | 'evening', createdAt: string, date: string, event_type = FINISHED_EVENT): ActivityLogEntry {
+  return { id: `f-${createdAt}`, event_type, entity_type: 'ritual', entity_id: 'x', payload: { ritual, date, steps: [], entity_key: `${ritual}-${date}` }, created_at: createdAt }
+}
+
+describe('finishedPayload', () => {
+  it('dates a 00:30 shutdown to the day it closed, and keeps the steps walked', () => {
+    expect(finishedPayload('evening', ['sweep', 'seeds', 'goodnight'], at('2026-09-26T21:30:00Z'))).toEqual({ ritual: 'evening', date: '2026-09-26', steps: ['sweep', 'seeds', 'goodnight'] })
+  })
+})
+
+describe('ritualFinishedToday', () => {
+  const eveningSat = finished('evening', '2026-09-26T20:10:00Z', '2026-09-26') // Sat 23:10 Cairo
+  const morningSun = finished('morning', '2026-09-27T05:20:00Z', '2026-09-27') // Sun 08:20 Cairo
+  it('a morning finished today reads as finished; the evening does not', () => {
+    expect(ritualFinishedToday([eveningSat, morningSun], 'morning', at('2026-09-27T09:00:00Z'))).toBe(true)
+    expect(ritualFinishedToday([morningSun], 'evening', at('2026-09-27T09:00:00Z'))).toBe(false)
+  })
+  it('the evening shut down at 23:10 is still finished at 00:30, and not at 04:00', () => {
+    expect(ritualFinishedToday([eveningSat], 'evening', at('2026-09-26T21:30:00Z'))).toBe(true) // Sun 00:30
+    expect(ritualFinishedToday([eveningSat], 'evening', at('2026-09-27T01:00:00Z'))).toBe(false) // Sun 04:00
+  })
+  it("yesterday's morning is not today's", () => {
+    const morningSat = finished('morning', '2026-09-26T05:00:00Z', '2026-09-26')
+    expect(ritualFinishedToday([morningSat], 'morning', at('2026-09-27T05:00:00Z'))).toBe(false)
+  })
+  it('only ritual.finished counts: a logged step is not a finish', () => {
+    const step = finished('morning', '2026-09-27T05:20:00Z', '2026-09-27', 'ritual.step_completed')
+    expect(ritualFinishedToday([step], 'morning', at('2026-09-27T09:00:00Z'))).toBe(false)
+  })
+  it('ritualsFinishedToday answers both at once', () => {
+    expect(ritualsFinishedToday([eveningSat, morningSun], at('2026-09-26T21:30:00Z'))).toEqual({ morning: false, evening: true })
+    expect(ritualsFinishedToday([eveningSat, morningSun], at('2026-09-27T09:00:00Z'))).toEqual({ morning: true, evening: false })
   })
 })

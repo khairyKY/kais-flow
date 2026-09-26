@@ -9,7 +9,7 @@ import { playSound, closeTheGarden } from '../../lib/sounds'
 import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { logRitualStep, setSeed, useSeedsFor } from './api'
+import { logRitualFinished, logRitualStep, setSeed, useSeedsFor } from './api'
 import { MAX_SEEDS, seedTargetDate } from './loopDay'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
@@ -88,13 +88,24 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
 
   // Advance without counting the step — the sweep beat's "skip for now" (punch item 43:
   // skipping must never log the step as complete).
+  // Loop B: moving past the last beat (goodnight's "Done") finishes the ritual and logs
+  // `ritual.finished` with the beats done on this run; the header's "skip" leaves without it.
+  const [doneBeats, setDoneBeats] = useState<string[]>([])
+  function go(done: string[]) {
+    if (beatIndex < BEATS.length - 1) {
+      setBeatIndex(beatIndex + 1)
+      setDoneBeats(done)
+    } else {
+      logRitualFinished('evening', done)
+      onClose()
+    }
+  }
   function advance() {
-    if (beatIndex < BEATS.length - 1) setBeatIndex(beatIndex + 1)
-    else onClose()
+    go(doneBeats)
   }
   function next() {
     logRitualStep('evening', BEATS[beatIndex])
-    advance()
+    go([...doneBeats, BEATS[beatIndex]])
   }
 
   // "lands in the journal" — literally (punch item 43): append the line to today's real

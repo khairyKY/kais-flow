@@ -6,7 +6,7 @@ import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { localDateKey } from '../routines/streaks'
 import { useTasks } from '../tasks/api'
-import { SEED_EVENT, UNSEED_EVENT, liveSeeds, seedPayload, seededTaskIds, type RitualKind } from './loopDay'
+import { FINISHED_EVENT, SEED_EVENT, UNSEED_EVENT, finishedPayload, liveSeeds, ritualsFinishedToday, seedPayload, seededTaskIds, type RitualKind } from './loopDay'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 export type { RitualKind } from './loopDay'
@@ -147,4 +147,42 @@ export function useSeedsFor(forDate: string): Task[] {
 /** Plant (or take back) a seed for the next morning — the loop day after `now`'s. */
 export function setSeed(task: Task, seeded: boolean, now: Date = new Date()): void {
   logRitualEvent(SEEDS_KEY, seeded ? SEED_EVENT : UNSEED_EVENT, 'task', task.id, { ...seedPayload(now) })
+}
+
+// ── Loop B: "was the ritual finished today?" — the trace the Today Day card reads. ──
+// Contract: `ritual.finished`, entity_type 'ritual', payload { ritual, date, steps, entity_key }.
+// `date` is the Cairo loop day (04:00 rollover, loopDay.ts); `steps` are the steps actually done
+// on that run. Logged once each time a ritual is walked past its last step — the morning's
+// "Finish — the day has a shape" (or its step skip), the evening's "Done". Leaving early
+// ("skip for now", the evening header's skip) logs nothing. Read it with
+// `useRitualsFinishedToday()` or `ritualFinishedToday(rows, ritual, now)`.
+
+const FINISHED_KEY = ['activity_log', 'ritual_finished'] as const
+
+/** `ritual.finished` rows from the last two days, oldest first. */
+export function useRitualFinishedRows() {
+  return useQuery({
+    queryKey: FINISHED_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('*')
+        .eq('event_type', FINISHED_EVENT)
+        .gte('created_at', new Date(Date.now() - 2 * 86_400_000).toISOString())
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data as ActivityLogEntry[]
+    },
+  })
+}
+
+/** { morning, evening }: was each ritual finished on the loop day `now` falls in. */
+export function useRitualsFinishedToday(now: Date = new Date()): Record<RitualKind, boolean> {
+  const { data: rows } = useRitualFinishedRows()
+  return ritualsFinishedToday(rows ?? [], now)
+}
+
+export function logRitualFinished(ritual: RitualKind, steps: readonly string[], now: Date = new Date()): void {
+  const payload = finishedPayload(ritual, steps, now)
+  logRitualEvent(FINISHED_KEY, FINISHED_EVENT, 'ritual', `${ritual}-${payload.date}`, { ...payload })
 }
