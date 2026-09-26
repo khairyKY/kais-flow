@@ -301,7 +301,10 @@ export function OnboardingPage() {
               <p className="ob-sub" style={{ marginBottom: 24 }}>Show up, pick what matters, give it a shape. Then just follow the day.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
                 <Feature icon={<img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 20 }} />} title="Today & your Top-3" desc="One anchor screen. Choose the three things that would make today count — the rest can wait." />
-                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 25%, transparent)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Syncs both ways with Google Calendar." />
+                {/* deviation(2026-09-26 conductor-decides, Polish E): the export promises "Syncs both ways with
+                    Google Calendar", but that sync isn't built (step 6 marks it Soon). Truthfulness rule:
+                    say it's coming later, in step 6's own words, and claim nothing more. */}
+                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 25%, transparent)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Google Calendar sync arrives in a later release." />
                 <Feature
                   icon={
                     <svg width="18" height="18" viewBox="0 0 24 24">
