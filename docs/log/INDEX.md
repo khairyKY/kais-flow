@@ -22,3 +22,4 @@
 - 2026-09-26 06:42 · decision · Kai delegates all UX decisions; 22 open questions decided — `2026-09-26-0642-bohr-decision-conductor-decides.md`
 - 2026-09-26 06:43 · status · release-1 = 13 merges (350 tests); P0-B merged; Polish C/D/E + FIX-5 running — `2026-09-26-0643-bohr-status.md`
 - 2026-09-26 07:04 · test-run · FIX-5 (0037 search, notify prune) merged + webpush pinned @0.5.0 on release-1: 34 files / 350 tests, lint baseline, build green; fix0 79/79, sec2 110/110, notify-prune 12/12, fix5-search 31/31 (worker). Decisions: 0.35 = distance (tighten, per J-7); substring title tier kept
+- 2026-09-26 07:05 · handoff · DEPLOY-RUNBOOK-v1.md written (backup → 0030–0037 → functions → Gmail SMTP → frontend → live checks); TEST-LEDGER gains R-1…R-13

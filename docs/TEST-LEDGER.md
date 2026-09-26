@@ -27,3 +27,23 @@ _Nothing user-visible has changed since the loop started. The 2026-09-24 changes
 
 ## By area
 _Rows get added as each area is audited (Phase A) or changed._
+
+## 🆕 release-1 — pending deploy (added 2026-09-26; state: branch `claude/release-1`)
+
+_Check these by hand on live right after the deploy. The runbook's step 7 is the short version._
+
+| # | Steps | Expected | Covered by | State | Last verified |
+|---|---|---|---|---|---|
+| R-1 | People → New person → sign out → sign in | Person still there; any person lost before is recovered with a "Recovered … hadn't saved earlier" toast | `outbox.test.ts` + local e2e (`docs/log/assets/p0/`) | branch | 2026-09-26 local |
+| R-2 | Morning ritual → Next → reload | Step stays done; no "couldn't be saved" toast | `activity.test.ts` + local e2e | branch | 2026-09-26 local |
+| R-3 | Journal offline: type a sentence, reconnect | Exactly one entry with the full text | P0-B tests + local e2e | branch | 2026-09-26 local |
+| R-4 | Offline with a pending change → Sign out | Prompt "N changes haven't synced yet"; Stay keeps them; "Discard & sign out" really signs out | P0-B tests + local e2e | branch | 2026-09-26 local |
+| R-5 | Sign-in page → Forgot password → email link | Reset page; the new password works, the old one doesn't | J-11 e2e 38/38 (local) | branch | 2026-09-26 local — live needs runbook step 5 |
+| R-6 | New account via "Create an account" | Onboarding runs once, then Today; later sign-ins go straight to Today | Polish A e2e 49/49 | branch | 2026-09-26 local |
+| R-7 | Open `/nope`; open `/seasons` | Calm "This page isn't here"; no developer screen; no "Good morning, Kai" | Polish A e2e | branch | 2026-09-26 local |
+| R-8 | Calendar week in Cairo | Today's column labelled TODAY on the right date; opens ≈2h before now; overlaps side by side / shingled / "+N more"; weekends off doesn't crash | FIX-2 tests + local e2e | branch | 2026-09-26 local |
+| R-9 | New routine with just a name | Anytime / Every day / reminder off; reads "no streak yet" | Polish B tests + local e2e | branch | 2026-09-26 local |
+| R-10 | Search a just-captured word; type the first 3 letters of a task title | Exact item first; prefix finds it | `supabase/tests/fix5-search.sh` 31/31 (local SQL) | branch | 2026-09-26 local — live embeddings unverified |
+| R-11 | Settings → Send test notification (two accounts) | Only your own devices buzz | `fix0-auth.sh` 79/79, `notify-prune.sh` 12/12 (harness) | branch | 2026-09-26 harness — real push unverified |
+| R-12 | Chat / voice after heavy use | Past the daily allowance: calm "refills tomorrow", no crash | `sec2.sh` 110/110 (harness) | branch | 2026-09-26 harness |
+| R-13 | Anon-key curl to any function (audit §1.9) | 401 | `fix0-auth.sh` | branch | 2026-09-26 harness |
