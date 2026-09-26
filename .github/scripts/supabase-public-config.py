@@ -19,7 +19,9 @@ source = 'repo variables'
 
 
 def get(path: str) -> str:
-    with urllib.request.urlopen(app + path, timeout=30) as r:
+    # Cloudflare turns away Python's default "Python-urllib" agent with a 403.
+    req = urllib.request.Request(app + path, headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) kais-flow-ci'})
+    with urllib.request.urlopen(req, timeout=30) as r:
         return r.read().decode('utf-8', 'ignore')
 
 
