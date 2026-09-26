@@ -65,7 +65,7 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
   )
 }
 
-function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; onOpenTrellis: () => void }) {
+function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
 
@@ -100,7 +100,9 @@ function RoutineRow({ routine, completions, doneToday, onOpenTrellis }: { routin
       </div>
       {routine.clock_time && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{routine.clock_time}</span>}
       {status !== 'growing' ? (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{ZERO_ROW_LABEL[status]}</span>
+        // Phone rows follow #1b, whose zero-streak row (Meditate) carries no label: in the ~300px
+        // phone row it could only wrap over the routine's name.
+        !isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{ZERO_ROW_LABEL[status]}</span>
       ) : (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--sig-streak)' }}>
           <FlameIcon />
@@ -289,7 +291,7 @@ export function RoutinesPage() {
               {!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}
             </div>
             {g.items.map((r) => (
-              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} onOpenTrellis={() => setTrellisRoutine(r)} />
+              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} />
             ))}
           </div>
         ))}

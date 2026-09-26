@@ -1,5 +1,5 @@
 import { useEscapeStack } from '../../lib/overlayStack'
-import { computeGraceStreak, computeTrellisDays, routineStartKey, type TrellisDay } from './streaks'
+import { computeGraceStreak, computeTrellisDays, routineStartKey, routineStreak, type TrellisDay } from './streaks'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
@@ -39,13 +39,19 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
   const { current, rainedDates } = computeGraceStreak(dates, routine.cadence, new Date(), since)
   const days = computeTrellisDays(dates, routine.cadence, DAYS, new Date(), since)
 
+  const { status } = routineStreak(dates, routine.cadence)
+
   const lastRain = [...days].reverse().find((d) => d.state === 'rained')
   const lastBreak = [...days].reverse().find((d) => d.state === 'broke')
+  // Never tended and no real miss to show: the New routine form's own "Its plant" hint (#2a),
+  // not "the vine kept growing" for a vine that hasn't started.
   const caption = lastRain
     ? `it rained ${weekdayName(lastRain.key)} — the vine held on.`
     : lastBreak
       ? `it broke ${weekdayName(lastBreak.key)} — the vine started over.`
-      : 'no missed days in the last 14 — the vine kept growing ✿'
+      : status === 'new'
+        ? 'starts bare, grows with the streak ✿'
+        : 'no missed days in the last 14 — the vine kept growing ✿'
 
   function tickColor(d: TrellisDay): string {
     if (d.state === 'broke') return 'var(--acc-terra)'
