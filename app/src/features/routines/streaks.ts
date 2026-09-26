@@ -144,22 +144,28 @@ export interface TodayTally {
   remaining: number
 }
 
+function doneTodayIds(completions: RoutineCompletion[], today: Date): Set<string> {
+  const todayKey = localDateKey(today)
+  return new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id))
+}
+
+/** The routines that belong to today, in their given order: active, and either scheduled by
+ * their cadence today or already checked off today. Exactly the set `todayTally` counts, so a
+ * list drawn from it always matches its "done/due" header (Polish D: Today's rail listed every
+ * active routine — a Sunday-only one on a Saturday — under a count of all of them). */
+export function routinesForToday<T extends Routine>(routines: T[], completions: RoutineCompletion[], today: Date = new Date()): T[] {
+  const doneIds = doneTodayIds(completions, today)
+  return routines.filter((r) => r.active && (doneIds.has(r.id) || isScheduled(today, r.cadence)))
+}
+
 /** The "N of M tended" count. Only active routines count, and only when today is theirs: a
  * routine whose cadence rests today is neither due nor remaining. One checked off on a resting
  * day still counts as tended (and so as due), so `done` never exceeds `due`. */
 export function todayTally(routines: Routine[], completions: RoutineCompletion[], today: Date = new Date()): TodayTally {
-  const todayKey = localDateKey(today)
-  const doneIds = new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id))
-  let due = 0
-  let done = 0
-  for (const routine of routines) {
-    if (!routine.active) continue
-    const isDone = doneIds.has(routine.id)
-    if (!isDone && !isScheduled(today, routine.cadence)) continue
-    due++
-    if (isDone) done++
-  }
-  return { due, done, remaining: due - done }
+  const doneIds = doneTodayIds(completions, today)
+  const dueToday = routinesForToday(routines, completions, today)
+  const done = dueToday.filter((r) => doneIds.has(r.id)).length
+  return { due: dueToday.length, done, remaining: dueToday.length - done }
 }
 
 function scheduledAndDone(cadence: Cadence, completedDates: string[], days: number, today: Date): { scheduled: number; done: number } {

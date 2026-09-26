@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, streakRiskMessage, todayTally } from './streaks'
+import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakRiskMessage, todayTally } from './streaks'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
@@ -291,6 +291,37 @@ describe('todayTally — only routines whose day it is count', () => {
     const archived = routine({ id: 'arch', cadence: DAILY, active: false })
     const r = routine({ id: 'live', cadence: DAILY })
     expect(todayTally([archived, r], completionsFor('live', [dayKey(-1)]), NOW)).toEqual({ due: 1, done: 0, remaining: 1 })
+  })
+})
+
+// Polish D: Today's rail lists routinesForToday under a todayTally header — the audit saw
+// "Routines · 1/5" over five rows on a Saturday while Routines said "1 of 3".
+describe('routinesForToday — the rows under the todayTally header', () => {
+  const SUNDAY_ONLY: Cadence = { weekdays: [0] }
+  const mixed = [
+    routine({ id: 'daily', cadence: DAILY }),
+    routine({ id: 'mwf', cadence: MON_WED_FRI }), // Wednesday is its day
+    routine({ id: 'sunday', cadence: SUNDAY_ONLY }), // rests on a Wednesday
+    routine({ id: 'monfri', cadence: MON_FRI }), // rests, but checked off anyway today
+    routine({ id: 'archived', cadence: DAILY, active: false }),
+  ]
+  const completions = [...completionsFor('daily', [dayKey(0)]), ...completionsFor('monfri', [dayKey(0)]), ...completionsFor('sunday', [dayKey(-3)])]
+
+  it('keeps the routines scheduled today plus any checked off today, in their order', () => {
+    expect(routinesForToday(mixed, completions, NOW).map((r) => r.id)).toEqual(['daily', 'mwf', 'monfri'])
+  })
+
+  it('is exactly the set todayTally counts, so the header always matches the rows', () => {
+    const rows = routinesForToday(mixed, completions, NOW)
+    const tally = todayTally(mixed, completions, NOW)
+    expect(tally).toEqual({ due: 3, done: 2, remaining: 1 })
+    expect(tally.due).toBe(rows.length)
+  })
+
+  it('a day when every routine rests lists nothing and counts 0 due', () => {
+    const resting = [routine({ id: 's', cadence: SUNDAY_ONLY }), routine({ id: 'mf', cadence: MON_FRI })]
+    expect(routinesForToday(resting, [], NOW)).toEqual([])
+    expect(todayTally(resting, [], NOW).due).toBe(0)
   })
 })
 
