@@ -4,6 +4,7 @@ import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
 import { useMotionEnabled } from '../../lib/motion'
 import { flowName, workspaceName as workspaceLabel } from '../../lib/owner'
+import { KeyCombo } from '../../components/kit'
 
 // ── Pixel contract: design-export/Onboarding.dc.html — 1a-1g (the seven steps) + 1h
 // (iPhone, full-screen, CTA pinned). One React tree; the phone chrome from 1h (dots-only
@@ -289,7 +290,9 @@ export function OnboardingPage() {
               <h1 className="ob-h">Get it out of your head</h1>
               <p className="ob-sub" style={{ marginBottom: 24 }}>Everything that takes time belongs in one place. Capture fast, sort later.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
-                <Feature icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-body)' }}>⌘K</span>} title="Command bar & voice" desc={'Type or speak a thought — "send the invoice friday 3pm" — and it parses the date, project and priority for you.'} />
+                {/* Polish F2b (conductor decision 2026-09-26, J-17): the shortcut is drawn as keycaps,
+                    the app's one look for a key, instead of plain mono "⌘K". */}
+                <Feature icon={<KeyCombo keys={['⌘', 'K']} size="sm" style={{ gap: 2 }} />} title="Command bar & voice" desc={'Type or speak a thought — "send the invoice friday 3pm" — and it parses the date, project and priority for you.'} />
                 <Feature icon={<img src="/ds/assets/hydrangea/light.png" alt="" style={{ height: 20 }} />} title="Universal inbox" desc="Anything it can't place waits in one calm inbox. Clear it to zero, one keystroke each." />
                 <Feature icon={<img src="/ds/assets/wisteria/p60.png" alt="" style={{ height: 20 }} />} title="Projects & areas" desc="Group work that finishes into projects, and the parts of life that just continue into areas." />
               </div>

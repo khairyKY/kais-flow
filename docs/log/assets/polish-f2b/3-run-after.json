@@ -1,0 +1,81 @@
+{
+ "which": "after",
+ "clock": "10:50:59",
+ "report": {
+  "day-landing": {
+   "railBar": true,
+   "railShown": false,
+   "gridVisiblePx": 394,
+   "landsOn": "09:30:00",
+   "nowLineY": 415,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": null
+  },
+  "opened": {
+   "railBar": false,
+   "railShown": true,
+   "gridVisiblePx": 97,
+   "landsOn": "09:30:00",
+   "nowLineY": 712,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": "0"
+  },
+  "openedAfterReload": {
+   "railBar": false,
+   "railShown": true,
+   "gridVisiblePx": 97,
+   "landsOn": "09:30:00",
+   "nowLineY": 712,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": "0"
+  },
+  "foldedAgain": {
+   "railBar": true,
+   "railShown": false,
+   "gridVisiblePx": 394,
+   "landsOn": "09:30:00",
+   "nowLineY": 415,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": "1"
+  },
+  "foldedAfterReload": {
+   "railBar": true,
+   "railShown": false,
+   "gridVisiblePx": 394,
+   "landsOn": "09:30:00",
+   "nowLineY": 415,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": "1"
+  },
+  "night-landing": {
+   "railBar": true,
+   "railShown": false,
+   "gridVisiblePx": 394,
+   "landsOn": "09:30:00",
+   "nowLineY": 415,
+   "nowLineVisible": true,
+   "tabbarTop": 795,
+   "stored": null
+  },
+  "desktop": {
+   "railBar": false,
+   "railShown": false,
+   "gridVisiblePx": 479,
+   "landsOn": "08:30:00",
+   "nowLineY": 478,
+   "nowLineVisible": true,
+   "tabbarTop": null,
+   "stored": null
+  }
+ },
+ "realErrors": [
+  "day FAILED http://127.0.0.1:5239/ds/assets/vine/bare.png net::ERR_ABORTED",
+  "day FAILED http://127.0.0.1:5239/ds/assets/vine/bare.png net::ERR_ABORTED"
+ ],
+ "meteo": 16
+}

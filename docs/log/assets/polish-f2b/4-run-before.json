@@ -1,0 +1,91 @@
+{
+ "which": "before",
+ "report": {
+  "timerBefore": {
+   "clockCairo": "25/09/2026, 23:58:34",
+   "title": "Sep 25 — Oct 1",
+   "firstHeaders": [
+    "2026-09-25 \"FRI · TODAY 25\"",
+    "2026-09-26 \"SAT 26\""
+   ],
+   "todayLabelOn": "2026-09-25",
+   "fcTodayCol": "2026-09-25",
+   "nowLineCol": "2026-09-25",
+   "nowChip": "11:58 PM"
+  },
+  "timerAfter": {
+   "clockCairo": "26/09/2026, 00:00:36",
+   "title": "Sep 25 — Oct 1",
+   "firstHeaders": [
+    "2026-09-25 \"FRI 25\"",
+    "2026-09-26 \"SAT · TODAY 26\""
+   ],
+   "todayLabelOn": "2026-09-26",
+   "fcTodayCol": "2026-09-26",
+   "nowLineCol": "2026-09-26",
+   "nowChip": "12:00 AM"
+  },
+  "visibilityBefore": {
+   "clockCairo": "25/09/2026, 23:50:04",
+   "title": "Sep 25 — Oct 1",
+   "firstHeaders": [
+    "2026-09-25 \"FRI · TODAY 25\"",
+    "2026-09-26 \"SAT 26\""
+   ],
+   "todayLabelOn": "2026-09-25",
+   "fcTodayCol": "2026-09-25",
+   "nowLineCol": "2026-09-25",
+   "nowChip": "11:50 PM"
+  },
+  "visibilityJumpedNoEvent": {
+   "clockCairo": "26/09/2026, 00:05:00",
+   "title": "Sep 25 — Oct 1",
+   "firstHeaders": [
+    "2026-09-25 \"FRI · TODAY 25\"",
+    "2026-09-26 \"SAT 26\""
+   ],
+   "todayLabelOn": "2026-09-25",
+   "fcTodayCol": "2026-09-25",
+   "nowLineCol": "2026-09-25",
+   "nowChip": "11:50 PM"
+  },
+  "visibilityAfter": {
+   "clockCairo": "26/09/2026, 00:05:02",
+   "title": "Sep 25 — Oct 1",
+   "firstHeaders": [
+    "2026-09-25 \"FRI 25\"",
+    "2026-09-26 \"SAT · TODAY 26\""
+   ],
+   "todayLabelOn": "2026-09-26",
+   "fcTodayCol": "2026-09-26",
+   "nowLineCol": "2026-09-26",
+   "nowChip": "12:05 AM"
+  },
+  "pagedBefore": {
+   "clockCairo": "25/09/2026, 23:58:35",
+   "title": "Oct 2 — 8",
+   "firstHeaders": [
+    "2026-10-02 \"FRI 02\"",
+    "2026-10-03 \"SAT 03\""
+   ],
+   "todayLabelOn": null,
+   "fcTodayCol": null,
+   "nowLineCol": null,
+   "nowChip": null
+  },
+  "pagedAfter": {
+   "clockCairo": "26/09/2026, 00:00:37",
+   "title": "Oct 2 — 8",
+   "firstHeaders": [
+    "2026-10-02 \"FRI 02\"",
+    "2026-10-03 \"SAT 03\""
+   ],
+   "todayLabelOn": null,
+   "fcTodayCol": null,
+   "nowLineCol": null,
+   "nowChip": null
+  }
+ },
+ "realErrors": [],
+ "meteo": 12
+}

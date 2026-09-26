@@ -9,7 +9,7 @@ import {
 } from '../notifications/api'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useTheme } from '../../lib/theme'
-import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
+import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
@@ -78,6 +78,7 @@ function Seg<T extends string | number>({ value, onChange, options }: { value: T
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
+            aria-pressed={on}
             style={{
               padding: '6px 13px', borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
               background: on ? 'var(--paper-parchment)' : 'none',
@@ -255,7 +256,9 @@ function AppearanceCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Interface size</div>
-          <div style={fhelp}>scales the whole app · 125% is the new normal</div>
+          {/* Polish F2b: the default is per device (125% on a computer, 100% on a phone or a
+              touch-first screen), so the caption names this device's own normal. */}
+          <div style={fhelp}>scales the whole app · {Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device's normal</div>
         </div>
         <Seg<UiScale>
           value={scale}

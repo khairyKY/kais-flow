@@ -74,3 +74,57 @@ describe('layoutOverlaps (CALENDAR.md §6)', () => {
     expect(out.size).toBe(0)
   })
 })
+
+// Polish F2b: "the block you just dropped always stays visible" (it takes the top lane).
+describe('layoutOverlaps keepVisible (a just-dropped block)', () => {
+  // The seeded 14:00 trio plus a 30-min drop at 14:30 — the 4th block at once.
+  const trio = [b('design', 14, 15.5), b('budget', 14, 15), b('omar', 14.5, 15.5)]
+  const drop = b('dropped', 14.5, 15)
+
+  it('without it, the 4th block vanishes under the topmost "+1 more" (the old behaviour)', () => {
+    const out = layoutOverlaps([...trio, drop])
+    expect(out.get('dropped')).toEqual({ kind: 'hidden', under: 'omar' })
+    expect(out.get('omar')).toEqual({ kind: 'stack', lane: 2, hidden: ['dropped'] })
+  })
+
+  it('with it, the dropped block takes the top lane and the block it displaced goes under it', () => {
+    const out = layoutOverlaps([...trio, drop], 'dropped')
+    expect(out.get('design')).toEqual({ kind: 'stack', lane: 0, hidden: [] })
+    expect(out.get('budget')).toEqual({ kind: 'stack', lane: 1, hidden: [] })
+    expect(out.get('dropped')).toEqual({ kind: 'stack', lane: 2, hidden: ['omar'] })
+    expect(out.get('omar')).toEqual({ kind: 'hidden', under: 'dropped' })
+  })
+
+  it('takes over what the displaced block was hiding, so "+N more" still reaches everything', () => {
+    const five = [
+      b('planning', 9, 10.5),
+      b('vendor', 9, 10),
+      b('omar', 9.5, 10.5),
+      b('budget', 9.5, 10),
+      b('interview', 9.75, 10.75),
+    ]
+    const out = layoutOverlaps(five, 'interview')
+    expect(out.get('interview')).toEqual({ kind: 'stack', lane: 2, hidden: ['omar', 'budget'] })
+    expect(out.get('omar')).toEqual({ kind: 'hidden', under: 'interview' })
+    expect(out.get('budget')).toEqual({ kind: 'hidden', under: 'interview' })
+    // Every block is either drawn or listed under a drawn one.
+    const drawn = [...out.entries()].filter(([, s]) => s.kind !== 'hidden').map(([id]) => id)
+    const listed = [...out.values()].flatMap((s) => (s.kind === 'stack' ? s.hidden : []))
+    expect(new Set([...drawn, ...listed])).toEqual(new Set(five.map((x) => x.id)))
+  })
+
+  it('changes nothing when the kept block is already visible, or not in a stack at all', () => {
+    const plain = layoutOverlaps([...trio, drop])
+    expect(layoutOverlaps([...trio, drop], 'budget')).toEqual(plain)
+    expect(layoutOverlaps([...trio, drop], 'nope')).toEqual(plain)
+    expect(layoutOverlaps([b('a', 9, 10), b('c', 9.5, 10)], 'c')).toEqual(layoutOverlaps([b('a', 9, 10), b('c', 9.5, 10)]))
+  })
+
+  it('leaves other clusters on the same day untouched', () => {
+    const other = [b('x', 18, 19), b('y', 18, 19), b('z', 18, 19), b('w', 18, 19)]
+    const out = layoutOverlaps([...trio, drop, ...other], 'dropped')
+    // Equal times tie-break by id: w, x, y are the three sheets and z hides under y.
+    expect(out.get('y')).toEqual({ kind: 'stack', lane: 2, hidden: ['z'] })
+    expect(out.get('z')).toEqual({ kind: 'hidden', under: 'y' })
+  })
+})

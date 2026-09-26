@@ -4,7 +4,10 @@ import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent, restoreEvent } from './api'
-import { useTasks, completeTask, uncompleteTask } from '../tasks/api'
+// Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
+// checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
+// completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
+import { useTasks, completeTaskWithUndo, uncompleteTask } from '../tasks/api'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Checkbox } from '../../components/kit'
@@ -18,11 +21,13 @@ import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
-import { localTimeKey } from './eventTime'
+import { slotFields } from './eventTime'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
+import { SCROLL_LEAD_DESKTOP_MIN, SCROLL_LEAD_PHONE_MIN } from './gridClock'
+import { useDayRollover } from './useDayRollover'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
@@ -33,6 +38,11 @@ const RAIL_W_KEY = 'kf.calRailWidth'
 // Polish D: '1' = the user folded the Unscheduled rail, '0' = they opened it; unset = automatic
 // (folded only when the visible days wouldn't keep their minimum width beside it — weekFit.ts).
 const RAIL_FOLD_KEY = 'kf.calRailFolded'
+// Polish F2b (conductor decision 2026-09-26): on a phone the rail stacked above the grid left the
+// grid ~211px tall, so there it starts folded to one tap-to-open strip. '0' = the user opened it,
+// '1' = they folded it again; unset = folded. Its own key: the phone rail is a different control
+// (a strip above the grid, not the desktop's side strip) with a different default.
+const RAIL_FOLD_PHONE_KEY = 'kf.calRailFoldedPhone'
 const DEFAULT_RAIL_W = 244
 const RAIL_MIN = 150
 const RAIL_MAX = 760
@@ -142,11 +152,17 @@ export function CalendarPage() {
   const [viewOptsAnchor, setViewOptsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const viewOptsExit = useOverlayExit(viewOptsOpen)
 
+  // Polish F2b: a tab left open past midnight rolls over by itself. The grid follows the new day
+  // only when it was showing the day that just ended — a range paged to with ‹ › stays put.
+  // `today` (the day stamp) re-renders this page, so the rail's Today list and footer re-read too.
+  const today = useDayRollover((previous) => {
+    if (rangeInfo && previous >= rangeInfo.start && previous < rangeInfo.end) gridRef.current?.today()
+  })
   const railTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
   const motionOn = useMotionEnabled()
   const conflicts = useMemo(() => computeConflicts(events), [events])
-  const load = useMemo(() => todaysLoad(events), [events])
+  const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   const dayCount = settings?.calendar_day_count ?? 4
 
   function patchViewOpts(patch: Partial<CalViewOptions>) {
@@ -233,7 +249,7 @@ export function CalendarPage() {
     const items: ContextMenuItem[] = []
     if (event.type === 'task') {
       items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
-      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTask(t) } })
+      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     } else {
@@ -259,12 +275,12 @@ export function CalendarPage() {
   }
 
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
+  // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
+  // the form shows the clicked time on Cairo's clock and saves that exact instant back.
   function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number }) {
-    const start = new Date(info.start)
-    const end = new Date(info.end)
     setQuickCreate({
       kind: 'event',
-      slot: { date: localDateKey(start), start: info.allDay ? '' : localTimeKey(start), end: info.allDay ? '' : localTimeKey(end), allDay: info.allDay },
+      slot: slotFields(info.start, info.end, info.allDay),
       anchor: { x: info.x, y: info.y },
     })
   }
@@ -273,11 +289,10 @@ export function CalendarPage() {
   function handleGridContextMenu(iso: string, allDay: boolean, x: number, y: number) {
     function openKind(kind: QuickCreateKind) {
       setContextMenu(null)
-      const start = new Date(iso)
-      const end = new Date(start.getTime() + (allDay ? 24 * 60 : 30) * 60000)
+      const end = new Date(new Date(iso).getTime() + (allDay ? 24 * 60 : 30) * 60000)
       setQuickCreate({
         kind,
-        slot: { date: localDateKey(start), start: allDay ? '' : localTimeKey(start), end: allDay ? '' : localTimeKey(end), allDay },
+        slot: slotFields(iso, end.toISOString(), allDay),
         anchor: { x, y },
       })
     }
@@ -301,10 +316,10 @@ export function CalendarPage() {
     const end = new Date(new Date(start).getTime() + (allDay ? 24 * 60 : (task.duration_min ?? 30)) * 60000).toISOString()
     const ev = scheduleTask(task, start, end, allDay)
     toastUndo(`Scheduled · ${task.title}`, () => deleteEvent(ev))
-    if (motionOn) {
-      setJustDroppedId(ev.id)
-      window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
-    }
+    // Always reported, motion or not: CalendarGrid keeps this block visible until the next
+    // interaction (Polish F2b). The settle-in it also drives is gated in CSS by .cal-motion-on.
+    setJustDroppedId(ev.id)
+    window.setTimeout(() => setJustDroppedId((cur) => (cur === ev.id ? null : cur)), 800)
   }
 
   // R4-16: rail width is user-controlled and remembered across sessions.
@@ -340,12 +355,23 @@ export function CalendarPage() {
     }
   })
   const isMobile = useIsMobile()
-  const railFolded =
-    !isMobile && (railPref ? railPref === 'folded' : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends)))
-  function setRailFolded(folded: boolean) {
-    setRailPref(folded ? 'folded' : 'open')
+  const [phoneRailOpen, setPhoneRailOpen] = useState(() => {
     try {
-      localStorage.setItem(RAIL_FOLD_KEY, folded ? '1' : '0')
+      return localStorage.getItem(RAIL_FOLD_PHONE_KEY) === '0'
+    } catch {
+      return false
+    }
+  })
+  const railFolded = isMobile
+    ? !phoneRailOpen
+    : railPref
+      ? railPref === 'folded'
+      : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
+  function setRailFolded(folded: boolean) {
+    if (isMobile) setPhoneRailOpen(!folded)
+    else setRailPref(folded ? 'folded' : 'open')
+    try {
+      localStorage.setItem(isMobile ? RAIL_FOLD_PHONE_KEY : RAIL_FOLD_KEY, folded ? '1' : '0')
     } catch {
       /* private mode — the choice lasts this visit */
     }
@@ -412,6 +438,11 @@ export function CalendarPage() {
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
+        /* Polish F2b: the phone's folded rail — one strip in 1b's own language (the chip strip's
+           mono label between dashed rules), the round knob pointing down to open it. */
+        .cal-rail-bar { flex: none; width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border: none; border-bottom: 1px dashed var(--line-solid); background: none; font: inherit; cursor: pointer; }
+        .cal-rail-bar-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
+        .cal-rail-knob .cal-rail-knob-glyph { display: inline-block; }
         @media (max-width: 767px) {
           .cal-shell { flex-direction: column; }
           .cal-rail { width: 100%; border-right: none; border-bottom: 1px dashed var(--line-solid); padding: 16px; }
@@ -422,15 +453,29 @@ export function CalendarPage() {
       `}</style>
 
       <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
-        {railFolded && (
+        {railFolded && !isMobile && (
           <button type="button" className="cal-rail-tab" onClick={() => setRailFolded(false)} title="Show unscheduled" aria-label={`Show unscheduled tasks (${railTasks.length})`}>
             <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true">›</span>
             <span className="cal-rail-tab-label">Unscheduled · {railTasks.length}</span>
           </button>
         )}
+        {railFolded && isMobile && (
+          <button type="button" className="cal-rail-bar" onClick={() => setRailFolded(false)} aria-expanded={false} aria-label={`Show unscheduled tasks (${railTasks.length})`}>
+            <span className="cal-rail-bar-label">Unscheduled · {railTasks.length}</span>
+            <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true"><span className="cal-rail-knob-glyph" style={{ transform: 'rotate(90deg)' }}>›</span></span>
+          </button>
+        )}
         {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
         <aside className={railFolded ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
+            {/* Polish F2b: the phone rail folds back up from here (desktop folds from the splitter). */}
+            {isMobile && (
+              <button type="button" className="cal-rail-knob kf-collapse-btn kf-hit" aria-expanded={true} aria-label="Hide unscheduled tasks" onClick={() => setRailFolded(true)}>
+                <span className="cal-rail-knob-glyph" style={{ transform: 'rotate(-90deg)' }}>›</span>
+              </button>
+            )}
+          </div>
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -488,7 +533,7 @@ export function CalendarPage() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                       {/* R4 (Kai 2026-07-20): tick a task off without scheduling it first. The
                           guard swallows pointerdown so FullCalendar's Draggable never sees it. */}
-                      <span ref={dragGuard(() => completeTask(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
+                      <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
                         <Checkbox checked={false} size={15} />
                       </span>
                       <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
@@ -617,7 +662,9 @@ export function CalendarPage() {
               events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false }))}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
-                if (t) (done ? uncompleteTask : completeTask)(t)
+                if (!t) return
+                if (done) uncompleteTask(t)
+                else completeTaskWithUndo(t)
               }}
               onCreate={handleGridCreate}
               onMove={(id, start, end, allDay) => {
@@ -644,6 +691,7 @@ export function CalendarPage() {
               hiddenDays={viewOpts.showWeekends ? undefined : WEEKEND_DAYS}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
+              scrollLeadMinutes={isMobile ? SCROLL_LEAD_PHONE_MIN : SCROLL_LEAD_DESKTOP_MIN}
               dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}
