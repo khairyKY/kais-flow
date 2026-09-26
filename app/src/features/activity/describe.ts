@@ -278,7 +278,7 @@ function describePeople(e: ActivityLogEntry, names: ActivityNames): ActivityLine
 }
 
 function describeJournal(e: ActivityLogEntry): ActivityLine {
-  const { event_type: type, payload } = e
+  const { event_type: type } = e
   const line = (text: string, details = '', href: string | null = '/journal'): ActivityLine => ({ text, details, category: 'journal', icon: 'fern', href })
   switch (type) {
     case 'journal.created':
@@ -290,8 +290,9 @@ function describeJournal(e: ActivityLogEntry): ActivityLine {
     case 'journal.restored':
       return line('Brought back a journal entry', 'from Trash')
     case 'journal.line_added':
-      // The evening ritual's one line — the words are the user's own, so they're the detail.
-      return line("Wrote the evening's line", str(payload, 'text'))
+      // The evening ritual's one line. S8 (polish-f1): its words stay in the journal — the event
+      // no longer carries them, and rows written before that still did, so never print payload.text.
+      return line("Added a line to today's journal", 'evening ritual')
     default:
       return line('Updated the journal')
   }

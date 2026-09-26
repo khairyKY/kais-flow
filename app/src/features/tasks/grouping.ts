@@ -64,6 +64,28 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
   })
 }
 
+/**
+ * The rows the Today page lists — its Top-3 section plus "All open" (TodayPage.tsx's `visible`
+ * set, verbatim): every non-someday task that isn't finished, plus the ones finished *today*,
+ * which stay on the page struck through (A3). Done-ness is `completed_at`, exactly as Today
+ * renders it. Unlike the `today` smart list above, it isn't date-bounded: Today is the whole
+ * open garden, not "due ≤ today".
+ *
+ * One selector for the page and its badge (conductor decision 2026-09-26: "the badge counts
+ * exactly what Today shows"), so the two can't drift again (audit K-8, "Today badge drift").
+ */
+export function todayListTasks(tasks: Task[], now: Date = new Date()): Task[] {
+  const today = cairoDateKey(now)
+  return tasks.filter((t) => !t.someday && (!t.completed_at || cairoDateKey(new Date(t.completed_at)) === today))
+}
+
+/** The sidebar's Today badge: the rows `todayListTasks` lists that are still open — Today's open
+ * Top-3 rows plus its "All open · N". Rows finished today stay listed (struck through) but aren't
+ * counted: a badge counts what's left, so ticking a task off drops it by one. */
+export function todayOpenCount(tasks: Task[], now: Date = new Date()): number {
+  return todayListTasks(tasks, now).filter((t) => !t.completed_at).length
+}
+
 export type RailScopeKind = 'smart' | 'project' | 'area' | 'domain'
 
 export interface RailScope {

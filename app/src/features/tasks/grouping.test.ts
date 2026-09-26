@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterByList, filterByScope, groupTasks, planningColumns } from './grouping'
+import { filterByList, filterByScope, groupTasks, planningColumns, todayListTasks, todayOpenCount } from './grouping'
 import { scheduleNextWeek } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
@@ -139,6 +139,67 @@ describe('filterByList', () => {
   it('all = every open task, someday and undated included, never done (punch 27)', () => {
     const ids = filterByList(tasks, 'all', NOW).map((t) => t.id)
     expect(ids.sort()).toEqual(['nextmonth', 'overdue', 'someday', 'thisweek', 'today', 'top3', 'undated'])
+  })
+})
+
+describe('todayListTasks / todayOpenCount (the Today page and its sidebar badge)', () => {
+  // The drift fixture from the audit (K-8): the old badge was filterByList('today') = top-3 OR
+  // scheduled today OR due ≤ today, while the Today page lists every open non-someday task.
+  const tasks = [
+    task({ id: 'top3', top3: true }),
+    task({ id: 'dueToday', due_at: at(0) }),
+    task({ id: 'overdue', due_at: at(-3) }),
+    task({ id: 'scheduledToday', scheduled_start: at(0, 15), scheduled_end: at(0, 16) }),
+    task({ id: 'in5days', due_at: at(5) }),
+    task({ id: 'undated' }),
+    task({ id: 'in20days', due_at: at(20) }),
+    task({ id: 'someday', someday: true }),
+    task({ id: 'doneToday', status: 'done', completed_at: at(0, 8) }),
+    task({ id: 'doneYesterday', status: 'done', completed_at: at(-1, 20) }),
+  ]
+
+  // What TodayPage.tsx renders, restated independently: its `visible` filter.
+  const todayPageRows = (list: Task[], now: Date) => {
+    const key = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' })
+    return list.filter((t) => !t.someday && (!t.completed_at || key(new Date(t.completed_at)) === key(now)))
+  }
+
+  it('lists every open non-someday task, dated or not, plus the ones finished today', () => {
+    const ids = todayListTasks(tasks, NOW).map((t) => t.id)
+    expect(ids.sort()).toEqual(['doneToday', 'dueToday', 'in20days', 'in5days', 'overdue', 'scheduledToday', 'top3', 'undated'])
+  })
+
+  it("is exactly the Today page's row set", () => {
+    expect(todayListTasks(tasks, NOW)).toEqual(todayPageRows(tasks, NOW))
+  })
+
+  it('the badge counts the listed rows that are still open — not the done-today row, never someday', () => {
+    expect(todayOpenCount(tasks, NOW)).toBe(7)
+    expect(todayOpenCount(tasks, NOW)).toBe(todayPageRows(tasks, NOW).filter((t) => !t.completed_at).length)
+  })
+
+  it('differs from the Due Today smart list — the drift this fixes', () => {
+    expect(filterByList(tasks, 'today', NOW).length).toBe(4)
+    expect(todayOpenCount(tasks, NOW)).not.toBe(filterByList(tasks, 'today', NOW).length)
+  })
+
+  it('ticking a task off drops the badge by one while the row stays listed', () => {
+    const ticked = tasks.map((t) => (t.id === 'in5days' ? { ...t, status: 'done' as const, completed_at: at(0, 14) } : t))
+    expect(todayOpenCount(ticked, NOW)).toBe(6)
+    expect(todayListTasks(ticked, NOW).map((t) => t.id)).toContain('in5days')
+  })
+
+  it("'finished today' is Cairo's day: 00:30 Cairo is today, 23:30 Cairo the night before is not", () => {
+    const edge = [
+      task({ id: 'justAfterMidnight', status: 'done', completed_at: '2026-07-08T00:30:00+03:00' }),
+      task({ id: 'lateYesterday', status: 'done', completed_at: '2026-07-07T23:30:00+03:00' }),
+    ]
+    expect(todayListTasks(edge, NOW).map((t) => t.id)).toEqual(['justAfterMidnight'])
+    expect(todayOpenCount(edge, NOW)).toBe(0)
+  })
+
+  it('an empty garden counts 0', () => {
+    expect(todayOpenCount([], NOW)).toBe(0)
   })
 })
 

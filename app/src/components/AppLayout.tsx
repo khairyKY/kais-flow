@@ -10,7 +10,7 @@ import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
-import { filterByList, type SmartList } from '../features/tasks/grouping'
+import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
@@ -104,7 +104,10 @@ function PlanDrawer() {
     localStorage.setItem('kf.planOpen', open ? '1' : '0')
   }, [open])
 
-  const todayCount = filterByList(tasks, 'today').length
+  // polish-f1 (audit K-8): the folded drawer's whisper counts exactly the open rows the Today page
+  // lists (grouping.ts todayListTasks is Today's own row rule), so badge and page can't drift.
+  // The open drawer's "Due Today" row below still counts the Due Today list it links to.
+  const todayCount = todayOpenCount(tasks)
 
   const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode) => (
     <Link
@@ -163,7 +166,7 @@ function PlanDrawer() {
           ›
         </span>
         {!open && todayCount > 0 && (
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
+          <span title={`${todayCount} open on Today`} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
       {open && (
@@ -432,13 +435,13 @@ function TopBar() {
         {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
             (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
             boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
-        <span>
+        <span className="app-topbar-where">
           <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
         </span>
         <button
           type="button"
           onClick={() => setPopOpen((v) => !v)}
-          className="kf-hit"
+          className="kf-hit app-topbar-sync"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online || n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
           {status}
@@ -446,9 +449,11 @@ function TopBar() {
             <span style={{ color: 'var(--acc-sage)', animation: glint ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: glint ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
           )}
         </button>
-        <SeasonTopbarEcho />
+        <span className="app-topbar-echo">
+          <SeasonTopbarEcho />
+        </span>
       </div>
-      <div style={{ flex: 'none' }}>Africa/Cairo</div>
+      <div className="app-topbar-zone" style={{ flex: 'none' }}>Africa/Cairo</div>
 
       {popOpen && (
         <div
@@ -551,12 +556,21 @@ export function AppLayout() {
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
+        .app-topbar-echo { display: contents; }
         @media (max-width: 767px) {
           .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
           /* The phone topbar already clips from the right; a long owner name would push the date
              off too, so the name alone caps (~12 chars) and ellipsizes. "Kai's Flow" fits. */
           .app-topbar-owner { display: inline-block; vertical-align: top; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+          /* polish-f1: at 390px and the default 125% size the strip is ~280 CSS px wide, and the
+             sync status (3rd) was pushed out entirely by the weather echo and the zone. The
+             iPhone exports carry neither (their app bar is flower · date · search), so both drop
+             here; the status never shrinks, and if anything still has to give (a long name while
+             "Offline ◌ — N saved here"), it's the name · date run, with an ellipsis. */
+          .app-topbar-echo, .app-topbar-zone { display: none; }
+          .app-topbar-where { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+          .app-topbar-sync { flex: none; }
           .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
           .app-tabbar { display: flex !important; }
         }

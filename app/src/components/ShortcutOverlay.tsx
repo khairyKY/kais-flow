@@ -75,9 +75,12 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>plant a whole day without the mouse</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* polish-f1: every key in the hint is a keycap (J-17's one visual language), Esc too. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
             <KeyChip text="?" />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>toggle · Esc closes</span>
+            <span>toggle ·</span>
+            <KeyChip text="Esc" />
+            <span>closes</span>
           </div>
         </div>
 

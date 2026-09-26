@@ -12,6 +12,7 @@ import { toastUndo } from '../../lib/undo'
 import { logRitualStep } from './api'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
+import { KeyChip } from '../../components/kit'
 import type { Task } from '../../lib/types'
 
 // ── The Closing Ritual — pixel contract Rituals.dc.html 2c/2d/2e (the four beats) with
@@ -103,7 +104,10 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       // D-1: a day holds many timestamped entries, so the night's line becomes its own
       // entry (stamped when it was written) instead of being appended to an earlier one.
       upsertJournalEntry({ entry_date: todayKey, body: text }, true)
-      logActivity('journal.line_added', 'ritual', todayKey, { text })
+      // S8 (polish-f1): the event says a line was written, never what it says. activity_log is
+      // kept in the persisted IndexedDB cache (Focus, Activity and notifications need it
+      // offline) and journal words must not be — the line itself lives in the journal entry above.
+      logActivity('journal.line_added', 'ritual', todayKey, { date: todayKey })
     }
     next()
   }
@@ -397,7 +401,11 @@ function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: 
           />
           <div style={{ marginTop: 34, borderTop: '1px dashed var(--line-dashed)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <FieldLabel color="var(--ink-hairline)">lands in the journal</FieldLabel>
-            <FieldLabel>↵ continues</FieldLabel>
+            {/* polish-f1: the key is a keycap, like every other shortcut hint (J-17). */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <KeyChip text="↵" size="sm" />
+              <FieldLabel>continues</FieldLabel>
+            </span>
           </div>
         </div>
       </div>
