@@ -16,7 +16,14 @@
 --     autopush, Apple (*.push.apple.com) or WNS (*.notify.windows.com); this constraint is the
 --     same rule at write time. NOT VALID: rows stored before this migration are not checked (and
 --     can't block it) — notify skips them instead. Every new or updated row is checked.
-
+--
+-- 3 · slipping view owner filters (LOW). Every correlated subquery matched activity_log /
+--     projects / tasks / areas by entity id alone. Under a user's JWT that is harmless (RLS hides
+--     other users' rows), but the service role — notify's morning digest — bypasses RLS, so an
+--     activity_log row another account logged against your domain/project/area id counted as a
+--     "touch" on it. Same bug class 0035 fixed in do_resurface(). Recreated identically (same
+--     columns, same order, same security_invoker) except that each subquery now also requires
+--     the joined row to belong to the owner of the domain/project/area being scored.
 
 -- ---------------------------------------------------------------------------------------------
 -- 1 · ai_usage
@@ -69,3 +76,54 @@ alter table push_subscriptions
   add constraint push_subscriptions_endpoint_known_service check (
     endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+push\.apple\.com|([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+notify\.windows\.com)/'
   ) not valid;
+
+-- ---------------------------------------------------------------------------------------------
+-- 3 · slipping — 0013's definition with owner filters added, nothing else changed
+-- ---------------------------------------------------------------------------------------------
+create or replace view slipping with (security_invoker = true) as
+with domain_touch as (
+  select
+    d.id,
+    d.name,
+    greatest(
+      d.created_at,
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = d.user_id and al.entity_type = 'domain' and al.entity_id = d.id), d.created_at),
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = d.user_id and al.entity_type = 'project' and al.entity_id in (select id from projects where domain_id = d.id and projects.user_id = d.user_id)), d.created_at),
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = d.user_id and al.entity_type = 'task' and al.entity_id in (select id from tasks where domain_id = d.id and tasks.user_id = d.user_id)), d.created_at),
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = d.user_id and al.entity_type = 'area' and al.entity_id in (select id from areas where domain_id = d.id and areas.user_id = d.user_id)), d.created_at)
+    ) as last_touch
+  from domains d
+),
+project_touch as (
+  select
+    p.id,
+    p.name,
+    greatest(
+      p.created_at,
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = p.user_id and al.entity_type = 'project' and al.entity_id = p.id), p.created_at),
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = p.user_id and al.entity_type = 'task' and al.entity_id in (select id from tasks where project_id = p.id and tasks.user_id = p.user_id)), p.created_at)
+    ) as last_touch
+  from projects p
+),
+area_touch as (
+  select
+    a.id,
+    a.name,
+    greatest(
+      a.created_at,
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = a.user_id and al.entity_type = 'area' and al.entity_id = a.id), a.created_at),
+      coalesce((select max(al.created_at) from activity_log al where al.user_id = a.user_id and al.entity_type = 'task' and al.entity_id in (select id from tasks where area_id = a.id and tasks.user_id = a.user_id)), a.created_at)
+    ) as last_touch
+  from areas a
+)
+select 'domain'::text as entity_type, id as entity_id, name as entity_name, last_touch,
+  extract(epoch from (now() - last_touch)) / 86400 as days_since
+from domain_touch
+union all
+select 'project'::text, id, name, last_touch,
+  extract(epoch from (now() - last_touch)) / 86400
+from project_touch
+union all
+select 'area'::text, id, name, last_touch,
+  extract(epoch from (now() - last_touch)) / 86400
+from area_touch;
