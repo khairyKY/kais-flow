@@ -243,7 +243,12 @@ export function writeRow<T extends { id: string }>(
   // it — the same revert, just a narrower window than the refetch case above.
   void queryClient.cancelQueries({ queryKey: [table] })
   queryClient.setQueryData<T[] | T>([table], (old) => {
-    if (!old) return undefined // no cached row/list yet — nothing to update optimistically
+    // No cached row/list yet — nothing to update optimistically. Deliberately NOT seeded with
+    // `[row]` (P0-B): a never-loaded list would then read as loaded — and fresh for staleTime —
+    // holding one row, `['activity_log']` is shared by two differently-shaped queries, and
+    // `app_settings` is a row, not a list. A page that must see its own new row before its list
+    // has loaded holds it itself (JournalPage → holdRow).
+    if (!old) return undefined
     // Every table caches an array under its query key, except the `app_settings` singleton
     // (cached as the row itself) — branch on shape rather than assuming `old` is always a list.
     if (!Array.isArray(old)) return op === 'delete' ? undefined : row

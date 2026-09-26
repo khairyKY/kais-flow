@@ -62,12 +62,17 @@ export function upsertJournalEntry(
   return finalEntry
 }
 
-export function deleteJournalEntry(entry: JournalEntry): void {
-  writeRow('journal_entries', { ...entry, deleted_at: new Date().toISOString() })
+/** Returns the row as written, so the Journal page can hold it (see `holdRow`). */
+export function deleteJournalEntry(entry: JournalEntry): JournalEntry {
+  const row = { ...entry, deleted_at: new Date().toISOString() }
+  writeRow('journal_entries', row)
   logActivity('journal.deleted', 'journal_entry', entry.id, {})
+  return row
 }
 
-export function restoreJournalEntry(entry: JournalEntry): void {
-  writeRow('journal_entries', { ...entry, deleted_at: null })
+export function restoreJournalEntry(entry: JournalEntry): JournalEntry {
+  const row = { ...entry, deleted_at: null }
+  writeRow('journal_entries', row)
   logActivity('journal.restored', 'journal_entry', entry.id, {})
+  return row
 }

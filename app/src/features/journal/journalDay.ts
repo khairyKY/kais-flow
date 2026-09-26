@@ -56,6 +56,31 @@ export function writtenStreak(entries: JournalEntry[], today: string): number {
   }
 }
 
+/** Rows the Journal page wrote that the cached list doesn't hold yet, keyed by id. */
+export type HeldRows = Record<string, JournalEntry>
+
+/** P0-B (audit 2026-09-26): when the journal list has never loaded on this device (offline, or
+ * typing before the first fetch lands), writeRow has no cached list to add a new row to. The page
+ * then couldn't see the entry it had just created, the blank page stayed blank, and every
+ * keystroke started another entry — "Written while offline." became 22 one-letter rows. The page
+ * holds its own latest copy of each row it writes until the cached list has that row. */
+export function holdRow(held: HeldRows, row: JournalEntry, listed: JournalEntry[]): HeldRows {
+  const inList = new Set(listed.map((e) => e.id))
+  const next: HeldRows = {}
+  // Rows the list has caught up with are the cache's again — it may have newer data.
+  for (const [id, r] of Object.entries(held)) if (!inList.has(id)) next[id] = r
+  if (!inList.has(row.id)) next[row.id] = row
+  return next
+}
+
+/** The list the page renders: the cached list plus the held rows it doesn't have yet. A held row
+ * that was deleted stays hidden, the same as the list's own `deleted_at` filter. */
+export function withHeldRows(listed: JournalEntry[], held: HeldRows): JournalEntry[] {
+  const inList = new Set(listed.map((e) => e.id))
+  const extra = Object.values(held).filter((r) => !r.deleted_at && !inList.has(r.id))
+  return extra.length ? [...listed, ...extra] : listed
+}
+
 /** Timestamp shown above each entry inside the notebook card. */
 export function entryTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
