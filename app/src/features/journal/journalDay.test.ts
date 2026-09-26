@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, holdRow, withHeldRows, type HeldRows } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows } from './journalDay'
 import type { JournalEntry } from '../../lib/types'
 
 function entry(p: Partial<JournalEntry> & { id: string; entry_date: string }): JournalEntry {
@@ -151,5 +151,46 @@ describe('holdRow / withHeldRows', () => {
   it('returns the list untouched when nothing is held', () => {
     const listed = [entry({ id: 'a', entry_date: '2026-09-26' })]
     expect(withHeldRows(listed, {})).toBe(listed)
+  })
+})
+
+// Polish G (audit 2026-09-26): the page claims nothing about the past until the list has arrived.
+describe('listState', () => {
+  it('is ready once the list arrived, even if a later refetch failed or is paused', () => {
+    expect(listState({ data: [], isError: false, fetchStatus: 'idle' })).toBe('ready')
+    expect(listState({ data: [], isError: true, fetchStatus: 'idle' })).toBe('ready')
+    expect(listState({ data: [], isError: false, fetchStatus: 'paused' })).toBe('ready')
+  })
+
+  it('is loading while the first fetch is in flight', () => {
+    expect(listState({ data: undefined, isError: false, fetchStatus: 'fetching' })).toBe('loading')
+    // Pending but not fetching: the persisted cache is still being restored.
+    expect(listState({ data: undefined, isError: false, fetchStatus: 'idle' })).toBe('loading')
+  })
+
+  it('is away when offline and the list never loaded on this device', () => {
+    expect(listState({ data: undefined, isError: false, fetchStatus: 'paused' })).toBe('away')
+  })
+
+  it('is resting when the request failed with nothing cached, including while it retries', () => {
+    expect(listState({ data: undefined, isError: true, fetchStatus: 'idle' })).toBe('resting')
+    expect(listState({ data: undefined, isError: true, fetchStatus: 'fetching' })).toBe('resting')
+  })
+})
+
+describe('past-state copy', () => {
+  it('never says "error", and promises only that what you write is kept', () => {
+    for (const line of [PAST_AWAY, PAST_RESTING]) {
+      expect(line.toLowerCase()).not.toContain('error')
+      expect(line).toContain('kept')
+    }
+  })
+})
+
+describe('daysLabel', () => {
+  it('reads "1 day", never "1 days"', () => {
+    expect(daysLabel(0)).toBe('0 days')
+    expect(daysLabel(1)).toBe('1 day')
+    expect(daysLabel(12)).toBe('12 days')
   })
 })

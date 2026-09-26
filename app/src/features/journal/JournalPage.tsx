@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, type HeldRows } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
+import { Button } from '../../components/kit'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import type { JournalEntry } from '../../lib/types'
 import '../projects/xfx.css'
@@ -39,6 +40,58 @@ function fernSrc(length: number): string {
   return `/ds/assets/fern/${fernByLength(length)}.png`
 }
 
+/** States.dc.html 1d — the pencil resting on the first, still-blank page. The export's colours
+ * through their tokens: gold-warm body, blossom eraser; buttercream wood and a muted graphite
+ * point are the nearest tokens to its #e8ddc4 / #4d4738. */
+function RestingPencil() {
+  return (
+    <svg aria-hidden width="120" height="16" viewBox="0 0 120 16" style={{ position: 'absolute', right: 18, bottom: -7, transform: 'rotate(-3deg)', pointerEvents: 'none' }}>
+      <rect x="14" y="4" width="92" height="8" rx="2" fill="var(--acc-gold-warm)" />
+      <path d="M14 4 2 8l12 4V4Z" fill="var(--acc-buttercream)" />
+      <path d="M6.5 6.5 2 8l4.5 1.5v-3Z" fill="var(--ink-muted)" />
+      <rect x="106" y="4" width="10" height="8" rx="2" fill="var(--acc-blossom)" />
+    </svg>
+  )
+}
+
+/** Polish G: the journal's past couldn't be read — offline before it ever loaded on this device,
+ * or the request failed. Said in the page's own hand, where the first-page line sits, with one
+ * retry when there's something to retry. The notebook stays writable either way. */
+function PastNote({ state, retrying, onRetry, size }: { state: Extract<ListState, 'away' | 'resting'>; retrying: boolean; onRetry: () => void; size: number }) {
+  return (
+    <div role="status" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' }}>
+      <span style={{ fontFamily: 'var(--font-hand)', fontSize: size, lineHeight: 1.35, color: 'var(--ink-hand)' }}>{state === 'away' ? PAST_AWAY : PAST_RESTING}</span>
+      {state === 'resting' && (
+        <Button type="button" variant="secondary" onClick={onRetry} disabled={retrying} style={{ fontSize: 12, padding: '6px 14px' }}>
+          {retrying ? 'Trying…' : 'Try again'}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+/** The phone Notes / Quotes shelf (1b tabs) when it has nothing to list: empty, offline before it
+ * ever loaded, or failed. Journal's fern, still coiled, and one hand line — plus a retry when
+ * there's something to retry. No "go add one" button: the Library is parked (K-26), so there's
+ * nowhere to send anyone. Loading shows nothing; it's brief, and an unloaded shelf isn't empty. */
+type ShelfQuery = { data: unknown[] | undefined; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle'; isFetching: boolean; refetch: () => unknown }
+function ShelfState({ q, what }: { q: ShelfQuery; what: 'notes' | 'quotes' }) {
+  const s = listState(q)
+  if (s === 'loading' || (s === 'ready' && (q.data?.length ?? 0) > 0)) return null
+  const line = s === 'ready' ? `No ${what} on the shelf yet.` : s === 'away' ? "The shelf will be here when you're back online." : "The shelf didn't come through just now."
+  return (
+    <div role={s === 'ready' ? undefined : 'status'} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 0 10px' }}>
+      <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
+      <div style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 17, lineHeight: 1.35, color: 'var(--ink-hand)', textAlign: 'center' }}>{line}</div>
+      {s === 'resting' && (
+        <Button type="button" variant="secondary" onClick={() => void q.refetch()} disabled={q.isFetching} style={{ marginTop: 14, fontSize: 12, padding: '6px 14px' }}>
+          {q.isFetching ? 'Trying…' : 'Try again'}
+        </Button>
+      )}
+    </div>
+  )
+}
+
 export function JournalPage() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
@@ -46,20 +99,30 @@ export function JournalPage() {
 
 
   // Queries
-  const { data: listed } = useJournalEntries()
+  const journalQ = useJournalEntries()
+  const listed = journalQ.data
+  // Polish G: until the list has arrived, nothing derived from it is claimed (see `listState`).
+  const past = listState(journalQ)
+  const known = past === 'ready'
+  const pastUnread = past === 'away' || past === 'resting'
+  const pastNote = (size: number) =>
+    past === 'away' || past === 'resting' ? <PastNote state={past} retrying={journalQ.isFetching} onRetry={() => void journalQ.refetch()} size={size} /> : null
   // P0-B: rows this page wrote that the cached list doesn't have yet (it never loaded on this
   // device — offline, or typing before the first fetch lands). See `holdRow`.
   const [held, setHeld] = useState<HeldRows>({})
   const entries = useMemo(() => withHeldRows(listed ?? [], held), [listed, held])
-  // States 1d — first-run: the input is the action, this line is the invitation
-  const firstPage = !entries.some(isWritten)
-  const { data: notes = [] } = useNotes()
-  const { data: quotes = [] } = useQuotes()
+  // States 1d — first-run: the input is the action, this line is the invitation. Only once the
+  // list has arrived: an unloaded list is not an empty one.
+  const firstPage = known && !entries.some(isWritten)
+  const notesQ = useNotes()
+  const quotesQ = useQuotes()
+  const notes = notesQ.data ?? []
+  const quotes = quotesQ.data ?? []
 
   // Find a quote for commonplace rail (first quote or random)
   const commonplaceQuote = useMemo(() => {
-    return quotes[0] || null
-  }, [quotes])
+    return quotesQ.data?.[0] || null
+  }, [quotesQ.data])
 
   const { data: commonplaceCommentaries = [] } = useCommentaries(
     'quote',
@@ -330,6 +393,7 @@ export function JournalPage() {
           fontSize: `${t.fontSize}px`,
           lineHeight: `${t.lineHeight}px`,
           color: 'var(--ink-body)',
+          caretColor: 'var(--acc-terra)', // States 1d: the terra cursor on the open page
           resize: 'none',
           outline: 'none',
           padding: 0,
@@ -383,7 +447,7 @@ export function JournalPage() {
             </div>
           </div>
         ))}
-        {notes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No notes kept yet.</div>}
+        <ShelfState q={notesQ} what="notes" />
       </div>
     </div>
   )
@@ -406,7 +470,7 @@ export function JournalPage() {
             </div>
           </div>
         ))}
-        {quotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No quotes kept yet.</div>}
+        <ShelfState q={quotesQ} what="quotes" />
       </div>
     </div>
   )
@@ -430,7 +494,7 @@ export function JournalPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Journal · Day {dayCount}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
             </div>
           </div>
@@ -462,6 +526,9 @@ export function JournalPage() {
 
           {mobileTab === 'journal' && (
             <>
+              {/* Polish G: offline before the journal ever loaded here, or it failed to load. */}
+              {pastUnread && <div style={{ marginTop: 16 }}>{pastNote(16)}</div>}
+
               {/* Prompt */}
               <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>
                 {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
@@ -470,7 +537,8 @@ export function JournalPage() {
               {/* Writing Card */}
               <div style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
-                
+                {firstPage && <RestingPencil />}
+
                 {renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}
 
                 {/* Polish G: at the default 125% interface size a 390px phone lays this card out
@@ -668,8 +736,10 @@ export function JournalPage() {
                   style={{ display: 'block', textDecoration: 'none', padding: '8px 11px', cursor: 'pointer' }}
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>
+                  {/* Until the list arrives a day isn't "empty", only unknown: the line keeps its
+                      height and says nothing (Polish G). */}
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 2 }}>
-                    {entryForDate?.mood || (hasEntry ? 'kept' : 'empty')}
+                    {known ? entryForDate?.mood || (hasEntry ? 'kept' : 'empty') : ' '}
                   </div>
                 </div>
               )
@@ -677,8 +747,10 @@ export function JournalPage() {
           })}
         </div>
 
-        {/* Notes shelf link list */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>
+        {/* Notes / Quotes shelf link lists. Polish G: a group shows only when it has something to
+            list — a brand-new account used to get two bare headings with nothing under them, and
+            with the Library parked (K-26) there's no way to fill them from here. */}
+        {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
         {notes.slice(0, 4).map((n) => (
           <div
             key={n.id}
@@ -690,8 +762,7 @@ export function JournalPage() {
           </div>
         ))}
 
-        {/* Quotes shelf link list */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>
+        {quotes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>}
         {quotes.slice(0, 4).map((q) => (
           <div
             key={q.id}
@@ -721,7 +792,7 @@ export function JournalPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <img src={fernSrc(dayLength)} alt="" style={{ height: 52, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
 
                 {/* Size from .jn-title: the export's 40px wherever the page is wide enough, easing
                     down (never below 28px) so the date keeps to one line in a narrower column. */}
@@ -729,7 +800,11 @@ export function JournalPage() {
               </div>
             </div>
 
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
+            {pastUnread ? (
+              <div style={{ marginTop: 8 }}>{pastNote(19)}</div>
+            ) : (
+              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
+            )}
 
             {/* Prompt Selector */}
             <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -749,7 +824,8 @@ export function JournalPage() {
             {/* Ruled Notebook Card */}
             <div style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
-              
+              {firstPage && <RestingPencil />}
+
               {renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 10px', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', whiteSpace: 'nowrap' }}>
@@ -820,7 +896,9 @@ export function JournalPage() {
       </main>
 
       {/* 3. RIGHT RAIL: Quote of the Day, On This Day, Streak — a column beside the page when
-          there's room, otherwise folded under the writing (quote | on this day + kept). */}
+          there's room, otherwise folded under the writing (quote | on this day + kept).
+          Polish G: On this day and Kept read the journal's past, so they wait for the list. */}
+      {(commonplaceQuote || known) && (
       <aside className="jn-rail">
 
         {/* Quote of the day */}
@@ -873,6 +951,7 @@ export function JournalPage() {
           </section>
         )}
 
+        {known && (
         <div className="jn-rail-pair">
         {/* On this day */}
         <section>
@@ -895,8 +974,9 @@ export function JournalPage() {
               )}
             </div>
           ) : (
-            <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>
-              No entries on this day in past years.
+            // Polish G: the page's hand, as every designed empty line is — not grey italic UI text.
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, lineHeight: 1.35, color: 'var(--ink-hand)' }}>
+              Nothing from this day in past years — yet.
             </div>
           )}
         </section>
@@ -908,16 +988,20 @@ export function JournalPage() {
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/ds/assets/fern/full.png" alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            {/* The export's full fern — but a streak of 0 is a fern that hasn't unfurled yet
+                (growth stages never lie, punch 10). */}
+            <img src={`/ds/assets/fern/${streakDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakDays} days</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
             </div>
           </div>
         </section>
         </div>
+        )}
 
       </aside>
+      )}
       </div>
       {confirmCard}
     </div>
