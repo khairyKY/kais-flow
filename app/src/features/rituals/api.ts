@@ -1,11 +1,15 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { logActivity } from '../../lib/activity'
+import { activityRow, logActivity } from '../../lib/activity'
+import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { localDateKey } from '../routines/streaks'
-import type { ActivityLogEntry } from '../../lib/types'
+import { useTasks } from '../tasks/api'
+import { SEED_EVENT, UNSEED_EVENT, liveSeeds, seedPayload, seededTaskIds, type RitualKind } from './loopDay'
+import type { ActivityLogEntry, Task } from '../../lib/types'
 
-export type RitualKind = 'morning' | 'evening'
+export type { RitualKind } from './loopDay'
 
 /** Total steps each ritual walks — the denominator on Today's ritual cards.
  * Mirrors MorningRitual's STEPS and EveningRitual's BEATS (5 since ruling D-2 folded
@@ -91,4 +95,56 @@ export function logRitualStep(ritual: RitualKind, step: string): void {
     step,
     date: localDateKey(new Date()),
   })
+}
+
+/** Writes one activity row through the outbox AND folds it into a ritual query's cache, so the
+ * screen that wrote it sees it at once. Same reason as logReviewEvent above: the outbox only
+ * re-applies pending writes to a table's own `[table]` key. Unlike there, an empty cache is
+ * seeded with the row: these keys hold one shape only, and an in-flight first fetch cancelled
+ * by another write (writeRow cancels every `['activity_log', …]` query) would otherwise drop it. */
+function logRitualEvent(key: readonly unknown[], eventType: string, entityType: string, entityId: string, payload: Record<string, unknown>): void {
+  const row = activityRow(eventType, entityType, entityId, payload)
+  writeRow('activity_log', row)
+  const entry: ActivityLogEntry = { ...row, created_at: new Date().toISOString() }
+  queryClient.setQueryData<ActivityLogEntry[]>(key, (old) => (old ? [...old, entry] : [entry]))
+}
+
+// ── Loop B: the evening seeds tomorrow's Top 3 (docs/DAILY-CYCLE.md, "shutdown feeds the next
+// Plan"). A seed is an activity row, not a column or a table: `ritual.seeded` / `ritual.unseeded`,
+// entity = the task, payload { ritual: 'evening', step: 'seeds', for_date, date } — see loopDay.ts.
+// Seeding no longer stars the task tonight; the morning ritual's Top-3 step pre-selects the seeds
+// and one tap keeps them. Rows sync like every activity row, so a phone at night seeds the
+// laptop's morning. ──
+
+const SEEDS_KEY = ['activity_log', 'ritual_seeds'] as const
+
+/** Seed/unseed rows from the last three days, oldest first (the order seededTaskIds replays). */
+export function useRitualSeedRows() {
+  return useQuery({
+    queryKey: SEEDS_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('*')
+        .in('event_type', [SEED_EVENT, UNSEED_EVENT])
+        .gte('created_at', new Date(Date.now() - 3 * 86_400_000).toISOString())
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data as ActivityLogEntry[]
+    },
+  })
+}
+
+/** The live seeds planted for the morning of `forDate` (a loop-day key): open tasks only, in
+ * seeding order, at most three. `useSeedsFor(loopDayKey(now))` is this morning's; the evening
+ * shows `useSeedsFor(seedTargetDate(now))`, tomorrow's. */
+export function useSeedsFor(forDate: string): Task[] {
+  const { data: rows } = useRitualSeedRows()
+  const { data: tasks } = useTasks()
+  return useMemo(() => liveSeeds(seededTaskIds(rows ?? [], forDate), tasks ?? []), [rows, tasks, forDate])
+}
+
+/** Plant (or take back) a seed for the next morning — the loop day after `now`'s. */
+export function setSeed(task: Task, seeded: boolean, now: Date = new Date()): void {
+  logRitualEvent(SEEDS_KEY, seeded ? SEED_EVENT : UNSEED_EVENT, 'task', task.id, { ...seedPayload(now) })
 }
