@@ -24,6 +24,7 @@ import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
 import { SCROLL_LEAD_DESKTOP_MIN, SCROLL_LEAD_PHONE_MIN } from './gridClock'
+import { useDayRollover } from './useDayRollover'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
@@ -148,11 +149,17 @@ export function CalendarPage() {
   const [viewOptsAnchor, setViewOptsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const viewOptsExit = useOverlayExit(viewOptsOpen)
 
+  // Polish F2b: a tab left open past midnight rolls over by itself. The grid follows the new day
+  // only when it was showing the day that just ended — a range paged to with ‹ › stays put.
+  // `today` (the day stamp) re-renders this page, so the rail's Today list and footer re-read too.
+  const today = useDayRollover((previous) => {
+    if (rangeInfo && previous >= rangeInfo.start && previous < rangeInfo.end) gridRef.current?.today()
+  })
   const railTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start)
   const daisy = daisyAsset(new Date().getHours())
   const motionOn = useMotionEnabled()
   const conflicts = useMemo(() => computeConflicts(events), [events])
-  const load = useMemo(() => todaysLoad(events), [events])
+  const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   const dayCount = settings?.calendar_day_count ?? 4
 
   function patchViewOpts(patch: Partial<CalViewOptions>) {

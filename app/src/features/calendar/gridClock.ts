@@ -1,5 +1,6 @@
 // J-15 — the two places the time grid meets the wall clock. Pure, so both are unit-tested in
 // UTC and in Africa/Cairo (the zone the bug only showed up in).
+import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
 
 /** A day column's header, read from the Date FullCalendar hands `dayHeaderContent`.
  *
@@ -31,4 +32,25 @@ export function scrollTimeNear(now: Date, leadMinutes: number = SCROLL_LEAD_DESK
   const minutes = Math.max(0, now.getHours() * 60 + now.getMinutes() - leadMinutes)
   const slot = minutes - (minutes % 30)
   return `${String(Math.floor(slot / 60)).padStart(2, '0')}:${String(slot % 60).padStart(2, '0')}:00`
+}
+
+// Polish F2b (conductor decision 2026-09-26: "roll 'today' over at Cairo midnight
+// automatically"). A calendar tab left open overnight kept yesterday as "today".
+
+/** Which day "today" is: Cairo's calendar day (the app's one day boundary, B2) and the device's
+ * own. The grid itself is laid out in device time, so on a device outside Cairo either one
+ * turning over re-syncs it; on a device in Cairo the two are the same day. */
+export function dayStamp(now: Date): string {
+  const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return `${cairoDateKey(now)}|${local}`
+}
+
+/** ms from `now` to the next Cairo midnight — or to the next device midnight when that comes
+ * first (only off-Cairo devices). Cairo's midnight is read from the tz database, so the night
+ * summer time ends (the last Thursday of October) is right too. */
+export function msUntilNextDay(now: Date): number {
+  const [y, m, d] = cairoDateKey(now).split('-').map(Number)
+  const nextCairo = new Date(cairoWallTimeToIso(y, m, d + 1)).getTime() // day 32 rolls over via Date.UTC
+  const nextLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime()
+  return Math.max(0, Math.min(nextCairo, nextLocal) - now.getTime())
 }

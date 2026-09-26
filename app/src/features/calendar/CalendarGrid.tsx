@@ -12,6 +12,7 @@ import { layoutOverlaps } from './overlapLayout'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
+import { useDayRollover } from './useDayRollover'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -200,6 +201,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     const id = window.setInterval(() => setMinute((m) => m + 1), 60_000)
     return () => window.clearInterval(id)
   }, [])
+  // Polish F2b: re-render the day headers ("· Today", the daisy stages) the moment a new day
+  // starts, not up to a minute later; a background tab catches up when it becomes visible.
+  useDayRollover()
   // Rendered day-column count, from datesSet — drives the min-width that makes the grid
   // horizontally scrollable instead of crushing columns (Kai: "why cant I scroll horizontally").
   const [visibleDays, setVisibleDays] = useState(initialView === 'timeGridDay' ? 1 : 7)
