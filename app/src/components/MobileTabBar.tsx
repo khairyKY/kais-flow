@@ -1,7 +1,8 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { VoiceCaptureButton } from '../features/capture/VoiceCaptureButton'
 import { useEscapeStack } from '../lib/overlayStack'
+import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
 
 // Pixel contract: "Kai's Flow — Universal Navigation Reference" §03 Mobile tab bar
 // (canonical 5-slot bar: Today · Inbox · Capture FAB · Cal · More) + its "More" sheet.
@@ -15,7 +16,11 @@ function slotLabel(active: boolean): CSSProperties {
 
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
 // (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
-const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; badge?: boolean }[] = [
+// deviation(2026-09-26 audit): the export's sheet has no Tasks, Projects, Activity or Trash, so on
+// a phone those four pages had no way in at all. They append after Focus the same way, each with
+// the icon the collapsed sidebar rail already gives it (Tasks' blossom flower, Projects' trellis
+// glyph, Activity's gold dot, Trash's hairline dot). Order is a placeholder until Kai picks one.
+const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; glyph?: ReactNode; badge?: boolean }[] = [
   { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
@@ -23,6 +28,10 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/people', label: 'People', dot: '--acc-clover' },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
+  { to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
+  { to: '/projects', label: 'Projects', glyph: <ProjectsGlyph /> },
+  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
+  { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
 ]
 
 function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pendingInbox: number; onClose: () => void; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
@@ -44,6 +53,8 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
+              {/* Line glyphs stroke currentColor — same muted ink as the rail's resting icons. */}
+              {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
               <span style={{ fontSize: 13, color: 'var(--ink-body)' }}>{item.label}</span>
               {item.badge && pendingInbox > 0 && (
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--acc-terra)' }}>{pendingInbox}</span>

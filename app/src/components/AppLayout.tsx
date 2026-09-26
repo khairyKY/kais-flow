@@ -13,7 +13,7 @@ import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
-import { FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
 // hotkey effect below, since CommandBar used to own it and can no longer be always-mounted.
@@ -37,22 +37,6 @@ import { splitKeyCombo } from '../lib/shortcuts'
 // active, washi tape tinted per page. ──
 
 const A = '/ds/assets'
-
-// Reference's "terrarium species" flower glyph — same five-ellipse shape, fill/center vary per page.
-function FlowerIcon({ fill, center }: { fill: string; center: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flex: 'none' }}>
-      <g fill={fill}>
-        <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
-        <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
-        <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
-        <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
-        <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
-      </g>
-      <circle cx="12" cy="11" r="2.4" fill={center} />
-    </svg>
-  )
-}
 
 type NavItem = {
   to: string
