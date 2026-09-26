@@ -17,10 +17,14 @@ function slotLabel(active: boolean): CSSProperties {
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
 // (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
 // deviation(2026-09-26 audit): the export's sheet has no Tasks, Projects, Activity or Trash, so on
-// a phone those four pages had no way in at all. They append after Focus the same way, each with
-// the icon the collapsed sidebar rail already gives it (Tasks' blossom flower, Projects' trellis
-// glyph, Activity's gold dot, Trash's hairline dot). Order is a placeholder until Kai picks one.
+// a phone those four pages had no way in at all. Each carries the icon the collapsed sidebar rail
+// already gives it (Tasks' blossom flower, Projects' trellis glyph, Activity's gold dot, Trash's
+// hairline dot). Order (polish-f1, conductor's call): Tasks and Projects lead — they're the pages a
+// phone user reaches for most and the tab bar has no slot for — then the designed rows in the
+// export's order, then Focus, Activity and Trash.
 const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; glyph?: ReactNode; badge?: boolean }[] = [
+  { to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
+  { to: '/projects', label: 'Projects', glyph: <ProjectsGlyph /> },
   { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
@@ -28,8 +32,6 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/people', label: 'People', dot: '--acc-clover' },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
-  { to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
-  { to: '/projects', label: 'Projects', glyph: <ProjectsGlyph /> },
   { to: '/activity', label: 'Activity', dot: '--acc-gold' },
   { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
 ]
