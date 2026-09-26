@@ -73,7 +73,10 @@ jobs:
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
           grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
           grep -n 'uses-permission' "$manifest"
-          find src-tauri/gen/android/app/src/main -name 'MainActivity.kt' -exec cat {} \;
+          # Our activity: keeps the page clear of the status/navigation bars + keyboard, bar strips in the page's colour.
+          activity="$(find src-tauri/gen/android/app/src/main -name 'MainActivity.kt' | head -1)"
+          test -n "$activity" || { echo "::error::generated MainActivity.kt not found"; exit 1; }
+          cp src-tauri/android/MainActivity.kt "$activity"
           # Android string resources reject a bare apostrophe ("Kai's Flow" → Kai\'s Flow).
           python3 - <<'PY'
           import glob, re
@@ -172,6 +175,7 @@ jobs:
                   print(b[i:i + 160])
               print(f'=====END {p}=====')
           PY
+          cat shots/webview-top.txt || true
           echo '----- window insets'; cat shots/window.txt || true
           echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
           echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true

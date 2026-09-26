@@ -24,7 +24,7 @@ import './index.css'
 import './features/projects/xfx.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
-import { isNativeShell } from './lib/platform'
+import { isNativeShell, syncShellChrome } from './lib/platform'
 
 // Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build
 // until a second reload. In autoUpdate mode this reloads the page as soon as the new version
@@ -40,6 +40,9 @@ if (!isNativeShell()) registerSW({
     })
   },
 })
+
+// M1: once styles have settled, give the Android shell the page colour for its bar strips.
+if (isNativeShell()) window.addEventListener('load', () => syncShellChrome(document.documentElement.dataset.theme === 'night' ? 'night' : 'day'))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
