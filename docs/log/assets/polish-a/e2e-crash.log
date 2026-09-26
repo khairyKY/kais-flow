@@ -1,0 +1,44 @@
+scratch build: {"commit":"a6afa9aa51f0242d0727517aeed73663ad4b4c49","builtAt":"2026-09-26T06:02:00.242Z"}
+
+# a crash on a top-level route (no shell): /sign-in?crash
+PASS  /sign-in crash: crash page
+PASS  /sign-in crash: no developer screen / raw text
+PASS  /sign-in crash: the word "error" is not on screen
+      shot desktop-crash-bare-signin.png
+PASS  bare crash: Reload reloads the page  — loads=1
+
+# a crash inside the shell: /focus?crash
+PASS  sign in (scratch build) → /today  — /today
+PASS  /focus crash: crash page inside the shell  — aside=1
+PASS  /focus crash: offers Reload and Back to Today
+PASS  /focus crash: no developer screen / raw text
+PASS  /focus crash: the word "error" is not on screen
+      shot desktop-crash-inshell-focus.png
+PASS  in-shell crash: Reload reloads the page  — loads=1
+PASS  crash: "Back to Today" → /today  — /today
+PASS  …and Today renders normally
+
+# a crash on Today itself: /today?crash
+PASS  /today crash: crash page
+PASS  /today crash: no "Back to Today" (it would only repeat the crash)
+      shot desktop-crash-inshell-today.png
+PASS  after a crash the sidebar still navigates (→ /inbox)  — /inbox
+PASS  …and Inbox renders normally
+PASS  phone bare crash page
+      shot phone-crash-bare-signin.png
+
+17/17 checks passed
+CONSOLE ERRORS (excluding open-meteo):
+crash /sign-in: Error: forced crash for polish-a check
+crash /sign-in: React Router caught the following error during render Error: forced crash for polish-a check
+crash /sign-in: Error: forced crash for polish-a check
+crash /sign-in: React Router caught the following error during render Error: forced crash for polish-a check
+crash /focus: Error: forced crash for polish-a check
+crash /focus: React Router caught the following error during render Error: forced crash for polish-a check
+crash /focus: Error: forced crash for polish-a check
+crash /focus: React Router caught the following error during render Error: forced crash for polish-a check
+crash /today: Error: forced crash for polish-a check
+crash /today: React Router caught the following error during render Error: forced crash for polish-a check
+crash-phone /sign-in: Error: forced crash for polish-a check
+crash-phone /sign-in: React Router caught the following error during render Error: forced crash for polish-a check
+open-meteo / ERR_TUNNEL_CONNECTION_FAILED lines ignored: 8
