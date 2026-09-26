@@ -17,3 +17,4 @@
 - 2026-09-26 06:06 · decision · new-user audit triage — 3 fixed, 6 in progress, rest queued — `2026-09-26-0606-bohr-decision-audit-triage.md`
 - 2026-09-26 06:08 · audit · security review of release-1: SHIP WITH FIXES; fixes routed to SEC-2 + P0-B — `2026-09-26-0608-bohr-audit-security-review.md`
 - 2026-09-26 06:09 · test-run · Polish A merged into release-1 @ 0116ce0: 28 files / 279 tests UTC+Cairo, lint baseline, build green (worker e2e 49/49 + crash 17/17; handoff 2026-09-26-0607-polish-a-handoff.md on that branch)
+- 2026-09-26 06:14 · test-run · Polish B merged into release-1 @ 3f84169: 29 files / 301 tests UTC+Cairo, lint baseline, build green (handoff 2026-09-26-0611-polish-b-handoff.md on that branch); Polish D dispatched (Tasks/Calendar 1280 layout, Now label, Today routine count, Review since, single-task Undo)
