@@ -7,7 +7,7 @@
 // check → undo → check again put TWO copies of next Tuesday on the list.
 
 import type { Task } from '../../lib/types'
-import { nextOccurrence } from './recurrence'
+import { nextOccurrence, nextReminderAt } from './recurrence'
 
 /** What completing changes on the task itself — exactly what an undo puts back. */
 export type CompletionFields = Pick<Task, 'status' | 'completed_at' | 'top3'>
@@ -47,6 +47,9 @@ export function planCompletion(task: Task, existing: readonly Task[], now: strin
     status: 'todo',
     completed_at: null,
     due_at: at.toISOString(),
+    // Polish F2a: the copy reminds again — same lead before its own due time, not yet sent.
+    reminder_at: nextReminderAt(task.reminder_at, task.due_at, at),
+    reminder_sent: false,
     scheduled_start: null,
     scheduled_end: null,
     top3: false,

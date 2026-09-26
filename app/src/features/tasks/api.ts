@@ -6,7 +6,7 @@ import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
-import { nextOccurrence } from './recurrence'
+import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo } from './completion'
 import type { Task } from '../../lib/types'
 
@@ -229,7 +229,9 @@ export function skipNextOccurrence(task: Task): void {
   if (task.recurrence_rule && task.due_at) {
     const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
     if (next) {
-      writeRow('tasks', { ...task, due_at: next.toISOString() })
+      // Polish F2a: the reminder moves with the occurrence (same lead, not yet sent) — left
+      // behind, it pointed at the skipped time and never fired for the new one.
+      writeRow('tasks', { ...task, due_at: next.toISOString(), reminder_at: nextReminderAt(task.reminder_at, task.due_at, next), reminder_sent: false })
       logActivity('task.skipped', 'task', task.id, { next_due_at: next.toISOString() })
     }
   }

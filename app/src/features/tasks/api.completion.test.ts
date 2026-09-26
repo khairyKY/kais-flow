@@ -24,7 +24,7 @@ vi.mock('../../lib/activity', () => ({
 }))
 vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn() }))
 
-const { completeTask, completeTaskWithUndo, uncompleteTask } = await import('./api')
+const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence } = await import('./api')
 const { useToastStore } = await import('../../lib/toastStore')
 
 function task(over: Partial<Task> = {}): Task {
@@ -112,5 +112,33 @@ describe('uncompleteTask ("Reopen")', () => {
     uncompleteTask(cache.find((x) => x.id === t.id)!)
     completeTask(cache.find((x) => x.id === t.id)!)
     expect(cache.filter((x) => x.status === 'todo' && x.due_at === '2026-09-29T06:00:00.000Z')).toHaveLength(1)
+  })
+})
+
+describe('a repeating task keeps reminding (Polish F2a)', () => {
+  // Saturday 09:00 Cairo, reminder 15 min before — the notify sweep already sent it.
+  const reminded = () => task({ reminder_at: '2026-09-26T05:45:00.000Z', reminder_sent: true })
+
+  it('completing writes the next occurrence with its own reminder, not yet sent', () => {
+    const t = reminded()
+    cache = [t]
+    completeTask(t)
+    const spawned = writes.find((w) => w.table === 'tasks' && w.row.id !== t.id)!.row
+    expect(spawned).toMatchObject({ due_at: '2026-09-29T06:00:00.000Z', reminder_at: '2026-09-29T05:45:00.000Z', reminder_sent: false })
+  })
+
+  it('skipping an occurrence moves the reminder with it', () => {
+    const t = reminded()
+    cache = [t]
+    skipNextOccurrence(t)
+    expect(writes).toHaveLength(1)
+    expect(writes[0].row).toMatchObject({ id: t.id, due_at: '2026-09-29T06:00:00.000Z', reminder_at: '2026-09-29T05:45:00.000Z', reminder_sent: false })
+  })
+
+  it('skipping a task with no reminder leaves it without one', () => {
+    const t = task({ reminder_at: null })
+    cache = [t]
+    skipNextOccurrence(t)
+    expect(writes[0].row).toMatchObject({ due_at: '2026-09-29T06:00:00.000Z', reminder_at: null, reminder_sent: false })
   })
 })

@@ -72,6 +72,25 @@ describe('planCompletion', () => {
     expect(planCompletion(task(), [openCopy], NOW, newId).next).toBeNull()
   })
 
+  it('Polish F2a: the next occurrence reminds again — same lead before its due, not yet sent', () => {
+    // 15 min before Saturday 09:00, already sent by the notify sweep.
+    const reminded = task({ reminder_at: '2026-09-26T05:45:00.000Z', reminder_sent: true })
+    const { done, next } = planCompletion(reminded, [], NOW, newId)
+    expect(next).toMatchObject({ due_at: NEXT_DUE, reminder_at: '2026-09-29T05:45:00.000Z', reminder_sent: false })
+    // The completed row keeps its own reminder history.
+    expect(done).toMatchObject({ reminder_at: '2026-09-26T05:45:00.000Z', reminder_sent: true })
+  })
+
+  it('Polish F2a: a reminder not yet sent moves with the occurrence too', () => {
+    const { next } = planCompletion(task({ reminder_at: '2026-09-26T05:00:00.000Z', reminder_sent: false }), [], NOW, newId)
+    expect(next).toMatchObject({ reminder_at: '2026-09-29T05:00:00.000Z', reminder_sent: false })
+  })
+
+  it('Polish F2a: no reminder on the original → none on the copy', () => {
+    const { next } = planCompletion(task({ reminder_at: null, reminder_sent: false }), [], NOW, newId)
+    expect(next).toMatchObject({ reminder_at: null, reminder_sent: false })
+  })
+
   it('a done or trashed copy of that occurrence does not block the spawn', () => {
     const doneCopy = task({ id: 'd', due_at: NEXT_DUE, status: 'done' })
     const trashed = task({ id: 't', due_at: NEXT_DUE, deleted_at: NOW })
