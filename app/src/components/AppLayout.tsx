@@ -10,7 +10,7 @@ import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
-import { filterByList, type SmartList } from '../features/tasks/grouping'
+import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
@@ -104,7 +104,10 @@ function PlanDrawer() {
     localStorage.setItem('kf.planOpen', open ? '1' : '0')
   }, [open])
 
-  const todayCount = filterByList(tasks, 'today').length
+  // polish-f1 (audit K-8): the folded drawer's whisper counts exactly the open rows the Today page
+  // lists (grouping.ts todayListTasks is Today's own row rule), so badge and page can't drift.
+  // The open drawer's "Due Today" row below still counts the Due Today list it links to.
+  const todayCount = todayOpenCount(tasks)
 
   const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode) => (
     <Link
@@ -163,7 +166,7 @@ function PlanDrawer() {
           ›
         </span>
         {!open && todayCount > 0 && (
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
+          <span title={`${todayCount} open on Today`} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
       {open && (
