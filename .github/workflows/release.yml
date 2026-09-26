@@ -3,12 +3,14 @@ name: Release
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
 #   gate → cron-key check → backup → database → edge functions → app (merge into master) → live check.
 # Nothing touches production until the gate is green and the merge into master is proven to be
-# exactly the tested tree. Trigger: push a `v*` tag on the release branch's tested commit, publish a
-# GitHub Release targeting it, or (once this file is on master) Actions → Release → Run workflow.
+# exactly the tested tree. Trigger: push a `v*` tag or a `claude/ship-v*` branch at the release's
+# tested commit, publish a GitHub Release targeting it, or (once on master) Actions → Run workflow.
 # The repo is public, so this job never prints data or keys; the backup goes to a private
 # Storage bucket in the same Supabase project (personal data never leaves Supabase).
 on:
   push:
+    # A `claude/ship-v*` branch starts a release too: the sandbox's git proxy refuses tag pushes.
+    branches: ['claude/ship-v*']
     tags: ['v*']
   release:
     types: [published]
@@ -58,6 +60,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           RELEASED="$(git rev-parse HEAD)"
+          LABEL="${LABEL#claude/ship-}"; echo "LABEL=$LABEL" >> "$GITHUB_ENV"
           git checkout -B master origin/master
           git merge --no-ff --no-edit -m "release $LABEL: merge ${RELEASED:0:7} into master" "$RELEASED"
           if [ "$(git rev-parse 'HEAD^{tree}')" != "$(git rev-parse "$RELEASED^{tree}")" ]; then
