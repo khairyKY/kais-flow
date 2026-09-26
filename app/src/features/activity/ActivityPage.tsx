@@ -420,10 +420,9 @@ export function ActivityPage() {
       <style>{styles}</style>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
-        <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          <span>Kai's Flow · Activity</span>
-          <span>Africa/Cairo</span>
-        </div>
+        {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Activity / Africa/Cairo" strip —
+            that was Activity.dc.html's mock of the shell topbar (<main>'s first child, 42px), and
+            the real shell already draws the topbar above this page. */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '34px 48px 40px', maxWidth: 880 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

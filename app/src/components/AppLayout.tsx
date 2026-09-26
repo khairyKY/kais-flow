@@ -13,6 +13,7 @@ import { filterByList, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
+import { useOwner } from '../lib/settings'
 import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
@@ -384,6 +385,7 @@ function queueAgo(ts: number): string {
 
 function TopBar() {
   const online = useOnline()
+  const owner = useOwner()
   const motionOn = useMotionEnabled()
   const queue = useOutboxQueue()
   const n = queue.length
@@ -424,7 +426,12 @@ function TopBar() {
       style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        <span>Kai's Flow · {dateLabel} ·</span>
+        {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
+            (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
+            boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
+        <span>
+          <span style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
+        </span>
         <button
           type="button"
           onClick={() => setPopOpen((v) => !v)}
@@ -500,6 +507,7 @@ export function AppLayout() {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
 
+  const owner = useOwner()
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
@@ -680,9 +688,13 @@ export function AppLayout() {
             scrolling — flip to a portal if that ever matters. */}
         <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
 
-        <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>
-          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Personal · Cairo</div>
+        {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
+            answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
+            boundary is Cairo for everyone (B2), and the timezone setting isn't read yet. Names
+            are user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
+        <div className="app-sidebar-header" style={{ padding: '0 22px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
+          <div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
+          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · Cairo</div>
           <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
