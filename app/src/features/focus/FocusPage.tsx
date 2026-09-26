@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useTasks, completeTask } from '../tasks/api'
+import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { useProjects } from '../projects/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
@@ -188,7 +188,9 @@ export function FocusPage() {
       }
     }
 
-    completeTask(activeTask)
+    // Polish F2a: "Done" toast + Undo, like every other check. Undo reopens the task (it comes
+    // back as the active task); the focused minutes logged above stay — that time was spent.
+    completeTaskWithUndo(activeTask)
     setIsRunning(false)
     setPomodoroStartIso(null)
     if (mode === 'pomodoro') {

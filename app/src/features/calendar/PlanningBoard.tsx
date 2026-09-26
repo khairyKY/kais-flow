@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, snoozeTask, setProject, deleteTask } from '../tasks/api'
+import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, snoozeTask, setProject, deleteTask } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
@@ -15,6 +15,7 @@ import { dragLift, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { scheduleNextWeek, scheduleThisWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
@@ -243,9 +244,12 @@ export function PlanningBoard() {
   // Punch 14: in-app ConfirmCard replaces the native confirm popup
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Polish F2a: bulk complete carries the same Undo as Today's and Tasks' — undoCompletion also
+  // takes back each repeat's spawned next occurrence. (A single card's check is TaskRow's own
+  // completeTaskWithUndo.)
   function bulkComplete() {
-    selectedTasks.forEach(completeTask)
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    const undos = selectedTasks.map((t) => completeTask(t))
+    toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
   function bulkSnooze(until: string) {

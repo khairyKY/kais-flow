@@ -30,6 +30,7 @@ import { useAreas } from '../areas/api'
 import {
   useTasks,
   completeTask,
+  completeTaskWithUndo,
   undoCompletion,
   createTask,
   snoozeTask,
@@ -1011,7 +1012,7 @@ export function ProjectDetailPage() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {repeatingTasks.map((t) => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                <Checkbox checked={false} onChange={() => completeTask(t)} size={15} />
+                <Checkbox checked={false} onChange={() => completeTaskWithUndo(t)} size={15} />
                 <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
                 <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '3px 8px', borderRadius: 3 }}>
                   ↻ repeats
