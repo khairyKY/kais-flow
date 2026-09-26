@@ -23,7 +23,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { Button, Chip } from '../../components/kit'
+import { Button, Chip, KeyCombo } from '../../components/kit'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, isToday } from './inboxDisplay'
 import type { InboxItem, InboxKind } from '../../lib/types'
@@ -393,11 +393,13 @@ export function InboxPage() {
 
             {!isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>E</b> file</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>D</b> dismiss</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>S</b> snooze</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>↑↓</b> move</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>⏎</b> open</span>
+                {/* J-17: each key is a keycap (the `?` overlay's chip), not a bold letter. */}
+                {([[['E'], 'file'], [['D'], 'dismiss'], [['S'], 'snooze'], [['↑', '↓'], 'move'], [['⏎'], 'open']] as const).map(([keys, label]) => (
+                  <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <KeyCombo keys={keys} size="sm" />
+                    {label}
+                  </span>
+                ))}
                 <span style={{ marginLeft: 'auto' }}>one keystroke per capture — that's the whole game</span>
               </div>
             )}
@@ -641,15 +643,42 @@ function TriageCard({
             style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontFamily: 'var(--font-ui)', fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', padding: '4px 8px' }}
           />
         ) : (
-          <div data-no-select onClick={() => setEditing(true)} title="Tap to edit the title before filing" style={{ flex: 1, fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, cursor: 'text' }}>
+          <div data-no-select onClick={() => setEditing(true)} title="Tap to edit the title before filing" style={{ flex: 1, minWidth: 0, fontSize: size.title, color: 'var(--ink-body)', lineHeight: 1.45, cursor: 'text', overflowWrap: 'anywhere' }}>
             {title}
           </div>
         )}
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
-          {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
-        </span>
+        {/* Polish F2b: on a phone this unbreakable caption took half the row and squeezed the
+            title into a word-per-line column. 1c gives the text the card's full width; the
+            caption moves to the end of the chip row below. */}
+        {!compact && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
+            {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
+          </span>
+        )}
       </div>
 
+      {compact ? (
+        // Inbox.dc.html 1c: the AI read as a row of chips under the text (no tinted bar — the
+        // title above already shows the cleaned text), wrapping as the width needs.
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 9 }}>
+          {parse ? (
+            confident ? (
+              <>
+                <Chip tone="hydrangea" style={{ background: 'color-mix(in srgb, var(--acc-hydrangea) 30%, transparent)' }}>AI · {parse.kind ?? 'note'} · {pct}%</Chip>
+                {dueLabel && <Chip tone="lavender">→ {dueLabel}</Chip>}
+                {projectName && <Chip tone="sage">{projectName}</Chip>}
+              </>
+            ) : (
+              <Chip tone="bordered">AI unsure · {pct}%</Chip>
+            )
+          ) : (
+            <span style={{ fontSize: size.meta, color: 'var(--ink-muted)', fontStyle: 'italic' }}>no AI read on this one — file it yourself</span>
+          )}
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
+            {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
+          </span>
+        </div>
+      ) : (
       <div style={{ marginTop: 11, display: 'flex', alignItems: 'center', gap: 9, background: confident ? 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)' : 'var(--paper-bone)', borderRadius: 6, padding: size.barPad, flexWrap: 'wrap' }}>
         {parse ? (
           confident ? (
@@ -674,8 +703,10 @@ function TriageCard({
           <span style={{ fontSize: size.meta, color: 'var(--ink-muted)', fontStyle: 'italic' }}>no AI read on this one — file it yourself</span>
         )}
       </div>
+      )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 8 : 9, marginTop: 13, flexWrap: 'wrap' }}>
+      {/* 1c: on a phone the actions sit under a dashed rule, File first and Dismiss at the far edge. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 8 : 9, marginTop: compact ? 11 : 13, flexWrap: 'wrap', ...(compact ? { paddingTop: 10, borderTop: '1px dashed var(--line-dashed)' } : null) }}>
         {!compact && (
           <>
             <Select
@@ -704,14 +735,14 @@ function TriageCard({
             {dueLabel && <Chip tone="lavender">→ {dueLabel}</Chip>}
           </>
         )}
-        <span style={{ flex: 1 }} />
+        {!compact && <span style={{ flex: 1 }} />}
         <Button type="button" variant="cta" onClick={file} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 14px' : '8px 16px' }}>
           File as task
         </Button>
         <Button type="button" variant="secondary" onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 12px' : '8px 14px' }}>
           Snooze
         </Button>
-        <Button type="button" variant="ghost" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px' }}>
+        <Button type="button" variant="ghost" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px', ...(compact ? { marginLeft: 'auto' } : null) }}>
           Dismiss
         </Button>
       </div>

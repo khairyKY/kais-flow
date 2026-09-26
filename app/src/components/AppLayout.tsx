@@ -3,17 +3,19 @@ import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-route
 import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
-import { signOut } from '../features/auth/AuthProvider'
-import type { OutboxEntry } from '../lib/outbox'
+import { useSignOut } from '../features/auth/useSignOut'
+import { unsyncedChanges, type OutboxEntry } from '../lib/outbox'
+import { syncHeader, syncRows } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
 import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
-import { filterByList, type SmartList } from '../features/tasks/grouping'
+import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
-import { FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { useOwner } from '../lib/settings'
+import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
 // hotkey effect below, since CommandBar used to own it and can no longer be always-mounted.
@@ -25,6 +27,8 @@ const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ de
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
+import { KeyCombo } from './kit'
+import { splitKeyCombo } from '../lib/shortcuts'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -35,22 +39,6 @@ import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 // active, washi tape tinted per page. ──
 
 const A = '/ds/assets'
-
-// Reference's "terrarium species" flower glyph — same five-ellipse shape, fill/center vary per page.
-function FlowerIcon({ fill, center }: { fill: string; center: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flex: 'none' }}>
-      <g fill={fill}>
-        <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
-        <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
-        <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
-        <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
-        <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
-      </g>
-      <circle cx="12" cy="11" r="2.4" fill={center} />
-    </svg>
-  )
-}
 
 type NavItem = {
   to: string
@@ -66,9 +54,13 @@ type NavItem = {
 // Punch 58 (Kai's V1 ruling): rail icons ALL simple — Inbox/Projects/Routines/
 // Focus/Review swap their species PNG renders for line glyphs (icons/NavGlyphs.tsx).
 // Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
+// Loop B (docs/DAILY-CYCLE.md, 2026-09-26): Tend reads in the daily loop's order — capture lands in
+// Inbox, the day is planned onto the Calendar, then the lists behind it: Today · Inbox · Calendar ·
+// Tasks · Projects. Only the order changed; each row's icon, dot and tape are its own.
 const TEND: NavItem[] = [
   { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" />, tape: 'color-mix(in srgb, var(--acc-sage) 40%, transparent)' },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'color-mix(in srgb, var(--acc-hydrangea) 55%, transparent)' },
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
   // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
@@ -76,7 +68,6 @@ const TEND: NavItem[] = [
   // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
   // Tasks was the odd one out.
   { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" />, tape: 'color-mix(in srgb, var(--acc-blossom) 45%, transparent)' },
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
   { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
 ]
 
@@ -116,7 +107,10 @@ function PlanDrawer() {
     localStorage.setItem('kf.planOpen', open ? '1' : '0')
   }, [open])
 
-  const todayCount = filterByList(tasks, 'today').length
+  // polish-f1 (audit K-8): the folded drawer's whisper counts exactly the open rows the Today page
+  // lists (grouping.ts todayListTasks is Today's own row rule), so badge and page can't drift.
+  // The open drawer's "Due Today" row below still counts the Due Today list it links to.
+  const todayCount = todayOpenCount(tasks)
 
   const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode) => (
     <Link
@@ -175,7 +169,7 @@ function PlanDrawer() {
           ›
         </span>
         {!open && todayCount > 0 && (
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
+          <span title={`${todayCount} open on Today`} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
       {open && (
@@ -338,11 +332,14 @@ function footerRow(icon: React.ReactNode, label: string, shortcut: string | unde
       type="button"
       onClick={onClick}
       className="kf-side-row"
+      title={label}
+      aria-label={label}
       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 6, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
     >
       <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
       <span className="app-footer-label" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>
-      {shortcut && <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>{shortcut}</span>}
+      {/* J-17: keycaps, not mono text. The class keeps them hidden on the collapsed rail. */}
+      {shortcut && <KeyCombo className="app-footer-label" keys={splitKeyCombo(shortcut)} size="sm" style={{ marginLeft: 'auto' }} />}
     </button>
   )
 }
@@ -365,12 +362,17 @@ function useOnline(): boolean {
 // ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue.
 // Event-driven via outbox's 'kf-outbox-change' (foundation patch landed); the slow
 // interval is only a belt-and-braces fallback.
-// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection. ──
-function useOutboxQueue(): OutboxEntry[] {
-  const [queue, setQueue] = useState<OutboxEntry[]>([])
+// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection.
+// polish-c (2026-09-26 audit): `waiting` is P0-B's unsyncedChanges() — user actions, not queue
+// rows — so one capture reads "1", not "2" (every action also queues an activity_log row). ──
+function useOutboxQueue(): { queue: OutboxEntry[]; waiting: number } {
+  const [state, setState] = useState<{ queue: OutboxEntry[]; waiting: number }>({ queue: [], waiting: 0 })
   useEffect(() => {
     let alive = true
-    const read = () => void get<OutboxEntry[]>('kf-outbox').then((q) => { if (alive) setQueue(q ?? []) })
+    const read = () =>
+      void Promise.all([get<OutboxEntry[]>('kf-outbox'), unsyncedChanges()]).then(([q, waiting]) => {
+        if (alive) setState({ queue: q ?? [], waiting })
+      })
     read()
     const t = setInterval(read, 30_000)
     window.addEventListener('kf-outbox-change', read)
@@ -384,12 +386,9 @@ function useOutboxQueue(): OutboxEntry[] {
       window.removeEventListener('offline', read)
     }
   }, [])
-  return queue
+  return state
 }
 
-const QUEUE_KIND: Record<string, string> = {
-  tasks: 'task', inbox_items: 'inbox', journal_entries: 'journal', calendar_events: 'event', routines: 'routine',
-}
 function queueAgo(ts: number): string {
   const min = Math.max(1, Math.round((Date.now() - ts) / 60_000))
   return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
@@ -397,9 +396,10 @@ function queueAgo(ts: number): string {
 
 function TopBar() {
   const online = useOnline()
+  const owner = useOwner()
   const motionOn = useMotionEnabled()
-  const queue = useOutboxQueue()
-  const n = queue.length
+  const { queue, waiting: n } = useOutboxQueue()
+  const rows = useMemo(() => syncRows(queue), [queue])
   const [popOpen, setPopOpen] = useState(false)
   const popRef = useRef<HTMLDivElement>(null)
 
@@ -437,11 +437,16 @@ function TopBar() {
       style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        <span>Kai's Flow · {dateLabel} ·</span>
+        {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
+            (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
+            boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
+        <span className="app-topbar-where">
+          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
+        </span>
         <button
           type="button"
           onClick={() => setPopOpen((v) => !v)}
-          className="kf-hit"
+          className="kf-hit app-topbar-sync"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online || n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
           {status}
@@ -449,9 +454,11 @@ function TopBar() {
             <span style={{ color: 'var(--acc-sage)', animation: glint ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: glint ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
           )}
         </button>
-        <SeasonTopbarEcho />
+        <span className="app-topbar-echo">
+          <SeasonTopbarEcho />
+        </span>
       </div>
-      <div style={{ flex: 'none' }}>Africa/Cairo</div>
+      <div className="app-topbar-zone" style={{ flex: 'none' }}>Africa/Cairo</div>
 
       {popOpen && (
         <div
@@ -463,25 +470,19 @@ function TopBar() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
           ) : (
             <>
+              {/* polish-c (2026-09-26 audit): human rows only — one per change, never a table
+                  name, never the change's bookkeeping activity row alongside it (components/syncQueue.ts). */}
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
-                {online ? `Syncing ↻ ${n}` : `Offline ◌ · ${n} saved here`}
+                {syncHeader(n, online)}
               </div>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {queue.map((e) => {
-                  const p = e.payload as Record<string, unknown>
-                  const label = (p.title ?? p.raw_text ?? p.name ?? '') as string
-                  return (
-                    <div key={`${e.table}-${e.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
-                        {QUEUE_KIND[e.table] ?? e.table}
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {label ? `'${label}'` : ''} {e.op === 'delete' ? 'removed' : 'saved'}
-                      </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(e.queuedAt)}</span>
-                    </div>
-                  )
-                })}
+                {rows.map((r) => (
+                  <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+                  </div>
+                ))}
               </div>
               <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>
                 {online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back."}
@@ -508,11 +509,14 @@ export function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  // P0-B: both Sign out buttons (sidebar + phone More sheet) share one flow and one prompt.
+  const signOutFlow = useSignOut()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('kf.sidebarCollapsed') === '1')
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
 
+  const owner = useOwner()
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
@@ -554,16 +558,40 @@ export function AppLayout() {
   }, [setCommandBarOpen, toggleCommandBar])
 
   return (
-    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: '100dvh', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
+        .app-topbar-echo { display: contents; }
         @media (max-width: 767px) {
           .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
+          /* The phone topbar already clips from the right; a long owner name would push the date
+             off too, so the name alone caps (~12 chars) and ellipsizes. "Kai's Flow" fits. */
+          .app-topbar-owner { display: inline-block; vertical-align: top; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+          /* polish-f1: at 390px and a 125% size (the phone default until F2b) the strip is ~280 CSS px wide, and the
+             sync status (3rd) was pushed out entirely by the weather echo and the zone. The
+             iPhone exports carry neither (their app bar is flower · date · search), so both drop
+             here; the status never shrinks, and if anything still has to give (a long name while
+             "Offline ◌ — N saved here"), it's the name · date run, with an ellipsis. */
+          .app-topbar-echo, .app-topbar-zone { display: none; }
+          .app-topbar-where { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+          .app-topbar-sync { flex: none; }
           .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* Shell fit (2026-09-26): the footer is pinned, so on a short sidebar (1280×800 at the
+           default 125% is only 640 layout px tall) its five labelled rows (194px) pushed Tasks,
+           Calendar and Projects out of view. Below 800px of sidebar height it becomes one row of
+           icons (~47px) — same controls, titled + labelled, the collapsed rail's own treatment.
+           A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
+        .app-sidebar { container: kf-sidebar / size; }
+        @container kf-sidebar (max-height: 799px) {
+          .app-sidebar:not(.collapsed) .app-sidebar-footer { flex-direction: row !important; justify-content: space-between; padding: 4px 12px 12px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .app-footer-label { display: none !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row { padding: 8px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row:hover { transform: none; }
+        }
         /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
            width and the label floats over the page. Styled to the export's nav row: parchment,
            card border, crisp shadow, 14px --ink-body. */
@@ -691,11 +719,15 @@ export function AppLayout() {
             the container goes overflow-visible and the flyouts float over the page.
             ponytail: on a very short viewport the collapsed rail clips its tail instead of
             scrolling — flip to a portal if that ever matters. */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 18px' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
 
-        <div className="app-sidebar-header" style={{ padding: '0 22px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>Kai's Flow</div>
-          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Personal · Cairo</div>
+        {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
+            answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
+            boundary is Cairo for everyone (B2), and the timezone setting isn't read yet. Names
+            are user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
+        <div className="app-sidebar-header" style={{ padding: '0 22px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
+          <div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
+          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · Cairo</div>
           <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
@@ -715,21 +747,26 @@ export function AppLayout() {
         <div style={{ flex: 1 }} />
 
         <StreakWidget />
+        </div>
 
-        <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {/* Shell fit (2026-09-26): the footer rows are pinned below the scrolling column. At the
+            default 125% size a 1280×800 window is only ~640 layout px tall, so inside the scroll
+            Settings / Sign out sat ~290px below the fold. Pinned, they're always one tap away. */}
+        <div className="app-sidebar-footer" style={{ flex: 'none', padding: '4px 14px 18px', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {footerRow(PlusGlyph, 'Capture', '⌘K', () => setCommandBarOpen(true))}
           {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
           {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
           <NavLink
             to="/settings"
+            title="Settings"
+            aria-label="Settings"
             className="kf-side-row"
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
           >
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
           </NavLink>
-          {footerRow(SignOutGlyph, 'Sign out', undefined, () => void signOut(), true)}
-        </div>
+          {footerRow(SignOutGlyph, 'Sign out', undefined, signOutFlow.request, true)}
         </div>
       </aside>
 
@@ -748,7 +785,7 @@ export function AppLayout() {
         pendingInbox={pendingInbox.length}
         onSearch={() => setSearchOpen(true)}
         onChat={() => setChatOpen(true)}
-        onSignOut={() => void signOut()}
+        onSignOut={signOutFlow.request}
       />
 
       <Suspense fallback={null}>
@@ -758,6 +795,7 @@ export function AppLayout() {
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
       </Suspense>
       <ToastHost />
+      {signOutFlow.prompt}
     </div>
   )
 }

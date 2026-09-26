@@ -16,9 +16,19 @@
 -- The two `enqueue_embed_*` functions return `trigger` and cannot be called over RPC at all.
 
 revoke execute on function do_resurface() from public, anon, authenticated;
-revoke execute on function reload_retainers() from public, anon, authenticated;
-
 -- `reload_retainers()` also shipped without a pinned search_path, which lets a caller who can
 -- create objects shadow an unqualified name inside a definer function. Pin it to match every
 -- other definer function in this schema.
-alter function reload_retainers() set search_path = public;
+--
+-- Guarded (2026-09-26, v1.0.0 deploy): production ran an earlier copy of 0020 that predates this
+-- function, so it has no `reload_retainers()` (and no `retainer-reload-monthly` job) and the
+-- unguarded revoke aborted the push. Where the function doesn't exist there is nothing callable
+-- to lock down; where it does, it is locked down exactly as before.
+do $$
+begin
+  if to_regprocedure('public.reload_retainers()') is not null then
+    revoke execute on function public.reload_retainers() from public, anon, authenticated;
+    alter function public.reload_retainers() set search_path = public;
+  end if;
+end
+$$;

@@ -1,0 +1,35 @@
+build: {"commit":"912b52678bd46bc8f0b77566de7ceabfdc686719","builtAt":"2026-09-26T06:56:03.966Z"}
+      desktop-day: queue tables ["inbox_items","activity_log","tasks","activity_log"] | strip "OFFLINE ◌ — 2 SAVED HERE"
+      desktop-day popover: OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 6955' · captured | 1 min ago | TASK | 'Water the basil 6955' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  desktop-day: strip counts changes, not queue rows  — OFFLINE ◌ — 2 SAVED HERE (queue 4, changes 2)
+PASS  desktop-day: popover never shows a table name  — OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 6955' · captured | 1 min ago | TASK | 'Water the basil 6955' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  desktop-day: popover says "changes"  — OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 6955' · captured | 1 min ago | TASK | 'Water the basil 6955' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  desktop-day: one row per change
+PASS  desktop-day: never the word "error"
+      shot ./shots/after-offline-desktop-day-popover.png
+PASS  desktop-day: back online → Synced  — SYNCED
+●
+      shot ./shots/after-offline-desktop-day-back-online.png
+      phone-night: queue tables ["inbox_items","activity_log","tasks","activity_log"] | strip "OFFLINE ◌ — 2 SAVED HERE"
+      phone-night popover: OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 9826' · captured | 1 min ago | TASK | 'Water the basil 9826' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  phone-night: strip counts changes, not queue rows  — OFFLINE ◌ — 2 SAVED HERE (queue 4, changes 2)
+PASS  phone-night: popover never shows a table name  — OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 9826' · captured | 1 min ago | TASK | 'Water the basil 9826' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  phone-night: popover says "changes"  — OFFLINE ◌ · 2 CHANGES SAVED HERE | INBOX | 'offline seeds 9826' · captured | 1 min ago | TASK | 'Water the basil 9826' · added | 1 min ago | Everything here syncs the moment you're back.
+PASS  phone-night: one row per change
+PASS  phone-night: never the word "error"
+      shot ./shots/after-offline-phone-night-popover.png
+PASS  phone-night: back online → Synced  — SYNCED
+●
+      shot ./shots/after-offline-phone-night-back-online.png
+
+console/request lines: 8 total, 0 other than open-meteo
+  offline-desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-desktop-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-desktop-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-phone-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-phone-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-phone-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  offline-phone-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+12/12 checks passed

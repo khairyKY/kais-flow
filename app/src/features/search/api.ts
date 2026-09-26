@@ -4,7 +4,10 @@ import type { SearchHit, SearchEntityType, Task } from '../../lib/types'
 export async function searchHybrid(query: string, limit = 50): Promise<SearchHit[]> {
   const { data, error } = await supabase.functions.invoke('search', { body: { query, limit } })
   if (error) throw error
-  return (data as { results: SearchHit[] }).results
+  // An answer without a results list is a failed search, not an empty one (useSearch → "resting").
+  const results = (data as { results?: unknown } | null)?.results
+  if (!Array.isArray(results)) throw new Error('search answered without results')
+  return results as SearchHit[]
 }
 
 // Punch 49: the groups the ⌘/ overlay and the full page both render, in the export's order

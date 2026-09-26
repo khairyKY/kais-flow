@@ -1,7 +1,10 @@
 // P5: hybrid retrieval (FTS + pgvector RRF) grounds a Groq streaming answer over the user's
 // tasks/inbox_items + a small live snapshot. SSE out, terminated by a `done` event with citations.
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders, hybridSearch, type SearchHit } from '../_shared/retrieval.ts'
+import { requireUser } from '../_shared/auth.ts'
+import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
+import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
+import { hybridSearch, type SearchHit } from '../_shared/retrieval.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -25,12 +28,26 @@ function buildContext(hits: SearchHit[], top3: { title: string }[], slipping: { 
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // FIX-0 / S3: a signed-in user, not merely the public anon key, before retrieval or Groq.
+  // Retrieval below still runs as that user (their JWT is forwarded), so RLS scopes every row.
+  const auth = await requireUser(req)
+  if (auth instanceof Response) return auth
+
+  // SEC-2: today's AI allowance, before the body is read, retrieval runs or Groq is called.
+  // Fails CLOSED: if the allowance can't be checked, chat does not call Groq. Nothing is lost by
+  // saying "not right now" to a question, while an unmetered path during a database blip is the
+  // one gap a quota-draining script would lean on.
+  const allowance = await takeAiAllowance(auth.user.id, 'chat')
+  if (allowance === 'over') return dailyLimitResponse(req)
+  if (allowance === 'unavailable') return jsonResponse(req, { error: 'allowance unavailable' }, 503)
+
   try {
-    const authHeader = req.headers.get('Authorization') ?? ''
+    const authHeader = `Bearer ${auth.token}`
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     })
@@ -62,7 +79,9 @@ Deno.serve(async (req) => {
     })
 
     if (!groqRes.ok || !groqRes.body) {
-      return new Response(JSON.stringify({ error: `Groq error ${groqRes.status}: ${await groqRes.text()}` }), {
+      // Upstream detail stays in the function log; the caller only needs to know it failed.
+      console.error('chat: groq', groqRes.status, await groqRes.text())
+      return new Response(JSON.stringify({ error: 'upstream_failed' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -116,7 +135,9 @@ Deno.serve(async (req) => {
       },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('chat:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -21,12 +21,23 @@ body,
 /* Route transition wrapper — Motion 2a route cut (D-4 ruling, 2026-07-26): the incoming
    page rises 6px over 160ms on every client-side route change; [data-initial] suppresses
    it (and the stagger) on cold boot. Fill is `backwards`, never `both` — see tokens/motion.css
-   (J-5). Definite height (not auto) so height-bounded pages (calendar) inherit a real
-   viewport-relative size. */
+   (J-5).
+   Shell fit (2026-09-26): a flex column that is AT LEAST the scroll area's height, not exactly it.
+   With a fixed `height: 100%`, a long page overflowed this box, and the scroll area's bottom padding
+   (the phone's tab-bar clearance) was added after the box rather than after the content — so the
+   last line of a long page ended under the tab bar. Pages that fill the screen use `flex: 1`
+   (Herbarium, Activity, Trash already do), which grows into the min-height. */
 .kf-route {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  animation: routeCut 160ms var(--ease-out) backwards;
+}
+/* Height-bounded pages need a DEFINITE height to size against (the calendar's grid scrolls inside
+   itself; `.cal-shell { height: 100% }`), so a route holding one keeps the exact height. */
+.kf-route:has(> .cal-shell) {
   height: 100%;
   min-height: 0;
-  animation: routeCut 160ms var(--ease-out) backwards;
 }
 .kf-route[data-initial] {
   animation: none;
@@ -93,4 +104,14 @@ body::before {
   background: color-mix(in srgb, var(--ink-hairline) 55%, var(--bg-app)); /* night-safe (X-pass patch) */
   border-radius: 6px;
   border: 3px solid var(--bg-app);
+}
+
+/* Viewport lengths under the root UI zoom (lib/uiScale.ts sets `zoom` + --kf-ui-scale on <html>).
+   `100dvh` / `100vw` are laid out in unzoomed px and then scaled by the zoom, so at the default 125%
+   a "full-height" shell was 125% of the window: a second scrollbar on every page, the sidebar
+   footer below the fold, the last phone card behind the tab bar (Polish G finding, 2026-09-26).
+   Full-screen layouts use these instead of raw viewport units. */
+:root {
+  --kf-vh: calc(100dvh / var(--kf-ui-scale, 1));
+  --kf-vw: calc(100vw / var(--kf-ui-scale, 1));
 }

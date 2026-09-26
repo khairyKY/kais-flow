@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
+import { Select } from '../../components/Select'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { ConfirmCard } from '../projects/ConfirmCard'
-import { useTasks, createTask, setSomeday, completeTask, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
+import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
@@ -21,7 +23,8 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
@@ -69,7 +72,8 @@ function useDeepLinkScroll(focusId: string | null, tasks: Task[]): void {
 
 export type SortKey = 'smart' | 'due' | 'priority' | 'title'
 const SORT_KEYS: readonly SortKey[] = ['smart', 'due', 'priority', 'title']
-const SORT_LABELS: Record<SortKey, string> = { smart: 'Sort · Smart', due: 'Sort · Due', priority: 'Sort · Priority', title: 'Sort · A-Z' }
+const SORT_OPTION_LABELS: Record<SortKey, string> = { smart: 'Smart', due: 'Due', priority: 'Priority', title: 'A–Z' }
+const SORT_LABELS: Record<SortKey, string> = { smart: 'Sort · Smart', due: 'Sort · Due', priority: 'Sort · Priority', title: 'Sort · A–Z' }
 
 /** Reorders tasks inside each display group. `smart` keeps groupTasks' own date order. */
 function applySort(groups: TaskGroup[], sort: SortKey): TaskGroup[] {
@@ -102,12 +106,25 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
 }
 
 function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
+  const stripRef = useRef<HTMLDivElement>(null)
+  // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
+  // (a deep link to Done/All would otherwise land on a tab scrolled out of sight).
+  useEffect(() => {
+    const strip = stripRef.current
+    const el = strip?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!strip || !el || strip.scrollWidth <= strip.clientWidth) return
+    const left = el.offsetLeft - strip.offsetLeft
+    if (left < strip.scrollLeft || left + el.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = Math.max(0, left - 16)
+  }, [active])
   const tab = (key: Tab, label: string, count: number, underline: string) => (
     <Link
       key={key}
       to={key === 'done' ? '/tasks?list=done' : `/tasks?list=${key}`}
+      aria-current={active === key ? 'page' : undefined}
       style={{
         position: 'relative',
+        flex: 'none',
+        whiteSpace: 'nowrap',
         paddingBottom: 11,
         fontSize: 14,
         fontWeight: active === key ? 600 : 400,
@@ -120,29 +137,46 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       {active === key && <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: underline, borderRadius: 2 }} />}
     </Link>
   )
+  // Polish D (2026-09-26 audit): this was ONE unbreakable line (~640px: six tabs + Repeating +
+  // Sort). Wherever the list column is narrower — 1280/1440 at the default 125% interface size,
+  // every phone — it ran on under the Organize rail (All, Repeating and Sort unclickable) or off
+  // the screen. Now the tools wrap onto their own line ABOVE the tabs (wrap-reverse keeps the
+  // tabs on the bar's bottom border), and only if the tabs alone still don't fit does their strip
+  // scroll sideways inside itself (phones). One line, as drawn in Tasks.dc.html 1a, whenever it fits.
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
-      {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
-      {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
-      {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
-      {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
-      {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
-      {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
-      {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
-          task lives, undated project filings included. */}
-      {tab('all', 'All', allCount, 'var(--acc-moss)')}
-      <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
+      {/* paddingBottom 1 + marginBottom -1: the active underline (bottom -1) stays inside the
+          scroller's clip box and still lands on the bar's border, exactly as before. */}
+      <div ref={stripRef} style={{ display: 'flex', alignItems: 'flex-end', gap: 22, flex: '1 1 auto', minWidth: 0, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', paddingBottom: 1, marginBottom: -1 }}>
+        {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
+        {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
+        {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
+        {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
+        {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
+        {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
+        {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
+            task lives, undated project filings included. */}
+        {tab('all', 'All', allCount, 'var(--acc-moss)')}
+      </div>
+      <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
-            with the `⚟` glyph. Now a real sort cycler with a real icon. */}
-        <button
-          type="button"
-          onClick={() => onSort(SORT_KEYS[(SORT_KEYS.indexOf(sort) + 1) % SORT_KEYS.length])}
+            with the `⚟` glyph, then a click-cycler. J-12 (Kai): "a popover listing the options"
+            instead of clicking through Smart → Due → Priority → A–Z — the themed Select's own
+            popover, with the trigger keeping the cycler's exact look. */}
+        <Select
+          value={sort}
+          onChange={(v) => onSort(v as SortKey)}
+          options={SORT_KEYS.map((k) => ({ value: k, label: SORT_OPTION_LABELS[k] }))}
           title="Change sort order"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}
-        >
-          <SortIcon /> {SORT_LABELS[sort]}
-        </button>
+          ariaLabel="Sort order"
+          className="kf-hit"
+          // Polish F2a (FIX-6 decision "add a subtle ▾"): the trigger opens a menu, so it shows the
+          // caret the app's other menu triggers carry (BulkBar, Inbox bulk, People) — hairline ink,
+          // the label's own size.
+          display={<><SortIcon /> {SORT_LABELS[sort]} <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span></>}
+          style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
+        />
       </span>
     </div>
   )
@@ -214,7 +248,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
     // the content area's 30px top padding — the overhang clipped the bottom of the Projects
     // card even when the rail's own scrollbar was at the end. Sized to the worst case
     // (unscrolled page) so all three tape cards render fully at 100% zoom.
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(100dvh - 42px - 30px)', overflowY: 'auto' }}>
+    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(var(--kf-vh) - 42px - 30px)', overflowY: 'auto' }}>
       {/* R4-19 (2026-07-20 audit): "should be a bit more of a header… the same font as the title
           of the page… make it a bit more subtle, but to still be visible." Was 9.5px uppercase
           mono in --ink-faint, reading as a caption. Now the display face the page titles use,
@@ -417,14 +451,36 @@ export function TasksPage() {
   // in its group a beat longer so the check/petal animation (Motion 3b/5a, Tasks 2a) has
   // somewhere to play before the row actually leaves the list.
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null)
-  const [completingIds, setCompletingIds] = useState<Set<string>>(new Set())
+  // Rows in that grace window → the Top-3 flag each had when checked. Polish F2a: completing
+  // clears top3, and the grace row only put `status` back — so it re-rendered as a plain row the
+  // moment it was checked: no Top-3 bloom or glow, ☆ instead of ★, no ✶ Goal, and the live petal
+  // (`checking && task.top3`) never rendered. A Top-3 task not due today even left the Today tab
+  // at once (its list keeps it by top3). The grace row now keeps the flag it had.
+  const [completing, setCompleting] = useState<Map<string, boolean>>(new Map())
   // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
   // hand banner. Fires once per calendar day, ever (localStorage gate).
   const [dayComplete, setDayComplete] = useState(false)
-  function handleRowComplete(task: Task) {
-    completeTask(task)
+  // Pending 650ms hand-offs to the row exit, per task — an Undo cancels its own.
+  const exitTimers = useRef(new Map<string, number>())
+  /** Undo landed: stop the row's exit (or undo a finished one) so it stands back in its group. */
+  function keepRow(id: string) {
+    const timer = exitTimers.current.get(id)
+    if (timer !== undefined) window.clearTimeout(timer)
+    exitTimers.current.delete(id)
+    cancelRowRemoval(document.getElementById(`task-${id}`))
+    setCompleting((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Map(prev)
+      next.delete(id)
+      return next
+    })
+  }
+  // Punch 6 (Polish D): a single check toasts "Done" with Undo; `toast: false` is the bulk path,
+  // which puts up one toast for the whole selection instead.
+  function handleRowComplete(task: Task, { toast = true }: { toast?: boolean } = {}): CompletionUndo {
+    const undo = toast ? completeTaskWithUndo(task, () => keepRow(task.id)) : completeTask(task)
     setJustCompletedId(task.id)
-    if (!motion) return
+    if (!motion) return undo
     const todayOpen = filterByList(tasks, 'today', now).filter((t) => t.status === 'todo')
     if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id)) {
       const dayKey = new Date().toDateString()
@@ -436,19 +492,34 @@ export function TasksPage() {
         }
       } catch { /* private mode — skip the ceremony */ }
     }
-    setCompletingIds((prev) => new Set(prev).add(task.id))
-    window.setTimeout(() => {
+    setCompleting((prev) => new Map(prev).set(task.id, task.top3))
+    const timer = window.setTimeout(() => {
+      exitTimers.current.delete(task.id)
       // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
       // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
       // then the row leaves the list.
       animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
-        setCompletingIds((prev) => { const next = new Set(prev); next.delete(task.id); return next })
+        setCompleting((prev) => { const next = new Map(prev); next.delete(task.id); return next })
       })
     }, 650)
+    exitTimers.current.set(task.id, timer)
+    return undo
+  }
+  // Polish F2a: a second click on a just-checked row (still in its grace window) reopens it —
+  // the row stays in its group instead of sliding out, and the toast's Undo checks it again.
+  function handleRowReopen(task: Task) {
+    keepRow(task.id)
+    reopenTaskWithUndo(task)
   }
   const displayTasks = useMemo(
-    () => (completingIds.size === 0 ? tasks : tasks.map((t) => (completingIds.has(t.id) ? { ...t, status: 'todo' as const } : t))),
-    [tasks, completingIds],
+    () =>
+      completing.size === 0
+        ? tasks
+        : tasks.map((t) => {
+            const top3 = completing.get(t.id)
+            return top3 === undefined ? t : { ...t, status: 'todo' as const, top3 }
+          }),
+    [tasks, completing],
   )
 
   const [domainChip, setDomainChip] = useState<string | null>(null)
@@ -496,8 +567,13 @@ export function TasksPage() {
   const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   function bulkComplete() {
-    selectedTasks.forEach((t) => handleRowComplete(t))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.` })
+    const undos = selectedTasks.map((t) => handleRowComplete(t, { toast: false }))
+    toastUndo(`${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} completed.`, () =>
+      undos.forEach((u) => {
+        undoCompletion(u)
+        keepRow(u.before.id)
+      }),
+    )
     clearSelection()
   }
   function bulkSnooze(until: string) {
@@ -539,7 +615,8 @@ export function TasksPage() {
       : undefined
 
   const bindings = buildListBindings({
-    complete: (t) => handleRowComplete(t),
+    // Pressing the complete key again on a just-checked row reopens it, like a second click.
+    complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
@@ -584,13 +661,21 @@ export function TasksPage() {
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
   // (Tasks.dc.html:253-256) so the Organize rail starts level with the header.
   return (
-    <div style={{ maxWidth: 1180 }}>
-      {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only. */}
+    <div className="tasks-page" style={{ maxWidth: 1180 }}>
+      {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only.
+          Polish D (2026-09-26 audit): the switch was `@media (max-width: 767px)`, but media
+          queries read the WINDOW, which the root 125% zoom (lib/uiScale.ts) doesn't shrink — a
+          1280px window lays out only ~1024 CSS px, so the 288px rail kept its place and left the
+          list ~414px. A container query reads the page's real laid-out width instead: the rail
+          shows only when the list beside it keeps ≥472px (room for the six tabs on one line).
+          Below that the page is single-column, the layout Someday/Done (2a/2b) and phone already use. */}
       <style>{`
-        .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr) 288px; }
-        @media (max-width: 767px) {
-          .tasks-grid { grid-template-columns: 1fr; }
-          .tasks-rail { display: none; }
+        .tasks-page { container: tasks-page / inline-size; }
+        .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr); }
+        .tasks-rail { display: none; }
+        @container tasks-page (min-width: 760px) {
+          .tasks-grid { grid-template-columns: minmax(0,1fr) 288px; }
+          .tasks-rail { display: block; }
         }
       `}</style>
       <div className={singleCol ? undefined : 'tasks-grid'} style={{ display: singleCol ? 'block' : undefined, maxWidth: singleCol ? 780 : undefined }}>
@@ -740,6 +825,7 @@ export function TasksPage() {
                       goalTaskId={goalTaskId}
                       justCompletedId={justCompletedId}
                       onComplete={handleRowComplete}
+                      onReopen={handleRowReopen}
                     />
                   </div>
                 ))}

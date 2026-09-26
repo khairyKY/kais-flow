@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { useTasks, toggleTop3, completeTask, uncompleteTask, rescheduleDue } from '../tasks/api'
+import { useTasks, completeTask, undoCompletion, rescheduleDue } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { upsertJournalEntry } from '../journal/api'
@@ -9,9 +9,11 @@ import { playSound, closeTheGarden } from '../../lib/sounds'
 import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { logRitualStep } from './api'
+import { logRitualFinished, logRitualStep, setSeed, useSeedsFor } from './api'
+import { MAX_SEEDS, seedTargetDate } from './loopDay'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
+import { KeyChip } from '../../components/kit'
 import type { Task } from '../../lib/types'
 
 // ── The Closing Ritual — pixel contract Rituals.dc.html 2c/2d/2e (the four beats) with
@@ -80,17 +82,30 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const [line, setLine] = useState('')
-  const [seededIds, setSeededIds] = useState<Set<string>>(new Set())
+  // Loop B: tomorrow's seeds are activity rows (api.ts setSeed), read back here, so re-opening
+  // the ritual — or opening it on another device — shows what was already planted.
+  const seeds = useSeedsFor(seedTargetDate(new Date()))
 
   // Advance without counting the step — the sweep beat's "skip for now" (punch item 43:
   // skipping must never log the step as complete).
+  // Loop B: moving past the last beat (goodnight's "Done") finishes the ritual and logs
+  // `ritual.finished` with the beats done on this run; the header's "skip" leaves without it.
+  const [doneBeats, setDoneBeats] = useState<string[]>([])
+  function go(done: string[]) {
+    if (beatIndex < BEATS.length - 1) {
+      setBeatIndex(beatIndex + 1)
+      setDoneBeats(done)
+    } else {
+      logRitualFinished('evening', done)
+      onClose()
+    }
+  }
   function advance() {
-    if (beatIndex < BEATS.length - 1) setBeatIndex(beatIndex + 1)
-    else onClose()
+    go(doneBeats)
   }
   function next() {
     logRitualStep('evening', BEATS[beatIndex])
-    advance()
+    go([...doneBeats, BEATS[beatIndex]])
   }
 
   // "lands in the journal" — literally (punch item 43): append the line to today's real
@@ -103,7 +118,10 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       // D-1: a day holds many timestamped entries, so the night's line becomes its own
       // entry (stamped when it was written) instead of being appended to an earlier one.
       upsertJournalEntry({ entry_date: todayKey, body: text }, true)
-      logActivity('journal.line_added', 'ritual', todayKey, { text })
+      // S8 (polish-f1): the event says a line was written, never what it says. activity_log is
+      // kept in the persisted IndexedDB cache (Focus, Activity and notifications need it
+      // offline) and journal words must not be — the line itself lives in the journal entry above.
+      logActivity('journal.line_added', 'ritual', todayKey, { date: todayKey })
     }
     next()
   }
@@ -112,7 +130,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     beat === 'sweep' ? <SweepBeat tasks={tasks} onSkip={onClose} onSkipStep={advance} onNext={next} /> :
     beat === 'garden' ? <GardenBeat tasks={tasks} events={events} routines={routines} completions={completions} onSkip={onClose} onNext={next} /> :
     beat === 'line' ? <LineBeat line={line} onChange={setLine} onSkip={onClose} onNext={commitLine} /> :
-    beat === 'seeds' ? <SeedsBeat tasks={tasks} seededIds={seededIds} onSeed={(id) => setSeededIds((s) => new Set(s).add(id))} onSkip={onClose} onNext={next} /> :
+    beat === 'seeds' ? <SeedsBeat tasks={tasks} seeds={seeds} onSkip={onClose} onNext={next} /> :
     <GoodnightBeat
       onDone={() => {
         // Settings 3a: "The garden is silent after you close it." Closing is what starts
@@ -151,8 +169,9 @@ function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSki
   const doneToday = tasks.filter((t) => t.completed_at && new Date(t.completed_at) >= todayStart && new Date(t.completed_at) <= todayEnd)
 
   function markDone(t: Task) {
-    completeTask(t)
-    toastUndo('Task completed', () => uncompleteTask(t))
+    // Polish D: undoCompletion also takes back a recurring task's spawned next occurrence.
+    const undo = completeTask(t)
+    toastUndo('Task completed', () => undoCompletion(undo))
   }
 
   function roll(t: Task) {
@@ -396,7 +415,11 @@ function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: 
           />
           <div style={{ marginTop: 34, borderTop: '1px dashed var(--line-dashed)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <FieldLabel color="var(--ink-hairline)">lands in the journal</FieldLabel>
-            <FieldLabel>↵ continues</FieldLabel>
+            {/* polish-f1: the key is a keycap, like every other shortcut hint (J-17). */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <KeyChip text="↵" size="sm" />
+              <FieldLabel>continues</FieldLabel>
+            </span>
           </div>
         </div>
       </div>
@@ -405,28 +428,32 @@ function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: 
   )
 }
 
+// ── Beat 4 — Tomorrow's three (2d). Loop B (docs/DAILY-CYCLE.md, "shutdown feeds the next Plan"):
+// a tap plants the task as a seed for tomorrow's morning Top 3 instead of starring it tonight —
+// starring here put it in *today's* Top 3 (and hit today's three-star cap), and nothing told the
+// morning which stars came from last night. The morning ritual's Top-3 step now pre-selects these
+// and one tap keeps them. Tap again to take a seed back. ──
+
 function SeedsBeat({
   tasks,
-  seededIds,
-  onSeed,
+  seeds,
   onSkip,
   onNext,
 }: {
   tasks: ReturnType<typeof useTasks>['data']
-  seededIds: Set<string>
-  onSeed: (id: string) => void
+  seeds: Task[]
   onSkip: () => void
   onNext: () => void
 }) {
   const all = tasks ?? []
-  const top3 = all.filter((t) => t.top3)
-  const candidates = all.filter((t) => t.status === 'todo' && !t.top3)
-  const droppedIn = top3.filter((t) => seededIds.has(t.id)).length
+  const seededIds = new Set(seeds.map((t) => t.id))
+  // Today's still-open Top 3 lead the candidates — the likeliest things to carry into tomorrow.
+  const open = all.filter((t) => t.status === 'todo' && !seededIds.has(t.id))
+  const candidates = [...open.filter((t) => t.top3), ...open.filter((t) => !t.top3)]
 
-  function toggle(t: (typeof all)[number]) {
-    const wasStarred = t.top3
-    toggleTop3(t)
-    if (!wasStarred) onSeed(t.id)
+  function toggle(t: Task) {
+    if (seededIds.has(t.id)) setSeed(t, false)
+    else if (seeds.length < MAX_SEEDS) setSeed(t, true)
   }
 
   return (
@@ -437,7 +464,7 @@ function SeedsBeat({
         <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: '#c9c0d8' }}>tap three, or fewer ✿</div>
       </div>
       <div style={{ flex: 1, padding: '12px 24px 0', display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-        {top3.map((t) => (
+        {seeds.map((t) => (
           <div key={t.id} onClick={() => toggle(t)} style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'rgba(244,241,234,0.1)', border: '1px solid rgba(244,241,234,0.28)', borderRadius: 8, padding: '12px 13px', cursor: 'pointer' }}>
             <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>
             <span style={{ flex: 1, fontSize: 13.5, color: '#f0ebdd' }}><EmojiText text={t.title} /></span>
@@ -454,7 +481,7 @@ function SeedsBeat({
         <div style={{ position: 'relative', background: 'rgba(244,241,234,0.08)', border: '1.5px dashed rgba(201,165,90,0.5)', borderRadius: 10, padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9b485' }}>For tomorrow</div>
-            <div style={{ fontSize: 12, color: '#c9c0d8', marginTop: 2 }}>{droppedIn} seed{droppedIn === 1 ? '' : 's'} dropped in</div>
+            <div style={{ fontSize: 12, color: '#c9c0d8', marginTop: 2 }}>{seeds.length} seed{seeds.length === 1 ? '' : 's'} dropped in</div>
           </div>
         </div>
         <CtaButton onClick={onNext} full style={{ marginTop: 12 }}>Tuck them in</CtaButton>

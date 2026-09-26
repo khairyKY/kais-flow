@@ -1,0 +1,17 @@
+build: {"commit":"912b52678bd46bc8f0b77566de7ceabfdc686719","builtAt":"2026-09-26T06:56:03.966Z"}
+      set: "Alexandria-Rosemary"
+      long name desktop: {"topbar":"ALEXANDRIA-ROSEMARY'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO","ownerW":240,"headerOverflows":true}
+PASS  long name, desktop: sidebar title ellipsizes (no wrap)
+      shot ./shots/after-long-desktop-today.png
+      long name phone: {"topbar":"ALEXANDRIA-ROSEMARY'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO","ownerW":113,"headerOverflows":false}
+PASS  long name, phone: date still shows  — ALEXANDRIA-ROSEMARY'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO
+      shot ./shots/after-long-phone-today.png
+      restored: "Mira"
+
+console/request lines: 4 total, 0 other than open-meteo
+  long-desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  long-desktop /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  long-phone FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  long-phone /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+2/2 checks passed

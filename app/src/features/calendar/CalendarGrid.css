@@ -511,3 +511,45 @@
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
 .fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after { opacity: 1; }
+
+/* ═══ §6 Layout — overlap geometry (J-13). overlapLayout.ts picks each block's slot; these draw
+   it. FullCalendar positions every block's harness with inline left/right/z-index (its own
+   shingle overprinted titles and times), so the rules below are !important, reach the harness
+   through :has(), and skip FC's drag mirror (it rides a full-width harness of its own). ═══ */
+/* overlap (2): each calc(50% − 2px), 4px gutter — earlier start left */
+.fc .fc-timegrid-event-harness:has(> .kf-ov-p0:not(.fc-event-mirror)) { left: 0 !important; right: calc(50% + 2px) !important; margin: 0 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-p1:not(.fc-event-mirror)) { left: calc(50% + 2px) !important; right: 0 !important; margin: 0 !important; }
+/* stacked (3+): shingle 56% wide, offset 22% per index, later on top */
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)) { left: 0 !important; right: 44% !important; margin: 0 !important; z-index: 1 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)) { left: 22% !important; right: 22% !important; margin: 0 !important; z-index: 2 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { left: 44% !important; right: 0 !important; margin: 0 !important; z-index: 3 !important; }
+/* A shingled sheet must hide what it covers: block fills are a 24% tint, so on their own the
+   lower title reads straight through the upper block (the overprint J-13 is about). The harness
+   under each sheet carries the grid's own paper, so the tint sits on paper exactly as it does on
+   the bare column — same hue, same alpha, now opaque (the #3e drawing's sheets are opaque too). */
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)),
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)),
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { background: var(--paper-parchment); border-radius: 6px; }
+/* past the third index: fully hidden — listed by the topmost's "+N more" */
+.fc .fc-timegrid-event-harness:has(> .kf-ov-hide:not(.fc-event-mirror)) { display: none !important; }
+/* hover z-bumps only — no geometry change */
+.fc .fc-timegrid-event-harness:has(> .kf-ov:hover) { z-index: 4 !important; }
+/* the drawn shingle separates its upper sheets with the crisp shadow (Calendar.dc.html #3e) */
+.fc .fc-timegrid-event.kf-ov-s1:not(:hover),
+.fc .fc-timegrid-event.kf-ov-s2:not(:hover) { box-shadow: var(--shadow-crisp); }
+/* §6 overlap type scale: padding 6/8, title 11px on one line, time 8px start-only */
+.fc .fc-timegrid-event.kf-ov:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
+.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
+.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
+/* §6 narrow column (< 170px, Polish D): "short-tier type scale, start time only. Width never
+   changes what the block is." Same scale as the overlap tier above; CalendarGrid puts
+   .kf-cal-narrow on its wrapper and trims the time to the start (weekFit.ts decides). */
+.kf-cal-narrow .fc .fc-timegrid-event:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
+.fc .fc-timegrid-event .kf-ev-more { cursor: pointer; }
+@media (hover: hover) {
+  .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }
+}

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useTasks, completeTask } from '../tasks/api'
+import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { useProjects } from '../projects/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, localDateKey } from '../routines/streaks'
@@ -188,7 +188,9 @@ export function FocusPage() {
       }
     }
 
-    completeTask(activeTask)
+    // Polish F2a: "Done" toast + Undo, like every other check. Undo reopens the task (it comes
+    // back as the active task); the focused minutes logged above stay — that time was spent.
+    completeTaskWithUndo(activeTask)
     setIsRunning(false)
     setPomodoroStartIso(null)
     if (mode === 'pomodoro') {
@@ -635,7 +637,7 @@ export function FocusPage() {
 
   // 6. Base Timer layout (Pomodoro / Break / Stopwatch)
   return (
-    <div className="focus-bleed" style={{ position: 'relative', width: '100%', height: 'calc(100dvh - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
+    <div className="focus-bleed" style={{ position: 'relative', width: '100%', height: 'calc(var(--kf-vh) - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
       {/* WB-3 punch 64: the negative margins cancel `.app-main-content`'s DESKTOP padding
           (30/40/64). At ≤767px that padding is 20/16/tab-bar, so -40px bled 24px past each
           edge and gave /focus a horizontal scrollbar. Re-state the bleed against the phone
@@ -644,7 +646,7 @@ export function FocusPage() {
         @media (max-width: 767px) {
           .focus-bleed {
             margin: -20px -16px 0 !important;
-            height: calc(100dvh - 42px - 88px - env(safe-area-inset-bottom)) !important;
+            height: calc(var(--kf-vh) - 42px - 88px - env(safe-area-inset-bottom)) !important;
           }
         }
       `}</style>
@@ -1060,7 +1062,7 @@ export function FocusPage() {
         <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.05)', zIndex: 100 }}>
           {/* deviation(2026-07-18 audit): no rotate() on the settings card — text containers stay
               transform-free for crisp rendering (same ruling as C4). Washi tape keeps the tilt. */}
-          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
+          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
             {/* Washi tape decoration */}
             <span className="washi-tape-settings"></span>
 

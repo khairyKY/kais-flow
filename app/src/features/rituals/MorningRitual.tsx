@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useTasks, rescheduleDue, deleteTask, toggleTop3 } from '../tasks/api'
@@ -6,7 +6,8 @@ import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { localToIso } from '../calendar/eventTime'
 import { localDateKey } from '../routines/streaks'
-import { logRitualStep } from './api'
+import { logRitualFinished, logRitualStep, useRitualStepsToday, useSeedsFor } from './api'
+import { MAX_SEEDS, loopDayKey, morningPreselection, top3Diff } from './loopDay'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
@@ -85,10 +86,10 @@ function MorningPanel({ wide, children, footer }: { wide?: boolean; children: Re
   )
 }
 
-function StepFooter({ onSkip, onNext, label }: { onSkip: () => void; onNext: () => void; label: string }) {
+function StepFooter({ onSkip, onNext, label, skipLabel = 'skip for now' }: { onSkip: () => void; onNext: () => void; label: string; skipLabel?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 15, borderTop: '1px dashed var(--line-dashed)' }}>
-      <RLink onClick={onSkip}>skip for now</RLink>
+      <RLink onClick={onSkip}>{skipLabel}</RLink>
       <CtaButton onClick={onNext}>{label}</CtaButton>
     </div>
   )
@@ -106,30 +107,55 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const overdue = tasks.filter((t) => t.status === 'todo' && t.due_at && new Date(t.due_at) < startOfToday)
   const top3 = tasks.filter((t) => t.top3)
   const candidatesForTop3 = tasks.filter((t) => t.status === 'todo' && !t.top3)
-  const seeded = step === 'top3' && top3.length === 3 && !repicking
+
+  // Loop B (docs/DAILY-CYCLE.md, "shutdown feeds the next Plan"): last night's seeds (evening beat
+  // 4, api.ts setSeed) arrive pre-selected and one tap keeps them. "Seeded" used to mean "three
+  // tasks happen to be starred", whoever starred them; now it means seeds were planted for this
+  // loop day and this morning's Top-3 step hasn't been done yet. Done/deleted seeds and older
+  // nights' seeds never show (loopDay.ts liveSeeds / seededTaskIds).
+  const seeds = useSeedsFor(loopDayKey(new Date()))
+  const { data: stepsToday } = useRitualStepsToday()
+  const seeded = step === 'top3' && seeds.length > 0 && !stepsToday?.morning.has('top3') && !repicking
+  const seedIds = new Set(seeds.map((t) => t.id))
+  const seededRows = [...seeds, ...tasks.filter((t) => t.top3 && t.status === 'todo' && !seedIds.has(t.id))]
+  // null until touched, so the pre-selection follows the seeds as they load.
+  const [picked, setPicked] = useState<string[] | null>(null)
+  const selection = picked ?? morningPreselection(seeds, tasks)
 
   // Punch item 43: skipping a step must NOT count it as done — `advance` moves on without
   // logging; `next` is the "I did this step" path that logs it to the activity spine.
+  // Loop B: moving past the LAST step (Finish, or that step's own skip) finishes the ritual and
+  // logs `ritual.finished` with the steps done on this run; "skip for now" leaves without it.
+  const [doneSteps, setDoneSteps] = useState<string[]>([])
+  function go(done: string[]) {
+    if (stepIndex < STEPS.length - 1) {
+      setStepIndex(stepIndex + 1)
+      setDoneSteps(done)
+    } else {
+      logRitualFinished('morning', done)
+      onClose()
+    }
+  }
   function advance() {
-    if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1)
-    else onClose()
+    go(doneSteps)
   }
   function next() {
     logRitualStep('morning', STEPS[stepIndex])
-    advance()
+    go([...doneSteps, STEPS[stepIndex]])
   }
 
-  // 3b — "the step arrives closed and auto-advances after a beat unless touched".
-  const seededRef = useRef(seeded)
-  seededRef.current = seeded
-  useEffect(() => {
-    if (!seeded) return
-    const t = setTimeout(() => {
-      if (seededRef.current) next()
-    }, 1800)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seeded, stepIndex])
+  // 3b's auto-advance ("after a beat unless touched") is gone: seeds are no longer stars until
+  // they're kept, so advancing untouched would either star them without a tap or drop them.
+  function togglePick(id: string) {
+    setPicked(selection.includes(id) ? selection.filter((x) => x !== id) : selection.length < MAX_SEEDS ? [...selection, id] : selection)
+  }
+  // "Keep & continue →": the selection becomes the Top 3 — unstars first so the cap never refuses.
+  function keepSeeds() {
+    const { unstar, star } = top3Diff(selection, tasks)
+    for (const t of unstar) toggleTop3(t)
+    for (const t of star) toggleTop3(t)
+    next()
+  }
 
   const caption =
     step === 'overdue'
@@ -147,17 +173,28 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
           : "let today's shape settle onto the calendar"
 
   // A6 (2026-07-18 audit): two distinct skips — the top-right "skip" advances past the current
-  // step without performing it (also the block step's only skip, since it has no footer) and,
-  // per punch item 43, without logging it as complete; the footer's "skip for now" abandons
-  // the whole ritual.
+  // step without performing it and, per punch item 43, without logging it as complete; the
+  // footer's "skip for now" abandons the whole ritual. (Loop B: the block step has 1d's footer
+  // again, so "skip" is no longer its only way out.)
   return (
-    <MorningPanel wide={step === 'block'} footer={step === 'block' ? null : <StepFooter onSkip={onClose} onNext={next} label={stepIndex === STEPS.length - 1 ? 'Finish' : 'Next →'} />}>
+    <MorningPanel
+      wide={step === 'block'}
+      footer={
+        seeded ? (
+          <StepFooter onSkip={() => setRepicking(true)} skipLabel="re-pick" onNext={keepSeeds} label="Keep & continue →" />
+        ) : (
+          // Loop B: the time-block step had no footer (lost when 1d was built), so the morning
+          // could never be finished — only skipped out of. 1d's own footer, copy verbatim.
+          <StepFooter onSkip={onClose} onNext={next} label={step === 'block' ? 'Finish — the day has a shape' : 'Next →'} />
+        )
+      }
+    >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FieldLabel>
           {`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`}
           {seeded && <span style={{ color: 'var(--acc-gold)' }}> · closed by last night's seeds</span>}
         </FieldLabel>
-        <RLink onClick={advance}>skip</RLink>
+        <RLink onClick={() => advance()}>skip</RLink>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>
@@ -175,14 +212,14 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             <FieldLabel color="var(--acc-gold)">Planted last night</FieldLabel>
             <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>Tomorrow's three came in from the closing ritual — this step is already done.</div>
           </div>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', flex: 'none' }}>✿ {top3.length} seed{top3.length === 1 ? '' : 's'}</span>
+          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', flex: 'none' }}>✿ {seeds.length} seed{seeds.length === 1 ? '' : 's'}</span>
         </div>
       )}
 
       <h2 style={{ margin: '18px 0 4px', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 23, color: 'var(--ink-body)' }}>
         {step === 'top3' && seeded ? 'Your Top-3' : STEP_TITLES[step]}
         {step === 'top3' && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 400, fontSize: 13, color: 'var(--ink-faint)' }}> ({top3.length}/3{seeded ? ' · seeded' : ''})</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 400, fontSize: 13, color: 'var(--ink-faint)' }}> ({seeded ? `${selection.length}/3 · seeded` : `${top3.length}/3`})</span>
         )}
       </h2>
 
@@ -212,18 +249,36 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         seeded ? (
           <>
             <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Picked from bed, last night. Confirm them — or re-pick if the morning knows better.</p>
+            {/* Seeds first, pre-selected; then anything already starred. A tap takes one out or
+                puts it back (three at most); the footer's "Keep & continue →" confirms. */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {top3.map((t, i) => (
-                <div key={t.id} style={{ background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.2}deg)` }}>
-                  <span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <FieldLabel color="var(--acc-gold)">seeded</FieldLabel>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 15, borderTop: '1px dashed var(--line-dashed)' }}>
-              <RLink onClick={() => setRepicking(true)}>re-pick</RLink>
-              <CtaButton onClick={next}>Keep &amp; continue →</CtaButton>
+              {seededRows.map((t, i) => {
+                const on = selection.includes(t.id)
+                return (
+                  <div
+                    key={t.id}
+                    role="checkbox"
+                    aria-checked={on}
+                    tabIndex={0}
+                    onClick={() => togglePick(t.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        togglePick(t.id)
+                      }
+                    }}
+                    style={
+                      on
+                        ? { background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.2}deg)`, cursor: 'pointer' }
+                        : { border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }
+                    }
+                  >
+                    <span style={{ color: on ? 'var(--acc-terra)' : 'var(--line-sidebar)', fontSize: 15 }}>{on ? '★' : '☆'}</span>
+                    <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
+                    <FieldLabel color={on ? 'var(--acc-gold)' : 'var(--ink-faint)'}>{seedIds.has(t.id) ? 'seeded' : 'picked'}</FieldLabel>
+                  </div>
+                )
+              })}
             </div>
           </>
         ) : (

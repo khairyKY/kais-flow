@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   useTasks, createTask, renameTask, rescheduleDue, setLabels, setSomeday, setRecurrence,
-  setReminder, setDuration, toggleTop3, deleteTask, completeTask, uncompleteTask, snoozeTask,
+  setReminder, setDuration, toggleTop3, deleteTask, toggleTaskWithUndo, snoozeTask,
 } from '../tasks/api'
 import { useCalendarEvents } from './api'
 import { EmojiText } from '../../components/EmojiText'
@@ -18,7 +18,7 @@ import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { useGoalStore } from '../today/goalStore'
-import { BackLink, Checkbox, Chip } from '../../components/kit'
+import { BackLink, Checkbox, Chip, KeyCombo } from '../../components/kit'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
@@ -179,7 +179,7 @@ export function TaskEditorPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
               <Checkbox
                 checked={task.status === 'done'}
-                onChange={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
+                onChange={() => toggleTaskWithUndo(task)}
                 size={20}
                 style={{ borderRadius: 5, marginTop: 2, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
               />
@@ -251,7 +251,7 @@ export function TaskEditorPage() {
 
             <button
               type="button"
-              onClick={() => { task.status === 'done' ? uncompleteTask(task) : completeTask(task); navigate('/tasks') }}
+              onClick={() => { toggleTaskWithUndo(task); navigate('/tasks') }}
               style={{ width: '100%', marginTop: 16, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 14, padding: 13, borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
             >
               {task.status === 'done' ? 'Mark incomplete' : 'Mark complete'}
@@ -290,7 +290,7 @@ export function TaskEditorPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginTop: 24 }}>
         <Checkbox
           checked={task.status === 'done'}
-          onChange={() => (task.status === 'done' ? uncompleteTask(task) : completeTask(task))}
+          onChange={() => toggleTaskWithUndo(task)}
           size={22}
           style={{ borderRadius: 6, marginTop: 9, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
         />
@@ -348,7 +348,7 @@ export function TaskEditorPage() {
                   <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                     <Checkbox
                       checked={c.status === 'done'}
-                      onChange={() => (c.status === 'done' ? uncompleteTask(c) : completeTask(c))}
+                      onChange={() => toggleTaskWithUndo(c)}
                       size={16}
                       style={{ borderRadius: 4, ...(c.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
                     />
@@ -419,7 +419,8 @@ export function TaskEditorPage() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>⌘⏎</span>
+              {/* J-17 / 2026-09-26 decision: every shortcut hint is the kit's keycap (was hand-rolled mono text). */}
+              <KeyCombo keys={['⌘', '⏎']} size="sm" />
               <button type="button" onClick={handleSave} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Save</button>
             </div>
           </div>

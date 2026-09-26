@@ -3,6 +3,8 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { isPushSupported, subscribeThisDevice } from '../notifications/api'
 import { useMotionEnabled } from '../../lib/motion'
+import { flowName, workspaceName as workspaceLabel } from '../../lib/owner'
+import { KeyCombo } from '../../components/kit'
 
 // ── Pixel contract: design-export/Onboarding.dc.html — 1a-1g (the seven steps) + 1h
 // (iPhone, full-screen, CTA pinned). One React tree; the phone chrome from 1h (dots-only
@@ -28,12 +30,12 @@ const PILLARS = {
 }
 
 const STYLES = `
-  .ob-page { min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: var(--paper-sidebar); padding: 24px; }
+  .ob-page { min-height: var(--kf-vh); display: flex; align-items: center; justify-content: center; background: var(--paper-sidebar); padding: 24px; }
   /* R4-28b (2026-07-20 audit): "There's even a vertical one here, too." height was pinned at
      600px, so the taller steps overflowed into an internal scrollbar. min-height keeps the
      roomy proportions for the short steps and lets the tall ones grow; max-height still caps
      it to the viewport, so a genuinely small window scrolls instead of clipping. */
-  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: 600px; max-height: calc(100dvh - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.12), 0 18px 44px rgba(var(--kf-shadow-rgb, 60,52,38),0.14); overflow: hidden; }
+  .ob-card { position: relative; width: 780px; max-width: 100%; min-height: min(600px, calc(var(--kf-vh) - 48px)); max-height: calc(var(--kf-vh) - 48px); display: flex; flex-direction: column; background: var(--paper-linen); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.12), 0 18px 44px rgba(var(--kf-shadow-rgb, 60,52,38),0.14); overflow: hidden; }
   /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
   .ob-grain { position: absolute; inset: 0; pointer-events: none; z-index: 40; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
   [data-theme='night'] .ob-grain { mix-blend-mode: overlay; opacity: 0.25; }
@@ -88,7 +90,7 @@ const STYLES = `
   .ob-motion .ob-terrarium-seeds > *:nth-child(5) { animation-delay: 360ms; }
   @media (max-width: 767px) {
     .ob-page { padding: 0; background: var(--paper-linen); }
-    .ob-card { width: 100%; height: 100dvh; max-height: none; border-radius: 0; border: none; box-shadow: none; }
+    .ob-card { width: 100%; height: var(--kf-vh); max-height: none; border-radius: 0; border: none; box-shadow: none; }
     .ob-header { display: none; }
     .ob-dots-mobile { display: flex; justify-content: center; padding: calc(14px + env(safe-area-inset-top)) 0 0; position: relative; z-index: 2; }
     .ob-body { padding: 14px 22px 0; }
@@ -193,7 +195,8 @@ export function OnboardingPage() {
 
   if (!replant && settings && !needsOnboarding(settings)) return <Navigate to="/today" replace />
 
-  const appName = name.trim() ? `${name.trim()}'s Flow` : "Kai's Flow"
+  // Same rule the shell uses (lib/owner.ts), so this preview is exactly what the app will say.
+  const appName = flowName(name)
   const back = () => setStep((s) => Math.max(0, s - 1))
   const next = () => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1))
   const finish = () => {
@@ -274,7 +277,7 @@ export function OnboardingPage() {
               </div>
               <div style={{ width: '100%', marginTop: 22, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
                 <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                  <span>Kai's Flow · <b style={{ color: 'var(--acc-terra)', fontWeight: 600 }}>{workspaceName.trim() || 'Personal'}</b> · Cairo</span><span>preview</span>
+                  <span>{appName} · <b style={{ color: 'var(--acc-terra)', fontWeight: 600 }}>{workspaceLabel(workspaceName)}</b> · Cairo</span><span>preview</span>
                 </div>
                 <div style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>…the strip you'll see everywhere</div>
               </div>
@@ -287,7 +290,9 @@ export function OnboardingPage() {
               <h1 className="ob-h">Get it out of your head</h1>
               <p className="ob-sub" style={{ marginBottom: 24 }}>Everything that takes time belongs in one place. Capture fast, sort later.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
-                <Feature icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-body)' }}>⌘K</span>} title="Command bar & voice" desc={'Type or speak a thought — "send the invoice friday 3pm" — and it parses the date, project and priority for you.'} />
+                {/* Polish F2b (conductor decision 2026-09-26, J-17): the shortcut is drawn as keycaps,
+                    the app's one look for a key, instead of plain mono "⌘K". */}
+                <Feature icon={<KeyCombo keys={['⌘', 'K']} size="sm" style={{ gap: 2 }} />} title="Command bar & voice" desc={'Type or speak a thought — "send the invoice friday 3pm" — and it parses the date, project and priority for you.'} />
                 <Feature icon={<img src="/ds/assets/hydrangea/light.png" alt="" style={{ height: 20 }} />} title="Universal inbox" desc="Anything it can't place waits in one calm inbox. Clear it to zero, one keystroke each." />
                 <Feature icon={<img src="/ds/assets/wisteria/p60.png" alt="" style={{ height: 20 }} />} title="Projects & areas" desc="Group work that finishes into projects, and the parts of life that just continue into areas." />
               </div>
@@ -301,7 +306,10 @@ export function OnboardingPage() {
               <p className="ob-sub" style={{ marginBottom: 24 }}>Show up, pick what matters, give it a shape. Then just follow the day.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
                 <Feature icon={<img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 20 }} />} title="Today & your Top-3" desc="One anchor screen. Choose the three things that would make today count — the rest can wait." />
-                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 25%, transparent)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Syncs both ways with Google Calendar." />
+                {/* deviation(2026-09-26 conductor-decides, Polish E): the export promises "Syncs both ways with
+                    Google Calendar", but that sync isn't built (step 6 marks it Soon). Truthfulness rule:
+                    say it's coming later, in step 6's own words, and claim nothing more. */}
+                <Feature icon={<span style={{ width: 13, height: 13, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 25%, transparent)', borderRadius: 2, display: 'inline-block' }} />} title="Calendar time-blocking" desc="Drag a task onto the calendar to reserve real time for it. Google Calendar sync arrives in a later release." />
                 <Feature
                   icon={
                     <svg width="18" height="18" viewBox="0 0 24 24">

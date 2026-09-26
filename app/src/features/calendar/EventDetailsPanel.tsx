@@ -6,7 +6,7 @@ import { toastUndo } from '../../lib/undo'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
-import { completeTask } from '../tasks/api'
+import { completeTaskWithUndo } from '../tasks/api'
 import { ColorDots } from './formFields'
 import { TimeField } from './TimeField'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
@@ -75,7 +75,8 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   }
 
   function handleComplete() {
-    if (linkedTask) completeTask(linkedTask)
+    // Polish F2b (punch 6): "Done" with Undo, like every other place a task completes.
+    if (linkedTask) completeTaskWithUndo(linkedTask)
     onClose()
   }
 
@@ -95,7 +96,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
       <style>{'@keyframes edpFadeIn{from{opacity:0}}'}</style>
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 280, maxWidth: 'calc(100vw - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ width: 280, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         <div style={{ height: 6, background: stripColor }} />
         <div style={{ padding: '16px 18px' }}>

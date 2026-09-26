@@ -1,32 +1,8 @@
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
 import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
 import type { ShortcutEntry } from '../lib/pageShortcutsStore'
-
-function KeyChip({ text }: { text: string }) {
-  return (
-    <span
-      style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 10.5,
-        lineHeight: 1,
-        color: 'var(--ink-body)',
-        background: 'var(--paper-bone)',
-        border: '1px solid var(--line-card)',
-        borderBottomWidth: 2,
-        borderRadius: 5,
-        padding: '5px 7px',
-        minWidth: 22,
-        textAlign: 'center',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: 'var(--shadow-crisp)',
-      }}
-    >
-      {text}
-    </span>
-  )
-}
+// J-17: the keycap lives in the shared kit now — this overlay was its only user before.
+import { KeyChip } from './kit'
 
 function Category({ title, entries }: { title: string; entries: ShortcutEntry[] }) {
   return (
@@ -79,7 +55,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
         style={{
           width: '100%',
           maxWidth: 660,
-          maxHeight: 'calc(100dvh - 160px)',
+          maxHeight: 'calc(var(--kf-vh) - 160px)',
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           margin: '0 16px',
@@ -99,9 +75,12 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>plant a whole day without the mouse</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* polish-f1: every key in the hint is a keycap (J-17's one visual language), Esc too. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
             <KeyChip text="?" />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>toggle · Esc closes</span>
+            <span>toggle ·</span>
+            <KeyChip text="Esc" />
+            <span>closes</span>
           </div>
         </div>
 

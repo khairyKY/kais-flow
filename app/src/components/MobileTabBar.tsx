@@ -1,7 +1,8 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { VoiceCaptureButton } from '../features/capture/VoiceCaptureButton'
 import { useEscapeStack } from '../lib/overlayStack'
+import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
 
 // Pixel contract: "Kai's Flow — Universal Navigation Reference" §03 Mobile tab bar
 // (canonical 5-slot bar: Today · Inbox · Capture FAB · Cal · More) + its "More" sheet.
@@ -15,7 +16,15 @@ function slotLabel(active: boolean): CSSProperties {
 
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
 // (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
-const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; badge?: boolean }[] = [
+// deviation(2026-09-26 audit): the export's sheet has no Tasks, Projects, Activity or Trash, so on
+// a phone those four pages had no way in at all. Each carries the icon the collapsed sidebar rail
+// already gives it (Tasks' blossom flower, Projects' trellis glyph, Activity's gold dot, Trash's
+// hairline dot). Order (polish-f1, conductor's call): Tasks and Projects lead — they're the pages a
+// phone user reaches for most and the tab bar has no slot for — then the designed rows in the
+// export's order, then Focus, Activity and Trash.
+const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; glyph?: ReactNode; badge?: boolean }[] = [
+  { to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
+  { to: '/projects', label: 'Projects', glyph: <ProjectsGlyph /> },
   { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
@@ -23,6 +32,8 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/people', label: 'People', dot: '--acc-clover' },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
+  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
+  { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
 ]
 
 function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pendingInbox: number; onClose: () => void; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
@@ -34,17 +45,25 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        {/* Three columns where three fit, two where they don't (the export's caption for this
+            sheet says "2-column grid"; its card draws three at 500px). A fixed repeat(3, 1fr)
+            overflowed: at a 125% interface size (lib/uiScale.ts; the phone default was 125% until F2b) a 390px phone lays out
+            ~312 CSS px, so the right column ran past the screen edge — worse once "Projects"
+            joined (polish-c). 112px is the widest row's content (icon + "Projects"/"Routines");
+            the ellipsis below is only a last resort for extreme zooms. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 10 }}>
           {MORE_ITEMS.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
-              <span style={{ fontSize: 13, color: 'var(--ink-body)' }}>{item.label}</span>
+              {/* Line glyphs stroke currentColor — same muted ink as the rail's resting icons. */}
+              {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
+              <span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               {item.badge && pendingInbox > 0 && (
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
               )}

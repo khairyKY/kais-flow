@@ -1,0 +1,102 @@
+build: {"commit":"0116ce0ec4c6c161f7473ed569e6db4071d387da","builtAt":"2026-09-26T06:13:38.600Z"}
+      polish-c day header: "Kai's Flow PERSONAL · CAIRO a field journal of days ✿" | topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+FAIL  polish-c: sidebar names the owner  — Kai's Flow PERSONAL · CAIRO a field journal of days ✿
+FAIL  polish-c: topbar names the owner  — KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO
+      shot ./shots/before-desktop-day-today.png
+      shot ./shots/before-desktop-day-activity.png
+      activity rows:
+        Routine updated: "Evening stretch 0614" 09:14 ROUTINES
+        Updated journal entry — "journal" 09:14 JOURNAL kept
+        Wrote a journal entry 09:14 JOURNAL
+        Captured "inbox item" 09:14 INBOX quick capture
+        Logged an interaction with "Salma 0614" 09:14 PEOPLE interaction logged
+        Action: onboarding.completed 09:13 ALL Mira
+FAIL  activity: no in-page "Kai's Flow · Activity" strip  — found 1
+FAIL  activity: no "Logged an interaction" for a new person
+FAIL  activity: no placeholder "inbox item"
+FAIL  activity: no placeholder "journal"
+FAIL  activity: no "Routine updated" for a new routine
+      shot ./shots/before-desktop-day-search-page.png
+      search page: 1 real input(s), query shown in 2 search box(es), "0 results" x2
+FAIL  search page: one search box  — inputs 1, boxes 2
+FAIL  search page: at most one count line  — "0 results" x2
+FAIL  search page: failure is not "Nothing's come up"
+FAIL  search page: calm resting copy
+PASS  search page: never the word "error"
+FAIL  search page: retry offered
+      shot ./shots/before-desktop-day-search-overlay.png
+FAIL  overlay: failure is not "Nothing's come up"
+FAIL  overlay: calm resting copy
+PASS  overlay: never the word "error"
+      polish-c night header: "Kai's Flow PERSONAL · CAIRO a field journal of days ✿" | topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+      shot ./shots/before-desktop-night-today.png
+      shot ./shots/before-desktop-night-activity.png
+      shot ./shots/before-desktop-night-search-page.png
+      shot ./shots/before-desktop-night-search-overlay.png
+      shot ./shots/before-phone-day-today.png
+      phone day topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+      shot ./shots/before-phone-day-more-sheet.png
+      more rows: Routines(/routines) 108x55 · Inbox
+1(/inbox) 116x55 · Review(/weekly-review) 116x55 · Journal(/journal) 108x55 · People(/people) 116x55 · Settings(/settings) 116x55 · Focus(/focus) 108x54
+PASS  more sheet: every row ≥44px tall  — 55,55,55,55,55,55,54
+PASS  phone: no horizontal overflow with the sheet open
+FAIL  more sheet → Tasks  — no row in the sheet
+FAIL  more sheet → Projects  — no row in the sheet
+FAIL  more sheet → Activity  — no row in the sheet
+FAIL  more sheet → Trash  — no row in the sheet
+      phone activity rows:
+        Routine updated: "Evening stretch 0614" ROUTINES 09:14
+        Updated journal entry — "journal" JOURNAL 09:14
+        Wrote a journal entry JOURNAL 09:14
+        Captured "inbox item" INBOX 09:14
+        Logged an interaction with "Salma 0614" PEOPLE 09:14
+        Action: onboarding.completed ALL 09:13
+      shot ./shots/before-phone-night-today.png
+      phone night topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+      shot ./shots/before-phone-night-more-sheet.png
+      kai.local@example.com: gate offered /onboarding (never onboarded) → going to /today without answering
+      kai.local desktop header: "Kai's Flow PERSONAL · CAIRO a field journal of days ✿" | topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+PASS  kai.local: sidebar header unchanged (Kai's Flow · Personal · Cairo)  — Kai's Flow PERSONAL · CAIRO a field journal of days ✿
+PASS  kai.local: topbar starts Kai's Flow  — KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO
+      shot ./shots/before-kai-desktop-today.png
+      kai.local@example.com: gate offered /onboarding (never onboarded) → going to /today without answering
+      kai.local phone header: "Kai's FlowPersonal · Cairoa field journal of days ✿" | topbar: "KAI'S FLOW · SAT 26 SEPT · SYNCED ● · CAIRO AFRICA/CAIRO"
+      shot ./shots/before-kai-phone-today.png
+      shot ./shots/before-kai-phone-more-sheet.png
+
+console/request lines: 33 total, 4 other than open-meteo
+  desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /search: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /search: Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+  desktop-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-day /today: Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+  desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /search: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /search: Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+  desktop-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  desktop-night /today: Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+  phone-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  phone-day /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  phone-day FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  phone-day /activity: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  phone-night FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  phone-night /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-desktop /: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-desktop FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-desktop /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-phone FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_ABORTED
+  kai-phone FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-phone /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+6/24 checks passed

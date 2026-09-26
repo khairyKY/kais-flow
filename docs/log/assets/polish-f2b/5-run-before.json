@@ -1,0 +1,86 @@
+{
+ "which": "before",
+ "report": {
+  "la-slot": {
+   "fieldsShown": [
+    "",
+    "2026-09-26",
+    "1:00 PM",
+    "1:30 PM"
+   ],
+   "saved": {
+    "starts_at": "2026-09-26T20:00:00+00:00",
+    "ends_at": "2026-09-26T20:30:00+00:00"
+   },
+   "savedCairo": "Sat 23:00",
+   "slotClickedLocal": "13:00 device time"
+  },
+  "la-typed": {
+   "inputs": 4,
+   "fieldsShown": [
+    "T-4 typed",
+    "2026-09-26",
+    "3:00 PM",
+    "3:30 PM"
+   ],
+   "saved": {
+    "starts_at": "2026-09-26T22:00:00+00:00",
+    "ends_at": "2026-09-26T22:30:00+00:00"
+   },
+   "savedCairo": "Sun 01:00"
+  },
+  "la-title": {
+   "chip": "→ Sun 4:00 PM",
+   "fieldsShown": [
+    "T-4 title tomorrow 4pm",
+    "2026-09-27",
+    "4:00 PM",
+    "4:00 PM",
+    "4:30 PM"
+   ],
+   "savedDue": "2026-09-27T23:00:00+00:00",
+   "savedCairo": "Mon 02:00"
+  },
+  "cairo-slot": {
+   "fieldsShown": [
+    "",
+    "2026-09-26",
+    "1:00 PM",
+    "1:30 PM"
+   ],
+   "saved": {
+    "starts_at": "2026-09-26T10:00:00+00:00",
+    "ends_at": "2026-09-26T10:30:00+00:00"
+   },
+   "savedCairo": "Sat 13:00",
+   "slotClickedLocal": "13:00 device time"
+  },
+  "cairo-typed": {
+   "inputs": 4,
+   "fieldsShown": [
+    "T-4 typed",
+    "2026-09-26",
+    "3:00 PM",
+    "3:30 PM"
+   ],
+   "saved": {
+    "starts_at": "2026-09-26T12:00:00+00:00",
+    "ends_at": "2026-09-26T12:30:00+00:00"
+   },
+   "savedCairo": "Sat 15:00"
+  },
+  "cairo-title": {
+   "chip": "→ Sun 4:00 PM",
+   "fieldsShown": [
+    "T-4 title tomorrow 4pm",
+    "2026-09-27",
+    "4:00 PM",
+    "4:00 PM",
+    "4:30 PM"
+   ],
+   "savedDue": "2026-09-27T13:00:00+00:00",
+   "savedCairo": "Sun 16:00"
+  }
+ },
+ "realErrors": []
+}

@@ -7,9 +7,9 @@ import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { computeStreak, completionRate, computeTrellisDays, localDateKey } from '../routines/streaks'
+import { computeStreak, completionRate, computeTrellisDays, localDateKey, routineStartKey } from '../routines/streaks'
 import { useSlipping, markReviewed } from '../slipping/api'
-import { useReviewEventsThisWeek } from './api'
+import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { logActivity } from '../../lib/activity'
 import { useMotionEnabled } from '../../lib/motion'
 import { FieldLabel, useIsMobile } from './RitualChrome'
@@ -119,12 +119,12 @@ export function WeeklyReviewPage() {
 
   function markDomainSwept(d: Domain) {
     setLocalSweptAt((s) => new Map(s).set(d.id, new Date().toISOString()))
-    logActivity('domain.swept', 'domain', d.id, { week: weekKey })
+    logReviewEvent(weekStart.toISOString(), 'domain.swept', 'domain', d.id, { week: weekKey })
   }
 
   function giveVerdict(entityType: 'project' | 'area', id: string, verdict: SweepVerdict) {
     setLocalVerdicts((s) => new Map(s).set(id, verdict))
-    logActivity('review.verdict', entityType, id, { verdict, week: weekKey })
+    logReviewEvent(weekStart.toISOString(), 'review.verdict', entityType, id, { verdict, week: weekKey })
   }
 
   const openTasks = tasks.filter((t) => t.status === 'todo')
@@ -351,6 +351,66 @@ function SweepRow({
   )
 }
 
+/** The sweep list — one SweepRow per project/area plus the loose-task line. Shared by the
+ * current domain's card and (J-27) a re-opened swept domain. */
+function SweepList({
+  projects,
+  areas,
+  tasks,
+  verdicts,
+  onVerdict,
+  looseCount,
+  style,
+}: {
+  projects: Project[]
+  areas: Area[]
+  tasks: Task[]
+  verdicts: Map<string, SweepVerdict>
+  onVerdict: (entityType: 'project' | 'area', id: string, verdict: SweepVerdict) => void
+  looseCount: number
+  style?: CSSProperties
+}) {
+  return (
+    <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 4, ...style }}>
+      {projects.map((p, i) => (
+        <SweepRow
+          key={p.id}
+          dot={p.color || 'var(--acc-moss)'}
+          name={p.name}
+          open={tasks.filter((t) => t.project_id === p.id && t.status === 'todo').length}
+          touched={touchedLabel(tasks.filter((t) => t.project_id === p.id), p.updated_at)}
+          verdict={verdicts.get(p.id)}
+          onVerdict={(v) => onVerdict('project', p.id, v)}
+          last={areas.length === 0 && looseCount === 0 && i === projects.length - 1}
+        />
+      ))}
+      {areas.map((a, i) => (
+        <SweepRow
+          key={a.id}
+          dot={a.color || 'var(--acc-lavender)'}
+          name={`Area · ${a.name}`}
+          open={tasks.filter((t) => t.area_id === a.id && t.status === 'todo').length}
+          touched={touchedLabel(tasks.filter((t) => t.area_id === a.id), a.updated_at)}
+          verdict={verdicts.get(a.id)}
+          onVerdict={(v) => onVerdict('area', a.id, v)}
+          last={looseCount === 0 && i === areas.length - 1}
+        />
+      ))}
+      {projects.length === 0 && areas.length === 0 && looseCount === 0 && (
+        <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0, padding: '8px 2px' }}>Nothing here to sweep.</p>
+      )}
+      {looseCount > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
+          <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
+          <span style={{ marginLeft: 'auto' }}>
+            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DomainCard({
   domain,
   projects,
@@ -376,22 +436,53 @@ function DomainCard({
   looseCount: number
   isMobile: boolean
 }) {
+  // J-27 (Kai, 2026-07-29): "I should be able to open a swept one so I can edit the sweeping I've
+  // done." A swept domain folds to its summary row; pressing the row re-opens the same sweep list
+  // with every verdict still editable (each change logs a fresh review.verdict — the latest wins).
+  const [reopened, setReopened] = useState(false)
   const projectIds = new Set(projects.map((p) => p.id))
   const open = tasks.filter((t) => t.status === 'todo' && (t.domain_id === domain.id || (t.project_id && projectIds.has(t.project_id))))
   const counts = countsLine(projects.length, areas.length, open.length)
+  const sweepList = (style?: CSSProperties) => (
+    <SweepList projects={projects} areas={areas} tasks={tasks} verdicts={verdicts} onVerdict={onVerdict} looseCount={looseCount} style={style} />
+  )
 
   if (state === 'swept') {
     const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
     return (
-      <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '14px 17px', opacity: 0.85, display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-          <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
-        </span>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
-        <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
-          swept{time ? ` ${time}` : ''}
-        </span>
+      <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, opacity: reopened ? 1 : 0.85 }}>
+        {/* J-27: the summary row itself is the toggle — same look as before, plus a ▾/▴ hint. */}
+        <button
+          type="button"
+          aria-expanded={reopened}
+          title={reopened ? 'Fold this sweep back' : 'Re-open this sweep'}
+          onClick={() => setReopened((o) => !o)}
+          style={{ width: '100%', minHeight: 44, padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'inherit' }}
+        >
+          <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+            <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+          </span>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
+          <FHelp>{counts}</FHelp>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+            swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
+          </span>
+        </button>
+        {reopened && (
+          <div style={{ padding: isMobile ? '0 14px 14px' : '0 18px 16px' }}>
+            {sweepList()}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+              <button
+                type="button"
+                className="kf-hit"
+                onClick={() => setReopened(false)}
+                style={{ ...CHIP_BASE, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}
+              >
+                fold it back ↑
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -417,43 +508,7 @@ function DomainCard({
         <FHelp>{counts}</FHelp>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
       </div>
-      <div style={{ marginTop: 12, borderTop: '1px dashed var(--line-dashed)', paddingTop: 4 }}>
-        {projects.map((p, i) => (
-          <SweepRow
-            key={p.id}
-            dot={p.color || 'var(--acc-moss)'}
-            name={p.name}
-            open={tasks.filter((t) => t.project_id === p.id && t.status === 'todo').length}
-            touched={touchedLabel(tasks.filter((t) => t.project_id === p.id), p.updated_at)}
-            verdict={verdicts.get(p.id)}
-            onVerdict={(v) => onVerdict('project', p.id, v)}
-            last={areas.length === 0 && looseCount === 0 && i === projects.length - 1}
-          />
-        ))}
-        {areas.map((a, i) => (
-          <SweepRow
-            key={a.id}
-            dot={a.color || 'var(--acc-lavender)'}
-            name={`Area · ${a.name}`}
-            open={tasks.filter((t) => t.area_id === a.id && t.status === 'todo').length}
-            touched={touchedLabel(tasks.filter((t) => t.area_id === a.id), a.updated_at)}
-            verdict={verdicts.get(a.id)}
-            onVerdict={(v) => onVerdict('area', a.id, v)}
-            last={looseCount === 0 && i === areas.length - 1}
-          />
-        ))}
-        {projects.length === 0 && areas.length === 0 && looseCount === 0 && (
-          <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0, padding: '8px 2px' }}>Nothing here to sweep.</p>
-        )}
-        {looseCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
-            <span style={{ marginLeft: 'auto' }}>
-              <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
-            </span>
-          </div>
-        )}
-      </div>
+      {sweepList({ marginTop: 12 })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
         <button type="button" onClick={onSweep} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>
           Mark {domain.name} swept
@@ -605,12 +660,28 @@ function SeasonSoFar({
 
   return (
     <div style={{ marginTop: 22, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 3, padding: '20px 22px' }}>
+      {/* Polish F2b: 3c draws these four widgets 2×2 on an 880px card. Beside the sidebar and the
+          right rail at 1280 (and on a phone) each widget got ~194px, and the 30 routine cells
+          crushed to 0–1px. The widgets now wrap to one column when two can't each keep 260px,
+          and a trellis row whose card is too narrow puts its 30 cells on their own full-width
+          line under the name and % instead of shrinking them (all 30 days stay — the % beside
+          them counts the same 30). */}
+      <style>{`
+        .kf-season-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; margin-top: 18px; }
+        .kf-trellis-card { container-type: inline-size; }
+        .kf-trellis-row { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; row-gap: 6px; }
+        .kf-trellis-cells { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; }
+        @container (max-width: 320px) {
+          .kf-trellis-row { grid-template-columns: minmax(0, 1fr) auto; }
+          .kf-trellis-row .kf-trellis-cells { grid-row: 2; grid-column: 1 / -1; }
+        }
+      `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
         <img src={`${A}/fern/full.png`} alt="" style={{ height: 30, filter: 'var(--shadow-drop-sm)' }} />
         <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)' }}>The season so far</h2>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 18 }}>
+      <div className="kf-season-grid">
         <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
           <FieldLabel>Hours by area</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -656,18 +727,21 @@ function SeasonSoFar({
           </div>
         </div>
 
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
+        <div className="kf-trellis-card" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
           <FieldLabel>Routine consistency · last 30 days</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {topRoutines.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No routines yet.</p>}
             {topRoutines.map((r) => {
               const dates = completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on)
-              const days = computeTrellisDays(dates, r.cadence, 30)
-              const rate = completionRate(dates, r.cadence, 30)
+              // Polish D: days before the routine was planted are "off", not misses — in the
+              // trellis and in the rate beside it (same `since` as Routines' own trellis).
+              const since = routineStartKey(r.created_at, dates)
+              const days = computeTrellisDays(dates, r.cadence, 30, new Date(), since)
+              const rate = completionRate(dates, r.cadence, 30, new Date(), since)
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 62, fontSize: 12, color: 'var(--ink-muted)', flex: 'none' }}>{r.name}</span>
-                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(30,1fr)', gap: 2 }}>
+                <div key={r.id} className="kf-trellis-row">
+                  <span style={{ fontSize: 12, color: 'var(--ink-muted)', minWidth: 0, overflowWrap: 'anywhere' }}>{r.name}</span>
+                  <div className="kf-trellis-cells">
                     {days.map((d) => (
                       <span
                         key={d.key}
@@ -679,7 +753,7 @@ function SeasonSoFar({
                       />
                     ))}
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', flex: 'none' }}>{rate}%</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', textAlign: 'right' }}>{rate}%</span>
                 </div>
               )
             })}

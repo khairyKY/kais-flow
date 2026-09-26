@@ -1,0 +1,51 @@
+{
+ "which": "after",
+ "report": {
+  "commandBar-day": {
+   "footerText": "↵ QUICK ADD · ⌘ ↵ AI CAPTURE",
+   "footerKbd": [
+    "↵",
+    "⌘",
+    "↵"
+   ],
+   "jumpText": "JUMP Today ↓ then ↵",
+   "jumpKbd": [
+    "↓",
+    "↵"
+   ]
+  },
+  "commandBar-night": {
+   "footerText": "↵ QUICK ADD · ⌘ ↵ AI CAPTURE",
+   "footerKbd": [
+    "↵",
+    "⌘",
+    "↵"
+   ],
+   "jumpText": "JUMP Today ↓ then ↵",
+   "jumpKbd": [
+    "↓",
+    "↵"
+   ]
+  },
+  "onboarding-d1280-day": {
+   "kbd": [
+    "⌘",
+    "K"
+   ],
+   "chipText": "⌘K",
+   "chipW": 45,
+   "contentW": 43
+  },
+  "onboarding-p390-night": {
+   "kbd": [
+    "⌘",
+    "K"
+   ],
+   "chipText": "⌘K",
+   "chipW": 36,
+   "contentW": 34
+  }
+ },
+ "realErrors": [],
+ "meteo": 8
+}

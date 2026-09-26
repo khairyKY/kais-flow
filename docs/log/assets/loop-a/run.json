@@ -1,0 +1,55 @@
+{
+  "steps": [],
+  "wiped ritual rows": 13,
+  "08:00 card": "Plan your day· ~5 min 3 IN INBOX 1 OVERDUE TOP 3 3/3 Begin MORNING RITUAL 0/4 · EVENING RITUAL 0/5",
+  "menu task-backed": [
+    "Start focus",
+    "Complete",
+    "Open details",
+    "Move to tomorrow",
+    "Unschedule"
+  ],
+  "menu plain event": [
+    "Open in calendar",
+    "Delete"
+  ],
+  "click plain event →": "/calendar",
+  "start focus →": "/focus",
+  "focus shows task": true,
+  "08:0x after morning ritual": "NEXT · TOP 3 Review Omar's pull request 30M TOP 3 0/3 DONE THEN 10:30 AM · DEEP WORK — Q4 PLAN Start focus Done Open MORNING RITUAL ✓ · EVENING RITUAL 0/5",
+  "11:00 card": "NOW Deep work — Q4 plan 10:30 AM–12:00 PM Start focus Done Open MORNING RITUAL ✓ · EVENING RITUAL 0/5",
+  "undo toast": true,
+  "REST q4 after Done": [
+    {
+      "title": "Draft the Q4 plan",
+      "status": "done",
+      "completed_at": "2026-09-26T08:00:01.697+00:00"
+    }
+  ],
+  "11:0x card after Done": "NEXT · TOP 3 Review Omar's pull request 30M TOP 3 1/3 DONE THEN 2:00 PM · SYNC WITH OMAR Start focus Done Open MORNING RITUAL ✓ · EVENING RITUAL 0/5",
+  "fold label": "MORE FOR TODAY · 4 OPEN ▸",
+  "fold expanded (default)": "false",
+  "All open visible before": false,
+  "All open visible after click": true,
+  "fold expanded after reload": "true",
+  "19:00 card": "Shut down the day· ~3 min TOP 3 1/3 DONE Begin MORNING RITUAL ✓ · EVENING RITUAL 0/5",
+  "19:0x after evening ritual": "Day closed ✿ TOMORROW'S SEEDS Buy printer ink · Sketch the garden bed layout MORNING RITUAL ✓ · EVENING RITUAL ✓",
+  "REST finished": [
+    "morning:2026-09-26",
+    "evening:2026-09-26"
+  ],
+  "REST seeds": [
+    "2026-09-27",
+    "2026-09-27"
+  ],
+  "00:30 card": "Day closed ✿ TOMORROW'S SEEDS Buy printer ink · Sketch the garden bed layout MORNING RITUAL ✓ · EVENING RITUAL ✓",
+  "phone card": "Day closed ✿ TOMORROW'S SEEDS Buy printer ink · Sketch the garden bed layout MORNING RITUAL ✓ · EVENING RITUAL ✓",
+  "phone section order": [
+    "Your day",
+    "Top 3 today",
+    "Up next",
+    "Routines",
+    "More for today · 4 open"
+  ],
+  "consoleErrors": []
+}

@@ -1,0 +1,187 @@
+name: Android APK
+
+# M1 (docs/phases/M1-android.md): the real Android app — the same dist/ as the web app inside a
+# Tauri v2 shell, built on GitHub's runners (Android SDK + NDK are preinstalled; nothing on Kai's
+# laptop). Builds on the mobile branches for review; a published Release gets the APK attached.
+on:
+  push:
+    branches: ['claude/mobile-*']
+    paths: ['app/**', '.github/workflows/android.yml', '.github/scripts/**']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_URL: https://kais-flow.kaidagoat.workers.dev
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only used to attach the APK to a published Release
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      - run: npm ci
+
+      - name: Supabase public config
+        env:
+          VARS_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VARS_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: python3 ../.github/scripts/supabase-public-config.py
+
+      - name: Generate the Android project
+        run: |
+          set -euo pipefail
+          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          npx tauri android init --ci
+          res=src-tauri/gen/android/app/src/main/res
+          cp -r src-tauri/icons/android/. "$res/"
+          # Voice capture: the WebView asks for the mic through the shell, which needs these declared.
+          manifest=src-tauri/gen/android/app/src/main/AndroidManifest.xml
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
+          grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
+          grep -n 'uses-permission' "$manifest"
+          # Our activity: keeps the page clear of the status/navigation bars + keyboard, bar strips in the page's colour.
+          activity="$(find src-tauri/gen/android/app/src/main -name 'MainActivity.kt' | head -1)"
+          test -n "$activity" || { echo "::error::generated MainActivity.kt not found"; exit 1; }
+          cp src-tauri/android/MainActivity.kt "$activity"
+          # Android string resources reject a bare apostrophe ("Kai's Flow" → Kai\'s Flow).
+          python3 - <<'PY'
+          import glob, re
+          for p in glob.glob('src-tauri/gen/android/app/src/main/res/values*/strings.xml'):
+              s = open(p).read()
+              s = re.sub(r"Kai(?:&#x27;|&#39;|&apos;|')s", lambda m: "Kai\\'s", s)
+              open(p, 'w').write(s)
+              print(p, s, sep='\n')
+          PY
+
+      # arm64 = every Android phone from the last ~8 years; x86_64 so the emulator smoke test
+      # below runs this exact APK.
+      - name: Build
+        run: npx tauri android build --apk --target aarch64 --target x86_64
+
+      - name: Sign
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          unsigned="$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -1)"
+          test -n "$unsigned" || { echo "::error::no release APK was produced"; find src-tauri/gen/android/app/build/outputs -type f | head -20; exit 1; }
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"; pass="$KEYSTORE_PASSWORD"
+            echo "Signing with the project key (in-place updates work)."
+          else
+            pass="$(openssl rand -hex 16)"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -alias kaisflow -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$pass" -keypass "$pass" -dname "CN=Kai's Flow" > /dev/null 2>&1
+            echo "::warning::No ANDROID_KEYSTORE_B64 secret: signed with a one-off key. Installing a later build over this one needs an uninstall first."
+          fi
+          name="kais-flow-${GITHUB_SHA::7}.apk"
+          "$tools/zipalign" -f -p 4 "$unsigned" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass "pass:$pass" --out "$RUNNER_TEMP/$name" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/$name" | head -3
+          echo "APK=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
+          echo "APK_NAME=$name" >> "$GITHUB_ENV"
+          echo "- APK: \`$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK }}
+          retention-days: 30
+
+      - name: Attach to the Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$APK" --clobber
+
+  smoke:
+    name: Emulator smoke test
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: actions/download-artifact@v4
+        with:
+          path: apk
+          merge-multiple: true
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash .github/scripts/android-smoke.sh
+      # Artifacts aren't reachable from the conductor's sandbox, so the screens also go to the log
+      # as small base64 JPEGs between markers (plus the UI tree and the WebView's console).
+      - name: Screens to the log
+        if: always()
+        run: |
+          sudo apt-get install -y -qq python3-pil > /dev/null
+          python3 - <<'PY'
+          import base64, glob, io
+          from PIL import Image
+          for p in sorted(glob.glob('shots/*.png')):
+              im = Image.open(p).convert('RGB')
+              full = im.size
+              im.thumbnail((432, 960))
+              buf = io.BytesIO(); im.save(buf, 'JPEG', quality=72)
+              b = base64.b64encode(buf.getvalue()).decode()
+              print(f'=====BEGIN {p} full={full} small={im.size}=====')
+              for i in range(0, len(b), 160):
+                  print(b[i:i + 160])
+              print(f'=====END {p}=====')
+          PY
+          cat shots/webview-top.txt || true
+          echo '----- window insets'; cat shots/window.txt || true
+          echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
+          echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-screens
+          path: shots
+          retention-days: 14

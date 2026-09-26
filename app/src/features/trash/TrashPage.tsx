@@ -218,9 +218,8 @@ export function TrashPage() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', background: 'var(--paper-linen)' }}>
       <style>{styles}</style>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
-      <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 34px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
-        <span>Kai's Flow · Settings · Trash</span><span>Africa/Cairo</span>
-      </div>
+      {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Settings · Trash" strip — that was
+          Trash.dc.html's mock of the shell topbar, which the real shell already draws. */}
       <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 760, maxWidth: '100%', padding: '0 34px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>

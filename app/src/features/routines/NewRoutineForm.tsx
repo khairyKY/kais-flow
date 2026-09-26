@@ -7,7 +7,7 @@ import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
-import type { Cadence } from '../../lib/types'
+import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeMode } from './newRoutine'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
 // "Steps" and "Domain" are real since migration 0028 (routines.steps jsonb + domain_id).
@@ -15,11 +15,11 @@ import type { Cadence } from '../../lib/types'
 // so the mock's "2 min" chips / "10 min total" tally and the drag-reorder handle are dropped.
 // "Its plant" is a static Vine chip, not a picker — routines only ever grow the vine species
 // (_SHARED.md growth-stage map). "Challenge" trades the mock's bare day-count for a real
-// start/end pair: start = today, end = today + N-1. ──
+// start/end pair: start = today, end = today + N-1.
+// Polish B (audit-newuser): the form opens neutral — Anytime · Every day · reminder off — not
+// on the mock's filled sample; see NEW_ROUTINE_DEFAULTS in newRoutine.ts. ──
 
 const A = '/ds/assets'
-type TimeMode = 'morning' | 'afternoon' | 'evening' | 'anytime'
-type RepeatMode = 'daily' | 'weekdays' | 'custom'
 const WEEKDAY_COLS: { day: number; label: string }[] = [
   { day: 1, label: 'M' },
   { day: 2, label: 'T' },
@@ -29,12 +29,6 @@ const WEEKDAY_COLS: { day: number; label: string }[] = [
   { day: 6, label: 'S' },
   { day: 0, label: 'S' },
 ]
-
-function cadenceFor(mode: RepeatMode, custom: number[]): Cadence {
-  if (mode === 'daily') return { weekdays: [0, 1, 2, 3, 4, 5, 6] }
-  if (mode === 'weekdays') return { weekdays: [1, 2, 3, 4, 5] }
-  return { weekdays: [...custom].sort() }
-}
 
 function addDays(key: string, n: number): string {
   const d = new Date(`${key}T00:00:00`)
@@ -64,11 +58,11 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   const [steps, setSteps] = useState<string[]>([])
   const [domainId, setDomainId] = useState('')
   const { data: domains = [] } = useDomains()
-  const [timeMode, setTimeMode] = useState<TimeMode>('evening')
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>('custom')
-  const [customWeekdays, setCustomWeekdays] = useState<number[]>([1, 3, 5])
-  const [reminderOn, setReminderOn] = useState(true)
-  const [reminderTime, setReminderTime] = useState('21:30')
+  const [timeMode, setTimeMode] = useState<TimeMode>(NEW_ROUTINE_DEFAULTS.timeMode)
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>(NEW_ROUTINE_DEFAULTS.repeatMode)
+  const [customWeekdays, setCustomWeekdays] = useState<number[]>(NEW_ROUTINE_DEFAULTS.customWeekdays)
+  const [reminderOn, setReminderOn] = useState(NEW_ROUTINE_DEFAULTS.reminderOn)
+  const [reminderTime, setReminderTime] = useState(NEW_ROUTINE_DEFAULTS.reminderTime)
   const [isChallenge, setIsChallenge] = useState(initialChallenge)
   const [challengeDays, setChallengeDays] = useState('30')
 
@@ -77,12 +71,10 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   }
 
   function submit(from?: HTMLElement) {
-    const trimmed = name.trim()
-    if (!trimmed) return
+    const fields = draftToRoutineFields({ name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime })
+    if (!fields) return
     seedPlant(from, motion) // Motion 5f — the seed drops out of the plant button
-    const cadence = cadenceFor(repeatMode, customWeekdays)
-    const timeOfDay = timeMode === 'anytime' ? null : timeMode
-    const clockTime = reminderOn ? reminderTime : null
+    const { name: trimmed, timeOfDay, cadence, clockTime } = fields
     const days = Math.max(1, Number(challengeDays) || 0)
     const stepList = steps.map((s) => s.trim()).filter(Boolean)
     const domain = domainId || null

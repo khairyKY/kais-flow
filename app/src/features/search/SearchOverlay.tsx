@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { searchHybrid, searchHitHref, SEARCH_GROUPS } from './api'
+import { searchHitHref, SEARCH_GROUPS } from './api'
+import { useSearch } from './useSearch'
+import { SEARCH_RESTING } from './searchState'
 import { useTasks } from '../tasks/api'
 import { EmojiText } from '../../components/EmojiText'
+import { KeyChip } from '../../components/kit'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
-
-const DEBOUNCE_MS = 250
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: allTasks = [] } = useTasks()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchHit[]>([])
-  const [loading, setLoading] = useState(false)
+  const search = useSearch(query)
+  const { results, status } = search
+  const loading = status === 'searching'
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
@@ -22,30 +24,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
-    else {
-      setQuery('')
-      setResults([])
-    }
+    else setQuery('')
   }, [open])
 
-  useEffect(() => {
-    const trimmed = query.trim()
-    if (!trimmed) {
-      setResults([])
-      return
-    }
-    setLoading(true)
-    const handle = setTimeout(() => {
-      searchHybrid(trimmed)
-        .then((hits) => {
-          setResults(hits)
-          setActiveIndex(0)
-        })
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false))
-    }, DEBOUNCE_MS)
-    return () => clearTimeout(handle)
-  }, [query])
+  // A fresh answer starts on its first row.
+  useEffect(() => setActiveIndex(0), [results])
 
   if (!open) return null
 
@@ -152,7 +135,17 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
         {loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}
         {/* Search.dc.html 1b voice — same line as the full page's empty state, shortened */}
-        {!loading && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
+        {status === 'done' && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
+        {/* 2026-09-26 audit: a search that didn't answer is not "nothing's come up" — say so, calmly,
+            and offer the retry in the footer rows' own quiet type (no design yet: Phase C). */}
+        {status === 'resting' && query.trim() && (
+          <div role="status" style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', gap: 12 }}>
+            <p style={{ margin: 0, flex: 1, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>{SEARCH_RESTING}</p>
+            <button type="button" onClick={search.retry} className="kf-hit" style={{ font: 'inherit', flex: 'none', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}>
+              Try again
+            </button>
+          </div>
+        )}
 
         {/* R4 (2026-07-20 audit): long result sets need to scroll inside the card, not clip */}
         <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
@@ -169,7 +162,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {results.length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
+            <KeyChip text="↵" size="sm" />
           </div>
         )}
         {query.trim() && (
@@ -179,7 +172,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             style={{ marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
           >
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>↵</span>
+            <KeyChip text="↵" size="sm" />
           </button>
         )}
       </div>

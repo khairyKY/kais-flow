@@ -24,11 +24,14 @@ import './index.css'
 import './features/projects/xfx.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
+import { isNativeShell, syncShellChrome } from './lib/platform'
 
 // Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build
 // until a second reload. In autoUpdate mode this reloads the page as soon as the new version
 // takes over; queued writes survive in the outbox, a half-typed draft does not (accepted).
-registerSW({
+// M1: not inside the native shell — the APK bundles dist/ itself and updates by a new APK, and
+// Android's WebView has no Push API, so a service worker would only duplicate what's installed.
+if (!isNativeShell()) registerSW({
   immediate: true,
   onRegisteredSW(_url, registration) {
     // Browsers only look for a new build on navigation — also look whenever the tab comes back.
@@ -37,6 +40,9 @@ registerSW({
     })
   },
 })
+
+// M1: once styles have settled, give the Android shell the page colour for its bar strips.
+if (isNativeShell()) window.addEventListener('load', () => syncShellChrome(document.documentElement.dataset.theme === 'night' ? 'night' : 'day'))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

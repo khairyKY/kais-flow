@@ -1,0 +1,32 @@
+{
+  "landedOn": "/today",
+  "step4": {
+    "hasNewLine": true,
+    "hasOldPromise": false,
+    "text": [
+      "Calendar time-blocking",
+      "Drag a task onto the calendar to reserve real time for it. Google Calendar sync arrives in a later release."
+    ]
+  },
+  "step6": [
+    "Optional — integrations arrive in a later release; push works today.",
+    "Google Calendar",
+    "Soon",
+    "Soon"
+  ],
+  "afterFinish": "/today",
+  "desktopErrors": {
+    "meteoRequests": 2,
+    "tunnelConsole": 2,
+    "expected": [],
+    "other": []
+  },
+  "phoneTheme": "night",
+  "phoneStep4": true,
+  "phoneErrors": {
+    "meteoRequests": 1,
+    "tunnelConsole": 1,
+    "expected": [],
+    "other": []
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, streakRiskMessage } from './streaks'
+import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakRiskMessage, todayTally } from './streaks'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
@@ -151,6 +151,19 @@ describe('completionRate', () => {
     expect(completionRate([], NEVER, 7, NOW)).toBe(0)
   })
 
+  // Polish D: Weekly Review's "Routine consistency · last 30 days" row for a routine planted
+  // three days ago and tended every day since read 10% (27 pre-planting days counted as misses).
+  it('with `since`, days before the routine was planted are not counted against it', () => {
+    const tended = [dayKey(-3), dayKey(-2), dayKey(-1)]
+    const since = routineStartKey(new Date(NOW.getTime() - 3 * 86_400_000).toISOString(), tended)
+    expect(completionRate(tended, DAILY, 30, NOW)).toBe(10) // the old reading: 3 of 30
+    expect(completionRate(tended, DAILY, 30, NOW, since)).toBe(75) // 3 of 4 (today still open)
+    // …and the trellis beside it agrees: nothing before `since` reads as rain or a break.
+    const cells = computeTrellisDays(tended, DAILY, 30, NOW, since)
+    expect(cells.slice(0, 26).every((c) => c.state === 'off')).toBe(true)
+    expect(cells.slice(26).map((c) => c.state)).toEqual(['grew', 'grew', 'grew', 'off'])
+  })
+
   it('returns 100 when every scheduled day in the window was completed', () => {
     const completed = [dayKey(-6), dayKey(-5), dayKey(-4), dayKey(-3), dayKey(-2), dayKey(-1), dayKey(0)]
     expect(completionRate(completed, DAILY, 7, NOW)).toBe(100)
@@ -226,5 +239,138 @@ describe('streakRiskMessage', () => {
 
   it('returns null when there is no streak to lose', () => {
     expect(streakRiskMessage([routine({ name: 'Fresh habit', cadence: DAILY })], [], NOW)).toBeNull()
+  })
+})
+
+// ── Polish B (audit-newuser, "Create routine"): a brand-new routine must start honest. NOW is
+// Wed 2026-07-08; "planted today" = created_at at NOW. ──
+const PLANTED_TODAY = NOW.toISOString()
+const MON_WED_FRI: Cadence = { weekdays: [1, 3, 5] }
+const MON_FRI: Cadence = { weekdays: [1, 5] } // not scheduled on NOW (a Wednesday)
+
+describe('routineStreak — new vs lost', () => {
+  it('a routine planted today with no history reads new, not lost', () => {
+    expect(routineStreak([], DAILY, NOW)).toEqual({ current: 0, best: 0, status: 'new' })
+  })
+
+  it('a routine never tended (even weeks after planting) reads new — there was nothing to lose', () => {
+    expect(routineStreak([], MON_WED_FRI, NOW).status).toBe('new')
+  })
+
+  it('a genuinely broken streak still reads lost', () => {
+    const today = new Date(2026, 6, 20, 9, 0, 0) // Mon Jul 20
+    // tended Jul 8–14 (7 days), then missed Jul 15–19: the 19th rains, the 18th snaps it
+    const dates = [12, 11, 10, 9, 8, 7, 6].map((n) => localDateKey(addDays(today, -n)))
+    const s = routineStreak(dates, DAILY, today)
+    expect(s.current).toBe(0)
+    expect(s.best).toBe(7)
+    expect(s.status).toBe('lost')
+  })
+
+  it('a live streak reads growing', () => {
+    expect(routineStreak([dayKey(-1), dayKey(-2)], DAILY, NOW)).toEqual({ current: 2, best: 2, status: 'growing' })
+  })
+
+  it('checking off a brand-new routine today starts it growing at 1', () => {
+    expect(routineStreak([dayKey(0)], DAILY, NOW)).toMatchObject({ current: 1, status: 'growing' })
+  })
+})
+
+describe('todayTally — only routines whose day it is count', () => {
+  it('a routine planted today and scheduled today is one left', () => {
+    const r = routine({ cadence: DAILY, created_at: PLANTED_TODAY })
+    expect(todayTally([r], [], NOW)).toEqual({ due: 1, done: 0, remaining: 1 })
+  })
+
+  it('a routine not scheduled today is not left before the day is done', () => {
+    const r = routine({ cadence: MON_FRI, created_at: PLANTED_TODAY })
+    expect(todayTally([r], [], NOW)).toEqual({ due: 0, done: 0, remaining: 0 })
+  })
+
+  it('mixes: done-today + open-today count, a resting one does not', () => {
+    const doneOne = routine({ id: 'done', cadence: DAILY })
+    const openOne = routine({ id: 'open', cadence: DAILY })
+    const resting = routine({ id: 'resting', cadence: MON_FRI })
+    const completions = completionsFor('done', [dayKey(0)])
+    expect(todayTally([doneOne, openOne, resting], completions, NOW)).toEqual({ due: 2, done: 1, remaining: 1 })
+  })
+
+  it('a resting-day routine checked off anyway counts as tended, so done never exceeds due', () => {
+    const r = routine({ id: 'bonus', cadence: MON_FRI })
+    expect(todayTally([r], completionsFor('bonus', [dayKey(0)]), NOW)).toEqual({ due: 1, done: 1, remaining: 0 })
+  })
+
+  it('ignores archived routines and completions from other days', () => {
+    const archived = routine({ id: 'arch', cadence: DAILY, active: false })
+    const r = routine({ id: 'live', cadence: DAILY })
+    expect(todayTally([archived, r], completionsFor('live', [dayKey(-1)]), NOW)).toEqual({ due: 1, done: 0, remaining: 1 })
+  })
+})
+
+// Polish D: Today's rail lists routinesForToday under a todayTally header — the audit saw
+// "Routines · 1/5" over five rows on a Saturday while Routines said "1 of 3".
+describe('routinesForToday — the rows under the todayTally header', () => {
+  const SUNDAY_ONLY: Cadence = { weekdays: [0] }
+  const mixed = [
+    routine({ id: 'daily', cadence: DAILY }),
+    routine({ id: 'mwf', cadence: MON_WED_FRI }), // Wednesday is its day
+    routine({ id: 'sunday', cadence: SUNDAY_ONLY }), // rests on a Wednesday
+    routine({ id: 'monfri', cadence: MON_FRI }), // rests, but checked off anyway today
+    routine({ id: 'archived', cadence: DAILY, active: false }),
+  ]
+  const completions = [...completionsFor('daily', [dayKey(0)]), ...completionsFor('monfri', [dayKey(0)]), ...completionsFor('sunday', [dayKey(-3)])]
+
+  it('keeps the routines scheduled today plus any checked off today, in their order', () => {
+    expect(routinesForToday(mixed, completions, NOW).map((r) => r.id)).toEqual(['daily', 'mwf', 'monfri'])
+  })
+
+  it('is exactly the set todayTally counts, so the header always matches the rows', () => {
+    const rows = routinesForToday(mixed, completions, NOW)
+    const tally = todayTally(mixed, completions, NOW)
+    expect(tally).toEqual({ due: 3, done: 2, remaining: 1 })
+    expect(tally.due).toBe(rows.length)
+  })
+
+  it('a day when every routine rests lists nothing and counts 0 due', () => {
+    const resting = [routine({ id: 's', cadence: SUNDAY_ONLY }), routine({ id: 'mf', cadence: MON_FRI })]
+    expect(routinesForToday(resting, [], NOW)).toEqual([])
+    expect(todayTally(resting, [], NOW).due).toBe(0)
+  })
+})
+
+describe('routineStartKey', () => {
+  it('is the local day the routine was planted', () => {
+    expect(routineStartKey(PLANTED_TODAY, [])).toBe(dayKey(0))
+  })
+
+  it('never hides history older than created_at (e.g. a backfilled check-off)', () => {
+    expect(routineStartKey(PLANTED_TODAY, [dayKey(-3), dayKey(-1)])).toBe(dayKey(-3))
+  })
+
+  it('is undefined with no created_at and no history', () => {
+    expect(routineStartKey('', [])).toBeUndefined()
+  })
+})
+
+describe('days before a routine was planted are neither misses nor rain', () => {
+  it('a routine planted today: its 7-day row is all off, not six misses', () => {
+    const since = routineStartKey(PLANTED_TODAY, [])
+    expect(computeTrellisDays([], DAILY, 7, NOW, since).map((d) => d.state)).toEqual(['off', 'off', 'off', 'off', 'off', 'off', 'off'])
+    // without `since` the same empty history paints the pre-planting days as misses
+    expect(computeTrellisDays([], DAILY, 7, NOW).some((d) => d.state === 'rained' || d.state === 'broke')).toBe(true)
+  })
+
+  it('a routine planted today holds no phantom rain', () => {
+    const since = routineStartKey(PLANTED_TODAY, [])
+    expect(computeGraceStreak([], DAILY, NOW, since)).toEqual({ current: 0, rainedDates: [] })
+  })
+
+  it('real misses after planting still show, and `since` never changes the current streak', () => {
+    const plantedFiveDaysAgo = addDays(NOW, -5).toISOString()
+    const dates = [dayKey(-5), dayKey(-4), dayKey(-2), dayKey(-1)] // missed -3
+    const since = routineStartKey(plantedFiveDaysAgo, dates)
+    expect(computeTrellisDays(dates, DAILY, 7, NOW, since).map((d) => d.state)).toEqual(['off', 'grew', 'grew', 'rained', 'grew', 'grew', 'off'])
+    expect(computeGraceStreak(dates, DAILY, NOW, since).current).toBe(computeStreak(dates, DAILY, NOW).current)
+    expect(computeGraceStreak(dates, DAILY, NOW, since).rainedDates).toEqual([dayKey(-3)])
   })
 })

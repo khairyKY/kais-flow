@@ -2,6 +2,8 @@ import { uiZoom } from '../lib/uiScale'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { Float } from './Float'
+import { KeyCombo } from './kit'
+import { splitKeyCombo } from '../lib/shortcuts'
 
 export interface ContextMenuItem {
   label: string
@@ -11,7 +13,7 @@ export interface ContextMenuItem {
   icon?: React.ReactNode
   /** Overrides the label's text color (e.g. a priority level's own red/gold/blue) — ignored when `danger` is set. */
   labelColor?: string
-  /** Right-aligned mono hint (e.g. `"E"`, `"#"`) — the row's own keyboard shortcut, when it has one. */
+  /** Right-aligned keycap hint (e.g. `"E"`, `"#"`, `"⌃click"`) — the row's own keyboard shortcut, when it has one. */
   shortcut?: string
   /** Renders a child popover beside this item — opens on hover (short intent delay) or click,
    *  parent stays open. `onClose` collapses just this submenu (Escape/outside-click, so Escape
@@ -169,9 +171,8 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
             >
               {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--ink-faint)' }}>{item.icon}</span>}
               <span style={{ flex: 1 }}>{item.label}</span>
-              {item.shortcut && !item.submenu && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{item.shortcut}</span>
-              )}
+              {/* J-17: the hint column draws keycaps (Kai: "include them in right-click context menus"). */}
+              {item.shortcut && !item.submenu && <KeyCombo keys={splitKeyCombo(item.shortcut)} size="sm" />}
               {item.submenu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>▸</span>}
             </button>
           </div>

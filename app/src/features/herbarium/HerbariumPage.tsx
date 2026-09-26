@@ -236,7 +236,7 @@ export function HerbariumPage() {
     return (
       <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
         <div className="kf-overlay-card" style={isMobile
-          ? { width: '100%', height: '100dvh', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
+          ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
@@ -307,9 +307,8 @@ export function HerbariumPage() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{styles}</style>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
-      <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 34px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-        <span>Kai's Flow · Projects · Herbarium</span><span>Africa/Cairo</span>
-      </div>
+      {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Projects · Herbarium" strip — that
+          was Herbarium.dc.html's mock of the shell topbar, which the real shell already draws. */}
       <div style={{ flex: 1, padding: '32px 0 48px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 880, maxWidth: '100%', padding: '0 34px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 12 }}>

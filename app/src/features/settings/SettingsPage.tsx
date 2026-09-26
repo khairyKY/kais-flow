@@ -9,7 +9,7 @@ import {
 } from '../notifications/api'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useTheme } from '../../lib/theme'
-import { useUiScale, UI_SCALES, type UiScale } from '../../lib/uiScale'
+import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
@@ -68,9 +68,10 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
   )
 }
 
-function Seg<T extends string | number>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
+function Seg<T extends string | number>({ value, onChange, options, fill = false }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; fill?: boolean }) {
+  // `fill`: span the row and share it equally (phone Interface size — five options must fit even at 175%).
   return (
-    <div style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
+    <div style={{ display: fill ? 'flex' : 'inline-flex', width: fill ? '100%' : undefined, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
       {options.map((o) => {
         const on = o.value === value
         return (
@@ -78,8 +79,9 @@ function Seg<T extends string | number>({ value, onChange, options }: { value: T
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
+            aria-pressed={on}
             style={{
-              padding: '6px 13px', borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
+              padding: fill ? '6px 0' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
               background: on ? 'var(--paper-parchment)' : 'none',
               boxShadow: on ? 'var(--shadow-crisp)' : 'none',
               color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
@@ -255,7 +257,9 @@ function AppearanceCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Interface size</div>
-          <div style={fhelp}>scales the whole app · 125% is the new normal</div>
+          {/* Polish F2b: the default is per device (125% on a computer, 100% on a phone or a
+              touch-first screen), so the caption names this device's own normal. */}
+          <div style={fhelp}>scales the whole app · {Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device's normal</div>
         </div>
         <Seg<UiScale>
           value={scale}
@@ -873,15 +877,20 @@ function MobileSettings() {
   const github = integrations.find((i) => i.provider === 'github')
   const google = integrations.find((i) => i.provider === 'google')
   const { mode, setMode } = useThemeMode()
+  // Final polish (2026-09-26): the phone's Appearance card drew a static 60% "slider" and had no
+  // Interface size at all. Both now drive the same prefs as the desktop card.
+  const scale = useUiScale((st) => st.scale)
+  const setScale = useUiScale((st) => st.setScale)
+  const grain = useGrain()
 
-  const rows: { label: string; value: ReactNode }[] = [
+  const rows: { label: string; value: ReactNode; to?: string }[] = [
     { label: 'Timezone', value: settings?.timezone ?? '—' },
     { label: 'Google Calendar', value: google ? <><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)', display: 'inline-block' }} /> Connected</> : 'Not connected' },
     { label: 'GitHub', value: github ? 'Connected' : 'Not connected' },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
     { label: 'Capture API', value: 'not set up' },
     // Punch 50: the phone's only way into Trash.
-    { label: 'Trash', value: <Link to="/trash" style={{ color: 'var(--ink-muted)', textDecoration: 'underline' }}>{deletedItems.length} resting →</Link> },
+    { label: 'Trash', value: `${deletedItems.length} resting`, to: '/trash' },
   ]
 
   return (
@@ -897,23 +906,31 @@ function MobileSettings() {
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Theme</span>
           <Seg<ThemeMode> value={mode} onChange={setMode} options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'auto', label: 'Auto' }]} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Paper texture</span>
-          <span style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--line-solid)', position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', borderRadius: 2, background: 'var(--acc-sage)' }} />
-            <span style={{ position: 'absolute', left: '60%', top: '50%', transform: 'translate(-50%, -50%)', width: 14, height: 14, borderRadius: '50%', background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)' }} />
-          </span>
+        {/* Five sizes don't fit beside the label at 390px — the control gets its own line. */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-body)', marginBottom: 8 }}>Interface size</div>
+          <Seg<UiScale> fill value={scale} onChange={setScale} options={UI_SCALES.map((sc) => ({ value: sc, label: `${Math.round(sc * 100)}` }))} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Paper texture</span>
+          <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 160 }} />
         </div>
       </SCard>
 
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', marginTop: 12, overflow: 'hidden' }}>
-        {rows.map((r, i) => (
-          <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', borderBottom: i === rows.length - 1 ? 'none' : '1px dashed var(--line-dashed)' }}>
-            <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{r.label}</span>
-            <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>{r.value}</span>
-            <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>›</span>
-          </div>
-        ))}
+        {rows.map((r, i) => {
+          // Only a row that actually goes somewhere is a link and shows the chevron; the rest are
+          // read-outs (a chevron on a dead row promised a tap that did nothing).
+          const rowStyle = { display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', minHeight: 44, boxSizing: 'border-box' as const, borderBottom: i === rows.length - 1 ? 'none' : '1px dashed var(--line-dashed)', color: 'inherit', textDecoration: 'none' }
+          const inner = (
+            <>
+              <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 1 }}>{r.label}</span>
+              <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>{r.value}</span>
+              {r.to && <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>›</span>}
+            </>
+          )
+          return r.to ? <Link key={r.label} to={r.to} style={rowStyle}>{inner}</Link> : <div key={r.label} style={rowStyle}>{inner}</div>
+        })}
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>

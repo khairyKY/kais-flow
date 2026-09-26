@@ -1,0 +1,36 @@
+{
+ "which": "after",
+ "report": {
+  "blockCheckbox": {
+   "undoButton": 1,
+   "toasts": [
+    "Done\nUNDO"
+   ],
+   "dbAfterCheck": "done",
+   "undoClicked": true,
+   "dbAfterUndo": "todo",
+   "blockAt": 612
+  },
+  "contextMenu": {
+   "undoButton": 1,
+   "dbAfterCheck": "done",
+   "undoClicked": true,
+   "dbAfterUndo": "todo"
+  },
+  "detailsPanel": {
+   "undoButton": 1,
+   "dbAfterCheck": "done",
+   "undoClicked": true,
+   "dbAfterUndo": "todo"
+  },
+  "railCard": {
+   "undoButton": 1,
+   "dbAfterCheck": "done",
+   "undoClicked": true,
+   "dbAfterUndo": "todo",
+   "cardBackInRail": 1
+  }
+ },
+ "realErrors": [],
+ "meteo": 16
+}

@@ -1,23 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
-import { useTasks, completeTask, uncompleteTask, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
+import { todayListTasks } from '../tasks/grouping'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
-import { computeStreak, localDateKey } from '../routines/streaks'
+import { computeStreak, localDateKey, routinesForToday, todayTally } from '../routines/streaks'
 import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
-import { useRitualStepsToday, RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
-import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
-import { PinIcon } from '../rituals/PinIcon'
+import { useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { useRitualPins } from '../rituals/ritualPins'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
@@ -31,14 +32,25 @@ import { BulkBar } from '../../components/BulkBar'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
+import { upNextClock, upNextEvents, upNextLabel } from './upNext'
+import { taskMenuItems, upNextMenuItems } from './rowMenus'
+import { useStartFocus } from './startFocus'
+import { useMinuteNow } from './useMinuteNow'
+import { DayCard } from './DayCard'
+import { useStarEvents } from './api'
+import { starredIds, top3OfToday } from './top3Today'
+import { filterByList } from '../tasks/grouping'
+import { flushOutbox } from '../../lib/outbox'
+import { queryClient } from '../../lib/queryClient'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -146,17 +158,25 @@ export function TodayPage() {
   // A3 (2026-07-18 audit): tasks completed *today* stay visible struck-through in their
   // sections instead of vanishing; done rows sort after open ones within each section.
   const doneAfterOpen = (a: Task, b: Task) => Number(!!a.completed_at) - Number(!!b.completed_at)
-  const visible = tasks.filter((t) => !t.someday && (!t.completed_at || isToday(t.completed_at)))
+  // One rule for this page and the sidebar badge (Polish F1): grouping.ts `todayListTasks`.
+  const visible = todayListTasks(tasks)
   const open = visible.filter((t) => !t.completed_at)
-  const top3 = visible.filter((t) => t.top3).sort(doneAfterOpen)
+  // Loop A (2026-09-26 daily cycle): completing clears `top3` (completion.ts), so a finished pick
+  // used to drop out of this section into "All open" — and the Day card couldn't tell "all three
+  // done" from "none picked". Today's Top 3 now also holds the tasks finished today while starred,
+  // read back from the star log (./top3Today) — struck through, as A3/R4 always intended.
+  const { data: starEvents = [] } = useStarEvents(visible.filter((t) => t.completed_at).map((t) => t.id))
+  const dayTop3 = top3OfToday(visible, starredIds(starEvents))
+  const top3Ids = new Set(dayTop3.map((t) => t.id))
+  const top3 = [...dayTop3].sort(doneAfterOpen)
   // R4 (2026-07-20 audit): "when the goal of the day is finished it should still be displayed,
   // just crossed out." The card already strikes a done goal through — but the *selection* moved:
   // `top3` sorts done-after-open, so once the goal was checked `top3[0]` became a different,
   // still-open task and the finished one silently lost the title. Fall back to the first top-3
   // in unsorted order so today's goal stays today's goal after it's completed.
-  const goal = top3.find((t) => t.id === goalTaskId) ?? visible.filter((t) => t.top3)[0]
+  const goal = top3.find((t) => t.id === goalTaskId) ?? dayTop3[0]
   const restTop3 = top3.filter((t) => t.id !== goal?.id)
-  const allOpen = visible.filter((t) => !t.top3).sort(doneAfterOpen)
+  const allOpen = visible.filter((t) => !top3Ids.has(t.id)).sort(doneAfterOpen)
   const openCount = allOpen.filter((t) => !t.completed_at).length
   const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
   const nothingPlanned = !tasksPending && open.length === 0 && doneToday === 0
@@ -222,7 +242,12 @@ export function TodayPage() {
 
   const bulkToast = (verb: string) =>
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
-  function bulkComplete() { selectedTasks.forEach((t) => completeTask(t)); bulkToast('completed'); clearSelection() }
+  // Punch 6 (Polish D): completing gets the same Undo as a single check — see completeTaskWithUndo.
+  function bulkComplete() {
+    const undos = selectedTasks.map((t) => completeTask(t))
+    toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
+    clearSelection()
+  }
   function bulkSnooze(until: string) { selectedTasks.forEach((t) => snoozeTask(t, until)); bulkToast('snoozed'); clearSelection() }
   function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
@@ -250,7 +275,7 @@ export function TodayPage() {
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const listNavigate = useNavigate()
   const listBindings = buildListBindings({
-    complete: (t) => completeTask(t),
+    complete: (t) => completeTaskWithUndo(t),
     open: (t) => listNavigate(`/tasks/${t.id}`),
     snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
@@ -269,22 +294,35 @@ export function TodayPage() {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
 
-  const todayEvents = events
-    .filter((e) => !e.all_day && isToday(e.starts_at))
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-
-  const routineGroups = groupRoutinesByTime(routines.filter((r) => r.active))
+  // Polish D (2026-09-26 audit): the rail counted and listed EVERY active routine — a Sunday-only
+  // "Plan the week" on a Saturday, "1/5" where Routines said "1 of 3". The count and the rows now
+  // both come from the Routines page's own definition of today (streaks.ts todayTally /
+  // routinesForToday: scheduled today, or already checked off today), so the two pages agree.
+  const routineGroups = groupRoutinesByTime(routinesForToday(routines, completions))
   const doneKeys = useMemo(() => {
     const today = localDateKey(new Date())
     return new Set(completions.filter((c) => c.completed_on === today).map((c) => c.routine_id))
   }, [completions])
-  const routinesDone = routines.filter((r) => r.active && doneKeys.has(r.id)).length
-  const routinesTotal = routines.filter((r) => r.active).length
+  const { due: routinesTotal, done: routinesDone } = todayTally(routines, completions)
+  const hasActiveRoutines = routines.some((r) => r.active)
 
   // R4-D1 (Kai's 2026-07-20 ruling (a)): a ritual's progress is its own steps walked today,
   // never a count of `time_of_day`-tagged routines — those are a separate surface entirely.
-  const morning = { done: ritualSteps.morning.size, total: RITUAL_STEP_COUNT.morning }
-  const evening = { done: ritualSteps.evening.size, total: RITUAL_STEP_COUNT.evening }
+  // Loop A: the Day card reads them (./dayPhase morningState / eveningState).
+  //
+  // A ritual logs its steps through the outbox into activity_log, which realtime doesn't sync and
+  // the outbox's optimistic write doesn't reach (only the exact ['activity_log'] key). So when a
+  // ritual closes, let the queue land, then re-read the log — the Day card turns without a reload.
+  function openRitual(kind: RitualKind) {
+    if (kind === 'morning') setMorningOpen(true)
+    else setEveningOpen(true)
+  }
+  function closeRitual(kind: RitualKind) {
+    if (kind === 'morning') setMorningOpen(false)
+    else setEveningOpen(false)
+    void flushOutbox().then(() => queryClient.invalidateQueries({ queryKey: ['activity_log'] }))
+  }
+  const overdueCount = filterByList(tasks, 'overdue').length
 
   const streak = useMemo(() => {
     const byRoutine = new Map<string, string[]>()
@@ -402,6 +440,87 @@ export function TodayPage() {
     </div>
   ))
 
+  // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): Day card → Top 3 → Up next → Routines
+  // lead; the lists that don't drive the next move rest under one quiet "More for today" fold.
+  // Desktop keeps its rail (Routines first, then Slipping / From a while ago — already peripheral);
+  // the phone's single column gets Routines before the fold and everything else inside it.
+  const showAllOpen = !tasksPending && !nothingPlanned && !allDone
+  const resurfacing = resurfacedRow?.action === 'pending'
+  const allOpenSection = showAllOpen && (
+    <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
+      <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
+      {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
+      <div className="kf-dim">
+        {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
+          <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
+            <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+          </div>
+        ))}
+      </div>
+      {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
+      {allOpen.length > ALL_OPEN_CAP && (
+        <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
+          View all →
+        </Link>
+      )}
+    </section>
+  )
+  const slippingSection = slipping.length > 0 && (
+    <section>
+      <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
+      {/* Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A). */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {slipping.map((row) => {
+          const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+          // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
+          const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
+          return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
+        })}
+      </div>
+    </section>
+  )
+  // Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
+  // The section now either carries content or offers the one designed way in.
+  const routinesSection = (
+    <section>
+      <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
+      {routinesTotal === 0 && (
+        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
+          {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
+          {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
+        </Link>
+      )}
+      {routineGroups.filter((g) => g.items.length > 0).map((g) => (
+        <div key={g.key}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
+          {g.items.map((r) => (
+            <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
+          ))}
+        </div>
+      ))}
+    </section>
+  )
+  // Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
+  // bare heading. The heading now only appears with a card under it.
+  const resurfaceSection = resurfacing && (
+    <section>
+      <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
+      <ResurfaceCard />
+    </section>
+  )
+  const moreSummary = [
+    showAllOpen && openCount > 0 ? `${openCount} open` : null,
+    isMobile && slipping.length > 0 ? `${slipping.length} slipping` : null,
+    isMobile && resurfacing ? 'a memory' : null,
+  ].filter(Boolean).join(' · ')
+  const moreForToday = (showAllOpen || (isMobile && (slipping.length > 0 || resurfacing))) && (
+    <MoreForToday summary={moreSummary}>
+      {allOpenSection}
+      {isMobile && slippingSection}
+      {isMobile && resurfaceSection}
+    </MoreForToday>
+  )
+
   return (
     <div style={{ maxWidth: 1010, margin: '0 auto' }}>
       {isMobile ? (
@@ -416,10 +535,21 @@ export function TodayPage() {
         </>
       )}
 
-      {(ritualPins.morning || ritualPins.evening) && <div style={{ display: 'flex', gap: isMobile ? 9 : 14, marginTop: isMobile ? 12 : 20 }}>
-        {ritualPins.morning && <RitualCard kind="morning" label="Morning ritual" shortLabel="Morning" done={morning.done} total={morning.total || 4} accent="var(--acc-sage)" dot="var(--acc-gold-warm)" onClick={() => setMorningOpen(true)} icon={<SunIcon />} compact={isMobile} />}
-        {ritualPins.evening && <RitualCard kind="evening" label="Evening ritual" shortLabel="Evening" done={evening.done} total={evening.total || 2} accent="var(--acc-lavender)" dot="var(--acc-lavender)" onClick={() => setEveningOpen(true)} icon={<MoonIcon />} compact={isMobile} />}
-      </div>}
+      {/* deviation(2026-09-26 daily cycle): ONE Day card with the next move replaces the two
+          pinned ritual cards (./DayCard, ./dayPhase). Pins now decide which ritual it prompts. */}
+      <div style={{ marginTop: isMobile ? 12 : 20 }}>
+        <DayCard
+          events={events}
+          tasks={tasks}
+          top3={goal ? [goal, ...restTop3] : restTop3}
+          inboxCount={pendingInbox.length}
+          overdueCount={overdueCount}
+          ritualSteps={ritualSteps}
+          prompts={ritualPins}
+          compact={isMobile}
+          onOpenRitual={openRitual}
+        />
+      </div>
 
       {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
@@ -493,7 +623,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} focusable />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -502,77 +632,18 @@ export function TodayPage() {
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
-            {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
-            {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} first={i === 0} border={i > 0} compact={isMobile} />
-            ))}
+            <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} />
           </section>
 
-          {!tasksPending && !nothingPlanned && !allDone && (
-            <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
-              <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
-              {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
-              <div className="kf-dim">
-                {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
-                  <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
-                  </div>
-                ))}
-              </div>
-              {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
-              {allOpen.length > ALL_OPEN_CAP && (
-                <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
-                  View all →
-                </Link>
-              )}
-            </section>
-          )}
+          {isMobile && routinesSection}
+          {moreForToday}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
-          {slipping.length > 0 && (
-            <section>
-              <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
-              {/* Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A). */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {slipping.map((row) => {
-                  const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
-                  // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
-                  const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
-                  return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
-              The section now either carries content or offers the one designed way in. */}
-          <section>
-            <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
-            {routinesTotal === 0 && (
-              <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
-                nothing on repeat yet — plant one ✿
-              </Link>
-            )}
-            {routineGroups.filter((g) => g.items.length > 0).map((g) => (
-              <div key={g.key}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
-                {g.items.map((r) => (
-                  <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
-                ))}
-              </div>
-            ))}
-          </section>
-
-          {/* Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
-              bare heading. The heading now only appears with a card under it. */}
-          {resurfacedRow?.action === 'pending' && (
-            <section>
-              <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
-              <ResurfaceCard />
-            </section>
-          )}
-        </div>
+        {!isMobile && <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+          {routinesSection}
+          {slippingSection}
+          {resurfaceSection}
+        </div>}
       </div>
 
       {selected.size > 0 && (
@@ -597,8 +668,8 @@ export function TodayPage() {
       )}
       {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
 
-      {morningOpen && <MorningRitual onClose={() => setMorningOpen(false)} />}
-      {eveningOpen && <EveningRitual onClose={() => setEveningOpen(false)} />}
+      {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
+      {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}
     </div>
   )
 }
@@ -707,6 +778,8 @@ function DoneTodayCard() {
 
 // Holds a bloomed checkbox on screen for the length of Motion 5a before the row settles into
 // its done treatment. Without it the swap to DoneCheck is instant and nothing animates.
+// Polish F2a: the held box stays checked, so a second click on it used to run the completion
+// again ("Done" twice). A click on a checked box now reopens the task, with Undo (checkAction).
 function useBloomCheck(task: Task) {
   const [checking, setChecking] = useState(false)
   const done = !!task.completed_at
@@ -717,9 +790,14 @@ function useBloomCheck(task: Task) {
   }, [done])
   return {
     checking,
-    check: () => {
+    toggle: () => {
+      if (checkAction(done, checking) === 'reopen') {
+        setChecking(false)
+        reopenTaskWithUndo(task) // "Reopened" toast + Undo (puts the check back exactly)
+        return
+      }
       setChecking(true)
-      completeTask(task)
+      completeTaskWithUndo(task) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
     },
   }
 }
@@ -728,29 +806,43 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   const openDetail = () => navigate(`/tasks/${task.id}`) // J-8
+  // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — same right-click menu and
+  // ▶ Start focus as the rows under it ("every row that shows a task behaves like a task").
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const onMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY })
+  }
+  const menuNode = menu && <ContextMenu items={taskMenuItems(task, { open: openDetail, startFocus })} position={menu} onClose={() => setMenu(null)} />
+  const focusBtn = !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
-      <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
+      <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
+        {menuNode}
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
+        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox checked={bloom.checking} size={16} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         </div>
+        {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
     )
   }
   return (
-    <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
+    <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
+      {menuNode}
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.check} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
+      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
         <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
+      {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
       <div style={{ textAlign: 'center', flex: 'none' }}>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>
@@ -760,11 +852,11 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
 }
 
 // A3 — the design's done treatment (Today.dc.html:204, same as routine rows): filled
-// --sig-done check, struck-through title. Click reopens.
+// --sig-done check, struck-through title. Click reopens (Polish F2a: with Undo).
 function DoneCheck({ task, size }: { task: Task; size: number }) {
   return (
     <span
-      onClick={() => uncompleteTask(task)}
+      onClick={() => reopenTaskWithUndo(task)}
       title="Reopen"
       className="kf-hit"
       style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', cursor: 'pointer' }}
@@ -774,7 +866,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
+function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted, focusable }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean; focusable?: boolean }) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
@@ -795,6 +887,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   // Kai 2026-07-21: no visible select squares, but the row keeps its selection and menu
   // behaviours — Ctrl/Cmd+click toggles selection, right-click opens the actions menu.
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   function rowClick(e: React.MouseEvent) {
     if ((e.ctrlKey || e.metaKey) && !done && onToggleSelect) {
@@ -806,24 +899,16 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
     e.preventDefault()
     setMenu({ x: e.clientX, y: e.clientY })
   }
-  const menuItems: ContextMenuItem[] = [
-    done
-      ? { label: 'Reopen', onClick: () => uncompleteTask(task) }
-      : { label: 'Complete', onClick: () => completeTask(task) },
-    { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
-    { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
-    { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
-    { label: 'Someday', onClick: () => setSomeday(task, true), disabled: done },
-    ...(onToggleSelect && !done ? [{ label: selected ? 'Deselect' : 'Select', onClick: onToggleSelect, shortcut: '⌃click' }] : []),
-    { label: 'Open details', onClick: () => navigate(`/tasks/${task.id}`) },
-    { label: 'Delete', danger: true, onClick: () => deleteTask(task) },
-  ]
+  // Loop A: the menu lives in ./rowMenus (shared with the goal card), Start focus on top.
+  const menuItems = taskMenuItems(task, { open: () => navigate(`/tasks/${task.id}`), startFocus, selected, onToggleSelect })
   const menuNode = menu && <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
+  // Loop A: Top 3 rows carry a ▶ Start focus beside the star; the resting "All open" list doesn't.
+  const focusBtn = focusable && !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
       <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
         {menuNode}
-        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.check} /></span>}
+        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.toggle} /></span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null || dueBadges) && (
@@ -835,6 +920,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
             </div>
           )}
         </div>
+        {focusBtn}
         {!done && (
           <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
             {task.top3 ? '★' : '☆'}
@@ -846,11 +932,12 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   return (
     <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
       {menuNode}
-      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.check} /></span>}
+      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox checked={bloom.checking} bloom={task.top3} onChange={bloom.toggle} /></span>}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
+      {focusBtn}
       {!done && (
         <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
           {task.top3 ? '★' : '☆'}
@@ -860,36 +947,108 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   )
 }
 
+// Polish F2a (2026-09-26 decision): Up next lists what's running and what's still to come today —
+// an event drops off the minute it ends (upNext.ts). The list owns the minute tick, so it re-reads
+// the clock without re-rendering the whole page, and its rows' "Now" flips on the same tick.
+function UpNextList({ events, eventsPending, tasks, compact }: { events: CalendarEvent[]; eventsPending: boolean; tasks: Task[]; compact: boolean }) {
+  const now = useMinuteNow()
+  const upNext = upNextEvents(events, now)
+  return (
+    <>
+      {!eventsPending && upNext.length === 0 && <Empty line="A clear afternoon." />}
+      {upNext.map((e, i) => (
+        <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={compact} now={now} />
+      ))}
+    </>
+  )
+}
+
 // Kai 2026-07-21: "where are the checkboxes for the top 3 tasks and the entire task behaviour" —
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
-function EventRow({ event, task, first, border, compact }: { event: CalendarEvent; task?: Task; first: boolean; border: boolean; compact?: boolean }) {
-  const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+//
+// Loop A (2026-09-26, Kai: "I can't right click what is in the up next section"): the rows were
+// display-only. Now every row behaves like a task row — a click opens it (the task editor, or the
+// calendar for a plain event; the calendar has no per-event deep link), right-click opens the row
+// menu (./rowMenus), and a task-backed row carries ▶ Start focus.
+function EventRow({ event, task, border, compact, now }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date }) {
+  const clock = upNextClock
+  const navigate = useNavigate()
+  const startFocus = useStartFocus()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
+  // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
+  // list's minute tick (UpNextList) flips it on time without a reload.
+  const label = upNextLabel(event.starts_at, event.ends_at, now)
+  const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
+  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
+  const onMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY })
+  }
+  // The checkbox and ▶ act on their own; their clicks must not also open the row.
+  const own = (e: React.MouseEvent) => e.stopPropagation()
   const check = task && (
-    <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => (done ? uncompleteTask(task) : completeTask(task))} />
+    <span onClick={own} style={{ display: 'inline-flex', flex: 'none' }}>
+      <Checkbox checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
+    </span>
   )
+  const focusBtn = task && !done && <FocusButton title={event.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
+  // A sibling of the row, not a child: the menu portals to <body>, but React events still bubble
+  // through the component tree, and a menu click reaching the row would also open it.
+  const menuNode = menu && <ContextMenu items={upNextMenuItems(event, task, { open, startFocus })} position={menu} onClose={() => setMenu(null)} />
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
+  const rowProps = { id: `upnext-${event.id}`, onClick: open, onContextMenu: onMenu, title: task ? 'Open task' : 'Open in calendar' }
   if (compact) {
     return (
-      <div style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-        <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
-        {check}
-        <div style={{ flex: 1, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-      </div>
+      <>
+        <div {...rowProps} style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
+          <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
+          {check}
+          <div style={{ flex: 1, minWidth: 0, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+          {focusBtn}
+        </div>
+        {menuNode}
+      </>
     )
   }
   return (
-    <div style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none' }}>
-      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: first ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{first ? 'Now' : clock(event.starts_at)}</span>
-      {check}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
+    <>
+      <div {...rowProps} style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
+        <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
+        {check}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+        {focusBtn}
       </div>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-    </div>
+      {menuNode}
+    </>
+  )
+}
+
+// Loop A — ▶ Start focus, the row affordance (Top 3, the goal card, Up next, the Day card). A
+// drawn triangle rather than the ▶ character, which some platforms paint as a colour emoji.
+// Quiet (hairline) until hovered; .kf-hit gives it a 44px target on touch screens.
+function FocusButton({ title, onStart, size = 11 }: { title: string; onStart: () => void; size?: number }) {
+  return (
+    <button
+      type="button"
+      className="kf-hit kf-focus-btn"
+      title="Start focus"
+      aria-label={`Start focus: ${title}`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onStart()
+      }}
+      style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size + 10, height: size + 10, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+    >
+      <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor" /></svg>
+    </button>
   )
 }
 
@@ -929,58 +1088,34 @@ function RoutineRow({ routine, done }: { routine: Routine; done: boolean }) {
   )
 }
 
-function RitualCard({ kind, label, shortLabel, done, total, accent, dot, onClick, icon, compact }: { kind: RitualKind; label: string; shortLabel: string; done: number; total: number; accent: string; dot: string; onClick: () => void; icon: React.ReactNode; compact?: boolean }) {
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0
-  if (compact) {
-    return (
-      <button onClick={onClick} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '9px 11px', cursor: 'pointer', font: 'inherit', textAlign: 'left' }}>
-        <span style={{ width: 9, height: 9, borderRadius: '50%', background: dot, flex: 'none' }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>{shortLabel}</div>
-          <div style={{ marginTop: 4, height: 3, borderRadius: 2, background: 'var(--line-card)', overflow: 'hidden' }}>
-            <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: accent }} />
-          </div>
-        </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{done}/{total}</span>
-      </button>
-    )
+// Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
+// remembered per device; SectionLabel's look, as a button.
+const MORE_OPEN_KEY = 'kf.today.more-open'
+
+function MoreForToday({ summary, children }: { summary: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(MORE_OPEN_KEY) === '1' } catch { return false }
+  })
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    try { localStorage.setItem(MORE_OPEN_KEY, next ? '1' : '0') } catch { /* storage off: this visit only */ }
   }
   return (
-    <button onClick={onClick} style={{ position: 'relative', flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 13, cursor: 'pointer', font: 'inherit', textAlign: 'left' }}>
-      {/* R4-5c: a real pin, and a real control — click to unpin this ritual off Today
-          (it stays reachable from Routines). Was a static '◧ pinned' caption. */}
-      <span
-        role="button"
-        tabIndex={0}
-        title="Unpin from Today"
-        aria-label="Unpin this ritual from Today"
-        onClick={(e) => { e.stopPropagation(); toggleRitualPin(kind) }}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleRitualPin(kind) } }}
-        className="kf-hit"
-        style={{ position: 'absolute', top: 7, right: 9, display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer' }}
-      >
-        <PinIcon size={9} /> pinned
-      </span>
-      {icon}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, color: 'var(--ink-body)', fontWeight: 500 }}>{label}</div>
-        <div style={{ marginTop: 5, height: 4, borderRadius: 2, background: 'var(--line-card)', overflow: 'hidden' }}>
-          <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: accent }} />
-        </div>
-      </div>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{done}/{total}</span>
-    </button>
+    <section>
+      <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+          More for today{summary && <span style={{ color: 'var(--ink-hairline)' }}> · {summary}</span>}
+        </span>
+        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+        <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
+      </button>
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 12 }}>{children}</div>}
+    </section>
   )
 }
 
 function Empty({ line }: { line: string }) {
   return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>
 }
-
-const SunIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><circle cx="12" cy="12" r="5" fill="#D9B65C" /><g stroke="var(--acc-gold-warm)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></g></svg>
-)
-const MoonIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--acc-lavender)" /></svg>
-)
 

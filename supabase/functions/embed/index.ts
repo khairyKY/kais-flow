@@ -1,7 +1,9 @@
 // P5: drains embed_queue in batches (Supabase.ai gte-small, no external API) + one-off backfill.
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders, embedText } from '../_shared/retrieval.ts'
+import { isServiceRole } from '../_shared/auth.ts'
+import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
+import { embedText } from '../_shared/retrieval.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -21,9 +23,15 @@ async function enqueueMissing(supabase: any, table: string, entityType: 'task' |
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+
+  // FIX-0 / S5: only pg_cron (service-role key from Vault, 0009_search_cron.sql) may drain the
+  // queue or trigger a backfill — both are cross-tenant service-role work. Signed-in users and
+  // the anon key get 401 like anyone else: nothing in the app calls this function.
+  if (!(await isServiceRole(req))) return jsonResponse(req, { error: 'unauthorized' }, 401)
 
   try {
     const { backfill } = (await req.json().catch(() => ({}))) as { backfill?: boolean }
@@ -63,7 +71,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('embed:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

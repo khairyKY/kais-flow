@@ -1,0 +1,81 @@
+build: {"commit":"a6afa9aa51f0242d0727517aeed73663ad4b4c49","builtAt":"2026-09-26T05:57:50.685Z"}
+account: polish-a-2739612@example.com
+
+# signed out
+PASS  signed out /nope: not-found page  — landed /nope
+PASS  signed out /nope: no developer screen / raw text
+PASS  signed out /nope: the word "error" is not on screen
+      shot desktop-signedout-nope.png
+PASS  signed out /tasks/nope/deeper: not-found page  — landed /tasks/nope/deeper
+PASS  signed out /tasks/nope/deeper: no developer screen / raw text
+PASS  signed out /tasks/nope/deeper: the word "error" is not on screen
+PASS  signed out /capture: not-found page  — landed /capture
+PASS  signed out /capture: no developer screen / raw text
+PASS  signed out /capture: the word "error" is not on screen
+      shot desktop-signedout-capture.png
+PASS  signed out /seasons: not-found page  — landed /seasons
+PASS  signed out /seasons: no developer screen / raw text
+PASS  signed out /seasons: the word "error" is not on screen
+PASS  signed out /design-system: not-found page  — landed /design-system
+PASS  signed out /design-system: no developer screen / raw text
+PASS  signed out /design-system: the word "error" is not on screen
+PASS  signed out not-found: "Back to sign in" → /sign-in  — /sign-in
+PASS  signed out /today (a known page) still goes to sign-in  — /sign-in
+
+# sign up → onboarding → Today
+PASS  sign-up lands on /onboarding  — paths /sign-in → / → /onboarding
+PASS  sign-up never touched /today before onboarding
+      shot desktop-signup-onboarding.png
+PASS  finishing onboarding lands on Today  — /today
+      shot desktop-onboarded-today.png
+PASS  app_settings.onboarded_at saved on the server  — 2026-09-26T06:05:51.177+00:00
+
+# signed in
+PASS  signed in /nope: not-found inside the shell  — landed /nope, aside=1
+PASS  signed in /nope: no developer screen / raw text
+PASS  signed in /nope: the word "error" is not on screen
+      shot desktop-signedin-nope.png
+PASS  signed in /tasks/nope/deeper: not-found inside the shell  — landed /tasks/nope/deeper, aside=1
+PASS  signed in /tasks/nope/deeper: no developer screen / raw text
+PASS  signed in /tasks/nope/deeper: the word "error" is not on screen
+      shot desktop-signedin-tasks-nope-deeper.png
+PASS  signed in /capture: not-found inside the shell  — landed /capture, aside=1
+PASS  signed in /capture: no developer screen / raw text
+PASS  signed in /capture: the word "error" is not on screen
+      shot desktop-signedin-capture.png
+PASS  signed in /seasons: not-found inside the shell  — landed /seasons, aside=1
+PASS  signed in /seasons: no developer screen / raw text
+PASS  signed in /seasons: the word "error" is not on screen
+      shot desktop-signedin-seasons.png
+PASS  signed in /design-system: not-found inside the shell  — landed /design-system, aside=1
+PASS  signed in /design-system: no developer screen / raw text
+PASS  signed in /design-system: the word "error" is not on screen
+PASS  signed in not-found: "Back to Today" → /today  — /today
+PASS  /share?text=… lands in Inbox  — /inbox
+PASS  /share: the shared text is in the Inbox
+      shot desktop-share-inbox.png
+
+# sign out → sign in again
+PASS  sign out → /sign-in  — /sign-in
+PASS  signing in again lands on /today  — paths /sign-in → / → /today
+PASS  …without passing through /onboarding
+      shot desktop-signin-again-today.png
+
+# phone + night
+PASS  phone signed out: not-found
+PASS  phone signed out: no horizontal overflow  — 0px
+      shot phone-signedout-nope.png
+PASS  phone sign-in lands on /today  — /today
+PASS  phone signed in /capture: not-found
+PASS  phone signed in: no horizontal overflow  — 0px
+      shot phone-signedin-capture.png
+PASS  night signed out: not-found
+      shot desktop-night-signedout-nope.png
+PASS  night signed in: not-found
+      shot desktop-night-signedin-nope.png
+
+49/49 checks passed
+CONSOLE ERRORS (excluding open-meteo):
+desktop FAILED http://127.0.0.1:5230/favicon.svg net::ERR_ABORTED
+desktop FAILED http://127.0.0.1:54321/auth/v1/logout?scope=global net::ERR_ABORTED
+open-meteo / ERR_TUNNEL_CONNECTION_FAILED lines ignored: 26

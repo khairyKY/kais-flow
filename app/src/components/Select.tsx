@@ -1,7 +1,8 @@
 import { uiZoom } from '../lib/uiScale'
-import { useEffect, useRef, useState, type CSSProperties, type Ref } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
+import { clampSelectLeft, placeSelect, SELECT_TOUCH_ROW_H, type SelectPlacement } from './selectPlacement'
 
 export interface SelectOption {
   value: string
@@ -23,9 +24,12 @@ interface SelectProps {
   triggerRef?: Ref<HTMLButtonElement>
   /** When the popover is closed, Enter calls this instead of opening — lets Inbox keep "focus, Enter files". */
   onEnterClosed?: () => void
+  /** Replaces the trigger's whole contents (selected label + ▾) — for a trigger that keeps its
+   * own look, e.g. Tasks' `⇅ Sort · Smart` (J-12). The popover still lists the plain labels. */
+  display?: ReactNode
+  /** Extra class on the trigger — e.g. `kf-hit` for a 44px coarse-pointer hit area. */
+  className?: string
 }
-
-const ITEM_H = 32
 
 /**
  * Themed replacement for a native `<select>`: the popover list is ours, so it takes the app's
@@ -33,11 +37,11 @@ const ITEM_H = 32
  * it escapes the transformed (rotated) cards it often lives inside — `position:fixed` inside a
  * `transform`ed ancestor would otherwise anchor to the card, not the viewport.
  */
-export function Select({ value, onChange, options, style, title, ariaLabel, placeholder, triggerRef, onEnterClosed }: SelectProps) {
+export function Select({ value, onChange, options, style, title, ariaLabel, placeholder, triggerRef, onEnterClosed, display, className }: SelectProps) {
   const localRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number; width: number }>({ left: 0, width: 0 })
+  const [pos, setPos] = useState<SelectPlacement | null>(null)
   const [highlight, setHighlight] = useState(0)
 
   useEscapeStack(open, () => setOpen(false))
@@ -56,17 +60,29 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
     const el = localRef.current
     if (!el) return
     const b = el.getBoundingClientRect()
-    const r = { left: b.left / z, top: b.top / z, bottom: b.bottom / z, width: b.width / z }
-    const estHeight = Math.min(options.length * ITEM_H + 8, 320)
-    const below = r.bottom + estHeight <= window.innerHeight / z - 12
+    // polish-f1: everything in layout px (the viewport too — innerWidth is visual), clamped to
+    // the screen, with 44px rows under a finger (selectPlacement.ts).
+    const coarse = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
     setPos(
-      below
-        ? { left: r.left, top: r.bottom + 4, width: r.width }
-        : { left: r.left, bottom: window.innerHeight / z - r.top + 4, width: r.width },
+      placeSelect(
+        { left: b.left / z, top: b.top / z, bottom: b.bottom / z, width: b.width / z },
+        { width: window.innerWidth / z, height: window.innerHeight / z },
+        options.length,
+        coarse,
+      ),
     )
     setHighlight(Math.max(0, options.findIndex((o) => o.value === value)))
     setOpen(true)
   }
+
+  // The popover's real width is only known once it renders (labels can widen it past the
+  // trigger, up to maxWidth) — shift it back inside the right edge before paint if it spills.
+  // offsetWidth is layout px and ignores the entry animation's scale(0.98); a rect would not.
+  useLayoutEffect(() => {
+    if (!open || !pos || !panelRef.current) return
+    const left = clampSelectLeft(pos.left, panelRef.current.offsetWidth, window.innerWidth / uiZoom())
+    if (left !== pos.left) setPos({ ...pos, left })
+  }, [open, pos])
 
   function step(dir: 1 | -1) {
     setHighlight((h) => {
@@ -120,6 +136,7 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
       <button
         type="button"
         ref={setTriggerNode}
+        className={className}
         title={title}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -141,11 +158,16 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
           ...style,
         }}
       >
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-        <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
+        {display ?? (
+          <>
+            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+            <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
+          </>
+        )}
       </button>
 
       {open &&
+        pos &&
         createPortal(
           <div
             ref={panelRef}
@@ -153,12 +175,12 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
             className="kf-overlay-card"
             style={{
               position: 'fixed',
-              left: Math.max(8, Math.min(pos.left, window.innerWidth - Math.max(pos.width, 160) - 8)),
+              left: pos.left,
               top: pos.top,
               bottom: pos.bottom,
-              minWidth: Math.max(pos.width, 160),
-              maxWidth: 320,
-              maxHeight: 320,
+              minWidth: pos.minWidth,
+              maxWidth: pos.maxWidth,
+              maxHeight: pos.maxHeight,
               overflowY: 'auto',
               zIndex: 1000,
               background: 'var(--paper-parchment)',
@@ -184,6 +206,8 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 11,
+                    boxSizing: 'border-box',
+                    minHeight: pos.touch ? SELECT_TOUCH_ROW_H : undefined,
                     borderRadius: 5,
                     padding: '7px 10px',
                     fontFamily: 'var(--font-ui)',

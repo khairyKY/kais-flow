@@ -60,6 +60,18 @@ export function staggerDelay(index: number, step = 60): React.CSSProperties {
   return { animationDelay: `${index * step}ms` }
 }
 
+// J-22 — a stable 0–1 phase per id (FNV-1a hash), so a per-item ambient loop can start at its
+// own point in the cycle instead of every card animating in lockstep. Same id → same phase on
+// every render and reload, so nothing jumps when a list re-renders.
+export function idPhase(id: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0) / 4294967296
+}
+
 // F4 Motion 3c — overlay exit (140ms). Render while `mounted`; add the matching
 // `--out` class (kf-overlay-card--out / kf-scrim--out / kf-sheet--out / kf-drawer--out)
 // while `closing`. Esc obeys immediately under reduced-motion (duration collapses to 0).
@@ -105,6 +117,20 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
     })
     collapse.onfinish = () => onDone()
   }
+}
+
+/** Puts back a row `animateRowRemoval` was taking away — an Undo that lands mid-exit (Polish D,
+ * punch 6). Its slide/collapse run with `fill: forwards`, so once finished they'd hold the row at
+ * opacity 0 / height 0 even after it's back in the list. Cancelling them (onDone never fires) and
+ * clearing the inline styles it set restores the row as it was; CSS animations and transitions
+ * on the row are left alone. */
+export function cancelRowRemoval(el: HTMLElement | null) {
+  if (!el) return
+  for (const a of el.getAnimations?.() ?? []) {
+    if (!('animationName' in a) && !('transitionProperty' in a)) a.cancel()
+  }
+  el.style.pointerEvents = ''
+  el.style.overflow = ''
 }
 
 // Motion 5b "Drag lift" — R4-23 (Kai's 2026-07-20 audit). The export calls this "the one

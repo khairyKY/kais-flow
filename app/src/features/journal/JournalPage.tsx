@@ -1,12 +1,14 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router'
+import { onlineManager } from '@tanstack/react-query'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
+import { Button } from '../../components/kit'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import type { JournalEntry } from '../../lib/types'
 import '../projects/xfx.css'
@@ -33,10 +35,68 @@ const PROMPTS = [
 
 const MOODS = ['Calm', 'Focused', 'Grateful', 'Stretched']
 
+/** The connection as the query layer sees it (the same signal that pauses a query offline). */
+function useOnline(): boolean {
+  return useSyncExternalStore((cb) => onlineManager.subscribe(cb), () => onlineManager.isOnline())
+}
+
 // Fern thresholds are Foundation's (lib/growthStages) — the local copy that used to live
 // here is gone, so Journal can never drift from Review/Library (punch item 10).
 function fernSrc(length: number): string {
   return `/ds/assets/fern/${fernByLength(length)}.png`
+}
+
+/** States.dc.html 1d — the pencil resting on the first, still-blank page. The export's colours
+ * through their tokens: gold-warm body, blossom eraser; buttercream wood and a muted graphite
+ * point are the nearest tokens to its #e8ddc4 / #4d4738. */
+function RestingPencil() {
+  return (
+    <svg aria-hidden width="120" height="16" viewBox="0 0 120 16" style={{ position: 'absolute', right: 18, bottom: -7, transform: 'rotate(-3deg)', pointerEvents: 'none' }}>
+      <rect x="14" y="4" width="92" height="8" rx="2" fill="var(--acc-gold-warm)" />
+      <path d="M14 4 2 8l12 4V4Z" fill="var(--acc-buttercream)" />
+      <path d="M6.5 6.5 2 8l4.5 1.5v-3Z" fill="var(--ink-muted)" />
+      <rect x="106" y="4" width="10" height="8" rx="2" fill="var(--acc-blossom)" />
+    </svg>
+  )
+}
+
+/** Polish G: the journal's past couldn't be read — offline before it ever loaded on this device,
+ * or the request failed. Said in the page's own hand, where the first-page line sits, with one
+ * retry when there's something to retry. The notebook stays writable either way. */
+function PastNote({ state, retrying, onRetry, size }: { state: Extract<ListState, 'away' | 'resting'>; retrying: boolean; onRetry: () => void; size: number }) {
+  return (
+    <div role="status" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' }}>
+      <span style={{ fontFamily: 'var(--font-hand)', fontSize: size, lineHeight: 1.35, color: 'var(--ink-hand)' }}>{state === 'away' ? PAST_AWAY : PAST_RESTING}</span>
+      {state === 'resting' && (
+        <Button type="button" variant="secondary" onClick={onRetry} disabled={retrying} style={{ fontSize: 12, padding: '6px 14px' }}>
+          {retrying ? 'Trying…' : 'Try again'}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+/** The phone Notes / Quotes shelf (1b tabs) when it has nothing to list: empty, offline before it
+ * ever loaded, or failed. Journal's fern, still coiled, and one hand line — plus a retry when
+ * there's something to retry. No "go add one" button: the Library is parked (K-26), so there's
+ * nowhere to send anyone. Loading shows nothing; it's brief, and an unloaded shelf isn't empty. */
+type ShelfQuery = { data: unknown[] | undefined; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle'; isFetching: boolean; refetch: () => unknown }
+function ShelfState({ q, what }: { q: ShelfQuery; what: 'notes' | 'quotes' }) {
+  const online = useOnline()
+  const s = listState(q, online)
+  if (s === 'loading' || (s === 'ready' && (q.data?.length ?? 0) > 0)) return null
+  const line = s === 'ready' ? `No ${what} on the shelf yet.` : s === 'away' ? "The shelf will be here when you're back online." : "The shelf didn't come through just now."
+  return (
+    <div role={s === 'ready' ? undefined : 'status'} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 0 10px' }}>
+      <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
+      <div style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 17, lineHeight: 1.35, color: 'var(--ink-hand)', textAlign: 'center' }}>{line}</div>
+      {s === 'resting' && (
+        <Button type="button" variant="secondary" onClick={() => void q.refetch()} disabled={q.isFetching} style={{ marginTop: 14, fontSize: 12, padding: '6px 14px' }}>
+          {q.isFetching ? 'Trying…' : 'Try again'}
+        </Button>
+      )}
+    </div>
+  )
 }
 
 export function JournalPage() {
@@ -46,16 +106,31 @@ export function JournalPage() {
 
 
   // Queries
-  const { data: entries = [] } = useJournalEntries()
-  // States 1d — first-run: the input is the action, this line is the invitation
-  const firstPage = !entries.some(isWritten)
-  const { data: notes = [] } = useNotes()
-  const { data: quotes = [] } = useQuotes()
+  const journalQ = useJournalEntries()
+  const listed = journalQ.data
+  // Polish G: until the list has arrived, nothing derived from it is claimed (see `listState`).
+  const online = useOnline()
+  const past = listState(journalQ, online)
+  const known = past === 'ready'
+  const pastUnread = past === 'away' || past === 'resting'
+  const pastNote = (size: number) =>
+    past === 'away' || past === 'resting' ? <PastNote state={past} retrying={journalQ.isFetching} onRetry={() => void journalQ.refetch()} size={size} /> : null
+  // P0-B: rows this page wrote that the cached list doesn't have yet (it never loaded on this
+  // device — offline, or typing before the first fetch lands). See `holdRow`.
+  const [held, setHeld] = useState<HeldRows>({})
+  const entries = useMemo(() => withHeldRows(listed ?? [], held), [listed, held])
+  // States 1d — first-run: the input is the action, this line is the invitation. Only once the
+  // list has arrived: an unloaded list is not an empty one.
+  const firstPage = known && !entries.some(isWritten)
+  const notesQ = useNotes()
+  const quotesQ = useQuotes()
+  const notes = notesQ.data ?? []
+  const quotes = quotesQ.data ?? []
 
   // Find a quote for commonplace rail (first quote or random)
   const commonplaceQuote = useMemo(() => {
-    return quotes[0] || null
-  }, [quotes])
+    return quotesQ.data?.[0] || null
+  }, [quotesQ.data])
 
   const { data: commonplaceCommentaries = [] } = useCommentaries(
     'quote',
@@ -123,11 +198,20 @@ export function JournalPage() {
   // overwrite the other's field with whatever was on screen when its timer was set. Both
   // compose from here instead of from their captured render, so the loser of the race only
   // rewrites what the winner already wrote.
-  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] })
-  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3] }
+  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] })
+  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] }
   const rowNow = (id: string): JournalEntry | undefined => {
     const e = latest.current.dayEntries.find((x) => x.id === id)
     return e && { ...e, body: latest.current.drafts[id] ?? e.body }
+  }
+
+  /** Every journal write on this page goes through `hold`, so the page always sees the row it
+   * just wrote — same id, latest body — even when the cached list can't take it yet. */
+  const hold = (row: JournalEntry) => setHeld((h) => holdRow(h, row, latest.current.listed))
+  const save = (entry: Parameters<typeof upsertJournalEntry>[0], isNew: boolean) => {
+    const row = upsertJournalEntry(entry, isNew)
+    hold(row)
+    return row
   }
 
   // Focus hand-off: a brand-new entry (or the first keystroke on a blank day) mounts a
@@ -147,7 +231,7 @@ export function JournalPage() {
     timers.current[entry.id] = window.setTimeout(() => {
       const cur = rowNow(entry.id)
       if (!cur) return // deleted while the save was pending — don't resurrect it
-      upsertJournalEntry({ ...cur, body: val }, false)
+      save({ ...cur, body: val }, false)
       // The write is in the cache now, so the draft has served its purpose — drop it, or it
       // would mask a later update to this row arriving from another device.
       setDrafts(({ [entry.id]: _saved, ...rest }) => rest)
@@ -159,7 +243,7 @@ export function JournalPage() {
    * stamped now, focused for typing. */
   const addEntry = (date = todayStr, from?: HTMLElement) => {
     setSelectedDate(date)
-    const row = upsertJournalEntry({ entry_date: date, body: '' }, true)
+    const row = save({ entry_date: date, body: '' }, true)
     seedPlant(from, motion) // Motion 5f — "+ New entry" drops a seed into the day's column
     wantFocus.current = row.id
   }
@@ -167,7 +251,7 @@ export function JournalPage() {
   /** First keystroke on a day with no entries writes the entry rather than making the user
    * press "+ New entry" first — the input is the action (design state 1d). */
   const startFirstEntry = (val: string) => {
-    const row = upsertJournalEntry({ entry_date: selectedDate, body: val }, true)
+    const row = save({ entry_date: selectedDate, body: val }, true)
     setDrafts((d) => ({ ...d, [row.id]: val }))
     wantFocus.current = row.id
   }
@@ -181,14 +265,14 @@ export function JournalPage() {
     const heir = dayEntries.find((e) => e.id !== entry.id)
     // Motion 3e (WB-1) — the entry slides out and the day's column closes over it.
     animateRowRemoval(document.getElementById(`journal-${entry.id}`), () => {
-      deleteJournalEntry(row)
+      hold(deleteJournalEntry(row))
       // The day's mood / three small things live on its first entry — hand them down rather
       // than let them leave with it. (Undo leaves the heir holding a harmless stale copy;
       // `dayField` reads the earliest holder, which is the restored row again.)
       if (heir && (row.mood || row.gratitude.length) && !heir.mood && heir.gratitude.length === 0) {
-        upsertJournalEntry({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
+        save({ ...heir, mood: row.mood, gratitude: row.gratitude }, false)
       }
-      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => restoreJournalEntry(row))
+      toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => hold(restoreJournalEntry(row)))
     })
   }
 
@@ -201,7 +285,7 @@ export function JournalPage() {
       const gratitude = grats.map((s) => s.trim()).filter(Boolean)
       const target = latest.current.dayEntries[0]
       const cur = target && rowNow(target.id)
-      upsertJournalEntry(
+      save(
         cur ? { ...cur, mood, gratitude } : { entry_date: selectedDate, body: '', mood, gratitude },
         !cur
       )
@@ -317,6 +401,7 @@ export function JournalPage() {
           fontSize: `${t.fontSize}px`,
           lineHeight: `${t.lineHeight}px`,
           color: 'var(--ink-body)',
+          caretColor: 'var(--acc-terra)', // States 1d: the terra cursor on the open page
           resize: 'none',
           outline: 'none',
           padding: 0,
@@ -370,7 +455,7 @@ export function JournalPage() {
             </div>
           </div>
         ))}
-        {notes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No notes kept yet.</div>}
+        <ShelfState q={notesQ} what="notes" />
       </div>
     </div>
   )
@@ -393,7 +478,7 @@ export function JournalPage() {
             </div>
           </div>
         ))}
-        {quotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No quotes kept yet.</div>}
+        <ShelfState q={quotesQ} what="quotes" />
       </div>
     </div>
   )
@@ -417,7 +502,7 @@ export function JournalPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Journal · Day {dayCount}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
             </div>
           </div>
@@ -449,6 +534,9 @@ export function JournalPage() {
 
           {mobileTab === 'journal' && (
             <>
+              {/* Polish G: offline before the journal ever loaded here, or it failed to load. */}
+              {pastUnread && <div style={{ marginTop: 16 }}>{pastNote(16)}</div>}
+
               {/* Prompt */}
               <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>
                 {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
@@ -457,10 +545,14 @@ export function JournalPage() {
               {/* Writing Card */}
               <div style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
-                
+                {firstPage && <RestingPencil />}
+
                 {renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+                {/* Polish G: at a 125% interface size (the phone default until F2b) a 390px phone lays this card out
+                    ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
+                    stay whole; the save state takes its own line only when it doesn't fit. */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
@@ -538,7 +630,7 @@ export function JournalPage() {
 
   // Desktop layout (1a)
   return (
-    <div style={{ display: 'flex', width: '100%', minHeight: '85vh', background: 'var(--paper-linen)', position: 'relative' }}>
+    <div className="jn" style={{ width: '100%', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .ruled {
           background-image: repeating-linear-gradient(transparent 0px, transparent 26px, var(--line-dashed) 26px, var(--line-dashed) 27px);
@@ -552,20 +644,65 @@ export function JournalPage() {
         .journal-sidebar-link:hover, .journal-sidebar-link:hover * {
           color: var(--acc-terra) !important;
         }
+
+        /* Polish G (2026-09-26 audit): Journal.dc.html 1a is three FIXED columns — a 230px entry
+           tree, the writing page, a 262px rail — drawn on a 1300px card. In the app they sit inside
+           the shell (242px sidebar + 40px padding each side), and the default 125% interface size
+           (lib/uiScale.ts) lays a 1280px window out in ~1024 CSS px, so the two rails left the page
+           ~210 CSS px: the title clipped mid-word and the notebook was a strip. Media queries read
+           the WINDOW, which that zoom doesn't shrink, so the columns now follow the page's own
+           laid-out width (container queries, the same fix Polish D gave Tasks):
+             ≥1000px   the export's three columns, verbatim;
+             560–999   the tree stays beside the page and the rail folds under the writing
+                       (1280 and 1440 at 125%, 1600 when the sidebar is open);
+             <560      one column — the page, then the rail, then the tree; the card footer
+                       carries "＋ New entry", as 1b's does.
+           Phone (≤767px window) keeps its own 1b layout above. */
+        .jn { container: journal / inline-size; }
+        .jn-grid {
+          display: grid; min-height: 85vh; position: relative; z-index: 15;
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: "write" "rail" "tree";
+        }
+        .jn-tree { grid-area: tree; position: relative; display: flex; flex-direction: column; min-width: 0; padding: 22px 20px 28px; border-top: 1px dashed var(--line-solid); }
+        .jn-tree-new, .jn-gutter { display: none; }
+        .jn-main { grid-area: write; min-width: 0; display: flex; flex-direction: column; }
+        .jn-write { flex: 1; display: flex; justify-content: center; padding: 26px 20px 32px; container: jn-write / inline-size; }
+        .jn-title { font-size: clamp(28px, 7.8cqi, 40px); text-wrap: balance; }
+        .jn-rail {
+          grid-area: rail; min-width: 0; padding: 26px 20px 30px; border-top: 1px dashed var(--line-solid);
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 28px; align-content: start;
+        }
+        .jn-rail-pair { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+        @container journal (min-width: 560px) {
+          .jn-grid { grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "tree write" "tree rail"; }
+          .jn-tree { padding: 22px 18px; border-top: none; border-right: 1px dashed var(--line-solid); }
+          .jn-tree-new { display: flex; }
+          .jn-gutter { display: block; }
+          .jn-write { padding: 30px 28px 36px; }
+          .jn-rail { padding: 28px 28px 36px; }
+          .jn-card-new { display: none; }
+        }
+        @container journal (min-width: 1000px) {
+          .jn-grid { grid-template-columns: 230px minmax(0, 1fr) 262px; grid-template-rows: auto; grid-template-areas: "tree write rail"; }
+          .jn-write { padding: 34px 40px 44px; }
+          .jn-rail { display: flex; flex-direction: column; gap: 28px; padding: 30px 22px; border-top: none; border-left: 1px dashed var(--line-solid); }
+        }
       `}</style>
       <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
-      
+
+      <div className="jn-grid">
       {/* 1. LEFT RAIL: Entry tree + Gutter */}
-      <aside style={{ width: 230, flex: 'none', borderRight: '1px dashed var(--line-solid)', position: 'relative', padding: '22px 18px', display: 'flex', flexDirection: 'column', zIndex: 15 }}>
-        
+      <aside className="jn-tree">
+
         {/* Floating Fern Gutter */}
-        <img src="/ds/assets/fern/coil.png" alt="" style={{ position: 'absolute', right: 6, top: 78, height: 30, opacity: 0.45 }} />
-        <img src="/ds/assets/fern/unfurl1.png" alt="" style={{ position: 'absolute', right: 4, top: 250, height: 38, opacity: 0.5 }} />
-        <img src="/ds/assets/fern/unfurl2.png" alt="" style={{ position: 'absolute', right: 2, top: 470, height: 46, opacity: 0.55 }} />
-        <img src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', right: 0, bottom: 26, height: 60, opacity: 0.6, filter: 'var(--shadow-drop-sm)' }} />
+        <img className="jn-gutter" src="/ds/assets/fern/coil.png" alt="" style={{ position: 'absolute', right: 6, top: 78, height: 30, opacity: 0.45 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/unfurl1.png" alt="" style={{ position: 'absolute', right: 4, top: 250, height: 38, opacity: 0.5 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/unfurl2.png" alt="" style={{ position: 'absolute', right: 2, top: 470, height: 46, opacity: 0.55 }} />
+        <img className="jn-gutter" src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', right: 0, bottom: 26, height: 60, opacity: 0.6, filter: 'var(--shadow-drop-sm)' }} />
 
         {/* Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div className="jn-tree-new" style={{ alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
             onClick={(e) => addEntry(todayStr, e.currentTarget)}
             style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}
@@ -607,8 +744,10 @@ export function JournalPage() {
                   style={{ display: 'block', textDecoration: 'none', padding: '8px 11px', cursor: 'pointer' }}
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>
+                  {/* Until the list arrives a day isn't "empty", only unknown: the line keeps its
+                      height and says nothing (Polish G). */}
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 2 }}>
-                    {entryForDate?.mood || (hasEntry ? 'kept' : 'empty')}
+                    {known ? entryForDate?.mood || (hasEntry ? 'kept' : 'empty') : ' '}
                   </div>
                 </div>
               )
@@ -616,8 +755,10 @@ export function JournalPage() {
           })}
         </div>
 
-        {/* Notes shelf link list */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>
+        {/* Notes / Quotes shelf link lists. Polish G: a group shows only when it has something to
+            list — a brand-new account used to get two bare headings with nothing under them, and
+            with the Library parked (K-26) there's no way to fill them from here. */}
+        {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
         {notes.slice(0, 4).map((n) => (
           <div
             key={n.id}
@@ -629,8 +770,7 @@ export function JournalPage() {
           </div>
         ))}
 
-        {/* Quotes shelf link list */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>
+        {quotes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>}
         {quotes.slice(0, 4).map((q) => (
           <div
             key={q.id}
@@ -644,24 +784,15 @@ export function JournalPage() {
       </aside>
 
       {/* 2. MAIN COLUMN: Writing Columns */}
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', zIndex: 15 }}>
-        
-        {/* Top Header info */}
-        <div style={{ height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>Kai's Flow</span>
-            <span>·</span>
-            <span>{headerDateStr}</span>
-            <span>·</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              Synced
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc-sage)' }}></span>
-            </span>
-          </div>
-          <div>Africa/Cairo</div>
-        </div>
-
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '34px 40px 44px', overflowY: 'auto' }}>
+      <main className="jn-main">
+        {/* Polish G (2026-09-26 audit): no in-page "Kai's Flow · {date} · Synced ● / Africa/Cairo"
+            strip. In Journal.dc.html 1a it is <main>'s first child, 42px, in the topbar's exact
+            style — the export's mock of the shell topbar, which the real shell already draws above
+            this page (owner name, date, live sync state, zone). Nothing on it was Journal's own:
+            the selected day is the title below. Its "Synced ●" was hard-coded, so it stayed on
+            while the topbar said Offline. Same leftover Polish C removed from Activity, Herbarium,
+            Trash and Library. */}
+        <div className="jn-write">
           <div style={{ width: '100%', maxWidth: 660 }}>
             
             {/* Punch 47 item 5: the fern was mobile-only. Same binding here — the day's total
@@ -669,13 +800,19 @@ export function JournalPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <img src={fernSrc(dayLength)} alt="" style={{ height: 52, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Journal · Day {dayCount}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
 
-                <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
+                {/* Size from .jn-title: the export's 40px wherever the page is wide enough, easing
+                    down (never below 28px) so the date keeps to one line in a narrower column. */}
+                <h1 className="jn-title" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>
               </div>
             </div>
 
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
+            {pastUnread ? (
+              <div style={{ marginTop: 8 }}>{pastNote(19)}</div>
+            ) : (
+              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you ✿'}</div>
+            )}
 
             {/* Prompt Selector */}
             <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -695,18 +832,22 @@ export function JournalPage() {
             {/* Ruled Notebook Card */}
             <div style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
-              
+              {firstPage && <RestingPencil />}
+
               {renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 10px', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', whiteSpace: 'nowrap' }}>
+                {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
+                    so the card carries the day's "＋ New entry", as 1b's footer does. */}
+                <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>＋ Photo</span>
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>
 
-            {/* Mood picker */}
-            <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* Mood picker — the chips drop under "Today felt —" when they don't fit beside it. */}
+            <div style={{ marginTop: 26, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' }}>
               <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>Today felt —</span>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {MOODS.map((m) => {
@@ -762,9 +903,12 @@ export function JournalPage() {
         </div>
       </main>
 
-      {/* 3. RIGHT RAIL: Quote of the Day, On This Day, Streak */}
-      <aside style={{ width: 262, flex: 'none', borderLeft: '1px dashed var(--line-solid)', padding: '30px 22px', display: 'flex', flexDirection: 'column', gap: 28, zIndex: 15 }}>
-        
+      {/* 3. RIGHT RAIL: Quote of the Day, On This Day, Streak — a column beside the page when
+          there's room, otherwise folded under the writing (quote | on this day + kept).
+          Polish G: On this day and Kept read the journal's past, so they wait for the list. */}
+      {(commonplaceQuote || known) && (
+      <aside className="jn-rail">
+
         {/* Quote of the day */}
         {commonplaceQuote && (
           <section>
@@ -815,6 +959,8 @@ export function JournalPage() {
           </section>
         )}
 
+        {known && (
+        <div className="jn-rail-pair">
         {/* On this day */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -836,8 +982,9 @@ export function JournalPage() {
               )}
             </div>
           ) : (
-            <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>
-              No entries on this day in past years.
+            // Polish G: the page's hand, as every designed empty line is — not grey italic UI text.
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, lineHeight: 1.35, color: 'var(--ink-hand)' }}>
+              Nothing from this day in past years — yet.
             </div>
           )}
         </section>
@@ -849,15 +996,21 @@ export function JournalPage() {
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/ds/assets/fern/full.png" alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            {/* The export's full fern — but a streak of 0 is a fern that hasn't unfurled yet
+                (growth stages never lie, punch 10). */}
+            <img src={`/ds/assets/fern/${streakDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakDays} days</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
             </div>
           </div>
         </section>
+        </div>
+        )}
 
       </aside>
+      )}
+      </div>
       {confirmCard}
     </div>
   )

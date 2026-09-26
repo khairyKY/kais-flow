@@ -1,0 +1,25 @@
+build: {"commit":"912b52678bd46bc8f0b77566de7ceabfdc686719","builtAt":"2026-09-26T06:56:03.966Z"}
+      /herbarium: in-page "Kai's Flow · …" strips: 0
+PASS  /herbarium: no in-page strip under the topbar  — 0
+      shot ./shots/after-strip-desktop-herbarium.png
+      /trash: in-page "Kai's Flow · …" strips: 0
+PASS  /trash: no in-page strip under the topbar  — 0
+      shot ./shots/after-strip-desktop-trash.png
+      /library: in-page "Kai's Flow · …" strips: 0
+PASS  /library: no in-page strip under the topbar  — 0
+      shot ./shots/after-strip-desktop-library.png
+      onboarding workspace preview: "MIRA'S FLOW · NILE STUDIO · CAIRO"
+PASS  onboarding preview names the owner  — MIRA'S FLOW · NILE STUDIO · CAIRO
+      shot ./shots/after-onboarding-workspace-preview.png
+
+console/request lines: 8 total, 0 other than open-meteo
+  strips FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  strips /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  strips FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  strips /herbarium: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  strips FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  strips /trash: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  strips FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  strips /library: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+4/4 checks passed

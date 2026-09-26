@@ -1,0 +1,11 @@
+build: {"commit":"unknown","builtAt":"2026-09-26T06:53:58.205Z"}
+      kai.local@example.com: gate offered /onboarding (never onboarded) → going to /today without answering
+      shot ./shots/base-kai-desktop-today-1.png
+      shot ./shots/base-kai-desktop-today-2.png
+
+console/request lines: 3 total, 0 other than open-meteo
+  kai-twice FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_ABORTED
+  kai-twice FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  kai-twice /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+0/0 checks passed

@@ -4,8 +4,8 @@ import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
 import { settleSwipeX, DRAG_THRESHOLD, SWIPE_LEFT, SWIPE_RIGHT } from './swipe'
 import {
-  completeTask,
-  uncompleteTask,
+  completeTaskWithUndo,
+  reopenTaskWithUndo,
   toggleTop3,
   snoozeTask,
   setSomeday,
@@ -21,6 +21,7 @@ import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag } from './taskDisplay'
+import { checkAction } from './completion'
 import { shortcutHint } from './listShortcuts'
 import { scheduleToday } from '../../lib/dateShortcuts'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
@@ -106,9 +107,14 @@ export interface TaskRowProps {
   goalTaskId?: string | null
   /** Most recently completed task id this session — shows "just now ✿" + a loose petal instead of a time. */
   justCompletedId?: string | null
-  /** Defaults to `completeTask`. TasksPage supplies one that also tracks the grace window
-   * a just-checked row needs to stay visible in its group so the check/petal animation can play. */
+  /** Defaults to `completeTaskWithUndo` (punch 6: toast "Done" + Undo). TasksPage supplies one
+   * that also tracks the grace window a just-checked row needs to stay visible in its group so
+   * the check/petal animation can play. */
   onComplete?: (task: Task) => void
+  /** Defaults to `reopenTaskWithUndo` (Polish F2a: toast "Reopened" + Undo) — the filled ✓, the
+   * menu's Reopen, and a second click on a just-checked box. TasksPage supplies one that also
+   * ends the row's grace window. */
+  onReopen?: (task: Task) => void
 }
 
 function useRowSwipe() {
@@ -182,7 +188,8 @@ export function TaskRow({
   border = true,
   goalTaskId,
   justCompletedId,
-  onComplete = completeTask,
+  onComplete = (t: Task) => void completeTaskWithUndo(t),
+  onReopen = (t: Task) => void reopenTaskWithUndo(t),
 }: TaskRowProps) {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
@@ -238,15 +245,28 @@ export function TaskRow({
     else navigate(`/tasks/${task.id}`)
   }
 
+  // Polish F2a: inside Tasks' grace window a just-checked row is still drawn open with its box
+  // checked — a second click there used to complete it again. It now reopens (checkAction).
   function handleCheck() {
+    if (checkAction(done, checking) === 'reopen') {
+      handleReopen()
+      return
+    }
     setChecking(true)
     onComplete(task)
     swipe.reset()
   }
 
-  const menuItems: ContextMenuItem[] = done
+  function handleReopen() {
+    setChecking(false)
+    onReopen(task)
+    swipe.reset()
+  }
+
+  // A just-checked row (still drawn open in the grace window) is done: its menu is the done one.
+  const menuItems: ContextMenuItem[] = done || checking
     ? [
-        { label: 'Reopen', icon: <UndoMenuIcon />, onClick: () => uncompleteTask(task) },
+        { label: 'Reopen', icon: <UndoMenuIcon />, onClick: handleReopen },
         { label: 'Delete', danger: true, icon: <TrashMenuIcon />, onClick: () => setConfirmDelete({ title: `Delete "${task.title}"?`, body: '' }) },
       ]
     : [
@@ -435,7 +455,8 @@ export function TaskRow({
         style={{ ...rowStyle, alignItems: 'center', padding: '11px 2px', opacity: justCompleted ? 0.55 : 1 }}
       >
         <span
-          onClick={() => uncompleteTask(task)}
+          onClick={handleReopen}
+          title="Reopen"
           style={{ width: 18, height: 18, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 11, flex: 'none', cursor: 'pointer' }}
         >
           ✓

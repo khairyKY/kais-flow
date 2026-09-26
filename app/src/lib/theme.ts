@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { syncShellChrome } from './platform'
 
 // Day / Night — the two token themes (colors.css :root vs colors.dark.css
 // [data-theme="night"]). Appearance is a device preference, so it lives in
@@ -19,6 +20,7 @@ function read(): Theme {
 
 function apply(theme: Theme) {
   if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme
+  syncShellChrome(theme) // M1: the Android shell's bar strips follow Day/Night
 }
 
 interface ThemeState {

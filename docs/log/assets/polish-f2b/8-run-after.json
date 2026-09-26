@@ -1,0 +1,151 @@
+{
+ "which": "after",
+ "report": {
+  "d1280-day": {
+   "zoom": 1.25,
+   "cardCssW": 336,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    }
+   ]
+  },
+  "d1600-day": {
+   "zoom": 1.25,
+   "cardCssW": 288,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 6.4,
+     "cellVisualPx": 8,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 6.4,
+     "cellVisualPx": 8,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 6.4,
+     "cellVisualPx": 8,
+     "lines": 1
+    }
+   ]
+  },
+  "p390-day": {
+   "zoom": 1,
+   "cardCssW": 312,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    }
+   ]
+  },
+  "p390-night": {
+   "zoom": 1,
+   "cardCssW": 312,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 7.2,
+     "cellVisualPx": 7.2,
+     "lines": 1
+    }
+   ]
+  },
+  "p390-125-day": {
+   "zoom": 1.25,
+   "cardCssW": 234,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 4.6,
+     "cellVisualPx": 5.8,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 4.6,
+     "cellVisualPx": 5.8,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 4.6,
+     "cellVisualPx": 5.8,
+     "lines": 1
+    }
+   ]
+  },
+  "d1280-night": {
+   "zoom": 1.25,
+   "cardCssW": 336,
+   "rows": [
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    },
+    {
+     "cells": 30,
+     "cellCssPx": 8,
+     "cellVisualPx": 10,
+     "lines": 1
+    }
+   ]
+  }
+ },
+ "realErrors": [],
+ "meteo": 24
+}

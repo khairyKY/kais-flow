@@ -38,7 +38,18 @@
   position: absolute; width: 9px; height: 7px; pointer-events: none;
   background: linear-gradient(135deg, #E8C4CC, #D4A8B0); border-radius: 70% 30% 60% 40%;
 }
-.tr-checking .tr-petal-live { animation: petalFall 400ms var(--ease-out) forwards; }
+/* Polish F2a: the live petal rode the ambient petalFall (a 90px drop) — the open row clips at
+   its own edge (overflow: hidden, for the swipe panels), so the petal left the row ~50ms in and
+   read as nothing. 5a's petal (Motion.dc.html 5a frame 3) sheds beside the check: a short drop,
+   like 5e's toast petal, that stays inside the row. Transform + opacity only; rendered only while
+   motion is on (TaskRow gates it on useMotionEnabled). */
+@keyframes tr-petalShed {
+  0%   { opacity: 0; transform: translate(-2px, -7px) rotate(40deg); }
+  15%  { opacity: 1; }
+  60%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(3px, 7px) rotate(120deg); }
+}
+.tr-checking .tr-petal-live { animation: tr-petalShed 400ms var(--ease-out) forwards; }
 
 /* Effects 4 "Day complete" — 5-petal burst over the finished list, once per calendar day
    (TasksPage owns the once-a-day gate). Rides the token petalFall at the recipe's 900ms. */

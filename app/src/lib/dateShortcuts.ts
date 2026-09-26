@@ -8,41 +8,80 @@ export function cairoDateKey(d: Date): string {
   return cairoDay.format(d)
 }
 
-function atHour(base: Date, hour: number): Date {
-  const d = new Date(base)
-  d.setHours(hour, 0, 0, 0)
-  return d
+/** The Cairo calendar day `now` falls on, as that date's UTC midnight in ms — pure day math. */
+function cairoDayUtc(now: Date): number {
+  const [y, m, d] = cairoDateKey(now).split('-').map(Number)
+  return Date.UTC(y, m - 1, d)
+}
+
+// T-2: the shortcuts below schedule on that same Cairo day. Egypt has DST (UTC+2 winter,
+// UTC+3 summer), so Cairo's offset is read from the tz database via Intl — never hardcoded.
+const cairoClock = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Africa/Cairo',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+})
+
+/** Cairo's UTC offset in ms at instant `t` (whole seconds). */
+function cairoOffsetMs(t: number): number {
+  const p: Record<string, number> = {}
+  for (const { type, value } of cairoClock.formatToParts(t)) p[type] = Number(value)
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second) - t
+}
+
+/** Cairo's UTC offset in minutes at `at` (+180 in summer, +120 in winter). */
+export function cairoOffsetMinutes(at: Date): number {
+  return Math.round(cairoOffsetMs(at.getTime()) / 60000)
+}
+
+/** A Cairo wall-clock time, given as ms read as if it were UTC, -> the real instant (ISO). */
+function cairoWallToIso(wall: number): string {
+  // Second pass: the offset at the first guess can differ from the one at the real instant
+  // when a DST switch falls between them.
+  return new Date(wall - cairoOffsetMs(wall - cairoOffsetMs(wall))).toISOString()
+}
+
+/** T-4: ISO instant of a Cairo wall-clock time (`month` 1–12), on any device — "10am" typed on a
+ * phone set to another zone still means 10:00 in Cairo. DST-correct for the date itself. */
+export function cairoWallTimeToIso(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): string {
+  return cairoWallToIso(Date.UTC(year, month - 1, day, hour, minute, second))
+}
+
+/** ISO instant of `hour`:00 Cairo wall-clock, `days` Cairo calendar days after the one `now`
+ * falls on — the same day `cairoDateKey` (and so task grouping) sees, on any device. */
+function cairoDayAt(now: Date, days: number, hour: number): string {
+  return cairoWallToIso(cairoDayUtc(now) + days * 86400000 + hour * 3600000) // Cairo wall-clock, read as UTC
 }
 
 /** Shared "1/2/3 = today/tomorrow/next week" math — also backs the row context menu's
  * Schedule today/tomorrow so keyboard and mouse always land on the same time. */
 export function scheduleToday(now: Date = new Date()): string {
-  return atHour(now, 9).toISOString()
+  return cairoDayAt(now, 0, 9)
 }
 
 export function scheduleTomorrow(now: Date = new Date()): string {
-  const d = new Date(now)
-  d.setDate(d.getDate() + 1)
-  return atHour(d, 9).toISOString()
+  return cairoDayAt(now, 1, 9)
 }
 
-/** Day-offset to the coming Monday (7 if today already is one) — the one place this math
- * lives, so the planning board's "This week"/"Next week" bucket boundary can share it and
- * never drift from what this shortcut actually schedules. */
+/** Day-offset to the coming Monday (7 if today already is one), by the Cairo weekday — the one
+ * place this math lives, so the planning board's "This week"/"Next week" bucket boundary can
+ * share it and never drift from what this shortcut actually schedules. */
 export function daysUntilNextMonday(now: Date = new Date()): number {
-  return ((1 - now.getDay() + 7) % 7) || 7
+  const weekday = new Date(cairoDayUtc(now)).getUTCDay()
+  return ((1 - weekday + 7) % 7) || 7
 }
 
 export function scheduleNextWeek(now: Date = new Date()): string {
-  const d = new Date(now)
-  d.setDate(d.getDate() + daysUntilNextMonday(now))
-  return atHour(d, 9).toISOString()
+  return cairoDayAt(now, daysUntilNextMonday(now), 9)
 }
 
 /** Planning board's "This week" column drop target — a fixed 2-day-out placeholder date
  * (not today/tomorrow, which have their own columns) that the task can be dragged off of later. */
 export function scheduleThisWeek(now: Date = new Date()): string {
-  const d = new Date(now)
-  d.setDate(d.getDate() + 2)
-  return atHour(d, 9).toISOString()
+  return cairoDayAt(now, 2, 9)
 }

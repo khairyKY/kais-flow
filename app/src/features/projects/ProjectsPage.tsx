@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects, useTimeEntries, restoreProject, isThisMonth } from './api'
@@ -10,8 +10,9 @@ import { queryClient } from '../../lib/queryClient'
 import { BackLink, SectionLabel } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
+import { useIsMobile } from '../../components/BottomSheet'
 import './xfx.css'
 
 // Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month.
@@ -19,16 +20,22 @@ function dayMonth(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-function localUseIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
+// Effects 1t amber drift: three leaves per slipping board card, staggered 0 / 3.4 / 6.2s inside
+// the card. J-22 (Kai, 2026-07-29): those same constants ran on EVERY card, so the whole board
+// fell in lockstep. Each card now shifts the cycle by its id's phase (a negative delay starts the
+// fall mid-way, so no card waits empty) and stretches its durations by up to 16%. The stagger
+// inside a card is kept; only transform/opacity animate (kfAmberFall in xfx.css).
+const AMBER_LEAVES = [
+  { left: '18%', delay: 0, duration: 9.5 },
+  { left: '52%', delay: 3.4, duration: 11 },
+  { left: '78%', delay: 6.2, duration: 10.2 },
+] as const
+function amberLeafTiming(leaf: (typeof AMBER_LEAVES)[number], phase: number): React.CSSProperties {
+  return {
+    left: leaf.left,
+    animationDelay: `${(leaf.delay - phase * 10).toFixed(2)}s`,
+    animationDuration: `${(leaf.duration * (0.92 + 0.16 * phase)).toFixed(2)}s`,
+  }
 }
 
 const EMPTY_STAT = { hours: 0, monthHours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, weight: 0, doneWeight: 0, hasTop3Task: false }
@@ -47,7 +54,7 @@ export function getWisteriaImage(pct: number): string {
 
 export function ProjectsPage() {
   const navigate = useNavigate()
-  const isMobile = localUseIsMobile()
+  const isMobile = useIsMobile()
   const motion = useMotionEnabled()
 
   // State
@@ -155,7 +162,21 @@ export function ProjectsPage() {
 
   // Effects 1e bloom glow — never on more than one plant at once.
   const bloomId = activeProjects.find((p) => projectStats[p.id]?.pct === 100)?.id ?? null
-  const isSlippingProject = (pid: string) => slippingList.some((s) => s.entity_type === 'project' && s.entity_id === pid)
+  const slippingProject = (pid: string) => slippingList.find((s) => s.entity_type === 'project' && s.entity_id === pid)
+  const isSlippingProject = (pid: string) => !!slippingProject(pid)
+  // J-19: the area rows' slipping chip, now shared with project rows (the list used to flag a
+  // slipping area but not a slipping project — only the board knew). Desktop carries the days
+  // like the export's `slipping · 21d`; the phone branch keeps its shorter `slipping`.
+  const slippingChip = (days: number) => (
+    <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
+      slipping · {Math.floor(days)}d
+    </span>
+  )
+  const mobileSlippingChip = (
+    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
+      slipping
+    </span>
+  )
 
   const isEmpty = allProjects.length === 0 && areas.length === 0
 
@@ -233,8 +254,10 @@ export function ProjectsPage() {
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
+                    {/* J-19: on the meta line, not beside the name — the title row has no room at 390px. */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones
+                      {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
@@ -267,8 +290,9 @@ export function ProjectsPage() {
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.monthHours}h this month
+                      {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
@@ -297,9 +321,7 @@ export function ProjectsPage() {
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                 <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
                 {isSlipping ? (
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 9.5, padding: '4px 9px', borderRadius: 999 }}>
-                    slipping
-                  </span>
+                  mobileSlippingChip
                 ) : (
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>
                     {count} open
@@ -315,6 +337,75 @@ export function ProjectsPage() {
     )
   }
 
+  // J-21 (Kai, 2026-07-29): "Board / Finished / domain buttons shouldn't live under the heading
+  // of the page." WA-8's split out of the header was right (six pills never fit it), its home
+  // wasn't: the same controls now sit right-aligned on the first section-label row of whichever
+  // view is showing — beside ACTIVE's count in the list, on a bare dashed rule above the board
+  // and the archive. App-only navigation, not in the export; still kept quiet (R4-33a: only one
+  // filled CTA per view).
+  const viewControls = (
+    <span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 12, rowGap: 10 }}>
+      {view !== 'archive' && (
+        /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
+        <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
+          <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
+          <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
+        </span>
+      )}
+      {view === 'archive' && (
+        <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
+          ← Back to Active
+        </span>
+      )}
+      {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
+      <button
+        onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
+        style={{
+          border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
+          background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
+          color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
+          fontFamily: 'inherit',
+          fontSize: '12.5px',
+          padding: '9px 13px',
+          borderRadius: '999px',
+          cursor: 'pointer',
+          boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
+        }}
+      >
+        Finished · {archivedProjects.length}
+      </button>
+      {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
+          was a styled div with a transparent native <select> laid over it — the trigger
+          looked right, but opening it handed you the OS dropdown. The themed Select keeps
+          the pill (it merges `style` onto its trigger) and brings our own popover. */}
+      <Select
+        value={selectedDomainId || ''}
+        onChange={(v) => setSelectedDomainId(v || null)}
+        options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+        ariaLabel="Filter by domain"
+        placeholder="Domain"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '9.5px',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-muted)',
+          border: '1px solid var(--line-solid)',
+          borderRadius: '999px',
+          padding: '8px 13px',
+        }}
+      />
+    </span>
+  )
+  // Board / archive / empty list have no section label of their own: SectionLabel's dashed rule,
+  // minus the empty label slot (it would indent the rule), carries the controls.
+  const controlsRule = (maxWidth: number) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', maxWidth }}>
+      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      {viewControls}
+    </div>
+  )
+
   // Render Desktop
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '85vh' }}>
@@ -323,8 +414,8 @@ export function ProjectsPage() {
       <main style={{ position: 'relative', zIndex: 10, padding: '10px 8px 40px' }}>
         {/* punch 41: header is Projects.dc.html 1a node-for-node — plant at the set's live stage,
             eyebrow, 40px display title, then exactly `{n} active · {n} total` + New area + New project.
-            The app-only navigation (List/Board, Finished, domain filter) moved to its own quiet row
-            below: six pills never fit this row (punch 16's wrap), and the export's header has three. */}
+            The app-only navigation (List/Board, Finished, domain filter) lives on the section-label
+            row below (J-21): six pills never fit this row (punch 16's wrap), and the export's header has three. */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, rowGap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
@@ -363,70 +454,17 @@ export function ProjectsPage() {
           </div>
         </div>
 
-        {/* App-only navigation — not in the export. Kept quiet (R4-33a: only one filled CTA per view). */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, rowGap: 10, marginTop: 18, marginBottom: 4 }}>
-          {view !== 'archive' && (
-            /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
-            <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-              <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
-              <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
-            </span>
-          )}
-          {view === 'archive' && (
-            <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
-              ← Back to Active
-            </span>
-          )}
-          {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
-          <button
-            onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-            style={{
-              border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
-              background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
-              color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
-              fontFamily: 'inherit',
-              fontSize: '12.5px',
-              padding: '9px 13px',
-              borderRadius: '999px',
-              cursor: 'pointer',
-              boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
-            }}
-          >
-            Finished · {archivedProjects.length}
-          </button>
-          {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
-              was a styled div with a transparent native <select> laid over it — the trigger
-              looked right, but opening it handed you the OS dropdown. The themed Select keeps
-              the pill (it merges `style` onto its trigger) and brings our own popover. */}
-          <Select
-            value={selectedDomainId || ''}
-            onChange={(v) => setSelectedDomainId(v || null)}
-            options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
-            ariaLabel="Filter by domain"
-            placeholder="Domain"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9.5px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--ink-muted)',
-              border: '1px solid var(--line-solid)',
-              borderRadius: '999px',
-              padding: '8px 13px',
-            }}
-          />
-        </div>
-
         {/* LIST VIEW */}
-        {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{renderEmptyState()}</div>}
+        {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{controlsRule(900)}{renderEmptyState()}</div>}
         {view === 'list' && !isEmpty && (
           <div style={{ maxWidth: 900 }}>
             {/* ACTIVE */}
-            <SectionLabel style={{ margin: '26px 0 4px' }} action={sectionCount(listActive.length)}>
+            <SectionLabel style={{ margin: '26px 0 4px' }} action={<>{sectionCount(listActive.length)}{viewControls}</>}>
               <span style={{ color: 'var(--acc-sage-text)' }}>Active</span>
             </SectionLabel>
             {listActive.map((p, i) => {
               const stat = projectStats[p.id] ?? EMPTY_STAT
+              const slip = slippingProject(p.id)
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -440,6 +478,7 @@ export function ProjectsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      {slip && slippingChip(slip.days_since)}
                     </div>
                     {/* Contract sub-line is the domain ("Freelance" / "Personal"); engagement model is the fallback. */}
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
@@ -459,6 +498,7 @@ export function ProjectsPage() {
             </SectionLabel>
             {listRetainers.map((p, i) => {
               const stat = projectStats[p.id] ?? EMPTY_STAT
+              const slip = slippingProject(p.id)
               const domain = domains.find((d) => d.id === p.domain_id)
               return (
                 <div
@@ -472,6 +512,7 @@ export function ProjectsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
+                      {slip && slippingChip(slip.days_since)}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{domain?.name ?? p.engagement_model ?? ''}</div>
                   </div>
@@ -508,9 +549,7 @@ export function ProjectsPage() {
                     {domain && <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain.name}</span>}
                   </div>
                   {slippingItem ? (
-                    <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
-                      slipping · {Math.floor(slippingItem.days_since)}d
-                    </span>
+                    slippingChip(slippingItem.days_since)
                   ) : (
                     <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>area</span>
                   )}
@@ -526,8 +565,9 @@ export function ProjectsPage() {
         )}
 
         {/* BOARD VIEW */}
+        {view === 'board' && controlsRule(1100)}
         {view === 'board' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 26, maxWidth: 1100 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16, maxWidth: 1100 }}>
             {domains
               .filter((d) => !selectedDomainId || d.id === selectedDomainId)
               .map((d) => {
@@ -571,13 +611,9 @@ export function ProjectsPage() {
                             }}
                           >
                             {/* Effects 1t — amber drift over a slipping card, <=3 leaves; plant desaturates ~20% */}
-                            {motion && slipping && (
-                              <>
-                                <span className="kf-amber-leaf" style={{ left: '18%', animationDelay: '0s', animationDuration: '9.5s' }} />
-                                <span className="kf-amber-leaf" style={{ left: '52%', animationDelay: '3.4s', animationDuration: '11s' }} />
-                                <span className="kf-amber-leaf" style={{ left: '78%', animationDelay: '6.2s', animationDuration: '10.2s' }} />
-                              </>
-                            )}
+                            {motion && slipping && AMBER_LEAVES.map((leaf) => (
+                              <span key={leaf.left} className="kf-amber-leaf" style={amberLeafTiming(leaf, idPhase(p.id))} />
+                            ))}
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
                               <span style={{ position: 'relative', flex: 'none', display: 'inline-flex' }}>
                                 {/* Effects 1e — bloom glow at 100%, never more than one plant */}
@@ -635,6 +671,7 @@ export function ProjectsPage() {
         )}
 
         {/* ARCHIVE VIEW */}
+        {view === 'archive' && controlsRule(760)}
         {view === 'archive' && (
           <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

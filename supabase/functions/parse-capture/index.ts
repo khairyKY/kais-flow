@@ -1,14 +1,11 @@
 // P2 AI capture: text -> structured parse (Groq, JSON-schema-constrained via prompt + Zod validation).
 import { z } from 'npm:zod@^4'
+import { requireUser } from '../_shared/auth.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
+import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 const GROQ_PARSE_MODEL = Deno.env.get('GROQ_PARSE_MODEL') ?? 'llama-3.3-70b-versatile'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 const RequestSchema = z.object({
   raw_text: z.string().min(1).max(4000),
@@ -81,7 +78,10 @@ async function callGroq(rawText: string, systemPrompt: string): Promise<unknown>
       temperature: 0.2,
     }),
   })
-  if (!res.ok) throw new Error(`Groq error ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    console.error('parse-capture: groq', res.status, await res.text())
+    throw new Error('upstream_failed')
+  }
   const data = await res.json()
   const content = data.choices?.[0]?.message?.content
   if (!content) throw new Error('Groq returned no content')
@@ -104,9 +104,23 @@ function fallbackResult(rawText: string) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+
+  // FIX-0 / S3: a signed-in user, not merely the public anon key, before anything reaches Groq.
+  const auth = await requireUser(req)
+  if (auth instanceof Response) return auth
+
+  // SEC-2: today's AI allowance, before the body is read or Groq is called.
+  // Fails OPEN: if the allowance can't be checked ('unavailable'), the parse still runs. A capture
+  // must never be lost or degraded by our own bookkeeping — and the client already files it to
+  // the Inbox unparsed if this call fails, so failing closed would only cost the user their AI
+  // filing during a blip while saving at most one small text call. Over the limit is different:
+  // that 429 is a known state, and the client lands the capture in the Inbox as it does offline.
+  const allowance = await takeAiAllowance(auth.user.id, 'parse')
+  if (allowance === 'over') return dailyLimitResponse(req)
 
   let rawText = ''
   try {
@@ -129,7 +143,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    // Details stay in the function log; callers get a stable code, never upstream or stack text.
+    console.error('parse-capture:', e)
+    return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

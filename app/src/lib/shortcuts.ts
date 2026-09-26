@@ -48,3 +48,16 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['#'], label: 'Project' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },
 ]
+
+const MODIFIER_GLYPHS = '⌘⌃⌥⇧'
+
+/** J-17: a compact hint string → one keycap per key. Each leading modifier glyph gets its own
+ * cap and the remainder is one cap: `'⌘K'` → `['⌘', 'K']`, `'⌃click'` → `['⌃', 'click']`,
+ * `'E'` → `['E']`. A lone glyph (`'⌘'`) stays a single cap. */
+export function splitKeyCombo(combo: string): string[] {
+  const keys: string[] = []
+  let i = 0
+  while (i < combo.length - 1 && MODIFIER_GLYPHS.includes(combo[i])) keys.push(combo[i++])
+  keys.push(combo.slice(i))
+  return keys
+}

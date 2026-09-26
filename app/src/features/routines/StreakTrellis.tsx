@@ -1,5 +1,5 @@
 import { useEscapeStack } from '../../lib/overlayStack'
-import { computeGraceStreak, computeTrellisDays, type TrellisDay } from './streaks'
+import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, trellisCaption, type TrellisDay } from './streaks'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
@@ -34,16 +34,29 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
   useEscapeStack(true, onClose)
 
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-  const { current, rainedDates } = computeGraceStreak(dates, routine.cadence)
-  const days = computeTrellisDays(dates, routine.cadence, DAYS)
+  // Polish B: days before the routine was planted are 'off', never rain or a break.
+  const since = routineStartKey(routine.created_at, dates)
+  const { current, rainedDates } = computeGraceStreak(dates, routine.cadence, new Date(), since)
+  const days = computeTrellisDays(dates, routine.cadence, DAYS, new Date(), since)
 
-  const lastRain = [...days].reverse().find((d) => d.state === 'rained')
-  const lastBreak = [...days].reverse().find((d) => d.state === 'broke')
-  const caption = lastRain
-    ? `it rained ${weekdayName(lastRain.key)} — the vine held on.`
-    : lastBreak
-      ? `it broke ${weekdayName(lastBreak.key)} — the vine started over.`
-      : 'no missed days in the last 14 — the vine kept growing ✿'
+  const { status } = routineStreak(dates, routine.cadence)
+
+  // polish-f1: on a 0-day streak nothing is held up, so neither the "N rain held" chip nor the
+  // "it rained — the vine held on" caption shows (streaks.ts rainHeld / trellisCaption).
+  const held = rainHeld(current, rainedDates)
+  const story = trellisCaption(days, current, status)
+  // Never tended: the New routine form's own "Its plant" hint (#2a), not "the vine kept growing"
+  // for a vine that hasn't started. Snapped before this window: the export's "Bare · start again".
+  const caption =
+    story.kind === 'rained'
+      ? `it rained ${weekdayName(story.key)} — the vine held on.`
+      : story.kind === 'broke'
+        ? `it broke ${weekdayName(story.key)} — the vine started over.`
+        : story.kind === 'new'
+          ? 'starts bare, grows with the streak ✿'
+          : story.kind === 'bare'
+            ? 'bare for now — start again ✿'
+            : 'no missed days in the last 14 — the vine kept growing ✿'
 
   function tickColor(d: TrellisDay): string {
     if (d.state === 'broke') return 'var(--acc-terra)'
@@ -65,10 +78,10 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 3 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{current} days</span>
-                  {rainedDates.length > 0 && (
+                  {held.length > 0 && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                       <DropletIcon size={8} />
-                      {rainedDates.length} rain held
+                      {held.length} rain held
                     </span>
                   )}
                 </div>

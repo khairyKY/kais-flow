@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { filterByList, filterByScope, groupTasks, planningColumns } from './grouping'
+import { filterByList, filterByScope, groupTasks, planningColumns, todayListTasks, todayOpenCount } from './grouping'
 import { scheduleNextWeek } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
-// Fixed "now": Wed 2026-07-08, mid-afternoon local.
-const NOW = new Date('2026-07-08T15:00:00')
+// Fixed "now": Wed 2026-07-08, mid-afternoon in Cairo. B2/T-2: the app's day boundary is
+// Cairo's, so fixtures pin explicit Cairo instants — never device-local ones, which shift
+// with the machine running the tests. July–August 2026 is Cairo summer time (UTC+3) throughout.
+const NOW = new Date('2026-07-08T15:00:00+03:00')
 
 function task(over: Partial<Task>): Task {
   return {
@@ -34,12 +36,10 @@ function task(over: Partial<Task>): Task {
   }
 }
 
-/** local-midnight ISO for a day offset from NOW, at the given hour */
+/** ISO for `hour`:00 Cairo time on the Cairo day `dayOffset` days from NOW's (every offset
+ * used below stays inside Cairo summer time, UTC+3) */
 function at(dayOffset: number, hour = 9): string {
-  const d = new Date(NOW)
-  d.setDate(d.getDate() + dayOffset)
-  d.setHours(hour, 0, 0, 0)
-  return d.toISOString()
+  return new Date(Date.UTC(2026, 6, 8 + dayOffset, hour - 3)).toISOString()
 }
 
 describe('groupTasks', () => {
@@ -142,6 +142,77 @@ describe('filterByList', () => {
   })
 })
 
+describe('todayListTasks / todayOpenCount (the Today page and its sidebar badge)', () => {
+  // The drift fixture from the audit (K-8): the old badge was filterByList('today') = top-3 OR
+  // scheduled today OR due ≤ today, while the Today page lists every open non-someday task.
+  const tasks = [
+    task({ id: 'top3', top3: true }),
+    task({ id: 'dueToday', due_at: at(0) }),
+    task({ id: 'overdue', due_at: at(-3) }),
+    task({ id: 'scheduledToday', scheduled_start: at(0, 15), scheduled_end: at(0, 16) }),
+    task({ id: 'in5days', due_at: at(5) }),
+    task({ id: 'undated' }),
+    task({ id: 'in20days', due_at: at(20) }),
+    task({ id: 'someday', someday: true }),
+    task({ id: 'doneToday', status: 'done', completed_at: at(0, 8) }),
+    task({ id: 'doneYesterday', status: 'done', completed_at: at(-1, 20) }),
+  ]
+
+  // What TodayPage.tsx renders, restated independently: its `visible` filter.
+  const todayPageRows = (list: Task[], now: Date) => {
+    const key = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' })
+    return list.filter((t) => !t.someday && (!t.completed_at || key(new Date(t.completed_at)) === key(now)))
+  }
+
+  it('lists every open non-someday task, dated or not, plus the ones finished today', () => {
+    const ids = todayListTasks(tasks, NOW).map((t) => t.id)
+    expect(ids.sort()).toEqual(['doneToday', 'dueToday', 'in20days', 'in5days', 'overdue', 'scheduledToday', 'top3', 'undated'])
+  })
+
+  it("is the Today page's row set for ordinary tasks (TodayPage now calls it directly)", () => {
+    expect(todayListTasks(tasks, NOW)).toEqual(todayPageRows(tasks, NOW))
+  })
+
+  it('never lists a cancelled task, or a done task with no completion time (e.g. a CSV import), as open', () => {
+    const odd = [
+      task({ id: 'cancelled', status: 'cancelled' }),
+      task({ id: 'doneNoTime', status: 'done', completed_at: null }),
+      task({ id: 'open' }),
+    ]
+    expect(todayListTasks(odd, NOW).map((t) => t.id)).toEqual(['open'])
+    expect(todayOpenCount(odd, NOW)).toBe(1)
+  })
+
+  it('the badge counts the listed rows that are still open — not the done-today row, never someday', () => {
+    expect(todayOpenCount(tasks, NOW)).toBe(7)
+    expect(todayOpenCount(tasks, NOW)).toBe(todayPageRows(tasks, NOW).filter((t) => !t.completed_at).length)
+  })
+
+  it('differs from the Due Today smart list — the drift this fixes', () => {
+    expect(filterByList(tasks, 'today', NOW).length).toBe(4)
+    expect(todayOpenCount(tasks, NOW)).not.toBe(filterByList(tasks, 'today', NOW).length)
+  })
+
+  it('ticking a task off drops the badge by one while the row stays listed', () => {
+    const ticked = tasks.map((t) => (t.id === 'in5days' ? { ...t, status: 'done' as const, completed_at: at(0, 14) } : t))
+    expect(todayOpenCount(ticked, NOW)).toBe(6)
+    expect(todayListTasks(ticked, NOW).map((t) => t.id)).toContain('in5days')
+  })
+
+  it("'finished today' is Cairo's day: 00:30 Cairo is today, 23:30 Cairo the night before is not", () => {
+    const edge = [
+      task({ id: 'justAfterMidnight', status: 'done', completed_at: '2026-07-08T00:30:00+03:00' }),
+      task({ id: 'lateYesterday', status: 'done', completed_at: '2026-07-07T23:30:00+03:00' }),
+    ]
+    expect(todayListTasks(edge, NOW).map((t) => t.id)).toEqual(['justAfterMidnight'])
+    expect(todayOpenCount(edge, NOW)).toBe(0)
+  })
+
+  it('an empty garden counts 0', () => {
+    expect(todayOpenCount([], NOW)).toBe(0)
+  })
+})
+
 describe('filterByScope', () => {
   const tasks = [
     task({ id: 'p1', project_id: 'proj-a' }),
@@ -200,17 +271,23 @@ describe('planningColumns', () => {
 
   it('a task just dropped on Next week stays in Next week, on every weekday — regression for the bug where next Monday landed in This week on Tue–Sat', () => {
     for (let i = 0; i < 7; i++) {
-      const now = new Date('2026-07-06T15:00:00') // a Monday
-      now.setDate(now.getDate() + i)
-      const due = scheduleNextWeek(now)
-      const cols = planningColumns([task({ due_at: due })], now)
-      // Sunday is the one real exception: "next Monday" literally is tomorrow, and the
-      // board's own Tomorrow column takes precedence over Next week for a diff of 1 — not
-      // the bug being guarded against here (that was This week wrongly swallowing it).
-      const isSundayEdgeCase = now.getDay() === 0
-      const expectedKey = isSundayEdgeCase ? 'tomorrow' : 'nextWeek'
-      expect(cols.find((c) => c.key === expectedKey)!.tasks, `weekday offset ${i}`).toHaveLength(1)
-      expect(cols.find((c) => c.key === 'week')!.tasks, `weekday offset ${i}`).toHaveLength(0)
+      // T-2: `now` is pinned in Cairo time (2026-07-06 is a Monday there). 01:00 and 23:30
+      // Cairo fall on another calendar day on most devices (01:00 Cairo is 15:00 the day
+      // before in Los Angeles; 23:30 Cairo is the next morning in Tokyo) — exactly where a
+      // device-local shortcut and the Cairo-day board used to disagree.
+      for (const time of ['01:00', '15:00', '23:30']) {
+        const now = new Date(`2026-07-${String(6 + i).padStart(2, '0')}T${time}:00+03:00`)
+        const due = scheduleNextWeek(now)
+        const cols = planningColumns([task({ due_at: due })], now)
+        // Sunday is the one real exception: "next Monday" literally is tomorrow, and the
+        // board's own Tomorrow column takes precedence over Next week for a diff of 1 — not
+        // the bug being guarded against here (that was This week wrongly swallowing it).
+        const cairoWeekday = now.toLocaleDateString('en-US', { timeZone: 'Africa/Cairo', weekday: 'short' })
+        const expectedKey = cairoWeekday === 'Sun' ? 'tomorrow' : 'nextWeek'
+        const label = `weekday offset ${i} at ${time} Cairo`
+        expect(cols.find((c) => c.key === expectedKey)!.tasks, label).toHaveLength(1)
+        expect(cols.find((c) => c.key === 'week')!.tasks, label).toHaveLength(0)
+      }
     }
   })
 })

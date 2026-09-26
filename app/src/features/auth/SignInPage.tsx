@@ -1,55 +1,29 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import { authLinkOrigin } from '../../lib/platform'
 import { useAuth } from './AuthProvider'
-import { TapeCard, Button } from '../../components/kit'
+import { AuthShell, BackLink, CardCta, CardMessage, Field, Fields, HandLine, Notice, TextLink } from './AuthLayout'
+import { MIN_PASSWORD_LENGTH, calmAuthLine, resetRequestLooksSent } from './authLogic'
 
-// Kai's eye: Restyled with system tokens, TapeCard, and Button
-const FIELD_LABEL = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 9.5,
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-tertiary)',
-}
-
-const FIELD_INPUT = {
-  fontFamily: 'var(--font-ui)',
-  fontSize: 14,
-  background: 'var(--bg-input)',
-  border: '1px solid var(--border-default)',
-  borderRadius: 3, // House rules §06: sharp 3px card/input radius
-  padding: '11px 13px',
-  outline: 'none',
-  color: 'var(--text-primary)',
-}
-
-type Mode = 'signin' | 'signup'
-
-// House rule: the word "error" (and raw GoTrue text) never reaches the UI — same register as
-// the outbox toast ("One change couldn't be saved — set aside so the rest sync on.").
-function calmAuthLine(raw: string): string {
-  const m = raw.toLowerCase()
-  if (m.includes('password') && (m.includes('at least') || m.includes('should be')))
-    return 'Passwords need at least 6 characters — a little more soil.'
-  if (m.includes('already registered')) return 'This garden is already planted — sign in instead.'
-  if (m.includes('not confirmed')) return "Your seed hasn't sprouted yet — click the link in your email first."
-  if (m.includes('invalid login credentials')) return "That email and password don't match a garden here — try again."
-  if (m.includes('rate limit') || m.includes('too many')) return 'The garden needs a short rest — try again in a minute.'
-  return "That didn't take root — try again in a moment."
-}
+// J-11: 'forgot' is the password-reset request step. /reset's "Send a new link" lands here
+// with ?forgot, so there is one request form, not two.
+type Mode = 'signin' | 'signup' | 'forgot'
 
 export function SignInPage() {
   const { session, loading } = useAuth()
-  const [mode, setMode] = useState<Mode>('signin')
+  const [searchParams] = useSearchParams()
+  const [mode, setMode] = useState<Mode>(searchParams.has('forgot') ? 'forgot' : 'signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  // Non-null once a verification email is on its way — swaps the form for the "seed sent" state.
-  const [sentTo, setSentTo] = useState<string | null>(null)
+  // Non-null once an email is on its way — swaps the form for the matching "sent" state.
+  const [sent, setSent] = useState<{ kind: 'signup' | 'reset'; to: string } | null>(null)
 
-  if (!loading && session) return <Navigate to="/today" replace />
+  // Polish A: into the app through "/" — its index OnboardingGate sends a brand-new account to
+  // /onboarding once and everyone else on to /today (it waits for settings, so no flash).
+  if (!loading && session) return <Navigate to="/" replace />
 
   function rememberEmail() {
     try {
@@ -70,13 +44,22 @@ export function SignInPage() {
       else rememberEmail()
       return
     }
+    if (mode === 'forgot') {
+      // The email link opens /reset (ResetPage), which trades it for a recovery session.
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${authLinkOrigin()}/reset` })
+      setSubmitting(false)
+      // Same confirmation whether or not the account exists — see resetRequestLooksSent.
+      if (resetRequestLooksSent(error)) setSent({ kind: 'reset', to: email })
+      else setNotice(calmAuthLine(error?.message ?? ''))
+      return
+    }
     // Sign-up: Supabase's default email-verification flow. The confirmation link redirects
     // back to origin; supabase-js (detectSessionInUrl) picks the session out of the URL hash,
     // then the index OnboardingGate routes the fresh account into /onboarding.
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: { emailRedirectTo: `${authLinkOrigin()}/` },
     })
     setSubmitting(false)
     if (error) {
@@ -89,7 +72,7 @@ export function SignInPage() {
       return
     }
     rememberEmail()
-    setSentTo(email)
+    setSent({ kind: 'signup', to: email })
   }
 
   function switchMode(next: Mode) {
@@ -97,108 +80,80 @@ export function SignInPage() {
     setNotice(null)
   }
 
+  function backToSignIn() {
+    setSent(null)
+    switchMode('signin')
+  }
+
   const signup = mode === 'signup'
+  const forgot = mode === 'forgot'
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)', position: 'relative', overflow: 'hidden' }}>
-      <style>{'@media (max-width: 767px) { .signin-bg-illustration { display: none; } }'}</style>
-      <img className="signin-bg-illustration" src="/ds/assets/fern/full.png" alt="" style={{ position: 'absolute', left: 120, top: 120, height: 640, width: 'auto', opacity: 0.16, transform: 'rotate(-6deg)', pointerEvents: 'none' }} />
-      <img className="signin-bg-illustration" src="/ds/assets/cherry/opening.png" alt="" style={{ position: 'absolute', right: 150, bottom: 110, height: 420, width: 'auto', opacity: 0.13, transform: 'rotate(7deg)', pointerEvents: 'none' }} />
-      <img className="signin-bg-illustration" src="/ds/assets/clover/dewdrop.png" alt="" style={{ position: 'absolute', right: 280, top: 130, height: 180, width: 'auto', opacity: 0.14, transform: 'rotate(-4deg)', pointerEvents: 'none' }} />
+    <AuthShell onSubmit={handleSubmit}>
+      {sent?.kind === 'signup' ? (
+        <>
+          <CardMessage>
+            A seed's been sent to <b>{sent.to}</b> — click it to sprout your garden ✿
+          </CardMessage>
+          <HandLine top={12}>then come back and sign in</HandLine>
+          <BackLink onClick={backToSignIn}>← Back to sign in</BackLink>
+        </>
+      ) : sent?.kind === 'reset' ? (
+        <>
+          <CardMessage>
+            If there's an account for <b>{sent.to}</b>, a link to set a new password is on its way.
+          </CardMessage>
+          <HandLine top={12}>check your inbox — and the spam folder, just in case</HandLine>
+          <BackLink onClick={backToSignIn}>← Back to sign in</BackLink>
+        </>
+      ) : (
+        <>
+          <HandLine>
+            {signup ? 'a garden of your own starts here' : forgot ? "we'll email you a link to choose a new password" : 'welcome back to the garden'}
+          </HandLine>
 
-      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 384, margin: '0 16px' }}>
-        <TapeCard
-          tilt={-0.4}
-          tape="color-mix(in oklch, var(--acc-sage) 40%, transparent)" // Sage tape to match original login design
-          style={{
-            boxShadow: 'var(--shadow-popover)',
-            padding: '34px 34px 30px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, width: 'auto', objectFit: 'contain' }} />
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 'var(--fw-semibold)', letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>Kai's Flow</div>
-          </div>
+          <Fields>
+            <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+            {!forgot && (
+              <Field
+                label="Password"
+                type="password"
+                required
+                minLength={signup ? MIN_PASSWORD_LENGTH : undefined}
+                autoComplete={signup ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            )}
+          </Fields>
 
-          {sentTo ? (
-            <>
-              <p style={{ marginTop: 26, marginBottom: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--text-primary)' }}>
-                A seed's been sent to <b>{sentTo}</b> — click it to sprout your garden ✿
-              </p>
-              <div style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--text-secondary)', transform: 'rotate(-0.8deg)' }}>then come back and sign in</div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSentTo(null)
-                  switchMode('signin')
-                }}
-                style={{ marginTop: 22, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}
-              >
-                ← Back to sign in
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ marginTop: 6, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--text-secondary)', transform: 'rotate(-0.8deg)' }}>
-                {signup ? 'a garden of your own starts here' : 'welcome back to the garden'}
-              </div>
+          {notice && <Notice>{notice}</Notice>}
 
-              <div style={{ marginTop: 26, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={FIELD_LABEL}>Email</span>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    style={FIELD_INPUT}
-                  />
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={FIELD_LABEL}>Password</span>
-                  <input
-                    type="password"
-                    required
-                    minLength={signup ? 6 : undefined}
-                    autoComplete={signup ? 'new-password' : 'current-password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    style={FIELD_INPUT}
-                  />
-                </label>
-              </div>
+          <CardCta disabled={submitting}>
+            {signup
+              ? submitting ? 'Planting…' : 'Plant your garden'
+              : forgot
+                ? submitting ? 'Sending…' : 'Send reset link'
+                : submitting ? 'Signing in…' : 'Sign in'}
+          </CardCta>
 
-              {notice && <p style={{ marginTop: 12, marginBottom: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--acc-terra)' }}>{notice}</p>}
-
-              <Button
-                type="submit"
-                variant="cta"
-                disabled={submitting}
-                style={{
-                  marginTop: 24,
-                  width: '100%',
-                  justifyContent: 'center',
-                  padding: '13px 0',
-                  fontWeight: 500,
-                  fontSize: 14,
-                }}
-              >
-                {signup ? (submitting ? 'Planting…' : 'Plant your garden') : submitting ? 'Signing in…' : 'Sign in'}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => switchMode(signup ? 'signin' : 'signup')}
-                style={{ marginTop: 18, display: 'block', width: '100%', textAlign: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--text-secondary)' }}
-              >
-                {signup ? 'Already have a garden? Sign in →' : 'New here? Plant your garden →'}
-              </button>
-            </>
+          {/* J-11 (Kai's ruling): the doorways are conventional underlined links; the garden
+              voice lives in the button copy, not here. */}
+          {mode === 'signin' && (
+            <div style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <TextLink onClick={() => switchMode('signup')}>Create an account</TextLink>
+              <TextLink onClick={() => switchMode('forgot')}>Forgot password?</TextLink>
+            </div>
           )}
-        </TapeCard>
-      </form>
-    </div>
+          {signup && (
+            <div style={{ marginTop: 18, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--text-secondary)' }}>
+              Already have an account? <TextLink onClick={() => switchMode('signin')}>Sign in</TextLink>
+            </div>
+          )}
+          {forgot && <BackLink onClick={() => switchMode('signin')}>← Back to sign in</BackLink>}
+        </>
+      )}
+    </AuthShell>
   )
 }

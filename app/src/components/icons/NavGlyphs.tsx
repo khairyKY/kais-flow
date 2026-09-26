@@ -16,6 +16,23 @@ const base = {
   style: { flex: 'none' },
 } as const
 
+// Reference's "terrarium species" flower glyph — same five-ellipse shape, fill/center vary per page.
+// Today/Tasks/Calendar in the sidebar rail; Tasks again in the phone More sheet (polish-c).
+export function FlowerIcon({ fill, center }: { fill: string; center: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flex: 'none' }}>
+      <g fill={fill}>
+        <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
+        <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
+        <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
+        <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
+        <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
+      </g>
+      <circle cx="12" cy="11" r="2.4" fill={center} />
+    </svg>
+  )
+}
+
 // Inbox — tray
 export function InboxGlyph() {
   return (
