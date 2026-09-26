@@ -5,9 +5,13 @@
 // Generates a P-256 key pair + auth secret per device name and writes each device's
 // PushSubscription `keys` ({p256dh, auth}) to subs.json. Every POST to /<anything>/<device> is
 // decrypted (RFC 8291 aes128gcm) with that device's keys and appended to the log as
-// {device, payload, error} — so a test sees exactly which device received what. A POST for a
+// {device, payload, error, status} — so a test sees exactly which device received what. A POST for a
 // device name it doesn't know is still logged (error set): that's how a test catches a push that
 // should never have been sent.
+//
+// Every push is answered 201, unless MOCK_PUSH_STATUS names a JSON file mapping device → HTTP
+// status (e.g. {"a2":410}); it is re-read on every request, so a test can change the answer
+// between calls. The status sent is logged with each push.
 import http from 'node:http'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -21,6 +25,16 @@ for (const name of deviceList.split(',').filter(Boolean)) {
 }
 fs.writeFileSync(subsFile, JSON.stringify(Object.fromEntries(Object.entries(devices).map(([n, d]) =>
   [n, { p256dh: d.ecdh.getPublicKey().toString('base64url'), auth: d.auth.toString('base64url') }]))))
+
+function statusFor(device) {
+  if (!process.env.MOCK_PUSH_STATUS) return 201
+  try {
+    const status = JSON.parse(fs.readFileSync(process.env.MOCK_PUSH_STATUS, 'utf8'))[device]
+    return Number.isInteger(status) ? status : 201
+  } catch {
+    return 201 // no file (yet) = every device is fine
+  }
+}
 
 const hkdf = (ikm, salt, info, len) => Buffer.from(crypto.hkdfSync('sha256', ikm, salt, info, len))
 function decrypt(dev, body) {
@@ -54,8 +68,9 @@ http.createServer((req, res) => {
     } catch (e) {
       error = String(e)
     }
-    fs.appendFileSync(logFile, JSON.stringify({ device, payload, error }) + '\n')
-    res.writeHead(201)
+    const status = statusFor(device)
+    fs.appendFileSync(logFile, JSON.stringify({ device, payload, error, status }) + '\n')
+    res.writeHead(status)
     res.end()
   })
 }).listen(Number(port), host)

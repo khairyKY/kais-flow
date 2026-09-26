@@ -203,10 +203,18 @@ async function sendToSubscriptions(
       await subscriber.pushTextMessage(JSON.stringify(payload), {})
       sent++
     } catch (e) {
-      const status = (e as { status?: number })?.status
+      // @negrel/webpush (0.5.0, subscriber.ts) throws PushMessageError for any non-2xx reply, with
+      // the push service's Response on `.response`; the error has no `.status` of its own.
+      // 404/410 = this subscription is gone for good, so drop that one row: by id, and only if it
+      // belongs to the user this send is for (FIX-0: one user's run never touches another's rows).
+      const status = e instanceof webpush.PushMessageError ? e.response.status : undefined
       if (status === 404 || status === 410) {
-        await supabase.from('push_subscriptions').delete().eq('id', sub.id).eq('user_id', userId)
-        pruned++
+        const { error } = await supabase.from('push_subscriptions').delete().eq('id', sub.id).eq('user_id', userId)
+        if (error) {
+          console.error(`notify: user ${userId}: could not prune a gone subscription on ${endpointHost(sub.endpoint)}`, error)
+        } else {
+          pruned++
+        }
       }
     }
   }
