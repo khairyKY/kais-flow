@@ -3,8 +3,10 @@ import { filterByList, filterByScope, groupTasks, planningColumns } from './grou
 import { scheduleNextWeek } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
-// Fixed "now": Wed 2026-07-08, mid-afternoon local.
-const NOW = new Date('2026-07-08T15:00:00')
+// Fixed "now": Wed 2026-07-08, mid-afternoon in Cairo. B2/T-2: the app's day boundary is
+// Cairo's, so fixtures pin explicit Cairo instants — never device-local ones, which shift
+// with the machine running the tests. July–August 2026 is Cairo summer time (UTC+3) throughout.
+const NOW = new Date('2026-07-08T15:00:00+03:00')
 
 function task(over: Partial<Task>): Task {
   return {
@@ -34,12 +36,10 @@ function task(over: Partial<Task>): Task {
   }
 }
 
-/** local-midnight ISO for a day offset from NOW, at the given hour */
+/** ISO for `hour`:00 Cairo time on the Cairo day `dayOffset` days from NOW's (every offset
+ * used below stays inside Cairo summer time, UTC+3) */
 function at(dayOffset: number, hour = 9): string {
-  const d = new Date(NOW)
-  d.setDate(d.getDate() + dayOffset)
-  d.setHours(hour, 0, 0, 0)
-  return d.toISOString()
+  return new Date(Date.UTC(2026, 6, 8 + dayOffset, hour - 3)).toISOString()
 }
 
 describe('groupTasks', () => {
@@ -200,17 +200,23 @@ describe('planningColumns', () => {
 
   it('a task just dropped on Next week stays in Next week, on every weekday — regression for the bug where next Monday landed in This week on Tue–Sat', () => {
     for (let i = 0; i < 7; i++) {
-      const now = new Date('2026-07-06T15:00:00') // a Monday
-      now.setDate(now.getDate() + i)
-      const due = scheduleNextWeek(now)
-      const cols = planningColumns([task({ due_at: due })], now)
-      // Sunday is the one real exception: "next Monday" literally is tomorrow, and the
-      // board's own Tomorrow column takes precedence over Next week for a diff of 1 — not
-      // the bug being guarded against here (that was This week wrongly swallowing it).
-      const isSundayEdgeCase = now.getDay() === 0
-      const expectedKey = isSundayEdgeCase ? 'tomorrow' : 'nextWeek'
-      expect(cols.find((c) => c.key === expectedKey)!.tasks, `weekday offset ${i}`).toHaveLength(1)
-      expect(cols.find((c) => c.key === 'week')!.tasks, `weekday offset ${i}`).toHaveLength(0)
+      // T-2: `now` is pinned in Cairo time (2026-07-06 is a Monday there). 01:00 and 23:30
+      // Cairo fall on another calendar day on most devices (01:00 Cairo is 15:00 the day
+      // before in Los Angeles; 23:30 Cairo is the next morning in Tokyo) — exactly where a
+      // device-local shortcut and the Cairo-day board used to disagree.
+      for (const time of ['01:00', '15:00', '23:30']) {
+        const now = new Date(`2026-07-${String(6 + i).padStart(2, '0')}T${time}:00+03:00`)
+        const due = scheduleNextWeek(now)
+        const cols = planningColumns([task({ due_at: due })], now)
+        // Sunday is the one real exception: "next Monday" literally is tomorrow, and the
+        // board's own Tomorrow column takes precedence over Next week for a diff of 1 — not
+        // the bug being guarded against here (that was This week wrongly swallowing it).
+        const cairoWeekday = now.toLocaleDateString('en-US', { timeZone: 'Africa/Cairo', weekday: 'short' })
+        const expectedKey = cairoWeekday === 'Sun' ? 'tomorrow' : 'nextWeek'
+        const label = `weekday offset ${i} at ${time} Cairo`
+        expect(cols.find((c) => c.key === expectedKey)!.tasks, label).toHaveLength(1)
+        expect(cols.find((c) => c.key === 'week')!.tasks, label).toHaveLength(0)
+      }
     }
   })
 })
