@@ -73,6 +73,15 @@ jobs:
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
           grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
           grep -n 'uses-permission' "$manifest"
+          # Android string resources reject a bare apostrophe ("Kai's Flow" → Kai\'s Flow).
+          python3 - <<'PY'
+          import glob, re
+          for p in glob.glob('src-tauri/gen/android/app/src/main/res/values*/strings.xml'):
+              s = open(p).read()
+              s = re.sub(r"Kai(?:&#x27;|&#39;|&apos;|')s", lambda m: "Kai\\'s", s)
+              open(p, 'w').write(s)
+              print(p, s, sep='\n')
+          PY
 
       - name: Build (arm64 — every Android phone from the last ~8 years)
         run: npx tauri android build --apk --target aarch64
