@@ -1,12 +1,11 @@
 import { uiZoom } from '../../lib/uiScale'
 import { useEffect, useMemo, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import * as chrono from 'chrono-node'
 import { Select } from '../../components/Select'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
 import { createEvent, scheduleTask, updateEvent } from './api'
-import { localTimeKey, localToIso } from './eventTime'
-import { localDateKey } from '../routines/streaks'
+import { cairoTimeKey, cairoToIso } from './eventTime'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { createTask, setRecurrence, setLabels, toggleTop3, setSomeday, useTasks } from '../tasks/api'
 import { parseCommand } from '../command-bar/parseCommand'
 import { useProjects } from '../projects/api'
@@ -38,8 +37,12 @@ const KIND_META: Record<QuickCreateKind, { label: string; desc: string; cta: str
   block: { label: 'Time block', desc: 'reserved focus — usually holds a task', cta: 'Block time', hand: 'two hours fenced off, just for this ✿' },
 }
 
+// T-4 (Polish F2b): every date and time in this form is Cairo wall-clock, on any device — what
+// "10am" means in the command bar (Polish E) and the zone the rest of the app renders in. Slots
+// arrive already converted (CalendarPage), times typed or parsed from the title are read on Cairo's
+// clock, and cairoToIso turns the fields back into the exact instant they came from.
 function todayKey(): string {
-  return localDateKey(new Date())
+  return cairoDateKey(new Date())
 }
 
 function diffMinutes(start: string, end: string): number {
@@ -117,21 +120,23 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   useEscapeStack(true, onClose)
   useBodyScrollLock(true)
 
-  const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects) : null), [kind, title, domains, projects])
+  // T-4: the title's "friday 3pm" is read on Cairo's clock too (parseCommand's zone option).
+  const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects, { zone: 'cairo' }) : null), [kind, title, domains, projects])
   const eventDate = useMemo(() => {
     if (kind === 'task' || !title.trim()) return null
-    const hits = chrono.parse(title, new Date(), { forwardDate: true })
-    return hits[0]?.start.date() ?? null
+    const due = parseCommand(title, [], [], { zone: 'cairo' }).dueAt
+    return due ? new Date(due) : null
   }, [kind, title])
 
   // A stale end time from before the NL parse can land before the newly-caught start —
   // bump it forward by the default 30 min whenever that would happen.
   function applyParsedTime(d: Date) {
-    const newStart = localTimeKey(d)
-    setDate(localDateKey(d))
+    const newStart = cairoTimeKey(d)
+    setDate(cairoDateKey(d))
     setStartTime(newStart)
     if (diffMinutes(newStart, endTime) <= 0) {
-      const total = d.getHours() * 60 + d.getMinutes() + 30
+      const [h, m] = newStart.split(':').map(Number)
+      const total = h * 60 + m + 30
       setEndTime(`${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`)
     }
   }
@@ -156,7 +161,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   function submit(from?: HTMLElement) {
     seedPlant(from, motion) // Motion 5f — every calendar create lands with the drop+puff
     if (kind === 'task') {
-      const dueAt = date ? localToIso(date, startTime || '09:00') : null
+      const dueAt = date ? cairoToIso(date, startTime || '09:00') : null
       const task = createTask({
         title: title.trim() || 'Untitled task',
         dueAt,
@@ -172,16 +177,16 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       if (top3) toggleTop3(task)
       if (someday) setSomeday(task, true)
       if (slot && date && startTime && endTime) {
-        scheduleTask(task, localToIso(date, startTime), localToIso(date, endTime))
+        scheduleTask(task, cairoToIso(date, startTime), cairoToIso(date, endTime))
       }
     } else if (kind === 'event') {
-      const startsAt = allDay ? `${date}T00:00:00.000Z` : localToIso(date, startTime)
-      const endsAt = allDay ? nextDayIso(date) : localToIso(date, endTime)
+      const startsAt = allDay ? `${date}T00:00:00.000Z` : cairoToIso(date, startTime)
+      const endsAt = allDay ? nextDayIso(date) : cairoToIso(date, endTime)
       const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay)
       if (!busy) updateEvent(event, { busy: false })
     } else {
-      const startsAt = localToIso(date, startTime)
-      const endsAt = localToIso(date, endTime)
+      const startsAt = cairoToIso(date, startTime)
+      const endsAt = cairoToIso(date, endTime)
       if (holdsTask) {
         scheduleTask(holdsTask, startsAt, endsAt)
       } else {
@@ -274,7 +279,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)' }}>
           {(parsed?.dueAt || eventDate) && (
             <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
-              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Cairo' })}
             </span>
           )}
           {parsed?.projectMatch && <span style={chipStyle('color-mix(in srgb, var(--acc-moss) 20%, transparent)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}

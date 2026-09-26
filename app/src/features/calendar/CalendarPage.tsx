@@ -18,7 +18,7 @@ import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
-import { localTimeKey } from './eventTime'
+import { slotFields } from './eventTime'
 import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
@@ -272,12 +272,12 @@ export function CalendarPage() {
   }
 
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
+  // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
+  // the form shows the clicked time on Cairo's clock and saves that exact instant back.
   function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number }) {
-    const start = new Date(info.start)
-    const end = new Date(info.end)
     setQuickCreate({
       kind: 'event',
-      slot: { date: localDateKey(start), start: info.allDay ? '' : localTimeKey(start), end: info.allDay ? '' : localTimeKey(end), allDay: info.allDay },
+      slot: slotFields(info.start, info.end, info.allDay),
       anchor: { x: info.x, y: info.y },
     })
   }
@@ -286,11 +286,10 @@ export function CalendarPage() {
   function handleGridContextMenu(iso: string, allDay: boolean, x: number, y: number) {
     function openKind(kind: QuickCreateKind) {
       setContextMenu(null)
-      const start = new Date(iso)
-      const end = new Date(start.getTime() + (allDay ? 24 * 60 : 30) * 60000)
+      const end = new Date(new Date(iso).getTime() + (allDay ? 24 * 60 : 30) * 60000)
       setQuickCreate({
         kind,
-        slot: { date: localDateKey(start), start: allDay ? '' : localTimeKey(start), end: allDay ? '' : localTimeKey(end), allDay },
+        slot: slotFields(iso, end.toISOString(), allDay),
         anchor: { x, y },
       })
     }
