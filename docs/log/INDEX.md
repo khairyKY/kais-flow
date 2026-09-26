@@ -15,3 +15,4 @@
 - 2026-09-26 05:46 · handoff · P0 empty user_id data loss fixed + lost-write rescue, merged into release-1 — `2026-09-26-0546-bohr-release-p0-user-id.md`
 - 2026-09-26 05:57 · status · release-1 = T-1/2/3, J-11, FIX-2, FIX-6, 2×P0, FIX-0; security review running — `2026-09-26-0557-bohr-status.md`
 - 2026-09-26 06:06 · decision · new-user audit triage — 3 fixed, 6 in progress, rest queued — `2026-09-26-0606-bohr-decision-audit-triage.md`
+- 2026-09-26 06:08 · audit · security review of release-1: SHIP WITH FIXES; fixes routed to SEC-2 + P0-B — `2026-09-26-0608-bohr-audit-security-review.md`
