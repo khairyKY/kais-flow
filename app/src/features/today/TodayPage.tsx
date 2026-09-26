@@ -40,7 +40,7 @@ import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
-import { upNextClock, upNextLabel } from './upNext'
+import { upNextClock, upNextEvents, upNextLabel } from './upNext'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -286,10 +286,6 @@ export function TodayPage() {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
 
-  const todayEvents = events
-    .filter((e) => !e.all_day && isToday(e.starts_at))
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-
   // Polish D (2026-09-26 audit): the rail counted and listed EVERY active routine — a Sunday-only
   // "Plan the week" on a Saturday, "1/5" where Routines said "1 of 3". The count and the rows now
   // both come from the Routines page's own definition of today (streaks.ts todayTally /
@@ -523,10 +519,7 @@ export function TodayPage() {
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
-            {!eventsPending && todayEvents.length === 0 && <Empty line="A clear afternoon." />}
-            {todayEvents.map((e, i) => (
-              <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={isMobile} />
-            ))}
+            <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} />
           </section>
 
           {!tasksPending && !nothingPlanned && !allDone && (
@@ -882,16 +875,31 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   )
 }
 
+// Polish F2a (2026-09-26 decision): Up next lists what's running and what's still to come today —
+// an event drops off the minute it ends (upNext.ts). The list owns the minute tick, so it re-reads
+// the clock without re-rendering the whole page, and its rows' "Now" flips on the same tick.
+function UpNextList({ events, eventsPending, tasks, compact }: { events: CalendarEvent[]; eventsPending: boolean; tasks: Task[]; compact: boolean }) {
+  const now = useMinuteNow()
+  const upNext = upNextEvents(events, now)
+  return (
+    <>
+      {!eventsPending && upNext.length === 0 && <Empty line="A clear afternoon." />}
+      {upNext.map((e, i) => (
+        <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={compact} now={now} />
+      ))}
+    </>
+  )
+}
+
 // Kai 2026-07-21: "where are the checkboxes for the top 3 tasks and the entire task behaviour" —
 // Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
 // same contract as the calendar block (only task-linked entries are completable; plain events
 // have nothing to complete).
-function EventRow({ event, task, border, compact }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean }) {
+function EventRow({ event, task, border, compact, now }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date }) {
   const clock = upNextClock
   // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
   // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
-  // minute tick flips it on time without a reload.
-  const now = useMinuteNow()
+  // list's minute tick (UpNextList) flips it on time without a reload.
   const label = upNextLabel(event.starts_at, event.ends_at, now)
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
