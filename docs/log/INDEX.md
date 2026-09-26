@@ -12,3 +12,4 @@
 - 2026-09-26 05:15 · decision · bar = strongly polished + publish-ready for Kai and new users → Phase A/B audits join the goal — `2026-09-26-0515-bohr-decision-publish-bar.md`
 - 2026-09-26 05:35 · decision · J-11 merged into release-1; K-j: public email delivery needs free custom SMTP before confirmation ON — `2026-09-26-0535-bohr-decision-email-delivery.md`
 - 2026-09-26 06:00 · test-run · release-1 + J-11 + FIX-2: 259/259 ×3 TZ, real run in Cairo TZ — `2026-09-26-0600-bohr-test-run-release1-fix2.md`
+- 2026-09-26 05:46 · handoff · P0 empty user_id data loss fixed + lost-write rescue, merged into release-1 — `2026-09-26-0546-bohr-release-p0-user-id.md`
