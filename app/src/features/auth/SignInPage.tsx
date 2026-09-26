@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import { authLinkOrigin } from '../../lib/platform'
 import { useAuth } from './AuthProvider'
 import { AuthShell, BackLink, CardCta, CardMessage, Field, Fields, HandLine, Notice, TextLink } from './AuthLayout'
 import { MIN_PASSWORD_LENGTH, calmAuthLine, resetRequestLooksSent } from './authLogic'
@@ -45,7 +46,7 @@ export function SignInPage() {
     }
     if (mode === 'forgot') {
       // The email link opens /reset (ResetPage), which trades it for a recovery session.
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset` })
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${authLinkOrigin()}/reset` })
       setSubmitting(false)
       // Same confirmation whether or not the account exists — see resetRequestLooksSent.
       if (resetRequestLooksSent(error)) setSent({ kind: 'reset', to: email })
@@ -58,7 +59,7 @@ export function SignInPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: { emailRedirectTo: `${authLinkOrigin()}/` },
     })
     setSubmitting(false)
     if (error) {

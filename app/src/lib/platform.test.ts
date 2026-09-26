@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isNativeShell, rgbToHex, syncShellChrome } from './platform'
+import { authLinkOrigin, isNativeShell, rgbToHex, syncShellChrome } from './platform'
 
 describe('isNativeShell', () => {
   it('is true when the Tauri shell has injected its internals', () => {
@@ -42,5 +42,19 @@ describe('syncShellChrome', () => {
   it('does nothing outside the shell', () => {
     expect(() => syncShellChrome('day', fakeWindow(undefined))).not.toThrow()
     expect(() => syncShellChrome('day', undefined)).not.toThrow()
+  })
+})
+
+describe('authLinkOrigin', () => {
+  const browser = { location: { origin: 'https://kais-flow.example' } } as unknown as Window
+  const shell = { __TAURI_INTERNALS__: {}, location: { origin: 'https://tauri.localhost' } } as unknown as Window
+  it('uses the page origin in a browser', () => {
+    expect(authLinkOrigin({ VITE_PUBLIC_APP_URL: 'https://public.example' }, browser)).toBe('https://kais-flow.example')
+  })
+  it('sends emailed links to the public web app from inside the native shell', () => {
+    expect(authLinkOrigin({ VITE_PUBLIC_APP_URL: 'https://public.example/' }, shell)).toBe('https://public.example')
+  })
+  it('falls back to the page origin when no public URL was built in', () => {
+    expect(authLinkOrigin({}, shell)).toBe('https://tauri.localhost')
   })
 })

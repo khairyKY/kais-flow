@@ -27,3 +27,16 @@ export function syncShellChrome(theme: 'day' | 'night', w: Window | undefined = 
   const hex = rgbToHex(w.getComputedStyle(w.document.body).backgroundColor)
   if (hex) bridge.setChrome(hex, theme === 'day')
 }
+
+/** Where emailed auth links (password reset, sign-up confirmation) should land. In a browser: this
+ * page's origin. Inside the native shell the origin is `https://tauri.localhost`, which no email
+ * link can open, so they go to the public web app instead (`VITE_PUBLIC_APP_URL`, set by the
+ * native builds); the person then signs in inside the app as usual. */
+export function authLinkOrigin(
+  env: Record<string, unknown> = import.meta.env,
+  w: Window | undefined = typeof window === 'undefined' ? undefined : window,
+): string {
+  const publicUrl = typeof env.VITE_PUBLIC_APP_URL === 'string' ? env.VITE_PUBLIC_APP_URL.replace(/\/+$/, '') : ''
+  if (isNativeShell(w) && publicUrl) return publicUrl
+  return w?.location.origin ?? publicUrl
+}

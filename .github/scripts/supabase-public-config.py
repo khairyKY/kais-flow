@@ -60,4 +60,5 @@ if not (url and key):
 
 with open(os.environ['GITHUB_ENV'], 'a') as env:
     env.write(f'VITE_SUPABASE_URL={url}\nVITE_SUPABASE_ANON_KEY={key}\n')
+    env.write(f'VITE_PUBLIC_APP_URL={app}\n')  # emailed auth links from the app land on the web app
 print(f'Supabase public config from {source}: {url} (key found, not printed)')
