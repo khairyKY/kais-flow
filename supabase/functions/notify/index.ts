@@ -6,10 +6,14 @@
 //    and sends it to that user's devices only.
 //  - a signed-in user: may only send `test`, and only to their own devices.
 //  Anyone else (no token, the public anon key) gets 401.
+//
+// SEC-2: whichever branch, a push is only ever POSTed to a known Web Push service
+// (push-endpoint.ts); any other stored endpoint is skipped and counted, never contacted.
 import * as webpush from 'jsr:@negrel/webpush'
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
+import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -36,6 +40,8 @@ interface SendResult {
   attempted: number
   sent: number
   pruned: number
+  /** SEC-2: this user's devices whose endpoint is not a known push service — never contacted. */
+  skipped_endpoints: number
 }
 
 // Everything time-relative is computed once per invocation so every user in a cron run is judged
@@ -172,7 +178,8 @@ function appServer(): Promise<webpush.ApplicationServer> {
   return appServerPromise
 }
 
-/** Sends one user's payload to that user's own subscriptions; prunes the ones the push service says are gone. */
+/** Sends one user's payload to that user's own subscriptions on known push services; prunes the
+ * ones the push service says are gone. Endpoints anywhere else are skipped, not contacted. */
 async function sendToSubscriptions(
   supabase: SupabaseClient,
   userId: string,
@@ -181,9 +188,16 @@ async function sendToSubscriptions(
 ): Promise<SendResult> {
   const server = await appServer()
   const own = subs.filter((sub) => sub.user_id === userId) // defence in depth: never deliver across users
+  // SEC-2: the endpoint is user-supplied; POST only to real push services (no SSRF via `test`).
+  const deliverable = own.filter((sub) => isKnownPushEndpoint(sub.endpoint))
+  const skippedEndpoints = own.length - deliverable.length
+  if (skippedEndpoints > 0) {
+    const hosts = own.filter((sub) => !isKnownPushEndpoint(sub.endpoint)).map((sub) => endpointHost(sub.endpoint))
+    console.warn(`notify: user ${userId}: skipped ${skippedEndpoints} endpoint(s) not on a known push service: ${hosts.join(', ')}`)
+  }
   let sent = 0
   let pruned = 0
-  for (const sub of own) {
+  for (const sub of deliverable) {
     try {
       const subscriber = server.subscribe({ endpoint: sub.endpoint, keys: sub.keys })
       await subscriber.pushTextMessage(JSON.stringify(payload), {})
@@ -196,7 +210,7 @@ async function sendToSubscriptions(
       }
     }
   }
-  return { attempted: own.length, sent, pruned }
+  return { attempted: deliverable.length, sent, pruned, skipped_endpoints: skippedEndpoints }
 }
 
 type UserResult = { user_id: string; skipped: boolean; failed?: true } & SendResult
@@ -241,6 +255,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response>
 
   let sent = 0
   let pruned = 0
+  let skippedEndpoints = 0
   const users: UserResult[] = []
   for (const userId of userIds) {
     // One user's bad row or failed query must not cost every other user their notification.
@@ -248,21 +263,28 @@ async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response>
       const payload = await buildPayload(supabase, kind, userId, clock, allSlipping)
       const subs = subsByUser.get(userId) ?? []
       if (!payload || subs.length === 0) {
-        users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0 })
+        users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 })
         continue
       }
       const result = await sendToSubscriptions(supabase, userId, subs, payload)
       sent += result.sent
       pruned += result.pruned
+      skippedEndpoints += result.skipped_endpoints
       users.push({ user_id: userId, skipped: false, ...result })
     } catch (e) {
       console.error(`notify ${kind}: user ${userId} failed`, e)
-      users.push({ user_id: userId, skipped: false, failed: true, attempted: 0, sent: 0, pruned: 0 })
+      users.push({ user_id: userId, skipped: false, failed: true, attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 })
     }
   }
 
   // Counts only — never payload content — so the pg_net response log holds no personal data.
-  return jsonResponse(req, { sent, pruned, skipped: users.every((u) => u.skipped), users })
+  return jsonResponse(req, {
+    sent,
+    pruned,
+    skipped: users.every((u) => u.skipped),
+    skipped_endpoints: skippedEndpoints,
+    users,
+  })
 }
 
 /** Signed-in user path: a test push to the caller's own devices, nothing else. */

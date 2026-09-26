@@ -2,6 +2,7 @@
 import { z } from 'npm:zod@^4'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor } from '../_shared/cors.ts'
+import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 const GROQ_PARSE_MODEL = Deno.env.get('GROQ_PARSE_MODEL') ?? 'llama-3.3-70b-versatile'
@@ -108,6 +109,15 @@ Deno.serve(async (req) => {
   // FIX-0 / S3: a signed-in user, not merely the public anon key, before anything reaches Groq.
   const auth = await requireUser(req)
   if (auth instanceof Response) return auth
+
+  // SEC-2: today's AI allowance, before the body is read or Groq is called.
+  // Fails OPEN: if the allowance can't be checked ('unavailable'), the parse still runs. A capture
+  // must never be lost or degraded by our own bookkeeping — and the client already files it to
+  // the Inbox unparsed if this call fails, so failing closed would only cost the user their AI
+  // filing during a blip while saving at most one small text call. Over the limit is different:
+  // that 429 is a known state, and the client lands the capture in the Inbox as it does offline.
+  const allowance = await takeAiAllowance(auth.user.id, 'parse')
+  if (allowance === 'over') return dailyLimitResponse(req)
 
   let rawText = ''
   try {

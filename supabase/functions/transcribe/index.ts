@@ -1,6 +1,7 @@
 // P2 AI capture: audio blob -> text (Groq Whisper).
 import { requireUser } from '../_shared/auth.ts'
-import { corsHeadersFor } from '../_shared/cors.ts'
+import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
+import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 const GROQ_STT_MODEL = Deno.env.get('GROQ_STT_MODEL') ?? 'whisper-large-v3-turbo'
@@ -16,6 +17,14 @@ Deno.serve(async (req) => {
   // FIX-0 / S3: a signed-in user, not merely the public anon key, before anything reaches Groq.
   const auth = await requireUser(req)
   if (auth instanceof Response) return auth
+
+  // SEC-2: today's AI allowance, before up to 20MB of audio is read or Groq is called.
+  // Fails CLOSED: if the allowance can't be checked, no Whisper call. Speech-to-text has the
+  // tightest free-tier budget (audio-seconds per day) and each call can be the largest, so it is
+  // the last path to leave unmetered; the voice sheet tells the user to try again.
+  const allowance = await takeAiAllowance(auth.user.id, 'stt')
+  if (allowance === 'over') return dailyLimitResponse(req)
+  if (allowance === 'unavailable') return jsonResponse(req, { error: 'allowance unavailable' }, 503)
 
   try {
     const incoming = await req.formData()

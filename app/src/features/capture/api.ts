@@ -5,6 +5,7 @@ import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
 import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
+import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
 import type { Domain, Project, InboxItem } from '../../lib/types'
 
 // TODO(P4): read from app_settings.confidence_threshold once settings UI exists.
@@ -43,7 +44,12 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
     `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/transcribe`,
     { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form },
   )
-  if (!res.ok) throw new Error(`transcribe failed: ${res.status}`)
+  if (!res.ok) {
+    // SEC-2: today's speech-to-text allowance is used up — its own error type so the voice sheet
+    // can say so calmly instead of "failed".
+    if (await isDailyLimitResponse(res)) throw new DailyLimitError()
+    throw new Error(`transcribe failed: ${res.status}`)
+  }
   const data = (await res.json()) as { text: string }
   return data.text
 }
@@ -102,10 +108,13 @@ export async function captureWithAI(
   }
 
   let parse: ParseResult | null = null
+  let aiAllowanceUsedUp = false
   try {
     parse = await callParseCapture(rawText)
-  } catch {
+  } catch (err) {
     // AI failed for any reason — never block capture, just fall through to Inbox below.
+    // SEC-2: if the reason is today's used-up AI allowance, the toast says the AI step was skipped.
+    aiAllowanceUsedUp = await isDailyLimitError(err)
   }
 
   // Only 'task' has an auto-file target so far (P1 scope); everything else always goes to Inbox,
@@ -137,7 +146,7 @@ export async function captureWithAI(
   const item = newInboxItem(rawText, kind, transcript, parse, overridesPayload(overrides))
   writeRow('inbox_items', item)
   logActivity('inbox.captured', 'inbox_item', item.id, { kind })
-  useToastStore.getState().push({ message: 'Added to Inbox for review' })
+  useToastStore.getState().push({ message: aiAllowanceUsedUp ? INBOX_WITHOUT_AI : 'Added to Inbox for review' })
 }
 
 /** Reconnect hook: parse any captures that were queued while offline. */
