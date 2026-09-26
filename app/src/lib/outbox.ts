@@ -158,6 +158,81 @@ export async function reapplyPendingWrites(table: string): Promise<void> {
   queryClient.setQueryData([table], (old: unknown) => pending.reduce(applyEntry, old))
 }
 
+/** What actually goes over the wire for a row. Server-owned columns never do:
+ * - `search_tsv` (P5) is `generated always … stored` on tasks/inbox_items and Postgres 400s if it's
+ *   echoed back — and this app's whole write pattern is "spread a fetched row, change a field,
+ *   upsert the full object", so every `select('*')` row would carry it straight back.
+ * - `embedding` (P5, `vector(384)`) is written only by the embed pipeline (audit H1 / lead on J-16).
+ * - `user_id` when it's empty: every table defaults it to `auth.uid()`, but SENDING the column
+ *   overrides that default, and Postgres rejects `''` as a uuid. Several api.ts files built new rows
+ *   with `user_id: ''` (people, interactions, time_entries, library — the journal had the same bug
+ *   in R4), so those creates dead-lettered and vanished on the next sign-in (audit 2026-09-26).
+ *   Dropping it here fixes every current and future caller at the one chokepoint. */
+function networkPayload(row: Record<string, unknown>): Record<string, unknown> {
+  const { search_tsv: _searchTsv, embedding: _embedding, ...payload } = row
+  if (!payload.user_id) delete payload.user_id
+  return payload
+}
+
+type DeadEntry = OutboxEntry & { error?: string; failedAt?: number }
+let rescuing = false
+
+/** One-time rescue for the `user_id: ''` bug above: writes the server rejected ONLY because of
+ * that empty id go back into the live queue with the column dropped, so a person / time entry /
+ * library row that looked saved but never landed is recovered on this device. Rows the server
+ * already has are left alone (never replay an old write over newer data), and every other
+ * dead letter stays parked. Idempotent: a rescued entry leaves the dead-letter store.
+ * Call only while signed in as the account that owns this device's outbox. */
+export async function rescueEmptyUserIdWrites(): Promise<number> {
+  if (rescuing) return 0
+  rescuing = true
+  try {
+    const dead = (await get<DeadEntry[]>(DEAD_KEY)) ?? []
+    // Latest failure per row only — an older copy of the same row is superseded.
+    const latest = new Map<string, DeadEntry>()
+    for (const e of dead) {
+      if (e.op !== 'upsert' || e.payload?.user_id !== '') continue
+      const key = `${e.table}:${e.id}`
+      const prev = latest.get(key)
+      if (!prev || (e.failedAt ?? 0) >= (prev.failedAt ?? 0)) latest.set(key, e)
+    }
+    if (latest.size === 0) return 0
+
+    const byTable = new Map<string, string[]>()
+    for (const e of latest.values()) byTable.set(e.table, [...(byTable.get(e.table) ?? []), e.id])
+    const existing = new Set<string>()
+    for (const [table, ids] of byTable) {
+      const { data, error } = await supabase.from(table).select('id').in('id', ids)
+      if (error) return 0 // can't tell what the server has — try again on the next sign-in
+      for (const r of (data ?? []) as { id: string }[]) existing.add(`${table}:${r.id}`)
+    }
+
+    const queued = new Set((await peekQueue()).map((e) => `${e.table}:${e.id}`))
+    let rescued = 0
+    for (const [key, e] of latest) {
+      // A newer write for the row is already queued (it wins), or the row exists server-side.
+      if (queued.has(key) || existing.has(key)) continue
+      await enqueue({ id: e.id, table: e.table, op: 'upsert', payload: networkPayload(e.payload), queuedAt: Date.now() })
+      rescued++
+    }
+    // Drop every empty-user_id upsert from the dead letters: rescued, superseded, or already
+    // on the server — none of them is a failure anyone needs to inspect any more.
+    await set(
+      DEAD_KEY,
+      dead.filter((e) => !(e.op === 'upsert' && e.payload?.user_id === '')),
+    )
+    if (rescued > 0) {
+      useToastStore.getState().push({
+        message: rescued === 1 ? 'Recovered one change that hadn\'t saved earlier.' : `Recovered ${rescued} changes that hadn't saved earlier.`,
+      })
+      void flushOutbox()
+    }
+    return rescued
+  } finally {
+    rescuing = false
+  }
+}
+
 /** Optimistically updates the query cache for `table` and queues the write for sync. */
 export function writeRow<T extends { id: string }>(
   table: string,
@@ -179,18 +254,8 @@ export function writeRow<T extends { id: string }>(
     copy[idx] = row
     return copy
   })
-  // `search_tsv` (P5) is a `generated always as (...) stored` column on tasks/inbox_items — it
-  // comes back on every `select('*')`, and this app's whole write pattern is "spread a fetched
-  // row, change a field, upsert the full object" — so it must never be sent back, or Postgres
-  // 400s on every write to those tables ("cannot insert/update a generated column").
-  // `embedding` (P5, `vector(384)`) rides along for the same reason: `select('*')` returns it,
-  // no client code reads or declares it, and the embed pipeline is the only thing allowed to
-  // write it — so echoing 384 floats back on every task/inbox edit is pure waste at best and a
-  // rejected write at worst. Server owns it; strip it. (Audit H1 / lead on J-16.)
-  const { search_tsv: _searchTsv, embedding: _embedding, ...payload } = row as unknown as Record<
-    string,
-    unknown
-  >
+  // Server-owned columns and an empty user_id never go over the wire — see networkPayload.
+  const payload = networkPayload(row as unknown as Record<string, unknown>)
   void enqueue({
     id: row.id,
     table,

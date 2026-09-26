@@ -11,12 +11,14 @@ vi.mock('idb-keyval', () => ({
 
 const upsertMock = vi.fn()
 const deleteEqMock = vi.fn()
+const selectInMock = vi.fn()
 
 vi.mock('./supabase', () => ({
   supabase: {
     from: (table: string) => ({
       upsert: (payload: unknown) => upsertMock(table, payload),
       delete: () => ({ eq: (col: string, val: unknown) => deleteEqMock(table, col, val) }),
+      select: () => ({ in: (col: string, ids: string[]) => selectInMock(table, col, ids) }),
     }),
   },
 }))
@@ -56,6 +58,7 @@ describe('outbox', () => {
     cache.clear()
     upsertMock.mockReset()
     deleteEqMock.mockReset()
+    selectInMock.mockReset()
     toastPushMock.mockReset()
     setQueryDataMock.mockClear()
     vi.resetModules()
@@ -242,5 +245,84 @@ describe('outbox', () => {
       expect.objectContaining({ id: 'activity-1' }),
     )
     expect(store.get('kf-outbox')).toEqual([])
+  })
+
+  describe('empty user_id (audit 2026-09-26: people / time_entries / library creates vanished)', () => {
+    it('never sends an empty user_id, so the DB default auth.uid() applies', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep items queued
+      const { writeRow } = await import('./outbox')
+      writeRow('people', { id: 'p-empty', user_id: '', name: 'Mona' })
+      writeRow('people', { id: 'p-real', user_id: 'u-1', name: 'Omar' })
+      await flushMicrotasks()
+      const queue = store.get('kf-outbox') as { id: string; payload: Record<string, unknown> }[]
+      expect(queue.find((e) => e.id === 'p-empty')!.payload).not.toHaveProperty('user_id')
+      expect(queue.find((e) => e.id === 'p-real')!.payload.user_id).toBe('u-1')
+    })
+
+    const deadEmpty = (id: string, failedAt = 1) => ({
+      id,
+      table: 'people',
+      op: 'upsert',
+      payload: { id, user_id: '', name: `name-${id}` },
+      queuedAt: 0,
+      error: 'invalid input syntax for type uuid: ""',
+      failedAt,
+    })
+
+    it('requeues a rejected empty-user_id write the server never got, without the column', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') }) // hold the rescued row in the queue
+      selectInMock.mockResolvedValue({ data: [], error: null })
+      store.set('kf-outbox-dead', [deadEmpty('p1')])
+      const { rescueEmptyUserIdWrites } = await import('./outbox')
+      expect(await rescueEmptyUserIdWrites()).toBe(1)
+      const queue = store.get('kf-outbox') as { id: string; payload: Record<string, unknown> }[]
+      expect(queue).toHaveLength(1)
+      expect(queue[0].payload).toEqual({ id: 'p1', name: 'name-p1' })
+      expect(store.get('kf-outbox-dead')).toEqual([])
+      expect(toastPushMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('never replays over a row the server already has, and keeps unrelated dead letters', async () => {
+      selectInMock.mockResolvedValue({ data: [{ id: 'p2' }], error: null })
+      const other = { id: 't9', table: 'tasks', op: 'upsert', payload: { id: 't9', user_id: 'u-1' }, queuedAt: 0, error: 'rls' }
+      store.set('kf-outbox-dead', [deadEmpty('p2'), other])
+      const { rescueEmptyUserIdWrites } = await import('./outbox')
+      expect(await rescueEmptyUserIdWrites()).toBe(0)
+      expect(store.get('kf-outbox') ?? []).toEqual([])
+      expect(store.get('kf-outbox-dead')).toEqual([other])
+      expect(toastPushMock).not.toHaveBeenCalled()
+    })
+
+    it('lets a newer queued write for the same row win', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') })
+      selectInMock.mockResolvedValue({ data: [], error: null })
+      const { writeRow, rescueEmptyUserIdWrites } = await import('./outbox')
+      writeRow('people', { id: 'p3', name: 'newer' })
+      await flushMicrotasks()
+      store.set('kf-outbox-dead', [deadEmpty('p3')])
+      expect(await rescueEmptyUserIdWrites()).toBe(0)
+      const queue = store.get('kf-outbox') as { id: string; payload: { name: string } }[]
+      expect(queue.filter((e) => e.id === 'p3').map((e) => e.payload.name)).toEqual(['newer'])
+    })
+
+    it('rescues only the latest failure per row', async () => {
+      upsertMock.mockResolvedValue({ error: new Error('offline') })
+      selectInMock.mockResolvedValue({ data: [], error: null })
+      const older = { ...deadEmpty('p4', 1), payload: { id: 'p4', user_id: '', name: 'old' } }
+      const newer = { ...deadEmpty('p4', 2), payload: { id: 'p4', user_id: '', name: 'new' } }
+      store.set('kf-outbox-dead', [newer, older])
+      const { rescueEmptyUserIdWrites } = await import('./outbox')
+      expect(await rescueEmptyUserIdWrites()).toBe(1)
+      const queue = store.get('kf-outbox') as { payload: { name: string } }[]
+      expect(queue.map((e) => e.payload.name)).toEqual(['new'])
+    })
+
+    it('changes nothing when it cannot ask the server what it already has', async () => {
+      selectInMock.mockResolvedValue({ data: null, error: { message: 'offline' } })
+      store.set('kf-outbox-dead', [deadEmpty('p5')])
+      const { rescueEmptyUserIdWrites } = await import('./outbox')
+      expect(await rescueEmptyUserIdWrites()).toBe(0)
+      expect(store.get('kf-outbox-dead')).toHaveLength(1)
+    })
   })
 })

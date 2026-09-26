@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
-import { OUTBOX_KEY, DEAD_KEY, flushOutbox } from '../../lib/outbox'
+import { OUTBOX_KEY, DEAD_KEY, flushOutbox, rescueEmptyUserIdWrites } from '../../lib/outbox'
 // Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
 import { forgetRecovery, rememberRecovery } from './recovery'
 
@@ -54,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           void del('kais-flow-query-cache')
         }
         localStorage.setItem(OUTBOX_OWNER_KEY, uid)
+        // Only this account's own dead letters — a different owner's were just deleted above.
+        if (!owner || owner === uid) void rescueEmptyUserIdWrites()
       }
     })
 
