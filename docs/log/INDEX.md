@@ -7,3 +7,4 @@
 - 2026-09-26 04:50 · decision · local Supabase recipe for signed-in cloud runs; 0001–0034 apply cleanly — `2026-09-26-0450-bohr-decision-local-stack.md`
 - 2026-09-26 05:00 · status · 4 workers out (T-2, FIX-0, FIX-2, J-11); T-3 + T-1 ready — `2026-09-26-0500-bohr-status.md`
 - 2026-09-26 05:20 · decision · K-c not run; 0030–0035 ride the first backend release; 0032 compost is destructive — needs backup + Kai OK — `2026-09-26-0520-bohr-decision-kc-rides-release.md`
+- 2026-09-26 05:10 · correction · container restart: workers lost, FIX-0 WIP saved, recovery recipe; two filename times overstated — `2026-09-26-0510-bohr-correction-restart.md`
