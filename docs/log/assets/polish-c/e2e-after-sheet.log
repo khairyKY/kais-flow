@@ -1,0 +1,33 @@
+build: {"commit":"912b52678bd46bc8f0b77566de7ceabfdc686719","builtAt":"2026-09-26T06:56:03.966Z"}
+      sheet 390px zoom 1.25: {"cols":2,"truncated":[],"right":370,"vw":390,"minH":54,"zoom":"1.25"}
+PASS  sheet 390px @1.25: no row past the screen edge  — right 370 / 390
+PASS  sheet 390px @1.25: no label truncated
+PASS  sheet 390px @1.25: rows ≥44px  — 54
+      shot ./shots/after-sheet-390-zoom1.25.png
+      sheet 390px zoom 1: {"cols":3,"truncated":[],"right":374,"vw":390,"minH":44,"zoom":"1"}
+PASS  sheet 390px @1: no row past the screen edge  — right 374 / 390
+PASS  sheet 390px @1: no label truncated
+PASS  sheet 390px @1: rows ≥44px  — 44
+      shot ./shots/after-sheet-390-zoom1.png
+      sheet 360px zoom 1.25: {"cols":2,"truncated":[],"right":340,"vw":360,"minH":54,"zoom":"1.25"}
+PASS  sheet 360px @1.25: no row past the screen edge  — right 340 / 360
+PASS  sheet 360px @1.25: no label truncated
+PASS  sheet 360px @1.25: rows ≥44px  — 54
+      shot ./shots/after-sheet-360-zoom1.25.png
+      sheet 360px zoom 1: {"cols":2,"truncated":[],"right":344,"vw":360,"minH":44,"zoom":"1"}
+PASS  sheet 360px @1: no row past the screen edge  — right 344 / 360
+PASS  sheet 360px @1: no label truncated
+PASS  sheet 360px @1: rows ≥44px  — 44
+      shot ./shots/after-sheet-360-zoom1.png
+
+console/request lines: 8 total, 0 other than open-meteo
+  sheet-390-default FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-390-default /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-390-1 FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-390-1 /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-360-default FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-360-default /today: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-360-1 FAILED https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current_weather= net::ERR_TUNNEL_CONNECTION_FAILED
+  sheet-360-1 /: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED
+
+12/12 checks passed
