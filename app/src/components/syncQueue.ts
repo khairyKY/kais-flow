@@ -1,6 +1,8 @@
 import type { OutboxEntry } from '../lib/outbox'
-import type { ActivityLogEntry } from '../lib/types'
-import { describeActivity, plural, type ActivityCategory } from '../features/activity/describe'
+
+// Deliberately NOT importing features/activity/describe.ts: this runs in the shell's initial
+// chunk, and describe.ts would add ~5 kB gzip to it (bundle budget) for a rare case. Activity-only
+// rows get a short family + verb here instead ("Ritual · step completed").
 
 // The topbar's queue popover (States.dc.html 2b: `TASK  'buy milk' · completed  4 MIN AGO`),
 // built from the raw outbox. 2026-09-26 audit: it printed raw table names ("ACTIVITY_LOG saved")
@@ -9,6 +11,7 @@ import { describeActivity, plural, type ActivityCategory } from '../features/act
 // Rows here are the user's changes, the same set `unsyncedChanges()` (lib/outbox.ts) counts:
 // the non-activity entries, or — when only activity rows are waiting (a ritual step, a review
 // verdict) — those. The paired activity row only lends its verb ("completed", "captured").
+// (lib/outbox.ts belongs to another worker; if it ever exports its filter, use it here.)
 
 /** Human names for every table the app writes through the outbox. Never the table name itself. */
 const KIND: Record<string, string> = {
@@ -33,38 +36,48 @@ const KIND: Record<string, string> = {
   commentary: 'Library',
 }
 
-const CATEGORY_KIND: Record<ActivityCategory, string> = {
-  tasks: 'Task',
+/** Event family (the part before the dot) → kind, for activity-only rows. */
+const FAMILY_KIND: Record<string, string> = {
+  task: 'Task',
+  capture: 'Inbox',
   inbox: 'Inbox',
-  routines: 'Routine',
+  routine: 'Routine',
+  ritual: 'Ritual',
+  calendar_event: 'Event',
   calendar: 'Event',
   people: 'Person',
+  person: 'Person',
   journal: 'Journal',
-  projects: 'Project',
+  project: 'Project',
+  area: 'Area',
+  domain: 'Review',
   review: 'Review',
-  library: 'Library',
-  garden: 'Garden',
+  entity: 'Review',
+  resurfaced: 'Resurfaced',
+  book: 'Library',
+  note: 'Library',
+  quote: 'Library',
+  commentary: 'Library',
+  onboarding: 'Garden',
 }
 
 export interface SyncRow {
   key: string
   /** Mono tag, e.g. "Task" (the popover uppercases it). */
   kind: string
-  /** e.g. `'buy milk' · completed`, or `Morning ritual — pick your Top-3`. */
+  /** e.g. `'buy milk' · completed`, or `step completed` for an activity-only row. */
   text: string
   queuedAt: number
 }
 
-function asActivity(e: OutboxEntry): ActivityLogEntry {
-  const p = e.payload as Partial<ActivityLogEntry>
-  return {
-    id: e.id,
-    event_type: String(p.event_type ?? ''),
-    entity_type: String(p.entity_type ?? ''),
-    entity_id: String(p.entity_id ?? ''),
-    payload: (p.payload as Record<string, unknown> | null) ?? null,
-    created_at: new Date(e.queuedAt).toISOString(),
-  }
+/** The fields of a queued activity_log row this popover reads. */
+function eventOf(e: OutboxEntry): { type: string; entityId: string } {
+  const p = e.payload as { event_type?: unknown; entity_id?: unknown }
+  return { type: String(p.event_type ?? ''), entityId: String(p.entity_id ?? '') }
+}
+
+function plural(n: number, noun: string): string {
+  return `${n} ${n === 1 ? noun : `${noun}s`}`
 }
 
 /** The short verb from the change's own activity event: "task.completed" → "completed". */
@@ -89,17 +102,17 @@ export function syncRows(queue: OutboxEntry[]): SyncRow[] {
 
   if (changes.length === 0) {
     return activity.map((e) => {
-      const line = describeActivity(asActivity(e))
-      return { key: `activity_log-${e.id}`, kind: CATEGORY_KIND[line.category], text: line.text, queuedAt: e.queuedAt }
+      const { type } = eventOf(e)
+      return { key: `activity_log-${e.id}`, kind: FAMILY_KIND[type.split('.')[0]] ?? 'Change', text: verbOf(type) || 'saved', queuedAt: e.queuedAt }
     })
   }
 
   // The newest activity event per entity id lends its verb to that entity's row.
   const verbById = new Map<string, string>()
   for (const a of [...activity].sort((x, y) => x.queuedAt - y.queuedAt)) {
-    const act = asActivity(a)
-    const verb = verbOf(act.event_type)
-    if (verb) verbById.set(act.entity_id, verb)
+    const { type, entityId } = eventOf(a)
+    const verb = verbOf(type)
+    if (verb) verbById.set(entityId, verb)
   }
 
   return changes.map((e) => {

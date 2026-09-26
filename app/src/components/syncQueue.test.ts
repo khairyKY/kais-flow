@@ -54,9 +54,12 @@ describe('syncRows', () => {
     expect(JSON.stringify(rows)).not.toContain('private words')
   })
 
-  it('when only activity rows wait (a ritual step), they are the changes — described, not raw', () => {
-    const rows = syncRows([act('ritual.step_completed', 'r1', { ritual: 'morning', step: 'top3' })])
-    expect(rows).toEqual([expect.objectContaining({ kind: 'Routine', text: 'Morning ritual — pick your Top-3' })])
+  it('when only activity rows wait (a ritual step), they are the changes — named, not raw', () => {
+    const rows = syncRows([act('ritual.step_completed', 'r1', { ritual: 'morning', step: 'top3' }), act('review.week_closed', 'w1')])
+    expect(rows).toEqual([
+      expect.objectContaining({ kind: 'Ritual', text: 'step completed' }),
+      expect.objectContaining({ kind: 'Review', text: 'week closed' }),
+    ])
   })
 
   it('a delete with no activity row reads "removed"; an unknown table is just a "Change"', () => {
