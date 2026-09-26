@@ -5,6 +5,7 @@ import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTas
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue } from '../tasks/taskDisplay'
+import { todayListTasks } from '../tasks/grouping'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
@@ -159,7 +160,8 @@ export function TodayPage() {
   // A3 (2026-07-18 audit): tasks completed *today* stay visible struck-through in their
   // sections instead of vanishing; done rows sort after open ones within each section.
   const doneAfterOpen = (a: Task, b: Task) => Number(!!a.completed_at) - Number(!!b.completed_at)
-  const visible = tasks.filter((t) => !t.someday && (!t.completed_at || isToday(t.completed_at)))
+  // One rule for this page and the sidebar badge (Polish F1): grouping.ts `todayListTasks`.
+  const visible = todayListTasks(tasks)
   const open = visible.filter((t) => !t.completed_at)
   const top3 = visible.filter((t) => t.top3).sort(doneAfterOpen)
   // R4 (2026-07-20 audit): "when the goal of the day is finished it should still be displayed,
