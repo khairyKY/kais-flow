@@ -9,7 +9,7 @@
 //
 // SEC-2: whichever branch, a push is only ever POSTed to a known Web Push service
 // (push-endpoint.ts); any other stored endpoint is skipped and counted, never contacted.
-import * as webpush from 'jsr:@negrel/webpush'
+import * as webpush from 'jsr:@negrel/webpush@0.5.0'
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
