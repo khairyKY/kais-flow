@@ -89,22 +89,23 @@ export function logReviewEvent(
   )
 }
 
+/** Loop B: also folds the step into Today's `ritual_steps` cache, so the ritual card's n/4 moves
+ * when the ritual closes — it used to sit stale (e.g. 1/4 after all four) until a refetch. */
 export function logRitualStep(ritual: RitualKind, step: string): void {
-  logActivity('ritual.step_completed', 'ritual', `${ritual}-${localDateKey(new Date())}`, {
-    ritual,
-    step,
-    date: localDateKey(new Date()),
-  })
+  const date = localDateKey(new Date())
+  logRitualEvent(['activity_log', 'ritual_steps'], 'ritual.step_completed', 'ritual', `${ritual}-${date}`, { ritual, step, date })
 }
 
 /** Writes one activity row through the outbox AND folds it into a ritual query's cache, so the
  * screen that wrote it sees it at once. Same reason as logReviewEvent above: the outbox only
- * re-applies pending writes to a table's own `[table]` key. Unlike there, an empty cache is
- * seeded with the row: these keys hold one shape only, and an in-flight first fetch cancelled
- * by another write (writeRow cancels every `['activity_log', …]` query) would otherwise drop it. */
+ * re-applies pending writes to a table's own `[table]` key. A query no screen has created yet is
+ * left alone (its first mount fetches it whole); one that exists but holds no data is seeded with
+ * the row — writeRow cancels every in-flight `['activity_log', …]` fetch, so a first fetch cut
+ * short by this very write would otherwise never show it. */
 function logRitualEvent(key: readonly unknown[], eventType: string, entityType: string, entityId: string, payload: Record<string, unknown>): void {
   const row = activityRow(eventType, entityType, entityId, payload)
   writeRow('activity_log', row)
+  if (!queryClient.getQueryCache().find({ queryKey: key, exact: true })) return
   const entry: ActivityLogEntry = { ...row, created_at: new Date().toISOString() }
   queryClient.setQueryData<ActivityLogEntry[]>(key, (old) => (old ? [...old, entry] : [entry]))
 }
