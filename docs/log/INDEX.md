@@ -21,3 +21,4 @@
 - 2026-09-26 06:39 · test-run · SEC-2 merged into release-1 @ 43d32ac: 32 files / 320 tests UTC+Cairo, lint baseline, build green; worker sec2.sh 110/110 + fix0 79/79 (handoff 2026-09-26-0635-sec2-handoff.md). FIX-5 (0037) + notify prune dispatched. Queued: voice note lost when allowance is used up (needs Kai's call)
 - 2026-09-26 06:42 · decision · Kai delegates all UX decisions; 22 open questions decided — `2026-09-26-0642-bohr-decision-conductor-decides.md`
 - 2026-09-26 06:43 · status · release-1 = 13 merges (350 tests); P0-B merged; Polish C/D/E + FIX-5 running — `2026-09-26-0643-bohr-status.md`
+- 2026-09-26 07:04 · test-run · FIX-5 (0037 search, notify prune) merged + webpush pinned @0.5.0 on release-1: 34 files / 350 tests, lint baseline, build green; fix0 79/79, sec2 110/110, notify-prune 12/12, fix5-search 31/31 (worker). Decisions: 0.35 = distance (tighten, per J-7); substring title tier kept
