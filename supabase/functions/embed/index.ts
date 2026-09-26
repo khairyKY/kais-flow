@@ -29,8 +29,9 @@ Deno.serve(async (req) => {
   }
 
   // FIX-0 / S5: only pg_cron (service-role key from Vault, 0009_search_cron.sql) may drain the
-  // queue or trigger a backfill — both are cross-tenant service-role work.
-  if (!isServiceRole(req)) return jsonResponse(req, { error: 'unauthorized' }, 401)
+  // queue or trigger a backfill — both are cross-tenant service-role work. Signed-in users and
+  // the anon key get 401 like anyone else: nothing in the app calls this function.
+  if (!(await isServiceRole(req))) return jsonResponse(req, { error: 'unauthorized' }, 401)
 
   try {
     const { backfill } = (await req.json().catch(() => ({}))) as { backfill?: boolean }

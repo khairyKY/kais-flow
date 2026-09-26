@@ -165,7 +165,10 @@ function appServer(): Promise<webpush.ApplicationServer> {
   appServerPromise ??= (async () => {
     const vapidKeys = await webpush.importVapidKeys(JSON.parse(VAPID_KEYS_JSON), { extractable: false })
     return await webpush.ApplicationServer.new({ contactInformation: CONTACT_EMAIL, vapidKeys })
-  })()
+  })().catch((e) => {
+    appServerPromise = null // don't pin a failed VAPID import for the life of the worker
+    throw e
+  })
   return appServerPromise
 }
 
@@ -177,10 +180,10 @@ async function sendToSubscriptions(
   payload: PushPayload,
 ): Promise<SendResult> {
   const server = await appServer()
+  const own = subs.filter((sub) => sub.user_id === userId) // defence in depth: never deliver across users
   let sent = 0
   let pruned = 0
-  for (const sub of subs) {
-    if (sub.user_id !== userId) continue // defence in depth: never deliver across users
+  for (const sub of own) {
     try {
       const subscriber = server.subscribe({ endpoint: sub.endpoint, keys: sub.keys })
       await subscriber.pushTextMessage(JSON.stringify(payload), {})
@@ -193,8 +196,10 @@ async function sendToSubscriptions(
       }
     }
   }
-  return { attempted: subs.length, sent, pruned }
+  return { attempted: own.length, sent, pruned }
 }
+
+type UserResult = { user_id: string; skipped: boolean; failed?: true } & SendResult
 
 /** pg_cron path: every user with a push device gets their own payload on their own devices. */
 async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response> {
@@ -236,18 +241,24 @@ async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response>
 
   let sent = 0
   let pruned = 0
-  const users: Array<{ user_id: string; skipped: boolean } & SendResult> = []
+  const users: UserResult[] = []
   for (const userId of userIds) {
-    const payload = await buildPayload(supabase, kind, userId, clock, allSlipping)
-    const subs = subsByUser.get(userId) ?? []
-    if (!payload || subs.length === 0) {
-      users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0 })
-      continue
+    // One user's bad row or failed query must not cost every other user their notification.
+    try {
+      const payload = await buildPayload(supabase, kind, userId, clock, allSlipping)
+      const subs = subsByUser.get(userId) ?? []
+      if (!payload || subs.length === 0) {
+        users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0 })
+        continue
+      }
+      const result = await sendToSubscriptions(supabase, userId, subs, payload)
+      sent += result.sent
+      pruned += result.pruned
+      users.push({ user_id: userId, skipped: false, ...result })
+    } catch (e) {
+      console.error(`notify ${kind}: user ${userId} failed`, e)
+      users.push({ user_id: userId, skipped: false, failed: true, attempted: 0, sent: 0, pruned: 0 })
     }
-    const result = await sendToSubscriptions(supabase, userId, subs, payload)
-    sent += result.sent
-    pruned += result.pruned
-    users.push({ user_id: userId, skipped: false, ...result })
   }
 
   // Counts only — never payload content — so the pg_net response log holds no personal data.
@@ -268,7 +279,8 @@ async function runTestForUser(req: Request, userId: string, token: string): Prom
   if (error) throw error
   const payload = (await buildPayload(supabase, 'test', userId, runClock(), async () => []))!
   const result = await sendToSubscriptions(supabase, userId, (subs ?? []) as Subscription[], payload)
-  return jsonResponse(req, result)
+  // `sent`/`pruned` at the top level are what Settings' "send test" reads (notifications/api.ts).
+  return jsonResponse(req, { ...result, users: [{ user_id: userId, skipped: false, ...result }] })
 }
 
 Deno.serve(async (req) => {
@@ -278,7 +290,7 @@ Deno.serve(async (req) => {
   }
 
   // Resolve the caller before reading the body or touching the DB.
-  const serviceRole = isServiceRole(req)
+  const serviceRole = await isServiceRole(req)
   let userId: string | null = null
   let token = ''
   if (!serviceRole) {
@@ -290,13 +302,15 @@ Deno.serve(async (req) => {
 
   try {
     const { kind } = (await req.json()) as { kind: NotifyKind }
+
+    if (!serviceRole) {
+      // Digests, nudges, reminders and sweeps are cron-only; a user may only test their own devices.
+      if (kind !== 'test') return jsonResponse(req, { error: 'forbidden' }, 403)
+      return await runTestForUser(req, userId!, token)
+    }
+
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
-
-    if (serviceRole) return await runForAllUsers(req, kind)
-
-    // Digests, nudges, reminders and sweeps are cron-only.
-    if (kind !== 'test') return jsonResponse(req, { error: 'forbidden' }, 403)
-    return await runTestForUser(req, userId!, token)
+    return await runForAllUsers(req, kind)
   } catch (e) {
     return jsonResponse(req, { error: String(e) }, 400)
   }

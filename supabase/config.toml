@@ -385,6 +385,28 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# FIX-0 (S1/S3/S5): pin gateway JWT verification for every function instead of relying on the
+# default. This is NOT authentication on its own — the public anon key passes it — so each
+# function also checks its caller in code (`_shared/auth.ts`: requireUser / isServiceRole).
+# Keep it on: it is the first of the two checks `isServiceRole` stacks for the pg_cron caller.
+[functions.transcribe]
+verify_jwt = true
+
+[functions.parse-capture]
+verify_jwt = true
+
+[functions.chat]
+verify_jwt = true
+
+[functions.search]
+verify_jwt = true
+
+[functions.notify]
+verify_jwt = true
+
+[functions.embed]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

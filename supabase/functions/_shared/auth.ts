@@ -42,7 +42,8 @@ export async function requireUser(req: Request): Promise<AuthedUser | Response> 
   if (!token) return jsonResponse(req, { error: 'unauthorized' }, 401)
 
   // getUser(token) asks the auth server, so a deleted user or signed-out session is rejected
-  // too — not just a bad signature. It works for HS256 and asymmetric (ES256) user tokens alike.
+  // too — not just a bad signature. The auth server verifies the signature itself, so this works
+  // for legacy HS256 and asymmetric (ES256 — what the local stack issues) user tokens alike.
   const { data, error } = await authClient.auth.getUser(token)
   if (data?.user) return { user: data.user, token }
 
@@ -58,24 +59,49 @@ export async function requireUser(req: Request): Promise<AuthedUser | Response> 
  * `Authorization: Bearer <vault 'service_role_key'>` (migrations 0006/0007/0009/0016).
  *
  * Two ways in, on purpose:
- *  1. The token is byte-for-byte this project's `SUPABASE_SERVICE_ROLE_KEY` (constant-time
- *     compare). The common case.
- *  2. The token is a JWT whose `role` claim is `service_role`. The Vault copy is pasted in by hand
- *     and can legitimately differ from the env value while still being a valid service key —
- *     e.g. after a key rotation/regeneration where Vault was updated with a different (but still
- *     project-signed) service_role JWT than the one the runtime injects. Without this the cron
- *     jobs would silently start getting 401s.
+ *  1. The token is byte-for-byte this runtime's `SUPABASE_SERVICE_ROLE_KEY` (constant-time
+ *     compare). The expected case: Vault holds the same key the dashboard shows.
+ *  2. The token is a JWT whose `role` claim is `service_role`, and the auth server confirms it.
+ *     The Vault copy is pasted in by hand, so it can legitimately differ byte-for-byte from the
+ *     key the runtime injects while still being a valid, project-signed service_role JWT (a key
+ *     copied before a regeneration of the runtime value, a separately issued service_role JWT).
+ *     Without path 2 the cron jobs would start getting 401s silently and every digest, reminder
+ *     and embed drain would stop.
  *
- * Path 2 reads the claim WITHOUT checking the signature, which is only safe because
- * `verify_jwt = true` makes the gateway reject any bearer JWT this project didn't sign before the
- * function runs. That is why config.toml pins `verify_jwt = true` for every function: never turn
- * it off for a function that calls this.
+ * Path 2 never trusts the claim on its own. The gateway (`verify_jwt = true`) already rejects any
+ * bearer JWT this project didn't sign, and on top of that the auth server is asked to accept the
+ * token as an admin — so path 2 stays safe even if someone later turns `verify_jwt` off for a
+ * function (which Supabase's newer API-key docs suggest). A forged `{"role":"service_role"}`
+ * token fails both checks.
  */
-export function isServiceRole(req: Request): boolean {
+export async function isServiceRole(req: Request): Promise<boolean> {
   const token = bearerToken(req)
   if (!token) return false
   if (SERVICE_ROLE_KEY && timingSafeEqual(token, SERVICE_ROLE_KEY)) return true
-  return jwtPayload(token)?.role === 'service_role'
+  if (jwtPayload(token)?.role !== 'service_role') return false
+  const confirmed = await authServerAcceptsAsAdmin(token)
+  if (confirmed) {
+    // Worth knowing in the logs: it means Vault's key and the runtime's key have drifted apart.
+    console.warn('isServiceRole: accepted a verified service_role JWT that differs from SUPABASE_SERVICE_ROLE_KEY')
+  }
+  return confirmed
+}
+
+/**
+ * Asks the auth server whether `token` is a valid admin (service_role) JWT. The admin endpoints
+ * verify the signature and require the service_role claim; a one-row page is the cheapest such
+ * call. Any failure — bad signature, wrong role, network — answers "no".
+ */
+async function authServerAcceptsAsAdmin(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    })
+    await res.body?.cancel()
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -88,6 +114,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
+/** Decodes a JWT's payload WITHOUT verifying it — only ever used to decide whether to ask. */
 function jwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length !== 3) return null
