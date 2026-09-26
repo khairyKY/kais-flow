@@ -34,13 +34,28 @@ function cairoOffsetMs(t: number): number {
   return Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second) - t
 }
 
-/** ISO instant of `hour`:00 Cairo wall-clock, `days` Cairo calendar days after the one `now`
- * falls on — the same day `cairoDateKey` (and so task grouping) sees, on any device. */
-function cairoDayAt(now: Date, days: number, hour: number): string {
-  const wall = cairoDayUtc(now) + days * 86400000 + hour * 3600000 // Cairo wall-clock, read as UTC
+/** Cairo's UTC offset in minutes at `at` (+180 in summer, +120 in winter). */
+export function cairoOffsetMinutes(at: Date): number {
+  return Math.round(cairoOffsetMs(at.getTime()) / 60000)
+}
+
+/** A Cairo wall-clock time, given as ms read as if it were UTC, -> the real instant (ISO). */
+function cairoWallToIso(wall: number): string {
   // Second pass: the offset at the first guess can differ from the one at the real instant
   // when a DST switch falls between them.
   return new Date(wall - cairoOffsetMs(wall - cairoOffsetMs(wall))).toISOString()
+}
+
+/** T-4: ISO instant of a Cairo wall-clock time (`month` 1–12), on any device — "10am" typed on a
+ * phone set to another zone still means 10:00 in Cairo. DST-correct for the date itself. */
+export function cairoWallTimeToIso(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): string {
+  return cairoWallToIso(Date.UTC(year, month - 1, day, hour, minute, second))
+}
+
+/** ISO instant of `hour`:00 Cairo wall-clock, `days` Cairo calendar days after the one `now`
+ * falls on — the same day `cairoDateKey` (and so task grouping) sees, on any device. */
+function cairoDayAt(now: Date, days: number, hour: number): string {
+  return cairoWallToIso(cairoDayUtc(now) + days * 86400000 + hour * 3600000) // Cairo wall-clock, read as UTC
 }
 
 /** Shared "1/2/3 = today/tomorrow/next week" math — also backs the row context menu's

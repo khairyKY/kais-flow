@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   cairoDateKey,
+  cairoOffsetMinutes,
+  cairoWallTimeToIso,
   daysUntilNextMonday,
   scheduleNextWeek,
   scheduleThisWeek,
@@ -135,5 +137,19 @@ describe('cairoDateKey (B2)', () => {
     // 22:30 UTC on Sep 24 is already 01:30 on Sep 25 in Cairo (UTC+3).
     expect(cairoDateKey(new Date('2026-09-24T22:30:00Z'))).toBe('2026-09-25')
     expect(cairoDateKey(new Date('2026-09-24T20:30:00Z'))).toBe('2026-09-24')
+  })
+})
+
+// T-4 (Polish E): the command bar turns a typed "10am" into an instant with these.
+describe('Cairo wall-clock helpers', () => {
+  it('reads the offset from the tz database: +180 in summer time, +120 after the October switch', () => {
+    expect(cairoOffsetMinutes(new Date('2026-09-26T06:00:00Z'))).toBe(180)
+    expect(cairoOffsetMinutes(new Date('2026-11-05T08:00:00Z'))).toBe(120)
+  })
+
+  it('turns a Cairo wall-clock time into its instant, with that date’s own offset', () => {
+    expect(cairoWallTimeToIso(2026, 9, 26, 10, 0)).toBe('2026-09-26T07:00:00.000Z')
+    expect(cairoWallTimeToIso(2026, 11, 5, 10, 0)).toBe('2026-11-05T08:00:00.000Z')
+    expect(cairoWallTimeToIso(2026, 9, 27, 0, 30)).toBe('2026-09-26T21:30:00.000Z')
   })
 })
