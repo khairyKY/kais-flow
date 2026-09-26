@@ -55,3 +55,13 @@ One codebase. The same `app/dist/` the web app serves, wrapped in a **Tauri v2**
 - [ ] [KAI] Airplane mode → the app still opens and shows cached data; changes queue and sync later.
 
 ## Notes
+- 2026-09-26 17:29 — **First APK built green** (run 36258798680, commit 6dc3583).
+  - Signed, 31.7 MB, arm64.
+  - The Supabase public config was read from the live bundle.
+  - `tauri android init` → icons + mic permissions → build → zipalign + apksigner (one-off key, cert `CN=Kai's Flow`).
+  - Two fixes on the way:
+    - Cloudflare answers 403 to `Python-urllib`, so the resolver now sends a browser user agent;
+    - Android string resources reject a bare apostrophe, so a post-init step writes `Kai\'s Flow`.
+- 2026-09-26 17:32 — **Windows installer failed in makensis.** NSIS treats `'` as a string quote, so "Kai's Flow" split `IsShortcutTarget`'s parameters (7 for 4). Fix: `tauri.windows.conf.json` names the Windows app `Kai’s Flow` (U+2019).
+- 2026-09-26 17:40 — **Emulator smoke test** (API 34, x86_64): the APK now carries arm64 + x86_64 so the emulator runs the same file.
+  - Blob-storage artifacts are unreachable from the conductor's sandbox (403). So the job also prints small base64 JPEGs of the screens, the UI tree with bounds, and the WebView console to its log.
