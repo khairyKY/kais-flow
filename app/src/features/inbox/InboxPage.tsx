@@ -23,7 +23,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { Button, Chip } from '../../components/kit'
+import { Button, Chip, KeyCombo } from '../../components/kit'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, isToday } from './inboxDisplay'
 import type { InboxItem, InboxKind } from '../../lib/types'
@@ -393,11 +393,13 @@ export function InboxPage() {
 
             {!isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>E</b> file</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>D</b> dismiss</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>S</b> snooze</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>↑↓</b> move</span>
-                <span><b style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>⏎</b> open</span>
+                {/* J-17: each key is a keycap (the `?` overlay's chip), not a bold letter. */}
+                {([[['E'], 'file'], [['D'], 'dismiss'], [['S'], 'snooze'], [['↑', '↓'], 'move'], [['⏎'], 'open']] as const).map(([keys, label]) => (
+                  <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <KeyCombo keys={keys} size="sm" />
+                    {label}
+                  </span>
+                ))}
                 <span style={{ marginLeft: 'auto' }}>one keystroke per capture — that's the whole game</span>
               </div>
             )}

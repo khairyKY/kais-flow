@@ -25,6 +25,8 @@ const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ de
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
+import { KeyCombo } from './kit'
+import { splitKeyCombo } from '../lib/shortcuts'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -342,7 +344,8 @@ function footerRow(icon: React.ReactNode, label: string, shortcut: string | unde
     >
       <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
       <span className="app-footer-label" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>
-      {shortcut && <span className="app-footer-label" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>{shortcut}</span>}
+      {/* J-17: keycaps, not mono text. The class keeps them hidden on the collapsed rail. */}
+      {shortcut && <KeyCombo className="app-footer-label" keys={splitKeyCombo(shortcut)} size="sm" style={{ marginLeft: 'auto' }} />}
     </button>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
+import { Select } from '../../components/Select'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
@@ -69,7 +70,8 @@ function useDeepLinkScroll(focusId: string | null, tasks: Task[]): void {
 
 export type SortKey = 'smart' | 'due' | 'priority' | 'title'
 const SORT_KEYS: readonly SortKey[] = ['smart', 'due', 'priority', 'title']
-const SORT_LABELS: Record<SortKey, string> = { smart: 'Sort · Smart', due: 'Sort · Due', priority: 'Sort · Priority', title: 'Sort · A-Z' }
+const SORT_OPTION_LABELS: Record<SortKey, string> = { smart: 'Smart', due: 'Due', priority: 'Priority', title: 'A–Z' }
+const SORT_LABELS: Record<SortKey, string> = { smart: 'Sort · Smart', due: 'Sort · Due', priority: 'Sort · Priority', title: 'Sort · A–Z' }
 
 /** Reorders tasks inside each display group. `smart` keeps groupTasks' own date order. */
 function applySort(groups: TaskGroup[], sort: SortKey): TaskGroup[] {
@@ -134,15 +136,19 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11 }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
-            with the `⚟` glyph. Now a real sort cycler with a real icon. */}
-        <button
-          type="button"
-          onClick={() => onSort(SORT_KEYS[(SORT_KEYS.indexOf(sort) + 1) % SORT_KEYS.length])}
+            with the `⚟` glyph, then a click-cycler. J-12 (Kai): "a popover listing the options"
+            instead of clicking through Smart → Due → Priority → A–Z — the themed Select's own
+            popover, with the trigger keeping the cycler's exact look. */}
+        <Select
+          value={sort}
+          onChange={(v) => onSort(v as SortKey)}
+          options={SORT_KEYS.map((k) => ({ value: k, label: SORT_OPTION_LABELS[k] }))}
           title="Change sort order"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}
-        >
-          <SortIcon /> {SORT_LABELS[sort]}
-        </button>
+          ariaLabel="Sort order"
+          className="kf-hit"
+          display={<><SortIcon /> {SORT_LABELS[sort]}</>}
+          style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
+        />
       </span>
     </div>
   )

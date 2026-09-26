@@ -60,6 +60,18 @@ export function staggerDelay(index: number, step = 60): React.CSSProperties {
   return { animationDelay: `${index * step}ms` }
 }
 
+// J-22 — a stable 0–1 phase per id (FNV-1a hash), so a per-item ambient loop can start at its
+// own point in the cycle instead of every card animating in lockstep. Same id → same phase on
+// every render and reload, so nothing jumps when a list re-renders.
+export function idPhase(id: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0) / 4294967296
+}
+
 // F4 Motion 3c — overlay exit (140ms). Render while `mounted`; add the matching
 // `--out` class (kf-overlay-card--out / kf-scrim--out / kf-sheet--out / kf-drawer--out)
 // while `closing`. Esc obeys immediately under reduced-motion (duration collapses to 0).

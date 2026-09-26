@@ -1,32 +1,8 @@
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
 import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
 import type { ShortcutEntry } from '../lib/pageShortcutsStore'
-
-function KeyChip({ text }: { text: string }) {
-  return (
-    <span
-      style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 10.5,
-        lineHeight: 1,
-        color: 'var(--ink-body)',
-        background: 'var(--paper-bone)',
-        border: '1px solid var(--line-card)',
-        borderBottomWidth: 2,
-        borderRadius: 5,
-        padding: '5px 7px',
-        minWidth: 22,
-        textAlign: 'center',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: 'var(--shadow-crisp)',
-      }}
-    >
-      {text}
-    </span>
-  )
-}
+// J-17: the keycap lives in the shared kit now — this overlay was its only user before.
+import { KeyChip } from './kit'
 
 function Category({ title, entries }: { title: string; entries: ShortcutEntry[] }) {
   return (
