@@ -330,6 +330,75 @@ export function ProjectsPage() {
     )
   }
 
+  // J-21 (Kai, 2026-07-29): "Board / Finished / domain buttons shouldn't live under the heading
+  // of the page." WA-8's split out of the header was right (six pills never fit it), its home
+  // wasn't: the same controls now sit right-aligned on the first section-label row of whichever
+  // view is showing — beside ACTIVE's count in the list, on a bare dashed rule above the board
+  // and the archive. App-only navigation, not in the export; still kept quiet (R4-33a: only one
+  // filled CTA per view).
+  const viewControls = (
+    <span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 12, rowGap: 10 }}>
+      {view !== 'archive' && (
+        /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
+        <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
+          <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
+          <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
+        </span>
+      )}
+      {view === 'archive' && (
+        <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
+          ← Back to Active
+        </span>
+      )}
+      {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
+      <button
+        onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
+        style={{
+          border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
+          background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
+          color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
+          fontFamily: 'inherit',
+          fontSize: '12.5px',
+          padding: '9px 13px',
+          borderRadius: '999px',
+          cursor: 'pointer',
+          boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
+        }}
+      >
+        Finished · {archivedProjects.length}
+      </button>
+      {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
+          was a styled div with a transparent native <select> laid over it — the trigger
+          looked right, but opening it handed you the OS dropdown. The themed Select keeps
+          the pill (it merges `style` onto its trigger) and brings our own popover. */}
+      <Select
+        value={selectedDomainId || ''}
+        onChange={(v) => setSelectedDomainId(v || null)}
+        options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+        ariaLabel="Filter by domain"
+        placeholder="Domain"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '9.5px',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-muted)',
+          border: '1px solid var(--line-solid)',
+          borderRadius: '999px',
+          padding: '8px 13px',
+        }}
+      />
+    </span>
+  )
+  // Board / archive / empty list have no section label of their own: SectionLabel's dashed rule,
+  // minus the empty label slot (it would indent the rule), carries the controls.
+  const controlsRule = (maxWidth: number) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', maxWidth }}>
+      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      {viewControls}
+    </div>
+  )
+
   // Render Desktop
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '85vh' }}>
@@ -338,8 +407,8 @@ export function ProjectsPage() {
       <main style={{ position: 'relative', zIndex: 10, padding: '10px 8px 40px' }}>
         {/* punch 41: header is Projects.dc.html 1a node-for-node — plant at the set's live stage,
             eyebrow, 40px display title, then exactly `{n} active · {n} total` + New area + New project.
-            The app-only navigation (List/Board, Finished, domain filter) moved to its own quiet row
-            below: six pills never fit this row (punch 16's wrap), and the export's header has three. */}
+            The app-only navigation (List/Board, Finished, domain filter) lives on the section-label
+            row below (J-21): six pills never fit this row (punch 16's wrap), and the export's header has three. */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, rowGap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
@@ -378,66 +447,12 @@ export function ProjectsPage() {
           </div>
         </div>
 
-        {/* App-only navigation — not in the export. Kept quiet (R4-33a: only one filled CTA per view). */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, rowGap: 10, marginTop: 18, marginBottom: 4 }}>
-          {view !== 'archive' && (
-            /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
-            <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-              <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
-              <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
-            </span>
-          )}
-          {view === 'archive' && (
-            <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
-              ← Back to Active
-            </span>
-          )}
-          {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
-          <button
-            onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-            style={{
-              border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
-              background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
-              color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
-              fontFamily: 'inherit',
-              fontSize: '12.5px',
-              padding: '9px 13px',
-              borderRadius: '999px',
-              cursor: 'pointer',
-              boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
-            }}
-          >
-            Finished · {archivedProjects.length}
-          </button>
-          {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
-              was a styled div with a transparent native <select> laid over it — the trigger
-              looked right, but opening it handed you the OS dropdown. The themed Select keeps
-              the pill (it merges `style` onto its trigger) and brings our own popover. */}
-          <Select
-            value={selectedDomainId || ''}
-            onChange={(v) => setSelectedDomainId(v || null)}
-            options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
-            ariaLabel="Filter by domain"
-            placeholder="Domain"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9.5px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--ink-muted)',
-              border: '1px solid var(--line-solid)',
-              borderRadius: '999px',
-              padding: '8px 13px',
-            }}
-          />
-        </div>
-
         {/* LIST VIEW */}
-        {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{renderEmptyState()}</div>}
+        {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{controlsRule(900)}{renderEmptyState()}</div>}
         {view === 'list' && !isEmpty && (
           <div style={{ maxWidth: 900 }}>
             {/* ACTIVE */}
-            <SectionLabel style={{ margin: '26px 0 4px' }} action={sectionCount(listActive.length)}>
+            <SectionLabel style={{ margin: '26px 0 4px' }} action={<>{sectionCount(listActive.length)}{viewControls}</>}>
               <span style={{ color: 'var(--acc-sage-text)' }}>Active</span>
             </SectionLabel>
             {listActive.map((p, i) => {
@@ -543,8 +558,9 @@ export function ProjectsPage() {
         )}
 
         {/* BOARD VIEW */}
+        {view === 'board' && controlsRule(1100)}
         {view === 'board' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 26, maxWidth: 1100 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16, maxWidth: 1100 }}>
             {domains
               .filter((d) => !selectedDomainId || d.id === selectedDomainId)
               .map((d) => {
@@ -652,6 +668,7 @@ export function ProjectsPage() {
         )}
 
         {/* ARCHIVE VIEW */}
+        {view === 'archive' && controlsRule(760)}
         {view === 'archive' && (
           <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
