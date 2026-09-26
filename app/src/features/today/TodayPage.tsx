@@ -17,9 +17,8 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
-import { useRitualStepsToday, RITUAL_STEP_COUNT, type RitualKind } from '../rituals/api'
-import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
-import { PinIcon } from '../rituals/PinIcon'
+import { useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { useRitualPins } from '../rituals/ritualPins'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
@@ -45,6 +44,13 @@ import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { upNextClock, upNextEvents, upNextLabel } from './upNext'
 import { taskMenuItems, upNextMenuItems } from './rowMenus'
 import { useStartFocus } from './startFocus'
+import { useMinuteNow } from './useMinuteNow'
+import { DayCard } from './DayCard'
+import { useStarEvents } from './api'
+import { starredIds, top3OfToday } from './top3Today'
+import { filterByList } from '../tasks/grouping'
+import { flushOutbox } from '../../lib/outbox'
+import { queryClient } from '../../lib/queryClient'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
 
@@ -95,16 +101,6 @@ function useIsMobile(): boolean {
     return () => mq.removeEventListener('change', on)
   }, [])
   return isMobile
-}
-
-/** The current time, refreshed every minute — enough for "Now" to arrive and leave on time. */
-function useMinuteNow(): Date {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 60_000)
-    return () => window.clearInterval(id)
-  }, [])
-  return now
 }
 
 export function TodayPage() {
@@ -165,15 +161,22 @@ export function TodayPage() {
   // One rule for this page and the sidebar badge (Polish F1): grouping.ts `todayListTasks`.
   const visible = todayListTasks(tasks)
   const open = visible.filter((t) => !t.completed_at)
-  const top3 = visible.filter((t) => t.top3).sort(doneAfterOpen)
+  // Loop A (2026-09-26 daily cycle): completing clears `top3` (completion.ts), so a finished pick
+  // used to drop out of this section into "All open" — and the Day card couldn't tell "all three
+  // done" from "none picked". Today's Top 3 now also holds the tasks finished today while starred,
+  // read back from the star log (./top3Today) — struck through, as A3/R4 always intended.
+  const { data: starEvents = [] } = useStarEvents(visible.filter((t) => t.completed_at).map((t) => t.id))
+  const dayTop3 = top3OfToday(visible, starredIds(starEvents))
+  const top3Ids = new Set(dayTop3.map((t) => t.id))
+  const top3 = [...dayTop3].sort(doneAfterOpen)
   // R4 (2026-07-20 audit): "when the goal of the day is finished it should still be displayed,
   // just crossed out." The card already strikes a done goal through — but the *selection* moved:
   // `top3` sorts done-after-open, so once the goal was checked `top3[0]` became a different,
   // still-open task and the finished one silently lost the title. Fall back to the first top-3
   // in unsorted order so today's goal stays today's goal after it's completed.
-  const goal = top3.find((t) => t.id === goalTaskId) ?? visible.filter((t) => t.top3)[0]
+  const goal = top3.find((t) => t.id === goalTaskId) ?? dayTop3[0]
   const restTop3 = top3.filter((t) => t.id !== goal?.id)
-  const allOpen = visible.filter((t) => !t.top3).sort(doneAfterOpen)
+  const allOpen = visible.filter((t) => !top3Ids.has(t.id)).sort(doneAfterOpen)
   const openCount = allOpen.filter((t) => !t.completed_at).length
   const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
   const nothingPlanned = !tasksPending && open.length === 0 && doneToday === 0
@@ -305,8 +308,21 @@ export function TodayPage() {
 
   // R4-D1 (Kai's 2026-07-20 ruling (a)): a ritual's progress is its own steps walked today,
   // never a count of `time_of_day`-tagged routines — those are a separate surface entirely.
-  const morning = { done: ritualSteps.morning.size, total: RITUAL_STEP_COUNT.morning }
-  const evening = { done: ritualSteps.evening.size, total: RITUAL_STEP_COUNT.evening }
+  // Loop A: the Day card reads them (./dayPhase morningState / eveningState).
+  //
+  // A ritual logs its steps through the outbox into activity_log, which realtime doesn't sync and
+  // the outbox's optimistic write doesn't reach (only the exact ['activity_log'] key). So when a
+  // ritual closes, let the queue land, then re-read the log — the Day card turns without a reload.
+  function openRitual(kind: RitualKind) {
+    if (kind === 'morning') setMorningOpen(true)
+    else setEveningOpen(true)
+  }
+  function closeRitual(kind: RitualKind) {
+    if (kind === 'morning') setMorningOpen(false)
+    else setEveningOpen(false)
+    void flushOutbox().then(() => queryClient.invalidateQueries({ queryKey: ['activity_log'] }))
+  }
+  const overdueCount = filterByList(tasks, 'overdue').length
 
   const streak = useMemo(() => {
     const byRoutine = new Map<string, string[]>()
@@ -438,10 +454,21 @@ export function TodayPage() {
         </>
       )}
 
-      {(ritualPins.morning || ritualPins.evening) && <div style={{ display: 'flex', gap: isMobile ? 9 : 14, marginTop: isMobile ? 12 : 20 }}>
-        {ritualPins.morning && <RitualCard kind="morning" label="Morning ritual" shortLabel="Morning" done={morning.done} total={morning.total || 4} accent="var(--acc-sage)" dot="var(--acc-gold-warm)" onClick={() => setMorningOpen(true)} icon={<SunIcon />} compact={isMobile} />}
-        {ritualPins.evening && <RitualCard kind="evening" label="Evening ritual" shortLabel="Evening" done={evening.done} total={evening.total || 2} accent="var(--acc-lavender)" dot="var(--acc-lavender)" onClick={() => setEveningOpen(true)} icon={<MoonIcon />} compact={isMobile} />}
-      </div>}
+      {/* deviation(2026-09-26 daily cycle): ONE Day card with the next move replaces the two
+          pinned ritual cards (./DayCard, ./dayPhase). Pins now decide which ritual it prompts. */}
+      <div style={{ marginTop: isMobile ? 12 : 20 }}>
+        <DayCard
+          events={events}
+          tasks={tasks}
+          top3={goal ? [goal, ...restTop3] : restTop3}
+          inboxCount={pendingInbox.length}
+          overdueCount={overdueCount}
+          ritualSteps={ritualSteps}
+          prompts={ritualPins}
+          compact={isMobile}
+          onOpenRitual={openRitual}
+        />
+      </div>
 
       {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
@@ -617,8 +644,8 @@ export function TodayPage() {
       )}
       {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
 
-      {morningOpen && <MorningRitual onClose={() => setMorningOpen(false)} />}
-      {eveningOpen && <EveningRitual onClose={() => setEveningOpen(false)} />}
+      {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
+      {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}
     </div>
   )
 }
@@ -1037,58 +1064,7 @@ function RoutineRow({ routine, done }: { routine: Routine; done: boolean }) {
   )
 }
 
-function RitualCard({ kind, label, shortLabel, done, total, accent, dot, onClick, icon, compact }: { kind: RitualKind; label: string; shortLabel: string; done: number; total: number; accent: string; dot: string; onClick: () => void; icon: React.ReactNode; compact?: boolean }) {
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0
-  if (compact) {
-    return (
-      <button onClick={onClick} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '9px 11px', cursor: 'pointer', font: 'inherit', textAlign: 'left' }}>
-        <span style={{ width: 9, height: 9, borderRadius: '50%', background: dot, flex: 'none' }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>{shortLabel}</div>
-          <div style={{ marginTop: 4, height: 3, borderRadius: 2, background: 'var(--line-card)', overflow: 'hidden' }}>
-            <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: accent }} />
-          </div>
-        </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{done}/{total}</span>
-      </button>
-    )
-  }
-  return (
-    <button onClick={onClick} style={{ position: 'relative', flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 13, cursor: 'pointer', font: 'inherit', textAlign: 'left' }}>
-      {/* R4-5c: a real pin, and a real control — click to unpin this ritual off Today
-          (it stays reachable from Routines). Was a static '◧ pinned' caption. */}
-      <span
-        role="button"
-        tabIndex={0}
-        title="Unpin from Today"
-        aria-label="Unpin this ritual from Today"
-        onClick={(e) => { e.stopPropagation(); toggleRitualPin(kind) }}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleRitualPin(kind) } }}
-        className="kf-hit"
-        style={{ position: 'absolute', top: 7, right: 9, display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer' }}
-      >
-        <PinIcon size={9} /> pinned
-      </span>
-      {icon}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, color: 'var(--ink-body)', fontWeight: 500 }}>{label}</div>
-        <div style={{ marginTop: 5, height: 4, borderRadius: 2, background: 'var(--line-card)', overflow: 'hidden' }}>
-          <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: accent }} />
-        </div>
-      </div>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{done}/{total}</span>
-    </button>
-  )
-}
-
 function Empty({ line }: { line: string }) {
   return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>
 }
-
-const SunIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><circle cx="12" cy="12" r="5" fill="#D9B65C" /><g stroke="var(--acc-gold-warm)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></g></svg>
-)
-const MoonIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--acc-lavender)" /></svg>
-)
 

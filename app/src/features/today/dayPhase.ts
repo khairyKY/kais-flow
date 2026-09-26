@@ -1,0 +1,116 @@
+// The Day card's one decision: what is the next move right now? (Loop A, docs/DAILY-CYCLE.md,
+// "Today = the loop's home" §1.) Pure — TodayPage feeds it what it already reads.
+//
+//   state                                                       card
+//   ──────────────────────────────────────────────────────────  ─────────────────────────────
+//   evening ritual finished today                               Day closed ✿ (tomorrow's seeds)
+//   18:00 or later, or every picked Top 3 done — not shut down   Shut down the day · ~3 min
+//   not planned, before 17:00                                   Plan your day · ~5 min
+//   otherwise (planned, or 17:00–18:00 unplanned)               Now — the running/next item
+//
+//   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later.
+//
+// Earlier rows win: a closed day stays closed; an evening (or a finished Top 3) is for shutting
+// down even if the morning was never planned. All clock rules read Cairo's wall clock, whatever
+// the device zone — the app's one day boundary (B2).
+//
+// Kai's R4-5a pins still mean what they said ("should be able to choose whether they stay pinned"
+// to Today): an unpinned ritual is never *prompted* by the card — its Plan / Shut down state falls
+// through to Now. It stays one tap away in the card's ritual links and on Routines.
+
+export type DayPhase = 'plan' | 'now' | 'shutdown' | 'closed'
+
+export interface RitualState {
+  /** Steps walked today. */
+  done: number
+  total: number
+  /** Finished today. Defaults to every step walked. */
+  finished?: boolean
+}
+
+export interface DayPhaseInput<E, T> {
+  now: Date
+  morning: RitualState
+  evening: RitualState
+  /** Today's Top 3: how many were picked (open + finished today) and how many are finished. */
+  top3: { picked: number; done: number }
+  /** The running or next Up next item still to do (Up next order), or null. */
+  nextUp: E | null
+  /** The first unfinished Top 3 task, or null. */
+  firstOpenTop3: T | null
+  /** Which rituals the card may prompt (R4-5a pins). Both by default. */
+  prompts?: { morning: boolean; evening: boolean }
+}
+
+export type NowItem<E, T> = { kind: 'event'; event: E } | { kind: 'task'; task: T }
+
+export type DayCardState<E, T> =
+  | { phase: 'plan' }
+  | { phase: 'now'; item: NowItem<E, T> | null }
+  | { phase: 'shutdown' }
+  | { phase: 'closed' }
+
+/** Minutes since Cairo midnight: planning is "before 17:00", shutdown "from 18:00". */
+export const PLANNED_BY_TOP3_FROM = 12 * 60
+export const PLAN_UNTIL = 17 * 60
+export const SHUTDOWN_FROM = 18 * 60
+
+const cairoClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+
+/** Minutes since midnight on Cairo's wall clock. */
+export function cairoMinutes(now: Date): number {
+  let h = 0
+  let m = 0
+  for (const p of cairoClock.formatToParts(now)) {
+    if (p.type === 'hour') h = Number(p.value) % 24
+    else if (p.type === 'minute') m = Number(p.value)
+  }
+  return h * 60 + m
+}
+
+export function ritualFinished(r: RitualState): boolean {
+  return r.finished ?? (r.total > 0 && r.done >= r.total)
+}
+
+export function isPlanned(input: Pick<DayPhaseInput<unknown, unknown>, 'now' | 'morning' | 'top3'>): boolean {
+  return ritualFinished(input.morning) || (input.top3.picked >= 1 && cairoMinutes(input.now) >= PLANNED_BY_TOP3_FROM)
+}
+
+export function dayPhase<E, T>(input: DayPhaseInput<E, T>): DayCardState<E, T> {
+  const prompts = input.prompts ?? { morning: true, evening: true }
+  const minutes = cairoMinutes(input.now)
+  if (ritualFinished(input.evening)) return { phase: 'closed' }
+  const top3AllDone = input.top3.picked >= 1 && input.top3.done >= input.top3.picked
+  if (prompts.evening && (minutes >= SHUTDOWN_FROM || top3AllDone)) return { phase: 'shutdown' }
+  if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL) return { phase: 'plan' }
+  const item: NowItem<E, T> | null = input.nextUp
+    ? { kind: 'event', event: input.nextUp }
+    : input.firstOpenTop3
+      ? { kind: 'task', task: input.firstOpenTop3 }
+      : null
+  return { phase: 'now', item }
+}
+
+// ── The ritual step counts the card reads (RITUAL_STEP_COUNT denominators, rituals/api). ──
+
+/** The morning ritual's time-block step has no Next/Finish of its own (MorningRitual.tsx renders
+ * no footer on it — its only way out is the header "skip", which by punch 43 never logs), so it
+ * can never be logged as walked and the ritual could never read 4/4. Its outcome is observable,
+ * though — the spec's "Top 3 on the calendar": a task blocked onto today's calendar. So once the
+ * ritual was walked today (≥1 step logged), a task block today counts that step as done. When the
+ * ritual logs the step itself, the set already has it and nothing is added. */
+export const MORNING_BLOCK_STEP = 'block'
+
+export function morningState(logged: ReadonlySet<string>, total: number, hasTaskBlockToday: boolean): RitualState {
+  const inferred = logged.size > 0 && hasTaskBlockToday && !logged.has(MORNING_BLOCK_STEP) ? 1 : 0
+  return { done: Math.min(total, logged.size + inferred), total }
+}
+
+/** "The garden's closed." — pressing Done on the evening ritual's last beat (it logs `goodnight`)
+ * finishes the ritual even when an earlier beat was skipped (the sweep's "skip for now" advances
+ * without logging, punch 43). */
+export const EVENING_LAST_STEP = 'goodnight'
+
+export function eveningState(logged: ReadonlySet<string>, total: number): RitualState {
+  return { done: Math.min(total, logged.size), total, finished: logged.has(EVENING_LAST_STEP) || (total > 0 && logged.size >= total) }
+}
