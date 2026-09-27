@@ -13,7 +13,7 @@ import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } f
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
-import { useIntegrations } from './api'
+import { useIntegrations, connectGithub, syncGithub, disconnectGithub, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, CAPTURE_URL } from './captureKey'
 import { Button } from '../../components/kit'
 import { useDeletedItems } from '../trash/api'
@@ -598,7 +598,7 @@ function ProfileCard() {
   )
 }
 
-function ProviderRow({ icon, name, desc, status }: { icon: ReactNode; name: string; desc: string; status: ReactNode }) {
+function ProviderRow({ icon, name, desc, status, children }: { icon: ReactNode; name: string; desc: string; status: ReactNode; children?: ReactNode }) {
   return (
     <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
@@ -609,6 +609,7 @@ function ProviderRow({ icon, name, desc, status }: { icon: ReactNode; name: stri
         </div>
         {status}
       </div>
+      {children}
     </SCard>
   )
 }
@@ -676,6 +677,107 @@ function CaptureKeyCard() {
   )
 }
 
+const fieldInput: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontFamily: 'inherit' }
+
+// P6 step 1: GitHub issues → inbox. The PAT lives only in this input until it is posted to the
+// github-connect edge function; afterwards the client only ever sees login/status/synced_at.
+function GithubProvider({ github }: { github?: IntegrationStatus }) {
+  const [formOpen, setFormOpen] = useState(false)
+  const [token, setToken] = useState('')
+  const [repos, setRepos] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const failing = github?.status === 'failing'
+
+  async function run(action: () => Promise<string>) {
+    setBusy(true)
+    setMessage(null)
+    try {
+      setMessage(await action())
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Something went wrong — try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const connect = () =>
+    run(async () => {
+      const { login } = await connectGithub(token.trim(), repos)
+      setToken('')
+      setFormOpen(false)
+      return `Connected as @${login}.`
+    })
+  const sync = () =>
+    run(async () => {
+      const r = await syncGithub()
+      return `Synced · ${r.fetched} open · ${r.new} new · ${r.dismissed} closed`
+    })
+  const disconnect = () =>
+    run(async () => {
+      await disconnectGithub()
+      return 'Disconnected. Issues already in your inbox stay there.'
+    })
+
+  return (
+    <ProviderRow
+      icon={<GithubGlyph dim={!github} />}
+      name="GitHub"
+      desc="Open issues assigned to you, plus any repos you watch, filed as inbox letters."
+      status={
+        github ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: failing ? 'var(--acc-terra)' : 'var(--acc-sage)', flex: 'none' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: failing ? 'var(--acc-terra)' : 'var(--ink-muted)', textAlign: 'right' }}>
+              {failing ? 'Token expired — reconnect' : `Connected as @${github.login ?? '?'} · synced ${github.synced_at ? new Date(github.synced_at).toLocaleTimeString() : 'not yet'}`}
+            </span>
+          </div>
+        ) : (
+          !formOpen && <Button type="button" variant="secondary" onClick={() => setFormOpen(true)}>Connect</Button>
+        )
+      }
+    >
+      {github && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+          {failing ? (
+            !formOpen && <Button type="button" variant="secondary" onClick={() => setFormOpen(true)}>Reconnect</Button>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
+          )}
+          <Button type="button" variant="ghost" onClick={() => void disconnect()} disabled={busy}>Disconnect</Button>
+        </div>
+      )}
+      {formOpen && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void connect()
+          }}
+          style={{ display: 'grid', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}
+        >
+          <label>
+            <div style={{ ...flabel, marginBottom: 6 }}>Fine-grained access token</div>
+            <input type="password" autoComplete="off" spellCheck={false} value={token} onChange={(e) => setToken(e.target.value)} placeholder="github_pat_…" style={fieldInput} />
+            <div style={fhelp}>
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Create one on GitHub</a> — pick the repos it can see, set Issues to read-only (Metadata comes with it), and paste it here.
+            </div>
+          </label>
+          <label>
+            <div style={{ ...flabel, marginBottom: 6 }}>Watched repos · optional</div>
+            <input value={repos} onChange={(e) => setRepos(e.target.value)} placeholder="owner/repo, owner/other" style={fieldInput} />
+            <div style={fhelp}>all their open issues come in too · issues assigned to you always do</div>
+          </label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button type="submit" variant="cta" disabled={busy || !token.trim()}>{busy ? 'Connecting…' : 'Connect'}</Button>
+            <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
+          </div>
+        </form>
+      )}
+      {message && <div role="status" style={{ ...fhelp, fontSize: 10.5, color: 'var(--ink-muted)' }}>{message}</div>}
+    </ProviderRow>
+  )
+}
+
 function IntegrationsPage() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
@@ -688,24 +790,7 @@ function IntegrationsPage() {
         <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.55, color: 'var(--ink-muted)' }}>Everything that feeds the inbox, and the rules it follows.</p>
       </div>
 
-      <ProviderRow
-        icon={<GithubGlyph dim={!github} />}
-        name="GitHub"
-        desc="Issues and mentions from watched repos, filed as inbox letters."
-        status={
-          github ? (
-            <div style={{ textAlign: 'right', flex: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Connected · synced {new Date(github.updated_at).toLocaleTimeString()}</span>
-              </div>
-              {/* Punch 8: same — no disconnect API exists yet (v1.1). */}
-            </div>
-          ) : (
-            <SoonChip />
-          )
-        }
-      />
+      <GithubProvider github={github} />
 
       <ProviderRow
         icon={
@@ -939,7 +1024,7 @@ function MobileSettings() {
   const rows: { label: string; value: ReactNode; to?: string }[] = [
     { label: 'Timezone', value: settings?.timezone ?? '—' },
     { label: 'Google Calendar', value: google ? <><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)', display: 'inline-block' }} /> Connected</> : 'Not connected' },
-    { label: 'GitHub', value: github ? 'Connected' : 'Not connected' },
+    { label: 'GitHub', value: github ? (github.status === 'failing' ? 'Token expired' : 'Connected') : 'Not connected' },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
     { label: 'Capture API', value: 'not set up' },
     // Punch 50: the phone's only way into Trash.
@@ -984,6 +1069,11 @@ function MobileSettings() {
           )
           return r.to ? <Link key={r.label} to={r.to} style={rowStyle}>{inner}</Link> : <div key={r.label} style={rowStyle}>{inner}</div>
         })}
+      </div>
+
+      {/* P6: the phone has no Integrations page, so the GitHub row (connect / sync) sits here. */}
+      <div style={{ marginTop: 12 }}>
+        <GithubProvider github={github} />
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>

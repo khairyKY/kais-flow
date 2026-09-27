@@ -135,7 +135,9 @@ export function InboxPage() {
     () => allItems.filter((i) => i.status === 'dismissed').sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
     [allItems],
   )
-  const githubItems = items.filter((i) => i.kind === 'github_issue')
+  // P6: github-sync doesn't rank (yet) — most recently updated on GitHub first.
+  const ghUpdated = (i: InboxItem) => String((i.payload as { updated_at?: string } | null)?.updated_at ?? i.created_at)
+  const githubItems = items.filter((i) => i.kind === 'github_issue').sort((a, b) => ghUpdated(b).localeCompare(ghUpdated(a)))
   const aiItems = items.filter((i) => i.kind !== 'github_issue')
   const orderedItems = [...aiItems, ...githubItems]
 
@@ -369,7 +371,7 @@ export function InboxPage() {
                       it would have named the wrong repo for anyone (and Kai's own repo for a stranger).
                       Nothing stores a repo on an inbox item, so it's dropped rather than guessed —
                       same treatment as the retainer's "/ 10h · renews 1 Aug" (punch 42). */}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · ranked by AI</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
                 </div>
@@ -762,7 +764,9 @@ function TriageCard({
 
 // ── GitHub-ranked row ──
 function GithubRow({ item, compact, highlighted, selected, selectionActive, onToggleSelect, onFile, onDismiss }: { item: InboxItem; compact?: boolean; highlighted?: boolean; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void; onFile: () => void; onDismiss: () => void }) {
-  const payload = item.payload as { number?: number; rank?: number } | null
+  const payload = item.payload as { number?: number; rank?: number; repo?: string; url?: string } | null
+  // Only ever a github.com page as a link (payload is the user's own row, but still).
+  const issueUrl = payload?.url?.startsWith('https://github.com/') ? payload.url : null
   return (
     <div
       id={`inbox-${item.id}`}
@@ -783,8 +787,17 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
       <span style={{ flex: 1, fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</span>
       {!compact && (
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-          {payload?.number ? `#${payload.number} · ` : ''}{payload?.rank ? `rank ${payload.rank} · ` : ''}{daysAgo(item.created_at)}d
+          {payload?.rank ? `rank ${payload.rank} · ` : ''}{daysAgo(item.created_at)}d
         </span>
+      )}
+      {(payload?.repo || payload?.number) && (
+        issueUrl ? (
+          <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
+            {payload?.repo}{payload?.number ? `#${payload.number}` : ''} ↗
+          </a>
+        ) : (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{payload?.repo}{payload?.number ? `#${payload.number}` : ''}</span>
+        )
       )}
       <Button type="button" variant="cta" onClick={onFile} style={{ fontSize: compact ? 10.5 : 12, padding: compact ? '6px 10px' : '7px 13px' }}>File</Button>
       {!compact && <Button type="button" variant="ghost" onClick={onDismiss} style={{ fontSize: 12, padding: '7px 4px' }}>Dismiss</Button>}
