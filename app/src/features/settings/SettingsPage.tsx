@@ -14,6 +14,8 @@ import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
 import { useIntegrations } from './api'
+import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, CAPTURE_URL } from './captureKey'
+import { Button } from '../../components/kit'
 import { useDeletedItems } from '../trash/api'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
@@ -619,6 +621,61 @@ function GithubGlyph({ dim }: { dim?: boolean }) {
   )
 }
 
+// P6 step 7: the personal capture key (features/settings/captureKey.ts, function `capture`).
+function CaptureKeyCard() {
+  const { data: row } = useCaptureKey()
+  const [shown, setShown] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.6, color: 'var(--ink-muted)', wordBreak: 'break-all' }
+  const box: CSSProperties = { marginTop: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '9px 12px' }
+  return (
+    <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>External capture endpoint</div>
+      {!row && !shown && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</div>}
+      {row && !shown && (
+        <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)' }}>
+          key made {day(row.updated_at)} · {row.last_used_at ? `last used ${day(row.last_used_at)}` : 'not used yet'}
+        </div>
+      )}
+      {shown && (
+        <>
+          <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-body)' }}>Your capture key — copy it now, it won’t be shown again:</div>
+          <div style={{ ...box, ...mono, color: 'var(--ink-body)' }}>{shown}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(shown)}>Copy key</Button>
+            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(bookmarklet(shown))}>Copy bookmarklet</Button>
+          </div>
+          <div style={{ ...box, ...mono }}>
+            POST {CAPTURE_URL}
+            <br />Authorization: Bearer {'<key>'}
+            <br />{'{"text": "call the supplier", "url": "https://…"}'}
+          </div>
+          <div style={fhelp}>bookmarklet: make a new bookmark and paste it as the address · it sends the selected text, or the page</div>
+        </>
+      )}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <Button variant="secondary" disabled={busy} onClick={() => void run(async () => setShown(await createCaptureKey()))}>
+          {row || shown ? 'New key' : 'Create key'}
+        </Button>
+        {row && (
+          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteCaptureKey(row.id); setShown(null) })}>
+            Turn off
+          </Button>
+        )}
+      </div>
+      {err && <div style={{ ...fhelp, color: 'var(--acc-terra)' }}>{err}</div>}
+      <div style={fhelp}>anything POSTed here lands in your inbox · a new key stops the old one</div>
+    </SCard>
+  )
+}
+
 function IntegrationsPage() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
@@ -688,11 +745,7 @@ function IntegrationsPage() {
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>External capture endpoint</div>
-          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</div>
-          <div style={fhelp}>anything POSTed here lands in your inbox</div>
-        </SCard>
+        <CaptureKeyCard />
         <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <svg width="20" height="30" viewBox="0 0 20 32" style={{ flex: 'none' }}><rect x="1" y="1" width="18" height="30" rx="4" fill="none" stroke="var(--ink-faint)" strokeWidth="1.6" /><circle cx="10" cy="26.5" r="1.6" fill="var(--ink-faint)" /></svg>
