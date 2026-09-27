@@ -1,7 +1,8 @@
 name: Release
 
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
-#   gate → cron-key check → backup → database → edge functions → app (merge into master) → live check.
+#   gate → cron-key check → backup → database → edge functions → app (merge into master) → live check
+#   → GitHub Release (tag + notes) → Android APK + Windows installer attached to it.
 # Nothing touches production until the gate is green and the merge into master is proven to be
 # exactly the tested tree. Trigger: push a `v*` tag or a `claude/ship-v*` branch at the release's
 # tested commit, publish a GitHub Release targeting it, or (once on master) Actions → Run workflow.
@@ -39,6 +40,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      label: ${{ steps.ship.outputs.label }}
+      sha: ${{ steps.ship.outputs.sha }}
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       LABEL: ${{ github.event.release.tag_name || github.ref_name }}
@@ -132,7 +136,11 @@ jobs:
           echo "- Functions: $FUNCTIONS ✓" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ship the app (push the merge to master)
-        run: git push origin master
+        id: ship
+        run: |
+          git push origin master
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Wait until the live site serves this commit
         run: |
@@ -147,3 +155,46 @@ jobs:
           done
           echo "::error::The live site still serves '${live:-nothing}' after 10 minutes, expected ${want:0:7}. Check Cloudflare → Workers Builds."
           exit 1
+
+  # A GitHub Release per version (tag at the live master commit, generated notes), then the Android
+  # APK and Windows installer built from the same tree and attached to it. A release made with
+  # GITHUB_TOKEN can't start other workflows, so the builds are called from here.
+  publish:
+    name: GitHub Release
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.deploy.outputs.label }}
+          SHA: ${{ needs.deploy.outputs.sha }}
+        run: |
+          set -euo pipefail
+          case "$TAG" in v[0-9]*) ;; *) echo "::notice::'$TAG' is not a version tag, so no GitHub Release"; exit 0 ;; esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then exit 0; fi
+          gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target "$SHA" --title "Kai's Flow $TAG"             --generate-notes --notes "Live at $APP_URL · Android APK and Windows installer attached below once built (docs/INSTALL.md)."
+          echo "- GitHub Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
+
+  android:
+    needs: publish
+    if: needs.publish.outputs.tag != ''
+    uses: ./.github/workflows/android.yml
+    permissions:
+      contents: write
+    with:
+      tag: ${{ needs.publish.outputs.tag }}
+
+  desktop:
+    needs: publish
+    if: needs.publish.outputs.tag != ''
+    uses: ./.github/workflows/desktop.yml
+    permissions:
+      contents: write
+    with:
+      tag: ${{ needs.publish.outputs.tag }}
