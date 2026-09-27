@@ -51,7 +51,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   function ResultGroup({ label, dot, hits, offset }: { label: string; dot: string; hits: SearchHit[]; offset: number }) {
     return (
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
           {label}
         </div>
         {hits.map((hit, i) => {
@@ -83,7 +83,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>
                 {hit.snippet && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
                 )}
               </div>
             </button>

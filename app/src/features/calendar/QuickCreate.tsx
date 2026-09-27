@@ -291,7 +291,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   )
 
   function chipStyle(bg: string, color: string) {
-    return { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 9px', borderRadius: 999, background: bg, color }
+    return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 9px', borderRadius: 999, background: bg, color }
   }
 
   const gridCols = expanded ? '1fr 1fr' : '1fr'
@@ -316,7 +316,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             <TimeInput value={startTime} onChange={(v) => { setStartTime(v); markDateTouched() }} />
             <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
             <TimeInput value={endTime} onChange={(v) => { setEndTime(v); markDateTouched() }} />
-            {durationMin > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`}</span>}
+            {durationMin > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`}</span>}
           </div>
         </div>
       )}
@@ -364,7 +364,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
                   key={m}
                   type="button"
                   onClick={() => { const [eh, em] = startTime.split(':').map(Number); const total = eh * 60 + em + m; setEndTime(`${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`) }}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: durationMin === m ? 'none' : '1px solid var(--line-solid)', background: durationMin === m ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent', color: durationMin === m ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: durationMin === m ? 'none' : '1px solid var(--line-solid)', background: durationMin === m ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent', color: durationMin === m ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', cursor: 'pointer' }}
                 >
                   {m >= 60 ? `${m / 60}h` : `${m}m`}
                 </button>
@@ -422,7 +422,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
           </label>
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 12%, transparent)', borderRadius: 6, padding: '9px 12px' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar · never shown as its own UI</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar · never shown as its own UI</span>
           </div>
         </>
       )}
@@ -475,12 +475,12 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {KIND_META[kind].cta}
       </button>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 10 }}>
-        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           Full editor ↗
         </button>
         {/* deviation(2026-07-18 audit): export says "swipe down to dismiss" but the sheet has
             no swipe gesture — the hint names the dismiss that actually works. */}
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>tap outside to dismiss</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>tap outside to dismiss</span>
       </div>
     </>
   ) : (
@@ -488,7 +488,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       {expanded ? (
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
       ) : (
-        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           More options ↗
         </button>
       )}
@@ -496,7 +496,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {expanded ? (
           <button type="button" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
         ) : (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>esc</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>esc</span>
         )}
         <button
           type="button"

@@ -57,7 +57,7 @@ export function BulkBar({ count, onComplete, onSnooze, onSchedule, onMoveToProje
       <span
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 10,
+          fontSize: 'var(--fs-meta)',
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
           color: 'var(--acc-terra)',
@@ -70,13 +70,13 @@ export function BulkBar({ count, onComplete, onSnooze, onSchedule, onMoveToProje
         {checkSvg} Complete
       </button>
       <button type="button" style={actionStyle} onClick={onSnooze} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        Snooze<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+        Snooze<span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
       </button>
       <button type="button" style={actionStyle} onClick={onSchedule} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        Schedule<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+        Schedule<span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
       </button>
       <button type="button" style={actionStyle} onClick={onMoveToProject} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}>
-        Move<span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+        Move<span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
       </button>
       <button
         type="button"

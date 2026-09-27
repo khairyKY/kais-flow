@@ -84,7 +84,7 @@ export function Chip({ tone = 'bordered', children, style }: { tone?: ChipTone; 
 export function SectionLabel({ children, action, style }: { children: ReactNode; action?: ReactNode; style?: CSSProperties }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, ...style }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{children}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{children}</span>
       <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       {action}
     </div>
@@ -275,7 +275,7 @@ export function BackLink({ children, style, ...nav }: BackLinkProps) {
     borderRadius: 6,
     font: 'inherit',
     fontFamily: 'var(--font-mono)',
-    fontSize: 10,
+    fontSize: 'var(--fs-meta)',
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: 'var(--ink-muted)',

@@ -7,7 +7,7 @@ import { TapeCard, Button } from '../../components/kit'
 // Kai's eye: Restyled with system tokens, TapeCard, and Button
 const FIELD_LABEL: CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 10,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: 'var(--text-tertiary)',
@@ -110,7 +110,7 @@ export function BackLink({ onClick, children }: { onClick: () => void; children:
     <button
       type="button"
       onClick={onClick}
-      style={{ marginTop: 22, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}
+      style={{ marginTop: 22, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}
     >
       {children}
     </button>

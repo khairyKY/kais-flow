@@ -95,7 +95,7 @@ function WeekStrip({ anchor, weekStartsMon, onPick }: { anchor: Date; weekStarts
             aria-label={d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             style={{ flex: 1, minHeight: 44, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}
           >
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: isToday ? 'var(--acc-lavender-text)' : 'var(--ink-faint)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: isToday ? 'var(--acc-lavender-text)' : 'var(--ink-faint)' }}>
               {d.toLocaleDateString('en-US', { weekday: 'narrow' })}
             </span>
             <span
@@ -462,7 +462,7 @@ export function CalendarPage() {
         .cal-rail.is-folded { display: none; }
         .cal-rail-tab { flex: none; width: 34px; border: none; border-right: 1px dashed var(--line-solid); background: none; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; font: inherit; color: var(--ink-faint); }
         .cal-rail-knob { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line-card); background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-faint); font-size: 12px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-        .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+        .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
         .cal-rail-tab:hover .cal-rail-tab-label { color: var(--ink-muted); }
         .cal-railsplit .cal-rail-knob { position: absolute; top: 18px; left: -9px; z-index: 2; }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
@@ -488,7 +488,7 @@ export function CalendarPage() {
         /* Polish F2b: the phone's folded rail — one strip in 1b's own language (the chip strip's
            mono label between dashed rules), the round knob pointing down to open it. */
         .cal-rail-bar { flex: none; width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border: none; border-bottom: 1px dashed var(--line-solid); background: none; font: inherit; cursor: pointer; }
-        .cal-rail-bar-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
+        .cal-rail-bar-label { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
         .cal-rail-knob .cal-rail-knob-glyph { display: inline-block; }
         @media (max-width: 767px) {
           /* Calendar.dc.html 1b: header, week strip, unscheduled chip strip, then a full-bleed
@@ -524,7 +524,7 @@ export function CalendarPage() {
         {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
         <aside className={railFolded ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
             {/* Polish F2b: the phone rail folds back up from here (desktop folds from the splitter). */}
             {false && isMobile && (
               <button type="button" className="cal-rail-knob kf-collapse-btn kf-hit" aria-expanded={true} aria-label="Hide unscheduled tasks" onClick={() => setRailFolded(true)}>
@@ -540,14 +540,14 @@ export function CalendarPage() {
               onChange={(v) => onScopeKindChange(v as RailScopeKind)}
               options={SCOPE_KIND_OPTIONS}
               ariaLabel="Rail scope type"
-              style={{ fontSize: 10.5, padding: '4px 6px', flex: 'none', maxWidth: 92 }}
+              style={{ fontSize: 'var(--fs-meta-l)', padding: '4px 6px', flex: 'none', maxWidth: 92 }}
             />
             <Select
               value={scope.id}
               onChange={(id) => setScope((s) => ({ ...s, id }))}
               options={scopeValueOptions}
               ariaLabel="Rail scope value"
-              style={{ fontSize: 10.5, padding: '4px 6px', flex: 1, minWidth: 0 }}
+              style={{ fontSize: 'var(--fs-meta-l)', padding: '4px 6px', flex: 1, minWidth: 0 }}
             />
           </div>
 
@@ -595,7 +595,7 @@ export function CalendarPage() {
                       </span>
                       <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
                     </div>
-                    <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                    <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                       {overdue > 0 ? (
                         <span style={{ color: 'var(--acc-terra)' }}>Overdue {overdue}d</span>
                       ) : (
@@ -619,7 +619,7 @@ export function CalendarPage() {
           <div className="cal-rail-extra" style={{ flex: 1 }} />
           <div className="cal-rail-extra" style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
             <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
               {load.blocked} blocked<br />{load.freeHours}h free today
             </div>
           </div>
@@ -657,7 +657,7 @@ export function CalendarPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
               <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: isMobile ? 40 : 52, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   {isMobile ? `Calendar · Week ${weekNumber(rangeInfo?.start ?? new Date())}` : `Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
                 </div>
                 <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -689,7 +689,7 @@ export function CalendarPage() {
                   alignItems: 'center',
                   gap: 7,
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
+                  fontSize: 'var(--fs-meta)',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
                   color: 'var(--ink-body)',

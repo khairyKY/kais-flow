@@ -64,5 +64,10 @@
 @media (max-width: 767px) {
   .task-row-hover { opacity: 1; }
   .tr-mobile-only { display: flex !important; }
+  /* Two boxes per row read as two ways to complete on a phone. The select box only shows once
+     something is selected (start from the row's ⋯ → Select); then it's there to pick more. */
+  .app-main-content:not(:has(.tr-select.is-on)) .tr-select { display: none !important; }
+  /* Tasks header: the tab bar's mic is the phone's capture button. */
+  .tasks-head-capture { display: none; }
 }
 .tr-mobile-only { display: none; }

@@ -14,7 +14,7 @@ import { KeyChip, KeyCombo } from '../../components/kit'
 
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 10,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
   padding: '4px 9px',
@@ -221,7 +221,7 @@ export function CommandBar() {
             <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
             <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
             {/* Polish F2b (conductor decision 2026-09-26, J-17): shortcut hints are keycaps. */}
-            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
               {jumpSelected ? (
                 <KeyChip text="↵" size="sm" />
               ) : (
@@ -269,7 +269,7 @@ export function CommandBar() {
 
         {/* Polish F2b (J-17): the same keys as the `?` overlay's Command bar rows (↵ quick add,
             ⌘ ↵ AI capture), drawn as keycaps instead of "Enter = …" text. */}
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           <KeyChip text="↵" size="sm" /> quick add
           <span aria-hidden="true">·</span>
           <KeyCombo keys={['⌘', '↵']} size="sm" /> AI capture

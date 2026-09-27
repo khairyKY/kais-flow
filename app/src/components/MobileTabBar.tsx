@@ -22,7 +22,7 @@ function SlotIcon({ active, children }: { active: boolean; children: ReactNode }
 }
 
 function slotLabel(active: boolean): CSSProperties {
-  return { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
+  return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
 }
 
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
@@ -79,7 +79,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
               <span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               {item.badge && pendingInbox > 0 && (
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
               )}
             </Link>
           ))}
@@ -113,7 +113,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
           <span style={{ position: 'relative', display: 'inline-flex' }}>
             <SlotIcon active={pathname === '/inbox'}><InboxGlyph /></SlotIcon>
             {pendingInbox > 0 && (
-              <span style={{ position: 'absolute', top: -5, right: -9, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 999, background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10, lineHeight: '15px', textAlign: 'center' }}>
+              <span style={{ position: 'absolute', top: -5, right: -9, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 999, background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', lineHeight: '15px', textAlign: 'center' }}>
                 {pendingInbox > 99 ? '99+' : pendingInbox}
               </span>
             )}

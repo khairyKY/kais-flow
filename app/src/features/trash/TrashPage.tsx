@@ -127,10 +127,10 @@ export function TrashPage() {
   const hasItems = deletedItems.length > 0
 
   const styles = `
-    .tbadge { font-family:var(--font-mono); font-size: 10px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
+    .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
     .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px dashed var(--line-dashed); }
     .aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }
-    .aghd span.t { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }
+    .aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }
     .aghd .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); position:relative; }
     .leafbg { position:absolute; width:16px; height:10px; border-radius:80% 20% 70% 30%; opacity:0.16; }
   `
@@ -142,7 +142,7 @@ export function TrashPage() {
         <div className="trow">
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <div style={{ position: 'relative' }}>
               <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>
@@ -226,7 +226,7 @@ export function TrashPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <svg width="42" height="40" viewBox="0 0 48 46"><path d="M8 30c0-4 4-9 10-10-2-4 1-9 6-9s8 5 6 9c6 1 10 6 10 10Z" fill="var(--ink-hairline)" opacity="0.5"/><path d="M4 30h40l-3 12H7L4 30Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round"/><path d="M24 20v-6" stroke="var(--acc-moss)" strokeWidth="2" strokeLinecap="round"/><path d="M24 15c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="var(--acc-moss)"/></svg>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedItems.length} items resting</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedItems.length} items resting</div>
                 <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>
               </div>
             </div>

@@ -33,9 +33,9 @@ function useIsMobile(): boolean {
   return isMobile
 }
 
-const flabel: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
-const fhelp: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5 }
-const chip: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
+const flabel: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const fhelp: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5 }
+const chip: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
 
 function SCard({ children, style, tapeTint }: { children: ReactNode; style?: CSSProperties; tapeTint?: string }) {
   return (
@@ -324,11 +324,11 @@ function TimezoneCard() {
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <div>
-          <div style={{ ...flabel, fontSize: 10, marginBottom: 6, color: 'var(--ink-hairline)' }}>Common timezones</div>
+          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Common timezones</div>
           <Select value={tz} onChange={apply} ariaLabel="Common timezones" options={COMMON_TIMEZONES.map((z) => ({ value: z, label: z }))} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)' }} />
         </div>
         <div>
-          <div style={{ ...flabel, fontSize: 10, marginBottom: 6, color: 'var(--ink-hairline)' }}>Or custom IANA name</div>
+          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Or custom IANA name</div>
           <input
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
@@ -354,7 +354,7 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
       <div style={{ ...flabel, marginBottom: 12 }}>Integrations · Google Calendar</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: google ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
           {google ? `Connected · last synced ${new Date(google.updated_at).toLocaleString()}` : 'Not connected'}
         </span>
         <span style={{ flex: 1 }} />
@@ -365,18 +365,18 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
       <div style={fhelp}>mirrors events in and out invisibly — never its own UI · scopes: calendar.events read/write</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: github ? 'var(--acc-gold-warm)' : 'var(--line-solid)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>GitHub · issues → inbox</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>GitHub · issues → inbox</span>
         <span style={{ flex: 1 }} />
         <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{github ? 'configured' : 'not connected'}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--line-solid)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Groq · chat + parse</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Groq · chat + parse</span>
         <span style={{ flex: 1 }} />
         <button
           type="button"
           onClick={onOpenIntegrations}
-          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}
+          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}
         >
           open integrations status →
         </button>
@@ -505,7 +505,7 @@ function ResurfacingCard() {
         <div style={fhelp}>{help}</div>
       </div>
       <HairlineSlider ariaLabel={`${label} cooldown in days`} value={days[level]} min={1} max={30} onChange={(v) => set(level, v)} style={{ flex: 1, maxWidth: 200 }} />
-      <div style={{ width: 74, flex: 'none', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
+      <div style={{ width: 74, flex: 'none', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
         rests {days[level]} {days[level] === 1 ? 'day' : 'days'}
       </div>
     </div>
@@ -534,7 +534,7 @@ export function CaptureApiCard() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</span>
       </div>
-      <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 10.5, lineHeight: 1.7, color: 'var(--ink-muted)' }}>
+      <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', lineHeight: 1.7, color: 'var(--ink-muted)' }}>
         POST /capture · body: {'{"text": "send the quote tomorrow 3pm"}'}
         <br />→ parsed, filed, or held in Inbox — same as ⌘K
       </div>
@@ -728,7 +728,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
         github ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: failing ? 'var(--acc-terra)' : 'var(--acc-sage)', flex: 'none' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: failing ? 'var(--acc-terra)' : 'var(--ink-muted)', textAlign: 'right' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: failing ? 'var(--acc-terra)' : 'var(--ink-muted)', textAlign: 'right' }}>
               {failing ? 'Token expired — reconnect' : `Connected as @${github.login ?? '?'} · synced ${github.synced_at ? new Date(github.synced_at).toLocaleTimeString() : 'not yet'}`}
             </span>
           </div>
@@ -773,7 +773,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
           </div>
         </form>
       )}
-      {message && <div role="status" style={{ ...fhelp, fontSize: 10.5, color: 'var(--ink-muted)' }}>{message}</div>}
+      {message && <div role="status" style={{ ...fhelp, fontSize: 'var(--fs-meta-l)', color: 'var(--ink-muted)' }}>{message}</div>}
     </ProviderRow>
   )
 }
@@ -805,7 +805,7 @@ function IntegrationsPage() {
             <div style={{ textAlign: 'right', flex: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Connected · synced {new Date(google.updated_at).toLocaleTimeString()}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Connected · synced {new Date(google.updated_at).toLocaleTimeString()}</span>
               </div>
             </div>
           ) : (
@@ -877,7 +877,7 @@ export function SoundCatalogCard() {
         </div>
         {/* The design's whisper↔full meter: three bars that fill with the volume. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginLeft: 'auto' }}>
-          <span style={{ ...flabel, fontSize: 10 }}>whisper</span>
+          <span style={{ ...flabel, fontSize: 'var(--fs-meta)' }}>whisper</span>
           <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 3, height: 16 }}>
             {[0.34, 0.67, 1].map((step, i) => (
               <button
@@ -895,7 +895,7 @@ export function SoundCatalogCard() {
               />
             ))}
           </span>
-          <span style={{ ...flabel, fontSize: 10 }}>full</span>
+          <span style={{ ...flabel, fontSize: 'var(--fs-meta)' }}>full</span>
           <Toggle on={masterOn} onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
         </div>
       </div>
@@ -913,7 +913,7 @@ export function SoundCatalogCard() {
               <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
             </button>
             <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)', width: 120, flex: 'none' }}>{s.label}</span>
-            <span style={{ ...flabel, fontSize: 10, flex: 1 }}>{s.help}</span>
+            <span style={{ ...flabel, fontSize: 'var(--fs-meta)', flex: 1 }}>{s.help}</span>
             <Toggle on={on} onToggle={() => toggleSound(s.id as SoundId, !on)} />
           </div>
         )

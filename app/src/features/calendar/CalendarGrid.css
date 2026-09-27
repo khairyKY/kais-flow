@@ -11,6 +11,8 @@
      grid wrapper) rides the same --s scale as the zoom compensation — slot height, type and
      insets all breathe together. M keeps the contract's 54px/hour exactly. */
   --s: calc(var(--kf-ui-scale, 1) * var(--kf-cal-density, 1));
+  /* Text-only scale: small grid type rises on a phone (.kf-cal-phone) without growing the slots. */
+  --s-text: var(--s);
   --fc-border-color: var(--line-dashed);
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: var(--bg-input);
@@ -72,7 +74,7 @@
 .cal-day-header-today .cal-day-daisy { height: calc(30px * var(--s)); filter: var(--shadow-drop-sm); }
 .cal-day-header-name {
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--s));
+  font-size: calc(9px * var(--s-text));
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -98,7 +100,7 @@
 .fc .fc-timegrid-axis-cushion,
 .fc .fc-timegrid-slot-label-cushion {
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--s));
+  font-size: calc(9px * var(--s-text));
   color: var(--ink-hairline);
   width: calc(58px * var(--s));
   box-sizing: border-box;
@@ -133,7 +135,7 @@
   right: 6px;
   top: -16px;
   font-family: var(--font-mono);
-  font-size: calc(8.5px * var(--s));
+  font-size: calc(8.5px * var(--s-text));
   color: var(--acc-lavender-text);
   background: var(--paper-parchment);
   padding: 0 4px;
@@ -206,7 +208,7 @@
 }
 .fc .fc-event-time {
   font-family: var(--font-mono);
-  font-size: calc(8.5px * var(--s));
+  font-size: calc(8.5px * var(--s-text));
   color: var(--kf-ev-accent, var(--acc-lavender-text));
 }
 /* 4c puts the title first and the time under it — CalendarGrid's eventContent renders them in
@@ -231,7 +233,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(9px * var(--s));
+  font-size: calc(9px * var(--s-text));
   line-height: 1;
   color: var(--paper-parchment);
   cursor: pointer;
@@ -268,7 +270,7 @@
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
 /* All-day row */
-.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
 /* §6 all-day chip: 20px pill in the band above the grid — no grip, no time row */
 .fc .fc-daygrid-event {
@@ -276,17 +278,17 @@
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent);
   background: color-mix(in srgb, var(--acc-lavender) 24%, transparent);
-  font-size: calc(10.5px * var(--s));
+  font-size: calc(10.5px * var(--s-text));
   line-height: 18px;
   padding: 0 8px;
   color: var(--ink-body);
 }
 
 /* Month view (dayGridMonth) */
-.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
+.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
 .fc .fc-daygrid-day-number {
   font-family: var(--font-mono);
-  font-size: calc(10.5px * var(--s));
+  font-size: calc(10.5px * var(--s-text));
   color: var(--text-tertiary);
   padding: 5px 7px;
 }
@@ -294,7 +296,7 @@
 .fc .fc-daygrid-day.fc-day-past { background: rgba(var(--kf-shadow-rgb, 60,52,38), 0.045); }
 .fc .fc-daygrid-more-link {
   font-family: var(--font-mono);
-  font-size: calc(10px * var(--s));
+  font-size: calc(10px * var(--s-text));
   color: var(--text-tertiary);
 }
 .fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
@@ -466,7 +468,7 @@
   position: absolute;
   top: 3px; right: 5px;
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--s));
+  font-size: calc(9px * var(--s-text));
   line-height: 1;
   color: var(--ink-body);
   pointer-events: none;
@@ -491,7 +493,7 @@
 
 /* §6 micro tier (<27px drawn): one mono strip — no padding rows, radius eases to 3. */
 .fc .fc-timegrid-event.kf-tier-micro { padding: 0 6px; border-radius: 3px; }
-.fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
 .fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after { display: none; }
@@ -506,7 +508,7 @@
 
 /* §6 month view: badges/check/wash drop; the pill stays 16px. */
 .fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-elapsed { display: none; }
-.fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s)); }
+.fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s-text)); }
 
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
@@ -541,14 +543,14 @@
 .fc .fc-timegrid-event.kf-ov:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
+.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }
 /* §6 narrow column (< 170px, Polish D): "short-tier type scale, start time only. Width never
    changes what the block is." Same scale as the overlap tier above; CalendarGrid puts
    .kf-cal-narrow on its wrapper and trims the time to the start (weekFit.ts decides). */
 .kf-cal-narrow .fc .fc-timegrid-event:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
 .kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
 .kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s)); }
+.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }
 .fc .fc-timegrid-event .kf-ev-more { cursor: pointer; }
 @media (hover: hover) {
   .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -560,3 +562,4 @@
 .kf-cal-phone .fc .fc-timegrid-slot-label { vertical-align: top; }
 .kf-cal-phone .fc .fc-scrollgrid { border-left: none; border-right: none; }
 .kf-cal-phone .fc .fc-scrollgrid-section-header > * { border-bottom-width: 1px; }
+.kf-cal-phone { --s-text: calc(var(--s) * 1.22); }

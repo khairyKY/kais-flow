@@ -140,7 +140,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
         <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px' }}>
           <input
             autoFocus
@@ -161,7 +161,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         <div style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: isMobile ? '2px 12px' : '2px 13px' }}>
           {steps.map((step, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)', width: isMobile ? 12 : 14, flex: 'none' }}>{i + 1}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', width: isMobile ? 12 : 14, flex: 'none' }}>{i + 1}</span>
               <input
                 autoFocus={step === '' && i === steps.length - 1}
                 value={step}
@@ -180,7 +180,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>
         <div style={{ display: 'flex', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden' }}>
           {seg('morning', 'Morning', 'Morn')}
           {seg('afternoon', 'Afternoon', 'Aft')}
@@ -190,7 +190,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
           {repeatPill('daily', 'Every day')}
           {repeatPill('weekdays', 'Weekdays')}
@@ -231,7 +231,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>a gentle push notification</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>a gentle push notification</div>
         </div>
         {reminderOn && (
           <input
@@ -255,9 +255,9 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 7 }}>
             <span role="checkbox" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChallenge ? 'var(--ink-body)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none' }}>
-              {isChallenge && <span style={{ color: 'var(--paper-parchment)', fontSize: 10, lineHeight: 1 }}>✓</span>}
+              {isChallenge && <span style={{ color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', lineHeight: 1 }}>✓</span>}
             </span>
-            <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
+            <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
           </div>
           {isChallenge && (
             <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
@@ -273,7 +273,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           )}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
           <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px' }}>
             {domainId && <span style={{ width: 8, height: 8, borderRadius: '50%', background: domains.find((d) => d.id === domainId)?.color ?? 'var(--acc-hydrangea)', marginRight: 9, flex: 'none' }} />}
             <Select
@@ -289,14 +289,14 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
 
       <div style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 9 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>
         </div>
         <div style={{ background: fieldBg, border: '1px solid var(--acc-moss)', outline: '2px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)', borderRadius: 8, padding: '8px 4px', textAlign: 'center', width: isMobile ? 76 : 96 }}>
           <div style={{ height: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <img src={`${A}/vine/flowering.png`} alt="" style={{ maxHeight: 40 }} />
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', marginTop: 5 }}>Vine</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', marginTop: 5 }}>Vine</div>
         </div>
       </div>
 

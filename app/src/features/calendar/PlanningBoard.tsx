@@ -119,7 +119,7 @@ function BoardColumn({
         transition: 'background 120ms',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
         <span>{column.label}</span>
         <span style={{ opacity: 0.6 }}>·</span>
         <span>{column.tasks.length}</span>
@@ -170,7 +170,7 @@ function BoardColumn({
           style={{
             alignSelf: 'flex-start',
             fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
+            fontSize: 'var(--fs-meta-l)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--acc-sage)',

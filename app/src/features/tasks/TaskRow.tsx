@@ -71,12 +71,14 @@ function PriorityFlag({ color }: { color: string }) {
 const metaStyle: React.CSSProperties = {
   marginTop: 6,
   fontFamily: 'var(--font-mono)',
-  fontSize: 10,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: 'var(--ink-faint)',
   display: 'flex',
-  gap: 14,
+  // 4px between wrapped lines, 14px between items: on a phone the details wrap, and a flat 14px
+  // gap spread one task's details over three widely spaced lines.
+  gap: '4px 14px',
   alignItems: 'center',
   flexWrap: 'wrap',
 }
@@ -468,13 +470,13 @@ export function TaskRow({
         ) : (
           <>
             {tag && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
                 {tag.label}
               </span>
             )}
             {task.completed_at && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>
                 {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
             )}
@@ -502,7 +504,7 @@ export function TaskRow({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div onClick={openDetail} style={{ fontSize: 15, color: 'var(--ink-body)', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {tag && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
               {tag.label}
             </div>
@@ -511,14 +513,14 @@ export function TaskRow({
         <span
           className="tr-someday-hover"
           onClick={() => rescheduleDue(task, scheduleToday())}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
           → Today
         </span>
         <span
           className="tr-someday-hover"
           onClick={(e) => setPopover({ kind: 'schedule', x: e.clientX, y: e.clientY })}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
           Schedule ▾
         </span>
@@ -561,7 +563,7 @@ export function TaskRow({
           <div style={{ flex: 1 }} />
           <div style={{ width: 88, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--acc-terra)', pointerEvents: swipe.x < 0 ? 'auto' : 'none', cursor: 'pointer' }} onClick={() => setConfirmDelete({ title: `Delete "${task.title}"?`, body: task.scheduled_start ? 'This also removes its scheduled calendar block.' : '' })}>
             <TrashMenuIcon />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Delete</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Delete</span>
           </div>
         </div>
       )}
@@ -574,8 +576,8 @@ export function TaskRow({
         {!hideCheckbox && onToggleSelect && (
           <span
             onClick={onToggleSelect}
-            className={selected ? 'kf-hit' : 'task-row-hover kf-hit'}
-            style={{ width: 14, height: 14, marginTop: 3, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, lineHeight: 1, cursor: 'pointer' }}
+            className={selected ? 'tr-select is-on kf-hit' : 'tr-select task-row-hover kf-hit'}
+            style={{ width: 14, height: 14, marginTop: 3, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', lineHeight: 1, cursor: 'pointer' }}
           >
             {selected ? '✓' : ''}
           </span>

@@ -41,11 +41,11 @@ function amberLeafTiming(leaf: (typeof AMBER_LEAVES)[number], phase: number): Re
 const EMPTY_STAT = { hours: 0, monthHours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, weight: 0, doneWeight: 0, hasTop3Task: false }
 
 // Projects.dc.html `.mchip` / `.chip` verbatim (the export's canvas CSS has no counterpart in the app).
-const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
 const mchipLast: React.CSSProperties = { ...mchip, width: 96, textAlign: 'right' }
-const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
+const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
 // Section count on the right of the rule (`<span style="color:var(--ink-hairline)">2</span>`).
-const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--ink-hairline)' }}>{n}</span>
+const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', color: 'var(--ink-hairline)' }}>{n}</span>
 
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
@@ -173,7 +173,7 @@ export function ProjectsPage() {
     </span>
   )
   const mobileSlippingChip = (
-    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 10, padding: '4px 9px', borderRadius: 999 }}>
+    <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
       slipping
     </span>
   )
@@ -233,7 +233,7 @@ export function ProjectsPage() {
           {!isEmpty && <>
           {/* Active section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
           {filteredProjects
@@ -260,7 +260,7 @@ export function ProjectsPage() {
                       {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 10, padding: '4px 9px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                     {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : 'no date'}
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export function ProjectsPage() {
 
           {/* Retainers Section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Retainers</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Retainers</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
           {filteredProjects
@@ -295,7 +295,7 @@ export function ProjectsPage() {
                       {isSlippingProject(p.id) && mobileSlippingChip}
                     </div>
                   </div>
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 10, padding: '4px 9px', borderRadius: 999 }}>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                     retainer
                   </span>
                 </div>
@@ -304,7 +304,7 @@ export function ProjectsPage() {
 
           {/* Areas Section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           </div>
           {filteredAreas.map((a, i) => {
@@ -323,7 +323,7 @@ export function ProjectsPage() {
                 {isSlipping ? (
                   mobileSlippingChip
                 ) : (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                     {count} open
                   </span>
                 )}
@@ -353,7 +353,7 @@ export function ProjectsPage() {
         </span>
       )}
       {view === 'archive' && (
-        <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
+        <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
           ← Back to Active
         </span>
       )}
@@ -420,7 +420,7 @@ export function ProjectsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Projects &amp; areas · the forest
               </div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -430,7 +430,7 @@ export function ProjectsPage() {
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 10 }}>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
               {activeCount} active · {totalCount} total
             </span>
             <button
@@ -581,8 +581,8 @@ export function ProjectsPage() {
                   <div key={d.id} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
                       <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
-                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{domainProjects.length}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{domainProjects.length}</span>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -622,7 +622,7 @@ export function ProjectsPage() {
                               </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
-                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
                                   {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
                                 </div>
                               </div>
@@ -634,10 +634,10 @@ export function ProjectsPage() {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>
-                              <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 10, padding: '4px 9px', borderRadius: 999 }}>
+                              <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                                 {stat.doneMilestones} / {stat.totalMilestones}
                               </span>
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
                               {stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                             </div>
                           </div>
@@ -682,7 +682,7 @@ export function ProjectsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <img src="/ds/assets/wisteria/p100.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
                 <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>
               </div>
             </div>
@@ -702,7 +702,7 @@ export function ProjectsPage() {
               .sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
               .map(([year, yearProjs]) => (
                 <div key={year}>
-                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
+                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
                     <span>{year}</span>
                     <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                     <span style={{ color: 'var(--ink-hairline)' }}>{yearProjs.length}</span>
@@ -726,7 +726,7 @@ export function ProjectsPage() {
                             restoreProject(p)
                             queryClient.invalidateQueries({ queryKey: ['projects'] })
                           }}
-                          style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, padding: '4px 9px', borderRadius: 999 }}
+                          style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}
                         >
                           restore
                         </span>
@@ -737,10 +737,10 @@ export function ProjectsPage() {
               ))}
 
             <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
                 Open the Herbarium — {archivedProjects.length} pressed specimens →
               </Link>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
                 Archived projects stay searchable · restore any time
               </span>
               <span style={{ flex: 1 }}></span>

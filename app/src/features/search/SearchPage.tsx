@@ -36,7 +36,7 @@ function ResultGroup({ label, tint, dot, hits, query, onGo, offset, activeIndex,
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 4px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: tint, whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: tint, whiteSpace: 'nowrap' }}>
           {label} · {hits.length}
         </span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
@@ -74,7 +74,7 @@ function Chip({ label, count, on, onClick }: { label: string; count: number; on:
     <button
       type="button"
       onClick={onClick}
-      style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : 'none', color: on ? 'var(--paper-linen)' : 'var(--ink-muted)', border: `1px solid ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}
+      style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : 'none', color: on ? 'var(--paper-linen)' : 'var(--ink-muted)', border: `1px solid ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}
     >
       {label} <b style={{ fontWeight: 400, color: on ? 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' : 'var(--ink-hairline)' }}>{count}</b>
     </button>
@@ -194,12 +194,12 @@ export function SearchPage() {
           placeholder="Search the garden…"
           style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
         />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>esc clears</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>esc clears</span>
       </div>
 
       {/* One count line, and none while resting — a search that didn't answer knows no count. */}
       {trimmed && resultCountLine(search) && (
-        <div style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           {resultCountLine(search)}
         </div>
       )}

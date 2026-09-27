@@ -388,7 +388,7 @@ export function TodayPage() {
   const header = isMobile ? (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Today · Day {dayNumber}
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 27, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-body)', marginTop: 2 }}>
@@ -400,7 +400,7 @@ export function TodayPage() {
   ) : (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 }}>
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Today</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Today</div>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 42, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{dateLabel}</h1>
       </div>
       <VoiceCaptureButton />
@@ -415,7 +415,7 @@ export function TodayPage() {
         <img src={`${A}/vine/${vine}.png`} alt="Routines" style={{ height: 28 }} />
       </div>
       <div style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)', lineHeight: 1.2 }}>pressed &amp; kept, one day at a time</div>
-      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
+      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
         <div>{doneToday} of {open.length + doneToday} done</div>
         <div style={{ color: 'var(--acc-sage-text)' }}>{streak}-day streak</div>
       </div>
@@ -429,10 +429,10 @@ export function TodayPage() {
         <img src={`${A}/vine/${vine}.png`} alt="Routines" style={{ height: 54, filter: 'var(--shadow-drop-sm)' }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The terrarium</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The terrarium</div>
         <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>pressed &amp; kept, one day at a time</div>
       </div>
-      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.7 }}>
+      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.7 }}>
         <div>{pendingInbox.length} in inbox</div>
         <div>{doneToday} of {open.length + doneToday} done</div>
         <div style={{ color: 'var(--acc-sage-text)' }}>{streak}-day streak</div>
@@ -492,7 +492,7 @@ export function TodayPage() {
       )}
       {routineGroups.filter((g) => g.items.length > 0).map((g) => (
         <div key={g.key}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
           {g.items.map((r) => (
             <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
           ))}
@@ -553,7 +553,7 @@ export function TodayPage() {
 
       {!isMobile && <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 264px', gap: isMobile ? 30 : 44, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0,1fr)' : 'minmax(0,1fr) 264px', gap: isMobile ? 30 : 44, alignItems: 'start' }}>
         <div className="kf-bulk-anchor" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 26 : 34 }}>
           {upcomingBirthdays.map(({ person, days }) => {
             const text = days === 0 
@@ -623,7 +623,7 @@ export function TodayPage() {
               <>
                 {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} focusable />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -674,11 +674,11 @@ export function TodayPage() {
   )
 }
 
-const linkStyle = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)', textDecoration: 'none' }
+const linkStyle = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)', textDecoration: 'none' }
 
 function metaRow(projectName: string | undefined, dot: string, duration: number | null, extra?: React.ReactNode) {
   return (
-    <div style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+    <div style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
       {projectName && (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot }} />
@@ -816,7 +816,6 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
     setMenu({ x: e.clientX, y: e.clientY })
   }
   const menuNode = menu && <ContextMenu items={taskMenuItems(task, { open: openDetail, startFocus })} position={menu} onClose={() => setMenu(null)} />
-  const focusBtn = !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
       <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
@@ -824,10 +823,9 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
         <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox label={task.title} checked={bloom.checking} size={16} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
           <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         </div>
-        {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       </div>
     )
@@ -838,11 +836,10 @@ function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox label={task.title} checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
         <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
-      {focusBtn && <span style={{ alignSelf: 'center' }}>{focusBtn}</span>}
       <div style={{ textAlign: 'center', flex: 'none' }}>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>
@@ -859,14 +856,14 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
       onClick={() => reopenTaskWithUndo(task)}
       title="Reopen"
       className="kf-hit"
-      style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', cursor: 'pointer' }}
+      style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', flex: 'none', cursor: 'pointer' }}
     >
       ✓
     </span>
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted, focusable }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean; focusable?: boolean }) {
+function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
@@ -903,7 +900,6 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
   const menuItems = taskMenuItems(task, { open: () => navigate(`/tasks/${task.id}`), startFocus, selected, onToggleSelect })
   const menuNode = menu && <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
   // Loop A: Top 3 rows carry a ▶ Start focus beside the star; the resting "All open" list doesn't.
-  const focusBtn = focusable && !done && <FocusButton title={task.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   if (compact) {
     return (
       <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
@@ -912,7 +908,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         <div style={{ flex: 1, minWidth: 0 }}>
           <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null || dueBadges) && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {(projectName || task.duration_min != null) && (
                 <span>{[projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean).join(' · ')}</span>
               )}
@@ -920,7 +916,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
             </div>
           )}
         </div>
-        {focusBtn}
+        
         {!done && (
           <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
             {task.top3 ? '★' : '☆'}
@@ -937,7 +933,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
         <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
-      {focusBtn}
+      
       {!done && (
         <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
           {task.top3 ? '★' : '☆'}
@@ -995,7 +991,6 @@ function EventRow({ event, task, border, compact, now }: { event: CalendarEvent;
       <Checkbox label={task.title} checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
     </span>
   )
-  const focusBtn = task && !done && <FocusButton title={event.title} onStart={() => startFocus(task)} size={compact ? 10 : 11} />
   // A sibling of the row, not a child: the menu portals to <body>, but React events still bubble
   // through the component tree, and a menu click reaching the row would also open it.
   const menuNode = menu && <ContextMenu items={upNextMenuItems(event, task, { open, startFocus })} position={menu} onClose={() => setMenu(null)} />
@@ -1005,11 +1000,11 @@ function EventRow({ event, task, border, compact, now }: { event: CalendarEvent;
     return (
       <>
         <div {...rowProps} style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
-          <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: labelColor }}>{label.text}</span>
+          <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: labelColor }}>{label.text}</span>
           {check}
           <div style={{ flex: 1, minWidth: 0, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-          {focusBtn}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+          
         </div>
         {menuNode}
       </>
@@ -1023,32 +1018,11 @@ function EventRow({ event, task, border, compact, now }: { event: CalendarEvent;
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
         </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-        {focusBtn}
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+        
       </div>
       {menuNode}
     </>
-  )
-}
-
-// Loop A — ▶ Start focus, the row affordance (Top 3, the goal card, Up next, the Day card). A
-// drawn triangle rather than the ▶ character, which some platforms paint as a colour emoji.
-// Quiet (hairline) until hovered; .kf-hit gives it a 44px target on touch screens.
-function FocusButton({ title, onStart, size = 11 }: { title: string; onStart: () => void; size?: number }) {
-  return (
-    <button
-      type="button"
-      className="kf-hit kf-focus-btn"
-      title="Start focus"
-      aria-label={`Start focus: ${title}`}
-      onClick={(e) => {
-        e.stopPropagation()
-        onStart()
-      }}
-      style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size + 10, height: size + 10, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
-    >
-      <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor" /></svg>
-    </button>
   )
 }
 
@@ -1073,7 +1047,7 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
       {/* punch 20: the wisteria is the entity's real growth stage, computed by the caller. */}
       <img src={`${A}/wisteria/${stage}.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
       <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} days untouched</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} days untouched</div>
       <button onClick={(e) => { e.stopPropagation(); markReviewed(row) }} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>reviewed</button>
     </div>
   )
@@ -1104,11 +1078,12 @@ function MoreForToday({ summary, children }: { summary: string; children: React.
   return (
     <section>
       <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {/* ellipsis: on a phone the summary ran ~400px and pushed the whole page wider than the screen */}
           More for today{summary && <span style={{ color: 'var(--ink-hairline)' }}> · {summary}</span>}
         </span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-        <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
+        <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
       </button>
       {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 12 }}>{children}</div>}
     </section>
