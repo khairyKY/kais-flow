@@ -8,6 +8,8 @@ import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
+import { TASK_COLUMNS } from '../../lib/columns'
+import { fetchAll } from '../../lib/fetchAll'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -16,9 +18,9 @@ export function useTasks() {
   return useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*').order('due_at', { nullsFirst: false })
-      if (error) throw error
-      return data as Task[]
+      return fetchAll<Task>((from, to) =>
+        supabase.from('tasks').select(TASK_COLUMNS).order('due_at', { nullsFirst: false }).order('id').range(from, to),
+      )
     },
     select: (tasks) => tasks.filter((t) => !t.deleted_at),
   })

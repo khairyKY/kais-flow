@@ -78,15 +78,17 @@ export function FocusPage() {
   const { data: interactions = [] } = useInteractions()
   const { data: events = [] } = useCalendarEvents()
 
-  const { data: activityLogs = [] } = useQuery<ActivityLogEntry[]>({
-    queryKey: ['activity_log'],
+  // Only the first entry's date is used (the "days count"); this used to download the whole log.
+  const { data: activityLogs = [] } = useQuery<Pick<ActivityLogEntry, 'created_at'>[]>({
+    queryKey: ['activity_log', 'first'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('activity_log')
-        .select('*')
+        .select('created_at')
         .order('created_at', { ascending: true })
+        .limit(1)
       if (error) throw error
-      return data as ActivityLogEntry[]
+      return data as Pick<ActivityLogEntry, 'created_at'>[]
     },
   })
 

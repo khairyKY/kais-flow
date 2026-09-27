@@ -26,7 +26,7 @@ export function useSlipping(thresholdDays: number = DEFAULT_THRESHOLD_DAYS) {
       if (error) throw error
       return data as SlippingRow[]
     },
-    refetchInterval: 60_000,
+    refetchInterval: 5 * 60_000, // scale: the view is correlated subqueries; own writes invalidate it anyway
     select: (rows) =>
       rows
         .filter((r) => r.days_since > thresholdDays && !locallyReviewed.has(rowKey(r)))

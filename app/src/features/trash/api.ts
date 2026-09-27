@@ -4,6 +4,7 @@ import { writeRow } from '../../lib/outbox'
 import { restoreTask } from '../tasks/api'
 import { restoreInboxItem } from '../inbox/api'
 import { restoreJournalEntry } from '../journal/api'
+import { INBOX_COLUMNS, TASK_COLUMNS } from '../../lib/columns'
 import type { Task, InboxItem, JournalEntry } from '../../lib/types'
 
 export interface DeletedItem {
@@ -19,8 +20,8 @@ export function useDeletedItems() {
     queryKey: ['deleted_items'],
     queryFn: async () => {
       const [tasksRes, inboxRes, calendarRes, journalRes] = await Promise.all([
-        supabase.from('tasks').select('*').not('deleted_at', 'is', null),
-        supabase.from('inbox_items').select('*').not('deleted_at', 'is', null),
+        supabase.from('tasks').select(TASK_COLUMNS).not('deleted_at', 'is', null),
+        supabase.from('inbox_items').select(INBOX_COLUMNS).not('deleted_at', 'is', null),
         supabase.from('calendar_events').select('*').not('deleted_at', 'is', null),
         supabase.from('journal_entries').select('*').not('deleted_at', 'is', null)
       ])

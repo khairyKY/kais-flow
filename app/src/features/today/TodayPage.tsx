@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
-import { daysOverdue } from '../tasks/taskDisplay'
+import { daysOverdue, formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
@@ -685,7 +685,7 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
           {projectName}
         </span>
       )}
-      {duration != null && <span>{duration}m</span>}
+      {duration != null && <span>{formatDuration(duration)}</span>}
       {extra}
     </div>
   )
@@ -914,7 +914,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
           {(projectName || task.duration_min != null || dueBadges) && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {(projectName || task.duration_min != null) && (
-                <span>{[projectName, task.duration_min != null ? `${task.duration_min}m` : null].filter(Boolean).join(' · ')}</span>
+                <span>{[projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean).join(' · ')}</span>
               )}
               {dueBadges}
             </div>

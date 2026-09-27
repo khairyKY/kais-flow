@@ -9,7 +9,8 @@ import { hybridSearch, type SearchHit } from '../_shared/retrieval.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
-const GROQ_CHAT_MODEL = Deno.env.get('GROQ_CHAT_MODEL') ?? 'llama-3.3-70b-versatile'
+// llama-3.3-70b-versatile left Groq's free plan on 2026-08-16; gpt-oss-120b is its named replacement.
+const GROQ_CHAT_MODEL = Deno.env.get('GROQ_CHAT_MODEL') ?? 'openai/gpt-oss-120b'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -75,6 +76,9 @@ Deno.serve(async (req) => {
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
         stream: true,
         temperature: 0.3,
+        // Reasoning tokens count against the free plan's daily token budget; a grounded answer
+        // over retrieved items needs little of it. (gpt-oss only; other models reject the field.)
+        ...(GROQ_CHAT_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
       }),
     })
 

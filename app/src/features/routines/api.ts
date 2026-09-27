@@ -4,6 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { localDateKey } from './streaks'
+import { fetchAll } from '../../lib/fetchAll'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 export function useRoutines() {
@@ -21,9 +22,9 @@ export function useRoutineCompletions() {
   return useQuery({
     queryKey: ['routine_completions'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('routine_completions').select('*')
-      if (error) throw error
-      return data as RoutineCompletion[]
+      return fetchAll<RoutineCompletion>((from, to) =>
+        supabase.from('routine_completions').select('*').order('id').range(from, to),
+      )
     },
   })
 }
