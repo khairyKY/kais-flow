@@ -2,13 +2,18 @@ name: Windows app
 
 # M1 step 5 (design-integration/PLAN.md SHIP P2.3): the same Tauri shell as the Android app, built
 # as a real Windows installer on GitHub's Windows runner (system WebView2, ~5 MB, no Electron).
-# Builds on the mobile branches for review; a published Release gets the installer attached.
+# Builds on the mobile branches for review; a release (release.yml) gets the installer attached.
 on:
   push:
     branches: ['claude/mobile-*']
     paths: ['app/**', '.github/workflows/desktop.yml', '.github/scripts/**']
-  release:
-    types: [published]
+  # The Release pipeline (release.yml) calls this with the version tag; the build is stamped with
+  # it and attached to that GitHub Release.
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
   workflow_dispatch:
 
 permissions:
@@ -48,6 +53,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Stamp the release version
+        if: inputs.tag != ''
+        env:
+          TAG: ${{ inputs.tag }}
+        run: node -e "const f='src-tauri/tauri.conf.json',c=require('./'+f);c.version=process.env.TAG.replace(/^v/,'');require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
+
       - name: Supabase public config
         env:
           VARS_URL: ${{ vars.VITE_SUPABASE_URL }}
@@ -61,7 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           exe="$(ls src-tauri/target/release/bundle/nsis/*.exe | head -1)"
-          name="kais-flow-${GITHUB_SHA::7}-windows-setup.exe"
+          tag='${{ inputs.tag }}'
+          name="kais-flow-${tag:-${GITHUB_SHA::7}}-windows-setup.exe"
           cp "$exe" "$RUNNER_TEMP/$name"
           echo "EXE=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
           echo "EXE_NAME=$name" >> "$GITHUB_ENV"
@@ -74,8 +86,8 @@ jobs:
           retention-days: 30
 
       - name: Attach to the Release
-        if: github.event_name == 'release'
+        if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag }}
         run: gh release upload "$TAG" "$EXE" --clobber
