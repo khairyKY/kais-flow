@@ -48,3 +48,5 @@
 - 2026-09-27 06:33 · decision · every shipped version becomes a GitHub Release (publish job in release.yml; android/desktop called with the tag, version-stamped, assets attached); first = v1.0.3 — `2026-09-27-0633-local-decision-github-releases.md`
 - 2026-09-27 07:00 · decision · capture endpoint security review: sound; invocation-flood finding declined (same as every function; a counter costs more than the lookup) — `2026-09-27-0700-local-review-capture.md`
 - 2026-09-27 06:53 · release · **v1.0.4 LIVE** (master fec4474): 0040 applied, 6 functions redeployed after it, /version.json = fec4474; prod check: 25 user_id indexes, cron-history-prune scheduled, ai_usage_take present
+- 2026-09-27 07:11 · handoff · p6-github worker: github-connect + github-sync + 0042 cron + Settings/Inbox UI — `2026-09-27-0711-p6-github-handoff.md`
+- 2026-09-27 07:16 · status · v1.0.5 LIVE (b607733: capture endpoint + 0041; prod smoke: no/bad key 401, wrong key capture_key_invalid, preflight *). Lesson: app/.env.local (made for the preview) hid a CI-only test failure — run the suite with it moved aside. v1.0.6 candidate (GitHub) green: 769 ×4 TZ, lint 0, build, deno check
