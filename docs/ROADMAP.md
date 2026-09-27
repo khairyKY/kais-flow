@@ -44,6 +44,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-09-27** — **v1.0.6: GitHub issues → Inbox (P6 steps 1–2, 4)** — Settings › Integrations › GitHub: paste a fine-grained read-only token (checked with GitHub, stored server-side, never sent back); `github-sync` every 30 min (0042) + Sync now; new issues land in Inbox deduped by node_id, closed/deleted ones auto-dismiss, dismissed ones don't come back. AI ranking deferred (shared free Groq quota). Handoff: `docs/log/2026-09-27-0711-p6-github-handoff.md`.
 - **2026-09-27** — **v1.0.5: capture from anywhere (P6 step 7)** — personal capture key in Settings › Integrations (shown once, SHA-256 stored, migration 0041) + `capture` endpoint (bookmarklet, phone shortcuts, curl, automations → Inbox, 200/key/day, no AI step); U-5 checkbox labels, U-21 More-sheet dialog.
 - **2026-09-27** — **v1.0.4: scale to 100 users on free tiers** (client stops downloading embeddings, pages past 1000 rows, per-user realtime; 0040 user_id indexes + daily prune + global AI cap) + **Groq incident** (llama-3.3-70b left the free plan 2026-08-16 → parse/chat dead; moved to gpt-oss-20b/120b). Entry: `docs/log/2026-09-27-0648-local-release-v1.0.4-scale.md`.
 - **2026-09-27** — **GitHub Releases:** the release pipeline now ends by publishing Release `vX.Y.Z` with the Android APK + Windows installer attached (Kai's screenshot: "There aren't any releases here"). First: v1.0.3. Entry: `docs/log/2026-09-27-0633-local-decision-github-releases.md`.
