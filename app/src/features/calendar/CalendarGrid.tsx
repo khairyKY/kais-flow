@@ -39,6 +39,8 @@ export interface CalendarGridHandle {
   prev(): void
   next(): void
   today(): void
+  /** Phone week strip: jump the view to a day. */
+  gotoDate(date: Date): void
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -81,6 +83,9 @@ interface CalendarGridProps {
   justDroppedId?: string | null
   /** How far above the now-line the grid lands (gridClock.ts): 2h on desktop, 1h on a phone. */
   scrollLeadMinutes?: number
+  /** Phone (Calendar.dc.html 1b): the page header already names the day, so no column header;
+   * the all-day row only when something is all-day; a narrow hour gutter (CalendarGrid.css). */
+  phone?: boolean
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -190,6 +195,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   failedIds,
   justDroppedId,
   scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
+  phone = false,
 }, ref) {
   const customView = 'customDayCount'
   const fcRef = useRef<FullCalendar>(null)
@@ -270,6 +276,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       api.today()
       api.scrollToTime(scrollTimeNear(new Date(), scrollLeadMinutes))
     },
+    gotoDate: (date: Date) => fcRef.current?.getApi().gotoDate(date),
   }))
 
   function handleGridContextMenu(e: React.MouseEvent) {
@@ -292,7 +299,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     // it's also in the FC key because slot geometry is measured once per mount.
     <div
       ref={wrapRef}
-      className={narrow ? 'kf-cal-narrow' : undefined}
+      className={[narrow && 'kf-cal-narrow', phone && 'kf-cal-phone'].filter(Boolean).join(' ') || undefined}
       onContextMenu={handleGridContextMenu}
       style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
     >
@@ -351,6 +358,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
       dragScroll
       dayMaxEvents
+      dayHeaders={!(phone && initialView === 'timeGridDay')}
+      allDaySlot={!phone || events.some((e) => e.allDay)}
       dayHeaderContent={(arg) => {
         // Month view's header row is one cell per weekday, not per date — no daisy, no number.
         if (arg.view.type === 'dayGridMonth') {
