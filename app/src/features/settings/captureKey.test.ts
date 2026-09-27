@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// captureKey.ts imports the Supabase client, which throws without VITE_ env (CI has none).
+vi.mock('../../lib/supabase', () => ({ supabase: {} }))
+
 import { bookmarklet, newCaptureKey } from './captureKey'
 
 describe('capture key', () => {
