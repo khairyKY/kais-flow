@@ -13,6 +13,19 @@
   --ease-in:      cubic-bezier(0.55, 0, 0.68, 0.53);
   --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);   /* springy bounce for actions (app-only, kept) */
   --ease-natural: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
+  --dur-press: 100ms;
+  --dur-sheet-enter: 300ms;
+  --dur-sheet-exit: 200ms;
+  --dur-toast: 200ms;
+  --dur-longpress: 400ms;
+  --dur-toast-life: 6000ms;
+  --dur-swipe-settle: 200ms;
+  --dur-collapse: 200ms;
+  --ease-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-accel: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
 }
 
 @keyframes cloverSway {
@@ -93,3 +106,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Keyframes from the 2026-09-28 design-system refresh (sheets, toasts, skeleton, recording). */
+@keyframes sheetIn   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetOut  { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes scrimIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes toastIn   { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastOut  { from { opacity: 1; } to { opacity: 0; } }
+@keyframes skeletonPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes recPulse  { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.18); opacity: 0.2; } }

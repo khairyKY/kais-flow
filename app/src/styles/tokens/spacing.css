@@ -28,4 +28,21 @@
   --radius-input: 6px;    /* nav links, checkbox */
   --radius-md:    8px;    /* inputs (contrast to nav links) */
   --radius-pill:  999px;  /* buttons only */
+  /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
+  --touch-min: 48px;
+  --gutter-phone: 16px;
+  --row-min: 56px;
+  --topbar-h: 56px;
+  --tabbar-h: 64px;
+  --tabbar-inset: env(safe-area-inset-bottom, 16px);
+  --capture-size: 56px;
+  --sheet-radius: 8px;
+  --sheet-handle-w: 32px;
+  --sheet-handle-h: 4px;
+  --sheet-handle-hit: 48px;
+  --sheet-h-medium: 60%;
+  --sheet-h-full: calc(100% - 48px);
+  --toast-gap: 8px;
+  --swipe-commit: 0.4;
+
 }
