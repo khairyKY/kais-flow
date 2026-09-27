@@ -1,17 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { useNavigate } from 'react-router'
 import { Button } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import { completeTaskWithUndo } from '../tasks/api'
-import { formatDuration } from '../tasks/taskDisplay'
 import { RITUAL_STEP_COUNT, useRitualsFinishedToday, useSeedsFor, type RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
 import { NOW_SOON_MIN, dayPhase, eveningState, morningState, ritualFinished, type RitualState } from './dayPhase'
 import { top3Tally } from './top3Today'
-import { upNextClock, upNextEvents, isInProgress } from './upNext'
+import { upNextEvents } from './upNext'
 import { useMinuteNow } from './useMinuteNow'
-import { useStartFocus } from './startFocus'
 import type { CalendarEvent, Task } from '../../lib/types'
 
 // deviation(2026-09-26 daily cycle): the Day card. Today.dc.html 1a/1b pin two ritual cards
@@ -21,7 +17,6 @@ import type { CalendarEvent, Task } from '../../lib/types'
 // crisp shadow, sun/moon glyph, thin progress bar, mono count) with kit Buttons for its actions.
 // Either ritual stays one tap away from the links along its foot, in every state.
 
-const A = '/ds/assets'
 
 interface DayCardProps {
   events: CalendarEvent[]
@@ -39,8 +34,6 @@ interface DayCardProps {
 
 export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualSteps, prompts, compact, onOpenRitual }: DayCardProps) {
   const now = useMinuteNow()
-  const navigate = useNavigate()
-  const startFocus = useStartFocus()
 
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const today = cairoDateKey(now)
@@ -109,49 +102,12 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
     )
   }
 
-  // Now — the running or next item, else the first unfinished Top 3, else a clear stretch.
-  const item = state.item
-  if (!item) {
-    return (
-      <Shell compact={compact} icon={<img src={`${A}/daisy/midday.png`} alt="" style={{ height: 26, flex: 'none' }} />} links={links}
-        caption="Now"
-        title="Nothing on the clock"
-        meta={tally.picked > 0 ? [`Top 3 ${tally.done}/${tally.picked} done`] : ['a clear stretch — pick the next thing']}
-        actions={<Button type="button" variant="ghost" style={btn} onClick={() => navigate('/calendar')}>Open calendar</Button>}
-      />
-    )
-  }
-  const task = item.kind === 'task' ? item.task : item.event.task_id ? taskById.get(item.event.task_id) : undefined
-  const title = item.kind === 'task' ? item.task.title : item.event.title
-  const running = item.kind === 'event' && isInProgress(item.event.starts_at, item.event.ends_at, now)
-  const caption = item.kind === 'task' ? 'Next · Top 3' : running ? 'Now' : `Next · ${upNextClock(item.event.starts_at)}`
-  const meta = item.kind === 'event'
-    ? [`${upNextClock(item.event.starts_at)}–${upNextClock(item.event.ends_at)}`]
-    : [
-        item.task.duration_min != null ? formatDuration(item.task.duration_min) : null,
-        tally.picked > 0 ? `Top 3 ${tally.done}/${tally.picked} done` : null,
-        nextUp ? `then ${upNextClock(nextUp.starts_at)} · ${nextUp.title}` : null,
-      ].filter((m): m is string => !!m)
-  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
-  return (
-    <Shell compact={compact} icon={<img src={`${A}/daisy/midday.png`} alt="" style={{ height: 26, flex: 'none' }} />} links={links}
-      caption={caption} captionTone={running ? 'now' : 'time'}
-      title={<EmojiText text={title} />}
-      meta={meta}
-      actions={
-        <>
-          {task && (
-            <Button type="button" variant="secondary" style={btn} onClick={() => startFocus(task)}
-              icon={<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor" /></svg>}>
-              Start focus
-            </Button>
-          )}
-          {task && <Button type="button" variant="ghost" style={btn} onClick={() => completeTaskWithUndo(task)}>Done</Button>}
-          <Button type="button" variant="ghost" style={btn} onClick={open}>Open</Button>
-        </>
-      }
-    />
-  )
+  // Kai 2026-09-27: "why display the same thing twice… why a button for open and done… why does
+  // that next even exist if I see the top 3 today and below it the up next?" During the day the
+  // card steps aside: Top 3 and Up next show each thing as what it is (a task row: checkbox = done,
+  // tap = open; an event row: tap = open; the running one reads "Now"). Start focus is in each
+  // row's menu. The card returns only for the ritual moments: plan, shut down, day closed.
+  return null
 }
 
 // ── The card's shell: the retired RitualCard's look, one layout for every state. ──

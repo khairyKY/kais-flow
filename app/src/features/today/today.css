@@ -8,3 +8,6 @@
 .kf-link-terra:hover {
   color: var(--acc-terra);
 }
+
+/* The Day card renders nothing during the day (ritual moments only) — no empty gap. */
+.kf-daycard-slot:empty { display: none; }

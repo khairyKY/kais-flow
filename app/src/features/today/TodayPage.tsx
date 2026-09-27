@@ -537,7 +537,7 @@ export function TodayPage() {
 
       {/* deviation(2026-09-26 daily cycle): ONE Day card with the next move replaces the two
           pinned ritual cards (./DayCard, ./dayPhase). Pins now decide which ritual it prompts. */}
-      <div style={{ marginTop: isMobile ? 12 : 20 }}>
+      <div className="kf-daycard-slot" style={{ marginTop: isMobile ? 12 : 20 }}>
         <DayCard
           events={events}
           tasks={tasks}

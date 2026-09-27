@@ -22,7 +22,7 @@ Routines run beside the loop, never inside the task list.
    | State | Card shows |
    |---|---|
    | not planned, before 17:00 | **Plan your day · ~5 min** — inbox count, overdue count, Top 3 x/3 |
-   | planned (or Top 3 picked) | **Now** — the running or next item: Start focus · Done · Open |
+   | ~~planned (or Top 3 picked)~~ | ~~**Now** — the running or next item: Start focus · Done · Open~~ → **2026-09-27 (Kai): no card during the day.** It repeated Top 3 / Up next and invented Done/Open buttons; each item now shows once, as what it is (task row / event row, running one reads "Now" in Up next) |
    | after 18:00, or Top 3 all done, not shut down | **Shut down the day · ~3 min** |
    | shut down | **Day closed ✿** — tomorrow's seeds |
 
