@@ -53,3 +53,5 @@ _2026-09-26 (conductor): R-1 … R-13 re-verified together on the release candid
 | # | Steps | Expected | Covered by | State | Last verified |
 |---|---|---|---|---|---|
 | B-1 | Release v1.0.1 migration 0038: on the 1st of a month (first: 1 Oct 00:00 UTC) open a retainer project with ticked checklist items | All items unticked; Activity shows "retainer reloaded" | `docs/log/assets/v1.0.1/0038-pglite-check.mjs` + manual | branch `claude/release-v1.0.1` | 2026-09-26 PGlite |
+| B-2 | v1.0.4: capture "buy milk tomorrow" in ⌘K; ask chat "what is due this week?" | The capture files as a task due tomorrow (AI parse works again on gpt-oss-20b); chat answers from your data | manual | branch `claude/release-v1.0.4` | — |
+| B-3 | v1.0.4: open Tasks with >1000 tasks (or check Network) | All tasks show; the request has no `embedding` column; several `range` requests if >1000 | `lib/columns.test.ts` + manual | branch | 2026-09-27 unit |

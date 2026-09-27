@@ -79,6 +79,8 @@ async function callGroq(rawText: string, systemPrompt: string): Promise<unknown>
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
+      // Low: one capture → one small JSON object; reasoning tokens spend the free daily budget.
+      ...(GROQ_PARSE_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
     }),
   })
   if (!res.ok) {
