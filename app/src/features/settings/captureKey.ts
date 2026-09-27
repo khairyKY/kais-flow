@@ -53,6 +53,8 @@ export async function deleteCaptureKey(id: string): Promise<void> {
 }
 
 /** A bookmarklet that sends the current page (selection, else title + URL) to the Inbox. */
+// ponytail: `key` is spliced into a JS string unescaped — safe only because newCaptureKey()'s
+// base64url alphabet has no quote or backslash. Escape it if keys ever come from elsewhere.
 export function bookmarklet(key: string): string {
   const js = `(()=>{const s=String(getSelection()).trim();fetch(${JSON.stringify(CAPTURE_URL)},{method:'POST',headers:{Authorization:'Bearer ${key}','Content-Type':'application/json'},body:JSON.stringify({text:s||document.title||location.href,url:location.href})}).then(r=>alert(r.ok?'Sent to your Kai\\u2019s Flow inbox \\u273F':'Capture failed ('+r.status+')'))})()`
   return 'javascript:' + encodeURIComponent(js)

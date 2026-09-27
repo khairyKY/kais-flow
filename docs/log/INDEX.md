@@ -46,3 +46,4 @@
 - 2026-09-27 06:48 · status · INCIDENT: Groq retired llama-3.3-70b from the free plan 2026-08-16 → prod parse+chat dead; secrets moved to gpt-oss-20b/120b. v1.0.4 candidate (scale for 100 users: column lists, fetchAll, per-user realtime, 0040 indexes/prune/global AI cap; U-10/11/14) green — `2026-09-27-0648-local-release-v1.0.4-scale.md`
 - 2026-09-27 06:42 · handoff · scale-backend worker: 0040 + global AI cap + parse 429 no-retry — `2026-09-27-0642-scale-backend-handoff.md`
 - 2026-09-27 06:33 · decision · every shipped version becomes a GitHub Release (publish job in release.yml; android/desktop called with the tag, version-stamped, assets attached); first = v1.0.3 — `2026-09-27-0633-local-decision-github-releases.md`
+- 2026-09-27 07:00 · decision · capture endpoint security review: sound; invocation-flood finding declined (same as every function; a counter costs more than the lookup) — `2026-09-27-0700-local-review-capture.md`
