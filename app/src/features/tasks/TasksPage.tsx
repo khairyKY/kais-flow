@@ -38,6 +38,7 @@ import type { Area, Domain, Project, Task } from '../../lib/types'
 // list body with no tab highlighted. ──
 
 const A = '/ds/assets'
+const GROUP_CAP = 50 // U-7: rows per group before "Show N more"
 
 function isToday(iso: string | null): boolean {
   if (!iso) return false
@@ -528,7 +529,13 @@ export function TasksPage() {
   const filtered = domainChip ? filteredBase.filter((t) => effectiveDomainId(t, projects, areas) === domainChip) : filteredBase
   const [sort, setSort] = useState<SortKey>('smart')
   const groups = applySort(groupTasks(filtered, now), sort)
-  const flatTasks = groups.flatMap((g) => g.tasks)
+  // U-7: 411 rows rendered at once made a 31,000px page (6,196 nodes). Each group shows its first
+  // GROUP_CAP rows until "Show N more"; a deep-linked ?focus= row opens its group. Keyboard moves,
+  // select-all and bulk actions work on the rows you can see.
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(() => new Set())
+  const shownTasks = (g: TaskGroup) =>
+    openGroups.has(g.key) || (focusId != null && g.tasks.some((t) => t.id === focusId)) ? g.tasks : g.tasks.slice(0, GROUP_CAP)
+  const flatTasks = groups.flatMap(shownTasks)
 
   const openTotal = displayTasks.filter((t) => t.status === 'todo' && !t.someday).length
   const doneTodayCount = tasks.filter((t) => t.status === 'done' && isToday(t.completed_at)).length
@@ -814,7 +821,7 @@ export function TasksPage() {
             groups.map((group) => (
               <div key={group.key}>
                 {!isSomeday && <SectionHeader group={group} />}
-                {group.tasks.map((t, i) => (
+                {shownTasks(group).map((t, i) => (
                   <div key={t.id} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
@@ -829,6 +836,16 @@ export function TasksPage() {
                     />
                   </div>
                 ))}
+                {shownTasks(group).length < group.tasks.length && (
+                  <button
+                    type="button"
+                    className="kf-link-terra"
+                    onClick={() => setOpenGroups((prev) => new Set(prev).add(group.key))}
+                    style={{ background: 'none', border: 'none', padding: '10px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}
+                  >
+                    Show {group.tasks.length - shownTasks(group).length} more
+                  </button>
+                )}
               </div>
             ))
           )}
