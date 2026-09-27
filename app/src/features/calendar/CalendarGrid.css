@@ -553,3 +553,10 @@
 @media (hover: hover) {
   .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }
 }
+
+/* Phone (Calendar.dc.html 1b): hour labels sit in a slim gutter, 9px mono, 14px from the edge. */
+.kf-cal-phone .fc .fc-timegrid-slot-label-cushion,
+.kf-cal-phone .fc .fc-timegrid-axis-cushion { padding: 0 4px 0 10px; }
+.kf-cal-phone .fc .fc-timegrid-slot-label { vertical-align: top; }
+.kf-cal-phone .fc .fc-scrollgrid { border-left: none; border-right: none; }
+.kf-cal-phone .fc .fc-scrollgrid-section-header > * { border-bottom-width: 1px; }
