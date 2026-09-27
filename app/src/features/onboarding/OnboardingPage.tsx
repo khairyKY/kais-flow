@@ -238,7 +238,7 @@ export function OnboardingPage() {
               <p className="ob-sub">Just a first name is plenty — it's your garden, after all.</p>
               <div style={{ width: '100%', marginTop: 26, textAlign: 'left' }}>
                 <div className="ob-flabel" style={{ marginBottom: 7 }}>Your name</div>
-                <input className="ob-finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Kai" autoFocus />
+                <input className="ob-finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoFocus />
                 <div className="ob-flabel" style={{ margin: '18px 0 9px' }}>Pick a seed</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   {SEEDS.map((s) => (

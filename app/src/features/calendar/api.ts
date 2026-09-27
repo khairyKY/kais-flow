@@ -3,15 +3,16 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { fetchAll } from '../../lib/fetchAll'
 import type { CalendarEvent, Task } from '../../lib/types'
 
 export function useCalendarEvents() {
   return useQuery({
     queryKey: ['calendar_events'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('calendar_events').select('*').order('starts_at')
-      if (error) throw error
-      return data as CalendarEvent[]
+      return fetchAll<CalendarEvent>((from, to) =>
+        supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to),
+      )
     },
     select: (events) => events.filter((e) => !e.deleted_at),
   })
