@@ -75,11 +75,11 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <img src={`${A}/vine/flowering.png`} alt="" style={{ height: 42, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 3 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{current} days</span>
                   {held.length > 0 && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                       <DropletIcon size={8} />
                       {held.length} rain held
                     </span>
@@ -88,7 +88,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>last {DAYS} days</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>last {DAYS} days</span>
               <span onClick={onClose} style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer' }}>✕</span>
             </div>
           </div>
@@ -139,7 +139,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={`${A}/vine/leaf-right.png`} alt="" style={{ height: 12 }} />grew</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><DropletIcon size={8} />rained, held</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>

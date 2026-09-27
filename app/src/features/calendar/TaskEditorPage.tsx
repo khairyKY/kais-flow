@@ -281,7 +281,7 @@ export function TaskEditorPage() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <BackLink to="/tasks">Tasks</BackLink>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
           Created {new Date(task.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
           {task.updated_at !== task.created_at && ` · edited ${new Date(task.updated_at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`}
         </span>
@@ -296,12 +296,12 @@ export function TaskEditorPage() {
         />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
             {linkedInbox?.kind === 'voice' && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>
             )}
             {task.priority != null && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: priorityColor(task.priority) ?? 'var(--acc-gold)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: priorityColor(task.priority) ?? 'var(--acc-gold)' }}>
                 {priorityFlag(task.priority)} {task.priority === 1 ? 'Critical' : task.priority === 2 ? 'High' : 'Medium'}
               </span>
             )}
@@ -313,7 +313,7 @@ export function TaskEditorPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
             style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
           />
-          <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>click title to edit · saves on blur</div>
+          <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>click title to edit · saves on blur</div>
         </div>
         <img src={`/ds/assets/cherry/${stage}.png`} alt="" style={{ height: 52, flex: 'none', filter: 'var(--shadow-drop-sm)', marginTop: 2 }} />
         <button
@@ -354,7 +354,7 @@ export function TaskEditorPage() {
                     />
                     <span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}><EmojiText text={c.title} /></span>
                     {c.duration_min != null && (
-                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                         {c.duration_min >= 60 ? `${Math.floor(c.duration_min / 60)}h${c.duration_min % 60 ? c.duration_min % 60 + 'm' : ''}` : `${c.duration_min}m`}
                       </span>
                     )}
@@ -370,7 +370,7 @@ export function TaskEditorPage() {
                     placeholder="Add a subtask…"
                     style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
                   />
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>enter to add</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>enter to add</span>
                 </div>
               </div>
             </>
@@ -385,18 +385,18 @@ export function TaskEditorPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {linkedEvent && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 3, padding: '9px 13px' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>
                       Block · {new Date(linkedEvent.starts_at).toLocaleDateString('en-US', { weekday: 'short' })} {localTimeKey(new Date(linkedEvent.starts_at))}–{localTimeKey(new Date(linkedEvent.ends_at))}
                     </span>
-                    <Link to="/calendar" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-deep)', textDecoration: 'none' }}>view on calendar →</Link>
+                    <Link to="/calendar" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-deep)', textDecoration: 'none' }}>view on calendar →</Link>
                   </span>
                 )}
                 {linkedInbox && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)', borderLeft: '3px solid var(--acc-hydrangea)', borderRadius: 3, padding: '9px 13px' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                       Capture · {linkedInbox.kind}, {new Date(linkedInbox.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </span>
-                    <Link to="/inbox" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', textDecoration: 'none' }}>open in inbox →</Link>
+                    <Link to="/inbox" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', textDecoration: 'none' }}>open in inbox →</Link>
                   </span>
                 )}
               </div>
@@ -407,13 +407,13 @@ export function TaskEditorPage() {
             <div>
               {deleting ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-muted)' }}>Delete this task?</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)' }}>Delete this task?</span>
                   <button type="button" onClick={handleDelete} style={{ font: 'inherit', fontSize: 11.5, color: 'var(--text-on-accent)', background: 'var(--sig-overdue)', border: 'none', borderRadius: 999, padding: '5px 14px', cursor: 'pointer' }}>Delete</button>
                   <button type="button" onClick={() => setDeleting(false)} style={{ font: 'inherit', fontSize: 11.5, color: 'var(--ink-muted)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 14px', cursor: 'pointer' }}>Cancel</button>
                 </div>
               ) : (
                 <>
-                  <span onClick={() => setDeleting(true)} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete task…</span>
+                  <span onClick={() => setDeleting(true)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete task…</span>
                   <FHelp>also removes its calendar block</FHelp>
                 </>
               )}
@@ -436,7 +436,7 @@ export function TaskEditorPage() {
             {/* washi tape — Editor.dc.html 1a:382 */}
             <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
-            <FLabel style={{ fontSize: 8.5, color: 'var(--ink-hairline)' }}>Project or area</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Project or area</FLabel>
             <Select
               value={project?.id ?? area?.id ?? ''}
               onChange={handleProjectOrArea}
@@ -445,7 +445,7 @@ export function TaskEditorPage() {
               style={{ fontSize: 13, padding: '8px 10px', width: '100%' }}
             />
             <FHelp>a task lives in a project or an area, not both</FHelp>
-            <FLabel style={{ fontSize: 8.5, marginTop: 12 }}>Labels</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Labels</FLabel>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {task.labels.map((l) => (
                 <span key={l} style={chipStyle}>
@@ -469,15 +469,15 @@ export function TaskEditorPage() {
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Schedule</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
-                <FLabel style={{ fontSize: 8.5, color: 'var(--ink-hairline)' }}>Due date</FLabel>
+                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due date</FLabel>
                 <DateInput value={dueDate} onChange={(v) => handleDueChange(v, dueTime || '09:00')} />
               </div>
               <div>
-                <FLabel style={{ fontSize: 8.5, color: 'var(--ink-hairline)' }}>Due time</FLabel>
+                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due time</FLabel>
                 <TimeInput value={dueTime} onChange={(v) => handleDueChange(dueDate || localDateKey(new Date()), v)} />
               </div>
             </div>
-            <FLabel style={{ fontSize: 8.5, marginTop: 12 }}>Duration</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Duration</FLabel>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {DURATION_CHIPS.map((m) => (
                 <span key={m} onClick={() => setDuration(task, m)} style={{ ...chipStyle, cursor: 'pointer', ...(task.duration_min === m ? { background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', border: 'none' } : {}) }}>
@@ -485,10 +485,10 @@ export function TaskEditorPage() {
                 </span>
               ))}
             </div>
-            <FLabel style={{ fontSize: 8.5, marginTop: 12 }}>Reminder</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Reminder</FLabel>
             <Select value={reminderOffset} onChange={handleReminderChange} options={REMINDER_OPTIONS} ariaLabel="Reminder" style={{ fontSize: 13, padding: '8px 10px', width: '100%' }} />
             <FHelp>sends a push · needs a due time {dueTime ? '✓' : ''}</FHelp>
-            <FLabel style={{ fontSize: 8.5, marginTop: 12 }}>Repeat</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Repeat</FLabel>
             <Select value={task.recurrence_rule ?? ''} onChange={(v) => setRecurrence(task, v || null)} options={REPEAT_OPTIONS} ariaLabel="Repeat" style={{ fontSize: 13, padding: '8px 10px', width: '100%' }} />
             <FHelp>recurring tasks roll forward on done</FHelp>
 
@@ -537,7 +537,7 @@ export function TaskEditorPage() {
   )
 }
 
-const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
 // Overlays §03 task-detail rows: 13px of vertical padding (so the row clears 44px),
 // muted label left, mono value right.
@@ -558,7 +558,7 @@ const sheetRowValue = { fontFamily: 'var(--font-mono)', fontSize: 11, color: 'va
 
 const chipStyle = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 9,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
   padding: '5px 9px',

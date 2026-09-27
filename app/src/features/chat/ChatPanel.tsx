@@ -137,7 +137,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
                       style={{
                         display: 'inline-block',
                         fontFamily: 'var(--font-mono)',
-                        fontSize: 9,
+                        fontSize: 'var(--fs-meta)',
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                         color: 'var(--acc-clover-text)',

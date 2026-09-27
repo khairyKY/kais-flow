@@ -35,3 +35,5 @@ akiflow-dump.json
 
 # graphify knowledge-graph output — regenerable tool artifact, not project source
 graphify-out/
+# Claude Design project exports (Kai hands these over; never commit, the repo is public)
+design-refresh-*.zip

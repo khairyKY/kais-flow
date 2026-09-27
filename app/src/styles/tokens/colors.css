@@ -10,10 +10,10 @@
 
   /* Ink */
   --ink-body:           #2a2420;   /* primary text — bark brown */
-  --ink-muted:          #6b6455;   /* secondary text, metadata labels */
-  --ink-faint:          #8b8471;   /* hints, uppercase mono captions */
-  --ink-hairline:       #a49d87;   /* tertiary hint, "done" strike text */
-  --ink-hand:           #7a745f;   /* hand-script annotations (X-pass foundation patch) */
+  --ink-muted:          #5f5849;   /* secondary text, metadata labels */
+  --ink-faint:          #6f685a;   /* hints, uppercase mono captions */
+  --ink-hairline:       #8c8572;   /* tertiary hint, "done" strike text */
+  --ink-hand:           #6c6557;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Borders */
   --line-solid:         #cfc7b0;

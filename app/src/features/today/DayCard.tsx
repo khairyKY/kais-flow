@@ -1,16 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { useNavigate } from 'react-router'
 import { Button } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import { completeTaskWithUndo } from '../tasks/api'
 import { RITUAL_STEP_COUNT, useRitualsFinishedToday, useSeedsFor, type RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
 import { NOW_SOON_MIN, dayPhase, eveningState, morningState, ritualFinished, type RitualState } from './dayPhase'
 import { top3Tally } from './top3Today'
-import { upNextClock, upNextEvents, isInProgress } from './upNext'
+import { upNextEvents } from './upNext'
 import { useMinuteNow } from './useMinuteNow'
-import { useStartFocus } from './startFocus'
 import type { CalendarEvent, Task } from '../../lib/types'
 
 // deviation(2026-09-26 daily cycle): the Day card. Today.dc.html 1a/1b pin two ritual cards
@@ -20,7 +17,6 @@ import type { CalendarEvent, Task } from '../../lib/types'
 // crisp shadow, sun/moon glyph, thin progress bar, mono count) with kit Buttons for its actions.
 // Either ritual stays one tap away from the links along its foot, in every state.
 
-const A = '/ds/assets'
 
 interface DayCardProps {
   events: CalendarEvent[]
@@ -38,8 +34,6 @@ interface DayCardProps {
 
 export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualSteps, prompts, compact, onOpenRitual }: DayCardProps) {
   const now = useMinuteNow()
-  const navigate = useNavigate()
-  const startFocus = useStartFocus()
 
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const today = cairoDateKey(now)
@@ -62,7 +56,7 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
   const state = dayPhase({ now, morning, evening, top3: tally, nextUp, nextUpSoon, firstOpenTop3: openTop3[0] ?? null, prompts })
 
   const btn: CSSProperties = { fontSize: 12.5, padding: '7px 14px', ...(compact ? { minHeight: 44 } : null) }
-  const links = <RitualLinks morning={morning} evening={evening} onOpen={onOpenRitual} />
+  const links = <RitualLinks morning={morning} evening={evening} onOpen={onOpenRitual} short={compact} />
 
   if (state.phase === 'plan') {
     return (
@@ -108,49 +102,12 @@ export function DayCard({ events, tasks, top3, inboxCount, overdueCount, ritualS
     )
   }
 
-  // Now — the running or next item, else the first unfinished Top 3, else a clear stretch.
-  const item = state.item
-  if (!item) {
-    return (
-      <Shell compact={compact} icon={<img src={`${A}/daisy/midday.png`} alt="" style={{ height: 26, flex: 'none' }} />} links={links}
-        caption="Now"
-        title="Nothing on the clock"
-        meta={tally.picked > 0 ? [`Top 3 ${tally.done}/${tally.picked} done`] : ['a clear stretch — pick the next thing']}
-        actions={<Button type="button" variant="ghost" style={btn} onClick={() => navigate('/calendar')}>Open calendar</Button>}
-      />
-    )
-  }
-  const task = item.kind === 'task' ? item.task : item.event.task_id ? taskById.get(item.event.task_id) : undefined
-  const title = item.kind === 'task' ? item.task.title : item.event.title
-  const running = item.kind === 'event' && isInProgress(item.event.starts_at, item.event.ends_at, now)
-  const caption = item.kind === 'task' ? 'Next · Top 3' : running ? 'Now' : `Next · ${upNextClock(item.event.starts_at)}`
-  const meta = item.kind === 'event'
-    ? [`${upNextClock(item.event.starts_at)}–${upNextClock(item.event.ends_at)}`]
-    : [
-        item.task.duration_min != null ? `${item.task.duration_min}m` : null,
-        tally.picked > 0 ? `Top 3 ${tally.done}/${tally.picked} done` : null,
-        nextUp ? `then ${upNextClock(nextUp.starts_at)} · ${nextUp.title}` : null,
-      ].filter((m): m is string => !!m)
-  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
-  return (
-    <Shell compact={compact} icon={<img src={`${A}/daisy/midday.png`} alt="" style={{ height: 26, flex: 'none' }} />} links={links}
-      caption={caption} captionTone={running ? 'now' : 'time'}
-      title={<EmojiText text={title} />}
-      meta={meta}
-      actions={
-        <>
-          {task && (
-            <Button type="button" variant="secondary" style={btn} onClick={() => startFocus(task)}
-              icon={<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor" /></svg>}>
-              Start focus
-            </Button>
-          )}
-          {task && <Button type="button" variant="ghost" style={btn} onClick={() => completeTaskWithUndo(task)}>Done</Button>}
-          <Button type="button" variant="ghost" style={btn} onClick={open}>Open</Button>
-        </>
-      }
-    />
-  )
+  // Kai 2026-09-27: "why display the same thing twice… why a button for open and done… why does
+  // that next even exist if I see the top 3 today and below it the up next?" During the day the
+  // card steps aside: Top 3 and Up next show each thing as what it is (a task row: checkbox = done,
+  // tap = open; an event row: tap = open; the running one reads "Now"). Start focus is in each
+  // row's menu. The card returns only for the ritual moments: plan, shut down, day closed.
+  return null
 }
 
 // ── The card's shell: the retired RitualCard's look, one layout for every state. ──
@@ -179,7 +136,7 @@ function Shell({ compact, icon, caption, captionTone = 'time', title, meta, body
           {caption && <Caption tone={captionTone}>{caption}</Caption>}
           <div style={{ fontSize: compact ? 13.5 : 14.5, color: 'var(--ink-body)', fontWeight: 500, lineHeight: 1.3, marginTop: caption ? 2 : 0 }}>{title}</div>
           {meta && meta.length > 0 && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: compact ? 9 : 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: compact ? 8 : 12, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: compact ? 8 : 12, flexWrap: 'wrap' }}>
               {meta.map((m) => <span key={m}>{m}</span>)}
             </div>
           )}
@@ -190,36 +147,42 @@ function Shell({ compact, icon, caption, captionTone = 'time', title, meta, body
             </div>
           )}
         </div>
-        {actions && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: compact ? '1 0 100%' : 'none', flexWrap: 'wrap', paddingLeft: compact ? 36 : 0 }}>{actions}</div>
+        {actions && !compact && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none', flexWrap: 'wrap' }}>{actions}</div>
         )}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: compact ? 4 : 6 }}>{links}</div>
+      {/* Kai 2026-09-27: on a phone the button sat alone on its own row ("its position is quite
+          awkward"). Phone footer = the ritual links on the left, the card's action on the right. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: compact ? 'space-between' : 'flex-end', gap: 8, flexWrap: 'wrap', marginTop: compact ? 8 : 6 }}>
+        {links}
+        {actions && compact && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>{actions}</div>}
+      </div>
     </section>
   )
 }
 
 function Caption({ children, tone = 'time' }: { children: ReactNode; tone?: 'now' | 'time' }) {
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{children}</div>
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{children}</div>
   )
 }
 
 function Minutes({ children }: { children: ReactNode }) {
-  return <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 400, letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>
+  return <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontWeight: 400, letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>
 }
 
 // "A small secondary link on the card opens either ritual any time" — both, with the step count
 // the old pinned cards showed, or ✓ once finished (the count is per calendar date, the finish per
 // loop day — so after midnight a closed evening would otherwise read 0/5).
 const progress = (r: RitualState) => (ritualFinished(r) ? '✓' : `${r.done}/${r.total}`)
-function RitualLinks({ morning, evening, onOpen }: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void }) {
-  const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
+// `short` (phone): "Morning 0/4" so the links and the card's button share one row.
+function RitualLinks({ morning, evening, onOpen, short }: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void; short?: boolean }) {
+  const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {progress(morning)}</button>
-      <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 9 }}>·</span>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {progress(evening)}</button>
+      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>{short ? 'Morning' : 'Morning ritual'} {progress(morning)}</button>
+      <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>·</span>
+      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>{short ? 'Evening' : 'Evening ritual'} {progress(evening)}</button>
     </div>
   )
 }

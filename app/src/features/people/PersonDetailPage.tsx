@@ -152,11 +152,11 @@ export function PersonDetailPage() {
   return (
     <div style={{ maxWidth: 760 }}>
       <style>{`
-        .chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
-        .flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
-        .fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline)}
+        .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+        .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+        .fhelp{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;color:var(--ink-hairline)}
         .fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
-        .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
+        .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
         .slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
         .av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none}
       `}</style>
@@ -258,7 +258,7 @@ export function PersonDetailPage() {
             <select value={newFactType} onChange={(e) => setNewFactType(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
               <option value="Interest">Interest</option><option value="Birthday">Birthday</option><option value="Note">Note</option><option value="Family">Family</option>
             </select>
-            {newFactType} <span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+            {newFactType} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
           </span>
           <span style={{ flex: 1, minWidth: 160 }}>
             <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
@@ -279,7 +279,7 @@ export function PersonDetailPage() {
           <select value={logChannel} onChange={(e) => setLogChannel(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
             <option value="in person">In person</option><option value="call">Call</option><option value="text">Text</option><option value="email">Email</option>
           </select>
-          {logChannel === 'in person' ? 'In person' : logChannel.charAt(0).toUpperCase() + logChannel.slice(1)} <span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+          {logChannel === 'in person' ? 'In person' : logChannel.charAt(0).toUpperCase() + logChannel.slice(1)} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
         </span>
         <span style={{ flex: 1, minWidth: 160 }}>
           <input type="text" placeholder="what did you talk about?" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: logSummary ? 'normal' : 'italic', outline: 'none' }} />
@@ -288,7 +288,7 @@ export function PersonDetailPage() {
           <select value={logDate} onChange={(e) => setLogDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
             <option value="today">today</option><option value="yesterday">yesterday</option><option value="1w ago">1w ago</option>
           </select>
-          {logDate} <span style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>▾</span>
+          {logDate} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
         </span>
         <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Log</button>
       </form>
@@ -312,7 +312,7 @@ export function PersonDetailPage() {
 
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-        <span onClick={removePerson} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person…</span>
+        <span onClick={removePerson} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person…</span>
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
       </div>
 

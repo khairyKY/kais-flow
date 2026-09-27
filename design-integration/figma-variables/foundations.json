@@ -1,0 +1,68 @@
+{
+  "$type": "number",
+  "spacing": {
+    "sp-1": { "$value": 4 },
+    "sp-2": { "$value": 8 },
+    "sp-3": { "$value": 12 },
+    "sp-4": { "$value": 16 },
+    "sp-5": { "$value": 20 },
+    "sp-6": { "$value": 24 },
+    "sp-7": { "$value": 28 },
+    "sp-8": { "$value": 32 },
+    "sp-10": { "$value": 40 },
+    "sp-12": { "$value": 48 },
+    "sp-16": { "$value": 64 },
+    "gap": {
+      "tight": { "$value": 16 },
+      "default": { "$value": 24 },
+      "section": { "$value": 40 },
+      "major": { "$value": 64 }
+    },
+    "pad-card": {
+      "sm": { "$value": 14 },
+      "default": { "$value": 22 },
+      "lg": { "$value": 28 }
+    }
+  },
+  "radius": {
+    "sharp": { "$value": 3 },
+    "input": { "$value": 6 },
+    "md": { "$value": 8 },
+    "pill": { "$value": 999 }
+  },
+  "typography": {
+    "fs": {
+      "display-xl": { "$value": 44 },
+      "display-l": { "$value": 26 },
+      "display-m": { "$value": 22 },
+      "lead": { "$value": 18 },
+      "body-l": { "$value": 16 },
+      "body": { "$value": 14.5 },
+      "body-s": { "$value": 13.5 },
+      "caption": { "$value": 12.5 },
+      "mono-l": { "$value": 11 },
+      "mono": { "$value": 10.5 },
+      "mono-s": { "$value": 10 },
+      "mono-xs": { "$value": 9.5 },
+      "hand": { "$value": 16 },
+      "hand-l": { "$value": 18 }
+    },
+    "fw": {
+      "regular": { "$value": 400 },
+      "medium": { "$value": 500 },
+      "semibold": { "$value": 600 }
+    },
+    "lh": {
+      "tight": { "$value": 1.0 },
+      "snug": { "$value": 1.3 },
+      "body": { "$value": 1.4 },
+      "relaxed": { "$value": 1.5 }
+    },
+    "ls": {
+      "mono-tight": { "$value": 0.12 },
+      "mono": { "$value": 0.18 },
+      "mono-wide": { "$value": 0.22 },
+      "display": { "$value": -0.015 }
+    }
+  }
+}

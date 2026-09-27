@@ -7,7 +7,7 @@ import { TimeField } from './TimeField'
 
 export const FLABEL: CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 9,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.16em',
   textTransform: 'uppercase',
   color: 'var(--ink-faint)',
@@ -19,7 +19,7 @@ export function FLabel({ children, style }: { children: ReactNode; style?: CSSPr
 
 export function FHelp({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5, ...style }}>
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5, ...style }}>
       {children}
     </div>
   )
@@ -130,7 +130,7 @@ export function ColorDots({ value, onChange, size = 22 }: { value: string | null
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 9,
+              fontSize: 'var(--fs-meta)',
               color: 'var(--ink-hairline)',
             }}
           >

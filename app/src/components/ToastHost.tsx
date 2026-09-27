@@ -87,7 +87,7 @@ export function ToastHost() {
                 }}
                 style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
+                  fontSize: 'var(--fs-meta)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   color: 'var(--acc-terra)',

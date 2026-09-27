@@ -38,6 +38,7 @@ import type { Area, Domain, Project, Task } from '../../lib/types'
 // list body with no tab highlighted. ──
 
 const A = '/ds/assets'
+const GROUP_CAP = 50 // U-7: rows per group before "Show N more"
 
 function isToday(iso: string | null): boolean {
   if (!iso) return false
@@ -133,7 +134,7 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       }}
     >
       {label}
-      <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 10, color: active === key ? underline : 'var(--ink-hairline)' }}>{count}</span>
+      <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: active === key ? underline : 'var(--ink-hairline)' }}>{count}</span>
       {active === key && <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: underline, borderRadius: 2 }} />}
     </Link>
   )
@@ -159,7 +160,7 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
         {tab('all', 'All', allCount, 'var(--acc-moss)')}
       </div>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
-        <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
+        <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
             with the `⚟` glyph, then a click-cycler. J-12 (Kai): "a popover listing the options"
             instead of clicking through Smart → Due → Priority → A–Z — the themed Select's own
@@ -175,7 +176,7 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
           // caret the app's other menu triggers carry (BulkBar, Inbox bulk, People) — hairline ink,
           // the label's own size.
           display={<><SortIcon /> {SORT_LABELS[sort]} <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span></>}
-          style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
+          style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
         />
       </span>
     </div>
@@ -188,7 +189,7 @@ function SectionHeader({ group }: { group: TaskGroup }) {
   const m = group.totalMinutes % 60
   const time = group.totalMinutes > 0 ? [h ? `${h}H` : '', m ? `${m}M` : ''].filter(Boolean).join(' ') : null
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
       <span>{group.label} · {group.tasks.length}{time ? ` · ${time}` : ''}</span>
       <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
     </div>
@@ -214,7 +215,7 @@ function InlineAdd({ label, placeholder, color, onSubmit }: { label: string; pla
   const [value, setValue] = useState('')
   if (!open) {
     return (
-      <div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>
+      <div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>
         ＋ {label}
       </div>
     )
@@ -258,13 +259,13 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
           {domains.map((d) => (
             <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
               {d.name}
-              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                 {open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length}
               </span>
             </div>
@@ -275,20 +276,20 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
 
       <TapeCard tilt={0.4} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
           {areas.map((a) => (
             <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></span>
           ))}
         </div>
-        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New area
         </div>
       </TapeCard>
 
       <TapeCard tilt={-0.35} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={30} width={56} tint="color-mix(in srgb, var(--acc-hydrangea) 42%, transparent)" rotate={-1.5} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
           {projects.slice(0, 4).map((p) => {
             const inProject = tasks.filter((t) => t.project_id === p.id)
@@ -302,13 +303,13 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
                 </div>
               </div>
             )
           })}
         </div>
-        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New project
         </div>
       </TapeCard>
@@ -365,7 +366,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
         {doneToday.length > 0 && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '6px 0 4px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Today · {doneToday.length}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Today · {doneToday.length}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
             {doneToday.map((t, i) => (
@@ -381,7 +382,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
           <>
             <div onClick={() => setExpanded((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 22, padding: '9px 2px', cursor: 'pointer' }}>
               <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
               <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 22, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
             </div>
@@ -394,7 +395,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
         )}
       </div>
 
-      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
         <span>Completed items fade after 30 days — nothing is deleted</span>
         <span onClick={() => setExpanded(false)} style={{ marginLeft: 'auto', color: 'var(--acc-terra)', cursor: 'pointer' }}>Clear view</span>
       </div>
@@ -528,7 +529,13 @@ export function TasksPage() {
   const filtered = domainChip ? filteredBase.filter((t) => effectiveDomainId(t, projects, areas) === domainChip) : filteredBase
   const [sort, setSort] = useState<SortKey>('smart')
   const groups = applySort(groupTasks(filtered, now), sort)
-  const flatTasks = groups.flatMap((g) => g.tasks)
+  // U-7: 411 rows rendered at once made a 31,000px page (6,196 nodes). Each group shows its first
+  // GROUP_CAP rows until "Show N more"; a deep-linked ?focus= row opens its group. Keyboard moves,
+  // select-all and bulk actions work on the rows you can see.
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(() => new Set())
+  const shownTasks = (g: TaskGroup) =>
+    openGroups.has(g.key) || (focusId != null && g.tasks.some((t) => t.id === focusId)) ? g.tasks : g.tasks.slice(0, GROUP_CAP)
+  const flatTasks = groups.flatMap(shownTasks)
 
   const openTotal = displayTasks.filter((t) => t.status === 'todo' && !t.someday).length
   const doneTodayCount = tasks.filter((t) => t.status === 'done' && isToday(t.completed_at)).length
@@ -684,17 +691,18 @@ export function TasksPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>
             </div>
           </div>
           {isDone ? (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
             </div>
           ) : (
-            !isSomeday && <VoiceCaptureButton />
+            // Phone: the tab bar's mic is the capture button; a second one here wrapped to two lines.
+            !isSomeday && <span className="tasks-head-capture"><VoiceCaptureButton /></span>
           )}
         </div>
 
@@ -729,7 +737,7 @@ export function TasksPage() {
               background: 'color-mix(in srgb, var(--acc-terra) 12%, transparent)',
               color: 'var(--acc-terra)',
               fontFamily: 'var(--font-mono)',
-              fontSize: 10,
+              fontSize: 'var(--fs-meta)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               cursor: 'pointer',
@@ -740,7 +748,7 @@ export function TasksPage() {
         )}
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
-          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
+          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
             swipe → for actions · swipe ← to delete
           </div>
         )}
@@ -749,7 +757,7 @@ export function TasksPage() {
           <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
             <span
               onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
             >
               All
             </span>
@@ -757,7 +765,7 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
                 {d.name}
               </span>
@@ -814,7 +822,7 @@ export function TasksPage() {
             groups.map((group) => (
               <div key={group.key}>
                 {!isSomeday && <SectionHeader group={group} />}
-                {group.tasks.map((t, i) => (
+                {shownTasks(group).map((t, i) => (
                   <div key={t.id} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
@@ -829,6 +837,16 @@ export function TasksPage() {
                     />
                   </div>
                 ))}
+                {shownTasks(group).length < group.tasks.length && (
+                  <button
+                    type="button"
+                    className="kf-link-terra"
+                    onClick={() => setOpenGroups((prev) => new Set(prev).add(group.key))}
+                    style={{ background: 'none', border: 'none', padding: '10px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}
+                  >
+                    Show {group.tasks.length - shownTasks(group).length} more
+                  </button>
+                )}
               </div>
             ))
           )}
@@ -836,7 +854,7 @@ export function TasksPage() {
           {activeTab === 'today' && doneTodayTasks.length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Done today · {doneTodayTasks.length}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Done today · {doneTodayTasks.length}</span>
                 <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                 <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 26, opacity: 0.8, filter: 'var(--shadow-drop-sm)' }} />
               </div>

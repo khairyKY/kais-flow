@@ -193,7 +193,7 @@ export function PeoplePage() {
         {nudges.length > 0 && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 8px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>Say hi</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>Say hi</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
             {nudges.slice(0, 1).map((p) => {
@@ -220,7 +220,7 @@ export function PeoplePage() {
         {grouped.map(({ domain, people: groupPeople }) => (
           <div key={domain?.id || 'uncategorized'}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 4px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domain?.name || 'Uncategorized'}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domain?.name || 'Uncategorized'}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
             {groupPeople.map((p, idx) => {
@@ -234,7 +234,7 @@ export function PeoplePage() {
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
                     <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)', marginTop: 1 }}>{summaryShort}</div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{lastTouchText}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{lastTouchText}</span>
                 </Link>
               )
             })}
@@ -251,10 +251,10 @@ export function PeoplePage() {
         /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
         .grain { position: absolute; inset: 0; pointer-events: none; z-index: 10; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.5; }
         [data-theme='night'] .grain { mix-blend-mode: overlay; opacity: 0.25; }
-        .chip { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
-        .flabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
-        .fhelp { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--ink-hairline); }
-        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+        .chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+        .flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-hairline); }
+        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
         .slabel .r { flex: 1; height: 1px; border-bottom: 1px dashed var(--line-dashed); }
         .av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--ink-body); flex: none; }
       `}</style>

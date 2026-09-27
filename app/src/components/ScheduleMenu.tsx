@@ -32,7 +32,7 @@ const itemStyle = {
 
 const headerStyle = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 8,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.16em',
   textTransform: 'uppercase' as const,
   color: 'var(--ink-hairline)',
@@ -85,7 +85,7 @@ export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleM
             <div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>
               {title ? `Schedule "${title}"` : 'Schedule'}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
               For…
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -142,7 +142,7 @@ export function ScheduleMenu({ position, title, onClose, onSchedule }: ScheduleM
           onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
         >
           <span>{p.label}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{p.key}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{p.key}</span>
         </button>
       ))}
       <div style={{ height: 1, background: 'var(--line-dashed)', margin: '4px 8px' }} />

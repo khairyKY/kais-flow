@@ -238,7 +238,7 @@ export function ActivityPage() {
     'var(--ink-muted)'
 
   const styles = `
-    .afilter { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-solid); color:var(--ink-muted); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+    .afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-solid); color:var(--ink-muted); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; transition:all 0.2s; }
     .afilter.on { background:var(--ink-body); color:var(--paper-parchment); border-color:var(--ink-body); }
     .aitem { display:flex; gap:15px; padding:0 2px; position:relative; }
     .arail { width:30px; flex:none; display:flex; flex-direction:column; align-items:center; }
@@ -247,9 +247,9 @@ export function ActivityPage() {
     .abody { flex:1; min-width:0; padding-bottom:20px; }
     button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
     button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
-    .chip { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
-    .fhelp { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.06em; color:var(--ink-hairline); }
-    .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
+    .chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
+    .fhelp { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; color:var(--ink-hairline); }
+    .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
     .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
   `
 
@@ -295,7 +295,7 @@ export function ActivityPage() {
           </div>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '14px 0 4px', scrollbarWidth: 'none' }} className="no-scrollbar">
             {CATEGORIES.filter((cat) => MOBILE_CATEGORIES.includes(cat.id)).map((cat) => (
-              <span key={cat.id} onClick={() => setFilter(cat.id)} className={`afilter ${filter === cat.id ? 'on' : ''}`} style={{ fontSize: 8.5, padding: '5px 10px' }}>
+              <span key={cat.id} onClick={() => setFilter(cat.id)} className={`afilter ${filter === cat.id ? 'on' : ''}`} style={{ fontSize: 'var(--fs-meta)', padding: '5px 10px' }}>
                 {cat.label}
               </span>
             ))}
@@ -308,9 +308,9 @@ export function ActivityPage() {
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0 12px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>{group.length}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{group.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
@@ -318,7 +318,7 @@ export function ActivityPage() {
           )}
           {!isLoading && rawEntries.length >= limit && (
             <div style={{ margin: '8px 0 24px', padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', justifyContent: 'center' }}>
-              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
+              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
             </div>
           )}
         </div>
@@ -341,7 +341,7 @@ export function ActivityPage() {
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
               </span>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity · the ledger</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity · the ledger</div>
                 <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>
               </div>
             </div>
@@ -349,7 +349,7 @@ export function ActivityPage() {
               <span className="fhelp">{plural(totalCount, 'event')} · {spanLabel}</span>
               <span
                 onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
               >
                 <FunnelIcon /> {range.label} ▾
               </span>
@@ -382,9 +382,9 @@ export function ActivityPage() {
           {!isLoading && groupedEntries.length > 0 && (
             <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>
               {rawEntries.length >= limit ? (
-                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
+                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
               ) : (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
               )}
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do — just a trail behind you ✿</span>

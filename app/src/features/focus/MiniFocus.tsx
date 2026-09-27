@@ -24,15 +24,28 @@ export function MiniFocus({ task }: { task: Task }) {
 
   const label = mode === 'break' ? 'Break' : mode === 'stopwatch' ? 'Stopwatch' : 'Focus'
 
+  // Kai 2026-09-27 ("a bit gimmicky?"): the full pomodoro card sat at the top of every task page.
+  // Idle, it's now one quiet pill; the card only appears while this task is the one being timed.
+  if (!isThisTask) {
+    const pill = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 32, padding: '0 13px', borderRadius: 999, border: '1px solid var(--line-card)', background: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--ink-muted)', cursor: 'pointer', textDecoration: 'none' }
+    return activeTask ? (
+      <Link to="/focus" style={pill}>Focus running on another task →</Link>
+    ) : (
+      <button type="button" onClick={start} style={pill} aria-label={`Start a focus session on ${task.title}`}>
+        <span aria-hidden="true" style={{ color: 'var(--acc-terra)' }}>▶</span> Focus · {mmss(mode === 'stopwatch' ? stopwatchSeconds : secondsLeft)}
+      </button>
+    )
+  }
+
   return (
     <div style={{ border: '1px solid var(--line-card)', borderRadius: 8, padding: '13px 14px', background: 'var(--paper-bone)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           {label}
         </span>
         <Link
           to="/focus"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}
         >
           full view →
         </Link>
@@ -62,7 +75,7 @@ export function MiniFocus({ task }: { task: Task }) {
             background: isThisTask && isRunning ? 'var(--paper-parchment)' : 'var(--acc-terra)',
             color: isThisTask && isRunning ? 'var(--ink-body)' : 'var(--paper-parchment)',
             fontFamily: 'var(--font-mono)',
-            fontSize: 10,
+            fontSize: 'var(--fs-meta)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             cursor: 'pointer',
@@ -72,7 +85,7 @@ export function MiniFocus({ task }: { task: Task }) {
         </button>
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 8 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 8 }}>
         round {currentRound} of {settings.roundsBeforeLongBreak}
         {activeTask && !isThisTask && ' · running on another task'}
       </div>

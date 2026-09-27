@@ -541,7 +541,7 @@ export function ProjectDetailPage() {
           <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: '30px 36px 36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <BackLink to="/projects">All projects</BackLink>
-              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
                 {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -549,7 +549,7 @@ export function ProjectDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
               <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={project.name} /></h1>
-              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
+              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
                 target<br />
                 <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
                   {project.target_date ? new Date(project.target_date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' }) : 'no date'}
@@ -558,7 +558,7 @@ export function ProjectDetailPage() {
             </div>
 
             {/* Color picker */}
-            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
+            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
             <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
               {colorPalette.map((c) => (
                 <span
@@ -578,7 +578,7 @@ export function ProjectDetailPage() {
             </div>
 
             {/* Domain — R4-17: reparent an existing project (the API had this all along) */}
-            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
             <Select
               value={project.domain_id ?? ''}
               onChange={(v) => reparentProject(project, v || null)}
@@ -590,9 +590,9 @@ export function ProjectDetailPage() {
             {/* Hours + Milestones */}
             <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 26, marginTop: 24 }}>
               <div>
-                <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
+                <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>
-                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>
+                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>
                   logged across {pTimeEntries.length} sessions
                 </div>
               </div>
@@ -600,7 +600,7 @@ export function ProjectDetailPage() {
               <div>
                 <SectionLabel style={{ marginBottom: 8 }}>
                   <span>Milestones</span>
-                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', marginLeft: 8, fontSize: 9, padding: '2px 6px' }}>{milestonePct}%</span>
+                  <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', marginLeft: 8, fontSize: 'var(--fs-meta)', padding: '2px 6px' }}>{milestonePct}%</span>
                 </SectionLabel>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -623,8 +623,8 @@ export function ProjectDetailPage() {
                       ) : (
                         <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
                       )}
-                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
-                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
+                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
                       <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
                     </div>
                   ))}
@@ -658,7 +658,7 @@ export function ProjectDetailPage() {
             </div>
 
             {/* Open tasks */}
-            <SectionLabel style={{ margin: '24px 0 6px' }} action={<span onClick={() => setShowAddTask(!showAddTask)} style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, fontSize: 10 }}>+ add task</span>}>
+            <SectionLabel style={{ margin: '24px 0 6px' }} action={<span onClick={() => setShowAddTask(!showAddTask)} style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, fontSize: 'var(--fs-meta)' }}>+ add task</span>}>
               <span>Open tasks · {openTasks.length}</span>
             </SectionLabel>
 
@@ -699,7 +699,7 @@ export function ProjectDetailPage() {
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                   <Checkbox checked={item.completed} onChange={() => toggleProjectChecklistItem(project, item.id)} size={15} />
                   <span style={{ fontSize: 13, color: item.completed ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>{item.title}</span>
-                  <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '3px 8px', borderRadius: 3 }}>
+                  <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                     {item.type}
                   </span>
                   <span onClick={() => removeProjectChecklistItem(project, item.id)} style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
@@ -819,19 +819,19 @@ export function ProjectDetailPage() {
                     <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-hairline)', fontSize: 11 }}>{dateLabel}</span>
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
-                        <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 9, padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
+                        <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
                           update
                         </span>
                       )}
                       {log.note}
                     </span>
                     {log.type === 'work' && log.duration && (
-                      <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 9.5, padding: '3px 8px', borderRadius: 999 }}>
+                      <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
                         {Math.floor(log.duration / 60) > 0 ? `${Math.floor(log.duration / 60)}h ` : ''}
                         {log.duration % 60 > 0 ? `${log.duration % 60}m` : ''}
                       </span>
                     )}
-                    {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
+                    {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
                   </div>
                 )
               })}
@@ -854,7 +854,7 @@ export function ProjectDetailPage() {
                     },
                   })
                 }
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
                 Archive project…
               </span>
@@ -899,7 +899,7 @@ export function ProjectDetailPage() {
         <div style={{ padding: '30px 40px 36px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <BackLink to="/projects">All projects</BackLink>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
               {domain?.name || 'Personal'} · ongoing since {new Date(area.created_at).toLocaleDateString('en-US', { month: 'short' })}
             </span>
           </div>
@@ -907,10 +907,10 @@ export function ProjectDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 20 }}>
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}><EmojiText text={area.name} /></h1>
             </div>
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '4px 9px', borderRadius: 3 }}>
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3 }}>
               area, not a project
             </span>
           </div>
@@ -918,7 +918,7 @@ export function ProjectDetailPage() {
           {/* Cadence health cards */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 22 }}>
             <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
-              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
+              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span
                   style={{
@@ -949,29 +949,29 @@ export function ProjectDetailPage() {
                   )
                 })}
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', marginTop: 8 }}>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 8 }}>
                 tended {tendedCount} of the last 5 weeks
               </div>
             </div>
 
             <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
-              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This month</div>
+              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This month</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>
                   {closedThisMonth.length}
                 </span>
                 <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>tasks closed</span>
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', marginTop: 11 }}>no target — areas just keep going</div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)', marginTop: 6 }}>{openTasks.length} open right now</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 11 }}>no target — areas just keep going</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 6 }}>{openTasks.length} open right now</div>
             </div>
           </div>
 
           {/* Open tasks */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {openTasks.length}</span>
+            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {openTasks.length}</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-            <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 9, padding: '3px 8px', borderRadius: 999 }}>
+            <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
               + add task
             </span>
           </div>
@@ -1005,7 +1005,7 @@ export function ProjectDetailPage() {
 
           {/* Keeps coming back routines */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Keeps coming back</span>
+            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Keeps coming back</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
 
@@ -1014,7 +1014,7 @@ export function ProjectDetailPage() {
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <Checkbox checked={false} onChange={() => completeTaskWithUndo(t)} size={15} />
                 <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
-                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 9, padding: '3px 8px', borderRadius: 3 }}>
+                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                   ↻ repeats
                 </span>
               </div>
@@ -1028,7 +1028,7 @@ export function ProjectDetailPage() {
 
           {/* Recent activities */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 8px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Recent</span>
+            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Recent</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
 
@@ -1055,7 +1055,7 @@ export function ProjectDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
             <span
               onClick={handleConvertAreaToProject}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
             >
               Convert to project…
             </span>

@@ -29,7 +29,7 @@
   --ink-body:           #F0EBDD;   /* primary text */
   --ink-muted:          #C9C0D8;   /* secondary text, metadata */
   --ink-faint:          #8E88A0;   /* hints, mono captions */
-  --ink-hairline:       #6E687F;   /* tertiary, "done" strike text */
+  --ink-hairline:       #716B81;   /* tertiary, "done" strike text */
   --ink-hand:           #C9C0D8;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Lines — cream hairlines, more transparent than day */

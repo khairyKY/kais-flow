@@ -19,7 +19,12 @@
   --fs-mono-l:     11px;   /* section labels, timestamps */
   --fs-mono:       10.5px;
   --fs-mono-s:     10px;
-  --fs-mono-xs:    9.5px;  /* card metadata strips */
+  --fs-mono-xs:    10px;   /* card metadata strips */
+  /* Small metadata (dates, statuses, captions): 10px on desktop, where the default 125% interface
+     size shows it at 12.5px, but a phone runs at 100%, so it rises there (Kai 2026-09-27: "text
+     sizing could use a makeover for web-mobile"). Inline styles use these instead of 10/10.5. */
+  --fs-meta:       10px;
+  --fs-meta-l:     10.5px;
   --fs-hand:       16px;   /* Caveat marginalia */
   --fs-hand-l:     18px;
 
@@ -39,4 +44,14 @@
   --ls-mono:       0.18em;
   --ls-mono-wide:  0.22em;
   --ls-display:    -0.015em;
+}
+
+@media (max-width: 767px) {
+  :root { --fs-meta: 11.5px; --fs-meta-l: 12px; }
+  /* One page-title size on a phone (the export's iPhone mocks use 26px); desktop titles keep
+     their per-page sizes (30–44px), which ranged 22–40px on a 390px screen before. */
+  .app-main-content h1 { font-size: 26px !important; line-height: 1.08 !important; }
+  /* "Metadata is tiny but tracked wide" — at phone size the 0.14–0.2em tracking made captions
+     wrap ("TASKS · 325 / OPEN") and split task details over three lines. Tighter on a phone. */
+  .app-shell [style*="uppercase"] { letter-spacing: 0.07em !important; }
 }

@@ -70,7 +70,7 @@ export function ResurfaceCard() {
             onClick={() => animateRowRemoval(cardRef.current, () => convertResurfaced(row, inboxItem))}
             // punch 22: `font` (shorthand) must precede `fontSize` — later shorthand keys clobber
             // earlier longhands in React style objects, which reset the chip to the body size.
-            style={{ font: 'inherit', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, border: 'none', cursor: 'pointer' }}
+            style={{ font: 'inherit', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta-l)', padding: '5px 9px', borderRadius: 999, border: 'none', cursor: 'pointer' }}
           >
             Still relevant
           </button>
@@ -78,7 +78,7 @@ export function ResurfaceCard() {
         <button
           type="button"
           onClick={() => animateRowRemoval(cardRef.current, () => reviewLaterResurfaced(row, tier))}
-          style={{ font: 'inherit', border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 10.5, padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer' }}
+          style={{ font: 'inherit', border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta-l)', padding: '5px 9px', borderRadius: 999, background: 'none', cursor: 'pointer' }}
         >
           Later
         </button>

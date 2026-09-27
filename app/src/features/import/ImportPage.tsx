@@ -26,7 +26,7 @@ const card: React.CSSProperties = {
   borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '18px 20px',
 }
 const help: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em',
   textTransform: 'uppercase', color: 'var(--ink-faint)',
 }
 

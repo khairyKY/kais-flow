@@ -336,7 +336,7 @@ export function InboxPage() {
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                   jumped here from Search — the ringed card below is your match
                 </span>
-                <span onClick={() => setBannerDismissed(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>✕</span>
+                <span onClick={() => setBannerDismissed(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer' }}>✕</span>
               </div>
             )}
 
@@ -373,7 +373,7 @@ export function InboxPage() {
                       same treatment as the retainer's "/ 10h · renews 1 Aug" (punch 42). */}
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {githubItems.map((item) => (
@@ -394,7 +394,7 @@ export function InboxPage() {
             )}
 
             {!isMobile && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
                 {/* J-17: each key is a keycap (the `?` overlay's chip), not a bold letter. */}
                 {([[['E'], 'file'], [['D'], 'dismiss'], [['S'], 'snooze'], [['↑', '↓'], 'move'], [['⏎'], 'open']] as const).map(([keys, label]) => (
                   <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -459,7 +459,7 @@ function tabStyle(active: boolean, isMobile: boolean): React.CSSProperties {
     cursor: 'pointer',
   }
 }
-const tabCountStyle: React.CSSProperties = { marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }
+const tabCountStyle: React.CSSProperties = { marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }
 function tabUnderline(color: string): React.CSSProperties {
   return { position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: color, borderRadius: 2 }
 }
@@ -504,14 +504,14 @@ function ResolvedCard({ item }: { item: InboxItem }) {
   return (
     <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '13px 19px', marginTop: 18, opacity: 0.85, display: 'flex', alignItems: 'center', gap: 10 }}>
       <span style={{ width: 15, height: 15, borderRadius: 4, background: filed ? 'var(--sig-done)' : 'var(--ink-hairline)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-        <span style={{ color: 'var(--paper-parchment)', fontSize: 8 }}>✓</span>
+        <span style={{ color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)' }}>✓</span>
       </span>
       <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>
       <Chip tone="sage" style={filed ? undefined : { background: 'rgba(107,100,85,0.14)', color: 'var(--ink-faint)' }}>
         {filed ? 'already filed as a task' : 'dismissed'}
       </Chip>
       {filed && (
-        <a href="/tasks" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+        <a href="/tasks" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
           open task →
         </a>
       )}
@@ -529,7 +529,7 @@ function SelectBox({ selected, active, onToggle, marginTop = 3 }: { selected?: b
       aria-label="Select capture"
       onClick={(e) => { e.stopPropagation(); onToggle() }}
       className={`ib-select-box${selected || active ? ' on' : ''}`}
-      style={{ width: 15, height: 15, marginTop, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 9, lineHeight: 1, cursor: 'pointer' }}
+      style={{ width: 15, height: 15, marginTop, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', lineHeight: 1, cursor: 'pointer' }}
     >
       {selected ? '✓' : ''}
     </span>
@@ -653,7 +653,7 @@ function TriageCard({
             title into a word-per-line column. 1c gives the text the card's full width; the
             caption moves to the end of the chip row below. */}
         {!compact && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
             {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
           </span>
         )}
@@ -676,7 +676,7 @@ function TriageCard({
           ) : (
             <span style={{ fontSize: size.meta, color: 'var(--ink-muted)', fontStyle: 'italic' }}>no AI read on this one — file it yourself</span>
           )}
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
             {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
           </span>
         </div>
@@ -690,7 +690,7 @@ function TriageCard({
                 "<EmojiText text={parse.cleaned_text ?? item.raw_text} />"{dueLabel && <> · due <b style={{ fontWeight: 600 }}>{dueLabel}</b></>}{projectName && <> · → {projectName}</>}
               </span>
               {!compact && (
-                <span data-no-select onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', cursor: 'pointer' }}>
+                <span data-no-select onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', cursor: 'pointer' }}>
                   ✎ edit parse
                 </span>
               )}
@@ -786,17 +786,17 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
       <KindChip kind="github_issue" />
       <span style={{ flex: 1, fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</span>
       {!compact && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
           {payload?.rank ? `rank ${payload.rank} · ` : ''}{daysAgo(item.created_at)}d
         </span>
       )}
       {(payload?.repo || payload?.number) && (
         issueUrl ? (
-          <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
+          <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
             {payload?.repo}{payload?.number ? `#${payload.number}` : ''} ↗
           </a>
         ) : (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{payload?.repo}{payload?.number ? `#${payload.number}` : ''}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{payload?.repo}{payload?.number ? `#${payload.number}` : ''}</span>
         )
       )}
       <Button type="button" variant="cta" onClick={onFile} style={{ fontSize: compact ? 10.5 : 12, padding: compact ? '6px 10px' : '7px 13px' }}>File</Button>
@@ -842,7 +842,7 @@ function DismissedPanel({ items, compact, selected, onToggleSelect }: { items: I
         {!compact && (
           <>
             <span style={{ width: 1, height: 14, background: 'var(--line-dashed)' }} />
-            <span onClick={clearNow} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Clear now</span>
+            <span onClick={clearNow} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Clear now</span>
           </>
         )}
       </div>
@@ -906,7 +906,7 @@ function DismissedRow({ item, selected, selectionActive, onToggleSelect }: { ite
         <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{item.raw_text}</div>
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 11 }}>
           <KindChip kind={item.kind} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>dismissed {dismissedAgo(item.updated_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>dismissed {dismissedAgo(item.updated_at)}</span>
         </div>
       </div>
       <Button type="button" variant="secondary" onClick={() => restoreInboxItem(item)} style={{ fontSize: 11.5, padding: '6px 13px', color: 'var(--acc-terra)' }}>
@@ -934,10 +934,10 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
         {...swipe.handlers}
         style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(var(--kf-shadow-rgb, 60,52,38),0.14)' : undefined }}
       >
-        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 10, flex: 'none' }}>✕</span>
+        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)', flex: 'none' }}>✕</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.35 }}>{item.raw_text}</div>
-          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{KIND_LABEL[item.kind]} · {dismissedAgo(item.updated_at)}</div>
+          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{KIND_LABEL[item.kind]} · {dismissedAgo(item.updated_at)}</div>
         </div>
       </div>
     </div>

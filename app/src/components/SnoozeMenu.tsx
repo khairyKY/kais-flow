@@ -50,7 +50,7 @@ const itemStyle = {
 
 const headerStyle = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 8,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.16em',
   textTransform: 'uppercase' as const,
   color: 'var(--ink-hairline)',
@@ -107,7 +107,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
             <div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>
               {title ? `Snooze "${title}"` : 'Snooze'}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
               Until…
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -178,7 +178,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
         >
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
           <span style={{ flex: 1 }}>{p.label}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>
             {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
           </span>
         </button>

@@ -307,7 +307,7 @@ export function PerennialsPage() {
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}><EmojiText text={t.title} /></div>
-            <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
+            <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
               {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
             </div>
           </div>
@@ -389,7 +389,7 @@ export function PerennialsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Everything that repeats, in one bed
               </div>
               <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -397,7 +397,7 @@ export function PerennialsPage() {
               </h1>
             </div>
           </div>
-          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 4 }}>
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 4 }}>
             {activeSeries.length} series · {dueThisWeekCount} due this week
           </div>
         </div>

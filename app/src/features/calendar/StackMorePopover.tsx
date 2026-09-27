@@ -71,7 +71,7 @@ export function StackMorePopover({ anchor, items, onPick, onClose }: StackMorePo
           padding: 6,
         }}
       >
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '4px 10px 6px' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '4px 10px 6px' }}>
           Stacked here
         </div>
         {items.map((it) => (
@@ -85,7 +85,7 @@ export function StackMorePopover({ anchor, items, onPick, onClose }: StackMorePo
             style={{ display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', textAlign: 'left', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)', background: 'none', border: 'none', borderRadius: 5, padding: '7px 10px', cursor: 'pointer' }}
           >
             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><EmojiText text={it.title} /></span>
-            <span style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-hairline)' }}>{it.time}</span>
+            <span style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{it.time}</span>
           </button>
         ))}
       </div>

@@ -55,7 +55,7 @@ const segWrapStyle: React.CSSProperties = {
   borderRadius: 999,
   overflow: 'hidden',
   fontFamily: 'var(--font-mono)',
-  fontSize: 9,
+  fontSize: 'var(--fs-meta)',
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
 }
@@ -169,7 +169,7 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
         userSelect: 'none',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '6px 10px 8px' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '6px 10px 8px' }}>
         View options
       </div>
 
