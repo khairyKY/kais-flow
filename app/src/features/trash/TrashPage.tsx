@@ -127,7 +127,7 @@ export function TrashPage() {
   const hasItems = deletedItems.length > 0
 
   const styles = `
-    .tbadge { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
+    .tbadge { font-family:var(--font-mono); font-size: 10px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
     .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px dashed var(--line-dashed); }
     .aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }
     .aghd span.t { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }
@@ -142,7 +142,7 @@ export function TrashPage() {
         <div className="trow">
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <div style={{ position: 'relative' }}>
               <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>

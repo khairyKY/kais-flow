@@ -37,7 +37,7 @@ function CustomMin({ value, presets, onChange }: { value: number; presets: numbe
         style={{
           width: 46,
           fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
+          fontSize: 10,
           padding: '4px 6px',
           borderRadius: 999,
           textAlign: 'center',
@@ -46,7 +46,7 @@ function CustomMin({ value, presets, onChange }: { value: number; presets: numbe
           border: `1px solid ${isCustom ? 'color-mix(in srgb, var(--acc-terra) 30%, transparent)' : 'var(--line-solid)'}`,
         }}
       />
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>min</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>min</span>
     </span>
   )
 }
@@ -596,13 +596,13 @@ export function FocusPage() {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               {stats.completedToday} task{stats.completedToday === 1 ? '' : 's'} done
             </span>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               {stats.timeText}
             </span>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               {vineData.streak}-day streak
             </span>
           </div>
@@ -616,7 +616,7 @@ export function FocusPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span
               onClick={() => setMode('pomodoro')}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}
             >
               stay a while
             </span>
@@ -659,7 +659,7 @@ export function FocusPage() {
         <span className="flabel" style={{ fontSize: 10 }}>Focus{blockLabel ? ` · ${blockLabel}` : ''}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {sessionsToday > 0 && (
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               session {sessionsToday} today
             </span>
           )}
@@ -746,7 +746,7 @@ export function FocusPage() {
                       />
                     )
                   })}
-                  <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                  <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                     round {currentRound} of {settings.roundsBeforeLongBreak} · long break after
                   </span>
                 </>
@@ -778,7 +778,7 @@ export function FocusPage() {
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>
                   {formatTime(secondsLeft)}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 6 }}>
                   of {breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin} min
                 </div>
               </div>
@@ -810,7 +810,7 @@ export function FocusPage() {
                 Back to work →
               </button>
             </div>
-            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
               after round {settings.roundsBeforeLongBreak} · a {settings.longBreakMin}-min long break, garden view opens on its own
             </div>
           </div>
@@ -856,7 +856,7 @@ export function FocusPage() {
               </span>
               <span className="focus-bloom-glow" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-terra)' }} />
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
               {isRunning ? 'recording' : 'paused'}
               {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
             </div>
@@ -884,7 +884,7 @@ export function FocusPage() {
               {/* Task Picker dropdown */}
               {taskPickerOpen && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '8px 0', zIndex: 50, width: 320, maxHeight: 200, overflowY: 'auto' }}>
-                  <div style={{ padding: '4px 12px 8px', borderBottom: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  <div style={{ padding: '4px 12px 8px', borderBottom: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                     Select a task to focus on
                   </div>
                   {tasks.filter(t => t.status === 'todo').map(t => (
@@ -915,7 +915,7 @@ export function FocusPage() {
                 </span>
               )}
               {subtaskLabel && (
-                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 9px', borderRadius: 3 }}>
+                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 9px', borderRadius: 3 }}>
                   {subtaskLabel}
                 </span>
               )}
@@ -926,7 +926,7 @@ export function FocusPage() {
         {/* 1d: STOPWATCH target project / logging panel */}
         {mode === 'stopwatch' && (
           <div style={{ width: '420px', marginTop: 24, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', padding: '12px 16px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>
               on stop, this lands automatically
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -991,7 +991,7 @@ export function FocusPage() {
                     setSecondsLeft(settings.focusRoundMin * 60)
                     setPomodoroStartIso(null)
                   }}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 6 }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 6 }}
                 >
                   end early…
                 </span>
@@ -1007,7 +1007,7 @@ export function FocusPage() {
                 </button>
                 <span
                   onClick={handleDiscardStopwatch}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}
                 >
                   discard
                 </span>
@@ -1053,7 +1053,7 @@ export function FocusPage() {
         </div>
         <span
           onClick={() => setMode('garden')}
-          style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
+          style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
         >
           open the garden →
         </span>
@@ -1069,7 +1069,7 @@ export function FocusPage() {
             <span className="washi-tape-settings"></span>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Pomodoro settings
               </span>
               <span
@@ -1081,7 +1081,7 @@ export function FocusPage() {
             </div>
 
             {/* Focus round */}
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
               Focus round
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -1091,7 +1091,7 @@ export function FocusPage() {
                   onClick={() => saveSettings({ ...settings, focusRoundMin: t })}
                   style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 9.5,
+                    fontSize: 10,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
                     padding: '4px 9px',
@@ -1111,7 +1111,7 @@ export function FocusPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Short break */}
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
                   Short break
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
@@ -1121,7 +1121,7 @@ export function FocusPage() {
                       onClick={() => saveSettings({ ...settings, shortBreakMin: t })}
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: 9.5,
+                        fontSize: 10,
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                         padding: '4px 9px',
@@ -1141,7 +1141,7 @@ export function FocusPage() {
 
               {/* Long break */}
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 6 }}>
                   Long break
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
@@ -1151,7 +1151,7 @@ export function FocusPage() {
                       onClick={() => saveSettings({ ...settings, longBreakMin: t })}
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: 9.5,
+                        fontSize: 10,
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                         padding: '4px 9px',
@@ -1174,7 +1174,7 @@ export function FocusPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px dashed var(--line-dashed)' }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Rounds before a long break</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>
                   the classic is 4
                 </div>
               </div>
@@ -1199,7 +1199,7 @@ export function FocusPage() {
 
             {/* Rhythm preview */}
             <div style={{ marginTop: 14, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '11px 13px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>
                 Your rhythm · {rhythmPreviewData.text}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1214,7 +1214,7 @@ export function FocusPage() {
                   </React.Fragment>
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
                 <span><span style={{ color: 'var(--acc-terra)' }}>■</span> focus {settings.focusRoundMin}</span>
                 <span><span style={{ color: 'var(--acc-sage)' }}>■</span> break {settings.shortBreakMin}</span>
                 <span><span style={{ color: 'var(--acc-lavender-deep)' }}>■</span> long {settings.longBreakMin}</span>
@@ -1243,7 +1243,7 @@ export function FocusPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Garden view on long breaks</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 2 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 2 }}>
                   the dusk scene opens by itself
                 </div>
               </div>
@@ -1279,7 +1279,7 @@ export function FocusPage() {
               </span>
               <span
                 onClick={() => saveSettings(DEFAULT_SETTINGS)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
               >
                 reset to classic
               </span>

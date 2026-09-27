@@ -206,7 +206,7 @@ export function WeeklyReviewPage() {
             <img src={`${A}/fern/full.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>the numbers behind the week</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>the numbers behind the week</div>
             </div>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'close ↑' : 'open →'}</span>
           </button>
@@ -275,7 +275,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domai
 
 // `.fhelp` — Review.dc.html's small mono helper text
 function FHelp({ children }: { children: ReactNode }) {
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{children}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{children}</span>
 }
 
 /** "touched Tue" for fresh rows, "quiet N days" past a week — from the newest updated_at
@@ -297,7 +297,7 @@ function countsLine(projectCount: number, areaCount: number, openCount: number):
 
 const CHIP_BASE: CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 9.5,
+  fontSize: 10,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
   padding: '4px 9px',
@@ -460,11 +460,11 @@ function DomainCard({
           style={{ width: '100%', minHeight: 44, padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'inherit' }}
         >
           <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-            <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+            <span style={{ color: 'var(--paper-parchment)', fontSize: 10 }}>✓</span>
           </span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
           <FHelp>{counts}</FHelp>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
             swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
           </span>
         </button>
@@ -493,7 +493,7 @@ function DomainCard({
         <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>up next</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>up next</span>
       </div>
     )
   }
@@ -506,7 +506,7 @@ function DomainCard({
         <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
       </div>
       {sweepList({ marginTop: 12 })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
@@ -546,8 +546,8 @@ function RightRail({
             <div key={`${row.entity_type}-${row.entity_id}`} id={`slipping-${row.entity_type}:${row.entity_id}`} style={{ marginTop: 8, background: 'color-mix(in srgb, var(--acc-terra) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-terra) 25%, transparent)', borderRadius: 3, padding: '12px 14px' }}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--ink-hairline)' }}>{Math.floor(row.days_since)} days untouched</span>
-                <button type="button" onClick={() => onReview(row)} style={{ border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', padding: 0 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{Math.floor(row.days_since)} days untouched</span>
+                <button type="button" onClick={() => onReview(row)} style={{ border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', padding: 0 }}>
                   reviewed
                 </button>
               </div>
@@ -581,12 +581,12 @@ function RightRail({
         <div style={{ marginTop: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>{bloomsThisWeek}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>tasks done</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>tasks done</span>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>
               {Math.round(hoursThisWeek)}<span style={{ fontSize: 15, color: 'var(--ink-faint)' }}>h</span>
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
         </div>
         <div className="kf-ink" style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.8deg)' }}>no numbers to chase — just look once, honestly, then close the week</div>
       </div>
@@ -690,7 +690,7 @@ function SeasonSoFar({
               <div key={h.name}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{h.name}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
                     {Math.round(h.thisWeek)}H {h.thisWeek !== h.lastWeek && <span style={{ color: h.thisWeek > h.lastWeek ? 'var(--acc-sage-text)' : 'var(--ink-hairline)' }}>({h.thisWeek > h.lastWeek ? '+' : ''}{Math.round(h.thisWeek - h.lastWeek)})</span>}
                   </span>
                 </div>
@@ -753,7 +753,7 @@ function SeasonSoFar({
                       />
                     ))}
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', textAlign: 'right' }}>{rate}%</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', textAlign: 'right' }}>{rate}%</span>
                 </div>
               )
             })}
@@ -765,7 +765,7 @@ function SeasonSoFar({
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, paddingTop: 8 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>{bloomsThisWeek}</div>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last week · {bloomsLastWeek}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last week · {bloomsLastWeek}</div>
               <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
                 {bloomsThisWeek === bloomsLastWeek ? 'holding steady ✿' : bloomsThisWeek > bloomsLastWeek ? `${bloomsThisWeek - bloomsLastWeek} more petals down ✿` : `${bloomsLastWeek - bloomsThisWeek} fewer this week`}
               </div>
@@ -784,7 +784,7 @@ function SeasonSoFar({
                 <div style={{ flex: 1, height: 11, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, (p.hours / totalProjectHours) * 100)}%`, background: 'var(--acc-lavender-deep)', borderRadius: 2, opacity: 0.8 }} />
                 </div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(p.hours)}H</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(p.hours)}H</span>
               </div>
             ))}
             {restHours > 0.1 && (
@@ -793,7 +793,7 @@ function SeasonSoFar({
                 <div style={{ flex: 1, height: 11, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, (restHours / totalProjectHours) * 100)}%`, background: 'var(--ink-hairline)', borderRadius: 2, opacity: 0.6 }} />
                 </div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(restHours)}H</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(restHours)}H</span>
               </div>
             )}
           </div>

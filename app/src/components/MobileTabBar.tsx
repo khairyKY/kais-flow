@@ -11,7 +11,7 @@ import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
 const A = '/ds/assets'
 
 function slotLabel(active: boolean): CSSProperties {
-  return { fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
+  return { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
 }
 
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
@@ -68,7 +68,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
               <span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               {item.badge && pendingInbox > 0 && (
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--acc-terra)' }}>{pendingInbox}</span>
               )}
             </Link>
           ))}

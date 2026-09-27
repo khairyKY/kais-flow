@@ -7,7 +7,7 @@ import { KeyChip } from './kit'
 function Category({ title, entries }: { title: string; entries: ShortcutEntry[] }) {
   return (
     <>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>
         {title}
       </div>
       {entries.map((entry, i) => (
@@ -76,7 +76,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
           {/* polish-f1: every key in the hint is a keycap (J-17's one visual language), Esc too. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
             <KeyChip text="?" />
             <span>toggle ·</span>
             <KeyChip text="Esc" />

@@ -201,7 +201,7 @@ function Shell({ compact, icon, caption, captionTone = 'time', title, meta, body
 
 function Caption({ children, tone = 'time' }: { children: ReactNode; tone?: 'now' | 'time' }) {
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{children}</div>
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{children}</div>
   )
 }
 
@@ -214,11 +214,11 @@ function Minutes({ children }: { children: ReactNode }) {
 // loop day — so after midnight a closed evening would otherwise read 0/5).
 const progress = (r: RitualState) => (ritualFinished(r) ? '✓' : `${r.done}/${r.total}`)
 function RitualLinks({ morning, evening, onOpen }: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void }) {
-  const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
+  const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {progress(morning)}</button>
-      <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 9 }}>·</span>
+      <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 10 }}>·</span>
       <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {progress(evening)}</button>
     </div>
   )

@@ -214,7 +214,7 @@ function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSki
             {doneToday.map((t) => (
               <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.55 }}>
                 <span style={{ width: 15, height: 15, borderRadius: 4, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                  <span style={{ color: 'var(--paper-parchment)', fontSize: 9 }}>✓</span>
+                  <span style={{ color: 'var(--paper-parchment)', fontSize: 10 }}>✓</span>
                 </span>
                 <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-hairline)', textDecoration: 'line-through' }}><EmojiText text={t.title} /></span>
                 <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 16 }} />
@@ -285,7 +285,7 @@ function GardenBeat({
       <BeatHeader label="Closing · 2 of 5" onSkip={onSkip} />
       <div style={{ flex: 'none', padding: '14px 24px 0' }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, color: '#f0ebdd', lineHeight: 1.1 }}>Today's garden</h1>
-        <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#b8b0c8' }}>
+        <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#b8b0c8' }}>
           Today · {doneToday} bloom{doneToday === 1 ? '' : 's'} · {focusedHours.toFixed(1)}h focused{grewToday ? ' · vine +1' : ''}
         </div>
       </div>
@@ -368,7 +368,7 @@ function GardenBeat({
           <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', textAlign: 'center', pointerEvents: 'none' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, color: '#4a3416', lineHeight: 1 }}>{Math.round(focusedHours)}h</div>
           </div>
-          <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 2, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 2, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
             of sun · {Math.round(focusedHours)} of 12 waking hours
           </div>
         </div>
@@ -377,14 +377,14 @@ function GardenBeat({
           {petals.slice(0, Math.max(1, Math.min(7, doneToday))).map(([left, bottom, w, h, radius, rot], i) => (
             <span key={i} style={{ position: 'absolute', left, bottom, width: w, height: h, background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)', borderRadius: radius, transform: `rotate(${rot}deg)` }} />
           ))}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: -22, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: -22, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
             {doneToday} petal{doneToday === 1 ? '' : 's'}
           </div>
         </div>
 
         <div style={{ position: 'absolute', right: 30, bottom: 76, width: 120 }}>
           <img src={`${A}/vine/${stage}.png`} alt="" style={{ height: 84, filter: 'brightness(0.85)' }} />
-          <div style={{ marginTop: 6, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
+          <div style={{ marginTop: 6, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a89fc0' }}>
             vine{grewToday ? ' +1 leaf' : ''}
           </div>
         </div>
@@ -480,7 +480,7 @@ function SeedsBeat({
       <div style={{ flex: 'none', padding: '14px 24px max(32px, calc(14px + env(safe-area-inset-bottom)))' }}>
         <div style={{ position: 'relative', background: 'rgba(244,241,234,0.08)', border: '1.5px dashed rgba(201,165,90,0.5)', borderRadius: 10, padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9b485' }}>For tomorrow</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9b485' }}>For tomorrow</div>
             <div style={{ fontSize: 12, color: '#c9c0d8', marginTop: 2 }}>{seeds.length} seed{seeds.length === 1 ? '' : 's'} dropped in</div>
           </div>
         </div>
@@ -519,7 +519,7 @@ function GoodnightBeat({ onDone }: { onDone: () => void }) {
           </button>
         </div>
       </div>
-      <div style={{ flex: 'none', padding: '0 0 34px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8e88a0', position: 'relative', zIndex: 5 }}>
+      <div style={{ flex: 'none', padding: '0 0 34px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8e88a0', position: 'relative', zIndex: 5 }}>
         returns to a dimmed Today · no sounds after this
       </div>
     </>

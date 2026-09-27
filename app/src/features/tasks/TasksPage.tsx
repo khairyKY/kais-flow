@@ -214,7 +214,7 @@ function InlineAdd({ label, placeholder, color, onSubmit }: { label: string; pla
   const [value, setValue] = useState('')
   if (!open) {
     return (
-      <div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>
+      <div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>
         ＋ {label}
       </div>
     )
@@ -258,13 +258,13 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
           {domains.map((d) => (
             <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
               {d.name}
-              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-faint)' }}>
+              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
                 {open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length}
               </span>
             </div>
@@ -275,20 +275,20 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
 
       <TapeCard tilt={0.4} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
           {areas.map((a) => (
             <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></span>
           ))}
         </div>
-        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New area
         </div>
       </TapeCard>
 
       <TapeCard tilt={-0.35} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={30} width={56} tint="color-mix(in srgb, var(--acc-hydrangea) 42%, transparent)" rotate={-1.5} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
           {projects.slice(0, 4).map((p) => {
             const inProject = tasks.filter((t) => t.project_id === p.id)
@@ -302,13 +302,13 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
                 </div>
               </div>
             )
           })}
         </div>
-        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New project
         </div>
       </TapeCard>
@@ -394,7 +394,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
         )}
       </div>
 
-      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
         <span>Completed items fade after 30 days — nothing is deleted</span>
         <span onClick={() => setExpanded(false)} style={{ marginLeft: 'auto', color: 'var(--acc-terra)', cursor: 'pointer' }}>Clear view</span>
       </div>
@@ -691,7 +691,7 @@ export function TasksPage() {
           {isDone ? (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
             </div>
           ) : (
             !isSomeday && <VoiceCaptureButton />
@@ -740,7 +740,7 @@ export function TasksPage() {
         )}
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
-          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
+          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
             swipe → for actions · swipe ← to delete
           </div>
         )}
@@ -749,7 +749,7 @@ export function TasksPage() {
           <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
             <span
               onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
             >
               All
             </span>
@@ -757,7 +757,7 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
                 {d.name}
               </span>

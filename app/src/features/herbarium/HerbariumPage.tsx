@@ -173,7 +173,7 @@ export function HerbariumPage() {
     .spec:hover { transform:translateY(-1px); box-shadow:var(--shadow-panel); }
     .spec:active { transform:scale(0.97); transition-duration:80ms; }
     .spec.kf-stagger-item { animation-fill-mode: backwards; }
-    .ledger { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); line-height:2; }
+    .ledger { font-family:var(--font-mono); font-size: 10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); line-height:2; }
     .seas { display:flex; align-items:center; gap:14px; margin:30px 0 18px; }
     .seas span.t { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
     .seas .r { flex:1; height:1px; background:var(--line-solid); }
@@ -194,7 +194,7 @@ export function HerbariumPage() {
               <img src={imgSource} alt="" className="pressed" style={{ height: isMobile ? 200 : 265, transform: 'scaleY(0.94) rotate(-1.2deg)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} · {p.engagement_model || 'Standard'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} · {p.engagement_model || 'Standard'}</div>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>
               <div className="ledger" style={{ marginTop: 12 }}>Planted {formatFullDate(p.created_at)}<br />Bloomed {formatFullDate(p.updated_at)}<br />{specimenStats.hours} hours · {specimenStats.doneMilestones}/{specimenStats.totalMilestones} milestones</div>
               <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>
@@ -211,10 +211,10 @@ export function HerbariumPage() {
               {!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer', alignSelf: 'flex-end' }}>Edit the line…</span>}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>A life in numbers</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginBottom: 8 }}>A life in numbers</div>
                 <div style={{ display: 'flex', gap: 26 }}>
-                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>tasks bloomed</div></div>
-                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>longest focus day</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>tasks bloomed</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>longest focus day</div></div>
                 </div>
               </div>
             </div>
@@ -239,7 +239,7 @@ export function HerbariumPage() {
           ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div style={{ width: 190, height: 150, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
@@ -248,26 +248,26 @@ export function HerbariumPage() {
               <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
-            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
+            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
           {ceremonyBeat === 2 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 6px' }}>
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>
               <div style={{ marginTop: 18, borderTop: '1px dashed var(--line-dashed)' }}>
                 {[['Planted', formatDayMonth(p.created_at).toUpperCase()], ['Bloomed', formatDayMonth(new Date().toISOString()).toUpperCase()], ['Hours', String(hours)], ['Milestones', `${doneMilestones}/${milestones.length}`]].map(([label, value], i) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 2px', borderBottom: i < 3 ? '1px dashed var(--line-dashed)' : 'none' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>
                   </div>
                 ))}
               </div>
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
-            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
+            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
           </>)}
           {ceremonyBeat === 3 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: 110 }}>
                 <img src={imgSource} alt="" className="pressed" style={{ height: 100, transform: 'scaleY(0.94)' }} />

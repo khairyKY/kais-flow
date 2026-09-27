@@ -51,7 +51,7 @@ const STYLES = `
   .ob-dot.on { background: var(--acc-terra); width: 20px; border-radius: 999px; }
   .ob-cta { border: none; background: var(--acc-terra); color: var(--paper-parchment); font-family: inherit; font-size: 14px; padding: 12px 26px; border-radius: 999px; box-shadow: var(--shadow-cta); cursor: pointer; }
   .ob-back, .ob-skip { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); cursor: pointer; background: none; border: none; padding: 0; }
-  .ob-flabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+  .ob-flabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
   .ob-finput { background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: 8px; padding: 13px 15px; font-size: 15px; font-family: inherit; color: var(--ink-body); width: 100%; outline: none; }
   .ob-feat { display: flex; align-items: flex-start; gap: 13px; text-align: left; width: 100%; }
   .ob-feat-t { font-size: 14.5px; color: var(--ink-body); font-weight: 500; }
@@ -276,7 +276,7 @@ export function OnboardingPage() {
                 <input className="ob-finput" value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} placeholder="Personal" />
               </div>
               <div style={{ width: '100%', marginTop: 22, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
-                <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   <span>{appName} · <b style={{ color: 'var(--acc-terra)', fontWeight: 600 }}>{workspaceLabel(workspaceName)}</b> · Cairo</span><span>preview</span>
                 </div>
                 <div style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>…the strip you'll see everywhere</div>

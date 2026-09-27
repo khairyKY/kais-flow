@@ -441,7 +441,7 @@ export function JournalPage() {
   // Renders the mobile sub-panels
   const renderMobileNotes = () => (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Notes Shelf</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Notes Shelf</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {notes.map((n) => (
           <div
@@ -462,7 +462,7 @@ export function JournalPage() {
 
   const renderMobileQuotes = () => (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Quotes Shelf</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Quotes Shelf</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {quotes.map((q) => (
           <div
@@ -473,7 +473,7 @@ export function JournalPage() {
             <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>
               "{q.text}"
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', marginTop: 6, textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 6, textAlign: 'right' }}>
               — {q.author || 'Unknown'}
             </div>
           </div>
@@ -502,7 +502,7 @@ export function JournalPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
             </div>
           </div>
@@ -552,7 +552,7 @@ export function JournalPage() {
                 {/* Polish G: at a 125% interface size (the phone default until F2b) a 390px phone lays this card out
                     ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
                     stay whole; the save state takes its own line only when it doesn't fit. */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
@@ -590,7 +590,7 @@ export function JournalPage() {
 
               {/* Gratitude */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '22px 0 10px' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Three small things</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Three small things</span>
                 <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -611,11 +611,11 @@ export function JournalPage() {
               {commonplaceQuote && (
                 <div style={{ marginTop: 22, position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '15px 15px 13px', transform: 'rotate(-0.4deg)' }}>
                   <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', top: -13, right: 10, height: 30, filter: 'var(--shadow-drop-sm)' }} />
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</div>
                   <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, lineHeight: 1.5, color: 'var(--ink-body)', marginTop: 7 }}>
                     "{commonplaceQuote.text}"
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
                     — {commonplaceQuote.author}
                   </div>
                 </div>
@@ -712,7 +712,7 @@ export function JournalPage() {
         </div>
 
         {/* Weekly entries */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '4px 0 8px' }}>This week</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '4px 0 8px' }}>This week</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {weekEntries.map((dateStr) => {
             // "kept" means something was actually written that day, not that a row exists.
@@ -730,7 +730,7 @@ export function JournalPage() {
                   style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '9px 11px', marginBottom: 6 }}
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-body)', fontWeight: 500 }}>{dayName}, {monthDay}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)', marginTop: 3 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)', marginTop: 3 }}>
                     {entryForDate?.mood ? `${entryForDate.mood} · writing…` : 'writing…'}
                   </div>
                 </div>
@@ -746,7 +746,7 @@ export function JournalPage() {
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>
                   {/* Until the list arrives a day isn't "empty", only unknown: the line keeps its
                       height and says nothing (Polish G). */}
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 2 }}>
                     {known ? entryForDate?.mood || (hasEntry ? 'kept' : 'empty') : ' '}
                   </div>
                 </div>
@@ -758,7 +758,7 @@ export function JournalPage() {
         {/* Notes / Quotes shelf link lists. Polish G: a group shows only when it has something to
             list — a brand-new account used to get two bare headings with nothing under them, and
             with the Library parked (K-26) there's no way to fill them from here. */}
-        {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
+        {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
         {notes.slice(0, 4).map((n) => (
           <div
             key={n.id}
@@ -770,7 +770,7 @@ export function JournalPage() {
           </div>
         ))}
 
-        {quotes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>}
+        {quotes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Quotes</div>}
         {quotes.slice(0, 4).map((q) => (
           <div
             key={q.id}
@@ -816,11 +816,11 @@ export function JournalPage() {
 
             {/* Prompt Selector */}
             <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Today's prompt</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Today's prompt</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
               <span
                 onClick={() => setPromptIndex((prev) => (prev + 1) % PROMPTS.length)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer', userSelect: 'none' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer', userSelect: 'none' }}
               >
                 ↻ another
               </span>
@@ -839,10 +839,10 @@ export function JournalPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 10px', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', whiteSpace: 'nowrap' }}>
                 {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
                     so the card carries the day's "＋ New entry", as 1b's footer does. */}
-                <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>＋ Photo</span>
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
+                <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>＋ Photo</span>
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>
 
@@ -922,7 +922,7 @@ export function JournalPage() {
               <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)', animationDelay: '180ms' }}>
                 "{commonplaceQuote.text}"
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 10 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 10 }}>
                 — {commonplaceQuote.author || 'Unknown'}
               </div>
 
@@ -949,7 +949,7 @@ export function JournalPage() {
                 ) : (
                   <div
                     onClick={() => setShowAddCommentary(true)}
-                    style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}
                   >
                     ＋ add a thought
                   </div>
@@ -969,7 +969,7 @@ export function JournalPage() {
           </div>
           {onThisDayEntry ? (
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
                 {new Date(onThisDayEntry.entry_date).getFullYear() === new Date(selectedDate).getFullYear() - 1 ? 'One year ago' : `${new Date(selectedDate).getFullYear() - new Date(onThisDayEntry.entry_date).getFullYear()} years ago`}
               </div>
               <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, color: 'var(--ink-body)', marginTop: 7, lineHeight: 1.45, animationDelay: '360ms' }}>
@@ -1001,7 +1001,7 @@ export function JournalPage() {
             <img src={`/ds/assets/fern/${streakDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
             </div>
           </div>
         </section>

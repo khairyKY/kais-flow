@@ -233,7 +233,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               overdue.map((t) => (
                 <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
                     {daysOver(t.due_at!)}d over
                   </span>
                   <Pill onClick={() => rescheduleDue(t, tomorrowIso())}>push to tomorrow</Pill>
@@ -318,7 +318,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => fileToTask(item)}
-                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 13px', borderRadius: 999, cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 13px', borderRadius: 999, cursor: 'pointer' }}
                   >
                     file
                   </button>
@@ -369,7 +369,7 @@ function BedItem({ task }: { task: Task }) {
       {task.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
       <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></span>
       {task.duration_min != null && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{task.duration_min}m</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{task.duration_min}m</span>
       )}
     </div>
   )
@@ -382,7 +382,7 @@ function Bed({ icon, title, tasks }: { icon: string; title: string; tasks: Task[
         <img src={icon} alt="" style={{ height: 26 }} />
         <FieldLabel>{title}</FieldLabel>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{tasks.length}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{tasks.length}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {tasks.length === 0 ? (
@@ -399,7 +399,7 @@ function HourRow({ hour, isOver, setNodeRef }: { hour: number; isOver: boolean; 
   const label = hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : hour === 0 ? '12 AM' : `${hour} AM`
   return (
     <div ref={setNodeRef} style={{ position: 'relative', height: HOUR_PX, borderBottom: '1px solid var(--line-card)', background: isOver ? 'color-mix(in srgb, var(--acc-lavender) 14%, transparent)' : undefined }}>
-      <span style={{ position: 'absolute', left: -46, top: -6, width: 40, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{label}</span>
+      <span style={{ position: 'absolute', left: -46, top: -6, width: 40, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{label}</span>
     </div>
   )
 }
@@ -461,7 +461,7 @@ function BlockStep() {
               <img src={`${A}/hydrangea/${inboxStage(inboxItems.length)}.png`} alt="" style={{ height: 26, flex: 'none' }} />
               <FieldLabel>Inbox</FieldLabel>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{inboxItems.length}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{inboxItems.length}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {inboxItems.length === 0 ? (
@@ -481,7 +481,7 @@ function BlockStep() {
         <div style={{ flex: '1 1 320px', minWidth: 0, border: '1px solid var(--line-solid)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
           <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--line-card)', background: 'var(--paper-bone)' }}>
             <FieldLabel>{new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })} · today</FieldLabel>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
               <span style={{ color: 'var(--acc-sage)' }}>●</span> {plantedToday.length} planted · {Math.floor(totalMin / 60)}h{totalMin % 60 ? ` ${totalMin % 60}m` : ''}
             </span>
           </div>
@@ -518,7 +518,7 @@ function BlockStep() {
                       {e.task_id && <span style={{ color: 'var(--acc-terra)', fontSize: 11 }}>★</span>}
                       <span style={{ fontSize: 11.5, color: 'var(--ink-body)' }}>{e.title}</span>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--ink-faint)', marginTop: 2 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 2 }}>
                       {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </div>

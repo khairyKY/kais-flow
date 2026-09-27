@@ -20,13 +20,13 @@ export function useIsMobile(): boolean {
 
 // `.flabel` — step label, e.g. "Morning ritual · step 1/4"
 export function FieldLabel({ children, color = 'var(--ink-faint)' }: { children: ReactNode; color?: string }) {
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color }}>{children}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color }}>{children}</span>
 }
 
 // `.rlink` — ghost text link (skip / drop / dismiss / re-pick)
 export function RLink({ onClick, children, color = 'var(--ink-faint)', style }: { onClick?: () => void; children: ReactNode; color?: string; style?: CSSProperties }) {
   return (
-    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color, cursor: 'pointer', ...style }}>
+    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color, cursor: 'pointer', ...style }}>
       {children}
     </button>
   )
@@ -35,7 +35,7 @@ export function RLink({ onClick, children, color = 'var(--ink-faint)', style }: 
 // `.pill` — bordered mono pill button
 export function Pill({ onClick, children }: { onClick?: () => void; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, cursor: 'pointer' }}>
+    <button type="button" onClick={onClick} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, cursor: 'pointer' }}>
       {children}
     </button>
   )

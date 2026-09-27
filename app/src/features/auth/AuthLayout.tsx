@@ -7,7 +7,7 @@ import { TapeCard, Button } from '../../components/kit'
 // Kai's eye: Restyled with system tokens, TapeCard, and Button
 const FIELD_LABEL: CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontSize: 9.5,
+  fontSize: 10,
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: 'var(--text-tertiary)',

@@ -27,12 +27,12 @@ export function MiniFocus({ task }: { task: Task }) {
   return (
     <div style={{ border: '1px solid var(--line-card)', borderRadius: 8, padding: '13px 14px', background: 'var(--paper-bone)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           {label}
         </span>
         <Link
           to="/focus"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}
         >
           full view →
         </Link>
@@ -72,7 +72,7 @@ export function MiniFocus({ task }: { task: Task }) {
         </button>
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 8 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 8 }}>
         round {currentRound} of {settings.roundsBeforeLongBreak}
         {activeTask && !isThisTask && ' · running on another task'}
       </div>

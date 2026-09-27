@@ -101,7 +101,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
         <div style={{ height: 6, background: stripColor }} />
         <div style={{ padding: '16px 18px' }}>
           {conflicts.length > 0 && (
-            <div style={{ margin: '-4px 0 12px', padding: '6px 10px', background: 'var(--sig-overdue)', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', color: 'var(--text-on-accent)' }}>
+            <div style={{ margin: '-4px 0 12px', padding: '6px 10px', background: 'var(--sig-overdue)', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--text-on-accent)' }}>
               OVERLAPS: {conflicts.join(', ')}
             </div>
           )}
@@ -129,7 +129,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {linkedTask ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: 'var(--kf-chip-tasks, #8A4A58)' }}>Task</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: 'var(--kf-chip-tasks, #8A4A58)' }}>Task</span>
             ) : (
               (['event', 'time_block'] as CalendarEventType[]).map((t) => (
                 <button
@@ -138,7 +138,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
                   onClick={() => { setType(t); markDirty() }}
                   style={{
                     font: 'inherit', cursor: 'pointer', border: type === t ? 'none' : '1px solid var(--line-solid)',
-                    fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999,
+                    fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999,
                     background: type === t ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                     color: type === t ? 'var(--acc-lavender-text)' : 'var(--ink-muted)',
                   }}
@@ -157,7 +157,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               onClick={handleOpenTask}
               style={{ marginTop: 12, background: 'var(--paper-event)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 11, cursor: 'pointer' }}
             >
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>From task</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>From task</div>
               <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 3 }}>{linkedTask.title}</div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button type="button" onClick={handleOpenTask} style={{ font: 'inherit', fontSize: 11, color: 'var(--acc-lavender-deep)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Open task ↗</button>
@@ -172,7 +172,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               <button
                 type="button"
                 onClick={() => { setBusy((b) => !b); markDirty() }}
-                style={{ marginLeft: 'auto', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: busy ? 'var(--ink-body)' : 'var(--ink-faint)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}
+                style={{ marginLeft: 'auto', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: busy ? 'var(--ink-body)' : 'var(--ink-faint)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}
               >
                 {busy ? 'Busy' : 'Free'}
               </button>
@@ -186,7 +186,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               </span>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-muted)' }}>Sure?</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-muted)' }}>Sure?</span>
                 <button type="button" onClick={handleDelete} style={{ font: 'inherit', fontSize: 11, color: 'var(--text-on-accent)', background: 'var(--sig-overdue)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Delete</button>
                 <button type="button" onClick={() => setDeleting('idle')} style={{ font: 'inherit', fontSize: 11, color: 'var(--ink-muted)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '4px 10px', cursor: 'pointer' }}>Cancel</button>
               </div>

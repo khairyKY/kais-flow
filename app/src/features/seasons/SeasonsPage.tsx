@@ -33,7 +33,7 @@ const RAINDROPS = [
 const STYLES = `
   .se-hstage { position: relative; height: 210px; overflow: hidden; }
   .se-hband { position: absolute; left: 20px; right: 20px; bottom: 18px; z-index: 5; }
-  .se-hlabel { position: absolute; left: 14px; top: 12px; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); z-index: 6; }
+  .se-hlabel { position: absolute; left: 14px; top: 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); z-index: 6; }
   /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
   .se-grain { position: absolute; inset: 0; pointer-events: none; z-index: 4; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.45; }
   [data-theme='night'] .se-grain { mix-blend-mode: overlay; opacity: 0.25; }
@@ -103,7 +103,7 @@ function SeasonStage({
         </>
       )}
       <div className="se-hband">
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{date}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{date}</div>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 24, color: 'var(--ink-body)', marginTop: 3 }}>{greeting}</div>
           <span style={{ position: 'relative' }}>

@@ -232,7 +232,7 @@ export function LibraryPage() {
         <style>{`
           .chip {
             font-family: var(--font-mono);
-            font-size: 9.5px;
+            font-size: 10px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             padding: 4px 9px;
@@ -243,14 +243,14 @@ export function LibraryPage() {
           }
           .flabel {
             font-family: var(--font-mono);
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: var(--ink-faint);
           }
           .fhelp {
             font-family: var(--font-mono);
-            font-size: 8.5px;
+            font-size: 10px;
             letter-spacing: 0.06em;
             color: var(--ink-hairline);
           }
@@ -336,7 +336,7 @@ export function LibraryPage() {
                   {filteredQuotes.map((q) => (
                     <div key={q.id} onClick={() => setSearchParams({ tab: 'quotes', quoteId: q.id })} className="trow" style={{ cursor: 'pointer', display: 'block' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>"{q.text}"</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)', marginTop: 6, textAlign: 'right' }}>— {q.author || 'Unknown'}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 6, textAlign: 'right' }}>— {q.author || 'Unknown'}</div>
                     </div>
                   ))}
                   {filteredQuotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No quotes found.</div>}
@@ -389,10 +389,10 @@ export function LibraryPage() {
                   <div style={{ display: 'flex', gap: 16 }}>
                     <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <img src={getFernImage(progressPercent)} alt="" style={{ height: 36, opacity: 0.6 }} />
-                      <span className="fhelp" style={{ fontSize: 8 }}>cover</span>
+                      <span className="fhelp" style={{ fontSize: 10 }}>cover</span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
                       <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 22, lineHeight: 1.2, color: 'var(--ink-body)' }}>{activeBook.title}</h1>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{activeBook.author}</div>
                       
@@ -401,7 +401,7 @@ export function LibraryPage() {
                         <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--line-card)', position: 'relative' }}>
                           <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${progressPercent}%`, borderRadius: 2, background: 'var(--acc-buttercream)' }}></span>
                         </div>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-faint)' }}>{progressPercent}%</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{progressPercent}%</span>
                       </div>
                     </div>
                   </div>
@@ -502,7 +502,7 @@ export function LibraryPage() {
       <style>{`
         .chip {
           font-family: var(--font-mono);
-          font-size: 9.5px;
+          font-size: 10px;
           letter-spacing: 0.06em;
           text-transform: uppercase;
           padding: 4px 9px;
@@ -513,14 +513,14 @@ export function LibraryPage() {
         }
         .flabel {
           font-family: var(--font-mono);
-          font-size: 9px;
+          font-size: 10px;
           letter-spacing: 0.16em;
           text-transform: uppercase;
           color: var(--ink-faint);
         }
         .fhelp {
           font-family: var(--font-mono);
-          font-size: 8.5px;
+          font-size: 10px;
           letter-spacing: 0.06em;
           color: var(--ink-hairline);
         }
@@ -574,7 +574,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Daily pages
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{dailyPagesCount}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{dailyPagesCount}</span>
         </div>
 
         <div className="flabel" style={{ padding: '0 6px', margin: '12px 0 5px' }}>Shelf</div>
@@ -602,7 +602,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Notes
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{notes.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{notes.length}</span>
         </div>
 
         {/* Category: Quotes */}
@@ -628,7 +628,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Quotes
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{quotes.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{quotes.length}</span>
         </div>
 
         {/* Category: Books */}
@@ -654,7 +654,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Books
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-hairline)' }}>{books.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-hairline)' }}>{books.length}</span>
         </div>
 
         {/* Recent items list */}
@@ -692,7 +692,7 @@ export function LibraryPage() {
           {/* Sub-column: SHELF CONTENT LIST (to choose items in active category) */}
           <div style={{ width: 220, flex: 'none', borderRight: '1px dashed var(--line-solid)', overflowY: 'auto', padding: '16px 12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {activeTab} ({activeTab === 'quotes' ? filteredQuotes.length : activeTab === 'notes' ? filteredNotes.length : filteredBooks.length})
               </span>
               {activeTab === 'books' && (
@@ -852,7 +852,7 @@ export function LibraryPage() {
                   </div>
                   
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
                       Book · {activeBook.status}
                     </div>
                     <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1.15, color: 'var(--ink-body)' }}>{activeBook.title}</h1>

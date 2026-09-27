@@ -307,7 +307,7 @@ export function PerennialsPage() {
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}><EmojiText text={t.title} /></div>
-            <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
+            <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
               {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
             </div>
           </div>

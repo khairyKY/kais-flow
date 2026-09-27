@@ -152,9 +152,9 @@ export function PersonDetailPage() {
   return (
     <div style={{ maxWidth: 760 }}>
       <style>{`
-        .chip{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
-        .flabel{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
-        .fhelp{font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.06em;color:var(--ink-hairline)}
+        .chip{font-family:var(--font-mono);font-size: 10px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+        .flabel{font-family:var(--font-mono);font-size: 10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
+        .fhelp{font-family:var(--font-mono);font-size: 10px;letter-spacing:0.06em;color:var(--ink-hairline)}
         .fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
         .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
         .slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
