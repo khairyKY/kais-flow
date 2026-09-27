@@ -27,5 +27,22 @@
   --radius-sharp: 3px;    /* card, most surfaces — this ISN'T a rounded UI */
   --radius-input: 6px;    /* nav links, checkbox */
   --radius-md:    8px;    /* inputs (contrast to nav links) */
-  --radius-pill:  999px;  /* buttons only */
+  --radius-pill:  999px;  /* buttons, chips, indicators */
+
+  /* NEW · Touch & phone layout (Sep 2026) */
+  --touch-min:        48px;   /* every tappable thing — visual may be smaller, hit area never */
+  --gutter-phone:     16px;   /* screen edge → content */
+  --row-min:          56px;   /* one-line task row; grows with wrapped title */
+  --topbar-h:         56px;   /* phone app bar */
+  --tabbar-h:         64px;   /* tab bar, excluding the system gesture inset */
+  --tabbar-inset:     env(safe-area-inset-bottom, 16px);
+  --capture-size:     56px;   /* centre capture button */
+  --sheet-radius:     8px;    /* top corners of a bottom sheet only — a leaf, not a card */
+  --sheet-handle-w:   32px;
+  --sheet-handle-h:   4px;
+  --sheet-handle-hit: 48px;
+  --sheet-h-medium:   60%;    /* of the viewport */
+  --sheet-h-full:     calc(100% - 48px);  /* leaves the status bar + a sliver of the page */
+  --toast-gap:        8px;    /* toast ↔ tab bar, and between queued toasts */
+  --swipe-commit:     0.4;    /* fraction of row width that commits a swipe */
 }

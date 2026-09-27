@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+a{color:var(--acc-terra);text-decoration:none;border-bottom:1px solid rgba(178,106,78,0.35)}
+a:hover{color:var(--ink-body);border-bottom-color:var(--ink-hairline)}
+</style>
+</helmet>
+
+<div style="position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:60px 56px 120px">
+
+  <header style="padding-bottom:28px;border-bottom:1px dashed var(--line-dashed)">
+    <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Design System · Addendum</div>
+    <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:46px;line-height:1.02;letter-spacing:-0.015em;color:var(--ink-body)">Bottom nav icons</h1>
+    <p style="margin:16px 0 0;max-width:620px;font-size:14.5px;line-height:1.6;color:var(--ink-muted)">Five slots, four of them still placeholder dots in the shipping build. Three ways to fill them — each one takes a different position on how much botany belongs in a tab bar. All rendered at true 390pt width.</p>
+  </header>
+
+  <section style="margin-top:44px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">The slots</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 22px;max-width:660px;font-size:13.5px;line-height:1.6;color:var(--ink-muted)">Order is fixed and shouldn't change: <strong style="color:var(--ink-body)">Today</strong> is the home a person lands on, <strong style="color:var(--ink-body)">Calendar</strong> and <strong style="color:var(--ink-body)">Tasks</strong> flank the capture button, <strong style="color:var(--ink-body)">More</strong> holds people, projects and settings. The centre is the voice-capture FAB and is not a tab — it never takes an active state.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--line-dashed);border:1px solid var(--line-dashed);border-radius:3px;overflow:hidden">
+      <sc-for list="{{ slots }}" as="s" hint-placeholder-count="5">
+        <div style="background:var(--paper-parchment);padding:16px 15px;display:flex;flex-direction:column;gap:7px">
+          <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">{{ s.n }}</span>
+          <span style="font-size:13px;color:var(--ink-body)">{{ s.name }}</span>
+          <span style="font-size:11.5px;line-height:1.45;color:var(--ink-muted)">{{ s.job }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="margin-top:52px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Three directions</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+      <!-- A -->
+      <div id="A" style="flex:1 1 330px;min-width:330px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;color:var(--paper-parchment);background:var(--ink-body);border-radius:2px;padding:3px 7px">A</span>
+          <span style="font-family:var(--font-display);font-size:20px;color:var(--ink-body)">Line at rest, bloom when active</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:12.5px;line-height:1.55;color:var(--ink-muted);min-height:56px">The hybrid the build already gestures at, made a rule: every tab is a stroked line icon, and the <em>selected</em> one swaps to its botanical mark in the surface accent. The bar stays quiet; one flower blooms where you are.</p>
+
+        <div style="background:var(--paper-sidebar);border:1px solid var(--line-sidebar);border-radius:3px;box-shadow:var(--shadow-card);padding:14px 0 0;width:390px;max-width:100%">
+          <div style="height:78px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">screen content</div>
+          <div style="border-top:1px solid var(--line-sidebar);padding:11px 22px 26px;display:flex;align-items:flex-end;justify-content:space-between">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M12 3.5l8 6.5v10H4V10z" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linejoin="round"></path><path d="M9.5 20v-6h5v6" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linejoin="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Today</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24"><g fill="#A8A0BE"><ellipse cx="12" cy="6.2" rx="2.7" ry="3.4"></ellipse><ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)"></ellipse><ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)"></ellipse><ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)"></ellipse><ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)"></ellipse></g><circle cx="12" cy="11" r="2.4" fill="#D9B65C"></circle></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-lavender-text)">Calendar</span></div>
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--acc-terra);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-cta);margin-top:-24px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 6.5h13M4 12h13M4 17.5h9" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round"></path><path d="M18.5 15.5l1.6 1.6 3-3.4" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Tasks</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="5.5" cy="12" r="1.5" fill="var(--ink-faint)"></circle><circle cx="12" cy="12" r="1.5" fill="var(--ink-faint)"></circle><circle cx="18.5" cy="12" r="1.5" fill="var(--ink-faint)"></circle></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">More</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:15px 18px">
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage);margin-bottom:8px">Works because</div>
+          <p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--ink-muted)">Active state is unmistakable without a pill, underline or filled background — nothing else in the bar is ever coloured. Rest icons stay legible at 21px.</p>
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:8px">Costs</div>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--ink-muted)">Two shapes per tab to draw and animate. The Today/More slots have no natural flower — they'd need one assigned.</p>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div id="B" style="flex:1 1 330px;min-width:330px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;color:var(--paper-parchment);background:var(--ink-body);border-radius:2px;padding:3px 7px">B</span>
+          <span style="font-family:var(--font-display);font-size:20px;color:var(--ink-body)">All line, tape marks the place</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:12.5px;line-height:1.55;color:var(--ink-muted);min-height:56px">One family throughout — the section-08 line set, nothing else. The active tab is called out by a short washi strip above it in the surface accent, the same device that marks the active sidebar item on desktop.</p>
+
+        <div style="background:var(--paper-sidebar);border:1px solid var(--line-sidebar);border-radius:3px;box-shadow:var(--shadow-card);padding:14px 0 0;width:390px;max-width:100%">
+          <div style="height:78px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">screen content</div>
+          <div style="border-top:1px solid var(--line-sidebar);padding:11px 22px 26px;display:flex;align-items:flex-end;justify-content:space-between">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="var(--ink-faint)" stroke-width="1.6"></circle><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.8 1.8M16.8 16.8l1.8 1.8M18.6 5.4l-1.8 1.8M7.2 16.8l-1.8 1.8" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Today</span></div>
+            <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><span style="position:absolute;top:-9px;left:12px;width:30px;height:9px;background:rgba(168,160,190,0.45);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 3px,transparent 3px 7px);border-radius:1px;box-shadow:var(--shadow-crisp);transform:rotate(-3deg)"></span><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="var(--acc-lavender-text)" stroke-width="1.6"></rect><path d="M4 9h16M8 3v4M16 3v4" stroke="var(--acc-lavender-text)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-lavender-text)">Calendar</span></div>
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--acc-terra);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-cta);margin-top:-24px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="var(--ink-faint)" stroke-width="1.6"></circle><path d="M8.5 12.2l2.4 2.4 4.6-4.9" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">Tasks</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint)">More</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:15px 18px">
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage);margin-bottom:8px">Works because</div>
+          <p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--ink-muted)">One icon family, one metaphor, one thing to draw. The tape ties mobile to desktop, and it slides between tabs beautifully.</p>
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:8px">Costs</div>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--ink-muted)">Breaks the house rule that tape only goes on placed cards. Least distinctive of the three — could be any app's tab bar.</p>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div id="C" style="flex:1 1 330px;min-width:330px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;color:var(--paper-parchment);background:var(--ink-body);border-radius:2px;padding:3px 7px">C</span>
+          <span style="font-family:var(--font-display);font-size:20px;color:var(--ink-body)">A pressed row of specimens</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:12.5px;line-height:1.55;color:var(--ink-muted);min-height:56px">No line icons at all. Each tab is its own species, drawn once: dried and colourless at rest, full-colour where you stand. The bar becomes the herbarium strip at the bottom of the page.</p>
+
+        <div style="background:var(--paper-sidebar);border:1px solid var(--line-sidebar);border-radius:3px;box-shadow:var(--shadow-card);padding:14px 0 0;width:390px;max-width:100%">
+          <div style="height:78px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-hairline)">screen content</div>
+          <div style="border-top:1px solid var(--line-sidebar);padding:11px 22px 26px;display:flex;align-items:flex-end;justify-content:space-between">
+            <sc-for list="{{ specimens }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px">
+                <svg width="21" height="21" viewBox="0 0 24 24"><g fill="{{ p.hex }}"><ellipse cx="12" cy="6.2" rx="2.7" ry="3.4"></ellipse><ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)"></ellipse><ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)"></ellipse><ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)"></ellipse><ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)"></ellipse></g><circle cx="12" cy="11" r="2.4" fill="{{ p.core }}"></circle></svg>
+                <span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:{{ p.label }}">{{ p.name }}</span>
+              </div>
+            </sc-for>
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--acc-terra);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-cta);margin-top:-24px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path><path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+            <sc-for list="{{ specimens2 }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:56px">
+                <svg width="21" height="21" viewBox="0 0 24 24"><g fill="{{ p.hex }}"><ellipse cx="12" cy="6.2" rx="2.7" ry="3.4"></ellipse><ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)"></ellipse><ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)"></ellipse><ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)"></ellipse><ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)"></ellipse></g><circle cx="12" cy="11" r="2.4" fill="{{ p.core }}"></circle></svg>
+                <span style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:{{ p.label }}">{{ p.name }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;padding:15px 18px">
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage);margin-bottom:8px">Works because</div>
+          <p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--ink-muted)">Nothing else looks like it. Every tab already owns a species elsewhere in the product, so the bar teaches the colour system by using it.</p>
+          <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:8px">Costs</div>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--ink-muted)">Five near-identical rosettes at 21px are hard to tell apart by shape — it leans almost entirely on colour and the label. Fails an accessibility read.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:52px;background:var(--paper-parchment);border:1px solid var(--line-card);border-left:2px solid var(--acc-sage);border-radius:3px;box-shadow:var(--shadow-card);padding:26px 30px 28px">
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px">Recommendation</div>
+    <p style="margin:0 0 18px;max-width:720px;font-size:14.5px;line-height:1.6;color:var(--ink-body)"><a href="#A">A</a> — line at rest, bloom when active. It's the only one that keeps the tab bar legible at a glance <em>and</em> unmistakably this product, and it's already half-built. <a href="#C">C</a> is the most beautiful and the least usable; <a href="#B">B</a> is the safe fallback if the two-shape swap proves too costly to animate.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:11px">To ship A, decide two things</div>
+        <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+          <li><strong style="color:var(--ink-body)">Today's species.</strong> Sage is taken by Tasks. Suggest gold — it's the goal colour, and Today is where the goal lives.</li>
+          <li><strong style="color:var(--ink-body)">More has no species.</strong> Keep the three dots stroked even when active, tinted <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--ink-body</span>. A settings drawer shouldn't get a flower.</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:11px">Shared rules, whichever wins</div>
+        <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+          <li>Icons at <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">21px</span>, tap target <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">56 × 48</span> minimum.</li>
+          <li>Labels always visible — <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">8px</span> mono, uppercase, <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">0.1em</span>. Never icon-only.</li>
+          <li>Rest <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--ink-faint</span>; active takes the surface accent. No pills, no filled backgrounds.</li>
+          <li>The FAB never changes state, never takes a badge, and keeps its <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">24px</span> overhang.</li>
+          <li>Transition <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">180ms</span> ease-out. Nothing bounces.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    const dim = '#C6BFAE', dimCore = '#B8B0A0', faint = 'var(--ink-faint)';
+    return {
+      slots: [
+        { n: '01', name: 'Today', job: 'Landing surface — goal, next block, what is due.' },
+        { n: '02', name: 'Calendar', job: 'The day grid and the unscheduled tray.' },
+        { n: '03', name: 'Capture', job: 'Voice FAB. Not a tab — never selected.' },
+        { n: '04', name: 'Tasks', job: 'Everything unscheduled, by project.' },
+        { n: '05', name: 'More', job: 'People, projects, herbarium, settings.' },
+      ],
+      specimens: [
+        { name: 'Today', hex: dim, core: dimCore, label: faint },
+        { name: 'Calendar', hex: '#A8A0BE', core: '#D9B65C', label: 'var(--acc-lavender-text)' },
+      ],
+      specimens2: [
+        { name: 'Tasks', hex: dim, core: dimCore, label: faint },
+        { name: 'More', hex: dim, core: dimCore, label: faint },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

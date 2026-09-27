@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&amp;family=Inter+Tight:wght@400;500;600&amp;family=Courier+Prime:wght@400;700&amp;family=Caveat:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens-2026-07/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#17141f}
+a{color:#C9C0D8}a:hover{color:#F0EBDD}
+</style>
+</helmet>
+
+<div data-theme="night" style="min-height:100vh;background:var(--paper-linen);font-family:var(--font-ui);color:var(--ink-body);padding:56px 40px 90px">
+  <div style="max-width:1180px;margin:0 auto">
+
+    <!-- header -->
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Design System · dark variant</div>
+        <h1 style="margin:10px 0 0;font-family:var(--font-display);font-weight:500;font-size:46px;line-height:1.05;letter-spacing:-0.015em;color:var(--ink-body)">A field journal,<br>after dark</h1>
+        <p style="margin:14px 0 0;max-width:560px;font-size:14px;line-height:1.65;color:var(--ink-muted)">The Night Garden. Every daylight token has a night value — nothing falls back to paper. Rebased on the approved Night studies: violet midnight, moonlit cream, accents that glow instead of sit.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--acc-gold);background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:6px;padding:8px 13px;white-space:nowrap;flex:none">data-theme="night"</span>
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-hairline)">ds/tokens/colors.dark.css · via ds/styles.css</span>
+      </div>
+    </div>
+
+    <!-- 1 · SKY & PAPER -->
+    <div style="margin-top:52px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">01 · Sky &amp; paper — the grounds</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:16px">
+        <div><div style="height:110px;border-radius:6px;background:var(--paper-linen);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)"></div><div style="margin-top:8px;font-size:12.5px;color:var(--ink-body)">paper-linen</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">#211D30 · page</div></div>
+        <div><div style="height:110px;border-radius:6px;background:var(--paper-parchment);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)"></div><div style="margin-top:8px;font-size:12.5px;color:var(--ink-body)">paper-parchment</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">#262233 · cards</div></div>
+        <div><div style="height:110px;border-radius:6px;background:var(--paper-bone);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)"></div><div style="margin-top:8px;font-size:12.5px;color:var(--ink-body)">paper-bone</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">#2E2942 · inputs</div></div>
+        <div><div style="height:110px;border-radius:6px;background:var(--paper-sidebar);border:1px solid var(--line-card);box-shadow:var(--shadow-crisp)"></div><div style="margin-top:8px;font-size:12.5px;color:var(--ink-body)">paper-sidebar</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">#1C1929 · rail</div></div>
+        <div><div style="height:110px;border-radius:6px;background:var(--paper-goal);border:1px solid var(--line-goal);box-shadow:var(--shadow-goal)"></div><div style="margin-top:8px;font-size:12.5px;color:var(--ink-body)">paper-goal</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">#322B22 · ember-lit gold card</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:14px">
+        <div><div style="height:54px;border-radius:6px;background:var(--sky-mid);border:1px solid var(--line-card)"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sky-mid · #2E2840</div></div>
+        <div><div style="height:54px;border-radius:6px;background:var(--sky-horizon);border:1px solid var(--line-card)"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sky-horizon · #3B3450</div></div>
+        <div><div style="height:54px;border-radius:6px;background:var(--sky-input);border:1px solid var(--line-card)"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sky-input · cream 5%</div></div>
+        <div><div style="height:54px;border-radius:6px;background:linear-gradient(180deg,var(--sky-horizon),var(--sky-deep));border:1px solid var(--line-card)"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">dusk gradient · horizon→deep</div></div>
+        <div style="position:relative"><div style="height:54px;border-radius:6px;background:var(--sky-deep);border:1px solid var(--line-card)"></div><span style="position:absolute;left:18px;top:16px;width:3px;height:3px;border-radius:50%;background:var(--star)"></span><span style="position:absolute;left:44px;top:30px;width:2px;height:2px;border-radius:50%;background:var(--star);opacity:0.6"></span><span style="position:absolute;left:70px;top:12px;width:2px;height:2px;border-radius:50%;background:var(--star);opacity:0.4"></span><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">star · cream 90%</div></div>
+      </div>
+    </div>
+
+    <!-- 2 · MOONLIGHT INK + 3 · LINES -->
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:22px;margin-top:44px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">02 · Moonlight ink</div>
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:22px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-family:var(--font-display);font-size:21px;color:var(--ink-body)">Primary — a moonlit heading</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">ink-body · #F0EBDD</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:14px;color:var(--ink-muted)">Secondary — metadata and quiet sentences</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">ink-muted · #C9C0D8</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">Faint · mono captions</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">ink-faint · #8E88A0</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:14px;color:var(--ink-hairline);text-decoration:line-through">Hairline — a task already done</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">ink-hairline · #6E687F</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;border-top:1px dashed var(--line-dashed);padding-top:12px"><span style="font-family:var(--font-hand);font-size:19px;color:var(--ink-muted);transform:rotate(-0.6deg)">the hand still writes at night ✿</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">hand · ink-muted</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">03 · Lines — silver hairlines</div>
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:22px 26px;display:flex;flex-direction:column;gap:17px">
+          <div><span style="display:block;border-top:1px solid var(--line-solid)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">line-solid · cream 20%</span></div>
+          <div><span style="display:block;border-top:1px dashed var(--line-dashed)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">line-dashed · cream 16%</span></div>
+          <div><span style="display:block;border-top:1px solid var(--line-card)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">line-card · cream 12%</span></div>
+          <div><span style="display:block;border-top:1px solid var(--line-sidebar)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">line-sidebar · cream 14%</span></div>
+          <div><span style="display:block;border-top:1.5px dashed var(--line-goal)"></span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">line-goal · gold 45%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 · ACCENTS -->
+    <div style="margin-top:44px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">04 · Accents, moonlit</span><span style="font-family:var(--font-hand);font-size:16px;color:var(--ink-faint);transform:rotate(-0.6deg)">lighter, softer — they glow instead of sit</span></div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:16px">
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-sage);box-shadow:0 0 10px rgba(168,192,154,0.35)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-sage-text)">sage · leaves</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#A8C09A / text #C6D8BA</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-moss);box-shadow:0 0 10px rgba(143,176,152,0.35)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-sage-text)">moss · projects</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#8FB098</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-blossom);box-shadow:0 0 10px rgba(233,191,197,0.4)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-clover-text)">blossom · tasks</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#E9BFC5</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-lavender);box-shadow:0 0 10px rgba(192,183,224,0.4)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-lavender-text)">lavender · calendar</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#C0B7E0 / deep #C9C0D8</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-hydrangea);box-shadow:0 0 10px rgba(169,197,211,0.4)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-hydrangea-deep)">hydrangea · inbox</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#A9C5D3 / deep #C2D8E0</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 15px"><span style="display:block;width:30px;height:30px;border-radius:50%;background:var(--acc-buttercream);box-shadow:0 0 10px rgba(232,220,160,0.4)"></span><div style="margin-top:10px;font-size:12px;color:var(--acc-buttercream-text)">buttercream · docs</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#E8DCA0 / text #DCCFA0</div></div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:stretch">
+        <div style="flex:1;min-width:220px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 16px;display:flex;align-items:center;gap:14px"><button style="border:none;background:var(--accent-primary);color:var(--paper-sidebar);font-family:inherit;font-size:13px;font-weight:600;padding:9px 20px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Plant it</button><div><div style="font-size:12px;color:var(--ink-muted)">terra · the only warm CTA</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#E29473 · firefly-warm</div></div></div>
+        <div style="flex:1;min-width:220px;background:var(--paper-goal);border:1.5px dashed var(--line-goal);border-radius:6px;padding:14px 16px;display:flex;align-items:center;gap:14px"><span style="font-family:var(--font-hand);font-size:19px;color:var(--acc-gold);transform:rotate(-1.5deg)">goal of the day ✿</span><div style="margin-left:auto;text-align:right"><div style="font-size:12px;color:var(--acc-gold)">gold · #E4C36B</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">warm #C9A55A · ember card</div></div></div>
+        <div style="flex:1;min-width:220px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;padding:14px 16px;display:flex;align-items:center;gap:16px"><span style="width:10px;height:10px;border-radius:50%;background:var(--firefly);box-shadow:var(--glow-firefly);flex:none"></span><div><div style="font-size:12px;color:var(--ink-muted)">firefly · the signature glow</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline)">#F6E28C · glow-firefly</div></div></div>
+      </div>
+    </div>
+
+    <!-- 5 · SIGNALS + 6 · CHECKBOXES -->
+    <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:22px;margin-top:44px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">05 · Signals</div>
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--sig-overdue);background:rgba(226,148,115,0.14);border-radius:999px;padding:4px 11px;white-space:nowrap">3d over</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sig-overdue · #E29473</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-body)"><span style="color:var(--sig-streak)">🔥</span>34 days</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sig-streak · gold at night</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--paper-sidebar);background:var(--sig-done);border-radius:999px;padding:4px 11px">done</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sig-done · cream chip</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">06 · Checkboxes — sage moonlight</span><span style="font-family:var(--font-hand);font-size:16px;color:var(--ink-faint);transform:rotate(-0.6deg)">no more cream hairlines</span></div>
+        <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:8px 24px">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px dashed var(--line-dashed)">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-border);background:var(--check-bg);border-radius:5px;flex:none"></span>
+            <span style="flex:1;font-size:14px;color:var(--ink-body)">Open — border check-border, wash check-bg</span>
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">sage 65% / 8%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px dashed var(--line-dashed)">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-fill);background:var(--check-fill);border-radius:5px;flex:none;box-shadow:var(--check-glow);display:inline-flex;align-items:center;justify-content:center"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4.2 3.8 7 9 1" fill="none" stroke="var(--check-mark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+            <span style="flex:1;font-size:14px;color:var(--ink-hairline);text-decoration:line-through;text-decoration-color:var(--check-border)">Checked — fill glows, text strikes to hairline</span>
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">check-fill #A8C09A</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-border);background:var(--check-bg);border-radius:5px;flex:none"></span>
+            <span style="flex:1;font-size:14px;color:var(--ink-body)">Water the balcony jasmine</span>
+            <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-sage-text);background:rgba(168,192,154,0.14);border-radius:999px;padding:3px 9px">Balcony garden</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 · DEPTH -->
+    <div style="margin-top:44px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">07 · Depth — shadows sink, glows lift</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:16px">
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-card);padding:18px;transform:rotate(var(--tilt-neg-sm))"><div style="font-size:12.5px;color:var(--ink-body)">shadow-card</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline);margin-top:4px">black 40% + 30%</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-panel);padding:18px;transform:rotate(var(--tilt-pos-sm))"><div style="font-size:12.5px;color:var(--ink-body)">shadow-panel</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline);margin-top:4px">deeper ambient</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:6px;box-shadow:var(--shadow-popover);padding:18px;transform:rotate(var(--tilt-neg-sm))"><div style="font-size:12.5px;color:var(--ink-body)">shadow-popover</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline);margin-top:4px">floats over the dark</div></div>
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-goal);border-radius:6px;box-shadow:var(--glow-window);padding:18px;transform:rotate(var(--tilt-pos-sm))"><div style="font-size:12.5px;color:var(--acc-gold)">glow-window</div><div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-hairline);margin-top:4px">lamplight, not shadow</div></div>
+      </div>
+    </div>
+
+    <!-- 8 · PROOF -->
+    <div style="margin-top:44px;padding-top:26px;border-top:1px dashed var(--line-dashed)">
+      <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint)">08 · Proof — a working corner, tokens only</span><span style="font-family:var(--font-hand);font-size:16px;color:var(--ink-faint);transform:rotate(-0.6deg)">every value below is a var() — zero hard-coded color</span></div>
+      <div style="margin-top:16px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:8px;box-shadow:var(--shadow-panel);overflow:hidden;max-width:720px">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--paper-sidebar);border-bottom:1px solid var(--line-sidebar);padding:10px 20px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Tasks</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-hairline)">22:04 · Africa/Cairo</span></div>
+        <div style="padding:20px 24px 24px">
+          <div style="display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--line-card)">
+            <span style="position:relative;padding-bottom:10px;font-size:13.5px;font-weight:600;color:var(--text-primary)">Today<span style="position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--acc-blossom);border-radius:2px;box-shadow:0 0 8px rgba(233,191,197,0.5)"></span></span>
+            <span style="padding-bottom:10px;font-size:13.5px;color:var(--text-tertiary)">Upcoming</span>
+            <span style="padding-bottom:10px;font-size:13.5px;color:var(--text-tertiary)">Someday</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 2px;border-bottom:1px dashed var(--border-dashed)">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-fill);background:var(--check-fill);border-radius:5px;flex:none;box-shadow:var(--check-glow);display:inline-flex;align-items:center;justify-content:center"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4.2 3.8 7 9 1" fill="none" stroke="var(--check-mark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+            <span style="flex:1;font-size:14px;color:var(--ink-hairline);text-decoration:line-through;text-decoration-color:var(--check-border)">Send Omar the revised scope PDF</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 2px;border-bottom:1px dashed var(--border-dashed)">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-border);background:var(--check-bg);border-radius:5px;flex:none"></span>
+            <span style="flex:1;font-size:14px;color:var(--text-primary)">Wireframe the charts view</span>
+            <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--sig-overdue);background:rgba(226,148,115,0.14);border-radius:999px;padding:3px 9px">1d over</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 2px">
+            <span style="width:17px;height:17px;border:1.5px solid var(--check-border);background:var(--check-bg);border-radius:5px;flex:none"></span>
+            <span style="flex:1;font-size:14px;color:var(--text-primary)">Reconcile Q2 actuals</span>
+            <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--acc-lavender-text);background:rgba(192,183,224,0.16);border-radius:999px;padding:3px 9px">Sat 09:00</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+            <div style="flex:1;display:flex;align-items:center;gap:9px;background:var(--bg-input);border:1px solid var(--border-default);border-radius:8px;padding:10px 13px"><span style="color:var(--text-tertiary)">›</span><span style="font-size:13.5px;color:var(--text-secondary)">plant a task…</span></div>
+            <button style="border:none;background:var(--accent-primary);color:var(--paper-sidebar);font-family:inherit;font-size:13px;font-weight:600;padding:10px 20px;border-radius:999px;box-shadow:var(--shadow-cta);cursor:pointer">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="margin-top:52px;padding-top:20px;border-top:1px dashed var(--line-dashed);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-hairline)">coverage rule — every token in colors.css has a night value in colors.dark.css · shadows included</span>
+      <span style="font-family:var(--font-hand);font-size:17px;color:var(--ink-faint);transform:rotate(-0.8deg)">the garden doesn't close at night ✿</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

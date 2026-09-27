@@ -1,9 +1,13 @@
-/* Light mode — warm paper, botanical linen. This is the primary experience. */
+/* Light mode — warm paper, botanical linen. This is the primary experience.
+   Refresh Sep 2026: text tokens meet WCAG AA 4.5:1 on parchment, linen, bone,
+   sidebar and goal paper; non-text controls (borders, icons, checks) meet 3:1.
+   Ratios are annotated as  parchment / linen / bone / sidebar / goal.
+   Every variable from Jul 2026 is still here — values changed, names did not. */
 :root {
-  /* Paper ground */
+  /* Paper ground (unchanged) */
   --paper-linen:        #EFE9DB;   /* page background */
-  --paper-parchment:    #FBF6E9;   /* cards, panels, popovers */
-  --paper-bone:         #F6F0E1;   /* input fields, hover surfaces */
+  --paper-parchment:    #FBF6E9;   /* cards, panels, popovers, sheets */
+  --paper-bone:         #F6F0E1;   /* input fields, pressed surfaces */
   --paper-sidebar:      #EAE3D2;   /* left rail */
   --paper-goal:         #F8EFD3;   /* gold card — goal of the day */
   --paper-event:        #F4EFE0;   /* neutral calendar block — external / read-only */
@@ -15,49 +19,78 @@
   --block-sage:         rgba(138, 154, 126, 0.20);
   --block-hydrangea:    rgba(154, 180, 190, 0.22);
   --block-buttercream:  rgba(212, 199, 138, 0.24);
+  --block-terra:        rgba(181, 101, 74, 0.14);    /* NEW · overdue / priority chip wash */
 
-  /* Ink */
-  --ink-body:           #2a2420;   /* primary text — bark brown */
-  --ink-muted:          #6b6455;   /* secondary text, metadata labels */
-  --ink-faint:          #8b8471;   /* hints, uppercase mono captions */
-  --ink-hairline:       #a49d87;   /* tertiary hint, "done" strike text */
+  /* Ink — TEXT (≥4.5:1)                                  parch / linen / bone / sidebar / goal */
+  --ink-body:           #2a2420;   /* primary text — bark    14.19 / 12.65 / 13.47 / 11.97 / 13.33 */
+  --ink-muted:          #5f5849;   /* secondary, metadata     6.53 /  5.82 /  6.20 /  5.51 /  6.14  (was #6b6455) */
+  --ink-faint:          #6A6354;   /* hints, mono captions    5.52 /  4.92 /  5.24 /  4.66 /  5.18  (was #8b8471 — 3.45 / 3.08 ✗) */
+  --ink-hand:           #6c6557;   /* NEW · Caveat marginalia 5.35 /  4.77 /  5.08 /  4.51 /  5.03  (replaces literal #7a745f) */
+  /* Ink — NON-TEXT ONLY (≥3:1). Never body text, never a label. */
+  --ink-hairline:       #88816E;   /* hairlines, done-strike  3.60 /  3.21 /  3.41 /  3.03 /  3.38  (was #a49d87 — 2.51 ✗) */
 
-  /* Borders */
+  /* Borders — decorative rules stay soft (exempt: they separate, they don't identify) */
   --line-solid:         #cfc7b0;
   --line-dashed:        #d5cdb5;   /* dashed hairlines between sections */
   --line-sidebar:       #c9c1aa;
   --line-card:          #e0d8c2;
   --line-goal:          #dcc48e;
+  --line-control:       #88816E;   /* NEW · input / select / toggle outline  3.60 / 3.21 / 3.41 / 3.03 */
 
-  /* Botanical accents — the six flower tabs */
+  /* Botanical accents — the flower tabs. Fills, dots, tape, illustration.
+     Raw accents are NOT text colours (sage 2.78, moss 3.09, terra 3.95 on parchment). */
   --acc-sage:           #8A9A7E;   /* leaves, primary green */
   --acc-moss:           #7A946E;   /* projects — deep moss */
-  --acc-terra:          #B5654A;   /* CTA, alerts, active states */
+  --acc-terra:          #B5654A;   /* terra fill: dots, star, overdue icon  3.95 non-text ✓ */
   --acc-blossom:        #D4A8B0;   /* tasks — cherry blush */
   --acc-lavender:       #A8A0BE;   /* calendar */
   --acc-hydrangea:      #9AB4BE;   /* inbox */
   --acc-buttercream:    #D4C78A;   /* docs — fern accent */
   --acc-clover:         #C9A0A0;   /* chat — dusty rose */
-  --acc-gold:           #9a7b3a;   /* goal-of-day emphasis */
+  --acc-gold:           #7f6428;   /* goal emphasis text      5.18 / 4.62 / 4.92 / 4.37* / 5.18  (was #9a7b3a — 3.69 ✗)  *never on sidebar */
   --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
-  --acc-lavender-deep:  #7c6a9a;   /* muted lavender links/labels */
-  --acc-lavender-text:  #5a5170;   /* darker text on lavender-tinted pills */
-  --acc-sage-text:      #4d6650;   /* darker text on sage-tinted pills */
-  --acc-hydrangea-deep: #4d6a75;   /* text on hydrangea-tinted chips */
-  --acc-clover-text:    #8a5a5a;   /* text on clover-tinted chips */
-  --acc-buttercream-text: #9a8b52; /* darker buttercream for Review headers */
+  --acc-lavender-deep:  #6a5988;   /* lavender links/labels   5.73 / 5.11 / 5.44 / 4.83 / 5.38  (was #7c6a9a — 4.44 ✗) */
+  --acc-lavender-text:  #5a5170;   /* text on lavender pills  6.84 / 6.10 / 6.49 / 5.77 / 6.42 */
+  --acc-sage-text:      #4d6650;   /* text on sage pills      5.84 / 5.21 / 5.54 / 4.93 / 5.49 */
+  --acc-hydrangea-deep: #4d6a75;   /* text on hydrangea chips 5.36 / 4.77 / 5.08 / 4.52 / 5.03 */
+  --acc-clover-text:    #8a5a5a;   /* text on clover chips    5.27 / 4.70 / 5.00 / 4.45* / 4.95 */
+  --acc-buttercream-text: #716431; /* Review headers          5.45 / 4.86 / 5.17 / 4.60 / 5.12  (was #9a8b52 — 3.14 ✗) */
+  --acc-blossom-text:   #8A4A58;   /* NEW · text on blossom chips (was a literal) 6.08 / 5.42 / 5.77 / 5.13 */
+  --acc-terra-ink:      #9C5139;   /* NEW · terra as TEXT + CTA fill  5.33 / 4.75 / 5.06 / 4.50 / 5.01 */
 
   /* Signal colors */
-  --sig-overdue:        #B5654A;   /* same as terra — overdue reads warm */
-  --sig-streak:         #B5654A;   /* streak flame */
+  --sig-overdue:        #9C5139;   /* overdue TEXT — now terra-ink (was #B5654A, 3.95 ✗) */
+  --sig-streak:         #B5654A;   /* streak flame — a glyph, non-text */
   --sig-done:           #2a2420;   /* filled check chip */
+  --sig-amber:          #7f6428;   /* NEW · workload over capacity (gold ink) */
+  --sig-offline:        #4d6a75;   /* NEW · offline / pending-sync (hydrangea-deep) */
 
   /* Task checkboxes */
-  --check-border:       #b3ac95;
+  --check-border:       #88816E;   /* 3.41 on bone ✓ (was #b3ac95 — 2.00 ✗) */
   --check-bg:           var(--paper-bone);
-  --check-fill:         var(--acc-sage);   /* checked square */
-  --check-mark:         #FBF6E9;           /* the ✓ glyph */
-  --check-glow:         none;              /* night mode adds a moonlit glow */
+  --check-fill:         var(--acc-sage-text);   /* checked square — 5.84 ✓ (was --acc-sage, 2.78 ✗) */
+  --check-mark:         #FBF6E9;                /* ✓ on fill 5.84 */
+  --check-glow:         none;                   /* night mode adds a moonlit glow */
+
+  /* NEW · Star (Top 3) */
+  --star-on:            #B5654A;   /* filled star 3.95 ✓ */
+  --star-empty:         #88816E;   /* outline star 3.60 ✓ (was ink-hairline-ish 1.39 ✗) */
+
+  /* NEW · Interaction colour roles */
+  --on-terra:           #FBF6E9;   /* label on --acc-terra-ink CTA   5.33 */
+  --focus:              #4d6a75;   /* focus-visible ring (hydrangea-deep) 5.36 / 4.77 / 5.08 */
+  --badge-bg:           #9C5139;   /* tab badge */
+  --badge-ink:          #FBF6E9;   /* 5.33 */
+  --toast-bg:           #2a2420;   /* snackbar — bark, inverted */
+  --toast-ink:          #FBF6E9;   /* 14.19 */
+  --toast-action:       #C9A55A;   /* Undo — washi gold on bark  6.7 */
+  --swipe-right-bg:     #8A9A7E;   /* Tomorrow — sage fill */
+  --swipe-right-ink:    #2a2420;   /* 5.11 on sage */
+  --swipe-left-bg:      #9C5139;   /* Delete — terra-ink fill */
+  --swipe-left-ink:     #FBF6E9;   /* 5.33 */
+  --select-bg:          rgba(77, 106, 117, 0.10);   /* selected row wash (hydrangea-deep) */
+  --skeleton:           rgba(42, 36, 32, 0.07);
+  --skeleton-hi:        rgba(42, 36, 32, 0.035);
 
   /* Semantic aliases (what components should reach for) */
   --bg-app:             var(--paper-linen);
