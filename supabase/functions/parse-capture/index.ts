@@ -5,7 +5,10 @@ import { corsHeadersFor } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
-const GROQ_PARSE_MODEL = Deno.env.get('GROQ_PARSE_MODEL') ?? 'llama-3.3-70b-versatile'
+// SCALE: a small model is plenty for turning one capture into JSON, and on Groq's free plan each
+// model has its own daily budget. gpt-oss-20b is Groq's named replacement for llama-3.1-8b-instant,
+// which (with llama-3.3-70b-versatile) left the free plan on 2026-08-16.
+const GROQ_PARSE_MODEL = Deno.env.get('GROQ_PARSE_MODEL') ?? 'openai/gpt-oss-20b'
 
 const RequestSchema = z.object({
   raw_text: z.string().min(1).max(4000),
@@ -80,7 +83,7 @@ async function callGroq(rawText: string, systemPrompt: string): Promise<unknown>
   })
   if (!res.ok) {
     console.error('parse-capture: groq', res.status, await res.text())
-    throw new Error('upstream_failed')
+    throw new Error(res.status === 429 ? 'rate_limited' : 'upstream_failed')
   }
   const data = await res.json()
   const content = data.choices?.[0]?.message?.content
@@ -131,9 +134,12 @@ Deno.serve(async (req) => {
     let result: z.infer<typeof ParseResultSchema>
     try {
       result = ParseResultSchema.parse(await callGroq(rawText, systemPrompt))
-    } catch {
+    } catch (e) {
+      // One retry for a malformed answer or a blip — but not for Groq's 429: that's the shared
+      // key's rate limit, and a retry would only spend another call against it.
+      const rateLimited = e instanceof Error && e.message === 'rate_limited'
       try {
-        result = ParseResultSchema.parse(await callGroq(rawText, systemPrompt))
+        result = rateLimited ? fallbackResult(rawText) : ParseResultSchema.parse(await callGroq(rawText, systemPrompt))
       } catch {
         result = fallbackResult(rawText)
       }
