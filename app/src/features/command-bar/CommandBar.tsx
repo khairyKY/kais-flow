@@ -25,7 +25,7 @@ const PRIORITY_NAME: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Me
 
 // F3b (D-5 ruling, punch 59): Go-to lives inside ⌘K — type a view name, a jump row
 // appears; ↓ selects it, ↵ navigates. Plain ↵ still quick-adds. Parked surfaces
-// (Journal, Library) and dev routes are deliberately absent until they return.
+// (Library) and dev routes are deliberately absent until they return. Journal is back in the sidebar (U-14).
 const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
   { name: 'today', label: 'Today', to: '/today' },
   { name: 'inbox', label: 'Inbox', to: '/inbox' },
@@ -36,6 +36,7 @@ const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
   { name: 'review', label: 'Review', to: '/weekly-review' },
   { name: 'focus', label: 'Focus', to: '/focus' },
   { name: 'people', label: 'People', to: '/people' },
+  { name: 'journal', label: 'Journal', to: '/journal' },
   { name: 'activity', label: 'Activity', to: '/activity' },
   { name: 'settings', label: 'Settings', to: '/settings' },
   { name: 'search', label: 'Search', to: '/search' },

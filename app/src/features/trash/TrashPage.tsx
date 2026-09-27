@@ -108,8 +108,8 @@ export function TrashPage() {
     }
     if (diffDays < 7) return `deleted ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][deletedAt.getDay()]}`
     const dayLabel = deletedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
-    const daysLeft = Math.max(1, 30 - diffDays)
-    return `deleted ${dayLabel} \u00b7 composts in ${daysLeft}d`
+    const daysLeft = 30 - diffDays // ponytail: the 0032 compost cron removes it at 03:30 UTC once this hits 0
+    return `deleted ${dayLabel} \u00b7 ${daysLeft > 0 ? `composts in ${daysLeft}d` : 'composts tonight'}`
   }
 
   const ageGroupedItems = useMemo(() => {
