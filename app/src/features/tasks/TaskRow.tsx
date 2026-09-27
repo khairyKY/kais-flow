@@ -498,7 +498,7 @@ export function TaskRow({
         onClickCapture={selectClick}
         style={{ ...rowStyle, alignItems: 'center', padding: '12px 10px', margin: '0 -10px' }}
       >
-        <Checkbox checked={false} size={18} onChange={handleCheck} />
+        <Checkbox checked={false} size={18} onChange={handleCheck} label={task.title} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div onClick={openDetail} style={{ fontSize: 15, color: 'var(--ink-body)', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
           {tag && (
@@ -582,6 +582,7 @@ export function TaskRow({
         )}
         <span style={{ position: 'relative', marginTop: 2 }}>
           <Checkbox
+            label={task.title}
             checked={checking}
             size={18}
             bloom={task.top3}
