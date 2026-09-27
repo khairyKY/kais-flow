@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'react'
 import { searchHybrid } from './api'
 import { IDLE, searchReducer, type SearchState } from './searchState'
 
-const DEBOUNCE_MS = 250
+const DEBOUNCE_MS = 400 // each pause = one edge-function call (free tier: 500k/month)
 
 /** Debounced hybrid search for the ⌘/ overlay and /search — one copy of the lifecycle
  * (searchState.ts) so both tell "nothing found" from "didn't answer" the same way. */

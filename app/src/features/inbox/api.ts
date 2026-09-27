@@ -6,12 +6,14 @@ import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { createTask } from '../tasks/api'
 import { dayWord, formatDue } from './inboxDisplay'
+import { INBOX_COLUMNS } from '../../lib/columns'
+import { fetchAll } from '../../lib/fetchAll'
 import type { InboxItem, Task } from '../../lib/types'
 
 async function fetchInboxItems(): Promise<InboxItem[]> {
-  const { data, error } = await supabase.from('inbox_items').select('*').order('created_at', { ascending: false })
-  if (error) throw error
-  return data as InboxItem[]
+  return fetchAll<InboxItem>((from, to) =>
+    supabase.from('inbox_items').select(INBOX_COLUMNS).order('created_at', { ascending: false }).order('id').range(from, to),
+  )
 }
 
 export function usePendingInboxItems() {
