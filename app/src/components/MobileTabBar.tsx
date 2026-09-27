@@ -42,6 +42,9 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
     <div className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end' }} onClick={onClose}>
       <div
         className="kf-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="More"
         style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >

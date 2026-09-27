@@ -194,13 +194,16 @@ export function TapeCard({
 // and the Goal of the day, plus milestones. "Not every task in the today view, not in task view,
 // not anywhere." Everything else still fills and shows its check, just without the ceremony —
 // so opt in with `bloom`, don't opt out.
-export function Checkbox({ checked, onChange, size = 17, bloom = false, style }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties }) {
+// U-5: `label` names the thing being checked ("Complete \"Buy tyres\"") — a screen reader said
+// only "checkbox, not checked" 411 times on Tasks. Without it, a generic action name.
+export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string }) {
   const motionOn = useMotionEnabled()
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
+      aria-label={label ? `Complete "${label}"` : checked ? 'Mark not done' : 'Mark done'}
       onClick={() => {
         // Sound map (MOTION_RETROFIT §E): paper rustle on task complete. Silent unless the
         // user turned it on — playSound gates itself, so no settings branch here.
