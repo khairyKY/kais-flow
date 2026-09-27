@@ -2,13 +2,18 @@ name: Android APK
 
 # M1 (docs/phases/M1-android.md): the real Android app — the same dist/ as the web app inside a
 # Tauri v2 shell, built on GitHub's runners (Android SDK + NDK are preinstalled; nothing on Kai's
-# laptop). Builds on the mobile branches for review; a published Release gets the APK attached.
+# laptop). Builds on the mobile branches for review; a release (release.yml) gets the APK attached.
 on:
   push:
     branches: ['claude/mobile-*']
     paths: ['app/**', '.github/workflows/android.yml', '.github/scripts/**']
-  release:
-    types: [published]
+  # The Release pipeline (release.yml) calls this with the version tag; the build is stamped with
+  # it and attached to that GitHub Release.
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
   workflow_dispatch:
 
 permissions:
@@ -53,6 +58,12 @@ jobs:
           workspaces: app/src-tauri -> target
 
       - run: npm ci
+
+      - name: Stamp the release version
+        if: inputs.tag != ''
+        env:
+          TAG: ${{ inputs.tag }}
+        run: node -e "const f='src-tauri/tauri.conf.json',c=require('./'+f);c.version=process.env.TAG.replace(/^v/,'');require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
 
       - name: Supabase public config
         env:
@@ -110,7 +121,8 @@ jobs:
               -validity 10000 -storepass "$pass" -keypass "$pass" -dname "CN=Kai's Flow" > /dev/null 2>&1
             echo "::warning::No ANDROID_KEYSTORE_B64 secret: signed with a one-off key. Installing a later build over this one needs an uninstall first."
           fi
-          name="kais-flow-${GITHUB_SHA::7}.apk"
+          tag='${{ inputs.tag }}'
+          name="kais-flow-${tag:-${GITHUB_SHA::7}}.apk"
           "$tools/zipalign" -f -p 4 "$unsigned" "$RUNNER_TEMP/aligned.apk"
           "$tools/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass "pass:$pass" --out "$RUNNER_TEMP/$name" "$RUNNER_TEMP/aligned.apk"
           "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/$name" | head -3
@@ -125,10 +137,10 @@ jobs:
           retention-days: 30
 
       - name: Attach to the Release
-        if: github.event_name == 'release'
+        if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag }}
         run: gh release upload "$TAG" "$APK" --clobber
 
   smoke:
