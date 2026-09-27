@@ -24,6 +24,19 @@ export function MiniFocus({ task }: { task: Task }) {
 
   const label = mode === 'break' ? 'Break' : mode === 'stopwatch' ? 'Stopwatch' : 'Focus'
 
+  // Kai 2026-09-27 ("a bit gimmicky?"): the full pomodoro card sat at the top of every task page.
+  // Idle, it's now one quiet pill; the card only appears while this task is the one being timed.
+  if (!isThisTask) {
+    const pill = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 32, padding: '0 13px', borderRadius: 999, border: '1px solid var(--line-card)', background: 'none', fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--ink-muted)', cursor: 'pointer', textDecoration: 'none' }
+    return activeTask ? (
+      <Link to="/focus" style={pill}>Focus running on another task →</Link>
+    ) : (
+      <button type="button" onClick={start} style={pill} aria-label={`Start a focus session on ${task.title}`}>
+        <span aria-hidden="true" style={{ color: 'var(--acc-terra)' }}>▶</span> Focus · {mmss(mode === 'stopwatch' ? stopwatchSeconds : secondsLeft)}
+      </button>
+    )
+  }
+
   return (
     <div style={{ border: '1px solid var(--line-card)', borderRadius: 8, padding: '13px 14px', background: 'var(--paper-bone)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

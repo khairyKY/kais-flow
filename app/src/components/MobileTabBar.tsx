@@ -2,13 +2,24 @@ import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { VoiceCaptureButton } from '../features/capture/VoiceCaptureButton'
 import { useEscapeStack } from '../lib/overlayStack'
-import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
+import { FlowerIcon, InboxGlyph, ProjectsGlyph } from './icons/NavGlyphs'
 
 // Pixel contract: "Kai's Flow — Universal Navigation Reference" §03 Mobile tab bar
 // (canonical 5-slot bar: Today · Inbox · Capture FAB · Cal · More) + its "More" sheet.
 // The shell owns this; feature pages never render their own copy.
 
 const A = '/ds/assets'
+
+// deviation(2026-09-27, Kai: "what happened to the icons of the nav bar"): the Navigation
+// Reference draws 9px dots here. Each slot now carries the botanical glyph the sidebar gives the
+// same page, dimmed until it's the page you're on.
+function SlotIcon({ active, children }: { active: boolean; children: ReactNode }) {
+  return (
+    <span style={{ height: 20, display: 'inline-flex', alignItems: 'center', opacity: active ? 1 : 0.55, filter: active ? undefined : 'saturate(0.6)' }}>
+      {children}
+    </span>
+  )
+}
 
 function slotLabel(active: boolean): CSSProperties {
   return { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
@@ -94,15 +105,16 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
         style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40, borderTop: '1px solid var(--line-card)', background: 'var(--paper-sidebar)', padding: '9px 20px calc(4px + env(safe-area-inset-bottom))', alignItems: 'flex-start', justifyContent: 'space-between' }}
       >
         <Link to="/today" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-sage)' }} />
+          <SlotIcon active={pathname === '/today'}><FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" /></SlotIcon>
           <span style={slotLabel(pathname === '/today')}>Today</span>
         </Link>
 
         <Link to="/inbox" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <span style={{ position: 'relative', width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-hydrangea)' }}>
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            <SlotIcon active={pathname === '/inbox'}><InboxGlyph /></SlotIcon>
             {pendingInbox > 0 && (
-              <span style={{ position: 'absolute', top: -4, right: -5, width: 12, height: 12, borderRadius: '50%', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {pendingInbox}
+              <span style={{ position: 'absolute', top: -5, right: -9, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 999, background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 10, lineHeight: '15px', textAlign: 'center' }}>
+                {pendingInbox > 99 ? '99+' : pendingInbox}
               </span>
             )}
           </span>
@@ -114,7 +126,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
         </div>
 
         <Link to="/calendar" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-lavender)' }} />
+          <SlotIcon active={pathname === '/calendar'}><FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" /></SlotIcon>
           <span style={slotLabel(pathname === '/calendar')}>Cal</span>
         </Link>
 
@@ -124,7 +136,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
           className="kf-hit"
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
         >
-          <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: 11 }} />
+          <SlotIcon active={moreOpen}><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--ink-muted)" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></SlotIcon>
           <span style={slotLabel(moreOpen)}>More</span>
         </button>
       </div>
