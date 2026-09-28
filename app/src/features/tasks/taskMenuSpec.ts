@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'tomorrow' | 'date' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'date' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -45,6 +45,8 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     { key: 'repeat', label: 'Repeat', hint: task.recurrence_rule ? (REPEAT_LABELS[task.recurrence_rule] ?? 'Custom') : 'Never', sub: true },
     { key: 'remind', label: 'Remind', hint: task.reminder_at ? cairoTimeKey(new Date(task.reminder_at)) : 'Off', sub: true },
     { key: 'top3', label: task.top3 ? 'Remove from Top 3' : 'Add to Top 3' },
+    // Kai 2026-09-27: the inline ▶ buttons went, so Focus lives here — one task, never in bulk.
+    ...(n ? [] : [{ key: 'focus', label: 'Start focus' } as const]),
     ...(ctx.canSelect ? [{ key: 'select', label: ctx.selected ? 'Deselect' : 'Select', hint: 'or hold a row' } as const] : []),
     del,
   ]

@@ -13,7 +13,7 @@ const labels = (t: Task, ctx: Parameters<typeof taskMenuSpec>[1]) => taskMenuSpe
 describe('taskMenuSpec — one ⋯ list for every task row', () => {
   it('is MK Action Sheet, in its order, Delete last', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 09:00', canSelect: true })).toEqual([
-      'Tomorrow', 'Pick date…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete',
+      'Tomorrow', 'Pick date…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Start focus', 'Select', 'Delete',
     ])
   })
 

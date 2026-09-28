@@ -8,6 +8,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { voiceLimitReachedToday } from './aiAllowance'
 import { LOCK_DISTANCE, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
 import './capture.css'
+import { longPress } from '../../lib/haptics'
 
 // The sheet (and its transcribe/parse chain) only loads once a take needs filing.
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -59,7 +60,7 @@ export function CaptureButton() {
 
   function startTake() {
     held.current = true
-    navigator.vibrate?.(10)
+    longPress()
     // Voice is used up for today on this device: no recording — the sheet says so and offers typing.
     if (voiceLimitReachedToday(uid)) {
       dispatch({ type: 'fail' })

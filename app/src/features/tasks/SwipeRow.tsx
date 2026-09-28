@@ -4,6 +4,7 @@ import type { IconName } from '../../components/icons/kf'
 import { uiZoom } from '../../lib/uiScale'
 import { LONG_PRESS_MS, lockAxis, pastCommit, REST_X, settleSwipe, SETTLE_MS, type Axis } from './swipe'
 import './TaskRow.css'
+import { longPress, tick } from '../../lib/haptics'
 
 // ── The task-row gesture layer (DS-CHANGELOG §3 "Swipe row" + "Selection mode", Flow Audit §4):
 // swipe right reveals Tomorrow · Pick date · Project and, past --swipe-commit, commits Tomorrow;
@@ -11,14 +12,6 @@ import './TaskRow.css'
 // Touch only — a mouse never swipes (J-1/J-9); desktop has right-click and ⋯ for the same actions.
 // Tasks' TaskRow and Today's Top 3 / goal card / Up next rows all wrap their content in this. ──
 
-// ponytail: stand-in for builder C's lib/haptics tick() — swap the body for that import once it lands.
-function tick() {
-  try {
-    navigator.vibrate?.(10)
-  } catch {
-    /* no vibration here: the swipe still works, just silently */
-  }
-}
 
 export interface SwipeActions {
   tomorrow: () => void
@@ -79,7 +72,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       s.timer = window.setTimeout(() => {
         s.id = -1
         s.swallow = true // the hold was the action; its release is not a tap
-        tick()
+        longPress()
         onLongPress()
       }, LONG_PRESS_MS)
     }

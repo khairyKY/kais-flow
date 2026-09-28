@@ -11,6 +11,7 @@ import type { Domain, Project, Task } from '../../lib/types'
 import { shortcutHint } from './listShortcuts'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
+import { useStartFocus } from '../today/startFocus'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
 // pickers), desktop = the ContextMenu with submenus. One list (./taskMenuSpec); the writes come in
@@ -52,7 +53,7 @@ export interface MenuAnchor {
 
 const ICONS: Record<TaskMenuKey, IconName> = {
   tomorrow: 'tomorrow', date: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority',
-  repeat: 'repeat', remind: 'remind', top3: 'star', select: 'tasks', reopen: 'undo', delete: 'delete',
+  repeat: 'repeat', remind: 'remind', top3: 'star', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
   tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), select: '⌃click', delete: shortcutHint('delete'),
@@ -83,6 +84,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
 }) {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   const [sub, setSub] = useState<Sub | undefined>(anchor.sub)
   const { at } = anchor
   const base = task.due_at || task.scheduled_start
@@ -110,6 +112,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
     repeat: () => setSub('repeat'),
     remind: () => setSub('remind'),
     top3: actions.top3,
+    focus: () => { onClose(); startFocus(task) },
     select: () => actions.select?.(),
     reopen: actions.reopen,
     delete: actions.delete,
