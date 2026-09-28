@@ -29,6 +29,7 @@ import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button } from '../../components/kit'
 import { useListKeys } from '../../components/useListKeys'
 import { BulkBar } from '../../components/BulkBar'
+import { Skeleton } from '../../components/States'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
@@ -615,7 +616,12 @@ export function TodayPage() {
           <section className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             <SectionLabel style={{ marginTop: isMobile ? 16 : 0, marginBottom: isMobile ? 8 : 14 }}>{isMobile ? 'Top 3 today' : 'Top 3 for today'}</SectionLabel>
-            {tasksPending ? null : nothingPlanned ? (
+            {tasksPending ? (
+              <>
+                <Skeleton variant="card" />
+                <Skeleton rows={2} />
+              </>
+            ) : nothingPlanned ? (
               <EmptyTodayCard onPlan={() => setCommandBarOpen(true)} />
             ) : allDone ? (
               <DoneTodayCard />

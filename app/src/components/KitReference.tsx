@@ -5,6 +5,7 @@ import { ICON_NAMES } from './icons/kf'
 import { MobileTabBar, TabItem } from './MobileTabBar'
 import { ToastHost } from './ToastHost'
 import { useTheme } from '../lib/theme'
+import { KitSheetsDemo } from './KitSheetsDemo'
 
 const caption = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' } as const
 
@@ -180,6 +181,8 @@ export function KitReference() {
             </TapeCard>
           </div>
         </section>
+
+        <KitSheetsDemo />
       </div>
 
       <MobileTabBar pendingInbox={12} onSearch={() => {}} onChat={() => {}} onSignOut={() => {}} />

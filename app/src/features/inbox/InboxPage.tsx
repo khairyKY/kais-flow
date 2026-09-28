@@ -18,6 +18,7 @@ import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { Select } from '../../components/Select'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { Skeleton } from '../../components/States'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
@@ -115,7 +116,7 @@ interface AiParse {
 }
 
 export function InboxPage() {
-  const { data: items = [] } = usePendingInboxItems()
+  const { data: items = [], isPending: itemsPending } = usePendingInboxItems()
   const { data: allItems = [] } = useAllInboxItems()
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
@@ -326,7 +327,9 @@ export function InboxPage() {
       {tabsRow}
 
       {tab === 'waiting' ? (
-        zero ? (
+        itemsPending ? (
+          <Skeleton />
+        ) : zero ? (
           <EmptyInboxCard />
         ) : (
           <>

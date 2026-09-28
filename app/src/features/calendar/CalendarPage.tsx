@@ -31,6 +31,7 @@ import { useDayRollover } from './useDayRollover'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
+import { Skeleton } from '../../components/States'
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import type { CalendarEvent } from '../../lib/types'
 
@@ -169,7 +170,7 @@ const WEEKEND_DAYS = [0, 6]
 export function CalendarPage() {
   const navigate = useNavigate()
   const { data: events = [] } = useCalendarEvents()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: settings } = useAppSettings()
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
@@ -561,7 +562,9 @@ export function CalendarPage() {
           </div>
 
           <div ref={sidebarRef} className="cal-rail-cards">
-            {railTasks.length === 0 ? (
+            {tasksPending ? (
+              <Skeleton rows={3} />
+            ) : railTasks.length === 0 ? (
               <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0 }}>Nothing here to block.</p>
             ) : (
               railTasks.map((t, i) => {

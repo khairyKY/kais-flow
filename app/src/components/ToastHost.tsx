@@ -1,121 +1,113 @@
 import { useEffect, useRef, useState } from 'react'
-import { useToastStore, type Toast } from '../lib/toastStore'
-import { useMotionEnabled } from '../lib/motion'
+import { useToastStore, visibleToasts, lifeLeft, TOAST_LIFE_MS, type Toast } from '../lib/toastStore'
 
-// ── Motion 3d — toast rises 14px from the bottom edge, bottom-center, ONE slot
-// (never stacking), always carrying its undo. Motion 5e — on dismissal the corner
-// flower releases a single petal that falls 30px and fades.
-// Dwell is 4s in lib/toastStore (Motion 3d). Exit: the departing toast lingers
-// ~600ms locally to play its 160ms drop + 500ms petal.
+// ── MK Undo Toast (DS-CHANGELOG §3). Inverted snackbar: min-h 48, 12 from the screen edges,
+// bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 3,
+// --toast-bg / --toast-ink 14/20 wrapping to two lines, action 14/600 --toast-action in a 48 hit,
+// 2px life line. Queue: two on screen, newest at the bottom, the older above at 0.92, a third
+// waits (lib/toastStore). Life is 6s, paused while touched, hovered or focused. In 200ms
+// (rise 12 + fade) / out 200ms fade; reduced motion cross-fades. ──
+
+const EXIT_MS = 200 // --dur-toast
+
+const CSS = `
+  .kf-toast-host { position: fixed; z-index: 1100; display: flex; flex-direction: column; gap: var(--toast-gap);
+    bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+    width: max-content; max-width: min(480px, calc(var(--kf-vw) - 24px)); pointer-events: none; }
+  @media (max-width: 767px) {
+    .kf-toast-host { left: 12px; right: 12px; transform: none; width: auto; max-width: none;
+      bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + var(--toast-gap)); }
+  }
+  .kf-toast { position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: center; gap: 4px;
+    min-height: 48px; padding: 0 4px 0 16px; box-sizing: border-box; border-radius: 3px;
+    background: var(--toast-bg); color: var(--toast-ink); box-shadow: var(--shadow-toast);
+    animation: toastIn var(--dur-toast) var(--ease-standard) backwards; }
+  .kf-toast.is-leaving { animation: toastOut var(--dur-toast) var(--ease-standard) forwards; }
+  .kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  .kf-toast-act { flex: none; height: 48px; padding: 0 12px; border: none; background: none; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--toast-action); border-radius: 3px; }
+  .kf-toast-act:active { background: var(--pressed-overlay); }
+  .kf-toast-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  .kf-toast-life { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--toast-action); opacity: 0.7;
+    transform-origin: left; animation: kfToastLife ${TOAST_LIFE_MS}ms linear forwards; }
+  @keyframes kfToastLife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    /* cross-fade instead of the rise; beats the global 0.01ms rule by specificity */
+    .kf-toast { animation-name: scrimIn !important; animation-duration: var(--dur-toast) !important; }
+    .kf-toast.is-leaving { animation-name: toastOut !important; }
+    .kf-toast-life { animation-name: none !important; } /* a static line, not a 0.01ms sweep to empty */
+  }
+`
+
 export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts)
+  const shown = visibleToasts(toasts)
+  return (
+    <div className="kf-toast-host" role="status" aria-live="polite">
+      <style>{CSS}</style>
+      {shown.map((t, i) => (
+        <ToastCard key={t.id} toast={t} older={i < shown.length - 1} />
+      ))}
+    </div>
+  )
+}
+
+function ToastCard({ toast, older }: { toast: Toast; older: boolean }) {
   const dismiss = useToastStore((s) => s.dismiss)
-  const motionOn = useMotionEnabled()
+  const [hovered, setHovered] = useState(false) // pointerenter/leave: a mouse hover, or a finger down (touch fires enter before down, leave after up)
+  const [focused, setFocused] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const left = useRef(TOAST_LIFE_MS)
+  const paused = hovered || focused
 
-  const current: Toast | undefined = toasts[toasts.length - 1] // single slot — newest wins
-  const [leaving, setLeaving] = useState<Toast | null>(null)
-  const prev = useRef<Toast | undefined>(undefined)
+  // The 6s clock only runs while this card is on screen and untouched.
   useEffect(() => {
-    const was = prev.current
-    prev.current = current
-    if (was && !current && motionOn) {
-      setLeaving(was)
-      const t = setTimeout(() => setLeaving(null), 620)
-      return () => clearTimeout(t)
+    if (paused || leaving) return
+    const since = Date.now()
+    const t = setTimeout(() => setLeaving(true), left.current)
+    return () => {
+      clearTimeout(t)
+      left.current = lifeLeft(left.current, since, Date.now())
     }
-  }, [current, motionOn])
+  }, [paused, leaving])
 
-  const shown = current ?? leaving
-  if (!shown) return null
-  const isLeaving = !current
+  useEffect(() => {
+    if (!leaving) return
+    const t = setTimeout(() => dismiss(toast.id), EXIT_MS)
+    return () => clearTimeout(t)
+  }, [leaving, dismiss, toast.id])
+
+  const actions = [toast.onUndo && { label: 'Undo', run: toast.onUndo }, toast.action].filter(
+    (a): a is { label: string; run: () => void } => !!a,
+  )
 
   return (
-    <div className="kf-toast-host" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: 'calc(var(--kf-vw) - 24px)' }}>
-      <style>{`
-        /* WB-3 punch 64: at bottom:16 the toast — and its Undo — sat *under* the phone tab
-           bar. Lift it clear of the bar the same way the sync popover does. */
-        @media (max-width: 767px) {
-          .kf-toast-host { bottom: calc(74px + env(safe-area-inset-bottom)) !important; }
-        }
-        @keyframes kfToastIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @keyframes kfToastOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(10px); } }
-        @keyframes kfToastPetal { from { opacity: 0.9; transform: translateY(0) rotate(0deg); } to { opacity: 0; transform: translateY(30px) rotate(80deg); } }
-      `}</style>
+    <div style={{ opacity: older ? 0.92 : 1 }}>
       <div
-        key={shown.id}
-        style={{
-          position: 'relative',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 14,
-          background: 'var(--paper-parchment)',
-          border: '1px solid var(--line-card)',
-          borderLeft: '3px solid var(--acc-sage)',
-          borderRadius: 4,
-          boxShadow: 'var(--shadow-panel)',
-          padding: '11px 16px',
-          whiteSpace: 'nowrap',
-          animation: motionOn ? (isLeaving ? 'kfToastOut 160ms var(--ease-in) both' : 'kfToastIn 220ms var(--ease-out)') : undefined,
-        }}
+        className={`kf-toast${leaving ? ' is-leaving' : ''}`}
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       >
-        {/* corner flower (Motion 5e) — artwork colors, same blossom palette as the petal pile */}
-        <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" style={{ position: 'absolute', top: -6, left: -5 }}>
-          <g fill="var(--acc-blossom)">
-            <ellipse cx="12" cy="6.2" rx="2.7" ry="3.4" />
-            <ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)" />
-            <ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)" />
-            <ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)" />
-            <ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)" />
-          </g>
-          <circle cx="12" cy="11" r="2.4" fill="var(--acc-gold-warm)" />
-        </svg>
-        <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{shown.message}</span>
-        {!isLeaving &&
-          [
-            shown.onUndo && { label: 'Undo', run: shown.onUndo },
-            shown.action,
-          ]
-            .filter((a): a is { label: string; run: () => void } => !!a)
-            .map((a) => (
-              <button
-                key={a.label}
-                type="button"
-                className="kf-hit"
-                onClick={() => {
-                  a.run()
-                  dismiss(shown.id)
-                }}
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-meta)',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: 'var(--acc-terra)',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                }}
-              >
-                {a.label}
-              </button>
-            ))}
+        <span className="kf-toast-msg">{toast.message}</span>
+        {!leaving &&
+          actions.map((a) => (
+            <button
+              key={a.label}
+              type="button"
+              className="kf-toast-act"
+              onClick={() => {
+                a.run()
+                setLeaving(true)
+              }}
+            >
+              {a.label}
+            </button>
+          ))}
+        <span aria-hidden className="kf-toast-life" style={{ animationPlayState: paused ? 'paused' : 'running' }} />
       </div>
-      {isLeaving && motionOn && (
-        <span
-          aria-hidden
-          style={{
-            position: 'absolute',
-            top: -4,
-            left: -2,
-            width: 11,
-            height: 9,
-            background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',
-            borderRadius: '70% 30% 60% 40%',
-            animation: 'kfToastPetal 500ms linear both',
-          }}
-        />
-      )}
     </div>
   )
 }

@@ -1,0 +1,557 @@
+[
+  {
+    "name": "phone-day medium detent ≈ 60%",
+    "ok": true,
+    "detail": "506 / 844"
+  },
+  {
+    "name": "phone-day handle tap → full (100% − 48 × zoom 1)",
+    "ok": true,
+    "detail": "796 vs 796"
+  },
+  {
+    "name": "phone-day full header gains ✕",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day handle tap again → back to medium",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day drag 15% springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day sheet follows the finger, scrim fades with it",
+    "ok": true,
+    "detail": "transform matrix(1, 0, 0, 1, 0, 212.684), scrim 0.58"
+  },
+  {
+    "name": "phone-day drag 42% + release closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day closing kept the draft",
+    "ok": true,
+    "detail": "draft: \"call Priya at 9\""
+  },
+  {
+    "name": "phone-day reopen shows the draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day short fling closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day scrim tap closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day 'full' detent opens at 100% − 48",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "phone-day ✕ closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day action rows 52 tall (× zoom 1)",
+    "ok": true,
+    "detail": "52"
+  },
+  {
+    "name": "phone-day Delete reachable without scrolling",
+    "ok": true,
+    "detail": "bottom 822 / 844"
+  },
+  {
+    "name": "phone-day destructive row last",
+    "ok": true,
+    "detail": "DeleteUndo 6s"
+  },
+  {
+    "name": "phone-day destructive row in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(156, 81, 57) (token #9C5139)"
+  },
+  {
+    "name": "phone-day action sheet closes on select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day queue: 3 pushed, 2 visible",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "phone-day older above, newest(visible) at bottom",
+    "ok": true,
+    "detail": "Moved to Tomorrow 09:00 | “Book the dentist” moved to Trash"
+  },
+  {
+    "name": "phone-day older at 0.92",
+    "ok": true,
+    "detail": "0.92"
+  },
+  {
+    "name": "phone-day toast 12 from edges, bottom = tab bar + 8",
+    "ok": true,
+    "detail": "x 12, w 366, bottom gap 72"
+  },
+  {
+    "name": "phone-day life paused while hovered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day third toast stepped in once the first left",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day long toast wraps to two lines",
+    "ok": true,
+    "detail": "68px tall"
+  },
+  {
+    "name": "phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night medium detent ≈ 60%",
+    "ok": true,
+    "detail": "506 / 844"
+  },
+  {
+    "name": "phone-night handle tap → full (100% − 48 × zoom 1)",
+    "ok": true,
+    "detail": "796 vs 796"
+  },
+  {
+    "name": "phone-night full header gains ✕",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night handle tap again → back to medium",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night drag 15% springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night sheet follows the finger, scrim fades with it",
+    "ok": true,
+    "detail": "transform matrix(1, 0, 0, 1, 0, 212.684), scrim 0.58"
+  },
+  {
+    "name": "phone-night drag 42% + release closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night closing kept the draft",
+    "ok": true,
+    "detail": "draft: \"call Priya at 9\""
+  },
+  {
+    "name": "phone-night reopen shows the draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night short fling closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night scrim tap closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night 'full' detent opens at 100% − 48",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "phone-night ✕ closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night action rows 52 tall (× zoom 1)",
+    "ok": true,
+    "detail": "52"
+  },
+  {
+    "name": "phone-night Delete reachable without scrolling",
+    "ok": true,
+    "detail": "bottom 822 / 844"
+  },
+  {
+    "name": "phone-night destructive row last",
+    "ok": true,
+    "detail": "DeleteUndo 6s"
+  },
+  {
+    "name": "phone-night destructive row in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(226, 148, 115) (token #E29473)"
+  },
+  {
+    "name": "phone-night action sheet closes on select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night queue: 3 pushed, 2 visible",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "phone-night older above, newest(visible) at bottom",
+    "ok": true,
+    "detail": "Moved to Tomorrow 09:00 | “Book the dentist” moved to Trash"
+  },
+  {
+    "name": "phone-night older at 0.92",
+    "ok": true,
+    "detail": "0.92"
+  },
+  {
+    "name": "phone-night toast 12 from edges, bottom = tab bar + 8",
+    "ok": true,
+    "detail": "x 12, w 366, bottom gap 72"
+  },
+  {
+    "name": "phone-night life paused while hovered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night third toast stepped in once the first left",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night long toast wraps to two lines",
+    "ok": true,
+    "detail": "68px tall"
+  },
+  {
+    "name": "phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day medium detent ≈ 60%",
+    "ok": true,
+    "detail": "480 / 800"
+  },
+  {
+    "name": "desktop-day handle tap → full (100% − 48 × zoom 1.25)",
+    "ok": true,
+    "detail": "740 vs 740"
+  },
+  {
+    "name": "desktop-day full header gains ✕",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day handle tap again → back to medium",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day drag 15% springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day sheet follows the finger, scrim fades with it",
+    "ok": true,
+    "detail": "transform matrix(1, 0, 0, 1, 0, 161.28), scrim 0.58"
+  },
+  {
+    "name": "desktop-day drag 42% + release closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day closing kept the draft",
+    "ok": true,
+    "detail": "draft: \"call Priya at 9\""
+  },
+  {
+    "name": "desktop-day reopen shows the draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day short fling closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day scrim tap closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day 'full' detent opens at 100% − 48",
+    "ok": true,
+    "detail": "740"
+  },
+  {
+    "name": "desktop-day ✕ closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day action rows 52 tall (× zoom 1.25)",
+    "ok": true,
+    "detail": "65"
+  },
+  {
+    "name": "desktop-day Delete reachable without scrolling",
+    "ok": true,
+    "detail": "bottom 773 / 800"
+  },
+  {
+    "name": "desktop-day destructive row last",
+    "ok": true,
+    "detail": "DeleteUndo 6s"
+  },
+  {
+    "name": "desktop-day destructive row in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(156, 81, 57) (token #9C5139)"
+  },
+  {
+    "name": "desktop-day action sheet closes on select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day queue: 3 pushed, 2 visible",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop-day older above, newest(visible) at bottom",
+    "ok": true,
+    "detail": "Moved to Tomorrow 09:00 | “Book the dentist” moved to Trash"
+  },
+  {
+    "name": "desktop-day older at 0.92",
+    "ok": true,
+    "detail": "0.92"
+  },
+  {
+    "name": "desktop-day life paused while hovered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day third toast stepped in once the first left",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day long toast wraps to two lines",
+    "ok": true,
+    "detail": "85px tall"
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night medium detent ≈ 60%",
+    "ok": true,
+    "detail": "480 / 800"
+  },
+  {
+    "name": "desktop-night handle tap → full (100% − 48 × zoom 1.25)",
+    "ok": true,
+    "detail": "740 vs 740"
+  },
+  {
+    "name": "desktop-night full header gains ✕",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night handle tap again → back to medium",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night drag 15% springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night sheet follows the finger, scrim fades with it",
+    "ok": true,
+    "detail": "transform matrix(1, 0, 0, 1, 0, 161.28), scrim 0.58"
+  },
+  {
+    "name": "desktop-night drag 42% + release closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night closing kept the draft",
+    "ok": true,
+    "detail": "draft: \"call Priya at 9\""
+  },
+  {
+    "name": "desktop-night reopen shows the draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night short fling closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night scrim tap closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night 'full' detent opens at 100% − 48",
+    "ok": true,
+    "detail": "740"
+  },
+  {
+    "name": "desktop-night ✕ closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night action rows 52 tall (× zoom 1.25)",
+    "ok": true,
+    "detail": "65"
+  },
+  {
+    "name": "desktop-night Delete reachable without scrolling",
+    "ok": true,
+    "detail": "bottom 773 / 800"
+  },
+  {
+    "name": "desktop-night destructive row last",
+    "ok": true,
+    "detail": "DeleteUndo 6s"
+  },
+  {
+    "name": "desktop-night destructive row in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(226, 148, 115) (token #E29473)"
+  },
+  {
+    "name": "desktop-night action sheet closes on select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night queue: 3 pushed, 2 visible",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop-night older above, newest(visible) at bottom",
+    "ok": true,
+    "detail": "Moved to Tomorrow 09:00 | “Book the dentist” moved to Trash"
+  },
+  {
+    "name": "desktop-night older at 0.92",
+    "ok": true,
+    "detail": "0.92"
+  },
+  {
+    "name": "desktop-night life paused while hovered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night third toast stepped in once the first left",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night long toast wraps to two lines",
+    "ok": true,
+    "detail": "85px tall"
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone keyboard: sheet bottom = IME top",
+    "ok": true,
+    "detail": "bottom gap 300"
+  },
+  {
+    "name": "phone keyboard: focused field visible above IME",
+    "ok": true,
+    "detail": "field 295–343"
+  },
+  {
+    "name": "scroll lock on .app-main-content, not body",
+    "ok": true,
+    "detail": "open hidden/body '', after auto"
+  },
+  {
+    "name": "reduced motion: sheet cross-fades (scrimIn, 300ms)",
+    "ok": true,
+    "detail": "scrimIn 0.3s"
+  },
+  {
+    "name": "reduced motion: exit fades in place",
+    "ok": true,
+    "detail": "0.950162 none"
+  }
+]
