@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useOpenTask } from './openTask'
 import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
 import { completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, rescheduleDue } from './api'
@@ -95,7 +95,7 @@ export function TaskRow({
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const [schedulePos, setSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [checking, setChecking] = useState(false)
   const motionOn = useMotionEnabled()
@@ -147,7 +147,7 @@ export function TaskRow({
   }
 
   // J-8: tap the row = open the task. (A tap on a row swiped open closes it instead — SwipeRow.)
-  const openDetail = () => navigate(`/tasks/${task.id}`)
+  const openDetail = () => openTask(task.id)
 
   const rowStyle: React.CSSProperties = {
     borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',

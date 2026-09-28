@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
@@ -168,7 +168,7 @@ const RAIL_TILTS = [0, -0.4, 0, 0.4]
 const WEEKEND_DAYS = [0, 6]
 
 export function CalendarPage() {
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: settings } = useAppSettings()
@@ -317,7 +317,7 @@ export function CalendarPage() {
   /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
   function handleEventDoubleClick(id: string) {
     const event = events.find((e) => e.id === id)
-    if (event?.task_id) navigate(`/tasks/${event.task_id}`)
+    if (event?.task_id) openTask(event.task_id)
   }
 
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestTimes } from './taskSheet'
+import { blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).
@@ -99,5 +99,18 @@ describe('suggestTimes — Suggest a time (4m)', () => {
   })
   it('late in the evening, with no due time, it looks at tomorrow', () => {
     expect(suggestTimes([], null, at('19:50'), 30)).toEqual({ day: '2026-09-28', starts: [8 * 60, 8 * 60 + 30, 9 * 60], before: null })
+  })
+  it('the line under the slots', () => {
+    expect(suggestHint({ day: '2026-09-27', starts: [780], before: 900 }, now)).toBe('Free before 15:00 · tap one to place it')
+    expect(suggestHint({ day: '2026-09-28', starts: [480], before: null }, now)).toBe('Free tomorrow · tap one to place it')
+    expect(suggestHint({ day: '2026-09-27', starts: [], before: 900 }, now)).toBe('No free time before 15:00')
+    expect(suggestHint({ day: '2026-09-27', starts: [], before: null }, now)).toBe('No free time today or tomorrow')
+  })
+})
+
+describe('blockLine — the block card', () => {
+  it('day · start–end · length', () => {
+    expect(blockLine({ starts_at: iso('15:00'), ends_at: iso('15:30') }, at('09:00'))).toBe('Sun 27 · 15:00–15:30 · 30m')
+    expect(blockLine({ starts_at: iso('09:00', 30), ends_at: iso('10:30', 30) }, at('09:00'))).toBe('Wed 30 · 09:00–10:30 · 1h30')
   })
 })

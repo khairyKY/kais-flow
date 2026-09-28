@@ -1,0 +1,73 @@
+/* The phone task sheet — design-export/Task Sheet.dc.html 4a–4n, built from the Mobile Kit (MK Bottom
+   Sheet, parse chips, MK Action Sheet, pickers). The sheet body has 20px gutters; full-bleed rows step
+   out to the drawing's 4px (a 48 box, then the text). Night is the token swap only. */
+
+.ts-top { display: flex; align-items: flex-start; margin: 0 -16px; }
+.ts-box { width: var(--touch-min); height: var(--touch-min); flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-faint); }
+.ts-more { color: var(--ink-muted); }
+
+/* Title: Source Serif 20/26 at rest; tapped, the same text becomes a field (4c). */
+.ts-title {
+  flex: 1; min-width: 0; margin: 0 0 0 -8px; padding: 11px 8px 8px; box-sizing: border-box;
+  border: none; border-radius: 8px; background: none; outline: none; resize: none; overflow: hidden;
+  field-sizing: content; /* ponytail: grows with the text in current Chrome/WebView/Safari; an older engine shows one line */
+  overflow-wrap: anywhere; font-family: var(--font-display); font-size: var(--fs-display-m); font-weight: var(--fw-medium);
+  line-height: 26px; color: var(--ink-body);
+}
+.ts-title:focus { background: var(--paper-bone); box-shadow: var(--focus-ring); }
+.ts-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+
+.ts-done, .ts-next, .ts-sec, .ts-foot, .ts-block small {
+  font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase;
+}
+.ts-done { display: flex; align-items: center; gap: 6px; margin: -4px 0 12px; color: var(--acc-sage-text); }
+.ts-offline { margin: 0 0 12px; }
+
+.ts-chips { display: flex; flex-wrap: wrap; gap: 16px 8px; padding-bottom: 12px; }
+.ts-label-add {
+  min-width: 96px; field-sizing: content; border: 1px dashed var(--line-control); border-radius: var(--radius-pill);
+  background: none; outline: none; color: var(--ink-body);
+}
+.ts-label-add:focus { box-shadow: var(--focus-ring); }
+.ts-next { display: flex; align-items: center; gap: 6px; margin: -2px 0 12px; color: var(--ink-muted); }
+
+.ts-notes {
+  display: block; width: 100%; min-height: 48px; box-sizing: border-box; margin: 0 0 4px; padding: 12px 14px;
+  border: 1px solid var(--line-control); border-radius: 8px; background: var(--paper-bone); outline: none; resize: none;
+  field-sizing: content; font: inherit; font-size: var(--fs-body); line-height: 1.45; color: var(--ink-body);
+}
+.ts-notes:focus { box-shadow: var(--focus-ring); }
+.ts-notes::placeholder, .ts-sub-add::placeholder, .ts-label-add::placeholder { color: var(--ink-faint); }
+
+.ts-sec { display: flex; align-items: center; gap: 12px; min-height: var(--touch-min); font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }
+.ts-sec::after { content: ''; flex: 1; border-bottom: 1px dashed var(--line-dashed); }
+
+.ts-sub { display: flex; align-items: center; min-height: var(--touch-min); margin: 0 -16px; padding-right: 16px; }
+.ts-sub-title { min-width: 0; font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); }
+.ts-sub-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.ts-sub-add { flex: 1; min-width: 0; height: var(--touch-min); padding: 0; border: none; background: none; outline: none; font: inherit; font-size: var(--fs-body); color: var(--ink-body); }
+
+/* The block card (4b): buttercream, opens the calendar. */
+.ts-block {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 56px; padding: 6px 4px 6px 12px;
+  border: none; border-radius: 3px; background: var(--block-buttercream); font: inherit; text-align: left;
+  color: var(--ink-muted); cursor: pointer;
+}
+.ts-block > span { flex: 1; min-width: 0; }
+.ts-block b { display: block; font-size: 14px; font-weight: var(--fw-medium); line-height: 20px; color: var(--ink-body); }
+.ts-block small { display: block; color: var(--acc-buttercream-text); }
+.ts-hint { display: flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; color: var(--ink-muted); }
+.ts-focus { padding: 4px 0; }
+
+/* Footer: two mono lines left (save state · created), the primary right. */
+.ts-foot { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; color: var(--ink-faint); }
+.ts-save { display: inline-flex; align-items: center; gap: 5px; }
+.ts-save.is-saved { color: var(--acc-sage-text); }
+.ts-save.is-pending { color: var(--sig-offline); }
+.ts-save.is-pending::before { content: ''; width: 7px; height: 7px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid currentColor; }
+
+/* 4i: loading — the sheet's shape in skeleton bars (MK States). */
+.ts-skel { display: flex; flex-direction: column; gap: 16px; padding-top: 12px; animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
+.ts-skel span { display: block; border-radius: 2px; background: var(--skeleton); }
+.ts-skel div { display: flex; gap: 8px; }
+.ts-skel .is-pill { height: 32px; border-radius: var(--radius-pill); }

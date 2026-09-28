@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
 import { Select } from '../../components/Select'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { useOpenTask } from './openTask'
 import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -412,7 +413,7 @@ export function TasksPage() {
   const dupeClusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
   const [title, setTitle] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const rawList = searchParams.get('list')
   // R4-3 (2026-07-20 audit): SearchOverlay deep-links here as /tasks?focus=<id>, but this
   // page never read the param, so a clicked result landed on an unhighlighted list.
@@ -610,7 +611,7 @@ export function TasksPage() {
   const bindings = buildListBindings({
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
     complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
-    open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
+    open: (t) => openTask(t.id), // F3 punch 29: Enter opens detail
     today: (t) => rescheduleDue(t, scheduleToday()),
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),

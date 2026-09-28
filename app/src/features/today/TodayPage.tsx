@@ -51,6 +51,7 @@ import { upNextClock, upNextLabel } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
+import { useOpenTask } from '../tasks/openTask'
 import { DayCard, RitualCard } from './DayCard'
 import { useDay } from './useDay'
 import { useStarEvents } from './api'
@@ -279,10 +280,10 @@ export function TodayPage() {
   // "Task list" — same row-menu pattern as TasksPage now, so both surfaces match the overlay.
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
-  const listNavigate = useNavigate()
+  const openTask = useOpenTask()
   const listBindings = buildListBindings({
     complete: (t) => completeTaskWithUndo(t),
-    open: (t) => listNavigate(`/tasks/${t.id}`),
+    open: (t) => openTask(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
@@ -882,11 +883,12 @@ function PhoneSection({ label, link, first }: { label: string; link?: { to: stri
  * a plain event has nothing to complete); swipe / hold behave as the task's row. */
 function NowSlip({ event, task, now, sel }: { event: CalendarEvent; task?: Task; now: Date; sel: RowSelection }) {
   const navigate = useNavigate()
+  const openTask = useOpenTask()
   const start = new Date(event.starts_at).getTime()
   const end = new Date(event.ends_at).getTime()
   const pct = Math.min(100, Math.max(0, Math.round(((now.getTime() - start) / Math.max(1, end - start)) * 100)))
   const left = Math.max(1, Math.ceil((end - now.getTime()) / 60_000))
-  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
+  const open = () => (task ? openTask(task.id) : navigate('/calendar'))
   const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', transform: 'rotate(-0.3deg)' } as const
   const inner = (done?: React.ReactNode) => (
     <>
@@ -1097,8 +1099,8 @@ const doneAt = (task: Task) => (task.completed_at ? `Done ${cairoTimeKey(new Dat
 function GoalCard({ task, projectName, dot, compact, meta, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; meta?: string[] } & RowSelection) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
-  const navigate = useNavigate()
-  const openDetail = () => navigate(`/tasks/${task.id}`) // J-8
+  const openTask = useOpenTask()
+  const openDetail = () => openTask(task.id) // J-8
   // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — the same grammar as the rows under it.
   const g = useTodayRow(task, sel)
   const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
@@ -1190,7 +1192,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
       {task.recurrence_rule && <span>↻</span>}
     </>
   ) : null
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const g = useTodayRow(task, { ...sel, ...(block ? blockGrammar(block) : null) })
   // Kai 2026-07-21: no visible select squares on desktop — Ctrl/Cmd+click toggles selection.
   function selectClick(e: React.MouseEvent) {
@@ -1199,7 +1201,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     e.stopPropagation()
     sel.onToggleSelect()
   }
-  const open = () => navigate(`/tasks/${task.id}`)
+  const open = () => openTask(task.id)
   const rowProps = {
     id: block ? `upnext-${block.id}` : `task-${task.id}`,
     tabIndex: highlighted ? 0 : -1,
@@ -1293,7 +1295,8 @@ function EventRow({ event, task, border, now, rowSelection }: { event: CalendarE
   const label = upNextLabel(event.starts_at, event.ends_at, now)
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
-  const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
+  const openTask = useOpenTask()
+  const open = () => (task ? openTask(task.id) : navigate('/calendar'))
   // The checkbox acts on its own; its click must not also open the row.
   const own = (e: React.MouseEvent) => e.stopPropagation()
   const check = task && (
