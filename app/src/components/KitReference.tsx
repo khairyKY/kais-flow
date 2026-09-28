@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, Chip, SectionLabel, TapeCard, Checkbox, KeyChip, KeyCombo } from './kit'
 import { useTheme } from '../lib/theme'
+import { KitSheetsDemo } from './KitSheetsDemo'
 
 // Living reference for the §04 component kit — reachable at /design-system (no auth).
 // Wave agents diff their compositions against these atoms.
@@ -73,6 +74,8 @@ export function KitReference() {
             </TapeCard>
           </div>
         </section>
+
+        <KitSheetsDemo />
       </div>
     </div>
   )
