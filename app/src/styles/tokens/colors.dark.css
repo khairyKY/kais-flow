@@ -5,7 +5,7 @@
 
    COVERAGE RULE: every token in colors.css (and the shadow set in effects.css)
    has a night value here — nothing falls back to a daylight value. */
-[data-theme="night"] {
+[data-theme="night"], :root[data-theme="night"] {
   /* Sky ground — violet midnight, never true black */
   --sky-deep:           #211D30;   /* page background */
   --sky-mid:            #2E2840;   /* mid sky, sidebar wash */
@@ -25,12 +25,12 @@
   /* Moonlight ink — soft cream on violet, never pure white */
   --moon-primary:       #F0EBDD;
   --moon-muted:         #C9C0D8;
-  --moon-faint:         #8E88A0;
+  --moon-faint:         #9A94AC;
   --ink-body:           #F0EBDD;   /* primary text */
   --ink-muted:          #C9C0D8;   /* secondary text, metadata */
-  --ink-faint:          #8E88A0;   /* hints, mono captions */
-  --ink-hairline:       #716B81;   /* tertiary, "done" strike text */
-  --ink-hand:           #C9C0D8;   /* hand-script annotations (X-pass foundation patch) */
+  --ink-faint:          #9A94AC;   /* hints, mono captions */
+  --ink-hairline:       #7A748A;   /* tertiary, "done" strike text */
+  --ink-hand:           #B3ABC4;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Lines — cream hairlines, more transparent than day */
   --line-solid:         rgba(240, 235, 221, 0.2);
@@ -96,4 +96,40 @@
   --border-dashed:      var(--line-dashed);
   --accent-primary:     var(--acc-terra);
   --accent-plant:       var(--acc-sage);
+  /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
+  --block-lavender: rgba(192, 183, 224, 0.22);
+  --block-moss: rgba(154, 190, 140, 0.18);
+  --block-blossom: rgba(233, 191, 197, 0.18);
+  --block-sage: rgba(168, 196, 152, 0.18);
+  --block-hydrangea: rgba(169, 197, 211, 0.18);
+  --block-buttercream: rgba(232, 220, 160, 0.18);
+  --block-terra: rgba(226, 148, 115, 0.16);
+  --line-control: #7A748A;
+  --acc-blossom-text: #E9BFC5;
+  --acc-terra-ink: #E29473;
+  --sig-amber: #E4C36B;
+  --sig-offline: #A9C5D3;
+  --star-on: #E29473;
+  --star-empty: #7A748A;
+  --on-terra: #211D30;
+  --focus: #A9C5D3;
+  --badge-bg: #E29473;
+  --badge-ink: #211D30;
+  --toast-bg: #F0EBDD;
+  --toast-ink: #211D30;
+  --toast-action: #9C5139;
+  --swipe-right-bg: #A8C09A;
+  --swipe-right-ink: #211D30;
+  --swipe-left-bg: #E29473;
+  --swipe-left-ink: #211D30;
+  --select-bg: rgba(169, 197, 211, 0.12);
+  --skeleton: rgba(240, 235, 221, 0.08);
+  --skeleton-hi: rgba(240, 235, 221, 0.04);
+  --shadow-sheet: 0 -1px 0 rgba(240, 235, 221, 0.08), 0 -12px 36px rgba(0, 0, 0, 0.5);
+  --shadow-toast: 0 2px 4px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.45);
+  --shadow-tabbar: 0 -1px 0 rgba(240, 235, 221, 0.10);
+  --scrim: rgba(12, 10, 20, 0.62);
+  --pressed-overlay: rgba(240, 235, 221, 0.10);
+  --focus-ring: 0 0 0 2px #211D30, 0 0 0 4px #A9C5D3;
+
 }

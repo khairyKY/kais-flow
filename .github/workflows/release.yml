@@ -187,6 +187,9 @@ jobs:
     uses: ./.github/workflows/android.yml
     permissions:
       contents: write
+    # The keystore secrets (ANDROID_KEYSTORE_B64/_PASSWORD) must reach the called workflow, or every
+    # release APK gets a one-off key and Android refuses to update over the previous install.
+    secrets: inherit
     with:
       tag: ${{ needs.publish.outputs.tag }}
 

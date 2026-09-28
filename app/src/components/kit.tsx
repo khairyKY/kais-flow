@@ -2,79 +2,98 @@ import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { playSound } from '../lib/sounds'
 import { useMotionEnabled } from '../lib/motion'
+import { Icon } from './Icon'
+import type { IconName } from './icons/kf'
+import './kit.css'
 
 // ── Shared component kit — Design System.dc.html §04. The design-system atoms
-// every feature composes: Button · Chip · SectionLabel · TapeCard · Checkbox.
-// Values are verbatim from §04. Composites (TaskRow, etc.) are built by their
-// owning wave from these atoms. House rules (§06): radius 3px cards, tilt ±0.3–0.5°,
+// every feature composes: Button · Chip · SectionLabel · TapeCard · Checkbox · Star.
+// Values are verbatim from §04; the 2026-09-28 refresh (DS-CHANGELOG §3) adds the phone sizes
+// and the pressed / focus / disabled / loading / selected states, which live in kit.css so a
+// media query can size them (desktop keeps its Jul 2026 sizes). Composites (TaskRow, etc.) are
+// built by their owning wave from these atoms. House rules (§06): radius 3px cards, tilt ±0.3–0.5°,
 // tape only on placed standalone cards, one terra CTA + one gold Goal card per view. ──
 
 // ── Button — one terra CTA per view (§04) ──
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'cta' | 'secondary' | 'ghost'
   icon?: ReactNode
+  /** 16px ring spinner in place of the icon, presses blocked; pass the in-progress label ("Saving"). */
+  loading?: boolean
+  /** Secondary only: the selected (filter-on) state — sage wash, sage-text border + label, check 18. */
+  selected?: boolean
 }
 
-const buttonBase: CSSProperties = {
-  font: 'inherit',
-  fontSize: 13,
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 9,
-}
-const buttonVariants: Record<'cta' | 'secondary' | 'ghost', CSSProperties> = {
-  cta: { border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', padding: '10px 17px 10px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)' },
-  secondary: { border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', padding: '9px 16px', borderRadius: 999, boxShadow: 'var(--shadow-crisp)' },
-  ghost: { border: 'none', background: 'none', color: 'var(--ink-muted)', padding: '9px 6px' },
-}
-
-export function Button({ variant = 'cta', icon, children, style, ...props }: ButtonProps) {
+export function Button({ variant = 'cta', icon, loading = false, selected, className, disabled, children, ...props }: ButtonProps) {
+  const toggles = variant === 'secondary' && selected !== undefined
   return (
-    <button className="kf-btn" style={{ ...buttonBase, ...buttonVariants[variant], ...style }} {...props}>
-      {icon}
+    <button
+      className={`kf-btn kf-press kf-button kf-button--${variant}${className ? ` ${className}` : ''}`}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      aria-pressed={toggles ? selected : undefined}
+      {...props}
+    >
+      {loading ? <span className="kf-spinner" aria-hidden="true" /> : toggles && selected ? <Icon name="check" size={18} /> : icon}
       {children}
     </button>
   )
 }
 
 // ── Chip / tag — surface-tinted (§04) ──
-type ChipTone = 'tasks' | 'inbox' | 'routed' | 'sage' | 'overdue' | 'terra' | 'gold' | 'lavender' | 'hydrangea' | 'clover' | 'bordered'
+// date / project / duration / priority are the capture parse chips (DS-CHANGELOG §3): same box +
+// a 16px glyph. No inline ✕ (a 16px target) — tapping the chip opens its picker, which has Remove.
+type ChipTone = 'tasks' | 'inbox' | 'routed' | 'sage' | 'overdue' | 'terra' | 'gold' | 'lavender' | 'hydrangea' | 'clover' | 'bordered' | 'date' | 'project' | 'duration' | 'priority'
 
-// punch 57: every tint was a hard-coded DAY accent rgba, so at night the chips kept their
-// daylight fill on the dark ground (the "maroon-on-dark chip"). Each literal is exactly its
-// accent token at that alpha, so color-mix over the token is byte-identical in day and flips
-// automatically at night. `tasks` ink is the one value with no --acc-*-text token to reach for.
+// punch 57 → 2026-09-28: the surface tints are the --block-* tokens (day + night pairs) with the
+// matching -text ink (tasks blossom, inbox hydrangea, routed sage, overdue terra-ink).
+// gold and clover have no block token, so they keep the color-mix over their accent.
 const chipTones: Record<ChipTone, CSSProperties> = {
-  tasks: { background: 'color-mix(in srgb, var(--acc-blossom) 16%, transparent)', color: 'var(--kf-chip-tasks, #8A4A58)' },
-  inbox: { background: 'color-mix(in srgb, var(--acc-hydrangea) 20%, transparent)', color: 'var(--acc-hydrangea-deep)' },
-  hydrangea: { background: 'color-mix(in srgb, var(--acc-hydrangea) 20%, transparent)', color: 'var(--acc-hydrangea-deep)' },
-  routed: { background: 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' },
-  sage: { background: 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' },
-  overdue: { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
-  terra: { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
+  tasks: { background: 'var(--block-blossom)', color: 'var(--acc-blossom-text)' },
+  inbox: { background: 'var(--block-hydrangea)', color: 'var(--acc-hydrangea-deep)' },
+  hydrangea: { background: 'var(--block-hydrangea)', color: 'var(--acc-hydrangea-deep)' },
+  routed: { background: 'var(--block-sage)', color: 'var(--acc-sage-text)' },
+  sage: { background: 'var(--block-sage)', color: 'var(--acc-sage-text)' },
+  overdue: { background: 'var(--block-terra)', color: 'var(--acc-terra-ink)' },
+  terra: { background: 'var(--block-terra)', color: 'var(--acc-terra-ink)' },
   gold: { background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: 'var(--acc-gold)' },
-  lavender: { background: 'color-mix(in srgb, var(--acc-lavender) 18%, transparent)', color: 'var(--acc-lavender-text)' },
+  lavender: { background: 'var(--block-lavender)', color: 'var(--acc-lavender-text)' },
   clover: { background: 'color-mix(in srgb, var(--acc-clover) 18%, transparent)', color: 'var(--acc-clover-text)' },
-  bordered: { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
+  bordered: { border: '1px solid var(--line-control)', color: 'var(--ink-muted)' },
+  date: { background: 'var(--block-lavender)', color: 'var(--acc-lavender-text)' },
+  project: { background: 'var(--block-moss)', color: 'var(--acc-sage-text)' },
+  duration: { background: 'var(--block-buttercream)', color: 'var(--acc-buttercream-text)' },
+  priority: { background: 'var(--block-terra)', color: 'var(--acc-terra-ink)' },
+}
+const parseGlyph: Partial<Record<ChipTone, IconName>> = { date: 'calendar', project: 'projects', duration: 'clock', priority: 'priority' }
+
+type ChipProps = {
+  tone?: ChipTone
+  children: ReactNode
+  style?: CSSProperties
+  /** A 16px leading glyph; parse tones bring their own. */
+  icon?: ReactNode
+  /** 1.5px inset ring in the chip ink + check 16. */
+  selected?: boolean
+  loading?: boolean
+  disabled?: boolean
+  /** Makes the chip a button (48 hit on touch) — e.g. a parse chip opening its picker. */
+  onClick?: () => void
 }
 
-export function Chip({ tone = 'bordered', children, style }: { tone?: ChipTone; children: ReactNode; style?: CSSProperties }) {
-  const bordered = tone === 'bordered'
-  return (
-    <span
-      style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: bordered ? 9 : 10,
-        letterSpacing: bordered ? '0.08em' : '0.06em',
-        textTransform: 'uppercase',
-        padding: bordered ? '5px 9px' : '5px 10px',
-        borderRadius: bordered ? 3 : 999,
-        whiteSpace: 'nowrap',
-        ...chipTones[tone],
-        ...style,
-      }}
-    >
+export function Chip({ tone = 'bordered', children, style, icon, selected, loading, disabled, onClick }: ChipProps) {
+  const glyphName = parseGlyph[tone]
+  const glyph = loading ? <span className="kf-spinner kf-spinner--sm" aria-hidden="true" /> : selected ? <Icon name="check" size={16} /> : icon ?? (glyphName && <Icon name={glyphName} size={16} />)
+  const className = `kf-chip${tone === 'bordered' ? ' kf-chip--bordered' : ''}${glyph ? ' kf-chip--glyph' : ''}${selected ? ' kf-chip--selected' : ''}`
+  const chipStyle = { ...chipTones[tone], ...style }
+  return onClick ? (
+    <button type="button" className={`${className} kf-press kf-hit`} style={chipStyle} onClick={onClick} disabled={disabled} aria-pressed={selected} aria-busy={loading || undefined}>
+      {glyph}
+      {children}
+    </button>
+  ) : (
+    <span className={className} style={chipStyle} aria-disabled={disabled || undefined}>
+      {glyph}
       {children}
     </span>
   )
@@ -196,13 +215,17 @@ export function TapeCard({
 // so opt in with `bloom`, don't opt out.
 // U-5: `label` names the thing being checked ("Complete \"Buy tyres\"") — a screen reader said
 // only "checkbox, not checked" 411 times on Tasks. Without it, a generic action name.
-export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string }) {
+// 2026-09-28 (DS-CHANGELOG §3): on a phone every box draws 22 × 22 radius 6 (`subtask` 18) in a
+// 48 hit whatever `size` says — `size` stays the desktop size; kit.css owns the phone override.
+export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label, subtask, disabled }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string; subtask?: boolean; disabled?: boolean }) {
   const motionOn = useMotionEnabled()
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
+      disabled={disabled}
+      data-subtask={subtask || undefined}
       aria-label={label ? `Complete "${label}"` : checked ? 'Mark not done' : 'Mark done'}
       onClick={() => {
         // Sound map (MOTION_RETROFIT §E): paper rustle on task complete. Silent unless the
@@ -235,16 +258,37 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
       {checked ? (
         <span
           style={{
-            display: 'inline-block',
+            display: 'flex',
+            // The kit's 2.2px check (DS Kit: 16 in a 22 box), sized to the box so the phone's 22 fits.
+            width: '72%',
+            height: '72%',
             // checkPop 180ms (0→1.3→1), delayed behind the 90ms fill; `both` holds scale(0) during the delay.
             animation: motionOn ? 'checkPop 180ms var(--ease-out) 90ms both' : 'none',
           }}
         >
-          ✓
+          <Icon name="check" strokeWidth={2.2} style={{ width: '100%', height: '100%' }} />
         </span>
       ) : (
         ''
       )}
+    </button>
+  )
+}
+
+// ── Star (Top 3) — glyph 22 in a 48 hit; empty = --star-empty stroke, on = filled --star-on
+// (DS-CHANGELOG §3; the star is the icon set's one fill). ──
+export function Star({ on, onChange, label, disabled, style }: { on: boolean; onChange?: (next: boolean) => void; label?: string; disabled?: boolean; style?: CSSProperties }) {
+  return (
+    <button
+      type="button"
+      className="kf-star"
+      aria-pressed={on}
+      aria-label={label ? `Top 3: "${label}"` : 'Top 3'}
+      disabled={disabled}
+      onClick={() => onChange?.(!on)}
+      style={style}
+    >
+      <Icon name="star" size={22} fill={on ? 'currentColor' : 'none'} />
     </button>
   )
 }

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ds/styles.css">
+<meta name="design_doc_mode" content="canvas">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+a{color:var(--acc-lavender-deep);text-decoration:none}
+a:hover{color:var(--acc-terra)}
+</style>
+</helmet>
+
+<div style="position:relative;z-index:2;padding:56px 60px 120px;max-width:1280px;margin:0 auto">
+
+  <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px dashed var(--line-dashed)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · App Icons</div>
+      <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:46px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">A mark pressed<br>onto the page</h1>
+    </div>
+    <p style="margin:0;max-width:400px;font-size:14px;line-height:1.6;color:var(--ink-muted)">Turn 3 explores the two you liked: the <strong>K</strong> on paper in typewriter &amp; handwritten inks (<a href="#3a">3a</a>–<a href="#3d">3d</a>), and classic <strong>serif</strong> Ks with a Times feel (<a href="#3h">3h</a>–<a href="#3j">3j</a>), and new <strong>sprout</strong> treatments (<a href="#3e">3e</a>–<a href="#3g">3g</a>). Turns 2 and 1 kept below.</p>
+  </header>
+
+  <!-- ============ FINAL — Source Serif K ============ -->
+  <section style="margin-top:44px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--acc-terra);white-space:nowrap">Final — Source Serif K</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+      <!-- master -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+        <div id="master-icon" style="position:relative;width:256px;height:256px;border-radius:57.6px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 16px 38px rgba(60,52,38,.2),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.4px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-display);font-weight:500;font-size:169px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">1024px master</div>
+      </div>
+
+      <!-- size ladder -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Reads at every size</div>
+        <div style="display:flex;align-items:flex-end;gap:22px">
+          <div style="text-align:center">
+            <div style="position:relative;width:120px;height:120px;border-radius:27px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 8px 18px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:79px;color:var(--ink-body)">K</span></div>
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">120</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:87px;height:87px;border-radius:20px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 6px 14px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:57px;color:var(--ink-body)">K</span></div>
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">87</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:60px;height:60px;border-radius:13.5px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 4px 9px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:39px;color:var(--ink-body)">K</span></div>
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">60</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:40px;height:40px;border-radius:9px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 3px 6px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:26px;color:var(--ink-body)">K</span></div>
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">40</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:40px;margin-top:34px;align-items:flex-start">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">Night garden</div>
+            <div style="position:relative;width:100px;height:100px;border-radius:22px;overflow:hidden;background:linear-gradient(158deg,#2E2840,#211D30 70%,#1C1929);box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 1px rgba(110,104,127,.4)">
+              <div style="position:absolute;inset:0;background:radial-gradient(90% 80% at 50% -10%,rgba(228,195,107,.14),transparent 60%)"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:66px;color:#F0EBDD;text-shadow:0 0 14px rgba(240,235,221,.25)">K</span></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">On the home screen</div>
+            <div style="position:relative;width:210px;height:150px;border-radius:26px;overflow:hidden;background:linear-gradient(165deg,#7f8a6e,#5c6b52 55%,#3f4a38);box-shadow:0 1px 2px rgba(60,52,38,.2),0 12px 28px rgba(60,52,38,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+              <div style="position:absolute;inset:0;background:radial-gradient(120% 60% at 70% 10%,rgba(255,250,235,.16),transparent 55%)"></div>
+              <div style="position:relative;width:70px;height:70px;border-radius:16px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 2px 6px rgba(0,0,0,.28)">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--font-display);font-weight:500;font-size:46px;color:var(--ink-body)">K</span></div>
+              </div>
+              <div style="position:relative;font-family:var(--font-ui);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap">Kai's Flow</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ TURN 3 — K + sprout explorations ============ -->
+  <section style="margin-top:44px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Turn 3 — the K, on paper</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 24px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Ink on warm paper · same debossed squircle</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+      <!-- 3a typewriter K -->
+      <div id="3a" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:118px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3A</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Typewriter K</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Courier Prime · bark ink</div>
+        </div>
+      </div>
+
+      <!-- 3b handwritten K -->
+      <div id="3b" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-hand);font-weight:600;font-size:160px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3B</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Handwritten K</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Caveat · bark ink</div>
+        </div>
+      </div>
+
+      <!-- 3c typewriter K + leaf -->
+      <div id="3c" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:118px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M63 38 C72 36 79 28 78 18 C68 20 62 29 63 38 Z" fill="var(--acc-sage)"/>
+            <path d="M63 38 C68 31 72 26 77 21" stroke="#6a7a5e" stroke-width="1" fill="none"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3C</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Typewriter K · leaf</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Ink K · sage sprig</div>
+        </div>
+      </div>
+
+      <!-- 3d handwritten K + leaf -->
+      <div id="3d" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-hand);font-weight:600;font-size:160px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M64 34 C73 32 80 24 79 14 C69 16 63 25 64 34 Z" fill="var(--acc-sage)"/>
+            <path d="M64 34 C69 27 73 22 78 17" stroke="#6a7a5e" stroke-width="1" fill="none"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3D</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Handwritten K · leaf</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Caveat · sage sprig</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px;margin:40px 0 10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Turn 3 — serif K</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 24px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Classic serif · Times feel</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+      <!-- 3h Times New Roman K -->
+      <div id="3h" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'Times New Roman',Times,serif;font-weight:400;font-size:138px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:#fff;background:var(--acc-terra);padding:2px 8px;border-radius:999px">3H · RECOMMENDED</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Times K</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Times New Roman · bark ink</div>
+        </div>
+      </div>
+
+      <!-- 3i Source Serif K -->
+      <div id="3i" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-display);font-weight:500;font-size:132px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3I</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Source Serif K</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">The app's own serif</div>
+        </div>
+      </div>
+
+      <!-- 3j Times italic K -->
+      <div id="3j" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'Times New Roman',Times,serif;font-style:italic;font-weight:400;font-size:140px;line-height:1;color:var(--ink-body)">K</span>
+          </div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M66 36 C75 34 82 26 81 16 C71 18 65 27 66 36 Z" fill="var(--acc-sage)"/>
+            <path d="M66 36 C71 29 75 24 80 19" stroke="#6a7a5e" stroke-width="1" fill="none"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3J</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Times italic K · leaf</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Slanted serif · sage sprig</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px;margin:40px 0 24px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Turn 3 — more sprouts</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+      <!-- 3e sprout ink line-art on paper -->
+      <div id="3e" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <g stroke="#2a2420" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M50 84 C50 66 50 56 50 44"/>
+              <path d="M49 60 C34 58 24 47 25 33 C41 35 50 47 49 60 Z"/>
+              <path d="M51 50 C66 47 76 35 75 21 C59 24 50 37 51 50 Z"/>
+              <path d="M49 60 C42 53 36 45 30 38" stroke-width="1.1"/>
+              <path d="M51 50 C58 43 64 35 70 28" stroke-width="1.1"/>
+            </g>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3E</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Sprout · line-art</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Ink outline on paper</div>
+        </div>
+      </div>
+
+      <!-- 3f sprout filled sage on paper -->
+      <div id="3f" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M50 84 C50 66 50 56 50 46" stroke="var(--acc-moss)" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+            <path d="M49 60 C34 58 24 47 25 33 C41 35 50 47 49 60 Z" fill="var(--acc-sage)"/>
+            <path d="M51 50 C66 47 76 35 75 21 C59 24 50 37 51 50 Z" fill="var(--acc-sage)"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3F</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Sprout · sage on paper</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Filled green · light tile</div>
+        </div>
+      </div>
+
+      <!-- 3g sprout three-leaf ink -->
+      <div id="3g" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M50 86 C50 66 50 54 50 40" stroke="var(--acc-moss)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+            <path d="M50 40 C46 30 47 22 52 15 C58 21 57 32 50 40 Z" fill="var(--acc-sage)"/>
+            <path d="M49 58 C35 57 26 47 27 34 C42 36 50 47 49 58 Z" fill="var(--acc-sage)"/>
+            <path d="M51 50 C65 48 74 38 73 25 C58 27 50 38 51 50 Z" fill="var(--acc-sage)"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">3G</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Sprout · three leaves</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Taller · a bud on top</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ TURN 2 — flat marks ============ -->
+  <section style="margin-top:44px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Turn 2 — flat &amp; distinctive</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+      <!-- 2a sprout on sage -->
+      <div id="2a" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(160deg,#96a488,#8A9A7E 55%,#76866a);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.2),inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1.2px rgba(255,255,255,.10)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% -8%,rgba(255,255,255,.18),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:overlay;opacity:.35"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M50 84 C50 66 50 56 50 46" stroke="#FBF6E9" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+            <path d="M49 60 C34 58 24 47 25 33 C41 35 50 47 49 60 Z" fill="#FBF6E9"/>
+            <path d="M51 50 C66 47 76 35 75 21 C59 24 50 37 51 50 Z" fill="#FBF6E9"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:#fff;background:var(--acc-terra);padding:2px 8px;border-radius:999px">2A · RECOMMENDED</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">The sprout</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Growth · the whole app in one glyph</div>
+        </div>
+      </div>
+
+      <!-- 2b monogram K on terra -->
+      <div id="2b" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(160deg,#c07356,#B5654A 55%,#9e5238);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.2),inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1.2px rgba(255,255,255,.10)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% -8%,rgba(255,255,255,.2),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:overlay;opacity:.35"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--font-display);font-weight:500;font-size:130px;line-height:1;color:#FBF6E9">K</span>
+          </div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <path d="M62 40 C71 38 78 30 77 20 C67 22 61 31 62 40 Z" fill="#FBF6E9"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">2B</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Monogram K</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Serif K · a leaf on the shoulder</div>
+        </div>
+      </div>
+
+      <!-- 2c growth arc on paper -->
+      <div id="2c" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <circle cx="34" cy="76" r="5.5" fill="#B5654A"/>
+            <path d="M34 76 C34 52 46 34 72 28" stroke="#7A946E" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+            <path d="M72 28 C63 25 55 27 50 34 C58 40 66 39 72 28 Z" fill="#7A946E"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">2C</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Growth arc</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Seed to leaf · abstract</div>
+        </div>
+      </div>
+
+      <!-- 2d solid gold tile, leaf motif -->
+      <div id="2d" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(160deg,#d3b26a,#C9A55A 55%,#b8923f);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.2),inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 1.2px rgba(255,255,255,.10)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% -8%,rgba(255,255,255,.22),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:overlay;opacity:.32"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0" preserveAspectRatio="xMidYMid slice">
+            <path d="M96 96 C60 96 40 76 40 40 C40 30 42 22 48 14 C82 30 100 56 96 96 Z" fill="rgba(120,90,30,0.20)"/>
+            <path d="M66 90 C58 66 56 44 54 22" stroke="rgba(120,90,30,0.28)" stroke-width="2.2" fill="none"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">2D</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Tonal leaf</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Solid tile · one quiet motif</div>
+        </div>
+      </div>
+
+      <!-- 2e line-art sprig on parchment -->
+      <div id="2e" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FCF8EE,#F6F0E1 70%,#EFE9DB);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <g stroke="#2a2420" stroke-width="2.1" fill="none" stroke-linecap="round">
+              <path d="M50 86 C50 62 50 42 50 20"/>
+              <path d="M50 68 C40 66 32 58 31 48"/>
+              <path d="M50 58 C60 56 68 48 69 38"/>
+              <path d="M50 47 C41 45 34 38 33 29"/>
+              <path d="M50 37 C59 35 66 29 67 21"/>
+              <path d="M50 20 C47 16 47 12 50 9 C53 12 53 16 50 20 Z"/>
+            </g>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">2E</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Line-art frond</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Ink stroke · engraving feel</div>
+        </div>
+      </div>
+
+      <!-- 2f seal / crest -->
+      <div id="2f" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(160deg,#5d6b52,#4c5945 55%,#3c4738);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.22),inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1.2px rgba(255,255,255,.08)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% -8%,rgba(255,255,255,.14),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:overlay;opacity:.35"></div>
+          <svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0">
+            <defs><path id="sealArc" d="M50 50 m-33 0 a33 33 0 1 1 66 0" fill="none"/></defs>
+            <circle cx="50" cy="50" r="37" stroke="#E8D9A8" stroke-width="1.4" fill="none"/>
+            <circle cx="50" cy="50" r="33" stroke="#E8D9A8" stroke-width="0.8" fill="none" opacity="0.6"/>
+            <text font-family="'Courier Prime',monospace" font-size="7" letter-spacing="3.4" fill="#E8D9A8"><textPath href="#sealArc" startOffset="9%">KAI'S · FLOW</textPath></text>
+            <path d="M50 66 C50 54 50 48 50 40" stroke="#E8D9A8" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            <path d="M49.5 52 C41 50.5 35 44 34.5 36 C43 37.5 49 44 49.5 52 Z" fill="#E8D9A8"/>
+            <path d="M50.5 46 C59 44.5 65 38 65.5 30 C57 31.5 51 38 50.5 46 Z" fill="#E8D9A8"/>
+            <circle cx="50" cy="70" r="1.7" fill="#E8D9A8"/>
+          </svg>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">2F</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Field seal</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Crest · sprig in a ring</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ TURN 1 — the candidates ============ -->
+  <section style="margin-top:44px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Turn 1 — pick a mark</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+      <!-- 1a clover -->
+      <div id="1a" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9 0%,#EFE9DB 68%,#E7E0CE 100%);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(92% 74% at 50% 118%,rgba(201,160,160,.18),transparent 60%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.55"></div>
+          <img src="ds/assets/clover/four_leaf.png" alt="four-leaf clover" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:64%;filter:drop-shadow(0 3px 4px rgba(60,52,38,.22))">
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:#fff;background:var(--acc-terra);padding:2px 8px;border-radius:999px">1A · RECOMMENDED</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Four-leaf clover</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Luck · Today · the milestone</div>
+        </div>
+      </div>
+
+      <!-- 1b cherry -->
+      <div id="1b" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9 0%,#F1EADB 68%,#EAE3D2 100%);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(92% 74% at 50% 118%,rgba(212,168,176,.2),transparent 60%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.55"></div>
+          <img src="ds/assets/cherry/bloom.png" alt="cherry blossom" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:74%;filter:drop-shadow(0 3px 4px rgba(60,52,38,.22))">
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">1B</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Cherry blossom</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Tasks · the bloom</div>
+        </div>
+      </div>
+
+      <!-- 1c wisteria -->
+      <div id="1c" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9 0%,#EFEAE0 68%,#E6E2D6 100%);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(92% 80% at 50% 118%,rgba(168,160,190,.2),transparent 60%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.55"></div>
+          <img src="ds/assets/wisteria/p100.png" alt="wisteria" style="position:absolute;left:52%;top:48%;transform:translate(-50%,-50%);height:86%;filter:drop-shadow(0 3px 4px rgba(60,52,38,.22))">
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">1C</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Wisteria</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Projects · the drape</div>
+        </div>
+      </div>
+
+      <!-- 1d hydrangea -->
+      <div id="1d" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9 0%,#EDEAE0 68%,#E4E3D6 100%);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(92% 74% at 50% 118%,rgba(154,180,190,.2),transparent 60%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.55"></div>
+          <img src="ds/assets/hydrangea/zero.png" alt="hydrangea" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:78%;filter:drop-shadow(0 3px 4px rgba(60,52,38,.22))">
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">1D</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Hydrangea</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Inbox · the cluster</div>
+        </div>
+      </div>
+
+      <!-- 1e monogram -->
+      <div id="1e" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:200px;height:200px;border-radius:45px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9 0%,#EFE9DB 68%,#E7E0CE 100%);box-shadow:0 1px 2px rgba(60,52,38,.14),0 12px 30px rgba(60,52,38,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1.2px rgba(224,216,194,.95)">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 92% at 50% -6%,rgba(255,255,255,.5),transparent 56%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.55"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column">
+            <div style="font-family:var(--font-display);font-weight:500;font-size:118px;line-height:.8;color:var(--acc-terra);text-shadow:0 1px 1px rgba(255,255,255,.5)">✿</div>
+            <div style="margin-top:10px;font-family:var(--font-display);font-style:italic;font-size:22px;color:var(--ink-body)">Kai's</div>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;color:var(--ink-muted);background:var(--paper-bone);border:1px solid var(--line-card);padding:2px 8px;border-radius:999px">1E</div>
+          <div style="margin-top:9px;font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">Monogram ✿</div>
+          <div style="margin-top:2px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">Typographic · the marker</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ reference — the primary in situ ============ -->
+  <section style="margin-top:64px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">The clover, in situ</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+      <!-- size ladder -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Reads at every size</div>
+        <div style="display:flex;align-items:flex-end;gap:22px">
+          <div style="text-align:center">
+            <div style="position:relative;width:120px;height:120px;border-radius:27px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 8px 18px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:64%;filter:drop-shadow(0 2px 3px rgba(60,52,38,.22))">
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">120</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:87px;height:87px;border-radius:20px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 6px 14px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:64%;filter:drop-shadow(0 2px 2px rgba(60,52,38,.22))">
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">87</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:60px;height:60px;border-radius:13.5px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 4px 9px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:66%;filter:drop-shadow(0 1px 2px rgba(60,52,38,.2))">
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">60</div>
+          </div>
+          <div style="text-align:center">
+            <div style="position:relative;width:40px;height:40px;border-radius:9px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 1px 2px rgba(60,52,38,.14),0 3px 6px rgba(60,52,38,.16),inset 0 0 0 1px rgba(224,216,194,.95)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:68%;filter:drop-shadow(0 1px 1px rgba(60,52,38,.2))">
+            </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">40</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- night variant -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Night garden</div>
+        <div style="position:relative;width:120px;height:120px;border-radius:27px;overflow:hidden;background:linear-gradient(158deg,#2E2840,#211D30 70%,#1C1929);box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 1px rgba(110,104,127,.4)">
+          <div style="position:absolute;inset:0;background:radial-gradient(90% 80% at 50% -10%,rgba(228,195,107,.14),transparent 60%)"></div>
+          <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:screen;opacity:.4"></div>
+          <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:64%;filter:drop-shadow(0 0 10px rgba(246,226,140,.4)) brightness(1.02)">
+        </div>
+      </div>
+
+      <!-- home screen -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">On the home screen</div>
+        <div style="position:relative;width:250px;height:300px;border-radius:34px;overflow:hidden;background:linear-gradient(165deg,#7f8a6e,#5c6b52 55%,#3f4a38);box-shadow:0 1px 2px rgba(60,52,38,.2),0 14px 34px rgba(60,52,38,.3);padding:34px 0 0">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 60% at 70% 10%,rgba(255,250,235,.16),transparent 55%)"></div>
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:9px">
+            <div style="position:relative;width:74px;height:74px;border-radius:17px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:0 2px 6px rgba(0,0,0,.28)">
+              <div style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></div>
+              <img src="ds/assets/clover/four_leaf.png" alt="" style="position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:64%;filter:drop-shadow(0 1px 2px rgba(60,52,38,.22))">
+            </div>
+            <div style="font-family:var(--font-ui);font-size:12.5px;font-weight:500;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap">Kai's Flow</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+</x-dc>
+</body>
+</html>

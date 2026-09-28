@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { lazy, type ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider, useMatches, type RouteObject } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
@@ -8,38 +8,46 @@ import { SignInPage } from './features/auth/SignInPage'
 import { AppLayout } from './components/AppLayout'
 import { KitReference } from './components/KitReference'
 import { NotFoundPage, RouteErrorPage } from './components/RouteErrorPage'
+import { isCapacitorShell } from './lib/platform'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
 // AppLayout + SignInPage stay eager: the shell and entry are needed immediately.
-const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
-const InboxPage = lazy(() => import('./features/inbox/InboxPage').then((m) => ({ default: m.InboxPage })))
-const TasksPage = lazy(() => import('./features/tasks/TasksPage').then((m) => ({ default: m.TasksPage })))
-const CalendarPage = lazy(() => import('./features/calendar/CalendarPage').then((m) => ({ default: m.CalendarPage })))
-const PlanningBoard = lazy(() => import('./features/calendar/PlanningBoard').then((m) => ({ default: m.PlanningBoard })))
-const TaskEditorPage = lazy(() => import('./features/calendar/TaskEditorPage').then((m) => ({ default: m.TaskEditorPage })))
-const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then((m) => ({ default: m.RoutinesPage })))
-const WeeklyReviewPage = lazy(() => import('./features/rituals/WeeklyReviewPage').then((m) => ({ default: m.WeeklyReviewPage })))
-const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+// M1b: every page chunk is then fetched in the background once the first screen is up (below), so
+// switching tabs never shows the blank fallback while a chunk downloads and parses.
+const pageLoaders: (() => Promise<unknown>)[] = []
+function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+  pageLoaders.push(load)
+  return lazy(() => load().then((m) => ({ default: m[name] })))
+}
+const TodayPage = page(() => import('./features/today/TodayPage'), 'TodayPage')
+const InboxPage = page(() => import('./features/inbox/InboxPage'), 'InboxPage')
+const TasksPage = page(() => import('./features/tasks/TasksPage'), 'TasksPage')
+const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage')
+const PlanningBoard = page(() => import('./features/calendar/PlanningBoard'), 'PlanningBoard')
+const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
+const RoutinesPage = page(() => import('./features/routines/RoutinesPage'), 'RoutinesPage')
+const WeeklyReviewPage = page(() => import('./features/rituals/WeeklyReviewPage'), 'WeeklyReviewPage')
+const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'SettingsPage')
 // [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
-const SearchPage = lazy(() => import('./features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
-const SharePage = lazy(() => import('./features/capture/SharePage').then((m) => ({ default: m.SharePage })))
-const ProjectsPage = lazy(() => import('./features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
-const ProjectDetailPage = lazy(() => import('./features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
-const PerennialsPage = lazy(() => import('./features/projects/PerennialsPage').then((m) => ({ default: m.PerennialsPage })))
-const JournalPage = lazy(() => import('./features/journal/JournalPage').then((m) => ({ default: m.JournalPage })))
-const LibraryPage = lazy(() => import('./features/library/LibraryPage').then((m) => ({ default: m.LibraryPage })))
-const FocusPage = lazy(() => import('./features/focus/FocusPage').then((m) => ({ default: m.FocusPage })))
-const ActivityPage = lazy(() => import('./features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })))
-const HerbariumPage = lazy(() => import('./features/herbarium/HerbariumPage').then((m) => ({ default: m.HerbariumPage })))
-const TrashPage = lazy(() => import('./features/trash/TrashPage').then((m) => ({ default: m.TrashPage })))
-const PeoplePage = lazy(() => import('./features/people/PeoplePage').then((m) => ({ default: m.PeoplePage })))
-const PersonDetailPage = lazy(() => import('./features/people/PersonDetailPage').then((m) => ({ default: m.PersonDetailPage })))
-const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
-const OnboardingGate = lazy(() => import('./features/onboarding/OnboardingGate').then((m) => ({ default: m.OnboardingGate })))
-const ImportPage = lazy(() => import('./features/import/ImportPage').then((m) => ({ default: m.ImportPage })))
+const SearchPage = page(() => import('./features/search/SearchPage'), 'SearchPage')
+const SharePage = page(() => import('./features/capture/SharePage'), 'SharePage')
+const ProjectsPage = page(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
+const ProjectDetailPage = page(() => import('./features/projects/ProjectDetailPage'), 'ProjectDetailPage')
+const PerennialsPage = page(() => import('./features/projects/PerennialsPage'), 'PerennialsPage')
+const JournalPage = page(() => import('./features/journal/JournalPage'), 'JournalPage')
+const LibraryPage = page(() => import('./features/library/LibraryPage'), 'LibraryPage')
+const FocusPage = page(() => import('./features/focus/FocusPage'), 'FocusPage')
+const ActivityPage = page(() => import('./features/activity/ActivityPage'), 'ActivityPage')
+const HerbariumPage = page(() => import('./features/herbarium/HerbariumPage'), 'HerbariumPage')
+const TrashPage = page(() => import('./features/trash/TrashPage'), 'TrashPage')
+const PeoplePage = page(() => import('./features/people/PeoplePage'), 'PeoplePage')
+const PersonDetailPage = page(() => import('./features/people/PersonDetailPage'), 'PersonDetailPage')
+const OnboardingPage = page(() => import('./features/onboarding/OnboardingPage'), 'OnboardingPage')
+const OnboardingGate = page(() => import('./features/onboarding/OnboardingGate'), 'OnboardingGate')
+const ImportPage = page(() => import('./features/import/ImportPage'), 'ImportPage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
-const ResetPage = lazy(() => import('./features/auth/ResetPage').then((m) => ({ default: m.ResetPage })))
+const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
 
 // Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
 // (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,
@@ -133,6 +141,16 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage bare />,
   },
 ])
+
+if (typeof window !== 'undefined') {
+  const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1000))
+  const preload = () => idle(() => pageLoaders.forEach((load) => void load().catch(() => {}))) // offline or a stale deploy: the page loads on demand later
+  if (document.readyState === 'complete') preload()
+  else window.addEventListener('load', preload, { once: true })
+}
+
+// M1b: Android Back (lib/androidBack.ts) — only the Capacitor shell has one.
+if (isCapacitorShell()) void import('./lib/androidBack').then((m) => m.installAndroidBack(() => void router.navigate('/today', { replace: true })))
 
 function App() {
   return (

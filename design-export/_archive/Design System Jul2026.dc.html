@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../support.js"></script>
+</head>
+<body>
+<!-- Archived Jul 2026 page (reconstructed after the Sep 2026 refresh; renders with the Jul token snapshot). -->
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter+Tight:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens-2026-07/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:0.5}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:#d4cdb9;border-radius:6px;border:3px solid var(--paper-linen)}
+@keyframes cloverSway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+</style>
+</helmet>
+<div style="position:relative;z-index:2;max-width:1160px;margin:0 auto;padding:64px 56px 120px">
+
+  <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap;padding-bottom:30px;border-bottom:1px dashed var(--line-dashed)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint)">Kai's Flow · Design System</div>
+      <h1 style="margin:12px 0 0;font-family:var(--font-display);font-weight:500;font-size:52px;line-height:0.98;letter-spacing:-0.015em;color:var(--ink-body)">A field journal<br>of days</h1>
+    </div>
+    <div style="max-width:430px">
+      <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-muted)">Warm linen paper with visible grain, near-square parchment cards pinned slightly crooked, washi tape on the important ones, and botanical illustrations pressed onto the page as living status indicators. A quiet serif for display, a wide-tracked mono for metadata, one line of handwriting per card at most.</p>
+      <p style="margin:14px 0 0;font-family:var(--font-hand);font-size:19px;color:var(--ink-hand)">Ring or whisper — never shout. ✿</p>
+    </div>
+  </header>
+
+  <!-- COLOR -->
+  <section style="margin-top:56px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">01 — Color</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px">Paper grounds</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px">
+      <sc-for list="{{ papers }}" as="s" hint-placeholder-count="6">
+        <div>
+          <div style="height:64px;border:1px solid var(--line-card);border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-crisp)"></div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:30px 0 12px">Ink & line</div>
+    <div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:14px">
+      <sc-for list="{{ inks }}" as="s" hint-placeholder-count="8">
+        <div>
+          <div style="height:64px;border:1px solid var(--line-card);border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-crisp)"></div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:30px 0 12px">Botanical accents — one per surface</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <sc-for list="{{ accents }}" as="s" hint-placeholder-count="10">
+        <div>
+          <div style="height:76px;border-radius:3px;background:{{ s.v }};box-shadow:var(--shadow-card);display:flex;align-items:flex-end;padding:9px 11px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-body);background:rgba(251,246,233,0.88);padding:2px 6px;border-radius:2px">{{ s.role }}</span>
+          </div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--ink-body)">{{ s.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ s.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">02 — Typography</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:48px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px"><div style="font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1;letter-spacing:-0.015em;color:var(--ink-body)">Sunday, July 5</div><div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">SOURCE SERIF 4 · 500 · 44PX — PAGE TITLE</div></div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px"><div style="font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink-body)">One thing that makes today a win</div><div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">SOURCE SERIF 4 · 600 · 22PX — CARD TITLE</div></div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px"><div style="font-size:16px;line-height:1.5;color:var(--ink-body)">Body copy is Inter Tight at a 14.5px baseline — quiet, legible, never competing with the serif. It carries the working text of every list and card.</div><div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">INTER TIGHT · 400 · 14.5–16PX — BODY</div></div>
+        <div style="border-bottom:1px dashed var(--line-dashed);padding-bottom:20px"><div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-muted)">Top 3 for today · 9:00 AM · Overdue 3d</div><div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">COURIER PRIME · UPPER · TRACKED — ALL METADATA</div></div>
+        <div><div style="font-family:var(--font-hand);font-size:22px;color:#7a745f">pressed &amp; kept, one day at a time</div><div style="margin-top:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--ink-faint)">CAVEAT · MARGINALIA ONLY · ≤1 PER CARD</div></div>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">The rules</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:11px;font-size:13.5px;line-height:1.45;color:var(--ink-muted)"><li>Big sizes are quiet weights. Never bold <em>and</em> huge.</li><li>Metadata is <span style="font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.14em;font-size:11px;color:var(--ink-body)">always</span> mono, uppercase, tracked wide.</li><li>Handwriting is an aside — never inside a button or a label.</li><li>No hard black; <span style="color:var(--ink-body)">#2a2420 bark</span> is as dark as text goes.</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOWERS -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">03 — The living species</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 26px;max-width:640px;font-size:13.5px;line-height:1.55;color:var(--ink-muted)">Seven botanical illustrations stand in for the app's surfaces. Each has a <em>state axis</em> — the flower's appearance <em>means</em> something (a count, a progress, a time of day). Never decoration, never invented.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px">
+      <sc-for list="{{ species }}" as="f" hint-placeholder-count="8">
+        <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:16px 16px 18px;display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="height:104px;display:flex;align-items:flex-end;justify-content:center">
+            <img loading="lazy" src="{{ f.src }}" alt="{{ f.plant }}" style="max-height:104px;max-width:100%;object-fit:contain;filter:var(--shadow-drop-sm)">
+          </div>
+          <div style="margin-top:12px;display:inline-flex;align-items:center;gap:7px">
+            <span style="width:9px;height:9px;border-radius:50%;background:{{ f.accent }}"></span>
+            <span style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink-body)">{{ f.surface }}</span>
+          </div>
+          <div style="margin-top:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint)">{{ f.plant }}</div>
+          <div style="margin-top:9px;font-size:12px;line-height:1.4;color:var(--ink-muted)">{{ f.axis }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">04 — Components</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px"><div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Buttons — one terra CTA per view</div><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><button style="border:none;background:var(--acc-terra);color:var(--paper-parchment);font-family:inherit;font-size:13px;padding:10px 17px 10px 15px;border-radius:999px;box-shadow:var(--shadow-cta)">Voice capture</button><button style="border:1px solid var(--line-solid);background:var(--paper-bone);color:var(--ink-body);font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;box-shadow:var(--shadow-crisp)">Secondary</button><button style="border:none;background:none;color:var(--ink-muted);font-family:inherit;font-size:13px;padding:9px 6px">Ghost</button></div></div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px"><div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Chips &amp; tags — surface-tinted</div><div style="display:flex;flex-wrap:wrap;gap:8px"><span style="background:rgba(212,168,176,0.16);color:#8A4A58;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Tasks</span><span style="background:rgba(154,180,190,0.2);color:var(--acc-hydrangea-deep);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Inbox</span><span style="background:rgba(138,154,126,0.18);color:var(--acc-sage-text);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Routed</span><span style="background:rgba(181,101,74,0.14);color:var(--acc-terra);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Overdue 3d</span><span style="border:1px solid var(--line-solid);color:var(--ink-muted);font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:5px 9px;border-radius:3px">Meeting</span></div></div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px"><div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">Task rows — flat in a list</div><div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:17px;height:17px;border:1.5px solid #bfb8a3;border-radius:5px;flex:none;margin-top:2px"></span><div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-body)">Plan and implement the forecasting logic</div><div style="margin-top:5px;display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)"><span>Forecasting App</span><span>30m</span></div></div><span style="color:var(--acc-terra);font-size:16px;line-height:1">★</span></div><div style="display:flex;align-items:flex-start;gap:14px;padding:11px 0"><span style="width:17px;height:17px;border-radius:5px;background:var(--sig-done);display:inline-flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-size:11px;flex:none;margin-top:2px">✓</span><div style="flex:1;min-width:0"><div style="font-size:14.5px;color:var(--ink-hairline);text-decoration:line-through">Fix your portfolio</div></div></div></div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px"><div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Section label — ≤4 per screen</div><div style="display:flex;align-items:center;gap:14px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">Up next</span><span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">View all →</span></div><div style="display:flex;gap:18px;padding:14px 0 4px;align-items:baseline"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">2:30 PM</span><div style="font-size:14.5px;color:var(--ink-body)">Jerad and Sam Josephson</div></div></div>
+    </div>
+
+    <!-- Goal card (feature) -->
+    <div style="margin-top:26px;display:grid;grid-template-columns:1.3fr 1fr;gap:26px;align-items:stretch">
+      <div style="position:relative;background:var(--paper-goal);border:1px solid var(--line-goal);box-shadow:var(--shadow-goal);padding:22px 24px 20px 22px;display:flex;align-items:flex-start;gap:16px;border-radius:3px;transform:rotate(-0.4deg)">
+        <span style="position:absolute;top:-10px;left:50%;width:82px;height:19px;margin-left:-41px;background:rgba(201,165,90,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp)"></span>
+        <span style="position:absolute;top:14px;left:20px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;background:var(--acc-gold);color:#FBF4E0;padding:3px 9px;border-radius:2px">✶ Goal of the day</span>
+        <span style="width:20px;height:20px;border:1.5px solid var(--acc-gold);border-radius:5px;flex:none;margin-top:40px;background:rgba(255,255,255,0.5)"></span>
+        <div style="flex:1;min-width:0;padding-top:36px">
+          <div style="font-family:var(--font-display);font-size:19px;font-weight:600;color:#4a3a1e;line-height:1.3">Deliver the MVP of the forecasting app</div>
+          <div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc-gold)">The one thing that makes today a win</div>
+        </div>
+        <img loading="lazy" src="../ds/assets/clover/four_leaf.png" alt="" style="width:40px;height:auto;object-fit:contain;filter:var(--shadow-drop-sm);margin-top:34px">
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">Washi tape & tilt — the placed-note feel</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:11px;font-size:13.5px;line-height:1.45;color:var(--ink-muted)">
+          <li>Tape only on <em>placed</em> standalone cards — never plain list items.</li>
+          <li>Tape color matches the card's surface accent.</li>
+          <li>Card radius is <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">3px</span> — sharp, not modern-rounded.</li>
+          <li>Tilt is ±0.3–0.5°, applied sparingly. One gold Goal card per view.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Washi tape anatomy -->
+    <div style="margin-top:26px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:24px 26px 26px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+        <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Washi tape — anatomy & recipe</span>
+        <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+      </div>
+      <p style="margin:0 0 20px;font-size:13px;line-height:1.55;color:var(--ink-muted);max-width:640px">One strip, one job: it says <em>someone put this here on purpose</em>. Always a translucent tint over the card edge, always striped, always slightly off-axis. Never opaque, never centered-and-straight, never decorative filler.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">The five layers</div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:78px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">01 tint</span><span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">Accent at <strong style="color:var(--ink-body)">0.40–0.45</strong> alpha — the paper must read through it.</span></div>
+            <div style="display:flex;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:78px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">02 weave</span><span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">4px white stripes at 0.32 on an 8px repeat, 90° — the fibre.</span></div>
+            <div style="display:flex;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:78px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">03 radius</span><span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">1px</span> — torn edge, not a rounded chip.</span></div>
+            <div style="display:flex;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:78px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">04 lift</span><span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--shadow-crisp</span> so it sits <em>on</em> the card, not in it.</span></div>
+            <div style="display:flex;gap:14px;padding:10px 0"><span style="width:78px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">05 skew</span><span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">Rotate <strong style="color:var(--ink-body)">2–4°</strong>. Two strips on one card lean opposite ways.</span></div>
+          </div>
+
+          <div style="margin-top:20px;background:var(--paper-bone);border:1px solid var(--line-dashed);border-radius:3px;padding:14px 16px;font-family:var(--font-mono);font-size:10.5px;line-height:1.85;color:var(--ink-muted);white-space:pre-wrap">position:absolute; width:52px; height:15px;
+background:rgba(138,154,126,0.42);
+background-image:repeating-linear-gradient(
+  90deg, rgba(255,255,255,0.32) 0 4px,
+  transparent 4px 8px);
+border-radius:1px;
+box-shadow:var(--shadow-crisp);
+transform:rotate(-3deg);</div>
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Four sanctioned sizes</div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <sc-for list="{{ tapeSizes }}" as="t" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:16px">
+                <span style="width:96px;flex:none;height:22px;display:flex;align-items:center"><span style="width:{{ t.w }};height:{{ t.h }};background:{{ t.bg }};background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp);transform:rotate(-3deg)"></span></span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:12.5px;color:var(--ink-body)">{{ t.name }}</span>
+                  <span style="display:block;margin-top:2px;font-size:11.5px;color:var(--ink-muted)">{{ t.use }}</span>
+                </span>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);white-space:nowrap">{{ t.dim }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin:26px 0 14px">Tape colour follows the surface</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <sc-for list="{{ tapeColors }}" as="c" hint-placeholder-count="6">
+              <div>
+                <span style="display:block;height:15px;background:{{ c.bg }};background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;box-shadow:var(--shadow-crisp)"></span>
+                <span style="display:block;margin-top:7px;font-size:11.5px;color:var(--ink-body)">{{ c.name }}</span>
+                <span style="display:block;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ c.alpha }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:26px;padding-top:20px;border-top:1px dashed var(--line-dashed);display:grid;grid-template-columns:1fr 1fr;gap:26px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage);margin-bottom:11px">Tape it</div>
+          <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+            <li>Placed standalone cards — Goal of the day, resurfaced notes, herbarium specimens, project cards.</li>
+            <li>The active sidebar item (30×9px, page accent, −3°) — the one exception to "cards only".</li>
+            <li>Top edge overhanging by <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">6–10px</span>, or corner-diagonal on a photo.</li>
+            <li>Pair strips at opposite corners when the card is wide (&gt;280px).</li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:11px">Never</div>
+          <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+            <li>On list rows, table rows, inputs, buttons, toasts or calendar blocks.</li>
+            <li>More than <strong style="color:var(--ink-body)">two strips</strong> per card, or more than three taped cards per screen.</li>
+            <li>Opaque fills, gradients, drop shadows heavier than <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--shadow-crisp</span>, or a rotation of exactly 0°.</li>
+            <li>Tape carrying meaning — it is never a status, a badge, or a colour code.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPACING + MOTION -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">05 — Space, radii &amp; motion</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Spacing — 4px base</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ spaces }}" as="sp" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);width:64px">{{ sp.name }}</span>
+              <span style="height:12px;background:var(--acc-sage);border-radius:2px;width:{{ sp.w }}"></span>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-muted)">{{ sp.px }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin:24px 0 14px">Radii</div>
+        <div style="display:flex;gap:16px;align-items:flex-end">
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:3px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">3 · card</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:6px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">6 · nav</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:8px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">8 · input</div></div>
+          <div style="text-align:center"><div style="width:56px;height:44px;background:var(--paper-bone);border:1.5px solid var(--acc-sage);border-radius:999px"></div><div style="margin-top:7px;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">pill · btn</div></div>
+        </div>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:22px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px">Motion — transform & opacity only</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ motions }}" as="m" hint-placeholder-count="6">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-body)">{{ m.name }}</span>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">{{ m.val }}</span>
+              <span style="flex:1;font-size:12px;color:var(--ink-muted);text-align:right">{{ m.use }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <p style="margin:16px 0 0;font-size:12.5px;line-height:1.5;color:var(--ink-muted)">Press is a 100ms overlay + scale 0.97 (no hover state is ever required); sheets enter 300ms on emphasized-decel and leave 200ms on emphasized-accel; entries fade up and stagger. Ambient budget: <em>≤2 continuous animations per screen</em>. All respect <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">prefers-reduced-motion</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DO / DON'T -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">06 — House rules</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--acc-sage);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage-text);margin-bottom:14px">Always</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.4;color:var(--ink-muted)">
+          <li>Semantic tokens only — never a hex literal in a component.</li>
+          <li>One terra CTA and at most one gold Goal card per view.</li>
+          <li>Each surface keeps its own accent flower color.</li>
+          <li>Metadata always mono, uppercase, tracked — ≤0.07em on a phone.</li>
+          <li>Every tappable thing owns a 48 × 48 target; every gesture has a tap path (⋯).</li>
+          <li>Delete is instant: Trash + Undo toast. No “are you sure”.</li>
+        </ul>
+      </div>
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--acc-terra);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-terra);margin-bottom:14px">Never</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.4;color:var(--ink-muted)">
+          <li>No pure white or hard black. No bright saturated primaries.</li>
+          <li>No modern rounded-16 cards; no brutalist hard shadows.</li>
+          <li>No tape on plain list items; no invented flower species.</li>
+          <li>No emoji beyond the ✿ marker; no more than 4 section labels.</li>
+          <li>Never show a stage that contradicts the data — no zero bloom on a full inbox.</li>
+          <li>Nothing that only appears on hover. Nothing under 12px on a phone. --ink-hairline is never text.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- GROWTH STAGES -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">07 — Growth stages · the floral logic</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="max-width:720px;margin:0 0 8px;font-size:13.5px;line-height:1.6;color:var(--ink-muted)">Every species answers three questions at once: <i>which surface is this, how is it going, does anything need me?</i> The stage shown must always match the data — a <b>zero</b> bloom on an inbox with items is a lie the garden never tells. Full logic lives in <span style="font-family:var(--font-mono);font-size:12px">Floral Logic.txt</span>.</p>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Hydrangea</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#9AB4BE">Inbox</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by pending count</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/hydrangea/zero.png" alt="zero" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">zero</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">inbox zero — the trophy bloom</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/hydrangea/light.png" alt="light" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">light</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">1–4 pending — loose spray</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/hydrangea/medium.png" alt="medium" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">medium</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">5–19 — cluster loosening</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/hydrangea/heavy.png" alt="heavy" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">heavy</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">20+ — packed and full</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Cherry blossom</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#D4A8B0">Tasks</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by completion</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/cherry/bud.png" alt="bud" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bud</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">not started — potential</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/cherry/opening.png" alt="opening" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">opening</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">in motion</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/cherry/bloom.png" alt="bloom" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bloom</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">the day’s work, waiting</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/cherry/fallen.png" alt="fallen" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">fallen</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">done — the petal falls</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Daisy</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#A8A0BE">Calendar</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by the clock, not data</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/daisy/morning.png" alt="morning" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">morning</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">before noon — mid-open</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/daisy/midday.png" alt="midday" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">midday</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">noon–3 — full face</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/daisy/evening.png" alt="evening" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">evening</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">after 5 — closing up</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/daisy/past.png" alt="past" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">past</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">yesterday — closed, muted</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/daisy/future.png" alt="future" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">future</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">tomorrow+ — tight green bud</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Fern</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#D4C78A">Review · Journal · Library</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by length / progress</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/fern/coil.png" alt="coil" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">coil</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">empty — all potential</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/fern/unfurl1.png" alt="unfurl1" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">unfurl1</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">just begun</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/fern/unfurl2.png" alt="unfurl2" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">unfurl2</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">halfway through</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/fern/full.png" alt="full" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">full</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">complete — fully unfurled</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Clover</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#C9A0A0">Chat · rituals · people</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by attention</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/clover/resting.png" alt="resting" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">resting</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">quiet — nothing unread</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/clover/awake.png" alt="awake" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">awake</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">unread — perked up</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/clover/dewdrop.png" alt="dewdrop" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">dewdrop</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">a mention — one bright drop</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/clover/seedling.png" alt="seedling" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">seedling</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">empty / first-run</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/clover/four_leaf.png" alt="four_leaf" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">four_leaf</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">milestone — rare luck</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Vine</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#7A946E">Routines</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by streak length</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/vine/bare.png" alt="bare" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">bare</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">no streak yet</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/vine/sprouting.png" alt="sprouting" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">sprouting</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">a few days in</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/vine/flowering.png" alt="flowering" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">flowering</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">streak established</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/vine/lush.png" alt="lush" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">lush</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">30d+ — the long green run</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-body)">Wisteria</span><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#7A946E">Projects</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint)">driven by weighted milestone %</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p0.png" alt="p0" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p0</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">new — bare tendril</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p20.png" alt="p20" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p20</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">early growth</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p40.png" alt="p40" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p40</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">leaves filling in</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p60.png" alt="p60" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p60</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">first clusters open</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p80.png" alt="p80" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p80</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">cascade forming</div>
+        </div>
+        <div style="width:128px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-crisp);padding:12px 10px;text-align:center">
+          <div style="height:66px;display:flex;align-items:flex-end;justify-content:center"><img loading="lazy" src="../ds/assets/wisteria/p100.png" alt="p100" style="max-height:64px;max-width:100px;filter:var(--shadow-drop-sm)"></div>
+          <div style="margin-top:9px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-body)">p100</div>
+          <div style="margin-top:4px;font-size:10.5px;line-height:1.4;color:var(--ink-muted)">full cascade — done</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ICONOGRAPHY -->
+  <section style="margin-top:60px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap">08 — Iconography</span>
+      <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+    </div>
+    <p style="margin:0 0 26px;font-size:13.5px;line-height:1.6;color:var(--ink-muted);max-width:680px">Two families only. <strong style="color:var(--ink-body)">Stroked line icons</strong> carry every UI action — thin, geometric, unemotional, so they never compete with the paper. <strong style="color:var(--ink-body)">Filled botanical marks</strong> are illustration, not UI: they identify surfaces and growth states and are never clickable affordances on their own.</p>
+
+    <!-- Theme statement, for search -->
+    <div style="background:var(--paper-bone);border:1px solid var(--line-card);border-left:2px solid var(--acc-sage);border-radius:3px;padding:20px 24px;margin-bottom:26px">
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px">The theme, in words — search these</div>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.65;color:var(--ink-body);max-width:700px">A pressed-flower field journal. Warm paper, hand-set type, botanical specimens taped down, dashed rules like a ruled notebook. Everything reads as <em>placed by a person</em>, never generated. Icons are the pencil lines on that page: fine, consistent, secondary to the content.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <sc-for list="{{ themeWords }}" as="w" hint-placeholder-count="14">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;color:var(--ink-muted);background:var(--paper-parchment);border:1px solid var(--line-dashed);border-radius:2px;padding:4px 8px">{{ w }}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Drawing rules -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:26px">
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">Line icons — the spec</div>
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">grid</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">viewBox="0 0 24 24"</span>, always — scale by width/height.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">stroke</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">1.6</span> at every size. Never 1, never 2.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">caps</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">round</span> caps and joins — pencil, not blade.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">fill</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">none</span>. A filled line icon is a bug.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">colour</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--ink-muted</span> at rest, <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">--ink-body</span> when active, <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--acc-terra)">--acc-terra</span> for destructive only.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line-dashed)"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">sizes</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)">Desktop: <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">14</span> menu rows · <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">16</span> inline · <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">18</span> nav. Phone: <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">24</span> in a 48 target, <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">20</span> in buttons, <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">16</span> in chips.</span></div>
+          <div style="display:flex;gap:14px;padding:9px 0"><span style="width:96px;flex:none;font-family:var(--font-mono);font-size:10px;color:var(--acc-sage)">gap</span><span style="flex:1;font-size:12.5px;color:var(--ink-muted)"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">11px</span> icon→label in rows; <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">7px</span> in buttons. Always <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">flex:none</span>.</span></div>
+        </div>
+      </div>
+
+      <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:20px 24px">
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px">Botanical marks — the other family</div>
+        <p style="margin:0 0 14px;font-size:12.5px;line-height:1.55;color:var(--ink-muted)">Solid petal shapes built from <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-body)">&lt;ellipse&gt;</span> clusters, filled with the surface accent, no stroke. One per surface — they <em>are</em> the surface's identity.</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+          <sc-for list="{{ marks }}" as="m" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px;background:var(--paper-bone);border:1px solid var(--line-dashed);border-radius:3px">
+              <svg width="22" height="22" viewBox="0 0 24 24"><g fill="{{ m.hex }}"><ellipse cx="12" cy="6.2" rx="2.7" ry="3.4"></ellipse><ellipse cx="17" cy="10" rx="2.7" ry="3.4" transform="rotate(72 17 10)"></ellipse><ellipse cx="15" cy="16" rx="2.7" ry="3.4" transform="rotate(144 15 16)"></ellipse><ellipse cx="9" cy="16" rx="2.7" ry="3.4" transform="rotate(216 9 16)"></ellipse><ellipse cx="7" cy="10" rx="2.7" ry="3.4" transform="rotate(288 7 10)"></ellipse><circle cx="12" cy="11.6" r="2.1" fill="#F4EFE4"></circle></g></svg>
+              <span style="font-size:11px;color:var(--ink-body);text-align:center">{{ m.name }}</span>
+              <span style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);text-align:center">{{ m.surface }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:9px">Never</div>
+        <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.45;color:var(--ink-muted)">
+          <li>A botanical mark as a button, toggle or menu-row icon.</li>
+          <li>Mixing the families inside one row or one toolbar.</li>
+          <li>Emoji, duotone, gradient fills, or a second icon library.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- The set -->
+    <div style="background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:3px;box-shadow:var(--shadow-card);padding:24px 26px 26px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+        <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)">Desktop set (Jul 2026) — for phone glyphs see <a href="Icons.dc.html">Icons</a>, which supersedes these where they overlap</span>
+        <span style="flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)"></span>
+      </div>
+      <p style="margin:0 0 20px;font-size:12.5px;line-height:1.55;color:var(--ink-muted);max-width:660px">Ship this set and no more. If a screen needs a 21st icon, it probably needs a label instead. Keywords are the terms to grep for in code and in the Figma library.</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--line-dashed);border:1px solid var(--line-dashed);border-radius:3px;overflow:hidden">
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="var(--ink-muted)" stroke-width="1.6"></rect><path d="M4 9h16M8 3v4M16 3v4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Calendar</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">calendar · date · day · schedule</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M12 8v4l3 2" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Clock</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">clock · time · duration · when</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Folder</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">folder · project · group · bucket</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13-6l2 2M20 12a8 8 0 0 1-13 6l-2-2" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19 4v4h-4M5 20v-4h4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Repeat</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">repeat · recurring · loop · series</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M8.5 12.2l2.4 2.4 4.6-4.9" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Check</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">check · done · complete · confirm</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Plus</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">plus · add · new · create</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">List</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">list · agenda · tasks · lines</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M16 16l4 4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Search</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">search · find · filter · lookup</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linejoin="round"></path><path d="M10 19a2 2 0 0 0 4 0" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Bell</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">bell · remind · alert · notify</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Trash</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">trash · delete · remove · destructive</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15.5 4.5l4 4L9 19H5v-4z" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Pencil</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">pencil · edit · rename · write</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M10 14a4 4 0 0 0 6 .5l3-3a4 4 0 0 0-5.7-5.7l-1.4 1.4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path><path d="M14 10a4 4 0 0 0-6-.5l-3 3a4 4 0 0 0 5.7 5.7l1.4-1.4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Link</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">link · url · attach · connect</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.5" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M5 20a7 7 0 0 1 14 0" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Person</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">person · user · owner · assignee</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.5" r="3.2" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M3 19a6 6 0 0 1 12 0" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path><path d="M16 6.2a3.2 3.2 0 0 1 0 6M17 14.4a6 6 0 0 1 4 4.6" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">People</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">people · guests · attendees · share</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11V5h6l9 9-6 6-9-9z" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linejoin="round"></path><circle cx="8" cy="9" r="1.3" fill="var(--ink-muted)"></circle></svg><span style="font-size:12px;color:var(--ink-body)">Tag</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">tag · label · category · chip</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 21V4M6 5h11l-2.2 3.5L17 12H6" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Flag</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">flag · priority · goal · milestone</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6z" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linejoin="round"></path><path d="M14.5 4v4.5H19M9 13h6M9 16.5h4" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Note</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">note · doc · detail · description</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Chevron</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">chevron · next · expand · submenu</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="1.4" fill="var(--ink-muted)"></circle><circle cx="15" cy="7" r="1.4" fill="var(--ink-muted)"></circle><circle cx="9" cy="12" r="1.4" fill="var(--ink-muted)"></circle><circle cx="15" cy="12" r="1.4" fill="var(--ink-muted)"></circle><circle cx="9" cy="17" r="1.4" fill="var(--ink-muted)"></circle><circle cx="15" cy="17" r="1.4" fill="var(--ink-muted)"></circle></svg><span style="font-size:12px;color:var(--ink-body)">Grip</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">grip · drag · reorder · handle</span></div>
+
+        <div style="background:var(--paper-parchment);padding:15px 14px;display:flex;flex-direction:column;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="var(--ink-muted)" stroke-width="1.6"></circle><path d="M12 7.5v5M12 16.2v.3" stroke="var(--ink-muted)" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="font-size:12px;color:var(--ink-body)">Alert</span><span style="font-family:var(--font-mono);font-size:9px;line-height:1.5;color:var(--ink-faint)">alert · warning · overdue · conflict</span></div>
+
+      </div>
+
+      <div style="margin-top:24px;padding-top:20px;border-top:1px dashed var(--line-dashed);display:grid;grid-template-columns:1fr 1fr;gap:26px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-sage);margin-bottom:11px">Use an icon when</div>
+          <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+            <li>It anchors a repeated row type (menu rows, detail fields) and is always paired with a label.</li>
+            <li>Space is genuinely gone — toolbars, the FAB, mobile tab bar.</li>
+            <li>It marks a state the eye must catch fast: alert, check, grip.</li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc-clover);margin-bottom:11px">Skip the icon when</div>
+          <ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink-muted)">
+            <li>The label already says it — no icon on text buttons or section labels.</li>
+            <li>It would be the only icon on the screen; one lone icon reads as debris.</li>
+            <li>You'd have to invent a metaphor. Write the word instead.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top:64px;padding-top:26px;border-top:1px dashed var(--line-dashed);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)">ds/tokens · light theme · refreshed Sep 2026</span>
+    <span style="font-family:var(--font-hand);font-size:18px;color:var(--ink-hand)">the whole system, pressed onto one page ✿</span>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      papers: [
+        { name: '--paper-linen', hex: '#EFE9DB', v: '#EFE9DB' },
+        { name: '--paper-parchment', hex: '#FBF6E9', v: '#FBF6E9' },
+        { name: '--paper-bone', hex: '#F6F0E1', v: '#F6F0E1' },
+        { name: '--paper-sidebar', hex: '#EAE3D2', v: '#EAE3D2' },
+        { name: '--paper-goal', hex: '#F8EFD3', v: '#F8EFD3' },
+        { name: '--paper-event', hex: '#F3EDDA', v: '#F3EDDA' },
+      ],
+      inks: [
+        { name: '--ink-body', hex: '#2a2420', v: '#2a2420' },
+        { name: '--ink-muted', hex: '#5f5849', v: '#5f5849' },
+        { name: '--ink-faint', hex: '#6A6354', v: '#6A6354' },
+        { name: '--ink-hairline', hex: '#88816E · non-text', v: '#88816E' },
+        { name: '--line-solid', hex: '#cfc7b0', v: '#cfc7b0' },
+        { name: '--line-dashed', hex: '#d5cdb5', v: '#d5cdb5' },
+        { name: '--line-card', hex: '#e0d8c2', v: '#e0d8c2' },
+        { name: '--line-control', hex: '#88816E', v: '#88816E' },
+      ],
+      accents: [
+        { name: '--acc-sage', hex: '#8A9A7E', v: '#8A9A7E', role: 'Plant / green' },
+        { name: '--acc-moss', hex: '#7A946E', v: '#7A946E', role: 'Projects' },
+        { name: '--acc-terra', hex: '#B5654A', v: '#B5654A', role: 'CTA / alert' },
+        { name: '--acc-blossom', hex: '#D4A8B0', v: '#D4A8B0', role: 'Tasks' },
+        { name: '--acc-lavender', hex: '#A8A0BE', v: '#A8A0BE', role: 'Calendar' },
+        { name: '--acc-hydrangea', hex: '#9AB4BE', v: '#9AB4BE', role: 'Inbox' },
+        { name: '--acc-buttercream', hex: '#D4C78A', v: '#D4C78A', role: 'Docs / review' },
+        { name: '--acc-clover', hex: '#C9A0A0', v: '#C9A0A0', role: 'Chat' },
+        { name: '--acc-gold', hex: '#7f6428', v: '#7f6428', role: 'Goal' },
+        { name: '--acc-terra-ink', hex: '#9C5139', v: '#9C5139', role: 'CTA fill / text' },
+        { name: '--acc-gold-warm', hex: '#C9A55A', v: '#C9A55A', role: 'Tape gold' },
+      ],
+      species: [
+        { surface: 'Today', plant: 'The terrarium', src: '../ds/assets/clover/four_leaf.png', accent: '#8A9A7E', axis: 'All plants together — the day\u2019s overall state' },
+        { surface: 'Inbox', plant: 'Hydrangea', src: '../ds/assets/hydrangea/medium.png', accent: '#9AB4BE', axis: 'Cluster shrinks as items clear \u2192 zero = one bloom' },
+        { surface: 'Tasks', plant: 'Cherry blossom', src: '../ds/assets/cherry/bloom.png', accent: '#D4A8B0', axis: 'One petal falls per completed task' },
+        { surface: 'Calendar', plant: 'Daisy', src: '../ds/assets/daisy/midday.png', accent: '#A8A0BE', axis: 'Petals open as the day fills with events' },
+        { surface: 'Routines', plant: 'Vine', src: '../ds/assets/vine/flowering.png', accent: '#7A946E', axis: 'Leaves grow along the streak; buds at 7+' },
+        { surface: 'Review', plant: 'Fern', src: '../ds/assets/fern/full.png', accent: '#D4C78A', axis: 'Frond unfurls as you sweep the week' },
+        { surface: 'Projects', plant: 'Wisteria', src: '../ds/assets/wisteria/p60.png', accent: '#7A946E', axis: 'Climbs p0 \u2192 p100 with progress' },
+        { surface: 'Chat', plant: 'Clover', src: '../ds/assets/clover/awake.png', accent: '#C9A0A0', axis: 'A small everyday sprig; leans on hover' },
+      ],
+      themeWords: ['pressed flower', 'field journal', 'botanical', 'paper', 'parchment', 'washi tape', 'dashed rule', 'hand-set type', 'herbarium', 'specimen', 'warm neutral', 'ink on paper', 'placed by hand', 'quiet UI', 'no gradients', 'sharp 3px radius'],
+      marks: [
+        { name: 'Lavender', surface: 'Calendar', hex: '#A8A0BE' },
+        { name: 'Sage', surface: 'Tasks', hex: '#8A9A7E' },
+        { name: 'Gold', surface: 'Goals', hex: '#C9A55A' },
+        { name: 'Cherry', surface: 'People', hex: '#D4A8B0' },
+        { name: 'Hydrangea', surface: 'Projects', hex: '#9AB4BE' },
+        { name: 'Clover', surface: 'Chat', hex: '#C9A0A0' },
+      ],
+      tapeSizes: [
+        { name: 'Nav marker', use: 'Active sidebar item', dim: '30 × 9', w: '30px', h: '9px', bg: 'rgba(168,160,190,0.45)' },
+        { name: 'Standard', use: 'Placed cards, notes', dim: '52 × 15', w: '52px', h: '15px', bg: 'rgba(138,154,126,0.42)' },
+        { name: 'Wide', use: 'Project & specimen cards', dim: '60 × 13', w: '60px', h: '13px', bg: 'rgba(212,168,176,0.42)' },
+        { name: 'Feature', use: 'Goal of the day only', dim: '82 × 19', w: '82px', h: '19px', bg: 'rgba(201,165,90,0.42)' },
+      ],
+      tapeColors: [
+        { name: 'Sage — default', alpha: '138,154,126 · .42', bg: 'rgba(138,154,126,0.42)' },
+        { name: 'Gold — goal', alpha: '201,165,90 · .42', bg: 'rgba(201,165,90,0.42)' },
+        { name: 'Cherry — people', alpha: '212,168,176 · .42', bg: 'rgba(212,168,176,0.42)' },
+        { name: 'Hydrangea — projects', alpha: '154,180,190 · .42', bg: 'rgba(154,180,190,0.42)' },
+        { name: 'Lavender — nav', alpha: '168,160,190 · .40', bg: 'rgba(168,160,190,0.40)' },
+        { name: 'Clover — resurfaced', alpha: '201,160,160 · .40', bg: 'rgba(201,160,160,0.40)' },
+      ],
+      spaces: [
+        { name: '--sp-2', px: '8px', w: '8px' },
+        { name: '--sp-4', px: '16px', w: '16px' },
+        { name: '--sp-6', px: '24px', w: '24px' },
+        { name: '--gap-section', px: '40px', w: '40px' },
+        { name: '--gap-major', px: '64px', w: '64px' },
+        { name: '--sp-16', px: '64px', w: '64px' },
+      ],
+      motions: [
+        { name: 'press', val: '100ms', use: 'pressed overlay + 0.97' },
+        { name: 'instant', val: '120ms', use: 'desktop press' },
+        { name: 'quick', val: '150ms', use: 'chips, checks' },
+        { name: 'normal', val: '200ms', use: 'nav, overlays' },
+        { name: 'slow', val: '300ms', use: 'panels, toasts' },
+        { name: 'bloom', val: '600ms', use: 'flower crossfade' },
+        { name: 'grow', val: '800ms', use: 'vine / streak' },
+        { name: 'sheet-enter', val: '300ms', use: 'emphasized-decel 0.05,0.7,0.1,1' },
+        { name: 'sheet-exit', val: '200ms', use: 'emphasized-accel 0.3,0,0.8,0.15' },
+        { name: 'toast', val: '200ms', use: 'in / out · lives 6s' },
+        { name: 'long-press', val: '400ms', use: 'hold → select mode' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

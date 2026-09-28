@@ -1,28 +1,61 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
-import { VoiceCaptureButton } from '../features/capture/VoiceCaptureButton'
+import { CaptureButton } from '../features/capture/CaptureButton'
 import { useEscapeStack } from '../lib/overlayStack'
-import { FlowerIcon, InboxGlyph, ProjectsGlyph } from './icons/NavGlyphs'
+import { useMotionEnabled } from '../lib/motion'
+import { Icon } from './Icon'
+import type { IconName } from './icons/kf'
+import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
+import './kit.css'
 
-// Pixel contract: "Kai's Flow — Universal Navigation Reference" §03 Mobile tab bar
-// (canonical 5-slot bar: Today · Inbox · Capture FAB · Cal · More) + its "More" sheet.
-// The shell owns this; feature pages never render their own copy.
+// Pixel contract: MK Tab Bar.dc.html + DS-CHANGELOG §3 "Tab bar" (2026-09-28 refresh — replaces the
+// Navigation Reference's 9px dots and the 2026-09-27 botanical-glyph stopgap): 64 + gesture inset ·
+// Today · Inbox · capture · Calendar · More · kf icons 24 · labels Inter 12/16 · the page you're on
+// gets a 56×32 pill in its surface's block tint · badge 1 · 12 · 99+ · re-tap = scroll to top.
+// Plus its "More" sheet. The shell owns this; feature pages never render their own copy.
 
 const A = '/ds/assets'
 
-// deviation(2026-09-27, Kai: "what happened to the icons of the nav bar"): the Navigation
-// Reference draws 9px dots here. Each slot now carries the botanical glyph the sidebar gives the
-// same page, dimmed until it's the page you're on.
-function SlotIcon({ active, children }: { active: boolean; children: ReactNode }) {
-  return (
-    <span style={{ height: 20, display: 'inline-flex', alignItems: 'center', opacity: active ? 1 : 0.55, filter: active ? undefined : 'saturate(0.6)' }}>
-      {children}
-    </span>
+/** One tab. Exported so /design-system can show each state signed-out. */
+export function TabItem({ label, icon, tint, active, badge = 0, to, onClick }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void }) {
+  const motionOn = useMotionEnabled()
+  const inner = (
+    <>
+      <span className="kf-tab-ind" style={{ backgroundColor: active ? tint : undefined }}>
+        <Icon name={icon} size={24} />
+        {badge > 0 && <span className="kf-tab-badge">{badge > 99 ? '99+' : badge}</span>}
+      </span>
+      <span className="kf-tab-label">{label}</span>
+    </>
   )
-}
-
-function slotLabel(active: boolean): CSSProperties {
-  return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? 'var(--ink-body)' : 'var(--ink-faint)' }
+  const name = badge > 0 ? `${label}, ${badge} waiting` : undefined
+  if (!to) {
+    return (
+      <button type="button" className="kf-tab" data-active={active || undefined} aria-label={name} aria-haspopup="dialog" onClick={onClick}>
+        {inner}
+      </button>
+    )
+  }
+  return (
+    <Link
+      to={to}
+      // Tabs swap the page rather than stack it: Back never walks through tab history.
+      replace
+      className="kf-tab"
+      data-active={active || undefined}
+      aria-current={active ? 'page' : undefined}
+      aria-label={name}
+      onClick={(e) => {
+        if (!active) return
+        // Re-tap the tab you're on = back to the top (a no-op when already there).
+        e.preventDefault()
+        const main = document.querySelector('.app-main-content')
+        if (main && main.scrollTop > 0) main.scrollTo({ top: 0, behavior: motionOn ? 'smooth' : 'auto' })
+      }}
+    >
+      {inner}
+    </Link>
+  )
 }
 
 // [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
@@ -97,49 +130,24 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
 export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pendingInbox: number; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
   const { pathname } = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
+  // The pages the More sheet leads to (Inbox has its own tab) light the More tab while you're on them.
+  const onMorePage = MORE_ITEMS.some((item) => item.to !== '/inbox' && pathname.startsWith(item.to))
 
   return (
     <>
-      <div
+      <nav
         className="app-tabbar"
-        style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40, borderTop: '1px solid var(--line-card)', background: 'var(--paper-sidebar)', padding: '9px 20px calc(4px + env(safe-area-inset-bottom))', alignItems: 'flex-start', justifyContent: 'space-between' }}
+        aria-label="Main"
+        style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40, background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-tabbar)', padding: '0 var(--sp-1) var(--tabbar-inset)', alignItems: 'stretch' }}
       >
-        <Link to="/today" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <SlotIcon active={pathname === '/today'}><FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" /></SlotIcon>
-          <span style={slotLabel(pathname === '/today')}>Today</span>
-        </Link>
-
-        <Link to="/inbox" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <span style={{ position: 'relative', display: 'inline-flex' }}>
-            <SlotIcon active={pathname === '/inbox'}><InboxGlyph /></SlotIcon>
-            {pendingInbox > 0 && (
-              <span style={{ position: 'absolute', top: -5, right: -9, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 999, background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', lineHeight: '15px', textAlign: 'center' }}>
-                {pendingInbox > 99 ? '99+' : pendingInbox}
-              </span>
-            )}
-          </span>
-          <span style={slotLabel(pathname === '/inbox')}>Inbox</span>
-        </Link>
-
-        <div style={{ marginTop: -3 }}>
-          <VoiceCaptureButton iconOnly />
+        <TabItem to="/today" label="Today" icon="today" tint="var(--block-sage)" active={pathname === '/today'} />
+        <TabItem to="/inbox" label="Inbox" icon="inbox" tint="var(--block-hydrangea)" active={pathname === '/inbox'} badge={pendingInbox} />
+        <div style={{ width: 72, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CaptureButton />
         </div>
-
-        <Link to="/calendar" className="kf-hit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
-          <SlotIcon active={pathname === '/calendar'}><FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" /></SlotIcon>
-          <span style={slotLabel(pathname === '/calendar')}>Cal</span>
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          className="kf-hit"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
-        >
-          <SlotIcon active={moreOpen}><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--ink-muted)" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></SlotIcon>
-          <span style={slotLabel(moreOpen)}>More</span>
-        </button>
-      </div>
+        <TabItem to="/calendar" label="Calendar" icon="calendar" tint="var(--block-lavender)" active={pathname === '/calendar'} />
+        <TabItem label="More" icon="more" tint="var(--block-buttercream)" active={moreOpen || onMorePage} onClick={() => setMoreOpen(true)} />
+      </nav>
 
       {moreOpen && (
         <MoreSheet pendingInbox={pendingInbox} onClose={() => setMoreOpen(false)} onSearch={onSearch} onChat={onChat} onSignOut={onSignOut} />

@@ -1,80 +1,109 @@
-/* Dark mode — "Night Garden". Rebased Jul 2026 to match the approved Night
-   studies (Night.dc.html): violet-midnight paper, moonlit cream ink, glowing
+/* Dark mode — "Night Garden". Violet-midnight paper, moonlit cream ink, glowing
    botanical accents. Applied by setting data-theme="night" on the root of a
    screen or subtree.
 
    COVERAGE RULE: every token in colors.css (and the shadow set in effects.css)
-   has a night value here — nothing falls back to a daylight value. */
-[data-theme="night"] {
+   has a night value here — nothing falls back to a daylight value.
+   Refresh Sep 2026: ratios annotated as  deep(linen) / panel(parchment) / bone / sidebar / goal. */
+[data-theme="night"],
+:root[data-theme="night"] {   /* :root[...] out-ranks effects.css :root when the theme sits on <html> */
   /* Sky ground — violet midnight, never true black */
-  --sky-deep:           #211D30;   /* page background */
-  --sky-mid:            #2E2840;   /* mid sky, sidebar wash */
-  --sky-horizon:        #3B3450;   /* horizon glow, dusk buttons */
-  --sky-panel:          #262233;   /* moonlit paper card */
+  --sky-deep:           #211D30;
+  --sky-mid:            #2E2840;
+  --sky-horizon:        #3B3450;
+  --sky-panel:          #262233;
   --sky-panel-strong:   #2C2740;
   --sky-input:          rgba(244, 241, 234, 0.05);
 
-  /* Paper names, remapped — components using paper-* just work at night */
-  --paper-linen:        #211D30;   /* page background */
-  --paper-parchment:    #262233;   /* cards, panels, popovers */
-  --paper-bone:         #2E2942;   /* input fields, hover surfaces */
-  --paper-sidebar:      #1C1929;   /* left rail */
-  --paper-goal:         #322B22;   /* gold goal card — ember-lit */
-  --paper-event:        #2A2639;   /* neutral calendar block — external / read-only */
+  /* Paper names, remapped */
+  --paper-linen:        #211D30;
+  --paper-parchment:    #262233;
+  --paper-bone:         #2E2942;
+  --paper-sidebar:      #1C1929;
+  --paper-goal:         #322B22;
+  --paper-event:        #2A2639;
 
-  /* Calendar block tints — brighter alpha so the wash reads on violet ground */
+  /* Calendar block tints */
   --block-lavender:     rgba(192, 183, 224, 0.22);
   --block-moss:         rgba(154, 190, 140, 0.18);
   --block-blossom:      rgba(233, 191, 197, 0.18);
   --block-sage:         rgba(168, 196, 152, 0.18);
   --block-hydrangea:    rgba(169, 197, 211, 0.18);
   --block-buttercream:  rgba(232, 220, 160, 0.18);
+  --block-terra:        rgba(226, 148, 115, 0.16);   /* NEW */
 
-  /* Moonlight ink — soft cream on violet, never pure white */
+  /* Moonlight ink — TEXT                                 deep / panel / bone / sidebar / goal */
   --moon-primary:       #F0EBDD;
   --moon-muted:         #C9C0D8;
-  --moon-faint:         #8E88A0;
-  --ink-body:           #F0EBDD;   /* primary text */
-  --ink-muted:          #C9C0D8;   /* secondary text, metadata */
-  --ink-faint:          #8E88A0;   /* hints, mono captions */
-  --ink-hairline:       #6E687F;   /* tertiary, "done" strike text */
+  --moon-faint:         #9A94AC;
+  --ink-body:           #F0EBDD;   /* 13.74 / 12.97 / 11.66 / 14.45 / 11.72 */
+  --ink-muted:          #C9C0D8;   /*  9.36 /  8.84 /  7.95 /  9.84 /  7.99 */
+  --ink-faint:          #9A94AC;   /*  5.62 /  5.30 /  4.77 /  5.90 /  4.79  (was #8E88A0 — 4.09 on bone ✗) */
+  --ink-hand:           #B3ABC4;   /* NEW  7.43 / 7.02 / 6.31 / 7.82 / 6.34 */
+  /* NON-TEXT ONLY (≥3:1) */
+  --ink-hairline:       #7A748A;   /*  3.66 /  3.45 /  3.10 /  3.85 /  3.12  (brief baseline #716B81 was 2.73 on bone ✗) */
 
-  /* Lines — cream hairlines, more transparent than day */
+  /* Lines — cream hairlines (decorative, exempt) */
   --line-solid:         rgba(240, 235, 221, 0.2);
   --line-dashed:        rgba(240, 235, 221, 0.16);
   --line-sidebar:       rgba(240, 235, 221, 0.14);
   --line-card:          rgba(240, 235, 221, 0.12);
   --line-goal:          rgba(228, 195, 107, 0.45);
+  --line-control:       #7A748A;   /* NEW  3.45 / 3.10 */
 
-  /* Botanical accents — moonlit: lighter, slightly desaturated, they glow */
-  --acc-sage:           #A8C09A;   /* leaves catch moonlight */
-  --acc-moss:           #8FB098;   /* projects */
-  --acc-terra:          #E29473;   /* CTA — firefly-warm */
-  --acc-blossom:        #E9BFC5;   /* tasks */
-  --acc-lavender:       #C0B7E0;   /* calendar */
-  --acc-hydrangea:      #A9C5D3;   /* inbox */
-  --acc-buttercream:    #E8DCA0;   /* docs */
-  --acc-clover:         #DDB3B3;   /* chat */
-  --acc-gold:           #E4C36B;   /* goal-of-day emphasis */
-  --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
-  --acc-lavender-deep:  #C9C0D8;   /* links/labels — flips light at night */
-  --acc-lavender-text:  #D8D2E8;   /* text on lavender-tinted pills */
-  --acc-sage-text:      #C6D8BA;   /* text on sage-tinted pills */
-  --acc-hydrangea-deep: #C2D8E0;   /* text on hydrangea-tinted chips */
-  --acc-clover-text:    #E4C4C4;   /* text on clover-tinted chips */
-  --acc-buttercream-text: #DCCFA0; /* Review headers */
+  /* Botanical accents — moonlit, they glow (all ≥5.7 on panel, usable as text at night) */
+  --acc-sage:           #A8C09A;
+  --acc-moss:           #8FB098;
+  --acc-terra:          #E29473;   /* 6.41 */
+  --acc-blossom:        #E9BFC5;
+  --acc-lavender:       #C0B7E0;
+  --acc-hydrangea:      #A9C5D3;
+  --acc-buttercream:    #E8DCA0;
+  --acc-clover:         #DDB3B3;
+  --acc-gold:           #E4C36B;   /* 9.06 */
+  --acc-gold-warm:      #C9A55A;
+  --acc-lavender-deep:  #C9C0D8;
+  --acc-lavender-text:  #D8D2E8;
+  --acc-sage-text:      #C6D8BA;
+  --acc-hydrangea-deep: #C2D8E0;
+  --acc-clover-text:    #E4C4C4;
+  --acc-buttercream-text: #DCCFA0;
+  --acc-blossom-text:   #E9BFC5;   /* NEW */
+  --acc-terra-ink:      #E29473;   /* NEW · at night terra already passes as text (6.41) */
 
   /* Signal colors */
   --sig-overdue:        #E29473;
-  --sig-streak:         #E4C36B;   /* the flame reads gold at night */
+  --sig-streak:         #E4C36B;
   --sig-done:           #F0EBDD;
+  --sig-amber:          #E4C36B;   /* NEW */
+  --sig-offline:        #A9C5D3;   /* NEW */
 
-  /* Task checkboxes — sage moonlight, not cream hairlines */
-  --check-border:       rgba(168, 192, 154, 0.65);
+  /* Task checkboxes */
+  --check-border:       rgba(168, 192, 154, 0.65);   /* 4.18 panel / 3.87 bone ✓ */
   --check-bg:           rgba(168, 192, 154, 0.08);
   --check-fill:         #A8C09A;
   --check-mark:         #211D30;
   --check-glow:         0 0 8px rgba(168, 192, 154, 0.4);
+
+  /* NEW · Star */
+  --star-on:            #E29473;
+  --star-empty:         #7A748A;
+
+  /* NEW · Interaction colour roles */
+  --on-terra:           #211D30;   /* violet ink on firefly-terra 6.79 */
+  --focus:              #A9C5D3;
+  --badge-bg:           #E29473;
+  --badge-ink:          #211D30;
+  --toast-bg:           #F0EBDD;   /* moon-cream snackbar, inverted */
+  --toast-ink:          #211D30;
+  --toast-action:       #9C5139;   /* 4.95 on cream */
+  --swipe-right-bg:     #A8C09A;
+  --swipe-right-ink:    #211D30;
+  --swipe-left-bg:      #E29473;
+  --swipe-left-ink:     #211D30;
+  --select-bg:          rgba(169, 197, 211, 0.12);
+  --skeleton:           rgba(240, 235, 221, 0.08);
+  --skeleton-hi:        rgba(240, 235, 221, 0.04);
 
   /* Night light */
   --firefly:            #F6E28C;
@@ -82,7 +111,7 @@
   --glow-firefly:       0 0 12px rgba(246, 226, 140, 0.85), 0 0 24px rgba(246, 226, 140, 0.35);
   --glow-window:        0 0 40px rgba(228, 195, 107, 0.12);
 
-  /* Shadows — deeper and cooler; warmth comes from glows instead */
+  /* Shadows */
   --shadow-crisp:       0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-card:        0 1px 2px rgba(0, 0, 0, 0.4), 0 5px 12px rgba(0, 0, 0, 0.3);
   --shadow-panel:       0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.35);
@@ -90,6 +119,13 @@
   --shadow-popover:     0 2px 3px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.55);
   --shadow-cta:         0 2px 4px rgba(0, 0, 0, 0.5);
   --shadow-drop-sm:     drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  /* NEW · phone layers */
+  --shadow-sheet:       0 -1px 0 rgba(240, 235, 221, 0.08), 0 -12px 36px rgba(0, 0, 0, 0.5);
+  --shadow-toast:       0 2px 4px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.45);
+  --shadow-tabbar:      0 -1px 0 rgba(240, 235, 221, 0.10);
+  --scrim:              rgba(12, 10, 20, 0.62);
+  --pressed-overlay:    rgba(240, 235, 221, 0.10);
+  --focus-ring:         0 0 0 2px #211D30, 0 0 0 4px #A9C5D3;
 
   /* Semantic aliases */
   --bg-app:             var(--paper-linen);

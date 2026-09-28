@@ -1,0 +1,106 @@
+/* Dark mode — "Night Garden". Rebased Jul 2026 to match the approved Night
+   studies (Night.dc.html): violet-midnight paper, moonlit cream ink, glowing
+   botanical accents. Applied by setting data-theme="night" on the root of a
+   screen or subtree.
+
+   COVERAGE RULE: every token in colors.css (and the shadow set in effects.css)
+   has a night value here — nothing falls back to a daylight value. */
+[data-theme="night"] {
+  /* Sky ground — violet midnight, never true black */
+  --sky-deep:           #211D30;   /* page background */
+  --sky-mid:            #2E2840;   /* mid sky, sidebar wash */
+  --sky-horizon:        #3B3450;   /* horizon glow, dusk buttons */
+  --sky-panel:          #262233;   /* moonlit paper card */
+  --sky-panel-strong:   #2C2740;
+  --sky-input:          rgba(244, 241, 234, 0.05);
+
+  /* Paper names, remapped — components using paper-* just work at night */
+  --paper-linen:        #211D30;   /* page background */
+  --paper-parchment:    #262233;   /* cards, panels, popovers */
+  --paper-bone:         #2E2942;   /* input fields, hover surfaces */
+  --paper-sidebar:      #1C1929;   /* left rail */
+  --paper-goal:         #322B22;   /* gold goal card — ember-lit */
+  --paper-event:        #2A2639;   /* neutral calendar block — external / read-only */
+
+  /* Calendar block tints — brighter alpha so the wash reads on violet ground */
+  --block-lavender:     rgba(192, 183, 224, 0.22);
+  --block-moss:         rgba(154, 190, 140, 0.18);
+  --block-blossom:      rgba(233, 191, 197, 0.18);
+  --block-sage:         rgba(168, 196, 152, 0.18);
+  --block-hydrangea:    rgba(169, 197, 211, 0.18);
+  --block-buttercream:  rgba(232, 220, 160, 0.18);
+
+  /* Moonlight ink — soft cream on violet, never pure white */
+  --moon-primary:       #F0EBDD;
+  --moon-muted:         #C9C0D8;
+  --moon-faint:         #8E88A0;
+  --ink-body:           #F0EBDD;   /* primary text */
+  --ink-muted:          #C9C0D8;   /* secondary text, metadata */
+  --ink-faint:          #8E88A0;   /* hints, mono captions */
+  --ink-hairline:       #6E687F;   /* tertiary, "done" strike text */
+
+  /* Lines — cream hairlines, more transparent than day */
+  --line-solid:         rgba(240, 235, 221, 0.2);
+  --line-dashed:        rgba(240, 235, 221, 0.16);
+  --line-sidebar:       rgba(240, 235, 221, 0.14);
+  --line-card:          rgba(240, 235, 221, 0.12);
+  --line-goal:          rgba(228, 195, 107, 0.45);
+
+  /* Botanical accents — moonlit: lighter, slightly desaturated, they glow */
+  --acc-sage:           #A8C09A;   /* leaves catch moonlight */
+  --acc-moss:           #8FB098;   /* projects */
+  --acc-terra:          #E29473;   /* CTA — firefly-warm */
+  --acc-blossom:        #E9BFC5;   /* tasks */
+  --acc-lavender:       #C0B7E0;   /* calendar */
+  --acc-hydrangea:      #A9C5D3;   /* inbox */
+  --acc-buttercream:    #E8DCA0;   /* docs */
+  --acc-clover:         #DDB3B3;   /* chat */
+  --acc-gold:           #E4C36B;   /* goal-of-day emphasis */
+  --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
+  --acc-lavender-deep:  #C9C0D8;   /* links/labels — flips light at night */
+  --acc-lavender-text:  #D8D2E8;   /* text on lavender-tinted pills */
+  --acc-sage-text:      #C6D8BA;   /* text on sage-tinted pills */
+  --acc-hydrangea-deep: #C2D8E0;   /* text on hydrangea-tinted chips */
+  --acc-clover-text:    #E4C4C4;   /* text on clover-tinted chips */
+  --acc-buttercream-text: #DCCFA0; /* Review headers */
+
+  /* Signal colors */
+  --sig-overdue:        #E29473;
+  --sig-streak:         #E4C36B;   /* the flame reads gold at night */
+  --sig-done:           #F0EBDD;
+
+  /* Task checkboxes — sage moonlight, not cream hairlines */
+  --check-border:       rgba(168, 192, 154, 0.65);
+  --check-bg:           rgba(168, 192, 154, 0.08);
+  --check-fill:         #A8C09A;
+  --check-mark:         #211D30;
+  --check-glow:         0 0 8px rgba(168, 192, 154, 0.4);
+
+  /* Night light */
+  --firefly:            #F6E28C;
+  --star:               rgba(255, 250, 230, 0.9);
+  --glow-firefly:       0 0 12px rgba(246, 226, 140, 0.85), 0 0 24px rgba(246, 226, 140, 0.35);
+  --glow-window:        0 0 40px rgba(228, 195, 107, 0.12);
+
+  /* Shadows — deeper and cooler; warmth comes from glows instead */
+  --shadow-crisp:       0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-card:        0 1px 2px rgba(0, 0, 0, 0.4), 0 5px 12px rgba(0, 0, 0, 0.3);
+  --shadow-panel:       0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.35);
+  --shadow-goal:        0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(228, 195, 107, 0.1);
+  --shadow-popover:     0 2px 3px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.55);
+  --shadow-cta:         0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-drop-sm:     drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+
+  /* Semantic aliases */
+  --bg-app:             var(--paper-linen);
+  --bg-surface:         var(--paper-parchment);
+  --bg-input:           var(--paper-bone);
+  --bg-sidebar:         var(--paper-sidebar);
+  --text-primary:       var(--ink-body);
+  --text-secondary:     var(--ink-muted);
+  --text-tertiary:      var(--ink-faint);
+  --border-default:     var(--line-solid);
+  --border-dashed:      var(--line-dashed);
+  --accent-primary:     var(--acc-terra);
+  --accent-plant:       var(--acc-sage);
+}

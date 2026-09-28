@@ -7,14 +7,17 @@
 // Allowed:
 //   - the production web app
 //   - http://localhost / http://127.0.0.1 on any port (Vite dev + preview)
+//   - Capacitor shells (M1b): `https://localhost` (Android, `server.androidScheme: 'https'`),
+//     `capacitor://localhost` (iOS)
 //   - Tauri v2 shells: `tauri://localhost` (macOS/iOS/Linux), `http(s)://tauri.localhost`
-//     (Windows/Android)
+//     (Windows; the old Tauri Android APK)
 //   - anything in the optional `ALLOWED_ORIGINS` secret (comma-separated, exact match) — e.g. a
-//     Capacitor shell (`https://localhost`, `capacitor://localhost`) or a preview domain, without a
-//     code change.
+//     preview domain, without a code change.
 
 const STATIC_ORIGINS = new Set([
   'https://kais-flow.kaidagoat.workers.dev',
+  'https://localhost',
+  'capacitor://localhost',
   'tauri://localhost',
   'http://tauri.localhost',
   'https://tauri.localhost',

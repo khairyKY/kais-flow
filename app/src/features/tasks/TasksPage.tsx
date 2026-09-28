@@ -18,6 +18,7 @@ import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
+import { Skeleton } from '../../components/States'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
@@ -407,7 +408,7 @@ export function TasksPage() {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [], isPending: tasksPending } = useTasks()
   // J-18: an import that exploded a repeating task into copies buried Kai's real tasks for weeks;
   // the tidy tool existed but lived three clicks deep in Settings. Point at it when it's needed.
   const dupeClusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
@@ -806,7 +807,9 @@ export function TasksPage() {
             </div>
           </div>
         )}
-        {isDone ? (
+        {tasksPending ? (
+          <Skeleton />
+        ) : isDone ? (
           <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} />
         ) : (
         <div style={{ paddingTop: isSomeday ? 16 : 0 }}>

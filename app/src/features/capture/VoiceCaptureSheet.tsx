@@ -8,16 +8,15 @@ import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled } from '../../lib/motion'
+import { pickMimeType } from './holdToTalk'
 import './capture.css'
-
-function pickMimeType(): string {
-  const candidates = ['audio/webm', 'audio/mp4', 'audio/aac']
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
-}
 
 interface VoiceCaptureSheetProps {
   open: boolean
   onClose: () => void
+  /** A take already recorded elsewhere (the tab bar's hold-to-talk): the sheet skips the mic and
+   * goes straight to transcribing it — with every "never lose a recording" path below. */
+  recording?: { blob: Blob; seconds: number }
 }
 
 /**
@@ -31,11 +30,11 @@ interface VoiceCaptureSheetProps {
  */
 type Phase = 'resting' | 'recording' | 'transcribing' | 'kept'
 
-export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
-  const [phase, setPhase] = useState<Phase>('recording')
+export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: VoiceCaptureSheetProps) {
+  const [phase, setPhase] = useState<Phase>(handedOver ? 'transcribing' : 'recording')
   const [keptReason, setKeptReason] = useState<KeptReason>('other')
   const [recording, setRecording] = useState(false)
-  const [seconds, setSeconds] = useState(0)
+  const [seconds, setSeconds] = useState(handedOver?.seconds ?? 0)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -60,7 +59,10 @@ export function VoiceCaptureSheet({ open, onClose }: VoiceCaptureSheetProps) {
     if (open) {
       setVisible(true)
       keptRef.current = null
-      if (voiceLimitReachedToday(uidRef.current)) {
+      if (handedOver) {
+        keptRef.current = handedOver.blob
+        void transcribeKept()
+      } else if (voiceLimitReachedToday(uidRef.current)) {
         setPhase('resting')
       } else {
         setPhase('recording')

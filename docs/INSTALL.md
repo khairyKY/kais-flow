@@ -18,6 +18,7 @@ The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. 
 - If Android says *"App not installed … conflicts with an existing package"*, that build was signed with a different key.
 - Open the old app and check it says **Synced**, uninstall it, then install the new one. Nothing is lost, because your data lives in the cloud.
 - A permanent signing key removes this step. It needs two repository secrets, `ANDROID_KEYSTORE_B64` + `ANDROID_KEYSTORE_PASSWORD`; the conductor can walk you through making them.
+- **Coming from the old Android app (before 2026-09-28):** the app was rebuilt on a new shell, so it keeps its data in a new place. Open the old app, wait for **Synced**, uninstall it, install the new one, and sign in again.
 
 **Not in the Android app yet:**
 - Push notifications. Reminders still reach you through the web app, installed from Chrome.

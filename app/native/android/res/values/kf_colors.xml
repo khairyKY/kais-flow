@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Day paper: the bg-app token (styles/tokens/colors.css). -->
+    <color name="kf_page">#EFE9DB</color>
+</resources>

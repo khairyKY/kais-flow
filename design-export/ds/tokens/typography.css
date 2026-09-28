@@ -1,13 +1,15 @@
 /* Type system. Three roles + one marginalia hand.
    Rule from Kami: "Ring or whisper, never shout." Headlines are large but
-   light-weight. Metadata is tiny but tracked wide. Nothing is bold AND large. */
+   light-weight. Nothing is bold AND large.
+   Refresh Sep 2026: desktop scale unchanged. Phones (≤767px) get their own
+   values — nothing under 12px, mono tracking ≤0.07em so captions stop wrapping. */
 :root {
   --font-display:  'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   --font-ui:       'Inter Tight', system-ui, -apple-system, sans-serif;
   --font-mono:     'Courier Prime', ui-monospace, 'Courier New', monospace;
   --font-hand:     'Caveat', 'Segoe Script', cursive;
 
-  /* Sizes */
+  /* Sizes — desktop */
   --fs-display-xl: 44px;   /* page title — "Sunday, July 5" */
   --fs-display-l:  26px;   /* card title — "Kai's Flow" wordmark */
   --fs-display-m:  22px;   /* sidebar wordmark */
@@ -23,7 +25,14 @@
   --fs-hand:       16px;   /* Caveat marginalia */
   --fs-hand-l:     18px;
 
-  /* Weights — deliberately never combined with the top display sizes */
+  /* NEW · role tokens (point here instead of a raw size) */
+  --fs-page-title: 44px;   /* = display-xl on desktop */
+  --fs-meta:       10px;   /* row metadata — "OVERDUE 64D · 30M" */
+  --fs-meta-l:     10.5px; /* section labels, captions */
+  --fs-tab-label:  12px;   /* tab bar label (phone only) */
+  --fs-badge:      12px;
+
+  /* Weights */
   --fw-regular:    400;
   --fw-medium:     500;
   --fw-semibold:   600;
@@ -34,9 +43,38 @@
   --lh-body:       1.4;
   --lh-relaxed:    1.5;
 
-  /* Letter spacing — mono labels are always tracked */
+  /* Letter spacing — mono labels are tracked */
   --ls-mono-tight: 0.12em;
   --ls-mono:       0.18em;
   --ls-mono-wide:  0.22em;
   --ls-display:    -0.015em;
+  --ls-meta:       0.12em;  /* NEW · row metadata */
+}
+
+/* Phone — true pixel size, no desktop zoom to hide behind. Floor is 12px. */
+@media (max-width: 767px) {
+  :root {
+    --fs-display-xl: 26px;   /* page title on a 390px screen */
+    --fs-page-title: 26px;
+    --fs-display-l:  22px;
+    --fs-display-m:  20px;
+    --fs-lead:       17px;
+    --fs-body-l:     16px;
+    --fs-body:       15px;
+    --fs-body-s:     14px;   /* body floor */
+    --fs-caption:    13px;
+    --fs-mono-l:     13px;
+    --fs-mono:       12.5px;
+    --fs-mono-s:     12px;
+    --fs-mono-xs:    12px;
+    --fs-meta:       12px;   /* brief said 11.5 — raised to honour the 12px floor */
+    --fs-meta-l:     12.5px;
+    --fs-hand:       18px;
+    --fs-hand-l:     20px;
+
+    --ls-mono-tight: 0.05em;
+    --ls-mono:       0.07em;
+    --ls-mono-wide:  0.07em;
+    --ls-meta:       0.06em;
+  }
 }

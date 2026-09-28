@@ -1,7 +1,8 @@
-/* Motion — gentle. Nothing snappy. All animations respect prefers-reduced-motion. */
+/* Motion — gentle. Nothing snappy. Transform + opacity only.
+   All animations respect prefers-reduced-motion. */
 :root {
   --dur-instant:  120ms;
-  --dur-quick:    150ms;   /* hover reveal */
+  --dur-quick:    150ms;   /* reveal */
   --dur-normal:   200ms;   /* tab switch, toggle */
   --dur-slow:     300ms;   /* panel transitions */
   --dur-bloom:    600ms;   /* petal fall */
@@ -11,7 +12,19 @@
   --ease-in:      cubic-bezier(0.55, 0, 0.68, 0.53);
   --ease-natural: cubic-bezier(0.4, 0.0, 0.2, 1);
 
-  /* Signature keyframes — importable via animation-name */
+  /* NEW · Phone roles, aligned to Material 3 motion (Sep 2026) */
+  --dur-press:        100ms;  /* pressed overlay + scale(0.97) in */
+  --dur-sheet-enter:  300ms;
+  --dur-sheet-exit:   200ms;
+  --dur-toast:        200ms;  /* in and out */
+  --dur-longpress:    400ms;  /* hold → select mode */
+  --dur-toast-life:   6000ms; /* Undo toast lifetime; timer pauses while pressed */
+  --dur-swipe-settle: 200ms;  /* row snaps back / flies off */
+  --dur-collapse:     200ms;  /* row height → 0 after delete (use scaleY + opacity) */
+
+  --ease-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1);   /* enter: sheet, toast */
+  --ease-emphasized-accel: cubic-bezier(0.3, 0, 0.8, 0.15);   /* exit: sheet, toast */
+  --ease-standard:         cubic-bezier(0.2, 0, 0, 1);        /* press, settle */
 }
 
 @keyframes cloverSway {
@@ -37,6 +50,16 @@
   100% { transform: translateY(90px) rotate(140deg); opacity: 0; }
 }
 
+/* NEW · phone layers */
+@keyframes sheetIn   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetOut  { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes scrimIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes toastIn   { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastOut  { from { opacity: 1; } to { opacity: 0; } }
+@keyframes skeletonPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes recPulse  { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.18); opacity: 0.2; } }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  /* Sheets and toasts cross-fade instead of travelling */
 }

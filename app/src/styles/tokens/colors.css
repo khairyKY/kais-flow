@@ -11,8 +11,8 @@
   /* Ink */
   --ink-body:           #2a2420;   /* primary text — bark brown */
   --ink-muted:          #5f5849;   /* secondary text, metadata labels */
-  --ink-faint:          #6f685a;   /* hints, uppercase mono captions */
-  --ink-hairline:       #8c8572;   /* tertiary hint, "done" strike text */
+  --ink-faint:          #6A6354;   /* hints, uppercase mono captions */
+  --ink-hairline:       #88816E;   /* tertiary hint, "done" strike text */
   --ink-hand:           #6c6557;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Borders */
@@ -31,24 +31,24 @@
   --acc-hydrangea:      #9AB4BE;   /* inbox */
   --acc-buttercream:    #D4C78A;   /* docs — fern accent */
   --acc-clover:         #C9A0A0;   /* chat — dusty rose */
-  --acc-gold:           #9a7b3a;   /* goal-of-day emphasis */
+  --acc-gold:           #7f6428;   /* goal-of-day emphasis */
   --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
-  --acc-lavender-deep:  #7c6a9a;   /* muted lavender links/labels (roll-to-tomorrow, day header) */
+  --acc-lavender-deep:  #6a5988;   /* muted lavender links/labels (roll-to-tomorrow, day header) */
   --acc-lavender-text:  #5a5170;   /* darker text on lavender-tinted pills (date chips) */
   --acc-sage-text:      #4d6650;   /* darker text on sage-tinted pills (match/routing chips) */
   --acc-hydrangea-deep: #4d6a75;   /* text on hydrangea-tinted chips/surfaces */
   --acc-clover-text:    #8a5a5a;   /* text on clover-tinted chips (chat citations) */
-  --acc-buttercream-text: #9a8b52; /* darker buttercream for Review section headers */
+  --acc-buttercream-text: #716431; /* darker buttercream for Review section headers */
 
   /* Signal colors */
-  --sig-overdue:        #B5654A;   /* same as terra — overdue reads warm */
+  --sig-overdue:        #9C5139;   /* same as terra — overdue reads warm */
   --sig-streak:         #B5654A;   /* streak flame */
   --sig-done:           #2a2420;   /* filled check chip */
 
   /* Task checkboxes */
-  --check-border:       #b3ac95;
+  --check-border:       #88816E;
   --check-bg:           var(--paper-bone);
-  --check-fill:         var(--acc-sage);   /* checked square */
+  --check-fill:         var(--acc-sage-text);   /* checked square */
   --check-mark:         #FBF6E9;           /* the ✓ glyph */
   --check-glow:         none;              /* night mode adds a moonlit glow */
 
@@ -65,4 +65,34 @@
   --accent-primary:     var(--acc-terra);
   --accent-plant:       var(--acc-sage);
   --text-on-accent:     var(--paper-parchment); /* text on terra/gold CTAs — cream, never pure white */
+  /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
+  --block-lavender: rgba(168, 160, 190, 0.20);
+  --block-moss: rgba(122, 148, 110, 0.18);
+  --block-blossom: rgba(212, 168, 176, 0.22);
+  --block-sage: rgba(138, 154, 126, 0.20);
+  --block-hydrangea: rgba(154, 180, 190, 0.22);
+  --block-buttercream: rgba(212, 199, 138, 0.24);
+  --block-terra: rgba(181, 101, 74, 0.14);
+  --line-control: #88816E;
+  --acc-blossom-text: #8A4A58;
+  --acc-terra-ink: #9C5139;
+  --sig-amber: #7f6428;
+  --sig-offline: #4d6a75;
+  --star-on: #B5654A;
+  --star-empty: #88816E;
+  --on-terra: #FBF6E9;
+  --focus: #4d6a75;
+  --badge-bg: #9C5139;
+  --badge-ink: #FBF6E9;
+  --toast-bg: #2a2420;
+  --toast-ink: #FBF6E9;
+  --toast-action: #C9A55A;
+  --swipe-right-bg: #8A9A7E;
+  --swipe-right-ink: #2a2420;
+  --swipe-left-bg: #9C5139;
+  --swipe-left-ink: #FBF6E9;
+  --select-bg: rgba(77, 106, 117, 0.10);
+  --skeleton: rgba(42, 36, 32, 0.07);
+  --skeleton-hi: rgba(42, 36, 32, 0.035);
+
 }
