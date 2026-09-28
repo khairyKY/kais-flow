@@ -10,8 +10,8 @@ import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } fro
 // Top 3 + goal card, task-backed Up next) gets its SwipeRow props, its ⋯ / right-click opener and the
 // menu to render beside it from here. ──
 
-/** The real writes for one task. */
-function taskActions(task: Task): TaskMenuActions {
+/** The real writes for one task (the task sheet's chips open the same pickers with these). */
+export function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
     schedule: (iso) => rescheduleDue(task, iso),

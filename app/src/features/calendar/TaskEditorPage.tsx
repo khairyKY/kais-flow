@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import {
-  useTasks, createTask, renameTask, rescheduleDue, setLabels, setSomeday, setRecurrence,
+  useTasks, rescheduleDue, setLabels, setSomeday, setRecurrence,
   setReminder, setDuration, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo,
 } from '../tasks/api'
+import { useTaskDraft } from '../tasks/useTaskDraft'
 import { useCalendarEvents } from './api'
 import { EmojiText } from '../../components/EmojiText'
 import { MiniFocus } from '../focus/MiniFocus'
@@ -12,22 +13,20 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
-import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
+import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { Select } from '../../components/Select'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
-import { useGoalStore } from '../today/goalStore'
-import { BackLink, Checkbox, Chip, KeyCombo } from '../../components/kit'
+import { useIsMobile } from '../../components/BottomSheet'
+import { BackLink, Checkbox, KeyCombo } from '../../components/kit'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
 
 // ── Editor.dc.html 1a — task detail, the full page (popover's "Open full ↗"
-// lands here) · 1f — the same content, phone width via the media query below.
-// Sidebar/topbar are the shell's (AppLayout); this owns everything past the
+// lands here). Sidebar/topbar are the shell's (AppLayout); this owns everything past the
 // breadcrumb. Subtasks (1a's "Subtasks · 1 of 3") are children one level deep
 // via tasks.parent_task_id (migration 0029) — hidden on a task that is itself
-// a child, so the tree can't nest. ──
+// a child, so the tree can't nest. On a phone a task is the task sheet over the page you were
+// on (features/tasks/TaskSheet), so a cold /tasks/:id link lands on Tasks with the sheet open. ──
 
 function taskCherryStage(task: Task): 'bud' | 'opening' | 'bloom' | 'fallen' {
   if (task.status === 'done') return 'fallen'
@@ -63,18 +62,10 @@ export function TaskEditorPage() {
 
   const task = tasks.find((t) => t.id === id)
 
-  const [title, setTitleLocal] = useState(task?.title ?? '')
-  const [notes, setNotesLocal] = useState(task?.notes ?? '')
+  const draft = useTaskDraft(task)
+  const { title, notes } = draft
   const [labelInput, setLabelInput] = useState('')
-  const [subtaskInput, setSubtaskInput] = useState('')
   const isMobile = useIsMobile()
-  const { goalTaskId } = useGoalStore()
-  const [sheetSchedule, setSheetSchedule] = useState(false)
-  const [sheetNotes, setSheetNotes] = useState(false)
-
-  useEffect(() => {
-    if (task) { setTitleLocal(task.title); setNotesLocal(task.notes ?? '') }
-  }, [task?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Editor.dc.html 1a shows a ⌘⏎ hint next to Save — wire it so the hint is true.
   useEffect(() => {
@@ -84,6 +75,8 @@ export function TaskEditorPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+
+  if (isMobile) return <Navigate to={`/tasks?task=${id}`} replace />
 
   if (!task) {
     return (
@@ -103,27 +96,10 @@ export function TaskEditorPage() {
   const area = task.area_id ? areas.find((a) => a.id === task.area_id) : null
   const stage = taskCherryStage(task)
   const statusLabel = task.status === 'done' ? 'Done' : task.status === 'cancelled' ? 'Cancelled' : 'Open'
-  // §03's lavender day chip: the *word* for the due day (the concrete time lives in the Schedule row).
-  const dueDayChip = !task.due_at
-    ? null
-    : dueDate === localDateKey(new Date())
-      ? 'Today'
-      : dueDate === localDateKey(new Date(Date.now() + 86_400_000))
-        ? 'Tomorrow'
-        : new Date(task.due_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
   // Children come straight from the tasks cache — no extra query needed.
   const subtasks = tasks.filter((t) => t.parent_task_id === task.id)
   const subtasksDone = subtasks.filter((t) => t.status === 'done').length
-
-  function saveTitle() {
-    const t = title.trim()
-    if (t && t !== task!.title) renameTask(task!, t)
-    else setTitleLocal(task!.title)
-  }
-
-  function saveNotes() {
-    writeRow('tasks', { ...task!, notes: notes || null })
-  }
+  const { saveTitle, saveNotes } = draft
 
   function handleDueChange(date: string, time: string) {
     rescheduleDue(task!, date ? localToIso(date, time || '09:00') : null)
@@ -146,13 +122,6 @@ export function TaskEditorPage() {
     setLabelInput('')
   }
 
-  function addSubtask() {
-    const t = subtaskInput.trim()
-    if (!t) return
-    createTask({ title: t, parentTaskId: task!.id, projectId: task!.project_id, domainId: task!.domain_id })
-    setSubtaskInput('')
-  }
-
   function handleDelete() {
     deleteTasksWithUndo([task!])
     navigate('/tasks')
@@ -164,119 +133,10 @@ export function TaskEditorPage() {
     navigate('/tasks')
   }
 
-  // ── Overlays.dc.html §03 "Task detail sheet" — on a phone /tasks/:id IS the sheet, not
-  // the two-column page reflowed. Every handler above is reused verbatim; only the
-  // presentation branches. Deleting / labels / subtasks stay desktop-only per §03, and the
-  // phone reaches delete + project through the task row's swipe panel. ──
-  if (isMobile) {
-    return (
-      <BottomSheet onClose={() => navigate('/tasks')} handleGap={16}>
-        {() => (
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <Checkbox
-                checked={task.status === 'done'}
-                onChange={() => toggleTaskWithUndo(task)}
-                size={20}
-                style={{ borderRadius: 5, marginTop: 2, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
-              />
-              <input
-                value={title}
-                onChange={(e) => setTitleLocal(e.target.value)}
-                onBlur={saveTitle}
-                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-                style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.3, background: 'none', border: 'none', outline: 'none', padding: 0 }}
-              />
-              <button
-                type="button"
-                className="kf-hit"
-                onClick={() => toggleTop3(task)}
-                aria-label={task.top3 ? 'Remove from Top-3' : 'Add to Top-3'}
-                style={{ color: 'var(--acc-terra)', fontSize: 18, flex: 'none', opacity: task.top3 ? 1 : 0.3, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              >★</button>
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-              {task.top3 && task.id === goalTaskId && <Chip tone="gold">✶ Goal</Chip>}
-              {dueDayChip && <Chip tone="lavender">{dueDayChip}</Chip>}
-              {task.priority != null && (
-                <Chip tone="gold">{priorityFlag(task.priority)} {task.priority === 1 ? 'Critical' : task.priority === 2 ? 'High' : 'Medium'}</Chip>
-              )}
-              {(project || area) && <Chip tone="sage">{project?.name ?? area?.name}</Chip>}
-            </div>
-
-            <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <button type="button" onClick={() => setSheetSchedule(true)} style={{ ...sheetRowStyle, borderBottom: '1px dashed var(--line-dashed)' }}>
-                <span style={sheetRowLabel}>Schedule</span>
-                <span style={sheetRowValue}>
-                  {task.due_at
-                    ? `${new Date(task.due_at).toLocaleDateString('en-US', { weekday: 'short' })} ${localTimeKey(new Date(task.due_at))}`
-                    : 'Set a date…'}
-                </span>
-              </button>
-
-              <div style={{ ...sheetRowStyle, borderBottom: '1px dashed var(--line-dashed)', cursor: 'default' }}>
-                <span style={sheetRowLabel}>Duration</span>
-                <Select
-                  value={task.duration_min != null ? String(task.duration_min) : ''}
-                  onChange={(v) => setDuration(task, v ? Number(v) : null)}
-                  options={[{ value: '', label: '—' }, ...DURATION_CHIPS.map((m) => ({ value: String(m), label: formatDuration(m) }))]}
-                  ariaLabel="Duration"
-                  style={{ ...sheetRowValue, background: 'none', border: 'none', padding: 0 }}
-                />
-              </div>
-
-              <div style={{ ...sheetRowStyle, cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-                <button type="button" onClick={() => setSheetNotes((v) => !v)} style={{ ...sheetRowStyle, padding: 0 }}>
-                  <span style={sheetRowLabel}>Notes</span>
-                  <span style={{ fontSize: 13, color: 'var(--ink-faint)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
-                    {notes.trim() || 'Add a note…'}
-                  </span>
-                </button>
-                {sheetNotes && (
-                  <textarea
-                    autoFocus
-                    value={notes}
-                    onChange={(e) => setNotesLocal(e.target.value)}
-                    onBlur={saveNotes}
-                    placeholder="Anything worth remembering when you sit down to do it…"
-                    style={{ width: '100%', minHeight: 96, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '11px 13px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', resize: 'vertical' }}
-                  />
-                )}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => { toggleTaskWithUndo(task); navigate('/tasks') }}
-              style={{ width: '100%', marginTop: 16, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 14, padding: 13, borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-            >
-              {task.status === 'done' ? 'Mark incomplete' : 'Mark complete'}
-            </button>
-
-            {sheetSchedule && (
-              <ScheduleMenu
-                position={{ x: 0, y: 0 }}
-                title={task.title}
-                value={task.due_at}
-                duration={task.duration_min}
-                onClose={() => setSheetSchedule(false)}
-                // One row write: a separate setDuration would be undone by this one's stale copy.
-                onSchedule={(iso, min) => rescheduleDue(min === undefined ? task : { ...task, duration_min: min }, iso)}
-                onClear={task.due_at ? () => rescheduleDue(task, null) : undefined}
-              />
-            )}
-          </>
-        )}
-      </BottomSheet>
-    )
-  }
-
   return (
     <div>
       <style>{`
         .te-body { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 36px; margin-top: 26px; }
-        @media (max-width: 767px) { .te-body { grid-template-columns: minmax(0, 1fr); } }
         .te-sub-add::placeholder { color: var(--ink-faint); }
       `}</style>
 
@@ -309,7 +169,7 @@ export function TaskEditorPage() {
           </div>
           <input
             value={title}
-            onChange={(e) => setTitleLocal(e.target.value)}
+            onChange={(e) => draft.setTitle(e.target.value)}
             onBlur={saveTitle}
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
             style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
@@ -330,7 +190,7 @@ export function TaskEditorPage() {
           <FLabel>Notes</FLabel>
           <textarea
             value={notes}
-            onChange={(e) => setNotesLocal(e.target.value)}
+            onChange={(e) => draft.setNotes(e.target.value)}
             onBlur={saveNotes}
             placeholder="Anything worth remembering when you sit down to do it…"
             style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', resize: 'vertical' }}
@@ -365,9 +225,9 @@ export function TaskEditorPage() {
                   <span style={{ width: 16, height: 16, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }} />
                   <input
                     className="te-sub-add"
-                    value={subtaskInput}
-                    onChange={(e) => setSubtaskInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubtask() } }}
+                    value={draft.subtask}
+                    onChange={(e) => draft.setSubtask(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); draft.addSubtask() } }}
                     placeholder="Add a subtask…"
                     style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
                   />
@@ -510,23 +370,6 @@ export function TaskEditorPage() {
 }
 
 const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-
-// Overlays §03 task-detail rows: 13px of vertical padding (so the row clears 44px),
-// muted label left, mono value right.
-const sheetRowStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  width: '100%',
-  padding: '13px 4px',
-  background: 'none',
-  border: 'none',
-  font: 'inherit',
-  textAlign: 'left' as const,
-  cursor: 'pointer',
-}
-const sheetRowLabel = { fontSize: 14, color: 'var(--ink-muted)', flex: 1 }
-const sheetRowValue = { fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-body)' }
 
 const chipStyle = {
   fontFamily: 'var(--font-mono)',

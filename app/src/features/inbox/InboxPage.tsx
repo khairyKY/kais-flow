@@ -12,6 +12,7 @@ import {
 } from './api'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
+import { useOpenTask } from '../tasks/openTask'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
 import { hydrangeaAsset } from '../../lib/gardenAssets'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
@@ -504,6 +505,7 @@ function EmptyInboxCard() {
 // ── Already-resolved deep-link target (filed elsewhere / dismissed) ──
 function ResolvedCard({ item }: { item: InboxItem }) {
   const filed = item.status === 'filed'
+  const openTask = useOpenTask()
   return (
     <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '13px 19px', marginTop: 18, opacity: 0.85, display: 'flex', alignItems: 'center', gap: 10 }}>
       <span style={{ width: 15, height: 15, borderRadius: 4, background: filed ? 'var(--sig-done)' : 'var(--ink-hairline)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
@@ -513,10 +515,11 @@ function ResolvedCard({ item }: { item: InboxItem }) {
       <Chip tone="sage" style={filed ? undefined : { background: 'rgba(107,100,85,0.14)', color: 'var(--ink-faint)' }}>
         {filed ? 'already filed as a task' : 'dismissed'}
       </Chip>
-      {filed && (
-        <a href="/tasks" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+      {/* Wave N: the task it became (the sheet on a phone); a plain href reloaded the whole app. */}
+      {filed && item.filed_task_id && (
+        <button type="button" className="kf-hit" onClick={() => openTask(item.filed_task_id!)} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
           open task →
-        </a>
+        </button>
       )}
     </div>
   )

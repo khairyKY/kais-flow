@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useOpenTask } from '../tasks/openTask'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent, restoreEvent } from './api'
 import { toastUndo } from '../../lib/undo'
@@ -29,7 +29,7 @@ function nextDay(isoDate: string): string {
 }
 
 export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPanelProps) {
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const qc = useQueryClient()
   const [title, setTitle] = useState(event.title)
   // Which day this sits on isn't editable from the compact popover — dragging the block on the
@@ -81,7 +81,9 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
   }
 
   function handleOpenTask() {
-    if (event.task_id) navigate(`/tasks/${event.task_id}`)
+    if (!event.task_id) return
+    onClose() // the sheet opens over the calendar (phone); desktop leaves for the editor page
+    openTask(event.task_id)
   }
 
   const dateLabel = new Date(event.starts_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
