@@ -1,0 +1,532 @@
+[
+  {
+    "name": "tasks-phone-day ⋯ → Pick date… = the full date sheet, task title as meta",
+    "ok": true,
+    "detail": "Due date"
+  },
+  {
+    "name": "tasks-phone-day quick picks incl. Someday + No date (task has a date); Today ticked",
+    "ok": true,
+    "detail": "[\"Today\",\"Tomorrow\",\"This weekend\",\"Next week\",\"Someday\",\"No date\"]"
+  },
+  {
+    "name": "tasks-phone-day no native date input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day day + Done → due_at = 2026-10-01 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-10-01T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-phone-day swipe → Pick date opens the same sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day quick pick Tomorrow = tomorrow 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-09-29T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day Top 3 ⋯ → Pick date… → date sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day has-items dot on today (cached tasks/events)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day Set time → \"Time · Today …\", the Gym block is a busy row with its chip",
+    "ok": true,
+    "detail": "TODAY · MON 28 SEP"
+  },
+  {
+    "name": "today-phone-day opens on the task's time (09:00 selected)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day free slot + Done → due_at today 08:30 Cairo",
+    "ok": true,
+    "detail": "2026-09-28T05:30:00.000Z (08:30)"
+  },
+  {
+    "name": "today-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-day Schedule → date sheet on the task's day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-day time sheet has duration chips, 30m selected (the task's)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-day Done → due_at today 14:30 + duration 45 in one row write",
+    "ok": true,
+    "detail": "2026-09-28T11:30:00.000Z · 45m · 1 write(s)"
+  },
+  {
+    "name": "editor-phone-day no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-day Snooze → Pick a date… → \"Snooze until\" date sheet, item as meta, no quick picks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-day no native date input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-day → snoozed_until = 2026-09-30 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-09-30T06:00:00.000Z"
+  },
+  {
+    "name": "inbox-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-day no native date input in the new-project form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-day Target date → date sheet (day picks, no time)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-day This weekend → the field shows that day",
+    "ok": true,
+    "detail": "Sat 3 Oct 2026 / SAT 3 OCT"
+  },
+  {
+    "name": "project-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-day no native time input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-day reminder time is read-only (no keyboard)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-day → time sheet (no day → no free slots)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-day 07:30 → field \"7:30 AM\"",
+    "ok": true,
+    "detail": "7:30 AM"
+  },
+  {
+    "name": "routine-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-day right-click → Pick date… → the popover (no sheet, no native input)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-day focus on the task's day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-day → → Enter → due_at = today+2 09:00 Cairo, menu closed",
+    "ok": true,
+    "detail": "2026-09-30T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-day no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-day Due date → popover \"Due date\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-day day + Done → due_at 2026-10-02 at the task's time (09:00)",
+    "ok": true,
+    "detail": "2026-10-02T06:00:00.000Z"
+  },
+  {
+    "name": "editor-desktop-day Due time: typed text + list, no sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-desktop-day Snooze → Pick a date… → popover \"Snooze until\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-desktop-day → snoozed_until 2026-10-03 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-10-03T06:00:00.000Z"
+  },
+  {
+    "name": "inbox-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-day Target date → popover in the modal, no native input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-day Today → the field shows today",
+    "ok": true,
+    "detail": "Mon 28 Sep 2026"
+  },
+  {
+    "name": "project-desktop-day Esc closes the picker first, the modal stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "worklog-desktop-day work date: only Today (max = today), no No date, future days disabled",
+    "ok": true,
+    "detail": "[\"Today\"]"
+  },
+  {
+    "name": "worklog-desktop-day no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "worklog-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-desktop-day reminder time: typed text + list, no native input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-desktop-day \"6:15 am\" → 6:15 AM",
+    "ok": true,
+    "detail": "6:15 AM"
+  },
+  {
+    "name": "routine-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night ⋯ → Pick date… = the full date sheet, task title as meta",
+    "ok": true,
+    "detail": "Due date"
+  },
+  {
+    "name": "tasks-phone-night quick picks incl. Someday + No date (task has a date); Today ticked",
+    "ok": true,
+    "detail": "[\"Today\",\"Tomorrow\",\"This weekend\",\"Next week\",\"Someday\",\"No date\"]"
+  },
+  {
+    "name": "tasks-phone-night no native date input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night day + Done → due_at = 2026-10-01 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-10-01T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-phone-night swipe → Pick date opens the same sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night quick pick Tomorrow = tomorrow 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-09-29T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night Top 3 ⋯ → Pick date… → date sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night has-items dot on today (cached tasks/events)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night Set time → \"Time · Today …\", the Gym block is a busy row with its chip",
+    "ok": true,
+    "detail": "TODAY · MON 28 SEP"
+  },
+  {
+    "name": "today-phone-night opens on the task's time (09:00 selected)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night free slot + Done → due_at today 08:30 Cairo",
+    "ok": true,
+    "detail": "2026-09-28T05:30:00.000Z (08:30)"
+  },
+  {
+    "name": "today-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-night Schedule → date sheet on the task's day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-night time sheet has duration chips, 30m selected (the task's)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-night Done → due_at today 14:30 + duration 45 in one row write",
+    "ok": true,
+    "detail": "2026-09-28T11:30:00.000Z · 45m · 1 write(s)"
+  },
+  {
+    "name": "editor-phone-night no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-night Snooze → Pick a date… → \"Snooze until\" date sheet, item as meta, no quick picks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-night no native date input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-phone-night → snoozed_until = 2026-09-30 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-09-30T06:00:00.000Z"
+  },
+  {
+    "name": "inbox-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-night no native date input in the new-project form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-night Target date → date sheet (day picks, no time)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-phone-night This weekend → the field shows that day",
+    "ok": true,
+    "detail": "Sat 3 Oct 2026 / SAT 3 OCT"
+  },
+  {
+    "name": "project-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-night no native time input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-night reminder time is read-only (no keyboard)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-night → time sheet (no day → no free slots)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-phone-night 07:30 → field \"7:30 AM\"",
+    "ok": true,
+    "detail": "7:30 AM"
+  },
+  {
+    "name": "routine-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-night right-click → Pick date… → the popover (no sheet, no native input)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-night focus on the task's day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-night → → Enter → due_at = today+2 09:00 Cairo, menu closed",
+    "ok": true,
+    "detail": "2026-09-30T06:00:00.000Z"
+  },
+  {
+    "name": "tasks-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-night no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-night Due date → popover \"Due date\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-night day + Done → due_at 2026-10-02 at the task's time (09:00)",
+    "ok": true,
+    "detail": "2026-10-02T06:00:00.000Z"
+  },
+  {
+    "name": "editor-desktop-night Due time: typed text + list, no sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "editor-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-desktop-night Snooze → Pick a date… → popover \"Snooze until\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "inbox-desktop-night → snoozed_until 2026-10-03 09:00 Cairo",
+    "ok": true,
+    "detail": "2026-10-03T06:00:00.000Z"
+  },
+  {
+    "name": "inbox-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-night Target date → popover in the modal, no native input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-night Today → the field shows today",
+    "ok": true,
+    "detail": "Mon 28 Sep 2026"
+  },
+  {
+    "name": "project-desktop-night Esc closes the picker first, the modal stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "worklog-desktop-night work date: only Today (max = today), no No date, future days disabled",
+    "ok": true,
+    "detail": "[\"Today\"]"
+  },
+  {
+    "name": "worklog-desktop-night no native inputs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "worklog-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-desktop-night reminder time: typed text + list, no native input",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine-desktop-night \"6:15 am\" → 6:15 AM",
+    "ok": true,
+    "detail": "6:15 AM"
+  },
+  {
+    "name": "routine-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

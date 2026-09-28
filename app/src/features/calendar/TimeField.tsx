@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
+import { useIsMobile } from '../../components/BottomSheet'
+import { QUARTERS as OPTIONS } from '../../components/pickerMath'
+import { TimePicker } from '../../components/TimePicker'
 import { useEscapeStack } from '../../lib/overlayStack'
 
 // ── C5 (2026-07-18 audit): themed replacement for native <input type="time"> — the OS
 // time-picker chrome can't take the parchment tokens. A plain text input stays for typing
 // ("3pm", "15:00", "9:30 am"); the popup is ours, styled like components/Select's panel.
-// Value contract is unchanged from the native input: "HH:mm" 24h, or "" for empty. ──
+// Value contract is unchanged from the native input: "HH:mm" 24h, or "" for empty.
+// On a phone (Wave M) it is a read-only field that opens the MK Time Picker sheet instead. ──
 
 const PANEL_MAX_H = 224
 
@@ -28,19 +32,21 @@ export function parseTimeText(text: string): string | null {
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
 }
 
-// 15-min increments, midnight → 23:45.
-const OPTIONS = Array.from(
-  { length: 96 },
-  (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`,
-)
-
 function nearestIndex(v: string): number {
   const [h, m] = v.split(':').map(Number)
   if (Number.isNaN(h)) return 36 // 09:00 — same default anchor as the calendar grid
   return Math.min(95, h * 4 + Math.round((m || 0) / 15))
 }
 
-export function TimeField({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: CSSProperties }) {
+export function TimeField({ value, onChange, style, day }: {
+  value: string
+  onChange: (v: string) => void
+  style?: CSSProperties
+  /** Phone sheet: the Cairo day ("YYYY-MM-DD") whose calendar gives the free slots and busy rows. */
+  day?: string | null
+}) {
+  const isMobile = useIsMobile()
+  const [sheet, setSheet] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -94,6 +100,10 @@ export function TimeField({ value, onChange, style }: { value: string; onChange:
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
+    if (isMobile) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheet(true) }
+      return
+    }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
       e.stopPropagation()
@@ -123,12 +133,16 @@ export function TimeField({ value, onChange, style }: { value: string; onChange:
           const p = parseTimeText(e.target.value)
           if (p) setHighlight(nearestIndex(p))
         }}
-        onFocus={openMenu}
-        onClick={() => { if (!open) openMenu() }}
+        readOnly={isMobile}
+        onFocus={isMobile ? undefined : openMenu}
+        onClick={() => { if (isMobile) setSheet(true); else if (!open) openMenu() }}
         onBlur={commitText}
         onKeyDown={onKeyDown}
         style={style}
       />
+      {sheet && (
+        <TimePicker day={day} value={value || null} onDone={(t) => { if (t !== value) onChange(t) }} onClose={() => setSheet(false)} />
+      )}
       {open &&
         createPortal(
           <div

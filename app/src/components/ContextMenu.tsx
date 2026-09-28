@@ -45,13 +45,17 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
         onClose()
       }
     }
+    // A fixed menu over a scrolled list detaches from the row it was opened on — close it. A
+    // scroll inside the menu (a submenu's own list: the date picker's times) is not that.
+    function handleScroll(e: Event) {
+      if (!ref.current?.contains(e.target as Node)) onClose()
+    }
     document.addEventListener('mousedown', handleClick)
-    // A fixed menu over a scrolled list detaches from the row it was opened on — close it.
-    window.addEventListener('scroll', onClose, true)
+    window.addEventListener('scroll', handleScroll, true)
     window.addEventListener('resize', onClose)
     return () => {
       document.removeEventListener('mousedown', handleClick)
-      window.removeEventListener('scroll', onClose, true)
+      window.removeEventListener('scroll', handleScroll, true)
       window.removeEventListener('resize', onClose)
     }
   }, [onClose])

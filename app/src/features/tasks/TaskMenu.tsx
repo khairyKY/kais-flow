@@ -31,6 +31,8 @@ export interface TaskMenuActions {
   delete: () => void
   select?: () => void
   unschedule?: () => void
+  /** The date picker's No date (single task). */
+  clearDate?: () => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -119,8 +121,11 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
   }
   const spec = taskMenuSpec(task, ctx)
 
+  // One task: the picker shows its day and offers No date; a bulk pick starts blank.
+  const due = ctx.bulkCount ? null : task.due_at
+  const clearDate = due ? actions.clearDate : undefined
   if (sub === 'date') {
-    return <ScheduleMenu position={at} title={ctx.bulkCount ? undefined : task.title} onClose={onClose} onSchedule={actions.schedule} onSomeday={actions.someday} />
+    return <ScheduleMenu position={at} title={ctx.bulkCount ? undefined : task.title} value={due} onClose={onClose} onSchedule={actions.schedule} onSomeday={actions.someday} onClear={clearDate} />
   }
   if (sub === 'project' && !isMobile) {
     return <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={ctx.bulkCount ? null : task.project_id} onSelect={actions.move} onClose={onClose} />
@@ -150,7 +155,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
   }
 
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
-    if (key === 'date') return ({ position, onClose: back, closeAll }) => <ScheduleMenu position={position} onClose={back} onSchedule={(iso) => { actions.schedule(iso); closeAll() }} onSomeday={() => { actions.someday(); closeAll() }} />
+    if (key === 'date') return ({ position, onClose: back, closeAll }) => <ScheduleMenu position={position} value={due} onClose={back} onSchedule={(iso) => { actions.schedule(iso); closeAll() }} onSomeday={() => { actions.someday(); closeAll() }} onClear={clearDate && (() => { clearDate(); closeAll() })} />
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <ProjectPicker position={position} projects={projects} domains={domains} currentProjectId={ctx.bulkCount ? null : task.project_id} onSelect={(p, d) => { actions.move(p, d); closeAll() }} onClose={back} />
     if (key === 'priority' || key === 'repeat' || key === 'remind') {
       const list = options[key]

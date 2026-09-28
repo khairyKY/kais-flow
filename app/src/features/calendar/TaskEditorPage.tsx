@@ -258,8 +258,12 @@ export function TaskEditorPage() {
               <ScheduleMenu
                 position={{ x: 0, y: 0 }}
                 title={task.title}
+                value={task.due_at}
+                duration={task.duration_min}
                 onClose={() => setSheetSchedule(false)}
-                onSchedule={(iso) => rescheduleDue(task, iso)}
+                // One row write: a separate setDuration would be undone by this one's stale copy.
+                onSchedule={(iso, min) => rescheduleDue(min === undefined ? task : { ...task, duration_min: min }, iso)}
+                onClear={task.due_at ? () => rescheduleDue(task, null) : undefined}
               />
             )}
           </>
@@ -458,7 +462,7 @@ export function TaskEditorPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
                 <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due date</FLabel>
-                <DateInput value={dueDate} onChange={(v) => handleDueChange(v, dueTime || '09:00')} />
+                <DateInput value={dueDate} title="Due date" onChange={(v) => handleDueChange(v, dueTime || '09:00')} />
               </div>
               <div>
                 <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due time</FLabel>
