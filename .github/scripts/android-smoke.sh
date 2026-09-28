@@ -36,6 +36,13 @@ adb logcat -d | grep -iE 'chromium|console|capacitor|webview|kaisflow|AndroidRun
 # Activity lifecycle: a destroy/relaunch during the cold start means the WebView loaded twice.
 { adb logcat -d -b events | grep -E 'wm_(on_create_called|on_destroy_called|relaunch|relaunch_resume_activity)|wm_destroy_activity' | grep -i kaisflow
   adb logcat -d | grep -iE 'config changes|relaunch|onConfigurationChanged' | grep -i kaisflow; } > shots/lifecycle.txt 2>&1
+# A second cold start once the freshly booted emulator has settled: tells a one-off relaunch (the
+# WebView provider being set up after boot) from one on every launch.
+adb logcat -c
+adb shell am force-stop "$pkg"
+{ adb shell am start -W -n "$pkg/.MainActivity" | grep -E 'LaunchState|TotalTime'
+  sleep 10
+  adb logcat -d -b events | grep -E 'wm_(on_create_called|on_destroy_called|relaunch)' | grep -i kaisflow; } > shots/lifecycle-2nd.txt 2>&1
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
