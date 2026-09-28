@@ -4,17 +4,19 @@
 //   state                                                       card
 //   ──────────────────────────────────────────────────────────  ─────────────────────────────
 //   evening ritual finished today                               Day closed ✿ (tomorrow's seeds)
-//   18:00 or later, or every picked Top 3 done — not shut down   Shut down the day · ~3 min
+//   18:00 or later — not shut down                              Shut down the day · ~3 min
 //   not planned, before 17:00                                   Plan your day · ~5 min
 //   otherwise (planned, or 17:00–18:00 unplanned)               Now — the next move (below)
 //
-//   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later.
+//   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later, or
+//   every picked Top 3 already done. Today Phone 2i (2026-09-28): a Top 3 finished early is a
+//   quiet "All three tended" line, not a Shut down prompt — the evening card waits for 18:00.
 //
 //   Now's item: an event that is running or starts within NOW_SOON_MIN; otherwise the first
 //   unfinished Top 3 (you can work it right now); otherwise the next event, however far off.
 //
-// Earlier rows win: a closed day stays closed; an evening (or a finished Top 3) is for shutting
-// down even if the morning was never planned. All clock rules read Cairo's wall clock, whatever
+// Earlier rows win: a closed day stays closed; an evening is for shutting down even if the
+// morning was never planned. All clock rules read Cairo's wall clock, whatever
 // the device zone — the app's one day boundary (B2).
 //
 // Kai's R4-5a pins still mean what they said ("should be able to choose whether they stay pinned"
@@ -79,16 +81,22 @@ export function ritualFinished(r: RitualState): boolean {
   return r.finished ?? (r.total > 0 && r.done >= r.total)
 }
 
+/** A ritual's step count, or ✓ once finished (the count is per calendar date, the finish per loop
+ * day — so after midnight a closed evening would otherwise read 0/5). */
+export function ritualProgress(r: RitualState): string {
+  return ritualFinished(r) ? '✓' : `${r.done}/${r.total}`
+}
+
 export function isPlanned(input: Pick<DayPhaseInput<unknown, unknown>, 'now' | 'morning' | 'top3'>): boolean {
-  return ritualFinished(input.morning) || (input.top3.picked >= 1 && cairoMinutes(input.now) >= PLANNED_BY_TOP3_FROM)
+  const { picked, done } = input.top3
+  return ritualFinished(input.morning) || (picked >= 1 && (done >= picked || cairoMinutes(input.now) >= PLANNED_BY_TOP3_FROM))
 }
 
 export function dayPhase<E, T>(input: DayPhaseInput<E, T>): DayCardState<E, T> {
   const prompts = input.prompts ?? { morning: true, evening: true }
   const minutes = cairoMinutes(input.now)
   if (ritualFinished(input.evening)) return { phase: 'closed' }
-  const top3AllDone = input.top3.picked >= 1 && input.top3.done >= input.top3.picked
-  if (prompts.evening && (minutes >= SHUTDOWN_FROM || top3AllDone)) return { phase: 'shutdown' }
+  if (prompts.evening && minutes >= SHUTDOWN_FROM) return { phase: 'shutdown' }
   if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL) return { phase: 'plan' }
   const soon = input.nextUp && (input.nextUpSoon ?? true)
   const item: NowItem<E, T> | null = soon && input.nextUp

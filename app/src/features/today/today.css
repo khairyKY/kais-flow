@@ -11,3 +11,285 @@
 
 /* The Day card renders nothing during the day (ritual moments only) — no empty gap. */
 .kf-daycard-slot:empty { display: none; }
+
+/* ── Today on a phone — design-export/Today Phone.dc.html 2a–2n (390 × 844) + SCREENS-2026-09-28
+   §Today rulings. Sizes are the Mobile Kit's (DS-CHANGELOG §3); the page is only rendered < 768px. ── */
+
+/* The page draws its own MK top bar (title · search · ⋯), so the shell's mono sync strip steps
+   aside on this page — sync lives in the header line (Syncing dot / offline chip) instead. */
+@media (max-width: 767px) {
+  .app-shell:has(.tp) .app-topbar { display: none !important; } /* its display is inline */
+}
+
+/* Full-bleed: out through .app-main-content's phone padding (20 top, 16 sides). */
+.tp { margin: calc(-1 * var(--sp-5)) calc(-1 * var(--gutter-phone)) 0; }
+
+.tp-bar {
+  position: sticky;
+  top: calc(-1 * var(--sp-5)); /* sticky insets by the scroller's padding-top; this pins it at the edge */
+  z-index: 5;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-1) 0 var(--gutter-phone);
+  background: var(--paper-linen);
+}
+.tp-bar h1.tp-bar-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-page-title);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Ruling 7: scrolled → the kit top bar's small-title variant. Out-ranks typography.css's phone h1 rule. */
+.app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
+  font-family: var(--font-ui);
+  font-weight: var(--fw-semibold);
+  font-size: 18px !important;
+  letter-spacing: 0;
+}
+.tp-icon {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-icon:active { background: var(--pressed-overlay); }
+.tp-icon:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Ruling 1: the Workload line carries the day. */
+.tp-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--gutter-phone) 6px;
+  font-size: var(--fs-body-s);
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+.tp-sum > svg { color: var(--ink-faint); }
+.tp-syncing { display: inline-flex; align-items: center; gap: 6px; color: var(--sig-offline); white-space: nowrap; }
+.tp-syncing::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.tp-sk { display: block; height: 12px; border-radius: 2px; background: var(--skeleton); }
+
+/* Mono type: captions, meta, labels. */
+.tp-caption, .tp-meta, .tp-label, .tp-sub, .tp-link, .tp-syncing, .tp-pending, .tp-ev-time {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.tp-caption { font-size: var(--fs-meta); letter-spacing: 0.07em; color: var(--ink-faint); }
+.tp-caption.is-now { color: var(--acc-sage-text); }
+.tp-meta {
+  margin-top: var(--sp-1);
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.tp-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tp-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.tp-pending { display: inline-flex; align-items: center; gap: 5px; color: var(--sig-offline); }
+.tp-pending::before { content: ''; width: 7px; height: 7px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid currentColor; }
+.tp-hand { font-family: var(--font-hand); font-size: var(--fs-hand); line-height: 1.3; color: var(--ink-hand); }
+
+/* Ruling 2: the ritual card — the NOW slip's anatomy, flat. */
+.tp-ritual {
+  margin: var(--sp-2) var(--gutter-phone) 10px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-2);
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-sharp);
+  box-shadow: var(--shadow-crisp);
+}
+.tp-glyph { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; }
+.tp-ritual-title, .tp-slip-title { margin-top: 3px; font-size: var(--fs-body); line-height: 20px; font-weight: var(--fw-medium); color: var(--ink-body); text-wrap: pretty; }
+.tp-hairline { position: relative; height: 2px; border-radius: 1px; background: var(--line-card); }
+.tp-hairline > span { position: absolute; inset: 0 auto 0 0; border-radius: 1px; background: var(--acc-sage-text); }
+
+/* NOW slip (MK 11, option 1b "Taped slip"). The card look rides SwipeRow's moving layer. */
+.tp-slip-wrap { padding: var(--sp-3) var(--gutter-phone) 14px; }
+.tp-tape {
+  position: absolute;
+  top: -7px;
+  left: 18px;
+  width: 40px;
+  height: 13px;
+  z-index: 2;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--acc-sage) 45%, transparent);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);
+  box-shadow: var(--shadow-crisp);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.tp-ring { position: relative; width: 44px; height: 44px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.tp-ring > span {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--paper-parchment);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--acc-sage-text);
+}
+.tp-slip-done {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-slip-done > span {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-control);
+  color: var(--acc-sage-text);
+  transition: transform var(--dur-press) var(--ease-standard);
+}
+.tp-slip-done:active { background: var(--pressed-overlay); }
+.tp-slip-done:active > span { transform: scale(0.92); }
+.tp-slip-done:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Section labels (kit): mono 12.5, dashed rule, optional link in a 48 hit. ≤ 4 per screen. */
+.tp-sec { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); padding: var(--sp-2) var(--gutter-phone) 0; }
+.tp-sec.is-first { padding-top: var(--sp-1); }
+.tp-label { font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }
+.tp-rule { flex: 1; border-bottom: 1px dashed var(--line-dashed); }
+.tp-link {
+  height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-1) 0 var(--sp-2);
+  margin-right: calc(-1 * var(--sp-1));
+  border-radius: var(--radius-sharp);
+  font-size: var(--fs-meta-l);
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-link:active { background: var(--pressed-overlay); }
+.tp-sub { padding: 14px var(--gutter-phone) 0; font-size: var(--fs-meta); letter-spacing: 0.07em; color: var(--ink-faint); }
+.tp-sub.is-first { padding-top: var(--sp-1); }
+.tp-pad { padding: var(--sp-2) var(--gutter-phone); display: flex; flex-direction: column; gap: 10px; }
+
+/* A list band: parchment, card line on top, dashed hairline under each row. */
+.tp-list { background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
+.tp-quiet {
+  min-height: var(--row-min);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--gutter-phone);
+  background: var(--paper-parchment);
+  border-top: 1px solid var(--line-card);
+  border-bottom: 1px dashed var(--line-dashed);
+  font-size: var(--fs-body-s);
+  line-height: 20px;
+  color: var(--ink-faint);
+}
+
+/* Task row (kit): [check 48][body][star 48][⋯ 48], min-h 56, padding 4. */
+.tp-row { border-bottom: 1px dashed var(--line-dashed); }
+.tp-hit { width: var(--touch-min); height: var(--touch-min); flex: none; display: flex; align-items: center; justify-content: center; }
+.tp-body { flex: 1; min-width: 0; padding: 14px var(--sp-1) var(--sp-3) 0; cursor: pointer; }
+.tp-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }
+.tp-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.tp .kf-row-more { margin: 0; }
+
+/* Ruling 5: event row — time · lavender rule · title + meta. No checkbox, no ⋯. */
+.tp-ev {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--row-min);
+  padding: var(--sp-1) var(--gutter-phone) var(--sp-1) var(--sp-1);
+  box-sizing: border-box;
+  border-bottom: 1px dashed var(--line-dashed);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-ev:active { background: var(--pressed-overlay); }
+.tp-ev-time { width: 56px; flex: none; display: flex; align-items: center; padding-left: var(--sp-3); font-size: var(--fs-meta-l); letter-spacing: 0.04em; color: var(--ink-body); }
+.tp-ev-rule { width: 3px; flex: none; margin: var(--sp-3) var(--sp-3) var(--sp-3) 0; border-radius: 2px; background: var(--acc-lavender); }
+.tp-ev-body { flex: 1; min-width: 0; padding: 10px 0 var(--sp-2); }
+
+/* Goal card (kit): gold tag, 22 gold box, serif 18/600 title, gold meta, clover. */
+.tp-goal-wrap { padding: 14px var(--gutter-phone); }
+.tp-goal-tag {
+  display: inline-block;
+  padding: 3px var(--sp-2);
+  border-radius: 2px;
+  background: var(--acc-gold);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--paper-parchment);
+}
+.tp-goal-title { font-family: var(--font-display); font-size: 18px; font-weight: var(--fw-semibold); line-height: 1.3; color: var(--ink-body); text-wrap: pretty; }
+.tp-goal-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.tp-goal .tp-meta { margin-top: 6px; color: var(--acc-gold); }
+
+/* 2i: all three tended. */
+.tp-tended { display: flex; align-items: center; gap: 10px; padding: 14px var(--gutter-phone) 2px; }
+
+/* The fold (ruling 7): "More for today · N", mono sub-headers inside. */
+.tp-fold {
+  width: 100%;
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  padding: 0 var(--gutter-phone);
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink-muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-fold:active { background: var(--pressed-overlay); }
+.tp-fold:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
+.tp-fold > svg { transition: transform var(--dur-collapse) var(--ease-standard); }
+.tp-fold[aria-expanded='true'] > svg { transform: rotate(180deg); }

@@ -500,6 +500,9 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 }
 
+/** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
+const OPEN_SEARCH_EVENT = 'kf-open-search'
+
 export function AppLayout() {
   useRealtimeSync()
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
@@ -509,6 +512,12 @@ export function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  // A page's own top bar (Today on a phone, MK top bar) opens the one search overlay.
+  useEffect(() => {
+    const open = () => setSearchOpen(true)
+    window.addEventListener(OPEN_SEARCH_EVENT, open)
+    return () => window.removeEventListener(OPEN_SEARCH_EVENT, open)
+  }, [])
   // P0-B: both Sign out buttons (sidebar + phone More sheet) share one flow and one prompt.
   const signOutFlow = useSignOut()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('kf.sidebarCollapsed') === '1')
