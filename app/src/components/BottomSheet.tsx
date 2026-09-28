@@ -312,7 +312,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
           {body}
         </div>
         {footer && (
-          <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)' }}>
+          <div data-sheet-footer style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)' }}>
             {footer(requestClose)}
           </div>
         )}

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { activityRow, logActivity } from '../../lib/activity'
@@ -11,10 +11,11 @@ import type { ActivityLogEntry, Task } from '../../lib/types'
 
 export type { RitualKind } from './loopDay'
 
-/** Total steps each ritual walks — the denominator on Today's ritual cards.
- * Mirrors MorningRitual's STEPS and EveningRitual's BEATS (5 since ruling D-2 folded
- * the 1e "Sweep today" beat in as evening beat 1 — punch item 43). */
-export const RITUAL_STEP_COUNT: Record<RitualKind, number> = { morning: 4, evening: 5 }
+/** Total steps each ritual walks — the denominator on Today's ritual cards: Plan my day's four
+ * sections (Carry-over · Inbox · Pick your 3 · Suggested times) and Shut down's four (Sweep · One
+ * line · Tomorrow's 3 · Close the day) — ritualLogic PLAN_STEPS / SHUT_STEPS (2026-09-28 sheets;
+ * the old evening "garden" beat is gone). */
+export const RITUAL_STEP_COUNT: Record<RitualKind, number> = { morning: 4, evening: 4 }
 
 /** R4-D1 (Kai's 2026-07-20 ruling (a)): rituals and routines are fully separate. A ritual's
  * progress is its OWN steps walked today — it used to be derived from how many `time_of_day`-
@@ -186,4 +187,41 @@ export function useRitualsFinishedToday(now: Date = new Date()): Record<RitualKi
 export function logRitualFinished(ritual: RitualKind, steps: readonly string[], now: Date = new Date()): void {
   const payload = finishedPayload(ritual, steps, now)
   logRitualEvent(FINISHED_KEY, FINISHED_EVENT, 'ritual', `${ritual}-${payload.date}`, { ...payload })
+}
+
+// ── Drafts ──
+
+/** A ritual's progress that outlives the sheet: ✕, Back, a swipe down or a reload keep it, for the
+ * loop day it was made on (Plan ruling 1 "keep progress"; the old night line draft, M1b). */
+export function useDraft<T extends object>(name: string, day: string, init: () => T): [T, (patch: Partial<T> | ((d: T) => Partial<T>)) => void, () => void] {
+  const key = `kf.ritual.${name}`
+  const [draft, setDraft] = useState<T & { day: string }>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? 'null')
+      if (saved?.day === day) return { ...init(), ...saved }
+    } catch {
+      /* private mode / bad JSON — start fresh */
+    }
+    return { ...init(), day }
+  })
+  const current = draft.day === day ? draft : { ...init(), day }
+  const set = (patch: Partial<T> | ((d: T) => Partial<T>)) =>
+    setDraft((prev) => {
+      const base = prev.day === day ? prev : { ...init(), day }
+      const next = { ...base, ...(typeof patch === 'function' ? patch(base) : patch) }
+      try {
+        localStorage.setItem(key, JSON.stringify(next))
+      } catch {
+        /* the draft just won't survive a reload */
+      }
+      return next
+    })
+  const clear = () => {
+    try {
+      localStorage.removeItem(key)
+    } catch {
+      /* nothing kept */
+    }
+  }
+  return [current, set, clear]
 }

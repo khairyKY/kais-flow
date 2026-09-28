@@ -4,13 +4,15 @@
 //   state                                                       card
 //   ──────────────────────────────────────────────────────────  ─────────────────────────────
 //   evening ritual finished today                               Day closed ✿ (tomorrow's seeds)
-//   18:00 or later — not shut down                              Shut down the day · ~3 min
+//   17:00 or later — not shut down                              Shut down the day · ~3 min
 //   not planned, before 17:00                                   Plan your day · ~5 min
-//   otherwise (planned, or 17:00–18:00 unplanned)               Now — the next move (below)
+//   otherwise (planned)                                         Now — the next move (below)
 //
 //   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later, or
 //   every picked Top 3 already done. Today Phone 2i (2026-09-28): a Top 3 finished early is a
-//   quiet "All three tended" line, not a Shut down prompt — the evening card waits for 18:00.
+//   quiet "All three tended" line, not a Shut down prompt — the evening card waits for 17:00.
+//   Kai (2026-09-28, rituals): Plan my day is only ever today's plan; from 17:00 the card offers
+//   Shut down, the one evening entry for tomorrow's 3 (no "Plan tomorrow").
 //
 //   Now's item: an event that is running or starts within NOW_SOON_MIN; otherwise the first
 //   unfinished Top 3 (you can work it right now); otherwise the next event, however far off.
@@ -57,10 +59,10 @@ export type DayCardState<E, T> =
   | { phase: 'shutdown' }
   | { phase: 'closed' }
 
-/** Minutes since Cairo midnight: planning is "before 17:00", shutdown "from 18:00". */
+/** Minutes since Cairo midnight: planning is "before 17:00", shutdown "from 17:00". */
 export const PLANNED_BY_TOP3_FROM = 12 * 60
 export const PLAN_UNTIL = 17 * 60
-export const SHUTDOWN_FROM = 18 * 60
+export const SHUTDOWN_FROM = 17 * 60
 /** An event this close (minutes) outranks the Top 3 as Now's item. */
 export const NOW_SOON_MIN = 30
 

@@ -1,0 +1,777 @@
+[
+  {
+    "name": "6a-day Today at 07:40 offers Plan",
+    "ok": true,
+    "detail": "MORNING · NOT PLANNED\nPlan my day\n~3 MIN\n2 IN INBOX\n2 OVERDUE\nPlan"
+  },
+  {
+    "name": "6a-day full-height kit sheet with ✕ and the title",
+    "ok": true,
+    "detail": "Plan my day\nSUN 27 SEP · ABOUT 3 MINUTES\nCARRY-OVER · 2\nROLL ALL TO TOMORROW\nRev"
+  },
+  {
+    "name": "6a-day four sections in order",
+    "ok": true,
+    "detail": "[\"CARRY-OVER · 2\",\"INBOX · 2\",\"PICK YOUR 3 · 2/3\",\"SUGGESTED TIMES\"]"
+  },
+  {
+    "name": "6a-day carry rows: overdue meta + Segmented + Drop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6a-day inbox rows: capture meta, project chip, Dismiss, File",
+    "ok": true,
+    "detail": "idea: dark mode for the herbarium VOICE · LAST NIGHT 23:10 KAI'S FLOW Dismiss File"
+  },
+  {
+    "name": "6a-day footer: workload + status + Start the day",
+    "ok": true,
+    "detail": "~5h planned · you'll finish around 14:00\n2 PICKED · 0 TIMED\nStart the day"
+  },
+  {
+    "name": "6a-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6a-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6a-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6a-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6i-night Today at 07:40 offers Plan",
+    "ok": true,
+    "detail": "MORNING · NOT PLANNED\nPlan my day\n~3 MIN\n2 IN INBOX\n2 OVERDUE\nPlan"
+  },
+  {
+    "name": "6i-night full-height kit sheet with ✕ and the title",
+    "ok": true,
+    "detail": "Plan my day\nSUN 27 SEP · ABOUT 3 MINUTES\nCARRY-OVER · 2\nROLL ALL TO TOMORROW\nRev"
+  },
+  {
+    "name": "6i-night four sections in order",
+    "ok": true,
+    "detail": "[\"CARRY-OVER · 2\",\"INBOX · 2\",\"PICK YOUR 3 · 2/3\",\"SUGGESTED TIMES\"]"
+  },
+  {
+    "name": "6i-night carry rows: overdue meta + Segmented + Drop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6i-night inbox rows: capture meta, project chip, Dismiss, File",
+    "ok": true,
+    "detail": "idea: dark mode for the herbarium VOICE · LAST NIGHT 23:10 KAI'S FLOW Dismiss File"
+  },
+  {
+    "name": "6i-night footer: workload + status + Start the day",
+    "ok": true,
+    "detail": "~5h planned · you'll finish around 14:00\n2 PICKED · 0 TIMED\nStart the day"
+  },
+  {
+    "name": "6i-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6i-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6i-night every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6i-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6b-day Today applies at once (due today 09:00) and stays selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6b-day status: 1 of 3 decided",
+    "ok": true,
+    "detail": "~5h planned · you'll finish around 14:00\n1 OF 3 DECIDED\nStart the day"
+  },
+  {
+    "name": "6b-day mid-swipe right shows Tomorrow · Mon 09:00",
+    "ok": true,
+    "detail": "Tomorrow\nMON 09:00"
+  },
+  {
+    "name": "6b-day swipe past the line = Tomorrow, the row stays showing it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6b-day Drop → Trash + \"Moved to Trash · Undo\", no confirm",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "6b-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6b-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6b-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6b-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6c seeds pre-selected: stars on, sprout \"Seed\", the first is \"✶ Goal\"",
+    "ok": true,
+    "detail": "Finish the flow audit ✶ GOAL SEED KAI'S FLOW 2H"
+  },
+  {
+    "name": "6c unstarred rows: node.js, plants (due today)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6c carried rows are not listed again under Pick your 3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6d every pick gets a suggested time (always suggests)",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "6d the first slot follows Deep work",
+    "ok": true,
+    "detail": "Finish the flow audit 2H AFTER DEEP WORK 10:30–12:30"
+  },
+  {
+    "name": "6d ✓ fills once accepted; status 3 picked · 2 timed",
+    "ok": true,
+    "detail": "~5h 45m planned · you'll finish around 14:50\n3 PICKED · 2 TIMED\nStart the day"
+  },
+  {
+    "name": "6d the pill being changed wears the focus ring; the timeline shows it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6d Time Picker: free slots, 15-min list, duration, footer No time (ghost) + Done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6d Done → the picked slot is accepted, after Lunch",
+    "ok": true,
+    "detail": "~5h 45m planned · you'll finish around 14:50\n3 PICKED · 3 TIMED\nStart the day"
+  },
+  {
+    "name": "6d \"No time\" → the row turns into \"Pick one\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6l 4th star → \"Top 3 is full — swap one out?\" with Swap",
+    "ok": true,
+    "detail": "[\"Top 3 is full — swap one out?\"]"
+  },
+  {
+    "name": "6l Swap: the goal stays, the last pick gives way",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Start the day: the picks become the Top 3",
+    "ok": true,
+    "detail": "[\"10000000-0000-4000-8000-000000000003\",\"10000000-0000-4000-8000-000000000004\",\"10000000-0000-4000-8000-000000000006\"]"
+  },
+  {
+    "name": "Start the day: accepted times go on the calendar (2 blocks, Cairo 10:30 / 12:30)",
+    "ok": true,
+    "detail": "[\"2026-09-27T07:30:00.000Z\",\"2026-09-27T09:30:00.000Z\"]"
+  },
+  {
+    "name": "Start the day: ritual.finished (morning) logged; the sheet is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Start the day: Today no longer offers Plan",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Start the day: the goal is the first pick",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6c-6d-6l no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6c-6d-6l no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6c-6d-6l every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6c-6d-6l no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6e workload line amber with alert + \"… over\"",
+    "ok": true,
+    "detail": "~9h 30m planned · you'd finish around 18:30\n30M OVER"
+  },
+  {
+    "name": "6e the long pick: \"Runs past 18:00\"",
+    "ok": true,
+    "detail": "Draft the Q4 budget\n4H\nAFTER LUNCH WITH OMAR\nRUNS PAST 18:00\n14:30–18:30"
+  },
+  {
+    "name": "6e-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6e-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6e-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6f collapsed lines: Nothing carried over ✿ · Inbox zero ✿ · Pick something first",
+    "ok": true,
+    "detail": "Plan my day SUN 27 SEP · ABOUT 3 MINUTES CARRY-OVER Nothing carried over ✿ INBOX Inbox zero ✿ PICK YOUR 3 · 0/3 ALL TASKS Clear morning — pick your 3. Nothing is due and nothing is starred. Type three"
+  },
+  {
+    "name": "6f \"Clear morning — pick your 3.\" + an input; footer \"Nothing planned yet · the day is open\" · 0 picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6f a typed thing becomes a task and a pick with a suggested time",
+    "ok": true,
+    "detail": "~30m planned · you'll finish around 09:30\n1 PICKED · 0 TIMED\nStart the day"
+  },
+  {
+    "name": "6f-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6f-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6f-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6f-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6j \"Your calendar is full from 09:00 to 18:00.\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6j every pick: \"No free slot\" + a secondary \"Pick one\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6j workload: meetings · the 3 picks don't fit · over",
+    "ok": true,
+    "detail": "~9h of meetings · the 3 picks don't fit\n3H 15M OVER"
+  },
+  {
+    "name": "6j-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6j-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6j-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6j-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6m Back closes the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6m Today card: \"Morning · 2 of 4 done\", \"~1 min left · Pick your 3 next\", Resume + hairline",
+    "ok": true,
+    "detail": "MORNING · 2 OF 4 DONE Plan my day ~1 MIN LEFT PICK YOUR 3 NEXT Resume"
+  },
+  {
+    "name": "6m Resume keeps the choices (Today / Someday still selected)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6m-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "6m-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6m-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "6m-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6k whole plan fits a tall phone, footer pinned",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6k no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-day centred panel ≤ 1080 CSS px, two columns",
+    "ok": true,
+    "detail": "{\"box\":{\"x\":20,\"y\":30,\"width\":1240,\"height\":740},\"cssWidth\":992,\"cols\":[588,588]}"
+  },
+  {
+    "name": "6h-desktop-day footer: workload · \"Esc closes · keeps progress\" · Start the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-day kit at phone size: buttons 48, meta 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-day Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-day …and keeps progress",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-night centred panel ≤ 1080 CSS px, two columns",
+    "ok": true,
+    "detail": "{\"box\":{\"x\":20,\"y\":30,\"width\":1240,\"height\":740},\"cssWidth\":992,\"cols\":[588,588]}"
+  },
+  {
+    "name": "6h-desktop-night footer: workload · \"Esc closes · keeps progress\" · Start the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-night kit at phone size: buttons 48, meta 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-night Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-night …and keeps progress",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6h-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night Today at 21:40 offers Shut down",
+    "ok": true,
+    "detail": "EVENING · 21:40\nShut down the day\n~2 MIN\n5 TO SWEEP\nShut down"
+  },
+  {
+    "name": "8a-night header: Shut down · Sun 27 Sep · 4 done · 2h 10m focused",
+    "ok": true,
+    "detail": "Shut down\nSUN 27 SEP · 4 DONE · 2H 10M FOCUSED\nSWEEP · 3 LEFT\nROLL ALL TO TOMORR"
+  },
+  {
+    "name": "8a-night sections: Sweep · 3 left, One line, Tomorrow's 3 · 3/3",
+    "ok": true,
+    "detail": "[\"SWEEP · 3 LEFT\",\"ONE LINE\",\"TOMORROW'S 3 · 3/3\"]"
+  },
+  {
+    "name": "8a-night sweep row: checkbox + meta (overdue · Top 3) + Tomorrow; no ⋯, no star",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night the last two lines in Caveat with mono dates",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night Tomorrow's 3: due tomorrow → left today; first star is the goal; no checkbox, no ⋯",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night seedling + \"Planted for Monday…\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night footer: 3 seeds for Mon · Close the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "8a-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8a-night every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "8a-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day Today at 21:40 offers Shut down",
+    "ok": true,
+    "detail": "EVENING · 21:40\nShut down the day\n~2 MIN\n5 TO SWEEP\nShut down"
+  },
+  {
+    "name": "8g-day header: Shut down · Sun 27 Sep · 4 done · 2h 10m focused",
+    "ok": true,
+    "detail": "Shut down\nSUN 27 SEP · 4 DONE · 2H 10M FOCUSED\nSWEEP · 3 LEFT\nROLL ALL TO TOMORR"
+  },
+  {
+    "name": "8g-day sections: Sweep · 3 left, One line, Tomorrow's 3 · 3/3",
+    "ok": true,
+    "detail": "[\"SWEEP · 3 LEFT\",\"ONE LINE\",\"TOMORROW'S 3 · 3/3\"]"
+  },
+  {
+    "name": "8g-day sweep row: checkbox + meta (overdue · Top 3) + Tomorrow; no ⋯, no star",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day the last two lines in Caveat with mono dates",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day Tomorrow's 3: due tomorrow → left today; first star is the goal; no checkbox, no ⋯",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day seedling + \"Planted for Monday…\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day footer: 3 seeds for Mon · Close the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "8g-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8g-day every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "8g-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b Tomorrow → selected (sage + check), meta \"→ Mon 09:00\", due tomorrow 09:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b checkbox = Done: the row stays, struck, + Done toast",
+    "ok": true,
+    "detail": "[\"Done\"]"
+  },
+  {
+    "name": "8b label: Sweep · 2 of 4 left",
+    "ok": true,
+    "detail": "SWEEP · 2 OF 4 LEFT"
+  },
+  {
+    "name": "8b a second tap takes the roll back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b no swipe-left (nothing here deletes)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b swipe right past the line = Tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b long-press selects: select circles on the open rows (not the done one) + \"1 selected\" bulk footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b bulk Done completes both, one toast",
+    "ok": true,
+    "detail": "[\"2 done\"]"
+  },
+  {
+    "name": "8b Back leaves selection mode first; the sheet stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "8b-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8b-night every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "8b-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8c Sweep collapses to \"Everything tended ✿\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8c saved: Caveat line + \"Saved to journal ✓\" + Edit; a journal entry was written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8c Tomorrow's 3: due tomorrow, then due later this week (Tue, Wed)",
+    "ok": true,
+    "detail": "✶ GOAL\nDUE TOMORROW\n30M | DUE TUE\n10M | DUE WED\n5M"
+  },
+  {
+    "name": "8c Edit updates the same entry (no second one)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8c-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "8c-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8c-night every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "8c-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8d 4th star → \"Tomorrow's 3 is full — swap one out?\" with Swap",
+    "ok": true,
+    "detail": "[\"Tomorrow's 3 is full — swap one out?\"]"
+  },
+  {
+    "name": "8d Swap: Buy milk in, the goal stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8e summary: clover, \"The garden's closed.\", See you in the morning ✿, stats, Goodnight",
+    "ok": true,
+    "detail": "The garden's closed. · See you in the morning ✿ · 4 DONE · 2H 10M FOCUSED · 3 SEEDED · Goodnight"
+  },
+  {
+    "name": "8e seeds planted for Mon (the three stars)",
+    "ok": true,
+    "detail": "[\"10000000-0000-4000-8000-000000000001\",\"10000000-0000-4000-8000-000000000004\",\"10000000-0000-4000-8000-000000000008\"]"
+  },
+  {
+    "name": "8e starred sweep rows roll to Mon 09:00 on close (Review Kai, Buy milk)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8e ritual.finished (evening) logged",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8e closes by itself (~3s) → Today shows \"Day closed ✿\" + 3 seeds for Mon",
+    "ok": true,
+    "detail": "EVENING ✓ · 21:40 Day closed ✿ 3 SEEDS PLANTED FOR MON The garden's closed. See you in the morning."
+  },
+  {
+    "name": "8d-8e-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "8d-8e-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8d-8e-night every control ≥ 40 tall (48 hit)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "8d-8e-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8h whole shut-down fits a tall phone, footer pinned",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8h no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8f-desktop-night centred two-column panel: Sweep + One line | Tomorrow's 3",
+    "ok": true,
+    "detail": "[588,588]"
+  },
+  {
+    "name": "8f-desktop-night footer: 3 seeds for Mon · Esc closes · keeps progress · Close the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8f-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8f-desktop-day centred two-column panel: Sweep + One line | Tomorrow's 3",
+    "ok": true,
+    "detail": "[588,588]"
+  },
+  {
+    "name": "8f-desktop-day footer: 3 seeds for Mon · Esc closes · keeps progress · Close the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "8f-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

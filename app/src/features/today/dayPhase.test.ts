@@ -40,8 +40,8 @@ describe('dayPhase — Plan', () => {
   it('stays Plan until 16:59 when nothing is planned', () => {
     expect(dayPhase(input({ now: at('16:59') })).phase).toBe('plan')
   })
-  it('from 17:00 an unplanned day stops asking to plan (17:00–18:00 shows Now)', () => {
-    expect(dayPhase(input({ now: at('17:00') })).phase).toBe('now')
+  it('from 17:00 an unplanned day stops asking to plan — the card offers Shut down (Kai, 2026-09-28)', () => {
+    expect(dayPhase(input({ now: at('17:00') })).phase).toBe('shutdown')
   })
   it('Top 3 picked before noon is not yet "planned" — the ritual still invites', () => {
     expect(dayPhase(input({ now: at('11:59'), top3: { picked: 2, done: 0 } })).phase).toBe('plan')
@@ -73,15 +73,15 @@ describe('dayPhase — Now', () => {
 })
 
 describe('dayPhase — Shut down', () => {
-  it('18:00 or later → Shut down the day, planned or not', () => {
-    expect(dayPhase(input({ now: at('18:00') })).phase).toBe('shutdown')
+  it('17:00 or later → Shut down the day, planned or not', () => {
+    expect(dayPhase(input({ now: at('17:00') })).phase).toBe('shutdown')
     expect(dayPhase(input({ now: at('19:00'), morning: { done: 4, total: 4 } })).phase).toBe('shutdown')
-    expect(dayPhase(input({ now: at('17:59'), morning: { done: 4, total: 4 } })).phase).toBe('now')
+    expect(dayPhase(input({ now: at('16:59'), morning: { done: 4, total: 4 } })).phase).toBe('now')
   })
-  it('every picked Top 3 done before 18:00 → no prompt (Today Phone 2i); Shut down waits for the evening', () => {
+  it('every picked Top 3 done before 17:00 → no prompt (Today Phone 2i); Shut down waits for the evening', () => {
     expect(dayPhase(input({ now: at('11:00'), morning: { done: 4, total: 4 }, top3: { picked: 3, done: 3 } })).phase).toBe('now')
     expect(dayPhase(input({ now: at('16:20'), top3: { picked: 3, done: 3 } })).phase).toBe('now')
-    expect(dayPhase(input({ now: at('18:00'), top3: { picked: 3, done: 3 } })).phase).toBe('shutdown')
+    expect(dayPhase(input({ now: at('17:00'), top3: { picked: 3, done: 3 } })).phase).toBe('shutdown')
   })
   it('a Top 3 all done counts as planned, even before noon', () => {
     expect(dayPhase(input({ now: at('10:00'), top3: { picked: 2, done: 2 } })).phase).toBe('now')

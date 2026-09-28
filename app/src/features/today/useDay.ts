@@ -26,6 +26,8 @@ export interface Day {
   /** What the evening seeded for the coming morning (ritual.seeded rows, still open tasks). */
   seeds: Task[]
   tally: { picked: number; done: number }
+  /** The steps each ritual logged today — the Resume card's "Pick your 3 next" (6m). */
+  steps: Record<RitualKind, ReadonlySet<string>>
 }
 
 /** The day's phase and ritual progress — one read for the desktop Day card and the phone's
@@ -50,5 +52,5 @@ export function useDay({ events, tasks, top3, ritualSteps, prompts }: DayInput):
   // An event running or starting within NOW_SOON_MIN is the move; further off, an open Top 3 is.
   const nextUpSoon = !!nextUp && new Date(nextUp.starts_at).getTime() - now.getTime() <= NOW_SOON_MIN * 60_000
   const state = dayPhase({ now, morning, evening, top3: tally, nextUp, nextUpSoon, firstOpenTop3: openTop3[0] ?? null, prompts })
-  return { now, state, morning, evening, seeds, tally }
+  return { now, state, morning, evening, seeds, tally, steps: ritualSteps }
 }

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useToastStore, visibleToasts, lifeLeft, TOAST_LIFE_MS, type Toast } from '../lib/toastStore'
+import { uiZoom } from '../lib/uiScale'
 
 // ── MK Undo Toast (DS-CHANGELOG §3). Inverted snackbar: min-h 48, 12 from the screen edges,
 // bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 3,
@@ -43,11 +44,32 @@ const CSS = `
   }
 `
 
+/** Over a sheet with a footer (Plan, Shut down, the pickers), a phone toast sits 8px above that
+ * footer as MK draws it (6l / 8d) — the CSS top dock would cover the sheet's ✕. Measured when a
+ * toast shows; null = the stylesheet's placement. */
+function sheetFooterDock(): number | null {
+  if (!window.matchMedia('(max-width: 767px)').matches) return null
+  const footer = document.querySelector('[aria-modal="true"] [data-sheet-footer]')
+  if (!footer) return null
+  return (window.innerHeight - footer.getBoundingClientRect().top) / uiZoom() + 8
+}
+
 export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts)
   const shown = visibleToasts(toasts)
+  const [dock, setDock] = useState<number | null>(null)
+  const count = shown.length
+  useLayoutEffect(() => {
+    if (!count) return
+    const update = () => setDock(sheetFooterDock())
+    update()
+    // Sheets portal into <body>: re-measure when one opens or closes under a live toast.
+    const mo = new MutationObserver(update)
+    mo.observe(document.body, { childList: true })
+    return () => mo.disconnect()
+  }, [count])
   return (
-    <div className="kf-toast-host" role="status" aria-live="polite">
+    <div className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>
       <style>{CSS}</style>
       {shown.map((t, i) => (
         <ToastCard key={t.id} toast={t} older={i < shown.length - 1} />
