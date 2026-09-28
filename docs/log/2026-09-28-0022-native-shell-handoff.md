@@ -12,7 +12,7 @@ Branch `claude/native-shell`, based on `origin/claude/ds-refresh`. Not merged, n
 ## What changed
 
 **Shell (Android only; the Windows installer stays on Tauri, `desktop.yml` untouched)**
-- `app/capacitor.config.ts`: appId `com.kaisflow.garden` (same as the Tauri APK, never change), appName `Kai’s Flow` (U+2019), webDir `dist`, `server.androidScheme: 'https'` → origin `https://localhost`.
+- `app/capacitor.config.ts`: appId `com.kaisflow.garden` (same as the Tauri APK, never change), appName `Kai’s Flow` (U+2019), webDir `dist`, `server.androidScheme: 'https'` → origin `https://localhost`; SystemBars `insetsHandling: 'native'` (the padding without the unused `--safe-area-inset-*` injection, which raced the page and logged a console error).
 - `app/package.json`: `@capacitor/core`, `@capacitor/android`, `@capacitor/app`, `@capacitor/haptics` (8.x, MIT), `@capacitor/cli` (dev).
 - `app/android/` is **generated in CI** (`npx cap add android`, which also syncs `dist/` and the plugins) and gitignored. Committed overrides live in `app/native/android/`, copied over it:
   - `MainActivity.java`: Capacitor 8's SystemBars already pads the WebView clear of the status bar, the navigation bar and the keyboard. This activity paints the strips that padding leaves in the page's colour: the web app calls `window.KaisFlowShell.setChrome(hex, light)`, the same contract as the Tauri shell, so `lib/platform.ts` `syncShellChrome` and `lib/theme.ts` are unchanged. It re-applies after every configuration change, because SystemBars resets the bars to the phone's theme there. The interface is added from a tiny plugin, since plugins load before the first page.
@@ -21,10 +21,11 @@ Branch `claude/native-shell`, based on `origin/claude/ds-refresh`. Not merged, n
 - Removed: `app/src-tauri/android/MainActivity.kt` (Tauri-Android only).
 - `.github/workflows/android.yml`: node 22 + Temurin 21 → `npm ci` → Supabase public config (unchanged script) → `npm run build` → `cap add android` + overrides → stamp `versionName`/`versionCode` from `tag` → `./gradlew assembleRelease` → zipalign + apksigner (same `ANDROID_KEYSTORE_B64`/`ANDROID_KEYSTORE_PASSWORD` logic, else a one-off key) → artifact `kais-flow-<tag or sha7>.apk` → attached to the Release when called with `tag`. `workflow_call` + `tag` contract unchanged, so `release.yml` needs no change. Push trigger adds `claude/native-shell`. No Rust, no NDK.
   - versionCode = major·1000000 + minor·1000 + patch (Tauri's formula), so a release stays "newer" than the Tauri APKs. Branch builds are `0.0.0-dev.<sha7>` / code 1.
-- `.github/scripts/android-smoke.sh`: same install → launch → day screenshot → UI dump → night screenshot, plus:
+- `.github/scripts/android-smoke.sh`: same install → launch → day screenshot → UI dump → night screenshot, plus (all printed to the log, since artifacts aren't reachable from the sandbox):
   - the WebView must start below the status bar (kept), and less than two bars down (insets applied twice);
   - **Back on the sign-in page must leave the app** (activity no longer resumed, process alive). Without the JS handler, Back does nothing there;
-  - the night screenshot now comes after a relaunch and `uimode night yes`, so it shows the strips surviving a configuration change.
+  - the night screenshot now comes after a relaunch and `uimode night yes`, so it shows the strips surviving a configuration change;
+  - the activity lifecycle (event log) and a second, timed cold start.
 - `supabase/functions/_shared/cors.ts`: `https://localhost` + `capacitor://localhost` added to the static allowlist.
 
 **Web layer**
@@ -55,11 +56,12 @@ Branch `claude/native-shell`, based on `origin/claude/ds-refresh`. Not merged, n
 - `npx cap add android` ran locally (no SDK needed to generate): `com/kaisflow/garden/MainActivity.java`, `namespace`/`applicationId` `com.kaisflow.garden`, `app_name` `Kai’s Flow`, plugins app + haptics. The workflow's override, manifest and version-stamp shell ran against it: permissions added, `v1.0.8` → 1000008 / "1.0.8", no tag → 1 / "0.0.0-dev.<sha7>". Gradle wasn't run (no Android SDK or JDK 21 here).
 - `android.yml` parses (PyYAML); every multi-line step and `android-smoke.sh` pass `bash -n`.
 
-## What the first CI run must prove
-1. `cap add android` + overrides + `./gradlew assembleRelease` succeed on `ubuntu-latest` with JDK 21 (SDK platform 36 present or auto-installed). `MainActivity.java` compiles.
-2. A signed `kais-flow-<sha7>.apk` artifact exists and `apksigner verify` prints the cert.
-3. Smoke: the app installs and opens to sign-in; `WebView top edge` > 0 and < 2 × the status bar; Back leaves the app with the process alive; the night screenshot shows paper strips with dark icons (the app is still in Day), not white or indigo.
-4. Logcat has no `AndroidRuntime` crash and no console errors.
+## CI evidence (Android APK workflow on this branch)
+- Run 36362384385 (07c7f17): **failed** in `mergeReleaseResources`: `--` inside an XML comment in `kf_colors.xml`. Fixed in 937cdb5. Everything before it worked: `cap add`, overrides, permissions, `app_name` `Kai’s Flow`, `namespace`/`applicationId` `com.kaisflow.garden`, version stamp, Capacitor + plugins compiled under JDK 21 / SDK 36.
+- Run 36365189377 (937cdb5): **green**. `BUILD SUCCESSFUL in 1m 35s`, signed `kais-flow-937cdb5.apk` (32 MB, one-off key, no keystore secret). Smoke: installs, opens to sign-in; `WebView top edge: 24px` under a 24 dp bar; Back on sign-in → launcher resumed, process alive; relaunch **HOT in 123 ms**. Day and night screens: paper strip, dark icons, no browser chrome.
+- Run 36366027636 (c8b83a2): **green**. `WebView top edge: 24px, status bar: 24px` (the double-inset guard now runs). The lifecycle showed that cold start relaunching the activity (`wm_relaunch_resume_activity`, mask `0x80000000` = asset paths, the WebView provider being added).
+- Run 36366558428 (8649e3e): **green**. Neither cold start relaunched (one `on_create` each); the second cold start took **847 ms** (the relaunching one took 4473 ms). The relaunch was the freshly booted emulator setting up its WebView, not a per-launch cost. Logcat: no crash, no console errors.
+- The first release run must still prove the `tag` path: `versionName`/`versionCode` from the tag, the `kais-flow-<tag>.apk` name and the upload to the Release (unchanged logic, checked locally with `v1.0.8` → 1000008).
 
 ## How to verify on a device [KAI]
 1. Open the old Tauri app, wait for **Synced**, uninstall it. The new app's storage is at a new origin, so it can't take over the old one's cache or unsent queue.
