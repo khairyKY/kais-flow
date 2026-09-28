@@ -1,529 +1,521 @@
-import { useState, type ReactNode } from 'react'
-import { EmojiText } from '../../components/EmojiText'
-import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, deleteTasksWithUndo, moveToTomorrowWithUndo, toggleTop3 } from '../tasks/api'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
+import { useTasks, completeTaskWithUndo, createTask, deleteTasksWithUndo, rescheduleDue, setSomeday, toggleTop3 } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
-import { localToIso } from '../calendar/eventTime'
-import { localDateKey } from '../routines/streaks'
-import { logRitualFinished, logRitualStep, useRitualStepsToday, useSeedsFor } from './api'
-import { MAX_SEEDS, loopDayKey, morningPreselection, top3Diff } from './loopDay'
-import { dragLift, useMotionEnabled } from '../../lib/motion'
-import { cairoDateKey } from '../../lib/dateShortcuts'
-import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
-import { useEscapeStack } from '../../lib/overlayStack'
-import type { Task } from '../../lib/types'
+import { cairoToIso } from '../calendar/eventTime'
+import { useProjects } from '../projects/api'
+import { useDomains } from '../domains/api'
+import { useGoalStore } from '../today/goalStore'
+import { useRowGrammar } from '../tasks/useRowGrammar'
+import { RowMenuButton } from '../tasks/SwipeRow'
+import { formatDuration } from '../tasks/taskDisplay'
+import { Button, Checkbox, Chip, Star } from '../../components/kit'
+import { Icon } from '../../components/Icon'
+import { TimePicker } from '../../components/TimePicker'
+import { ProjectPicker } from '../../components/ProjectPicker'
+import { busyOnDay, fromMin, toMin } from '../../components/pickerMath'
+import { cairoDateKey, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
+import { toastAction } from '../../lib/undo'
+import { logRitualFinished, logRitualStep, useDraft, useRitualStepsToday, useSeedsFor } from './api'
+import { loopDayKey, morningPreselection, top3Diff } from './loopDay'
+import {
+  DAY_FROM,
+  DAY_TO,
+  PLAN_STEPS,
+  cairoMin,
+  captureMeta,
+  carryMeta,
+  carryRows,
+  headerDate,
+  pickCandidates,
+  planStatus,
+  planWorkload,
+  span,
+  suggestTimes,
+  swapIn,
+  withPick,
+  type CarryChoice,
+  type CarryEntry,
+  type Chosen,
+  type PickIn,
+  type Slot,
+} from './ritualLogic'
+import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, Section, Segmented, WorkloadLine } from './RitualChrome'
+import type { InboxItem, Project, Domain, Task } from '../../lib/types'
 
-// ── Morning ritual — pixel contract Rituals.dc.html 1a (overdue), 1b/3b (top-3, open vs.
-// seeded), 1c (inbox to zero), 1d (time-block), 1g (iPhone). The "scene" parchment takeover
-// on desktop, a full-bleed sheet at phone widths. ──
+// ── Plan my day — design-export/Plan.dc.html 6a–6m + SCREENS-2026-09-28 §Plan my day rulings 1–8.
+// One scrolling sheet: Carry-over · Inbox · Pick your 3 · Suggested times, a sticky footer with the
+// workload and the one terra action. Carry-over and Inbox choices apply at once; the picks and
+// accepted times are a draft (kept across ✕ / Back / swipe-down / reload for this loop day) that
+// "Start the day" writes. Each finished section logs its step, so a plan closed half-way reads
+// "2 of 4 done" + Resume on Today (6m). Kai: Plan my day is always TODAY's plan — after 17:00 the
+// Today card offers Shut down instead (no 6g "Plan tomorrow"); the morning always suggests times. ──
 
-const A = '/ds/assets'
-const STEPS = ['overdue', 'top3', 'inbox', 'block'] as const
-type Step = (typeof STEPS)[number]
-const STEP_TITLES: Record<Step, string> = {
-  overdue: 'Review overdue',
-  top3: 'Pick your Top-3',
-  inbox: 'Inbox to zero',
-  block: 'Time-block your day',
+interface PlanDraft {
+  carry: CarryEntry[]
+  /** null until touched, so the pre-selection follows the seeds as they load. */
+  picks: string[] | null
+  chosen: Record<string, Chosen>
 }
 
-function daysOver(dueAt: string): number {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  return Math.max(1, Math.round((start.getTime() - new Date(dueAt).getTime()) / 86_400_000))
-}
-
-// One clover per step: completed steps settle into a dewdrop, the current step is awake,
-// upcoming steps are seedlings that fade further out.
-function StepClovers({ stepIndex, total }: { stepIndex: number; total: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flex: 'none' }}>
-      {Array.from({ length: total }, (_, i) => {
-        if (i < stepIndex) return <img key={i} src={`${A}/clover/dewdrop.png`} alt="" style={{ height: 30 }} />
-        if (i === stepIndex) return <img key={i} src={`${A}/clover/awake.png`} alt="" style={{ height: 34 }} />
-        const distance = i - stepIndex
-        const opacity = Math.max(0.2, 0.55 - (distance - 1) * 0.2)
-        return <img key={i} src={`${A}/clover/seedling.png`} alt="" style={{ height: 24, opacity }} />
-      })}
-    </div>
-  )
-}
-
-// The parchment "scene" panel — desktop centered takeover, full-bleed sheet on phone widths.
-// A5 (2026-07-18 audit): the export's `.scene-dim` scrim now lives on the full-viewport
-// `inset:0` layer (it used to sit inside a fixed-width inner box, so the app behind was never
-// dimmed) — the real app plays the role of the export's faux page behind the scene. The panel
-// carries the export `.panel` elevation shadow (0 30px 70px) so it reads as a takeover.
-function MorningPanel({ wide, children, footer }: { wide?: boolean; children: ReactNode; footer: ReactNode }) {
-  const isMobile = useIsMobile()
-
-  if (isMobile) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--paper-parchment)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ height: 6, flex: 'none', background: 'linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))' }} />
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 20px 0', display: 'flex', flexDirection: 'column' }}>{children}</div>
-        <div style={{ flex: 'none', padding: '14px 20px max(22px, calc(14px + env(safe-area-inset-bottom)))' }}>{footer}</div>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'radial-gradient(120% 90% at 50% 0%, rgba(42,36,32,0.1), rgba(42,36,32,0.34) 90%)' }}>
-      <div style={{ position: 'relative', width: wide ? 940 : 520, maxWidth: '100%', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 12, boxShadow: '0 30px 70px rgba(46,40,32,0.4)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ height: 7, flex: 'none', background: 'linear-gradient(90deg,var(--acc-buttercream),var(--acc-gold-warm) 40%,var(--acc-clover))' }} />
-        <div style={{ padding: '22px 26px 24px', overflowY: 'auto' }}>
-          {children}
-          {footer}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StepFooter({ onSkip, onNext, label, skipLabel = 'skip for now' }: { onSkip: () => void; onNext: () => void; label: string; skipLabel?: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 15, borderTop: '1px dashed var(--line-dashed)' }}>
-      <RLink onClick={onSkip}>{skipLabel}</RLink>
-      <CtaButton onClick={onNext}>{label}</CtaButton>
-    </div>
-  )
-}
+const CARRY_OPTIONS: { value: CarryChoice; label: string }[] = [
+  { value: 'today', label: 'Today' },
+  { value: 'tomorrow', label: 'Tomorrow' },
+  { value: 'someday', label: 'Someday' },
+]
 
 export function MorningRitual({ onClose }: { onClose: () => void }) {
-  useEscapeStack(true, onClose) // M1b: Esc / Android Back = "skip for now"
-  const [stepIndex, setStepIndex] = useState(0)
-  const [repicking, setRepicking] = useState(false)
-  const step = STEPS[stepIndex]
-  const { data: tasks = [] } = useTasks()
-  const { data: inboxItems = [] } = usePendingInboxItems()
-
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  const overdue = tasks.filter((t) => t.status === 'todo' && t.due_at && new Date(t.due_at) < startOfToday)
-  const top3 = tasks.filter((t) => t.top3)
-  const candidatesForTop3 = tasks.filter((t) => t.status === 'todo' && !t.top3)
-
-  // Loop B (docs/DAILY-CYCLE.md, "shutdown feeds the next Plan"): last night's seeds (evening beat
-  // 4, api.ts setSeed) arrive pre-selected and one tap keeps them. "Seeded" used to mean "three
-  // tasks happen to be starred", whoever starred them; now it means seeds were planted for this
-  // loop day and this morning's Top-3 step hasn't been done yet. Done/deleted seeds and older
-  // nights' seeds never show (loopDay.ts liveSeeds / seededTaskIds).
-  const seeds = useSeedsFor(loopDayKey(new Date()))
-  const { data: stepsToday } = useRitualStepsToday()
-  const seeded = step === 'top3' && seeds.length > 0 && !stepsToday?.morning.has('top3') && !repicking
-  const seedIds = new Set(seeds.map((t) => t.id))
-  const seededRows = [...seeds, ...tasks.filter((t) => t.top3 && t.status === 'todo' && !seedIds.has(t.id))]
-  // null until touched, so the pre-selection follows the seeds as they load.
-  const [picked, setPicked] = useState<string[] | null>(null)
-  const selection = picked ?? morningPreselection(seeds, tasks)
-
-  // Punch item 43: skipping a step must NOT count it as done — `advance` moves on without
-  // logging; `next` is the "I did this step" path that logs it to the activity spine.
-  // Loop B: moving past the LAST step (Finish, or that step's own skip) finishes the ritual and
-  // logs `ritual.finished` with the steps done on this run; "skip for now" leaves without it.
-  const [doneSteps, setDoneSteps] = useState<string[]>([])
-  function go(done: string[]) {
-    if (stepIndex < STEPS.length - 1) {
-      setStepIndex(stepIndex + 1)
-      setDoneSteps(done)
-    } else {
-      logRitualFinished('morning', done)
-      onClose()
-    }
-  }
-  function advance() {
-    go(doneSteps)
-  }
-  function next() {
-    logRitualStep('morning', STEPS[stepIndex])
-    go([...doneSteps, STEPS[stepIndex]])
-  }
-
-  // 3b's auto-advance ("after a beat unless touched") is gone: seeds are no longer stars until
-  // they're kept, so advancing untouched would either star them without a tap or drop them.
-  function togglePick(id: string) {
-    setPicked(selection.includes(id) ? selection.filter((x) => x !== id) : selection.length < MAX_SEEDS ? [...selection, id] : selection)
-  }
-  // "Keep & continue →": the selection becomes the Top 3 — unstars first so the cap never refuses.
-  function keepSeeds() {
-    const { unstar, star } = top3Diff(selection, tasks)
-    for (const t of unstar) toggleTop3(t)
-    for (const t of star) toggleTop3(t)
-    next()
-  }
-
-  const caption =
-    step === 'overdue'
-      ? overdue.length === 0
-        ? 'no loose ends from yesterday'
-        : `${overdue.length} loose end${overdue.length === 1 ? '' : 's'} from yesterday`
-      : step === 'top3'
-        ? seeded
-          ? 'picked from bed, last night'
-          : `${top3.length} sprout${top3.length === 1 ? '' : 's'} awake, ${Math.max(0, 3 - top3.length)} still sleeping`
-        : step === 'inbox'
-          ? inboxItems.length === 0
-            ? 'the inbox is clear, not a leaf out of place'
-            : `${inboxItems.length} letter${inboxItems.length === 1 ? '' : 's'} still waiting`
-          : "let today's shape settle onto the calendar"
-
-  // A6 (2026-07-18 audit): two distinct skips — the top-right "skip" advances past the current
-  // step without performing it and, per punch item 43, without logging it as complete; the
-  // footer's "skip for now" abandons the whole ritual. (Loop B: the block step has 1d's footer
-  // again, so "skip" is no longer its only way out.)
-  return (
-    <MorningPanel
-      wide={step === 'block'}
-      footer={
-        seeded ? (
-          <StepFooter onSkip={() => setRepicking(true)} skipLabel="re-pick" onNext={keepSeeds} label="Keep & continue →" />
-        ) : (
-          // Loop B: the time-block step had no footer (lost when 1d was built), so the morning
-          // could never be finished — only skipped out of. 1d's own footer, copy verbatim.
-          <StepFooter onSkip={onClose} onNext={next} label={step === 'block' ? 'Finish — the day has a shape' : 'Next →'} />
-        )
-      }
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <FieldLabel>
-          {`Morning ritual · step ${stepIndex + 1}/${STEPS.length}`}
-          {seeded && <span style={{ color: 'var(--acc-gold)' }}> · closed by last night's seeds</span>}
-        </FieldLabel>
-        <RLink onClick={() => advance()}>skip</RLink>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16 }}>
-        <StepClovers stepIndex={stepIndex} total={STEPS.length} />
-        <span style={{ marginLeft: 6, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{caption}</span>
-      </div>
-
-      {step === 'top3' && seeded && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, background: 'var(--paper-goal)', border: '1.5px dashed var(--line-goal)', borderRadius: 8, padding: '12px 15px', transform: 'rotate(-0.3deg)' }}>
-          <svg width="30" height="22" viewBox="0 0 34 24" style={{ flex: 'none' }}>
-            <path d="M2 4h30v18H2V4Z" fill="#C8B48C" stroke="#9d8a63" strokeWidth="1.5" />
-            <path d="M2 4l15 10L32 4" fill="none" stroke="#9d8a63" strokeWidth="1.5" />
-          </svg>
-          <div style={{ flex: 1 }}>
-            <FieldLabel color="var(--acc-gold)">Planted last night</FieldLabel>
-            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>Tomorrow's three came in from the closing ritual — this step is already done.</div>
-          </div>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--acc-gold)', flex: 'none' }}>✿ {seeds.length} seed{seeds.length === 1 ? '' : 's'}</span>
-        </div>
-      )}
-
-      <h2 style={{ margin: '18px 0 4px', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 23, color: 'var(--ink-body)' }}>
-        {step === 'top3' && seeded ? 'Your Top-3' : STEP_TITLES[step]}
-        {step === 'top3' && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 400, fontSize: 13, color: 'var(--ink-faint)' }}> ({seeded ? `${selection.length}/3 · seeded` : `${top3.length}/3`})</span>
-        )}
-      </h2>
-
-      {step === 'overdue' && (
-        <>
-          <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Push each one forward or let it go — start the day with a clean slate.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
-            {overdue.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-faint)', margin: 0 }}>Nothing overdue.</p>
-            ) : (
-              overdue.map((t) => (
-                <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
-                    {daysOver(t.due_at!)}d over
-                  </span>
-                  <Pill onClick={() => moveToTomorrowWithUndo([t])}>push to tomorrow</Pill>
-                  <RLink onClick={() => deleteTasksWithUndo([t])} color="var(--acc-terra)">drop</RLink>
-                </div>
-              ))
-            )}
-          </div>
-        </>
-      )}
-
-      {step === 'top3' && (
-        seeded ? (
-          <>
-            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Picked from bed, last night. Confirm them — or re-pick if the morning knows better.</p>
-            {/* Seeds first, pre-selected; then anything already starred. A tap takes one out or
-                puts it back (three at most); the footer's "Keep & continue →" confirms. */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {seededRows.map((t, i) => {
-                const on = selection.includes(t.id)
-                return (
-                  <div
-                    key={t.id}
-                    role="checkbox"
-                    aria-checked={on}
-                    tabIndex={0}
-                    onClick={() => togglePick(t.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        togglePick(t.id)
-                      }
-                    }}
-                    style={
-                      on
-                        ? { background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.2}deg)`, cursor: 'pointer' }
-                        : { border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }
-                    }
-                  >
-                    <span style={{ color: on ? 'var(--acc-terra)' : 'var(--line-sidebar)', fontSize: 15 }}>{on ? '★' : '☆'}</span>
-                    <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                    <FieldLabel color={on ? 'var(--acc-gold)' : 'var(--ink-faint)'}>{seedIds.has(t.id) ? 'seeded' : 'picked'}</FieldLabel>
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        ) : (
-          <>
-            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>The three that would make today a good day. Star up to three.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
-              {top3.map((t, i) => (
-                <div key={t.id} onClick={() => toggleTop3(t)} style={{ background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, transform: `rotate(${i % 2 === 0 ? -0.3 : 0.25}deg)`, cursor: 'pointer' }}>
-                  <span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <FieldLabel color="var(--acc-gold)">picked</FieldLabel>
-                </div>
-              ))}
-              {candidatesForTop3.map((t) => (
-                <div key={t.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ color: 'var(--line-sidebar)', fontSize: 15 }}>☆</span>
-                  <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={t.title} /></span>
-                  <Pill onClick={() => toggleTop3(t)}>star</Pill>
-                </div>
-              ))}
-            </div>
-            {repicking && <div style={{ marginTop: 8 }}><RLink onClick={() => setRepicking(false)}>done re-picking</RLink></div>}
-          </>
-        )
-      )}
-
-      {step === 'inbox' && (
-        <>
-          <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>File what matters, dismiss what doesn't. The hydrangea calms as it clears.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
-            {inboxItems.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-faint)', margin: 0 }}>Inbox zero already.</p>
-            ) : (
-              inboxItems.map((item) => (
-                <div key={item.id} style={{ border: '1px dashed var(--line-solid)', borderRadius: 6, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: 'var(--ink-body)' }}>{item.raw_text}</span>
-                  <button
-                    type="button"
-                    onClick={() => fileToTask(item)}
-                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 13px', borderRadius: 999, cursor: 'pointer' }}
-                  >
-                    file
-                  </button>
-                  <RLink onClick={() => dismissInboxItem(item)}>dismiss</RLink>
-                </div>
-              ))
-            )}
-          </div>
-        </>
-      )}
-
-      {step === 'block' && <BlockStep />}
-    </MorningPanel>
-  )
-}
-
-// ── Step 4 — Time-block your day: source beds (Top-3 / Inbox / This week) dragged onto a
-// live hour grid for today. Pixel contract 1d — the sample 8am-2pm window becomes a
-// scrollable real-hours grid so any task can actually be planted, not just the seven shown. ──
-
-const HOUR_START = 6
-const HOUR_END = 22
-const HOUR_PX = 52
-
-function BedItem({ task }: { task: Task }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
-  const motionOn = useMotionEnabled()
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 9,
-        background: 'var(--paper-parchment)',
-        border: '1px solid var(--line-card)',
-        borderRadius: 6,
-        padding: '8px 10px',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        touchAction: 'none',
-        // Motion 5b, via the shared grammar (R4-23) — replaces a flat 0.4 opacity fade.
-        ...dragLift(isDragging, motionOn),
-      }}
-    >
-      <span style={{ color: 'var(--ink-hairline)', fontSize: 11, letterSpacing: -3 }}>⠿</span>
-      {task.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
-      <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></span>
-      {task.duration_min != null && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{task.duration_min}m</span>
-      )}
-    </div>
-  )
-}
-
-function Bed({ icon, title, tasks }: { icon: string; title: string; tasks: Task[] }) {
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
-        <img src={icon} alt="" style={{ height: 26 }} />
-        <FieldLabel>{title}</FieldLabel>
-        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{tasks.length}</span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-        {tasks.length === 0 ? (
-          <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', fontStyle: 'italic', margin: 0 }}>nothing here</p>
-        ) : (
-          tasks.map((t) => <BedItem key={t.id} task={t} />)
-        )}
-      </div>
-    </div>
-  )
-}
-
-function HourRow({ hour, isOver, setNodeRef }: { hour: number; isOver: boolean; setNodeRef: (el: HTMLElement | null) => void }) {
-  const label = hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : hour === 0 ? '12 AM' : `${hour} AM`
-  return (
-    <div ref={setNodeRef} style={{ position: 'relative', height: HOUR_PX, borderBottom: '1px solid var(--line-card)', background: isOver ? 'color-mix(in srgb, var(--acc-lavender) 14%, transparent)' : undefined }}>
-      <span style={{ position: 'absolute', left: -46, top: -6, width: 40, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{label}</span>
-    </div>
-  )
-}
-
-function DropSlot({ hour }: { hour: number }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `hour-${hour}` })
-  return <HourRow hour={hour} isOver={isOver} setNodeRef={setNodeRef} />
-}
-
-function inboxStage(count: number): string {
-  return count === 0 ? 'zero' : count < 5 ? 'light' : count < 10 ? 'medium' : 'heavy'
-}
-
-function BlockStep() {
-  const { data: tasks = [] } = useTasks()
+  const now = new Date()
+  const today = cairoDateKey(now)
+  const navigate = useNavigate()
+  const { data: tasks = [], isPending } = useTasks()
+  const { data: inbox = [] } = usePendingInboxItems()
   const { data: events = [] } = useCalendarEvents()
-  const { data: inboxItems = [] } = usePendingInboxItems()
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  const { data: projects = [] } = useProjects()
+  const { data: domains = [] } = useDomains()
+  const { data: stepsToday } = useRitualStepsToday()
+  const setGoal = useGoalStore((s) => s.setGoal)
+  const seeds = useSeedsFor(loopDayKey(now))
+  const [draft, setDraft, clearDraft] = useDraft<PlanDraft>('plan', loopDayKey(now), () => ({ carry: [], picks: null, chosen: {} }))
+  const [changing, setChanging] = useState<string | null>(null)
+  const finished = useRef(false)
 
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  const in7Days = new Date(startOfToday)
-  in7Days.setDate(in7Days.getDate() + 7)
+  const byId = new Map(tasks.map((t) => [t.id, t]))
+  const carry = carryRows(tasks, draft.carry, now)
+  const carried = new Set(carry.map((e) => e.id))
+  const selection = (draft.picks ?? morningPreselection(seeds, tasks)).filter((id) => byId.get(id)?.status === 'todo')
+  const candidates = pickCandidates(tasks, seeds, selection, carried, now)
+  const seedIds = new Set(seeds.map((t) => t.id))
+  const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
 
-  const top3 = tasks.filter((t) => t.status === 'todo' && t.top3)
-  const thisWeek = tasks.filter(
-    (t) => t.status === 'todo' && !t.top3 && t.due_at && new Date(t.due_at) >= startOfToday && new Date(t.due_at) < in7Days,
-  )
+  // Suggested times (ruling 5): every pick gets a slot on today's calendar, 09–18.
+  const busy = busyOnDay(events, today)
+  const nowMin = cairoMin(now)
+  const pickIns: PickIn[] = selection.flatMap((id) => {
+    const t = byId.get(id)
+    if (!t) return []
+    const b = events.find((e) => e.task_id === id && !e.all_day && !e.deleted_at && cairoDateKey(new Date(e.starts_at)) === today)
+    return [{ id, dur: draft.chosen[id]?.dur ?? t.duration_min ?? 30, booked: b ? { start: cairoMin(new Date(b.starts_at)), end: cairoMin(new Date(b.ends_at)) } : undefined }]
+  })
+  const slots = suggestTimes(pickIns, busy, draft.chosen, nowMin)
+  const workload = planWorkload(busy, pickIns, slots, nowMin)
+  const timed = slots.filter((s) => s.kind === 'accepted' || s.kind === 'booked').length
 
-  const todayEvents = events
-    .filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === cairoDateKey(new Date()))
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-  const plantedToday = todayEvents.filter((e) => e.task_id)
-  const totalMin = todayEvents.reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)
+  // Each section finished here logs its step once (the Today card's "2 of 4 done", 6m). Only a
+  // change made on this screen counts — a section that was already empty when it opened doesn't.
+  const flags: Record<(typeof PLAN_STEPS)[number], boolean> = {
+    overdue: carry.every((e) => e.choice),
+    inbox: inbox.length === 0,
+    top3: selection.length >= 3,
+    block: slots.length > 0 && timed === slots.length,
+  }
+  const prevFlags = useRef(flags)
+  const loggedHere = useRef(new Set<string>())
+  useEffect(() => {
+    for (const step of PLAN_STEPS) {
+      if (flags[step] && !prevFlags.current[step] && !isPending && !stepsToday?.morning.has(step) && !loggedHere.current.has(step)) {
+        loggedHere.current.add(step)
+        logRitualStep('morning', step)
+      }
+    }
+    prevFlags.current = flags
+  })
 
-  function handleDragEnd(e: DragEndEvent) {
-    if (!e.over) return
-    const task = tasks.find((t) => t.id === e.active.id)
-    if (!task) return
-    const hour = Number(String(e.over.id).replace('hour-', ''))
-    const dateKey = localDateKey(new Date())
-    const start = localToIso(dateKey, `${String(hour).padStart(2, '0')}:00`)
-    const durationMin = task.duration_min ?? 30
-    const end = new Date(new Date(start).getTime() + durationMin * 60000).toISOString()
-    scheduleTask(task, start, end)
+  // 6f: nothing due, nothing starred → "Clear morning — pick your 3" with an input. Stays up while
+  // the typed picks fill the list, until three are picked.
+  const [clearMorning, setClearMorning] = useState(false)
+  useEffect(() => {
+    if (!isPending && candidates.length === 0) setClearMorning(true)
+  }, [isPending, candidates.length])
+
+  function choose(e: CarryEntry, t: Task, choice: CarryChoice) {
+    if (choice === 'today') rescheduleDue(t, scheduleToday())
+    else if (choice === 'tomorrow') rescheduleDue(t, scheduleTomorrow())
+    else setSomeday(t, true)
+    setDraft((d) => ({
+      carry: carry.map((x) => (x.id === e.id ? { ...x, choice } : x)),
+      picks: choice === 'today' ? d.picks : (d.picks ?? selection).filter((id) => id !== t.id),
+    }))
+  }
+  function rollAll() {
+    for (const e of carry) {
+      const t = byId.get(e.id)
+      if (t && e.choice !== 'tomorrow') rescheduleDue(t, scheduleTomorrow())
+    }
+    setDraft((d) => ({ carry: carry.map((x) => ({ ...x, choice: 'tomorrow' })), picks: (d.picks ?? selection).filter((id) => !carried.has(id)) }))
+  }
+  function drop(t: Task) {
+    deleteTasksWithUndo([t]) // Trash + "Moved to Trash · Undo", never a confirm
+    setDraft((d) => ({ picks: (d.picks ?? selection).filter((id) => id !== t.id) }))
+  }
+  // Ruling 4: a 4th star shows the swap toast (6l); the first pick is the goal.
+  function togglePick(t: Task) {
+    const r = withPick(selection, t.id)
+    if (r.full) {
+      toastAction('Top 3 is full — swap one out?', 'Swap', () => setDraft((d) => ({ picks: swapIn(d.picks ?? selection, t.id) })))
+      return
+    }
+    setDraft({ picks: r.picks })
+    // Ruling 3: starring a carried row implies Today.
+    const e = carry.find((x) => x.id === t.id)
+    if (e && r.picks.includes(t.id) && e.choice !== 'today') choose(e, t, 'today')
+  }
+  function setChosen(id: string, c: Chosen | null) {
+    setDraft((d) => {
+      const chosen = { ...d.chosen }
+      if (c) chosen[id] = c
+      else delete chosen[id]
+      return { chosen }
+    })
+  }
+  function addTyped(title: string) {
+    const t = createTask({ title, dueAt: scheduleToday() })
+    const r = withPick(selection, t.id)
+    if (!r.full) setDraft({ picks: r.picks })
   }
 
+  // "Start the day" (6 intro): the picks become the Top 3 (the first one the goal), the accepted
+  // times go on the calendar, every section counts as walked, and the ritual is finished.
+  function start(close: () => void) {
+    const { unstar, star } = top3Diff(selection, tasks)
+    unstar.forEach(toggleTop3)
+    star.forEach(toggleTop3)
+    setGoal(selection[0] ?? null)
+    for (const s of slots) {
+      const t = byId.get(s.id)
+      if (t && s.kind === 'accepted') scheduleTask(t, cairoToIso(today, fromMin(s.start)), cairoToIso(today, fromMin(s.end)))
+    }
+    for (const step of PLAN_STEPS) if (!stepsToday?.morning.has(step) && !loggedHere.current.has(step)) logRitualStep('morning', step)
+    logRitualFinished('morning', [...PLAN_STEPS])
+    finished.current = true
+    close()
+  }
+
+  const pickMeta = (t: Task, i: number) => [
+    i === 0 && <Meta key="g" tone="var(--acc-gold)">✶ Goal</Meta>,
+    seedIds.has(t.id) && (
+      <Meta key="s" tone="var(--acc-sage-text)">
+        <Icon name="today" size={16} />
+        Seed
+      </Meta>
+    ),
+    projectName(t.project_id) && <Meta key="p" dot="var(--acc-moss)">{projectName(t.project_id)}</Meta>,
+    t.due_at && cairoDateKey(new Date(t.due_at)) === today && <Meta key="d">Due today</Meta>,
+    t.duration_min != null && <Meta key="m">{formatDuration(t.duration_min)}</Meta>,
+  ]
+  const pickIndex = (id: string) => selection.indexOf(id)
+
+  const carrySection =
+    carry.length === 0 ? (
+      <Collapsed label="Carry-over" line="Nothing carried over ✿" />
+    ) : (
+      <>
+        <Section first label={`Carry-over · ${carry.length}`} link={{ label: 'Roll all to tomorrow', onClick: rollAll }} />
+        {carry.map((e) => {
+          const t = byId.get(e.id)!
+          const i = pickIndex(t.id)
+          return (
+            <PlanRow
+              key={e.id}
+              task={t}
+              picked={i >= 0}
+              onStar={() => togglePick(t)}
+              projects={projects}
+              domains={domains}
+              actions={{ tomorrow: () => choose(e, t, 'tomorrow'), delete: () => drop(t), someday: () => choose(e, t, 'someday') }}
+              meta={[
+                i === 0 && <Meta key="g" tone="var(--acc-gold)">✶ Goal</Meta>,
+                carryMeta(e.due, now) && <Meta key="o" tone={carryMeta(e.due, now)!.startsWith('Overdue') ? 'var(--sig-overdue)' : undefined}>{carryMeta(e.due, now)}</Meta>,
+                t.duration_min != null && <Meta key="m">{formatDuration(t.duration_min)}</Meta>,
+              ]}
+              below={
+                <div className="rt-below">
+                  <Segmented label={`When: ${t.title}`} options={CARRY_OPTIONS} value={e.choice ?? null} onChange={(c) => choose(e, t, c)} />
+                  <Button type="button" variant="ghost" className="rt-drop" icon={<Icon name="delete" size={20} />} onClick={() => drop(t)}>
+                    Drop
+                  </Button>
+                </div>
+              }
+            />
+          )
+        })}
+      </>
+    )
+
+  const inboxSection =
+    inbox.length === 0 ? (
+      <Collapsed label="Inbox" line="Inbox zero ✿" />
+    ) : (
+      <>
+        <Section label={`Inbox · ${inbox.length}`} />
+        {inbox.map((item) => (
+          <InboxRow key={item.id} item={item} now={now} projects={projects} domains={domains} />
+        ))}
+      </>
+    )
+
+  const picksSection = (
+    <>
+      <Section label={`Pick your 3 · ${selection.length}/3`} link={{ label: 'All tasks', onClick: () => navigate('/tasks') }} />
+      {clearMorning && (
+        <ClearMorning onAdd={addTyped} full={selection.length >= 3} title={candidates.length === 0} />
+      )}
+      {candidates.map((t) => (
+        <PlanRow key={t.id} task={t} picked={selection.includes(t.id)} onStar={() => togglePick(t)} projects={projects} domains={domains} meta={pickMeta(t, pickIndex(t.id))} />
+      ))}
+    </>
+  )
+
+  const changingSlot = slots.find((s) => s.id === changing)
+  const timesSection =
+    slots.length === 0 ? (
+      <Collapsed label="Suggested times" line="Pick something first" />
+    ) : (
+      <>
+        <Section label="Suggested times" />
+        {slots.every((s) => s.kind === 'noslot') && (
+          <div className="rt-warn">
+            <Icon name="alert" size={20} />
+            <span>Your calendar is full from {fromMin(Math.max(DAY_FROM, Math.ceil(nowMin / 15) * 15))} to 18:00.</span>
+          </div>
+        )}
+        <Timeline busy={busy} slots={slots} changing={changing} />
+        {slots.map((s) => {
+          const t = byId.get(s.id)!
+          return <TimeRow key={s.id} task={t} slot={s} changing={changing === s.id} onChange={() => setChanging(s.id)} onAccept={() => setChosen(s.id, s.kind === 'accepted' ? null : { at: s.start, dur: s.end - s.start })} />
+        })}
+      </>
+    )
+
+  const changingTask = changing ? byId.get(changing) : undefined
+  const dur = changing ? (pickIns.find((p) => p.id === changing)?.dur ?? 30) : 30
+
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: 'var(--ink-faint)' }}>Give the day a shape. Drag anything from the beds on the left into an open hour; drop the rest tomorrow.</p>
-      {/* WB-3 punch 64: basis-not-width + wrap, so the beds and the hour grid stack on a
-          phone instead of pushing the ritual 340px wide. Desktop (940px panel) is unchanged. */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'stretch' }}>
-        <div style={{ flex: '0 1 340px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Bed icon={`${A}/daisy/morning.png`} title="Today · Top-3" tasks={top3} />
-          {/* Inbox bed (contract 1d): read-only here — filing+scheduling in one drag needs inbox/api.ts, owned by W4 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
-              <img src={`${A}/hydrangea/${inboxStage(inboxItems.length)}.png`} alt="" style={{ height: 26, flex: 'none' }} />
-              <FieldLabel>Inbox</FieldLabel>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{inboxItems.length}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              {inboxItems.length === 0 ? (
-                <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', fontStyle: 'italic', margin: 0 }}>nothing here</p>
-              ) : (
-                inboxItems.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px' }}>
-                    <span style={{ color: 'var(--ink-hairline)', fontSize: 11, lineHeight: 1, letterSpacing: -3 }}>⠿</span>
-                    <span style={{ flex: 1, fontSize: 12.5, color: 'var(--ink-body)' }}>{item.raw_text}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          <Bed icon={`${A}/wisteria/p40.png`} title="This week" tasks={thisWeek} />
-        </div>
-        <div style={{ flex: '1 1 320px', minWidth: 0, border: '1px solid var(--line-solid)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper-parchment)' }}>
-          <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--line-card)', background: 'var(--paper-bone)' }}>
-            <FieldLabel>{new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })} · today</FieldLabel>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>
-              <span style={{ color: 'var(--acc-sage)' }}>●</span> {plantedToday.length} planted · {Math.floor(totalMin / 60)}h{totalMin % 60 ? ` ${totalMin % 60}m` : ''}
-            </span>
-          </div>
-          <div style={{ display: 'flex', height: 364, overflowY: 'auto' }}>
-            <div style={{ width: 46, flex: 'none', position: 'relative', borderRight: '1px solid var(--line-card)' }} />
-            <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-              {Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i).map((hour) => (
-                <DropSlot key={hour} hour={hour} />
-              ))}
-              {todayEvents.map((e) => {
-                const start = new Date(e.starts_at)
-                const end = new Date(e.ends_at)
-                const startMin = (start.getHours() - HOUR_START) * 60 + start.getMinutes()
-                const durMin = (end.getTime() - start.getTime()) / 60000
-                if (startMin < 0) return null
-                return (
-                  <div
-                    key={e.id}
-                    style={{
-                      position: 'absolute',
-                      top: (startMin / 60) * HOUR_PX,
-                      left: 7,
-                      right: 8,
-                      height: Math.max(20, (durMin / 60) * HOUR_PX),
-                      background: 'color-mix(in srgb, var(--acc-lavender) 20%, transparent)',
-                      borderLeft: '3px solid var(--acc-lavender)',
-                      boxShadow: e.task_id ? 'inset 3px 0 0 var(--acc-blossom)' : undefined,
-                      borderRadius: 3,
-                      padding: '5px 9px',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {e.task_id && <span style={{ color: 'var(--acc-terra)', fontSize: 11 }}>★</span>}
-                      <span style={{ fontSize: 11.5, color: 'var(--ink-body)' }}>{e.title}</span>
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>
-                      {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
+    <>
+      <RitualSheet
+        title="Plan my day"
+        sub={`${headerDate(now)} · about 3 minutes`}
+        onClose={() => {
+          if (finished.current) clearDraft()
+          onClose()
+        }}
+        left={
+          <>
+            {carrySection}
+            {inboxSection}
+          </>
+        }
+        right={
+          <>
+            {picksSection}
+            {timesSection}
+          </>
+        }
+        footer={(close) => (
+          <RitualFoot
+            workload={<WorkloadLine text={workload.text} over={workload.over ? `${span(workload.over)} over` : undefined} />}
+            status={planStatus(carry, selection.length, timed)}
+            cta={
+              <Button type="button" onClick={() => start(close)}>
+                Start the day
+              </Button>
+            }
+          />
+        )}
+      />
+      {changingTask && (
+        <TimePicker
+          day={today}
+          title={changingTask.title}
+          value={changingSlot && (changingSlot.kind === 'accepted' || changingSlot.kind === 'suggested' || changingSlot.kind === 'booked') ? fromMin(changingSlot.start) : null}
+          duration={dur}
+          events={events}
+          onDone={(hhmm, d) => setChosen(changingTask.id, { at: toMin(hhmm), dur: d ?? dur })}
+          onClear={() => setChosen(changingTask.id, { at: null, dur })}
+          onClose={() => setChanging(null)}
+        />
+      )}
+    </>
+  )
+}
+
+/** A kit task row in the plan: [check][title + meta][star][⋯], the row grammar (swipe right =
+ * Tomorrow, left = Drop/Delete, ⋯), and the star = this plan's pick (ruling 3–4). */
+function PlanRow({ task, picked, onStar, meta, below, projects, domains, actions }: {
+  task: Task
+  picked: boolean
+  onStar: () => void
+  meta: ReactNode[]
+  below?: ReactNode
+  projects: Project[]
+  domains: Domain[]
+  actions?: { tomorrow?: () => void; delete?: () => void; someday?: () => void }
+}) {
+  const g = useRowGrammar(task, { projects, domains, actions: { top3: onStar, ...actions } })
+  return (
+    <KitRow
+      task={task}
+      meta={meta}
+      below={below}
+      selected={g.menuOpen}
+      lead={<Checkbox checked={false} label={task.title} bloom={picked} onChange={() => completeTaskWithUndo(task)} />}
+      trail={
+        <>
+          <Star on={picked} label={task.title} onChange={onStar} />
+          <RowMenuButton title={task.title} onOpen={g.openMenu} />
+        </>
+      }
+      swipe={{ ...g.swipeProps, overlay: g.menuNode, onContextMenu: g.onContextMenu }}
+    />
+  )
+}
+
+/** Ruling 7: an inbox row is not a task yet — no checkbox. Capture meta, a tappable project chip
+ * (the capture parse chip), Dismiss (ghost) and File (secondary), each with its Undo toast. */
+function InboxRow({ item, now, projects, domains }: { item: InboxItem; now: Date; projects: Project[]; domains: Domain[] }) {
+  const parsed = (item.ai_parse as { project_id?: string | null } | null)?.project_id ?? null
+  const [project, setProject] = useState<{ id: string | null; domain: string | null }>({ id: parsed, domain: projects.find((p) => p.id === parsed)?.domain_id ?? null })
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null)
+  const slot = useRef<HTMLSpanElement>(null)
+  const name = projects.find((p) => p.id === project.id)?.name
+  return (
+    <div className="rt-inbox">
+      <div className="rt-title">{item.raw_text}</div>
+      <div className="rt-meta">
+        <span>{captureMeta(item, now)}</span>
       </div>
-    </DndContext>
+      <div className="rt-inbox-acts">
+        <span className="rt-chip-slot" ref={slot}>
+          <Chip
+            tone="project"
+            onClick={() => {
+              const r = slot.current?.getBoundingClientRect()
+              setAt({ x: r?.left ?? 0, y: r?.bottom ?? 0 })
+            }}
+          >
+            {name ?? 'No project'}
+          </Chip>
+        </span>
+        <Button type="button" variant="ghost" onClick={() => dismissInboxItem(item)}>
+          Dismiss
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => fileToTask(item, { projectId: project.id, domainId: project.domain })}>
+          File
+        </Button>
+      </div>
+      {at && <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={project.id} onSelect={(id, domain) => setProject({ id, domain })} onClose={() => setAt(null)} />}
+    </div>
+  )
+}
+
+/** 6f: a clear morning — type three things; each gets a time below. */
+function ClearMorning({ onAdd, full, title }: { onAdd: (title: string) => void; full: boolean; title: boolean }) {
+  const [text, setText] = useState('')
+  return (
+    <div className="rt-clear">
+      {title && (
+        <>
+          <div className="rt-clear-title">Clear morning — pick your 3.</div>
+          <div className="rt-clear-sub">Nothing is due and nothing is starred. Type three things; each gets a time below.</div>
+        </>
+      )}
+      {!full && (
+        <input
+          className="rt-input"
+          style={{ margin: '12px 0 4px' }}
+          value={text}
+          placeholder="Add a task…"
+          aria-label="Add a task"
+          enterKeyHint="done"
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && text.trim()) {
+              onAdd(text.trim())
+              setText('')
+            }
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/** The 09–18 mini timeline + legend (ruling 5): calendar = lavender, suggested = dashed sage,
+ * accepted = sage fill, being changed = focus ring. */
+function Timeline({ busy, slots, changing }: { busy: { start: number; end: number }[]; slots: Slot[]; changing: string | null }) {
+  const x = (m: number) => `${((Math.min(DAY_TO, Math.max(DAY_FROM, m)) - DAY_FROM) / (DAY_TO - DAY_FROM)) * 100}%`
+  const w = (a: number, b: number) => `${((Math.min(DAY_TO, b) - Math.max(DAY_FROM, a)) / (DAY_TO - DAY_FROM)) * 100}%`
+  const blocks = [
+    ...busy.filter((b) => b.end > DAY_FROM && b.start < DAY_TO).map((b) => ({ ...b, k: 'event' })),
+    ...slots.filter((s) => (s.kind === 'suggested' || s.kind === 'accepted') && s.start < DAY_TO).map((s) => ({ ...s, k: s.id === changing ? 'changing' : s.kind })),
+  ]
+  return (
+    <div className="rt-tl" aria-hidden>
+      <div className="rt-tl-bar">
+        {[12, 15].map((h) => (
+          <span key={h} className="rt-tl-tick" style={{ left: x(h * 60) }} />
+        ))}
+        {blocks.map((b, i) => (
+          <span key={i} className={`rt-tl-b rt-k-${b.k}`} style={{ left: x(b.start), width: w(b.start, b.end) }} />
+        ))}
+      </div>
+      <div className="rt-tl-hours">
+        {[9, 12, 15, 18].map((h, i) => (
+          <span key={h} style={{ left: x(h * 60), transform: `translateX(${i === 0 ? '0' : i === 3 ? '-100%' : '-50%'})` }}>
+            {String(h).padStart(2, '0')}:00
+          </span>
+        ))}
+      </div>
+      <div className="rt-legend">
+        {[['event', 'Calendar'], ['suggested', 'Suggested'], ['accepted', 'Accepted']].map(([k, label]) => (
+          <span key={k}>
+            <span className={`rt-sw rt-k-${k}`} />
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** A suggested-time row: the time pill (tap = the Time Picker) and the ✓ (the NOW slip's 40px Done
+ * circle, filled once accepted). No free slot, or "No time" → a secondary "Pick one". */
+function TimeRow({ task, slot, changing, onChange, onAccept }: { task: Task; slot: Slot; changing: boolean; onChange: () => void; onAccept: () => void }) {
+  const dur = slot.end - slot.start
+  const loose = slot.kind === 'noslot' || slot.kind === 'untimed'
+  const meta = [
+    !loose && <Meta key="m">{formatDuration(dur)}</Meta>,
+    loose && task.duration_min != null && <Meta key="m">{formatDuration(task.duration_min)}</Meta>,
+    slot.after && <Meta key="a">after {slot.after}</Meta>,
+    slot.kind === 'booked' && <Meta key="b">On the calendar</Meta>,
+    slot.late && <Meta key="l" tone="var(--sig-amber)">Runs past 18:00</Meta>,
+    slot.kind === 'noslot' && <Meta key="n" tone="var(--sig-amber)">No free slot</Meta>,
+    slot.kind === 'untimed' && <Meta key="u">No time</Meta>,
+  ].filter(Boolean)
+  const accepted = slot.kind === 'accepted' || slot.kind === 'booked'
+  return (
+    <div className="rt-trow" id={`rt-time-${task.id}`}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="rt-title">{task.title}</div>
+        {meta.length > 0 && <div className="rt-meta">{meta}</div>}
+      </div>
+      {loose ? (
+        <Button type="button" variant="secondary" icon={<Icon name="clock" size={20} />} onClick={onChange}>
+          Pick one
+        </Button>
+      ) : (
+        <>
+          <button type="button" className={`rt-pill${changing ? ' is-changing' : accepted ? ' rt-k-accepted is-accepted' : ''}`} onClick={onChange} aria-label={`Change the time of "${task.title}"`}>
+            {fromMin(slot.start)}–{fromMin(slot.end)}
+          </button>
+          <button type="button" className="rt-ok" aria-pressed={accepted} aria-label={`${accepted ? 'Accepted' : 'Accept'}: ${task.title}`} disabled={slot.kind === 'booked'} onClick={onAccept}>
+            <span>
+              <Icon name="check" size={20} strokeWidth={accepted ? 2.2 : 2} />
+            </span>
+          </button>
+        </>
+      )}
+    </div>
   )
 }

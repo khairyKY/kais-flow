@@ -99,15 +99,19 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
 }
 
 /** The phone time sheet. Done hands back "HH:mm" (09:00 if nothing was picked) and the duration
- * when the caller passed one and it changed. Dismissing it changes nothing. */
-export function TimePicker({ day, value, duration, onDone, onClose, events }: {
+ * when the caller passed one and it changed. Dismissing it changes nothing. `onClear` adds the
+ * footer's ghost "No time", like the date sheet's "No date" (SCREENS-2026-09-28 §Plan ruling 5). */
+export function TimePicker({ day, value, duration, onDone, onClose, onClear, events, title }: {
   day?: string | null
   value: string | null
   /** Pass the current duration (null = none) to show the chips. */
   duration?: number | null
   onDone: (hhmm: string, durationMin?: number) => void
   onClose: () => void
+  onClear?: () => void
   events?: readonly CalendarEvent[]
+  /** The meta line under "Time" — what is being timed ("Search for a good node.js source · today"). */
+  title?: string
 }) {
   const [time, setTime] = useState(value || '09:00')
   const [dur, setDur] = useState(duration ?? null)
@@ -116,9 +120,12 @@ export function TimePicker({ day, value, duration, onDone, onClose, events }: {
     <BottomSheet
       detent="full"
       onClose={onClose}
-      title={<SheetTitle title="Time" meta={day ? dayTitle(day, cairoDateKey(new Date())) : undefined} />}
+      title={<SheetTitle title="Time" meta={day ? `${title ? `${title} · ` : ''}${dayTitle(day, cairoDateKey(new Date()))}` : title} />}
       footer={(close) => (
-        <Button type="button" onClick={() => { onDone(time, dur != null && dur !== duration ? dur : undefined); close() }}>Done</Button>
+        <>
+          {onClear && <Button type="button" variant="ghost" onClick={() => { onClear(); close() }}>No time</Button>}
+          <Button type="button" onClick={() => { onDone(time, dur != null && dur !== duration ? dur : undefined); close() }}>Done</Button>
+        </>
       )}
     >
       {() => <TimePanel day={day ?? null} value={time} onValue={setTime} duration={hasDuration ? dur : undefined} onDuration={hasDuration ? setDur : undefined} events={events} />}

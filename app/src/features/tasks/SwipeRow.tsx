@@ -15,9 +15,11 @@ import { longPress, tick } from '../../lib/haptics'
 
 export interface SwipeActions {
   tomorrow: () => void
-  pickDate: (at: { x: number; y: number }) => void
-  project: (at: { x: number; y: number }) => void
-  delete: () => void
+  /** Without these two the right swipe is Tomorrow alone: past the line commits, short of it springs back. */
+  pickDate?: (at: { x: number; y: number }) => void
+  project?: (at: { x: number; y: number }) => void
+  /** Without it there is no left swipe (Shut down's Sweep: nothing on that screen deletes). */
+  delete?: () => void
 }
 
 // One row open at a time: opening (or starting to drag) a row closes the last one.
@@ -99,7 +101,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
     if (dt > 0) s.v = (e.clientX - s.lastX) / z / dt
     s.lastX = e.clientX
     s.lastT = e.timeStamp
-    s.cur = Math.max(-s.width, Math.min(s.width, s.x0 + dx))
+    s.cur = Math.max(actions?.delete ? -s.width : 0, Math.min(s.width, s.x0 + dx))
     const past = pastCommit(s.cur, s.width)
     if (past && !s.past) tick() // one tick as the line is crossed, not on the way back
     s.past = past
@@ -125,9 +127,9 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         if (end === 'tomorrow') {
           actions?.tomorrow()
           setX(0)
-        } else actions?.delete()
+        } else actions?.delete?.()
       }, SETTLE_MS)
-    } else setX(REST_X[end])
+    } else setX(end === 'open-right' && !actions?.pickDate ? 0 : REST_X[end])
   }
 
   const at = (el: HTMLElement) => {
@@ -180,15 +182,15 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
           ) : (
             <>
               {act('tomorrow', 'Tomorrow', () => actions.tomorrow())}
-              {act('pickdate', 'Pick date', (el) => actions.pickDate(at(el)))}
-              {act('project', 'Project', (el) => actions.project(at(el)))}
+              {actions.pickDate && act('pickdate', 'Pick date', (el) => actions.pickDate?.(at(el)))}
+              {actions.project && act('project', 'Project', (el) => actions.project?.(at(el)))}
             </>
           )}
         </div>
       )}
       {x < 0 && actions && (
         <div className="kf-swipe-bg is-left">
-          <button type="button" className="kf-swipe-act is-delete" onClick={(e) => { e.stopPropagation(); actions.delete() }}>
+          <button type="button" className="kf-swipe-act is-delete" onClick={(e) => { e.stopPropagation(); actions.delete?.() }}>
             <Icon name="delete" size={24} />
             <span>Delete</span>
           </button>

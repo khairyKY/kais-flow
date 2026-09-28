@@ -3,6 +3,7 @@ import { Button } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import type { RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
+import { resumeMeta } from '../rituals/ritualLogic'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { ritualFinished, ritualProgress, type RitualState } from './dayPhase'
 import type { Day } from './useDay'
@@ -177,11 +178,13 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
   const ritual: RitualKind = kind === 'plan' ? 'morning' : 'evening'
   const r = kind === 'plan' ? day.morning : day.evening
   const resume = r.done > 0 && !ritualFinished(r)
-  const meta = resume ? [`${r.done} of ${r.total} done`] : kind === 'plan' ? ['~3 min', `${inboxCount} in inbox`, `${overdueCount} overdue`] : ['~2 min', `${sweepCount} to sweep`]
+  // 6m: a ritual closed half-way — "Morning · 2 of 4 done", "~1 min left · Pick your 3 next", Resume.
+  const meta = resume ? resumeMeta(ritual, day.steps[ritual]) : kind === 'plan' ? ['~3 min', `${inboxCount} in inbox`, `${overdueCount} overdue`] : ['~2 min', `${sweepCount} to sweep`]
+  const when = resume ? `${r.done} of ${r.total} done` : kind === 'plan' ? 'not planned' : clock
   return (
     <RitualShell
       glyph={kind === 'plan' ? <SunIcon /> : <MoonIcon />}
-      caption={kind === 'plan' ? 'Morning · not planned' : `Evening · ${clock}`}
+      caption={`${kind === 'plan' ? 'Morning' : 'Evening'} · ${when}`}
       title={kind === 'plan' ? 'Plan my day' : 'Shut down the day'}
       meta={meta}
       pct={resume ? Math.round((r.done / r.total) * 100) : undefined}
