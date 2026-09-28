@@ -1,4 +1,6 @@
-import { readAuthRedirect, type AuthRedirect } from './authLogic'
+import { supabase } from '../../lib/supabase'
+import { authLinkOrigin } from '../../lib/platform'
+import { readAuthRedirect, resetRequestLooksSent, type AuthRedirect } from './authLogic'
 
 // J-11 · the browser half of password recovery. AuthProvider imports this eagerly, so the
 // module runs at boot — before the router exists and before supabase-js has finished with the
@@ -27,6 +29,34 @@ export function forgetRecovery(): void {
   } catch {
     /* nothing to forget */
   }
+}
+
+/** The address last used to sign in, sign up or ask for a reset on this device — pre-fills sign
+ * in, and lets an expired reset link (9k-3) send a new one in one tap. Settings reads it too. */
+const LAST_EMAIL = 'kf.lastEmail'
+
+export function rememberEmail(email: string): void {
+  try {
+    localStorage.setItem(LAST_EMAIL, email)
+  } catch {
+    /* private mode — the field just starts empty */
+  }
+}
+
+export function rememberedEmail(): string {
+  try {
+    return localStorage.getItem(LAST_EMAIL) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** Mails a password-reset link that opens /reset (ResetPage). Resolves to the failure to show,
+ * or null when it reads as sent — a 429 included, see resetRequestLooksSent. */
+export async function requestReset(email: string): Promise<{ message?: string; code?: string; status?: number } | null> {
+  rememberEmail(email)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${authLinkOrigin()}/reset` })
+  return resetRequestLooksSent(error) ? null : error
 }
 
 export function isRecovering(): boolean {

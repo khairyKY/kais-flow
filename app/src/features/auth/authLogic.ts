@@ -16,11 +16,46 @@ export function calmAuthLine(raw: string): string {
     const n = /at least (\d+)/.exec(m)?.[1] ?? String(MIN_PASSWORD_LENGTH)
     return `Passwords need at least ${n} characters — a little more soil.`
   }
-  if (m.includes('already registered')) return 'This garden is already planted — sign in instead.'
   if (m.includes('not confirmed')) return "Your seed hasn't sprouted yet — click the link in your email first."
   if (m.includes('invalid login credentials')) return "That email and password don't match a garden here — try again."
   if (m.includes('rate limit') || m.includes('too many')) return 'The garden needs a short rest — try again in a minute.'
   return "That didn't take root — try again in a moment."
+}
+
+/** What a failed auth call shows (First Run 9b). `in-use` is the card under the email field with
+ * "Sign in instead"; `offline` is the card with Retry (supabase-js reports a fetch that never
+ * reached the server as status 0); anything else is one calm line in the same card, no action. */
+export type AuthProblem = { kind: 'in-use' } | { kind: 'offline' } | { kind: 'line'; text: string }
+
+export function authProblem(error: { message?: string; code?: string; status?: number }): AuthProblem {
+  if (error.status === 0) return { kind: 'offline' }
+  if (error.code === 'user_already_exists' || error.code === 'email_exists' || /already registered/i.test(error.message ?? '')) return { kind: 'in-use' }
+  return { kind: 'line', text: calmAuthLine(error.message ?? '') }
+}
+
+/** The live rule under a new password (9a / 9b-2 / 9k-2) — the only rule is the length. */
+export function passwordRule(password: string): { state: 'empty' | 'short' | 'ok'; text: string } {
+  if (password.length >= MIN_PASSWORD_LENGTH) return { state: 'ok', text: `${MIN_PASSWORD_LENGTH}+ characters` }
+  if (!password) return { state: 'empty', text: `${MIN_PASSWORD_LENGTH}+ characters` }
+  return { state: 'short', text: `Use ${MIN_PASSWORD_LENGTH} or more characters — ${MIN_PASSWORD_LENGTH - password.length} to go` }
+}
+
+// ponytail: the big webmail inboxes only; any other domain gets no "Open email app" button
+// (a mailto: link would open a blank draft, not the inbox).
+const INBOXES: Record<string, string> = {
+  'gmail.com': 'https://mail.google.com/mail/u/0/#inbox',
+  'googlemail.com': 'https://mail.google.com/mail/u/0/#inbox',
+  'outlook.com': 'https://outlook.live.com/mail/',
+  'hotmail.com': 'https://outlook.live.com/mail/',
+  'live.com': 'https://outlook.live.com/mail/',
+  'yahoo.com': 'https://mail.yahoo.com/',
+  'icloud.com': 'https://www.icloud.com/mail',
+  'proton.me': 'https://mail.proton.me/',
+}
+
+/** Where "Open email app" (9k-1) goes for this address, or null when we can't know. */
+export function inboxUrl(email: string): string | null {
+  return INBOXES[email.split('@')[1]?.trim().toLowerCase() ?? ''] ?? null
 }
 
 /** What an auth email link left in the address bar. GoTrue's implicit flow (supabase-js's
@@ -37,13 +72,6 @@ export function readAuthRedirect(href: string): AuthRedirect {
     return { kind: 'error', code: get('error_code') ?? get('error') ?? 'unknown' }
   if (get('type') === 'recovery' && get('access_token')) return { kind: 'recovery' }
   return { kind: 'none' }
-}
-
-/** Why a new password can't be saved yet, or null when it can. */
-export function newPasswordProblem(password: string, confirm: string): string | null {
-  if (password.length < MIN_PASSWORD_LENGTH) return `Passwords need at least ${MIN_PASSWORD_LENGTH} characters — a little more soil.`
-  if (password !== confirm) return "Those two passwords don't match — try once more."
-  return null
 }
 
 /** Enumeration guard for the "Forgot password?" request. GoTrue answers an unknown email with

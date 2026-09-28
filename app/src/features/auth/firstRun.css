@@ -1,0 +1,370 @@
+/* First Run.dc.html (9a–9m): sign up, sign in, reset, onboarding. Phone first (390 × 844 frames);
+   the min-width block is 9m — wordmark top-left, fern watermark, one centred column
+   (400; onboarding 460). Sizes are the drawing's; every colour is a token. */
+
+.fr {
+  position: relative;
+  min-height: var(--kf-vh);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  overflow-x: hidden;
+  background: var(--paper-linen);
+  color: var(--ink-body);
+  font-family: var(--font-ui);
+}
+.fr-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background-image: var(--noise-url);
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+/* multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25 (punch 57). */
+[data-theme='night'] .fr-grain {
+  mix-blend-mode: overlay;
+  opacity: 0.25;
+}
+.fr-fern {
+  display: none;
+}
+
+.fr-bar {
+  position: relative;
+  z-index: 6;
+  flex: none;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 16px;
+}
+.fr-bar--back {
+  padding-left: 4px;
+}
+.fr-mark {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-body);
+}
+.fr-back {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-body);
+  cursor: pointer;
+}
+
+.fr-col {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 24px;
+}
+.fr-col--wide {
+  padding: 0 16px;
+}
+
+.fr-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.fr-art {
+  height: var(--art-h, 72px);
+  width: auto;
+  filter: var(--shadow-drop-sm);
+}
+/* The envelopes carry a 6px spacer under them in the drawing (9k-1, 9k-3): 6 + one more 10 gap. */
+.fr-envelope,
+.fr-art--envelope {
+  margin-bottom: 16px;
+}
+.fr-envelope {
+  position: relative;
+  width: 176px;
+  height: 104px;
+}
+.fr-envelope img {
+  position: absolute;
+  filter: var(--shadow-drop-sm);
+}
+.fr-h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink-body);
+  text-wrap: balance;
+}
+.fr-sub {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+.fr-sub b {
+  font-weight: 600;
+  color: var(--ink-body);
+}
+
+.fr-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* Input (DS-CHANGELOG §3): h 48 · radius 8 · bone · 1px --line-control · focus = ring + terra caret. */
+.fr-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink-body);
+}
+.fr-hint {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+.fr-box {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  box-sizing: border-box;
+  padding-left: 14px;
+  border: 1px solid var(--line-control);
+  border-radius: 8px;
+  background: var(--paper-bone);
+}
+.fr-box:focus-within {
+  box-shadow: var(--focus-ring);
+}
+.fr-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 14px 0 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink-body);
+  caret-color: var(--acc-terra-ink);
+}
+.fr-input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+.fr-show {
+  flex: none;
+  height: 46px;
+  padding: 0 12px 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.fr-rule {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+.fr-rule[data-state='ok'] {
+  color: var(--acc-sage-text);
+}
+.fr-rule[data-state='short'] {
+  color: var(--acc-terra-ink);
+}
+
+.fr-link {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--acc-lavender-deep);
+  cursor: pointer;
+  text-decoration: none;
+}
+.fr-alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+.fr-note {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.fr-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+/* The kit Button, full width at the drawn 48 on both widths (desktop keeps its type scale). */
+.fr .fr-cta {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  justify-content: center;
+  padding: 0 22px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.fr .fr-skip {
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Onboarding (9g / 9h). */
+.fr-hand {
+  font-family: var(--font-hand);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink-hand);
+}
+.fr-q {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink-body);
+  text-wrap: balance;
+}
+.fr-q-sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+.fr-box--line {
+  padding-left: 4px;
+}
+.fr-star {
+  width: 40px;
+  flex: none;
+  display: flex;
+  justify-content: center;
+  color: var(--star-empty);
+}
+.fr-when {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+.fr-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 0 calc(28px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .fr-fern {
+    display: block;
+    position: absolute;
+    left: -30px;
+    bottom: -40px;
+    height: 380px;
+    opacity: 0.12;
+    transform: rotate(-6deg);
+    pointer-events: none;
+  }
+  .fr-bar {
+    position: absolute;
+    top: calc(18px + env(safe-area-inset-top));
+    left: 36px;
+    right: 24px;
+    height: 48px;
+    padding: 0;
+  }
+  .fr-mark {
+    font-size: 20px;
+  }
+  .fr-col {
+    flex: none;
+    width: 400px;
+    max-width: calc(100% - 48px);
+    margin: 0 auto;
+    padding: 96px 0 48px;
+  }
+  .fr-col--wide {
+    width: 460px;
+    padding-top: 56px;
+  }
+  .fr-art {
+    height: calc(var(--art-h, 72px) + 8px);
+  }
+  .fr-col--wide .fr-art {
+    height: var(--art-h, 72px);
+  }
+  .fr-h1 {
+    font-size: 32px;
+  }
+  .fr-stack {
+    margin-top: 28px;
+  }
+  .fr-foot {
+    margin-top: 28px;
+    padding: 0;
+  }
+}
