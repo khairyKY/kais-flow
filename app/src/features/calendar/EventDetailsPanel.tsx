@@ -120,9 +120,9 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
               <>
                 <span>·</span>
                 {/* C5 (2026-07-18 audit): themed TimeField, not native time inputs with OS chrome */}
-                <TimeField value={startTime} onChange={(v) => { setStartTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
+                <TimeField value={startTime} day={date} onChange={(v) => { setStartTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
                 <span>–</span>
-                <TimeField value={endTime} onChange={(v) => { setEndTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
+                <TimeField value={endTime} day={date} onChange={(v) => { setEndTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
               </>
             )}
           </div>

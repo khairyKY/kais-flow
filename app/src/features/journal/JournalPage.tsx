@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import { onlineManager } from '@tanstack/react-query'
+import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
@@ -34,11 +34,6 @@ const PROMPTS = [
 ]
 
 const MOODS = ['Calm', 'Focused', 'Grateful', 'Stretched']
-
-/** The connection as the query layer sees it (the same signal that pauses a query offline). */
-function useOnline(): boolean {
-  return useSyncExternalStore((cb) => onlineManager.subscribe(cb), () => onlineManager.isOnline())
-}
 
 // Fern thresholds are Foundation's (lib/growthStages) — the local copy that used to live
 // here is gone, so Journal can never drift from Review/Library (punch item 10).

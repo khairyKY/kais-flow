@@ -130,6 +130,7 @@ export function KitGesturesDemo() {
   const actionsFor = (t: Task): Partial<TaskMenuActions> => ({
     tomorrow: () => tomorrow([t]),
     schedule: (iso) => patch([t.id], () => ({ due_at: iso, someday: false })),
+    clearDate: () => patch([t.id], () => ({ due_at: null })),
     someday: () => patch([t.id], () => ({ someday: true })),
     move: (projectId) => patch([t.id], () => ({ project_id: projectId })),
     priority: (priority) => patch([t.id], () => ({ priority })),

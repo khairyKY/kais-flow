@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { DateField } from '../../components/DatePicker'
 import { TimeField } from './TimeField'
 
 // ── Small form atoms shared by QuickCreate / TaskEditorPage / EventDetailsPanel —
@@ -36,14 +37,17 @@ const inputBase: CSSProperties = {
   width: '100%',
 }
 
-export function DateInput({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: CSSProperties }) {
-  return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputBase, ...style }} />
+// Wave M: our date picker instead of native <input type="date"> (FIX-7/J-25 — the OS chrome can't
+// take the parchment tokens). Same "YYYY-MM-DD" value contract, "" when cleared.
+export function DateInput({ value, onChange, style, title }: { value: string; onChange: (v: string) => void; style?: CSSProperties; title?: string }) {
+  return <DateField value={value} onChange={onChange} title={title} style={{ ...inputBase, ...style }} />
 }
 
 // C5 (2026-07-18 audit): themed TimeField instead of native <input type="time"> —
 // the OS picker chrome ignored the parchment theme. Same "HH:mm" value contract.
-export function TimeInput({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: CSSProperties }) {
-  return <TimeField value={value} onChange={onChange} style={{ ...inputBase, ...style }} />
+// `day` feeds the phone sheet's free slots.
+export function TimeInput({ value, onChange, style, day }: { value: string; onChange: (v: string) => void; style?: CSSProperties; day?: string }) {
+  return <TimeField value={value} onChange={onChange} day={day} style={{ ...inputBase, ...style }} />
 }
 
 // ── Segmented control — Editor .seg/.on. Generic over any option value. ──

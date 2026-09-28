@@ -50,6 +50,8 @@ export interface BottomSheetProps {
   detent?: SheetDetent
   /** Header title (Source Serif 20). At full height the header gains ✕. */
   title?: ReactNode
+  /** Pinned under the scrolling body (§3 footer: 16 side padding, 12 top, 28 bottom, dashed top rule). */
+  footer?: (close: () => void) => ReactNode
   children: (close: () => void) => ReactNode
 }
 
@@ -122,7 +124,7 @@ const CSS = `
   }
 `
 
-export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title, children }: BottomSheetProps) {
+export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title, footer, children }: BottomSheetProps) {
   const reduced = usePrefersReducedMotion()
   const titleId = useId()
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -304,11 +306,16 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
             minHeight: 0,
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            padding: `${header ? 4 : handleGap}px 20px calc(22px + env(safe-area-inset-bottom))`,
+            padding: `${header ? 4 : handleGap}px 20px ${footer ? '8px' : 'calc(22px + env(safe-area-inset-bottom))'}`,
           }}
         >
           {body}
         </div>
+        {footer && (
+          <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)' }}>
+            {footer(requestClose)}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

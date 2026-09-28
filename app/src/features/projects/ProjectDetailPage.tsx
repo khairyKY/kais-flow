@@ -50,6 +50,7 @@ import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { ConfirmCard } from './ConfirmCard'
 import { useMotionEnabled } from '../../lib/motion'
+import { DateField } from '../../components/DatePicker'
 import './xfx.css'
 
 // Local query hook to retrieve activity log for a specific project/area
@@ -777,12 +778,13 @@ export function ProjectDetailPage() {
                     placeholder="1h30m"
                     style={{ width: 75, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', textAlign: 'center', outline: 'none' }}
                   />
-                  <input
-                    type="date"
+                  <DateField
                     value={workDate}
                     max={localDateKey(new Date())}
-                    onChange={(e) => { if (e.target.value && e.target.value <= localDateKey(new Date())) setWorkDate(e.target.value) }}
-                    aria-label="Date this work happened"
+                    clearable={false}
+                    onChange={(v) => { if (v && v <= localDateKey(new Date())) setWorkDate(v) }}
+                    title="Worked on"
+                    ariaLabel="Date this work happened"
                     style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', outline: 'none' }}
                   />
                 </>

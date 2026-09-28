@@ -1,0 +1,612 @@
+[
+  {
+    "name": "phone-day no native date/time inputs on the page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: a full-height sheet (796 at 844)",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "phone-day date: title \"Due date\" + task meta",
+    "ok": true,
+    "detail": "Due date\nCALL THE BANK ABOUT THE MORTGAGE\nToday\nMON 28\nTomor"
+  },
+  {
+    "name": "phone-day date: quick picks in MK order",
+    "ok": true,
+    "detail": "[\"Today\",\"Tomorrow\",\"This weekend\",\"Next week\",\"Someday\",\"No date\"]"
+  },
+  {
+    "name": "phone-day date: quick picks 52 tall",
+    "ok": true,
+    "detail": "52,52,52,52,52,52"
+  },
+  {
+    "name": "phone-day date: Tomorrow hint \"Tue 29… · 09:00\" + check (current value)",
+    "ok": true,
+    "detail": "Tomorrow TUE 29 · 09:00"
+  },
+  {
+    "name": "phone-day date: month header Source Serif 18",
+    "ok": true,
+    "detail": "September 2026"
+  },
+  {
+    "name": "phone-day date: prev/next 48×48",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: weekday row M T W T F S S, mono 12, h 24",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: grid is Monday-first",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "phone-day date: day cell 44 tall, 40 circle",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: today = 1.5px terra-ink ring + aria-current",
+    "ok": true,
+    "detail": "rgb(156, 81, 57) 0px 0px 0px 1.5px inset"
+  },
+  {
+    "name": "phone-day date: selected = --acc-lavender-text fill, parchment digit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: has-items dots (4px --ink-faint) on the sample days",
+    "ok": true,
+    "detail": "2026-09-03,2026-09-08,2026-09-14,2026-09-21,2026-09-29"
+  },
+  {
+    "name": "phone-day date: footer Set time (secondary) + Done (terra-ink)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: next month",
+    "ok": true,
+    "detail": "October 2026"
+  },
+  {
+    "name": "phone-day date: tap selects (no write yet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: Done → that day 09:00, sheet closed",
+    "ok": true,
+    "detail": "due: Thu 1 Oct, 09:00 · 30m"
+  },
+  {
+    "name": "phone-day date: quick pick Tomorrow commits at once → tomorrow 09:00",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 09:00 · 30m"
+  },
+  {
+    "name": "phone-day date: Someday",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date: No date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: header \"Time\" · \"Tomorrow · Tue …\"",
+    "ok": true,
+    "detail": "Time\nTOMORROW · TUE 29 SEP\nFREE ON YOUR "
+  },
+  {
+    "name": "phone-day time: free slots 09:00–09:30 · 11:00–12:00 · 14:30–16:00, 48 pills",
+    "ok": true,
+    "detail": "[\"09:00–09:30\",\"11:00–12:00\",\"14:30–16:00\"]"
+  },
+  {
+    "name": "phone-day time: the 09:00 pill is selected (--block-lavender)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: rows 48, Courier 15",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: 09:00 selected = --block-sage + check",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: opens scrolled to the value (3rd row)",
+    "ok": true,
+    "detail": "96"
+  },
+  {
+    "name": "phone-day time: busy 09:30 = --ink-faint + \"Standup\" chip, still selectable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: duration chips 15m 30m 45m 1h 1h30 2h, 30m selected",
+    "ok": true,
+    "detail": "[\"15M\",\"30M\",\"45M\",\"1H\",\"1H30\",\"2H\"]"
+  },
+  {
+    "name": "phone-day time: chips 32 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: Back → the month (sheet stays)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: tap a busy row selects it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time: Done → day + 14:30 + 45m in one pick",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 14:30 · 45m"
+  },
+  {
+    "name": "phone-day date: Back closes the sheet, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time sheet (standalone): Time + list + chips, Done only; the 45m duration drops the 30-min gap",
+    "ok": true,
+    "detail": "[\"11:00–12:00\",\"14:30–16:00\"]"
+  },
+  {
+    "name": "phone-day time sheet: Done → 11:00",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 11:00 · 45m"
+  },
+  {
+    "name": "phone-day date field: sheet \"Date\", day hints without a time, no Set time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day date field: Today → \"2026-09-28\"",
+    "ok": true,
+    "detail": "field: 2026-09-28 09:00"
+  },
+  {
+    "name": "phone-day time field is read-only on a phone (no keyboard)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time field opens the time sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day time field: Done → 10:15",
+    "ok": true,
+    "detail": "field: 2026-09-28 10:15"
+  },
+  {
+    "name": "phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day date: a popover (not a sheet), inside the viewport",
+    "ok": true,
+    "detail": "{\"x\":149,\"y\":65,\"width\":425,\"height\":719.625}"
+  },
+  {
+    "name": "desktop-day date: same content (quick picks + month grid + footer)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day keyboard: focus starts on the selected day",
+    "ok": true,
+    "detail": "2026-09-29"
+  },
+  {
+    "name": "desktop-day keyboard: → moves a day",
+    "ok": true,
+    "detail": "2026-09-30"
+  },
+  {
+    "name": "desktop-day keyboard: ↓ moves a week",
+    "ok": true,
+    "detail": "2026-10-07"
+  },
+  {
+    "name": "desktop-day keyboard: PageDown → next month",
+    "ok": true,
+    "detail": "October 2026 → November 2026"
+  },
+  {
+    "name": "desktop-day keyboard: PageUp → back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day keyboard: Enter picks → 09:00, closes",
+    "ok": true,
+    "detail": "due: Wed 7 Oct, 09:00 · 30m"
+  },
+  {
+    "name": "desktop-day Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day outside click closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day time: Set time swaps in the time panel (an empty day = one 08:00–20:00 slot)",
+    "ok": true,
+    "detail": "[\"08:00–20:00\"]"
+  },
+  {
+    "name": "desktop-day time: scrolling the list keeps the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day time: Esc → back to the month",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Esc again closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day date field: popover under the field",
+    "ok": true,
+    "detail": "54.625 vs 49.625"
+  },
+  {
+    "name": "desktop-day date field: click a day + Done",
+    "ok": true,
+    "detail": "field: 2026-09-30 09:00"
+  },
+  {
+    "name": "desktop-day time field: typed text + list (no sheet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day time field: \"4:45 pm\" → 16:45",
+    "ok": true,
+    "detail": "field: 2026-09-30 16:45"
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night no native date/time inputs on the page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: a full-height sheet (796 at 844)",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "phone-night date: title \"Due date\" + task meta",
+    "ok": true,
+    "detail": "Due date\nCALL THE BANK ABOUT THE MORTGAGE\nToday\nMON 28\nTomor"
+  },
+  {
+    "name": "phone-night date: quick picks in MK order",
+    "ok": true,
+    "detail": "[\"Today\",\"Tomorrow\",\"This weekend\",\"Next week\",\"Someday\",\"No date\"]"
+  },
+  {
+    "name": "phone-night date: quick picks 52 tall",
+    "ok": true,
+    "detail": "52,52,52,52,52,52"
+  },
+  {
+    "name": "phone-night date: Tomorrow hint \"Tue 29… · 09:00\" + check (current value)",
+    "ok": true,
+    "detail": "Tomorrow TUE 29 · 09:00"
+  },
+  {
+    "name": "phone-night date: month header Source Serif 18",
+    "ok": true,
+    "detail": "September 2026"
+  },
+  {
+    "name": "phone-night date: prev/next 48×48",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: weekday row M T W T F S S, mono 12, h 24",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: grid is Monday-first",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "phone-night date: day cell 44 tall, 40 circle",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: today = 1.5px terra-ink ring + aria-current",
+    "ok": true,
+    "detail": "rgb(226, 148, 115) 0px 0px 0px 1.5px inset"
+  },
+  {
+    "name": "phone-night date: selected = --acc-lavender-text fill, parchment digit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: has-items dots (4px --ink-faint) on the sample days",
+    "ok": true,
+    "detail": "2026-09-03,2026-09-08,2026-09-14,2026-09-21,2026-09-29"
+  },
+  {
+    "name": "phone-night date: footer Set time (secondary) + Done (terra-ink)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: next month",
+    "ok": true,
+    "detail": "October 2026"
+  },
+  {
+    "name": "phone-night date: tap selects (no write yet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: Done → that day 09:00, sheet closed",
+    "ok": true,
+    "detail": "due: Thu 1 Oct, 09:00 · 30m"
+  },
+  {
+    "name": "phone-night date: quick pick Tomorrow commits at once → tomorrow 09:00",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 09:00 · 30m"
+  },
+  {
+    "name": "phone-night date: Someday",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date: No date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: header \"Time\" · \"Tomorrow · Tue …\"",
+    "ok": true,
+    "detail": "Time\nTOMORROW · TUE 29 SEP\nFREE ON YOUR "
+  },
+  {
+    "name": "phone-night time: free slots 09:00–09:30 · 11:00–12:00 · 14:30–16:00, 48 pills",
+    "ok": true,
+    "detail": "[\"09:00–09:30\",\"11:00–12:00\",\"14:30–16:00\"]"
+  },
+  {
+    "name": "phone-night time: the 09:00 pill is selected (--block-lavender)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: rows 48, Courier 15",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: 09:00 selected = --block-sage + check",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: opens scrolled to the value (3rd row)",
+    "ok": true,
+    "detail": "96"
+  },
+  {
+    "name": "phone-night time: busy 09:30 = --ink-faint + \"Standup\" chip, still selectable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: duration chips 15m 30m 45m 1h 1h30 2h, 30m selected",
+    "ok": true,
+    "detail": "[\"15M\",\"30M\",\"45M\",\"1H\",\"1H30\",\"2H\"]"
+  },
+  {
+    "name": "phone-night time: chips 32 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: Back → the month (sheet stays)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: tap a busy row selects it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time: Done → day + 14:30 + 45m in one pick",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 14:30 · 45m"
+  },
+  {
+    "name": "phone-night date: Back closes the sheet, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time sheet (standalone): Time + list + chips, Done only; the 45m duration drops the 30-min gap",
+    "ok": true,
+    "detail": "[\"11:00–12:00\",\"14:30–16:00\"]"
+  },
+  {
+    "name": "phone-night time sheet: Done → 11:00",
+    "ok": true,
+    "detail": "due: Tue 29 Sept, 11:00 · 45m"
+  },
+  {
+    "name": "phone-night date field: sheet \"Date\", day hints without a time, no Set time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night date field: Today → \"2026-09-28\"",
+    "ok": true,
+    "detail": "field: 2026-09-28 09:00"
+  },
+  {
+    "name": "phone-night time field is read-only on a phone (no keyboard)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time field opens the time sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night time field: Done → 10:15",
+    "ok": true,
+    "detail": "field: 2026-09-28 10:15"
+  },
+  {
+    "name": "phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night date: a popover (not a sheet), inside the viewport",
+    "ok": true,
+    "detail": "{\"x\":149,\"y\":65,\"width\":425,\"height\":719.625}"
+  },
+  {
+    "name": "desktop-night date: same content (quick picks + month grid + footer)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night keyboard: focus starts on the selected day",
+    "ok": true,
+    "detail": "2026-09-29"
+  },
+  {
+    "name": "desktop-night keyboard: → moves a day",
+    "ok": true,
+    "detail": "2026-09-30"
+  },
+  {
+    "name": "desktop-night keyboard: ↓ moves a week",
+    "ok": true,
+    "detail": "2026-10-07"
+  },
+  {
+    "name": "desktop-night keyboard: PageDown → next month",
+    "ok": true,
+    "detail": "October 2026 → November 2026"
+  },
+  {
+    "name": "desktop-night keyboard: PageUp → back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night keyboard: Enter picks → 09:00, closes",
+    "ok": true,
+    "detail": "due: Wed 7 Oct, 09:00 · 30m"
+  },
+  {
+    "name": "desktop-night Esc closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night outside click closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night time: Set time swaps in the time panel (an empty day = one 08:00–20:00 slot)",
+    "ok": true,
+    "detail": "[\"08:00–20:00\"]"
+  },
+  {
+    "name": "desktop-night time: scrolling the list keeps the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night time: Esc → back to the month",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Esc again closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night date field: popover under the field",
+    "ok": true,
+    "detail": "54.625 vs 49.625"
+  },
+  {
+    "name": "desktop-night date field: click a day + Done",
+    "ok": true,
+    "detail": "field: 2026-09-30 09:00"
+  },
+  {
+    "name": "desktop-night time field: typed text + list (no sheet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night time field: \"4:45 pm\" → 16:45",
+    "ok": true,
+    "detail": "field: 2026-09-30 16:45"
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -7,6 +7,7 @@ import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
+import { TimeField } from '../calendar/TimeField'
 import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeMode } from './newRoutine'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
@@ -234,11 +235,10 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>a gentle push notification</div>
         </div>
         {reminderOn && (
-          <input
-            type="time"
+          <TimeField
             value={reminderTime}
-            onChange={(e) => setReminderTime(e.target.value)}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
+            onChange={setReminderTime}
+            style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
           />
         )}
         <span

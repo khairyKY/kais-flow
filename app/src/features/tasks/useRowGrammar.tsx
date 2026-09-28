@@ -15,6 +15,7 @@ function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
     schedule: (iso) => rescheduleDue(task, iso),
+    clearDate: () => rescheduleDue(task, null),
     someday: () => setSomeday(task, true),
     move: (projectId, domainId) => setProject(task, projectId, domainId),
     priority: (p) => setPriority(task, p),
