@@ -129,6 +129,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               else if (e.key === 'Enter' && ordered[activeIndex]) { e.preventDefault(); goTo(ordered[activeIndex]) }
             }}
             placeholder="Search the garden…"
+            enterKeyHint="go"
             style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 15, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
           />
         </div>

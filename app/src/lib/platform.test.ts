@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { authLinkOrigin, isNativeShell, rgbToHex, syncShellChrome } from './platform'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Capacitor } from '@capacitor/core'
+import { authLinkOrigin, isCapacitorShell, isNativeShell, rgbToHex, syncShellChrome } from './platform'
+
+afterEach(() => vi.restoreAllMocks())
 
 describe('isNativeShell', () => {
   it('is true when the Tauri shell has injected its internals', () => {
@@ -10,6 +13,12 @@ describe('isNativeShell', () => {
   })
   it('is false with no window at all (tests, SSR)', () => {
     expect(isNativeShell(undefined)).toBe(false)
+  })
+  it('is true inside the Capacitor shell (the Android APK)', () => {
+    expect(isCapacitorShell()).toBe(false)
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true)
+    expect(isCapacitorShell()).toBe(true)
+    expect(isNativeShell({})).toBe(true)
   })
 })
 

@@ -401,6 +401,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           </span>
         )
       }
+      // M1b: on touch, a 400ms hold picks up a block or starts a slot selection — the DS long-press
+      // (DS-CHANGELOG §3). FullCalendar's 1000ms default read as "nothing happens".
+      longPressDelay={400}
+      eventLongPressDelay={400}
+      selectLongPressDelay={400}
       selectable
       selectMirror
       // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking

@@ -4,17 +4,32 @@ import { useEffect, useRef } from 'react'
  * One Escape key = one overlay closes: whichever registered last (topmost). Replaces the
  * five competing `document.addEventListener('keydown', ...)` Escape handlers that used to
  * live in CommandBar/SearchOverlay/ContextMenu/SnoozeMenu and would all fire at once.
+ * M1b: Android Back lands here too (lib/androidBack.ts) — sheets, menus, popovers, pickers,
+ * rituals and selection mode all register, so Back closes them in the reverse of opening order.
  */
 const stack: (() => void)[] = []
 
+/** Registers `close` as the topmost overlay. Returns the unregister (safe to call in any order). */
+export function pushOverlay(close: () => void): () => void {
+  stack.push(close)
+  return () => {
+    const i = stack.lastIndexOf(close)
+    if (i !== -1) stack.splice(i, 1)
+  }
+}
+
+/** Closes the topmost overlay; false when none is open. The overlay leaves the stack itself,
+ * when it unmounts or goes inactive — an overlay that refuses to close stays on top. */
+export function closeTopOverlay(): boolean {
+  const top = stack[stack.length - 1]
+  if (!top) return false
+  top()
+  return true
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return
-    const top = stack[stack.length - 1]
-    if (top) {
-      e.preventDefault()
-      top()
-    }
+    if (e.key === 'Escape' && closeTopOverlay()) e.preventDefault()
   })
 }
 
@@ -28,12 +43,7 @@ export function useEscapeStack(active: boolean, onClose: () => void): void {
   closeRef.current = onClose
   useEffect(() => {
     if (!active) return
-    const entry = () => closeRef.current()
-    stack.push(entry)
-    return () => {
-      const i = stack.lastIndexOf(entry)
-      if (i !== -1) stack.splice(i, 1)
-    }
+    return pushOverlay(() => closeRef.current())
   }, [active])
 }
 

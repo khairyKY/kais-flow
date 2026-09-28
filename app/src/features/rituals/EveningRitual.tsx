@@ -9,8 +9,9 @@ import { playSound, closeTheGarden } from '../../lib/sounds'
 import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { useEscapeStack } from '../../lib/overlayStack'
 import { logRitualFinished, logRitualStep, setSeed, useSeedsFor } from './api'
-import { MAX_SEEDS, seedTargetDate } from './loopDay'
+import { MAX_SEEDS, loopDayKey, seedTargetDate } from './loopDay'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
 import { useMotionEnabled } from '../../lib/motion'
 import { KeyChip } from '../../components/kit'
@@ -74,14 +75,20 @@ function BeatHeader({ label, onSkip }: { label: string; onSkip: () => void }) {
   )
 }
 
+// M1b: the night's line outlives the ritual (Back / skip unmount it) until it lands in the journal —
+// that night only (in the Android app the page can stay alive for days).
+let lineDraft = { day: '', text: '' }
+
 export function EveningRitual({ onClose }: { onClose: () => void }) {
+  useEscapeStack(true, onClose) // M1b: Esc / Android Back = the header's "skip"
   const [beatIndex, setBeatIndex] = useState(0)
   const beat = BEATS[beatIndex]
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
-  const [line, setLine] = useState('')
+  const [line, setLine] = useState(() => (lineDraft.day === loopDayKey(new Date()) ? lineDraft.text : ''))
+  lineDraft = { day: loopDayKey(new Date()), text: line }
   // Loop B: tomorrow's seeds are activity rows (api.ts setSeed), read back here, so re-opening
   // the ritual — or opening it on another device — shows what was already planted.
   const seeds = useSeedsFor(seedTargetDate(new Date()))
@@ -123,6 +130,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       // offline) and journal words must not be — the line itself lives in the journal entry above.
       logActivity('journal.line_added', 'ritual', todayKey, { date: todayKey })
     }
+    setLine('')
     next()
   }
 
@@ -407,6 +415,7 @@ function LineBeat({ line, onChange, onSkip, onNext }: { line: string; onChange: 
             autoFocus
             value={line}
             onChange={(e) => onChange(e.target.value)}
+            enterKeyHint="next"
             onKeyDown={(e) => {
               if (e.key === 'Enter') onNext()
             }}

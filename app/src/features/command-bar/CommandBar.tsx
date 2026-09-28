@@ -190,6 +190,7 @@ export function CommandBar() {
               }
             }}
             placeholder="Send the quote tomorrow 3pm #shaheen"
+            enterKeyHint="done"
             style={{
               flex: 1,
               fontFamily: 'var(--font-ui)',

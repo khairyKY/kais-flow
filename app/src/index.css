@@ -64,6 +64,50 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Touch feel (M1b — the Android app, and phone browsers): no grey flash on tap, no double-tap-zoom
+   wait, no page bounce or pull-to-refresh; a list scrolled to its end doesn't drag the page behind
+   it. App chrome (navigation, tab bar, buttons) can't be text-selected or long-press-called-out;
+   content text and inputs still can. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+  overscroll-behavior: none;
+}
+/* Vertical scrollers only: `contain` on a horizontal strip can swallow the page's vertical swipe. */
+.overflow-y-auto,
+[style*='overflow-y: auto'] {
+  overscroll-behavior-y: contain;
+}
+button,
+a,
+summary,
+[role='button'],
+[role='tab'],
+[role='menuitem'] {
+  touch-action: manipulation;
+}
+nav,
+button,
+[role='button'],
+[role='tab'],
+[role='menuitem'],
+.app-sidebar,
+.app-tabbar,
+.app-topbar {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* WebKit won't edit a field inside a user-select: none ancestor. */
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Paper grain overlay — felt, not seen */
 body::before {
   content: '';

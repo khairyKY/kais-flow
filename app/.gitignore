@@ -10,6 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Capacitor platform projects: CI generates them (`cap add android`); overrides live in native/
+/android
+/ios
 *.local
 .env
 !.env.example
