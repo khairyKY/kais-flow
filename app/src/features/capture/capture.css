@@ -111,3 +111,161 @@
   border-radius: 20px;
   z-index: 60;
 }
+
+/* ── Tab bar capture button — MK Capture.dc.html / DS-CHANGELOG §3 "Capture button" ──
+   56 circle, terra-ink, mic 24 on-terra; pressed 0.94; held = grows to 72 (scale 72/56) with a
+   100 halo (11px spread × the scale ≈ 14). The hold transform is inline (it follows the finger). */
+.kf-capture {
+  width: var(--capture-size);
+  height: var(--capture-size);
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+  box-shadow: var(--shadow-cta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* The hold owns the pointer: no page pan, no text selection, no iOS callout menu. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+button.kf-capture.kf-press {
+  transition: transform var(--dur-press) var(--ease-standard), box-shadow var(--dur-press) var(--ease-standard);
+}
+.kf-capture.kf-press:not(:disabled):active {
+  transform: scale(0.94);
+}
+.kf-capture[data-phase='recording'] {
+  box-shadow: 0 0 0 11px var(--block-terra), var(--shadow-cta);
+}
+.kf-capture[data-phase='recording']::before {
+  opacity: 0 !important;
+}
+
+/* The recording pill (left of the button), the lock rail (above it) and the hands-free bar
+   (over the tab bar). Positions are measured from the tab bar's top edge. */
+.kf-rec-pill,
+.kf-rec-rail {
+  position: fixed;
+  z-index: 39; /* under the tab bar (40), so the held button rides over the rail */
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-panel);
+}
+.kf-rec-pill {
+  left: var(--sp-3);
+  right: calc(50% + 34px);
+  bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + 20px);
+  height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--sp-4);
+}
+.kf-rec-rail {
+  left: 50%;
+  margin-left: calc(var(--touch-min) / -2);
+  bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + var(--sp-4));
+  width: var(--touch-min);
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  color: var(--ink-faint);
+}
+.kf-rec-lock {
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard);
+}
+.kf-rec-lock[data-near] {
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+}
+.kf-rec-locked {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41; /* over the tab bar it replaces */
+  padding-bottom: var(--tabbar-inset);
+  background: var(--paper-parchment);
+  box-shadow: var(--shadow-tabbar);
+}
+.kf-rec-locked-row {
+  height: var(--tabbar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3) 0 var(--sp-1);
+}
+.kf-rec-dot {
+  width: var(--sp-2);
+  height: var(--sp-2);
+  flex: none;
+  border-radius: 50%;
+  background: var(--acc-terra-ink);
+}
+.kf-rec-time {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-s);
+  letter-spacing: 0.04em;
+  color: var(--ink-body);
+  font-variant-numeric: tabular-nums;
+}
+/* Newest bar on the right; older ones scroll off the left edge. */
+.kf-rec-wave {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  overflow: hidden;
+}
+.kf-rec-wave > span {
+  width: 3px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--acc-terra-ink);
+}
+.kf-rec-cancel {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  color: var(--acc-terra-ink);
+  border-radius: 50%;
+}
+.kf-rec-send {
+  width: var(--capture-size);
+  height: var(--capture-size);
+  border-radius: 50%;
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+  box-shadow: var(--shadow-cta);
+}
+.kf-rec-cancel,
+.kf-rec-send {
+  flex: none;
+  padding: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.kf-rec-cancel { background: none; }

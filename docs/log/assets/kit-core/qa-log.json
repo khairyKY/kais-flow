@@ -1,0 +1,215 @@
+[
+ [
+  "metrics@390",
+  {
+   "cta": [
+    159,
+    48
+   ],
+   "ctaBg": "rgb(156, 81, 57)",
+   "ctaFont": "15px",
+   "chip": [
+    64,
+    32
+   ],
+   "chipFont": "12px",
+   "checkbox": [
+    22,
+    22
+   ],
+   "subtask": [
+    18,
+    18
+   ],
+   "star": [
+    48,
+    48
+   ],
+   "tabbar": [
+    390,
+    64
+   ],
+   "tabbarDisplay": "flex",
+   "capture": [
+    56,
+    56
+   ],
+   "indicator": [
+    56,
+    32
+   ],
+   "badge": [
+    20,
+    20
+   ],
+   "label": [
+    "\"Inter Tight\"",
+    "12px",
+    "16px",
+    "600",
+    "none"
+   ]
+  }
+ ],
+ [
+  "pageerrors@390",
+  []
+ ],
+ [
+  "metrics@1280",
+  {
+   "cta": [
+    167,
+    49
+   ],
+   "ctaBg": "rgb(156, 81, 57)",
+   "ctaFont": "13px",
+   "chip": [
+    66,
+    31
+   ],
+   "chipFont": "10px",
+   "checkbox": [
+    21,
+    21
+   ],
+   "subtask": [
+    21,
+    21
+   ],
+   "star": [
+    60,
+    60
+   ],
+   "tabbar": [
+    0,
+    0
+   ],
+   "tabbarDisplay": "none",
+   "capture": [
+    0,
+    0
+   ],
+   "indicator": [
+    70,
+    40
+   ],
+   "badge": [
+    25,
+    25
+   ],
+   "label": [
+    "\"Inter Tight\"",
+    "12px",
+    "16px",
+    "600",
+    "none"
+   ]
+  }
+ ],
+ [
+  "pageerrors@1280",
+  []
+ ],
+ [
+  "tap: command bar open",
+  true
+ ],
+ [
+  "tap: recording UI present",
+  0
+ ],
+ [
+  "tap: mic tracks live",
+  "n/a"
+ ],
+ [
+  "hold: pill visible",
+  1
+ ],
+ [
+  "hold: timer",
+  "0:00"
+ ],
+ [
+  "hold: capture transform",
+  "matrix(1.28571, 0, 0, 1.28571, 0, 0)"
+ ],
+ [
+  "lock: locked bar visible after release",
+  1
+ ],
+ [
+  "lock: still recording (timer)",
+  "0:03"
+ ],
+ [
+  "cancel: toast",
+  "Recording discarded\nUNDO"
+ ],
+ [
+  "undo: sheet phase (take restored + sent)",
+  "kept"
+ ],
+ [
+  "undo: sheet status",
+  "NOT TRANSCRIBED YET \u00b7 0:04"
+ ],
+ [
+  "slide-left: pill gone",
+  0
+ ],
+ [
+  "slide-left: toast",
+  "Recording discarded\nUNDO"
+ ],
+ [
+  "send: sheet phase (no backend signed-out)",
+  "kept"
+ ],
+ [
+  "errors",
+  [
+   "console: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+   "console: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+   "console: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+   "console: Failed to load resource: net::ERR_CONNECTION_REFUSED"
+  ]
+ ],
+ [
+  "keyboard Enter on capture: command bar open",
+  true
+ ],
+ [
+  "keyboard Enter: recording UI",
+  0
+ ],
+ [
+  "focus-visible box-shadow",
+  "rgb(251, 246, 233) 0px 0px 0px 2px, rgb(77, 106, 117) 0px 0px 0px 4px"
+ ],
+ [
+  "re-tap: scrollTop after",
+  0
+ ],
+ [
+  "re-tap: url unchanged",
+  "http://localhost:5201/design-system"
+ ],
+ [
+  "tab: history.length before/after (replace)",
+  [
+   2,
+   2,
+   "http://localhost:5201/sign-in"
+  ]
+ ],
+ [
+  "denied: toast",
+  "Mic blocked \u2014 allow it in site settings\nRETRY"
+ ],
+ [
+  "denied: recording UI after release",
+  0
+ ]
+]

@@ -1,22 +1,15 @@
 import { Suspense, lazy, useState } from 'react'
 import { Button } from '../../components/kit'
-// Punch 5 (bundle): the button sits in the shell (tab bar + Today header) but the SHEET —
+import { Icon } from '../../components/Icon'
+// Punch 5 (bundle): the button sits in page headers (Today, Tasks, Inbox) but the SHEET —
 // and the whole capture/zod parse chain behind it — is only needed once you tap the mic.
+// (The phone tab bar's capture button is CaptureButton: tap = type, hold = talk.)
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
 // Pixel contract: Today.dc.html 1a header CTA (line 132) — mic glyph + pill, kit Button "cta".
+// The glyph is the kf mic in currentColor, so it takes the CTA's --on-terra label ink.
 
-function MicIcon() {
-  return (
-    <svg width="15" height="16" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
-      <rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
+export function VoiceCaptureButton() {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
@@ -24,16 +17,11 @@ export function VoiceCaptureButton({ iconOnly }: { iconOnly?: boolean } = {}) {
       <Button
         type="button"
         variant="cta"
-        icon={<MicIcon />}
-        className={iconOnly ? 'kf-btn kf-hit' : undefined}
+        icon={<Icon name="mic" size={16} />}
         onClick={() => setSheetOpen(true)}
         title="Voice capture"
-        style={{
-          cursor: 'pointer',
-          ...(iconOnly ? { width: 38, height: 38, padding: 0, justifyContent: 'center' } : null),
-        }}
       >
-        {!iconOnly && 'Voice capture'}
+        Voice capture
       </Button>
 
       {sheetOpen && (

@@ -1,0 +1,297 @@
+/* Kit atoms — design-export/DS-CHANGELOG.md §3 (2026-09-28 refresh) + DS Kit.dc.html.
+   Phone sizes live under max-width 767px; desktop keeps its Jul 2026 sizes (§4).
+   Interaction rules for every atom: no hover dependence · pressed = --pressed-overlay +
+   scale(--press-scale) over --dur-press · focus-visible = --focus-ring · disabled = 0.42.
+   Callers' inline `style` still wins over all of this (backward compatible), which is why the
+   ring uses !important: it must show even over an inline box-shadow. */
+
+.kf-press {
+  position: relative;
+  isolation: isolate; /* the overlay below sits over the fill but under the label */
+  -webkit-tap-highlight-color: transparent;
+}
+/* `button.` out-ranks AppLayout's `.kf-btn { transition }`, which renders later. */
+button.kf-press {
+  transition: transform var(--dur-press) var(--ease-standard);
+}
+.kf-press::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--pressed-overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-press) var(--ease-standard);
+}
+.kf-press:not(:disabled):active {
+  transform: scale(var(--press-scale));
+}
+.kf-press:not(:disabled):active::before {
+  opacity: 1;
+}
+.kf-press:focus-visible,
+.kf-checkbox:focus-visible,
+.kf-star:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring) !important;
+}
+.kf-press:disabled,
+.kf-checkbox:disabled,
+.kf-star:disabled,
+.kf-chip[aria-disabled='true'] {
+  opacity: 0.42;
+  cursor: default;
+}
+.kf-press[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* Ring spinner — Button loading 16, chip loading 14. */
+.kf-spinner {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: kfSpin var(--dur-grow) linear infinite; /* no spinner token; one turn per 800ms */
+}
+.kf-spinner--sm {
+  width: 14px;
+  height: 14px;
+}
+@keyframes kfSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Button ── desktop values are the Jul 2026 inline ones, moved here so the phone block can
+   resize them. */
+.kf-button {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: var(--radius-pill);
+}
+.kf-button--cta {
+  border: none;
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+  padding: 10px 17px 10px 15px;
+  box-shadow: var(--shadow-cta);
+}
+.kf-button--secondary {
+  border: 1px solid var(--line-control);
+  background-color: var(--paper-bone);
+  color: var(--ink-body);
+  padding: 9px 16px;
+  box-shadow: var(--shadow-crisp);
+}
+.kf-button--secondary[aria-pressed='true'] {
+  background-color: var(--block-sage);
+  border-color: var(--acc-sage-text);
+  color: var(--acc-sage-text);
+}
+.kf-button--ghost {
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  padding: 9px 6px;
+}
+.kf-button:disabled {
+  box-shadow: none;
+}
+
+/* ── Chip ── desktop keeps its inline-text box; a glyph (icon / check / spinner) needs a flex box. */
+.kf-chip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.kf-chip--bordered {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
+  border-radius: var(--radius-sharp);
+}
+.kf-chip--glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kf-chip--selected {
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+button.kf-chip {
+  cursor: pointer;
+}
+
+/* ── Checkbox ── the box is inline-sized by callers; pressed = 48 halo + box 0.9. The halo is a
+   spread shadow (not a pseudo) so it stays behind the box's fill; 16px spread × 0.9 ≈ 48. */
+.kf-checkbox {
+  position: relative; /* anchors the phone hit area (::after) */
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press) var(--ease-standard), box-shadow var(--dur-press) var(--ease-standard);
+}
+.kf-checkbox:not(:disabled):active {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 16px var(--pressed-overlay) !important;
+}
+
+/* ── Star (Top 3) ── 22 glyph in a 48 hit; pressed = 48 overlay circle + glyph 0.9. */
+.kf-star {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--star-empty);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-press) var(--ease-standard);
+}
+.kf-star[aria-pressed='true'] {
+  color: var(--star-on);
+}
+.kf-star > svg {
+  transition: transform var(--dur-press) var(--ease-standard);
+}
+.kf-star:not(:disabled):active {
+  background-color: var(--pressed-overlay);
+}
+.kf-star:not(:disabled):active > svg {
+  transform: scale(0.9);
+}
+
+/* ── Tab bar (MobileTabBar) ── MK Tab Bar.dc.html: item ≈72×64, indicator 56×32, icon 24,
+   label Inter 12/16, badge h20. The indicator's tint is inline (per surface). */
+.kf-tab {
+  flex: 1;
+  min-width: 0;
+  height: var(--tabbar-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--ink-faint);
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-tab[data-active] {
+  color: var(--ink-body);
+}
+.kf-tab-ind {
+  position: relative;
+  width: 56px;
+  height: var(--sp-8);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--dur-press) var(--ease-standard);
+}
+.kf-tab:active .kf-tab-ind {
+  transform: scale(0.95);
+  background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay));
+}
+.kf-tab:focus-visible {
+  outline: none;
+}
+.kf-tab:focus-visible .kf-tab-ind {
+  box-shadow: var(--focus-ring);
+}
+.kf-tab-label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-tab-label);
+  line-height: 16px;
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+.kf-tab[data-active] .kf-tab-label {
+  font-weight: var(--fw-semibold);
+}
+.kf-tab-badge {
+  position: absolute;
+  top: -3px;
+  left: 30px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-badge);
+  font-weight: var(--fw-semibold);
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--paper-parchment);
+}
+
+@media (max-width: 767px) {
+  .kf-button {
+    min-height: var(--touch-min);
+    justify-content: center;
+    gap: var(--sp-2);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-medium);
+  }
+  .kf-button--cta { padding: 0 22px; }
+  .kf-button--secondary { padding: 0 18px; box-shadow: none; }
+  .kf-button--ghost { padding: 0 14px; }
+
+  .kf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--sp-8);
+    box-sizing: border-box;
+    padding: 0 var(--sp-3);
+  }
+  .kf-chip--bordered {
+    font-size: var(--fs-meta);
+    letter-spacing: 0.06em;
+    padding: 0 10px;
+  }
+
+  /* 22 × 22 radius 6 (subtask 18) whatever size the call site drew for desktop; 48 hit. */
+  .kf-checkbox {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+  }
+  .kf-checkbox[data-subtask] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .kf-checkbox::after {
+    content: '';
+    position: absolute;
+    inset: -13px;
+  }
+  .kf-checkbox[data-subtask]::after {
+    inset: -15px;
+  }
+}
