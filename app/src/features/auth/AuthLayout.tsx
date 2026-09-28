@@ -3,6 +3,7 @@ import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ErrorCard } from '../../components/States'
+import { ToastHost } from '../../components/ToastHost'
 import { useToastStore } from '../../lib/toastStore'
 import { calmAuthLine, inboxUrl, passwordRule, type AuthProblem } from './authLogic'
 import { requestReset } from './recovery'
@@ -24,13 +25,15 @@ export function FirstRunPage({ onSubmit, formRef, left, right, wide, children }:
       <form ref={formRef} className={`fr-col${wide ? ' fr-col--wide' : ''}`} onSubmit={onSubmit}>
         {children}
       </form>
+      {/* Outside the app shell, so these pages carry their own (Resend's "Sent again"). */}
+      <ToastHost />
     </div>
   )
 }
 
 /** One of the DS illustrations at its drawn height (desktop draws the auth ones 8px taller). */
-export function Plant({ src, h = 72 }: { src: string; h?: number }) {
-  return <img className="fr-art" src={src} alt="" style={{ '--art-h': `${h}px` } as CSSProperties} />
+export function Plant({ src, h = 72, envelope }: { src: string; h?: number; envelope?: boolean }) {
+  return <img className={`fr-art${envelope ? ' fr-art--envelope' : ''}`} src={src} alt="" style={{ '--art-h': `${h}px` } as CSSProperties} />
 }
 
 /** The sealed envelope — reset link sent (9k-1). */

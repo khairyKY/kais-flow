@@ -89,11 +89,15 @@
   width: auto;
   filter: var(--shadow-drop-sm);
 }
+/* The envelopes carry a 6px spacer under them in the drawing (9k-1, 9k-3): 6 + one more 10 gap. */
+.fr-envelope,
+.fr-art--envelope {
+  margin-bottom: 16px;
+}
 .fr-envelope {
   position: relative;
   width: 176px;
   height: 104px;
-  margin-bottom: 6px;
 }
 .fr-envelope img {
   position: absolute;

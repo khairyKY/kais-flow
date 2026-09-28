@@ -118,7 +118,7 @@ export function ResetPage() {
   const expired = view === 'expired'
   return (
     <FirstRunPage onSubmit={(e) => e.preventDefault()}>
-      <Hero art={<Plant src="/ds/assets/envelope/back.png" h={104} />} title={expired ? 'This reset link has expired' : 'Reset links open here'}>
+      <Hero art={<Plant src="/ds/assets/envelope/back.png" h={104} envelope />} title={expired ? 'This reset link has expired' : 'Reset links open here'}>
         {expired ? 'Reset links last an hour and work once.' : 'Ask for a link and open it from your email.'}
         {!session && email ? ` We'll send a new one to ${email}.` : ''}
       </Hero>
