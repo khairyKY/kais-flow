@@ -8,6 +8,9 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   // Origin https://localhost: a secure context (mic, crypto.randomUUID), on the functions' CORS list.
   server: { androidScheme: 'https' },
+  // SystemBars pads the WebView clear of the system bars and keyboard. `native` = the same padding
+  // without injecting --safe-area-inset-* variables, which the app doesn't use.
+  plugins: { SystemBars: { insetsHandling: 'native' } },
 }
 
 export default config

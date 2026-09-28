@@ -189,6 +189,7 @@ jobs:
           PY
           cat shots/webview-top.txt || true
           cat shots/back.txt || true
+          echo '----- activity lifecycle'; cat shots/lifecycle.txt || true
           echo '----- window insets'; cat shots/window.txt || true
           echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
           echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true

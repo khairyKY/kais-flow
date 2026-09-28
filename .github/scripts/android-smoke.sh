@@ -14,7 +14,7 @@ adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml shots/ui.xm
 # the bar — and by no more than one bar, or the insets were applied twice.
 webview_top="$(grep -o 'class="android.webkit.WebView"[^>]*bounds="\[[0-9]*,[0-9]*\]' shots/ui.xml | grep -o '\[[0-9]*,[0-9]*\]$' | tr -d '[]' | cut -d, -f2 | sort -n | head -1)"
 adb shell dumpsys window windows | grep -iE 'mCurrentFocus|statusBars|navigationBars|InsetsSource' | head -30 > shots/window.txt
-bar="$(grep -o 'type=statusBars frame=\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' shots/window.txt | head -1 | grep -o '[0-9]*\]$' | tr -d ']')"
+bar="$(grep -o 'type=statusBars[^}]*insetsSize=Insets{left=[0-9]*, top=[0-9]*' shots/window.txt | head -1 | grep -o '[0-9]*$')"
 echo "WebView top edge: ${webview_top:-unknown}px, status bar: ${bar:-unknown}px" | tee shots/webview-top.txt
 
 # Android Back on the sign-in page (no overlay, first history entry) must leave the app: the JS
@@ -33,6 +33,9 @@ adb shell cmd uimode night yes
 sleep 8
 adb exec-out screencap -p > shots/2-launch-night.png
 adb logcat -d | grep -iE 'chromium|console|capacitor|webview|kaisflow|AndroidRuntime' | tail -300 > shots/logcat.txt
+# Activity lifecycle: a destroy/relaunch during the cold start means the WebView loaded twice.
+{ adb logcat -d -b events | grep -E 'wm_(on_create_called|on_destroy_called|relaunch|relaunch_resume_activity)|wm_destroy_activity' | grep -i kaisflow
+  adb logcat -d | grep -iE 'config changes|relaunch|onConfigurationChanged' | grep -i kaisflow; } > shots/lifecycle.txt 2>&1
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
