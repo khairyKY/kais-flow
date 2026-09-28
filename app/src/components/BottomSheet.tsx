@@ -48,10 +48,12 @@ export interface BottomSheetProps {
    * toggles full ↔ rest (a 'full' sheet rests at full and toggles down to medium).
    */
   detent?: SheetDetent
-  /** Header title (Source Serif 20). At full height the header gains ✕. */
+  /** Header title (Source Serif 20). At full height the header gains ✕ — with no title, the ✕ sits
+   * in a 48px handle row instead (Task Sheet 4b), so the content's first row looks the same at both heights. */
   title?: ReactNode
-  /** Pinned under the scrolling body (§3 footer: 16 side padding, 12 top, 28 bottom, dashed top rule). */
-  footer?: (close: () => void) => ReactNode
+  /** Pinned under the scrolling body (§3 footer: 16 side padding, 12 top, 28 bottom, dashed top rule).
+   * Return null to hide it — e.g. while the keyboard is up (Task Sheet 4c). */
+  footer?: (close: () => void, keyboardUp: boolean) => ReactNode
   children: (close: () => void) => ReactNode
 }
 
@@ -212,8 +214,20 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
   const travel = !reduced
   const dragging = dragH > 0
   const shownY = Math.max(0, dragY)
-  const height = atFull ? 'var(--sheet-h-full)' : detent === 'content' ? undefined : 'var(--sheet-h-medium)'
-  const header = title != null || atFull
+  // A medium sheet goes full while the keyboard is up (Task Sheet 4c): 60% of what's left above the
+  // IME would hide the field and its neighbours.
+  const full = atFull || (kb > 0 && detent === 'medium')
+  const height = full ? 'var(--sheet-h-full)' : detent === 'content' ? undefined : 'var(--sheet-h-medium)'
+  const header = title != null
+  const xInHandle = full && !header
+  const foot = footer?.(requestClose, kb > 0)
+  const closeX = (
+    <button type="button" className="kf-bs-icon" aria-label="Close" onClick={requestClose}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    </button>
+  )
 
   return createPortal(
     // Clicks and presses stop here: React bubbles portal events up the *component* tree, so a
@@ -269,11 +283,12 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
               : 'transform var(--dur-sheet-exit) var(--ease-standard), height var(--dur-sheet-enter) var(--ease-emphasized-decel)',
         }}
       >
-        <div style={{ position: 'relative', height: 24, flex: 'none' }}>
+        <div style={{ position: 'relative', height: xInHandle ? 48 : 24, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+          {xInHandle && closeX}
           <button
             type="button"
             className="kf-bs-handle"
-            aria-label={atFull ? 'Shrink sheet' : 'Expand sheet'}
+            aria-label={full ? 'Shrink sheet' : 'Expand sheet'}
             onPointerDown={onHandleDown}
             onPointerMove={onHandleMove}
             onPointerUp={onHandleUp}
@@ -287,14 +302,8 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
           </button>
         </div>
         {header && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 56, padding: atFull ? '0 4px' : '0 4px 0 20px', flex: 'none' }}>
-            {atFull && (
-              <button type="button" className="kf-bs-icon" aria-label="Close" onClick={requestClose}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-                  <path d="M6 6l12 12M18 6 6 18" />
-                </svg>
-              </button>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 56, padding: full ? '0 4px' : '0 4px 0 20px', flex: 'none' }}>
+            {full && closeX}
             <div id={titleId} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, lineHeight: 1.2, color: 'var(--ink-body)' }}>
               {title}
             </div>
@@ -306,14 +315,14 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
             minHeight: 0,
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            padding: `${header ? 4 : handleGap}px 20px ${footer ? '8px' : 'calc(22px + env(safe-area-inset-bottom))'}`,
+            padding: `${header ? 4 : handleGap}px 20px ${foot != null ? '8px' : 'calc(22px + env(safe-area-inset-bottom))'}`,
           }}
         >
           {body}
         </div>
-        {footer && (
+        {foot != null && (
           <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)' }}>
-            {footer(requestClose)}
+            {foot}
           </div>
         )}
       </div>
