@@ -1,11 +1,13 @@
 name: Android APK
 
-# M1 (docs/phases/M1-android.md): the real Android app — the same dist/ as the web app inside a
-# Tauri v2 shell, built on GitHub's runners (Android SDK + NDK are preinstalled; nothing on Kai's
-# laptop). Builds on the mobile branches for review; a release (release.yml) gets the APK attached.
+# M1b (docs/phases/M1-android.md): the real Android app — the same dist/ as the web app inside a
+# Capacitor shell around Android's system WebView, built with Gradle on GitHub's runners (the
+# Android SDK is preinstalled; nothing on Kai's laptop). The android/ project is generated fresh
+# each build (`cap add android`) and app/native/android/ is copied over it. Builds on the mobile
+# branches for review; a release (release.yml) gets the APK attached.
 on:
   push:
-    branches: ['claude/mobile-*']
+    branches: ['claude/mobile-*', 'claude/native-shell']
     paths: ['app/**', '.github/workflows/android.yml', '.github/scripts/**']
   # The Release pipeline (release.yml) calls this with the version tag; the build is stamped with
   # it and attached to that GitHub Release.
@@ -44,26 +46,13 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
+      # Capacitor 8's Android library compiles for Java 21.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,x86_64-linux-android
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: app/src-tauri -> target
+          java-version: 21
 
       - run: npm ci
-
-      - name: Stamp the release version
-        if: inputs.tag != ''
-        env:
-          TAG: ${{ inputs.tag }}
-        run: node -e "const f='src-tauri/tauri.conf.json',c=require('./'+f);c.version=process.env.TAG.replace(/^v/,'');require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
 
       - name: Supabase public config
         env:
@@ -71,37 +60,47 @@ jobs:
           VARS_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: python3 ../.github/scripts/supabase-public-config.py
 
+      - name: Build the web app
+        run: npm run build
+
       - name: Generate the Android project
         run: |
           set -euo pipefail
-          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
-          export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
-          npx tauri android init --ci
-          res=src-tauri/gen/android/app/src/main/res
-          cp -r src-tauri/icons/android/. "$res/"
+          npx cap add android # creates android/ from capacitor.config.ts, then syncs dist/ + plugins into it
+          main=android/app/src/main
+          # Our activity (the bar strips take the page's colour), launch theme, clover icons.
+          test -f "$main/java/com/kaisflow/garden/MainActivity.java" || { echo "::error::generated MainActivity.java not found"; find "$main/java" -name '*.java'; exit 1; }
+          cp native/android/MainActivity.java "$main/java/com/kaisflow/garden/MainActivity.java"
+          cp -r native/android/res/. "$main/res/"
           # Voice capture: the WebView asks for the mic through the shell, which needs these declared.
-          manifest=src-tauri/gen/android/app/src/main/AndroidManifest.xml
+          manifest="$main/AndroidManifest.xml"
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
           grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
           grep -n 'uses-permission' "$manifest"
-          # Our activity: keeps the page clear of the status/navigation bars + keyboard, bar strips in the page's colour.
-          activity="$(find src-tauri/gen/android/app/src/main -name 'MainActivity.kt' | head -1)"
-          test -n "$activity" || { echo "::error::generated MainActivity.kt not found"; exit 1; }
-          cp src-tauri/android/MainActivity.kt "$activity"
-          # Android string resources reject a bare apostrophe ("Kai's Flow" → Kai\'s Flow).
-          python3 - <<'PY'
-          import glob, re
-          for p in glob.glob('src-tauri/gen/android/app/src/main/res/values*/strings.xml'):
-              s = open(p).read()
-              s = re.sub(r"Kai(?:&#x27;|&#39;|&apos;|')s", lambda m: "Kai\\'s", s)
-              open(p, 'w').write(s)
-              print(p, s, sep='\n')
-          PY
+          grep -n 'app_name' "$main/res/values/strings.xml"
 
-      # arm64 = every Android phone from the last ~8 years; x86_64 so the emulator smoke test
-      # below runs this exact APK.
+      # versionCode uses Tauri's formula (major·1000000 + minor·1000 + patch), so a release APK still
+      # counts as newer than the Tauri-built ones before it. Branch builds are 0.0.0-dev, code 1.
+      - name: Stamp the version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "$TAG" ]; then
+            name="${TAG#v}"
+            IFS=. read -r major minor patch <<< "${name%%[-+]*}"
+            code=$(( ${major:-0} * 1000000 + ${minor:-0} * 1000 + ${patch:-0} ))
+          else
+            name="0.0.0-dev.${GITHUB_SHA::7}"
+            code=1
+          fi
+          gradle=android/app/build.gradle
+          sed -i -E "s/versionCode [0-9]+/versionCode $code/; s/versionName \"[^\"]*\"/versionName \"$name\"/" "$gradle"
+          grep -nE 'namespace|applicationId|versionCode|versionName' "$gradle"
+
       - name: Build
-        run: npx tauri android build --apk --target aarch64 --target x86_64
+        working-directory: app/android
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
 
       - name: Sign
         env:
@@ -109,8 +108,8 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           set -euo pipefail
-          unsigned="$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -1)"
-          test -n "$unsigned" || { echo "::error::no release APK was produced"; find src-tauri/gen/android/app/build/outputs -type f | head -20; exit 1; }
+          unsigned="$(find android/app/build/outputs/apk -name '*release*.apk' | head -1)"
+          test -n "$unsigned" || { echo "::error::no release APK was produced"; find android/app/build/outputs -type f | head -20; exit 1; }
           tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"; pass="$KEYSTORE_PASSWORD"
@@ -160,6 +159,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The APK carries no native code, so the x86_64 emulator runs the exact file a phone gets.
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -188,6 +188,7 @@ jobs:
               print(f'=====END {p}=====')
           PY
           cat shots/webview-top.txt || true
+          cat shots/back.txt || true
           echo '----- window insets'; cat shots/window.txt || true
           echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
           echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true

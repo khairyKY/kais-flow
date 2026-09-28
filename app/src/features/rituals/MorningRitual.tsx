@@ -11,6 +11,7 @@ import { MAX_SEEDS, loopDayKey, morningPreselection, top3Diff } from './loopDay'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
+import { useEscapeStack } from '../../lib/overlayStack'
 import type { Task } from '../../lib/types'
 
 // ── Morning ritual — pixel contract Rituals.dc.html 1a (overdue), 1b/3b (top-3, open vs.
@@ -96,6 +97,7 @@ function StepFooter({ onSkip, onNext, label, skipLabel = 'skip for now' }: { onS
 }
 
 export function MorningRitual({ onClose }: { onClose: () => void }) {
+  useEscapeStack(true, onClose) // M1b: Esc / Android Back = "skip for now"
   const [stepIndex, setStepIndex] = useState(0)
   const [repicking, setRepicking] = useState(false)
   const step = STEPS[stepIndex]
