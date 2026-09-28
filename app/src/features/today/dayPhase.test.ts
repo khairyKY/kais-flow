@@ -78,8 +78,13 @@ describe('dayPhase — Shut down', () => {
     expect(dayPhase(input({ now: at('19:00'), morning: { done: 4, total: 4 } })).phase).toBe('shutdown')
     expect(dayPhase(input({ now: at('17:59'), morning: { done: 4, total: 4 } })).phase).toBe('now')
   })
-  it('every picked Top 3 done → Shut down, whatever the hour', () => {
-    expect(dayPhase(input({ now: at('11:00'), morning: { done: 4, total: 4 }, top3: { picked: 3, done: 3 } })).phase).toBe('shutdown')
+  it('every picked Top 3 done before 18:00 → no prompt (Today Phone 2i); Shut down waits for the evening', () => {
+    expect(dayPhase(input({ now: at('11:00'), morning: { done: 4, total: 4 }, top3: { picked: 3, done: 3 } })).phase).toBe('now')
+    expect(dayPhase(input({ now: at('16:20'), top3: { picked: 3, done: 3 } })).phase).toBe('now')
+    expect(dayPhase(input({ now: at('18:00'), top3: { picked: 3, done: 3 } })).phase).toBe('shutdown')
+  })
+  it('a Top 3 all done counts as planned, even before noon', () => {
+    expect(dayPhase(input({ now: at('10:00'), top3: { picked: 2, done: 2 } })).phase).toBe('now')
   })
   it('a Top 3 still open keeps the day in Now', () => {
     expect(dayPhase(input({ now: at('15:00'), morning: { done: 4, total: 4 }, top3: { picked: 3, done: 2 } })).phase).toBe('now')
