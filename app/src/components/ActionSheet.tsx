@@ -19,7 +19,8 @@ export interface ActionSheetItem {
   onSelect: () => void
 }
 
-const CSS = `
+/** The row style (52 · icon 24 · label 15/20 · hint mono 12) — the date picker's quick picks reuse it. */
+export const ACTION_ROW_CSS = `
   .kf-as-row { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 12px 0 20px;
     border: none; background: none; font: inherit; text-align: left; color: var(--ink-body); cursor: pointer;
     transition: background var(--dur-press) var(--ease-standard); }
@@ -68,7 +69,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
         // Full-bleed rows: the sheet body has 20px gutters, the rows carry their own.
         return (
           <div style={{ margin: '0 -20px', paddingTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
-            <style>{CSS}</style>
+            <style>{ACTION_ROW_CSS}</style>
             {actions.map(row)}
             {destructive.length > 0 && <div style={{ marginTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>{destructive.map(row)}</div>}
           </div>

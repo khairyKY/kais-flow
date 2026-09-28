@@ -301,8 +301,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       <div>
         <FLabel>{kind === 'task' ? 'Due' : 'Date'}</FLabel>
         <div style={{ display: 'flex', gap: 8 }}>
-          <DateInput value={date} onChange={(v) => { setDate(v); markDateTouched() }} />
-          {!allDay && kind === 'task' && <TimeInput value={startTime} onChange={(v) => { setStartTime(v); markDateTouched() }} />}
+          <DateInput value={date} title={kind === 'task' ? 'Due date' : 'Date'} onChange={(v) => { setDate(v); markDateTouched() }} />
+          {!allDay && kind === 'task' && <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />}
         </div>
       </div>
       {!allDay && (
@@ -313,9 +313,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
                 start as static text, so the only start time you could get was wherever you
                 happened to click — "It shouldn't be hard coded based on where I clicked."
                 It's the same state either way, so just let every kind edit it. */}
-            <TimeInput value={startTime} onChange={(v) => { setStartTime(v); markDateTouched() }} />
+            <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />
             <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
-            <TimeInput value={endTime} onChange={(v) => { setEndTime(v); markDateTouched() }} />
+            <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} />
             {durationMin > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`}</span>}
           </div>
         </div>

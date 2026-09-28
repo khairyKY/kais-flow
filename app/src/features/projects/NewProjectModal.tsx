@@ -5,6 +5,7 @@ import { createArea } from '../areas/api'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { DateField } from '../../components/DatePicker'
 import './xfx.css'
 
 // Extracted from ProjectsPage (2026-07-18 audit) so the Tasks rail can open the same
@@ -161,10 +162,10 @@ export function NewProjectModal({
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>
                   {type === 'retainer' ? 'Renews Date' : 'Target date'}
                 </div>
-                <input
-                  type="date"
+                <DateField
                   value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
+                  onChange={setTargetDate}
+                  title={type === 'retainer' ? 'Renews' : 'Target date'}
                   style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: 'none' }}
                 />
               </div>

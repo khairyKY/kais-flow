@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { scheduleTomorrow } from '../lib/dateShortcuts'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
+import { DatePicker } from './DatePicker'
 import { Float } from './Float'
 
 export interface SnoozeMenuProps {
@@ -62,7 +63,7 @@ const headerStyle = {
  * At ≤767px it becomes the Overlays §03 bottom sheet instead; the presets and handlers are shared. */
 export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: SnoozeMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [pickDate, setPickDate] = useState('')
+  const [picking, setPicking] = useState(false)
   const isMobile = useIsMobile()
 
   useEscapeStack(!isMobile, onClose) // the sheet registers its own (BottomSheet)
@@ -98,6 +99,10 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
     onClose()
   }
 
+  // Pick a date… opens the MK Date Picker in this menu's place: a day lands at 09:00 Cairo, or at
+  // the time set on it.
+  if (picking) return <DatePicker title="Snooze until" meta={title} value={null} withTime position={position} onPick={onSnooze} onClose={onClose} />
+
   // ── Overlays.dc.html §03 "Snooze / schedule sheet" ──
   if (isMobile) {
     return (
@@ -128,18 +133,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
               />
               {/* Not in §03, kept from the desktop popover: without it the phone can't
                   reach an arbitrary date, and every other snooze surface can. */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 4px', borderTop: '1px dashed var(--line-dashed)', fontSize: 14.5, color: 'var(--ink-muted)' }}>
-                <span style={{ flex: 1 }}>Pick a date…</span>
-                <input
-                  type="date"
-                  value={pickDate}
-                  onChange={(e) => {
-                    setPickDate(e.target.value)
-                    if (e.target.value) { onSnooze(atTime(new Date(`${e.target.value}T00:00:00`), 9).toISOString()); close() }
-                  }}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: 'none', border: 'none', color: 'var(--ink-faint)', padding: 0 }}
-                />
-              </label>
+              <SheetRow label="Pick a date…" last onClick={() => setPicking(true)} />
             </div>
           </>
         )}
@@ -195,26 +189,15 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
         <span>Someday</span>
       </button>
       <div style={{ height: 1, background: 'var(--line-dashed)', margin: '4px 8px' }} />
-      <div style={{ padding: '2px 10px 0' }}>
-        <input
-          type="date"
-          value={pickDate}
-          onChange={(e) => {
-            setPickDate(e.target.value)
-            if (e.target.value) fire(atTime(new Date(`${e.target.value}T00:00:00`), 9))
-          }}
-          style={{
-            width: '100%',
-            fontFamily: 'var(--font-ui)',
-            fontSize: 13,
-            background: 'none',
-            border: 'none',
-            borderRadius: 5,
-            padding: '7px 0',
-            color: 'var(--ink-muted)',
-          }}
-        />
-      </div>
+      <button
+        type="button"
+        onClick={() => setPicking(true)}
+        style={{ ...itemStyle, color: 'var(--ink-muted)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-bone)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+      >
+        Pick a date…
+      </button>
     </div>
     </Float>
   )
