@@ -126,7 +126,8 @@ export function suggestTimes(picks: readonly PickIn[], busy: readonly Busy[], ch
     const c = chosen[p.id]
     if (p.booked) out.push({ id: p.id, kind: 'booked', ...p.booked, late: late(p.booked.end) })
     else if (c && c.at != null) {
-      out.push({ id: p.id, kind: 'accepted', start: c.at, end: c.at + c.dur, late: late(c.at + c.dur) })
+      const before = busy.find((b) => b.end === c.at)
+      out.push({ id: p.id, kind: 'accepted', start: c.at, end: c.at + c.dur, after: before?.title.split(' — ')[0], late: late(c.at + c.dur) })
       taken.push({ start: c.at, end: c.at + c.dur })
     } else if (c) out.push({ id: p.id, kind: 'untimed', start: 0, end: 0, late: false })
   }

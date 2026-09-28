@@ -448,7 +448,7 @@ function Timeline({ busy, slots, changing }: { busy: { start: number; end: numbe
   const w = (a: number, b: number) => `${((Math.min(DAY_TO, b) - Math.max(DAY_FROM, a)) / (DAY_TO - DAY_FROM)) * 100}%`
   const blocks = [
     ...busy.filter((b) => b.end > DAY_FROM && b.start < DAY_TO).map((b) => ({ ...b, k: 'event' })),
-    ...slots.filter((s) => (s.kind === 'suggested' || s.kind === 'accepted') && s.start < DAY_TO).map((s) => ({ ...s, k: s.id === changing ? 'changing' : s.kind })),
+    ...slots.filter((s) => (s.kind === 'suggested' || s.kind === 'accepted') && s.start < DAY_TO && s.end > DAY_FROM).map((s) => ({ ...s, k: s.id === changing ? 'changing' : s.kind })),
   ]
   return (
     <div className="rt-tl" aria-hidden>

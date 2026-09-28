@@ -99,6 +99,9 @@ describe('Suggested times', () => {
   it('never before now: at 11:05 the first start is 11:15', () => {
     expect(suggestTimes([{ id: 'a', dur: 30 }], DAY, {}, m('11:05'))[0].start).toBe(m('11:15'))
   })
+  it('an accepted slot right after an event still says so', () => {
+    expect(suggestTimes([{ id: 'a', dur: 30 }], DAY, { a: { at: m('14:00'), dur: 30 } }, NOW)[0]).toMatchObject({ kind: 'accepted', after: 'Lunch with Omar' })
+  })
   it('accepted and "No time" hold; the rest fill around the accepted slot', () => {
     const s = suggestTimes(picks, DAY, { tyre: { at: m('10:30'), dur: 30 }, node: { at: null, dur: 45 } }, NOW)
     expect(s.map((x) => [x.id, x.kind, x.start])).toEqual([
