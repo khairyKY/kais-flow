@@ -1,4 +1,6 @@
-# M1 — The Android app (Tauri v2 APK)
+# M1 — The Android app (Tauri v2 APK → Capacitor, M1b)
+
+> **2026-09-28 (M1b): the Android app moved to Capacitor 8; the Windows installer stays on Tauri.** Kai, 2026-09-27, on the Tauri APK: "very buggy", "feels like a website", "responsiveness". The table below is the original Tauri shape; what replaced it is in Notes → 2026-09-28.
 
 > Kai, 2026-09-26: "start building the mobile version". This was already decided on 2026-07-12 (`design-integration/PLAN.md`, *Platform target* + SHIP P2): real packages, not a browser tab wearing an icon. Start = **web + Android APK**; Windows/macOS next; iOS later (needs a Mac + $99/yr).
 
@@ -78,3 +80,10 @@ One codebase. The same `app/dist/` the web app serves, wrapped in a **Tauri v2**
   - [KAI] install the APK from the newest green Android run (docs/INSTALL.md);
   - sign in and check Today on a real phone: the status-bar strip in Night, voice, offline launch;
   - a persistent signing key when Kai wants in-place updates.
+- 2026-09-28 00:22 — **M1b: Android on Capacitor 8** (branch `claude/native-shell`; handoff `docs/log/2026-09-28-0022-native-shell-handoff.md`).
+  - `app/capacitor.config.ts`: appId `com.kaisflow.garden` (unchanged), appName `Kai’s Flow`, webDir `dist`, `androidScheme: 'https'` → origin **`https://localhost`**, now on the functions' CORS list with `capacitor://localhost` (iOS later). Needs the next functions deploy.
+  - CI (`android.yml`): `npm run build` → `npx cap add android` (generated, never committed) → copy `app/native/android/` over it → `./gradlew assembleRelease` → zipalign + apksigner (same keystore secrets) → `kais-flow-<tag>.apk`. No Rust/NDK. The APK has no native code, so one file runs on arm64 phones and the x86_64 emulator.
+  - `app/native/android/`: `MainActivity.java` (bar strips in the page's colour via the same `KaisFlowShell.setChrome` JS contract; re-applied after configuration changes), `res/` (the clover icons moved from `src-tauri/icons/android`, launch theme = clover on paper, `kf_page` paper / night paper). Capacitor's own SystemBars pads the WebView clear of the bars and the keyboard.
+  - versionCode = Tauri's formula (major·1000000 + minor·1000 + patch), so releases stay "newer" than the Tauri APKs.
+  - Web: `isNativeShell()` = Capacitor or Tauri; Android Back = `lib/androidBack.ts` over `lib/overlayStack.ts`; touch CSS in `index.css`; every page chunk preloaded after first paint; FullCalendar long-press 400ms.
+  - Deviations from the brief: no `@capacitor/status-bar` (its colour is a no-op from Android 15, and its config-change restyle races Capacitor 8's SystemBars) and no `@capacitor/keyboard` (Android needs nothing from it; its resize modes are iOS-only). Back at Today *minimizes* (`App.minimizeApp`, what Android 12+ does itself) instead of `exitApp`, so the next open is instant.
