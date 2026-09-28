@@ -44,6 +44,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-09-28** — **v1.0.10 (Wave M): our own pickers.** The MK Date Picker (quick picks + month grid + Set time) and MK Time Picker (free slots from the calendar, 15-minute list, durations) replace every native date/time input — the July FIX-7/J-25 leftover. Open: Next week on a Sunday (next day vs the Monday after).
 - **2026-09-28** — **v1.0.9 (Wave L): one task-row grammar.** Swipe right = Tomorrow (09:00, everywhere), swipe left = Trash + Undo (no confirm), ⋯ on every task row (phone action sheet = desktop right-click), hold to select with a phone bulk bar. Task Snooze removed (Someday lives in the date picker). Start focus stays in ⋯.
 - **2026-09-28** — **v1.0.8 (Wave K):** Kai's Claude Design refresh lands. Tokens (3-way merge), kit atoms + icons + tab bar + hold-to-talk capture, draggable sheets + action sheet + Undo toast queue + loading/empty/error/offline states, and **the Android app moves to Capacitor** (Back button, touch, instant tabs). Six screen designs (Today phone, Plan, Shut down, Task sheet, Calendar phone, First run) are in design-export/ for the next waves.
 - **2026-09-27** — **v1.0.7: the phone pass.** Readability (AA ink tokens), phone type tokens, phone calendar (1b), tab bar icons, Tasks 50/group, Today no longer wider than the phone, focus buttons decluttered, Day card action beside the ritual links. Kai: "ship it". Flow map + audit + Claude Design prompts live in the vault (`05 - Projects/Kai's Flow/`).
