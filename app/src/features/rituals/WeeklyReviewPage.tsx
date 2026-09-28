@@ -12,7 +12,8 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { logActivity } from '../../lib/activity'
 import { useMotionEnabled } from '../../lib/motion'
-import { FieldLabel, useIsMobile } from './RitualChrome'
+import { FieldLabel } from './RitualChrome'
+import { useIsMobile } from '../../components/BottomSheet'
 import type { Area, CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // ── Weekly Review — pixel contract Review.dc.html 1a (desktop sweep + right rail), 1b
