@@ -7,21 +7,19 @@ import { useDomains, createDomain } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { ConfirmCard } from '../projects/ConfirmCard'
-import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, snoozeTask, rescheduleDue, toggleTop3, setProject, deleteTask, type CompletionUndo } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
 import { useListKeys } from '../../components/useListKeys'
-import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { Skeleton } from '../../components/States'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
@@ -549,9 +547,7 @@ export function TasksPage() {
   const doneCount = tasks.filter((t) => t.status === 'done').length
   const allCount = filterByList(displayTasks, 'all', now).length
 
-  const [kbSnoozeId, setKbSnoozeId] = useState<string | null>(null)
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
-  const kbSnoozeTask = kbSnoozeId ? flatTasks.find((t) => t.id === kbSnoozeId) : null
   const kbProjectTask = kbProjectId ? flatTasks.find((t) => t.id === kbProjectId) : null
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -568,11 +564,8 @@ export function TasksPage() {
   }
   useEscapeStack(selected.size > 0, clearSelection)
 
-  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
-  // Punch 14: in-app ConfirmCard replaces the native confirm popup (bulk delete + keyboard delete)
-  const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   function bulkComplete() {
     const undos = selectedTasks.map((t) => handleRowComplete(t, { toast: false }))
@@ -584,9 +577,8 @@ export function TasksPage() {
     )
     clearSelection()
   }
-  function bulkSnooze(until: string) {
-    selectedTasks.forEach((t) => snoozeTask(t, until))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} snoozed.` })
+  function bulkTomorrow() {
+    moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
   function bulkSchedule(iso: string, when = '') {
@@ -604,47 +596,33 @@ export function TasksPage() {
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
     clearSelection()
   }
+  // Flow Audit §4: delete = Trash + Undo, no confirm (only Trash's Delete forever confirms).
   function bulkDelete() {
-    setConfirm({
-      title: `Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`,
-      body: '',
-      onConfirm: () => {
-        setConfirm(null)
-        selectedTasks.forEach(deleteTask)
-        useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
-        clearSelection()
-      },
-    })
+    deleteTasksWithUndo(selectedTasks)
+    clearSelection()
   }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
       : undefined
 
   const bindings = buildListBindings({
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
     complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => navigate(`/tasks/${t.id}`), // F3 punch 29: Enter opens detail
-    snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
-    tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
+    tomorrow: (t) => moveToTomorrowWithUndo([t]),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
-    delete: (t) => {
-      setConfirm({
-        title: `Delete "${t.title}"?`,
-        body: t.scheduled_start ? 'This also removes its scheduled calendar block.' : '',
-        onConfirm: () => { setConfirm(null); deleteTask(t) },
-      })
-    },
+    delete: (t) => deleteTasksWithUndo([t]),
   })
   useDeepLinkScroll(focusId, flatTasks)
 
   const { focusedId: kbFocusedId } = useListKeys(flatTasks, bindings, {
-    active: !kbSnoozeId && !kbProjectId && !confirm && activeTab !== 'done',
+    active: !kbProjectId && activeTab !== 'done',
     sectionLabel: activeTab === 'done' ? undefined : 'Lists',
     onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
   })
@@ -750,7 +728,7 @@ export function TasksPage() {
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
           <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
-            swipe → for actions · swipe ← to delete
+            swipe → tomorrow · swipe ← delete · hold to select
           </div>
         )}
 
@@ -832,6 +810,7 @@ export function TasksPage() {
                       highlighted={t.id === kbFocusedId || t.id === focusId}
                       selected={selected.has(t.id)}
                       onToggleSelect={isSomeday ? undefined : () => toggleSelected(t.id)}
+                      selecting={selected.size > 0}
                       bulk={isSomeday ? undefined : bulkActions}
                       goalTaskId={goalTaskId}
                       justCompletedId={justCompletedId}
@@ -883,9 +862,6 @@ export function TasksPage() {
         )}
       </div>
 
-      {kbSnoozeTask && (
-        <SnoozeMenu position={rowAnchor('task-', kbSnoozeTask.id)} title={kbSnoozeTask.title} onClose={() => setKbSnoozeId(null)} onSnooze={(until) => snoozeTask(kbSnoozeTask, until)} onSomeday={() => setSomeday(kbSnoozeTask, true)} />
-      )}
       {kbProjectTask && (
         <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
       )}
@@ -894,17 +870,16 @@ export function TasksPage() {
         <BulkBar
           count={selected.size}
           onComplete={bulkComplete}
-          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
+          onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}
         />
       )}
-      {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
-      {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
     </div>
   )
 }

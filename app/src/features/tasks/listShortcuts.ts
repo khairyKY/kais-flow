@@ -1,7 +1,7 @@
 import type { Task } from '../../lib/types'
 import type { ListBinding } from '../../components/useListKeys'
 
-export type ListActionKey = 'complete' | 'open' | 'snooze' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'delete' | 'toggleSelect'
+export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'delete' | 'toggleSelect'
 
 interface ListShortcutMeta {
   keys: string[]
@@ -15,7 +15,6 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['x'], action: 'toggleSelect', label: 'Toggle select' },
   { keys: ['e', ' '], action: 'complete', label: 'Complete' },
   { keys: ['Enter'], action: 'open', label: 'Open detail' }, // F3 punch 29
-  { keys: ['s'], action: 'snooze', label: 'Snooze…' },
   { keys: ['1'], action: 'today', label: 'Schedule today' },
   { keys: ['2'], action: 'tomorrow', label: 'Schedule tomorrow' },
   { keys: ['3'], action: 'nextWeek', label: 'Schedule next week' },

@@ -8,6 +8,7 @@ import {
   scheduleThisWeek,
   scheduleToday,
   scheduleTomorrow,
+  tomorrowHint,
 } from './dateShortcuts'
 
 // T-2: every `now` below is an explicit instant and every expectation an explicit UTC ISO, so
@@ -129,6 +130,24 @@ describe('daysUntilNextMonday (Cairo weekday)', () => {
     expect(daysUntilNextMonday(new Date('2026-07-13T00:00:00+03:00'))).toBe(7) // 21:00Z Sun
     expect(daysUntilNextMonday(new Date('2026-07-13T23:59:00+03:00'))).toBe(7)
     expect(scheduleNextWeek(new Date('2026-07-13T00:00:00+03:00'))).toBe('2026-07-20T06:00:00.000Z')
+  })
+})
+
+describe('"Tomorrow" — one meaning everywhere: tomorrow 09:00 on the app clock', () => {
+  // Kai's Sunday evening at 23:30 Cairo is still Sunday afternoon in Los Angeles and already
+  // Monday morning in Tokyo; Tomorrow is Monday 09:00 Cairo on every one of those devices.
+  const sundayLate = new Date('2026-09-27T23:30:00+03:00')
+
+  it('lands on the next Cairo day at 09:00, whatever the device zone', () => {
+    expect(scheduleTomorrow(sundayLate)).toBe('2026-09-28T06:00:00.000Z')
+  })
+  it('never means now + 24h', () => {
+    expect(scheduleTomorrow(sundayLate)).not.toBe(new Date(sundayLate.getTime() + 86_400_000).toISOString())
+  })
+  it('the hint names that day and time', () => {
+    expect(tomorrowHint(sundayLate)).toBe('Mon 09:00')
+    expect(tomorrowHint(new Date('2026-09-24T22:30:00Z'))).toBe('Sat 09:00') // already Fri in Cairo
+    expect(tomorrowHint(new Date('2026-10-31T12:00:00+02:00'))).toBe('Sun 09:00')
   })
 })
 

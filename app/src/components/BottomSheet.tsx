@@ -108,7 +108,9 @@ const CSS = `
   .kf-bs-icon:active { background: var(--pressed-overlay); }
   .kf-bs-icon:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   .kf-bs-handle { position: absolute; top: 0; left: 50%; z-index: 1; width: 120px; height: var(--sheet-handle-hit);
-    margin-left: -60px; padding: 10px 0 0; border: none; background: none; cursor: grab; touch-action: none; }
+    margin-left: -60px; padding: 10px 0 0; border: none; background: none; cursor: grab; touch-action: none;
+    /* a button centres its content: without this the bar sat 27px down, over a two-line title */
+    display: flex; align-items: flex-start; }
   .kf-bs-handle:active { cursor: grabbing; }
   .kf-bs-handle > span { display: block; margin: 0 auto; width: var(--sheet-handle-w); height: var(--sheet-handle-h);
     border-radius: 2px; background: var(--ink-hairline); }

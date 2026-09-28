@@ -1,0 +1,50 @@
+---
+date: 2026-09-28T02:44Z
+session: gestures builder (D)
+type: handoff
+related: design-export/DS-CHANGELOG.md §3 (Task row, Swipe row, Selection mode, Action sheet (⋯), Undo toast, gesture↔tap parity, Android Back) · MK Swipe Row / MK Selection / MK Action Sheet / MK Undo Toast · Flow Audit §4 · Claude Design Prompts/01
+---
+
+# Gestures handoff: one task-row grammar (swipe · ⋯ · hold to select), one "Tomorrow", no task Snooze, Trash + Undo
+
+Branch `claude/gestures`, cut from `origin/claude/wave-k` (65c3a40). Not merged, not deployed. `lib/overlayStack.ts` untouched (selection registers through the existing `useEscapeStack`). No `lib/haptics.ts` on this base: `SwipeRow.tsx` has a local `tick()` stand-in (`navigator.vibrate(10)`, guarded) marked `ponytail:` — swap its body for builder C's `tick()` on merge.
+
+## What changed
+
+- **The grammar, once** (`features/tasks/`):
+  - `swipe.ts` (pure, rewritten): 8px touch slop + direction lock (`lockAxis`: sideways only when |dx| > |dy|; a tie or steeper drift is the page's scroll), `commitAt` (40% = `--swipe-commit`, never inside the reveal), `settleSwipe` (commit right = Tomorrow, commit left = Delete, else rest open at 196 / −96 or spring back; a flick opens, never commits; a finger that paused >100ms before lifting is not a flick).
+  - `SwipeRow.tsx`: the gesture layer. Touch only (a mouse never swipes, J-1/J-9). Deltas are divided by `uiZoom()`, so math is CSS px under the interface zoom. Right partial = Tomorrow · Pick date · Project (64 each, icon 24 + label 12/16 600) on `--swipe-right-bg`; past the line it collapses to "Tomorrow · Mon 09:00" with one haptic tick. Left = Delete 96 on `--swipe-left-bg`. Commit flies the row off (`--dur-swipe-settle`), then runs the action. Opening one row closes any other. A tap on an open row closes it (never opens the task). Hold 400ms (`LONG_PRESS_MS` = `--dur-longpress`) → haptic + select; the hold's release and a drag's release never count as taps, and Android's long-press `contextmenu` is swallowed. Also exports `RowMenuButton` (⋯, 48 hit on phone, 32 on desktop) and `SelectCircle` (24 in 48).
+  - `taskMenuSpec.ts` (pure): the ⋯ list in MK order — Tomorrow (hint "Mon 09:00") · Pick date… · Move to project… · Priority · Repeat · Remind · Add/Remove from Top 3 · Select ("or hold a row") · — Delete (last, destructive, "Undo 6s"). Done rows: Reopen · Delete. Bulk rows suffix "(N)" on the date/project/delete rows. Up next blocks add Unschedule after Pick date.
+  - `TaskMenu.tsx`: renders that list as the phone `ActionSheet` (a picker opens as its own keyed sheet) or the desktop `ContextMenu` with submenus. `useRowGrammar.tsx`: the hook every task row uses — swipe props, ⋯/right-click opener, the menu node, real writes (overridable per surface).
+- **Rows that use it:** Tasks `TaskRow` (open + Someday rows swipe; done rows get ⋯ Reopen/Delete), Today's Top 3 rows, the goal card (keeps its tilt and tape while swiped), and task-backed Up next rows. Tap = open, checkbox = complete + Undo (unchanged), ⋯ everywhere, right-click = the same list. Plain events keep "Open in calendar · Delete".
+- **Selection mode:** hold or ⋯ → Select. On a phone: app bar ✕ · "N selected" · Select all over the top bar; select circles replace checkboxes; ⋯ and star hide; every tap toggles; the bulk bar replaces the tab bar (Done · Tomorrow · Pick date · Project · Delete). Esc/✕/Back (the pages' existing `useEscapeStack`) or deselecting the last exits. Desktop keeps ⌘/Ctrl-click and the pill `BulkBar`, restyled to the kit (kf icons, `--acc-terra-ink` Delete, press/focus states). Today's goal card is now selectable too.
+- **"Tomorrow" = tomorrow 09:00 on the app clock** (`scheduleTomorrow`, Cairo per B2) + `tomorrowHint()` ("Mon 09:00") in `lib/dateShortcuts.ts`, via `moveToTomorrowWithUndo` ("Moved to tomorrow · Undo"): swipe, ⋯, the `2` key, bulk bars, the morning ritual's "push to tomorrow" (was +1 device day, no toast). The evening ritual's roll and the snooze menu's Tomorrow (was 09:00 device time) use the same helper. Today's old "Due tomorrow" (now + 24h) is gone with its menu. Picking a date in `ScheduleMenu` now lands at 09:00 Cairo, so picking tomorrow equals Tomorrow.
+- **Task Snooze removed** (nothing read `snoozed_until`): row menus, swipe, the `s` key (and its cheatsheet line), the bulk bars on Tasks/Today/Planning/Project detail, the task editor's Snoozed row, `snoozeTask()`. Someday moved into the date picker (`ScheduleMenu` gains an `onSomeday` row). Inbox snooze untouched. Column not dropped.
+- **Delete → Trash + "Moved to Trash · Undo", no confirm** (`deleteTasksWithUndo`; toast after the last write lands so an Undo can't race it): swipe, ⋯/right-click, `#` key, every bulk bar, the task editor, the morning ritual's "drop". Trash's own Delete forever / Empty untouched.
+- Small fixes met on the way: `.kf-swipe.kf-lift:active` no longer shrinks a row under the finger (the audit's `scale(.97)` bug); `BottomSheet`'s handle bar sat 27px down (a button centres its content) and overlapped two-line titles — now at 10px like MK; `/design-system` had two `ToastHost`s (every toast drawn twice) — KitSheetsDemo's is gone; `ImportPage` passes rows explicitly to `deleteTask` (it gained an `after` param).
+- **Demo:** `components/KitGesturesDemo.tsx` on the dev-only `/design-system` ("Task row grammar"): the real SwipeRow / useRowGrammar / TaskMenu / BulkBar over local sample rows (prompt 01's data); every write stays in component state. Not in `dist/`.
+
+## Evidence
+
+- Gate (no `app/.env.local`): `npx tsc -b` 0 · `npx vitest run` 62 files / 805 tests under TZ=UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo (base: 61 / 789) · `npm run lint` 0 errors, 25 warnings (base 29; none in new files) · `npm run build` ok, demo strings absent from `dist/`.
+- New/changed tests: `swipe.test.ts` (direction lock, commit line, settle incl. flick rules), `taskMenuSpec.test.ts` (order, hints, bulk, Up next, done, no Snooze/Complete), `dateShortcuts.test.ts` (one Tomorrow: TZ-independent, never now+24h, hint), `api.completion.test.ts` (Trash + Undo single/bulk, Tomorrow + Undo restores date and someday), `rowMenus.test.ts` (block Tomorrow/Unschedule/plain-event menu; old task-menu tests went with the menu).
+- Browser, Playwright + system Chrome, real CDP touch input (`docs/log/assets/gestures/`):
+  - `verify.mjs` — **104/104** on `/design-system`, 390×844 touch + 1280 mouse, day + night: rest at 196 / −96, reveal labels 12px, `--swipe-right-bg`, one open row at a time, tap closes an open row, short swipe springs back, past-line "Tomorrow · TUE 09:00" + haptic, commit toasts + Undo (one toast host), left commit collapses → "Moved to Trash" → Undo restores, a 7px drift on a vertical drag never moves the row and the page scrolls, at zoom 1.25 100 screen px = 80 CSS px, forced `:active` gives no shrink (a bare `.kf-lift` does), ⋯ 48×48, sheet in MK order / rows 52 / Delete last in `--acc-terra-ink` / Priority opens its own sheet, hold → "1 selected" + haptic, bulk bar covers the tab bar, circle 24, `--select-bg`, taps add, Select all, ✕ / Esc / deselect-last exit, bulk Tomorrow + bulk Delete (no dialog); desktop right-click and ⋯ = the same list, a mouse drag never swipes, ⌃-click → kit pill.
+  - `verify-pages.mjs` — **56/56** on the **real Tasks and Today pages**, signed in against a mocked backend (the dev server points at `127.0.0.1:9`, a made-up session in localStorage, Playwright answers REST with sample rows; no real account or network): TaskRow swipe/commit/Trash, ⋯ → Select, taps, circles, bulk Delete; the goal card swipes and keeps its tilt; the Up next ⋯ list (+ Unschedule, Tomorrow keeps the block's own time) and it doesn't open the task; Top 3 hold → selection, Select all includes the goal; desktop right-click lists and the pill, day + night.
+  - Screenshots: `phone-{day,night}-{rows,swipe-right-partial,swipe-right-past-line,swipe-left-partial,swipe-left-past-line,tomorrow-toast,trash-toast,action-sheet,selection,bulk-toasts}.png`, `desktop-{day,night}-{context-menu,bulk-pill}.png`, and `pages/` (Tasks + Today, phone + desktop, day + night).
+
+## Deviations
+
+- **Commit line = max(40% of the row, reveal + 24).** At 390 the three 64px actions already cover half the row, so a literal 40% would commit before the reveal could rest open. The mock's "past 40%" state (250) sits past this line; the partial (196) sits under it.
+- **Up next blocks:** Tomorrow moves the block to the same time tomorrow (its hint shows that time), not 09:00 — a block keeps the time it was given; "09:00" is for undated Tomorrow. Their ⋯ adds Unschedule after Pick date.
+- **Start focus, Complete, Duration, Due today, Someday and Open details left the row menus** (the MK list has none). Focus is still on the task page's pill and /focus; `features/today/startFocus.ts` is now unused — conductor's call whether Focus belongs in ⋯ (Audit §5 says "Focus stays … in ⋯", the MK sheet doesn't list it).
+- Tomorrow on a starred row keeps the star, so it stays in Today's Top 3; the row flies off and returns in place. (Unstarring on Tomorrow would be a product call.)
+- Perennials "End series" keeps its confirm (it ends a repeating series; not a row delete).
+- Phone bulk "Project" still opens the ProjectPicker popover (no sheet for it yet), same as before.
+
+## Risks / not done
+
+- **Toasts sit above sheets (z 1100, builder B's choice):** right after a swipe, a toast covers the bottom rows of a ⋯ sheet (Select, Delete) for up to 6s. Worth a look in the toast/sheet owner's pass.
+- Real device feel (haptics, iOS long-press callout, Android Back → `useEscapeStack`) not checked on hardware; headless touch never sets `:active`, so the pressed overlay was checked by forcing the state.
+- PlanningBoard cards are dnd-kit draggables wrapping TaskRow, so a horizontal touch there swipes as it did before this branch; not re-checked (the board is desktop/URL-only today).
+- No `docs/log/INDEX.md` line and no ROADMAP edit (parallel builders; conductor adds them).

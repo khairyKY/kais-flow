@@ -10,6 +10,7 @@ import { vineStage } from '../../lib/growthStages'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { scheduleTomorrow } from '../../lib/dateShortcuts'
 import { logRitualFinished, logRitualStep, setSeed, useSeedsFor } from './api'
 import { MAX_SEEDS, loopDayKey, seedTargetDate } from './loopDay'
 import { FieldLabel, RLink, Pill, CtaButton, useIsMobile } from './RitualChrome'
@@ -154,12 +155,6 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
 // Open tasks that were on today's plate get a per-task [done] / [roll to tomorrow]; tasks
 // already completed today show struck-through with a fallen petal, per the 1e sample row. ──
 
-function sweepTomorrowIso(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString()
-}
-
 function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSkip: () => void; onSkipStep: () => void; onNext: () => void }) {
   const [rolled, setRolled] = useState<Set<string>>(new Set())
   const [todayStart, todayEnd] = todayBounds()
@@ -184,7 +179,7 @@ function SweepBeat({ tasks, onSkip, onSkipStep, onNext }: { tasks: Task[]; onSki
 
   function roll(t: Task) {
     const priorDue = t.due_at
-    rescheduleDue(t, sweepTomorrowIso())
+    rescheduleDue(t, scheduleTomorrow()) // the one Tomorrow: 09:00 (lib/dateShortcuts)
     setRolled((s) => new Set(s).add(t.id))
     toastUndo('Rolled to tomorrow', () => {
       rescheduleDue(t, priorDue)

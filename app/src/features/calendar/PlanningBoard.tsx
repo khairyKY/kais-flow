@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, snoozeTask, setProject, deleteTask } from '../tasks/api'
+import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
-import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { ConfirmCard } from '../projects/ConfirmCard'
 import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
 import { useProjects } from '../projects/api'
@@ -238,11 +236,8 @@ export function PlanningBoard() {
   }
   useEscapeStack(selected.size > 0, clearSelection)
 
-  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
-  // Punch 14: in-app ConfirmCard replaces the native confirm popup
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Polish F2a: bulk complete carries the same Undo as Today's and Tasks' — undoCompletion also
   // takes back each repeat's spawned next occurrence. (A single card's check is TaskRow's own
@@ -252,9 +247,8 @@ export function PlanningBoard() {
     toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
-  function bulkSnooze(until: string) {
-    selectedTasks.forEach((t) => snoozeTask(t, until))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} snoozed.` })
+  function bulkTomorrow() {
+    moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
   function bulkSomeday() {
@@ -272,13 +266,15 @@ export function PlanningBoard() {
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
     clearSelection()
   }
+  // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() {
-    setConfirmDelete(true)
+    deleteTasksWithUndo(selectedTasks)
+    clearSelection()
   }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
       : undefined
 
   return (
@@ -341,19 +337,11 @@ export function PlanningBoard() {
         <BulkBar
           count={selected.size}
           onComplete={bulkComplete}
-          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
-        />
-      )}
-      {bulkSnoozePos && (
-        <SnoozeMenu
-          position={bulkSnoozePos}
-          onClose={() => setBulkSnoozePos(null)}
-          onSnooze={bulkSnooze}
-          onSomeday={bulkSomeday}
         />
       )}
       {bulkSchedulePos && (
@@ -361,6 +349,7 @@ export function PlanningBoard() {
           position={bulkSchedulePos}
           onClose={() => setBulkSchedulePos(null)}
           onSchedule={(iso) => bulkSchedule(iso)}
+          onSomeday={bulkSomeday}
         />
       )}
       {bulkProjectPos && (
@@ -371,20 +360,6 @@ export function PlanningBoard() {
           currentProjectId={null}
           onSelect={bulkMove}
           onClose={() => setBulkProjectPos(null)}
-        />
-      )}
-      {confirmDelete && (
-        <ConfirmCard
-          title={`Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`}
-          body=""
-          confirmLabel="Delete"
-          onConfirm={() => {
-            setConfirmDelete(false)
-            selectedTasks.forEach(deleteTask)
-            useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} deleted.` })
-            clearSelection()
-          }}
-          onCancel={() => setConfirmDelete(false)}
         />
       )}
     </div>

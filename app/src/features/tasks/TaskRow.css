@@ -55,18 +55,59 @@
    (TasksPage owns the once-a-day gate). Rides the token petalFall at the recipe's 900ms. */
 .motion-on .tr-burst { animation: petalFall 900ms var(--ease-out) forwards; }
 
-/* ── Swipe actions (1b) — pointer-driven reveal, snaps to rest positions. ── */
-.tr-swipe-actions {
-  position: absolute; inset: 0; display: flex; align-items: stretch; pointer-events: none;
+/* ── Row grammar — SwipeRow / RowMenuButton / SelectCircle (DS-CHANGELOG §3 "Swipe row",
+   "Selection mode", "Task row"). Shared by Tasks and Today's Top 3 / goal card / Up next rows. ── */
+/* Clip sideways only: a swiped row can't spill over the page, while a card's washi tape and
+   shadow (Today's goal card) still draw above and below it. */
+.kf-swipe { position: relative; overflow-x: clip; overflow-y: visible; }
+/* No press-shrink on a row you can drag: .kf-lift's :active scale(0.97) fired under the finger
+   for the whole swipe (Flow Audit swipe bugs). Pressed = the overlay only. */
+.kf-swipe.kf-lift:active { transform: none; }
+.kf-swipe-fg { position: relative; touch-action: pan-y; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+.kf-swipe-fg[data-moved] { background: var(--paper-parchment); box-shadow: var(--shadow-card); }
+@media (pointer: coarse) {
+  .kf-swipe-fg { user-select: none; -webkit-user-select: none; } /* a hold selects the row, not a word */
+  .kf-swipe:not([data-swiping]) > .kf-swipe-fg:active { background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay)); }
 }
-.tr-swipe-content { touch-action: pan-y; }
+.kf-swipe-bg { position: absolute; inset: 0; display: flex; align-items: stretch; }
+.kf-swipe-bg.is-right { background: var(--swipe-right-bg); color: var(--swipe-right-ink); padding-left: var(--sp-1); }
+.kf-swipe-bg.is-left { background: var(--swipe-left-bg); color: var(--swipe-left-ink); justify-content: flex-end; }
+.kf-swipe-act {
+  width: 64px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-1);
+  padding: 0; border: none; background: none; color: inherit; font: inherit; font-size: var(--fs-tab-label); line-height: 16px;
+  font-weight: 600; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.kf-swipe-act.is-delete { width: 96px; }
+.kf-swipe-act:active { background: var(--pressed-overlay); }
+.kf-swipe-act:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
+.kf-swipe-commit { display: flex; align-items: center; gap: 10px; padding-left: var(--sp-4); }
+.kf-swipe-commit-label { font-size: var(--fs-body); font-weight: 600; }
+.kf-swipe-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+
+/* ⋯ — 48 hit on a phone; a quiet 32 on desktop so rows keep their Jul 2026 height (§4). */
+.kf-row-more {
+  width: 32px; height: 32px; margin: -6px -4px -6px 0; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: none; border-radius: 50%; background: none; color: var(--ink-faint); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard);
+}
+.kf-row-more > svg { width: 20px; height: 20px; }
+.kf-row-more:hover { color: var(--ink-body); }
+.kf-row-more:active { background-color: var(--pressed-overlay); }
+.kf-row-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Selection circle: 24 in a 48 hit — 1.5px --line-control; selected = --acc-hydrangea-deep + check. */
+.kf-select-circle { width: var(--touch-min); height: var(--touch-min); margin: -13px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.kf-select-dot { width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid var(--line-control); display: flex; align-items: center; justify-content: center; color: var(--paper-parchment); }
+.kf-select-circle[data-on] .kf-select-dot { border: none; background: var(--acc-hydrangea-deep); }
 
 @media (max-width: 767px) {
   .task-row-hover { opacity: 1; }
   .tr-mobile-only { display: flex !important; }
-  /* Two boxes per row read as two ways to complete on a phone. The select box only shows once
-     something is selected (start from the row's ⋯ → Select); then it's there to pick more. */
-  .app-main-content:not(:has(.tr-select.is-on)) .tr-select { display: none !important; }
+  /* Two boxes per row read as two ways to complete on a phone: selecting swaps the checkbox for the
+     select circle instead (hold a row, or ⋯ → Select). */
+  .tr-select { display: none !important; }
+  .kf-row-more { width: var(--touch-min); height: var(--touch-min); margin: -12px -8px -12px 0; }
+  .kf-row-more > svg { width: 24px; height: 24px; }
   /* Tasks header: the tab bar's mic is the phone's capture button. */
   .tasks-head-capture { display: none; }
 }

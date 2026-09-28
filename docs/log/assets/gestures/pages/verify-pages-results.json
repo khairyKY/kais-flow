@@ -1,0 +1,282 @@
+[
+  {
+    "name": "tasks-phone-day rows render (real TaskRow)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day swipe right rests open at 196",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day full right swipe → \"Moved to tomorrow\"",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\"]"
+  },
+  {
+    "name": "tasks-phone-day full left swipe → \"Moved to Trash\", no confirm",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\",\"Moved to Trash\"]"
+  },
+  {
+    "name": "tasks-phone-day ⋯ sheet = MK list (starred row)",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Remove from Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "tasks-phone-day ⋯ → Select enters selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day taps add rows while selecting",
+    "ok": true,
+    "detail": "3 selected\nSelect all"
+  },
+  {
+    "name": "tasks-phone-day select circles replace checkboxes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-day bulk Delete → \"3 tasks moved to Trash\", no confirm",
+    "ok": true,
+    "detail": "[\"3 tasks moved to Trash\"]"
+  },
+  {
+    "name": "tasks-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day goal card + Top 3 rows render",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day the goal card swipes (rests open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day the goal keeps its tilt while open",
+    "ok": true,
+    "detail": "translateX(196px) rotate(-0.4deg)"
+  },
+  {
+    "name": "today-phone-day Up next task-backed row has ⋯",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day Up next ⋯ = task list + Unschedule",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Unschedule\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "today-phone-day Up next Tomorrow keeps the block's own time",
+    "ok": true,
+    "detail": "Tomorrow TUE 07:42"
+  },
+  {
+    "name": "today-phone-day Up next ⋯ did not open the task",
+    "ok": true,
+    "detail": "http://localhost:5231/today"
+  },
+  {
+    "name": "today-phone-day Top 3 row: left swipe → Trash + Undo",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "today-phone-day hold a Top 3 row → selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day Select all selects the goal too",
+    "ok": true,
+    "detail": "4 selected\nSelect all"
+  },
+  {
+    "name": "today-phone-day Esc exits",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-day right-click = the ⋯ list",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "tasks-desktop-day ⌃-click → kit pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-desktop-day right-click = the ⋯ list",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Remove from Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "today-desktop-day ⌃-click → kit pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night rows render (real TaskRow)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night swipe right rests open at 196",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night full right swipe → \"Moved to tomorrow\"",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\"]"
+  },
+  {
+    "name": "tasks-phone-night full left swipe → \"Moved to Trash\", no confirm",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\",\"Moved to Trash\"]"
+  },
+  {
+    "name": "tasks-phone-night ⋯ sheet = MK list (starred row)",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Remove from Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "tasks-phone-night ⋯ → Select enters selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night taps add rows while selecting",
+    "ok": true,
+    "detail": "3 selected\nSelect all"
+  },
+  {
+    "name": "tasks-phone-night select circles replace checkboxes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-phone-night bulk Delete → \"3 tasks moved to Trash\", no confirm",
+    "ok": true,
+    "detail": "[\"3 tasks moved to Trash\"]"
+  },
+  {
+    "name": "tasks-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night goal card + Top 3 rows render",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night the goal card swipes (rests open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night the goal keeps its tilt while open",
+    "ok": true,
+    "detail": "translateX(196px) rotate(-0.4deg)"
+  },
+  {
+    "name": "today-phone-night Up next task-backed row has ⋯",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night Up next ⋯ = task list + Unschedule",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Unschedule\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "today-phone-night Up next Tomorrow keeps the block's own time",
+    "ok": true,
+    "detail": "Tomorrow TUE 07:42"
+  },
+  {
+    "name": "today-phone-night Up next ⋯ did not open the task",
+    "ok": true,
+    "detail": "http://localhost:5231/today"
+  },
+  {
+    "name": "today-phone-night Top 3 row: left swipe → Trash + Undo",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "today-phone-night hold a Top 3 row → selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night Select all selects the goal too",
+    "ok": true,
+    "detail": "4 selected\nSelect all"
+  },
+  {
+    "name": "today-phone-night Esc exits",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-night right-click = the ⋯ list",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "tasks-desktop-night ⌃-click → kit pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-desktop-night right-click = the ⋯ list",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Remove from Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "today-desktop-night ⌃-click → kit pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

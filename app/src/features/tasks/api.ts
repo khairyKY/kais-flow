@@ -10,6 +10,7 @@ import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
+import { scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -201,8 +202,9 @@ export function uncompleteTask(task: Task): void {
   reopenTask(task)
 }
 
-/** Deletes the task and any calendar block scheduled for it (caller should confirm first). */
-export function deleteTask(task: Task): void {
+/** Moves the task (and any calendar block scheduled for it) to Trash — a soft delete that
+ * restoreTask puts back. `after` runs once the write has landed. */
+export function deleteTask(task: Task, after?: () => void): void {
   // Motion 3e (WB-1) — the exit lives here rather than at each call site: every task list
   // renders id="task-<id>" on its row, so this one wiring point covers the row menu, swipe,
   // done-row menu, the `#` keyboard delete, bulk delete, Today and Perennials "end series".
@@ -212,19 +214,38 @@ export function deleteTask(task: Task): void {
     deleteEventsForTask(task.id)
     writeRow('tasks', { ...task, deleted_at: new Date().toISOString() })
     logActivity('task.deleted', 'task', task.id, {})
+    after?.()
   })
+}
+
+/** Every task delete a person makes (Flow Audit §4): straight to Trash, no confirm, "Moved to
+ * Trash · Undo". The toast waits for the last write, so an Undo can never land before it. Only
+ * Trash's own "Delete forever" / "Empty" confirm. */
+export function deleteTasksWithUndo(tasks: Task[]): void {
+  let left = tasks.length
+  const message = tasks.length === 1 ? 'Moved to Trash' : `${tasks.length} tasks moved to Trash`
+  for (const t of tasks) {
+    deleteTask(t, () => {
+      if (--left === 0) toastUndo(message, () => tasks.forEach(restoreTask))
+    })
+  }
+}
+
+/** The one "Tomorrow" (lib/dateShortcuts scheduleTomorrow: tomorrow 09:00) with "Moved to
+ * tomorrow · Undo" — swipe, ⋯, the `2` key, the bulk bar, the morning ritual. Undo writes each
+ * row back as it was (due date and someday flag). */
+export function moveToTomorrowWithUndo(tasks: Task[]): void {
+  const at = scheduleTomorrow()
+  tasks.forEach((t) => rescheduleDue(t, at))
+  toastUndo(tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow`, () =>
+    tasks.forEach((t) => rescheduleDue(t, t.due_at)),
+  )
 }
 
 export function restoreTask(task: Task): void {
   restoreEventsForTask(task.id)
   writeRow('tasks', { ...task, deleted_at: null })
   logActivity('task.restored', 'task', task.id, {})
-}
-
-/** Hides the task from Today-style views until `until` — distinct from `due_at` (the deadline). Clears `someday` since picking a concrete re-surface time is the opposite of "no date, no guilt". */
-export function snoozeTask(task: Task, until: string): void {
-  writeRow('tasks', { ...task, snoozed_until: until, someday: false })
-  logActivity('task.snoozed', 'task', task.id, { until })
 }
 
 export function setSomeday(task: Task, someday: boolean): void {

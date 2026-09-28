@@ -64,8 +64,18 @@ export function scheduleToday(now: Date = new Date()): string {
   return cairoDayAt(now, 0, 9)
 }
 
+/** The app's one "Tomorrow" (Flow Audit §4): tomorrow 09:00 on the app's clock (Cairo, B2) — the
+ * row menus and swipe, the `2` key, the bulk bar, the rituals' push/roll, the snooze menu. It
+ * replaced now+24h, "+1 device day at this time" and 09:00 device time. */
 export function scheduleTomorrow(now: Date = new Date()): string {
   return cairoDayAt(now, 1, 9)
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/** "Mon 09:00" — the hint beside every "Tomorrow" (MK Action Sheet, MK Swipe Row). */
+export function tomorrowHint(now: Date = new Date()): string {
+  return `${WEEKDAYS[new Date(cairoDayUtc(now) + 86400000).getUTCDay()]} 09:00`
 }
 
 /** Day-offset to the coming Monday (7 if today already is one), by the Cairo weekday — the one
