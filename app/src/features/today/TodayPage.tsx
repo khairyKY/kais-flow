@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, snoozeTask, rescheduleDue, setProject, setSomeday, deleteTask } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, rescheduleDue, setProject, setSomeday, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue, formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
-import { cairoDateKey, scheduleToday, scheduleTomorrow, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -30,11 +30,9 @@ import { SectionLabel, Checkbox, Button } from '../../components/kit'
 import { useListKeys } from '../../components/useListKeys'
 import { BulkBar } from '../../components/BulkBar'
 import { Skeleton } from '../../components/States'
-import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { ContextMenu } from '../../components/ContextMenu'
-import { ConfirmCard } from '../projects/ConfirmCard'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { useToastStore } from '../../lib/toastStore'
@@ -43,8 +41,9 @@ import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { upNextClock, upNextEvents, upNextLabel } from './upNext'
-import { taskMenuItems, upNextMenuItems } from './rowMenus'
-import { useStartFocus } from './startFocus'
+import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
+import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
+import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
 import { useMinuteNow } from './useMinuteNow'
 import { DayCard } from './DayCard'
 import { useStarEvents } from './api'
@@ -201,7 +200,7 @@ export function TodayPage() {
   // A2 (2026-07-18 audit): the Tasks selection pattern on Today — checkbox toggle,
   // Ctrl+A via useListKeys, BulkBar. Done rows aren't selectable (bulk acts on open tasks).
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const selectable = [...restTop3, ...allOpen].filter((t) => !t.completed_at)
+  const selectable = [...(goal ? [goal] : []), ...restTop3, ...allOpen].filter((t) => !t.completed_at)
   const selectedTasks = selectable.filter((t) => selected.has(t.id))
   // Kai 2026-07-21 (clarified): the visible per-row select SQUARES go, but selectability
   // stays — Ctrl/Cmd+click toggles a row, Ctrl+A still selects all, the BulkBar still rides
@@ -217,6 +216,8 @@ export function TodayPage() {
   function clearSelection() {
     setSelected(new Set())
   }
+  // The one task-row grammar (features/tasks/SwipeRow + TaskMenu): each row's selection props.
+  const rowSelection = (t: Task) => ({ selected: selected.has(t.id), onToggleSelect: () => toggleSelected(t.id), selecting: selected.size > 0 })
   useEscapeStack(selected.size > 0, clearSelection)
 
   // Punch 19: click-away deselects. A click on empty page space clears the multi-select;
@@ -235,11 +236,8 @@ export function TodayPage() {
     return () => document.removeEventListener('click', onDocClick)
   }, [hasSelection])
 
-  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
-  // Punch 14: in-app ConfirmCard replaces the native confirm popup (bulk delete + keyboard delete)
-  const [confirm, setConfirm] = useState<{ title: string; body: string; onConfirm: () => void } | null>(null)
 
   const bulkToast = (verb: string) =>
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
@@ -249,48 +247,33 @@ export function TodayPage() {
     toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
-  function bulkSnooze(until: string) { selectedTasks.forEach((t) => snoozeTask(t, until)); bulkToast('snoozed'); clearSelection() }
+  function bulkTomorrow() { moveToTomorrowWithUndo(selectedTasks); clearSelection() }
   function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
   function bulkSomeday() { selectedTasks.forEach((t) => setSomeday(t, true)); bulkToast('parked for someday'); clearSelection() }
-  function bulkDelete() {
-    setConfirm({
-      title: `Delete ${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'}?`,
-      body: '',
-      onConfirm: () => {
-        setConfirm(null)
-        selectedTasks.forEach(deleteTask)
-        bulkToast('deleted')
-        clearSelection()
-      },
-    })
-  }
+  // Flow Audit §4: delete = Trash + Undo, no confirm.
+  function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
   // app's primary surface. Wired to the same handlers its context menu already uses.
   // WB-4 (punch 12): s/p were still unwired here while the `?` cheatsheet advertised them for
   // "Task list" — same row-menu pattern as TasksPage now, so both surfaces match the overlay.
-  const [kbSnoozeId, setKbSnoozeId] = useState<string | null>(null)
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
-  const kbSnoozeTask = kbSnoozeId ? selectable.find((t) => t.id === kbSnoozeId) : null
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const listNavigate = useNavigate()
   const listBindings = buildListBindings({
     complete: (t) => completeTaskWithUndo(t),
     open: (t) => listNavigate(`/tasks/${t.id}`),
-    snooze: (t) => setKbSnoozeId(t.id),
     today: (t) => rescheduleDue(t, scheduleToday()),
-    tomorrow: (t) => rescheduleDue(t, scheduleTomorrow()),
+    tomorrow: (t) => moveToTomorrowWithUndo([t]),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
-    delete: (t) => {
-      setConfirm({ title: `Delete "${t.title}"?`, body: '', onConfirm: () => { setConfirm(null); deleteTask(t) } })
-    },
+    delete: (t) => deleteTasksWithUndo([t]),
   })
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSnoozePos && !bulkSchedulePos && !bulkProjectPos && !confirm && !kbSnoozeId && !kbProjectId,
+    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
   })
@@ -454,7 +437,7 @@ export function TodayPage() {
       <div className="kf-dim">
         {allOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
           <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-            <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+            <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
           </div>
         ))}
       </div>
@@ -627,9 +610,9 @@ export function TodayPage() {
               <DoneTodayCard />
             ) : (
               <>
-                {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} />}
+                {goal && <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact={isMobile} {...rowSelection(goal)} />}
                 {restTop3.map((t) => (
-                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} selected={selected.has(t.id)} onToggleSelect={() => toggleSelected(t.id)} highlighted={t.id === focusedId} />
+                  <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border compact={isMobile} {...rowSelection(t)} highlighted={t.id === focusedId} />
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
               </>
@@ -638,7 +621,7 @@ export function TodayPage() {
 
           <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
             <SectionLabel action={!isMobile && <Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: isMobile ? 6 : 12 }}>Up next</SectionLabel>
-            <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} />
+            <UpNextList events={events} eventsPending={eventsPending} tasks={tasks} compact={isMobile} rowSelection={(t) => (selectable.some((s) => s.id === t.id) ? rowSelection(t) : {})} />
           </section>
 
           {isMobile && routinesSection}
@@ -656,23 +639,19 @@ export function TodayPage() {
         <BulkBar
           count={selected.size}
           onComplete={bulkComplete}
-          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
+          onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />
       )}
-      {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} onSomeday={bulkSomeday} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
-      {kbSnoozeTask && (
-        <SnoozeMenu position={rowAnchor('task-', kbSnoozeTask.id)} title={kbSnoozeTask.title} onClose={() => setKbSnoozeId(null)} onSnooze={(until) => snoozeTask(kbSnoozeTask, until)} onSomeday={() => setSomeday(kbSnoozeTask, true)} />
-      )}
       {kbProjectTask && (
         <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
       )}
-      {confirm && <ConfirmCard {...confirm} confirmLabel="Delete" onCancel={() => setConfirm(null)} />}
 
       {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
       {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}
@@ -808,49 +787,57 @@ function useBloomCheck(task: Task) {
   }
 }
 
-function GoalCard({ task, projectName, dot, compact }: { task: Task; projectName?: string; dot: string; compact?: boolean }) {
+type RowSelection = Pick<RowGrammarOptions, 'selected' | 'onToggleSelect' | 'selecting'>
+
+/** A Today row's grammar: swipe, ⋯ / right-click, hold to select (features/tasks). */
+function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule'>) {
+  const { data: projects = [] } = useProjects()
+  const { data: domains = [] } = useDomains()
+  const done = !!task.completed_at
+  return useRowGrammar(task, { projects, domains, ...o, onToggleSelect: done ? undefined : o.onToggleSelect })
+}
+
+function GoalCard({ task, projectName, dot, compact, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean } & RowSelection) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
   const navigate = useNavigate()
-  const startFocus = useStartFocus()
   const openDetail = () => navigate(`/tasks/${task.id}`) // J-8
-  // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — same right-click menu and
-  // ▶ Start focus as the rows under it ("every row that shows a task behaves like a task").
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
-  const onMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenu({ x: e.clientX, y: e.clientY })
-  }
-  const menuNode = menu && <ContextMenu items={taskMenuItems(task, { open: openDetail, startFocus })} position={menu} onClose={() => setMenu(null)} />
+  // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — the same grammar as the rows under it.
+  const g = useTodayRow(task, sel)
+  const box = { borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }
+  const check = (size: number) =>
+    g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={size} /> : <Checkbox label={task.title} checked={bloom.checking} size={size} bloom onChange={bloom.toggle} style={box} />
+  const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
+  const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
   if (compact) {
     return (
-      <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10, transform: 'rotate(-0.4deg)' }}>
-        {menuNode}
+      <SwipeRow id={`task-${task.id}`} onContextMenu={g.onContextMenu} contentStyle={{ ...card, padding: '11px 13px', gap: 10 }} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden style={{ position: 'absolute', top: -7, left: '50%', marginLeft: -26, width: 52, height: 13, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 3px,transparent 3px 6px)', transform: 'rotate(-1.5deg)', borderRadius: 1 }} />
-        <span style={{ marginTop: 12 }}>{done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <Checkbox label={task.title} checked={bloom.checking} size={16} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ marginTop: 12 }}>{check(16)}</span>
+        <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-          <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.25, marginTop: 3 }}><EmojiText text={task.title} /></div>
         </div>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 26, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
-      </div>
+        {more}
+      </SwipeRow>
     )
   }
   return (
-    <div id={`task-${task.id}`} onContextMenu={onMenu} style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', padding: '17px 18px 16px', display: 'flex', alignItems: 'flex-start', gap: 14, transform: 'rotate(-0.4deg)', borderRadius: 3, marginBottom: 8 }}>
-      {menuNode}
+    <SwipeRow id={`task-${task.id}`} onContextMenu={g.onContextMenu} style={{ marginBottom: 8 }} contentStyle={{ ...card, padding: '17px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox label={task.title} checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={{ borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }} />}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <span style={{ marginTop: 16 }}>{check(19)}</span>
+      <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div onClick={openDetail} style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5, cursor: 'pointer' }}><EmojiText text={task.title} /></div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, <span>{done ? 'Done today' : 'Due today'}</span>)}
       </div>
       <div style={{ textAlign: 'center', flex: 'none' }}>
         <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>
       </div>
-    </div>
+      {more}
+    </SwipeRow>
   )
 }
 
@@ -869,50 +856,62 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, selected, onToggleSelect, highlighted }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; selected?: boolean; onToggleSelect?: () => void; highlighted?: boolean }) {
+function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, ...sel }: { task: Task; projectName?: string; dot: string; border?: boolean; hollow?: boolean; compact?: boolean; highlighted?: boolean } & RowSelection) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
-  // via the shared taskDisplay helper — same "Overdue Nd" terra treatment, same ↻ glyph.
+  // via the shared taskDisplay helper — same "Overdue Nd" treatment, same ↻ glyph.
   const dueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : null
   const dueBadges = dueDays !== null || task.recurrence_rule ? (
     <>
-      {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--acc-terra)' }}>Overdue {dueDays}d</span>}
+      {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>}
       {dueDays === 0 && <span>Due today</span>}
       {task.recurrence_rule && <span>↻</span>}
     </>
   ) : null
-  const rowExtra: React.CSSProperties = {
-    background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined,
-    boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
-    outline: 'none',
-  }
-  // Kai 2026-07-21: no visible select squares, but the row keeps its selection and menu
-  // behaviours — Ctrl/Cmd+click toggles selection, right-click opens the actions menu.
   const navigate = useNavigate()
-  const startFocus = useStartFocus()
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
-  function rowClick(e: React.MouseEvent) {
-    if ((e.ctrlKey || e.metaKey) && !done && onToggleSelect) {
-      e.preventDefault()
-      onToggleSelect()
-    }
-  }
-  function rowMenu(e: React.MouseEvent) {
+  const g = useTodayRow(task, sel)
+  // Kai 2026-07-21: no visible select squares on desktop — Ctrl/Cmd+click toggles selection.
+  function selectClick(e: React.MouseEvent) {
+    if (!(e.ctrlKey || e.metaKey) || done || !sel.onToggleSelect) return
     e.preventDefault()
-    setMenu({ x: e.clientX, y: e.clientY })
+    e.stopPropagation()
+    sel.onToggleSelect()
   }
-  // Loop A: the menu lives in ./rowMenus (shared with the goal card), Start focus on top.
-  const menuItems = taskMenuItems(task, { open: () => navigate(`/tasks/${task.id}`), startFocus, selected, onToggleSelect })
-  const menuNode = menu && <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
-  // Loop A: Top 3 rows carry a ▶ Start focus beside the star; the resting "All open" list doesn't.
+  const open = () => navigate(`/tasks/${task.id}`)
+  const rowProps = {
+    id: `task-${task.id}`,
+    tabIndex: highlighted ? 0 : -1,
+    onClickCapture: selectClick,
+    onContextMenu: g.onContextMenu,
+    style: {
+      borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
+      background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined,
+      boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
+      outline: 'none',
+    },
+    ...g.swipeProps,
+    overlay: g.menuNode,
+  }
+  const check = (size: number | undefined, doneSize: number, marginTop: number) =>
+    g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={doneSize} /> : <span style={{ marginTop }}><Checkbox label={task.title} checked={bloom.checking} size={size} bloom={task.top3} onChange={bloom.toggle} /></span>
+  const tail = !g.selecting && (
+    <>
+      {!done && (
+        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: compact ? 14 : 16, lineHeight: 1, cursor: 'pointer' }}>
+          {task.top3 ? '★' : '☆'}
+        </span>
+      )}
+      <RowMenuButton title={task.title} onOpen={g.openMenu} />
+    </>
+  )
+  const title = { color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' } as const
   if (compact) {
     return (
-      <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
-        {menuNode}
-        {done && !bloom.checking ? <DoneCheck task={task} size={16} /> : <span style={{ marginTop: 1 }}><Checkbox label={task.title} checked={bloom.checking} size={16} bloom={task.top3} onChange={bloom.toggle} /></span>}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: 13.5, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
+      <SwipeRow {...rowProps} contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 2px' }}>
+        {check(16, 16, 1)}
+        <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+          <div style={{ fontSize: 13.5, ...title }}><EmojiText text={task.title} /></div>
           {(projectName || task.duration_min != null || dueBadges) && (
             <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {(projectName || task.duration_min != null) && (
@@ -922,44 +921,33 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, selected, on
             </div>
           )}
         </div>
-        
-        {!done && (
-          <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}>
-            {task.top3 ? '★' : '☆'}
-          </span>
-        )}
-      </div>
+        {tail}
+      </SwipeRow>
     )
   }
   return (
-    <div id={`task-${task.id}`} tabIndex={highlighted ? 0 : -1} onClick={rowClick} onContextMenu={rowMenu} style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px', borderBottom: border ? '1px dashed var(--line-dashed)' : 'none', ...rowExtra }}>
-      {menuNode}
-      {done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox label={task.title} checked={bloom.checking} bloom={task.top3} onChange={bloom.toggle} /></span>}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div onClick={() => navigate(`/tasks/${task.id}`)} style={{ fontSize: hollow ? 14.5 : 15, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer' }}><EmojiText text={task.title} /></div>
+    <SwipeRow {...rowProps} contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px' }}>
+      {check(undefined, 17, 2)}
+      <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+        <div style={{ fontSize: hollow ? 14.5 : 15, ...title }}><EmojiText text={task.title} /></div>
         {metaRow(projectName, dot, task.duration_min, dueBadges)}
       </div>
-      
-      {!done && (
-        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
-          {task.top3 ? '★' : '☆'}
-        </span>
-      )}
-    </div>
+      {tail}
+    </SwipeRow>
   )
 }
 
 // Polish F2a (2026-09-26 decision): Up next lists what's running and what's still to come today —
 // an event drops off the minute it ends (upNext.ts). The list owns the minute tick, so it re-reads
 // the clock without re-rendering the whole page, and its rows' "Now" flips on the same tick.
-function UpNextList({ events, eventsPending, tasks, compact }: { events: CalendarEvent[]; eventsPending: boolean; tasks: Task[]; compact: boolean }) {
+function UpNextList({ events, eventsPending, tasks, compact, rowSelection }: { events: CalendarEvent[]; eventsPending: boolean; tasks: Task[]; compact: boolean; rowSelection: (t: Task) => RowSelection }) {
   const now = useMinuteNow()
   const upNext = upNextEvents(events, now)
   return (
     <>
       {!eventsPending && upNext.length === 0 && <Empty line="A clear afternoon." />}
       {upNext.map((e, i) => (
-        <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={compact} now={now} />
+        <EventRow key={e.id} event={e} task={tasks.find((t) => t.id === e.task_id) ?? undefined} border={i > 0} compact={compact} now={now} rowSelection={rowSelection} />
       ))}
     </>
   )
@@ -974,10 +962,9 @@ function UpNextList({ events, eventsPending, tasks, compact }: { events: Calenda
 // display-only. Now every row behaves like a task row — a click opens it (the task editor, or the
 // calendar for a plain event; the calendar has no per-event deep link), right-click opens the row
 // menu (./rowMenus), and a task-backed row carries ▶ Start focus.
-function EventRow({ event, task, border, compact, now }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date }) {
+function EventRow({ event, task, border, compact, now, rowSelection }: { event: CalendarEvent; task?: Task; border: boolean; compact?: boolean; now: Date; rowSelection: (t: Task) => RowSelection }) {
   const clock = upNextClock
   const navigate = useNavigate()
-  const startFocus = useStartFocus()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
   // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts), and the
@@ -986,49 +973,57 @@ function EventRow({ event, task, border, compact, now }: { event: CalendarEvent;
   const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
   const done = task?.status === 'done'
   const open = () => navigate(task ? `/tasks/${task.id}` : '/calendar')
-  const onMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenu({ x: e.clientX, y: e.clientY })
-  }
-  // The checkbox and ▶ act on their own; their clicks must not also open the row.
+  // The checkbox acts on its own; its click must not also open the row.
   const own = (e: React.MouseEvent) => e.stopPropagation()
   const check = task && (
     <span onClick={own} style={{ display: 'inline-flex', flex: 'none' }}>
       <Checkbox label={task.title} checked={!!done} size={compact ? 14 : 15} onChange={() => toggleTaskWithUndo(task)} />
     </span>
   )
-  // A sibling of the row, not a child: the menu portals to <body>, but React events still bubble
-  // through the component tree, and a menu click reaching the row would also open it.
-  const menuNode = menu && <ContextMenu items={upNextMenuItems(event, task, { open, startFocus })} position={menu} onClose={() => setMenu(null)} />
   const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
-  const rowProps = { id: `upnext-${event.id}`, onClick: open, onContextMenu: onMenu, title: task ? 'Open task' : 'Open in calendar' }
-  if (compact) {
-    return (
-      <>
-        <div {...rowProps} style={{ display: 'flex', gap: 12, padding: '7px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
-          <span style={{ width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: labelColor }}>{label.text}</span>
-          {check}
-          <div style={{ flex: 1, minWidth: 0, fontSize: 13, ...titleStyle }}><EmojiText text={event.title} /></div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-          
-        </div>
-        {menuNode}
-      </>
-    )
-  }
+  const cells = (checkSlot: React.ReactNode) => (
+    <>
+      <span style={compact ? { width: 52, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: labelColor } : { width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
+      {checkSlot}
+      <div style={{ flex: 1, minWidth: 0, fontSize: compact ? 13 : 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
+    </>
+  )
+  const rowStyle = { display: 'flex', gap: compact ? 12 : 16, padding: compact ? '7px 0' : '9px 0', alignItems: 'center', cursor: 'pointer' } as const
+  const borderTop = border ? '1px dashed var(--line-dashed)' : 'none'
+  if (task) return <UpNextTaskRow event={event} task={task} open={open} rowStyle={rowStyle} borderTop={borderTop} sel={rowSelection(task)} check={check} cells={cells} />
+  // A plain event only opens or goes. The menu is a sibling of the row, not a child: it portals to
+  // <body>, but React events still bubble through the component tree, and a menu click reaching
+  // the row would also open it.
   return (
     <>
-      <div {...rowProps} style={{ display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', borderTop: border ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer' }}>
-        <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
-        {check}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
-        </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-        
+      <div id={`upnext-${event.id}`} onClick={open} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }} title="Open in calendar" style={{ ...rowStyle, borderTop }}>
+        {cells(null)}
       </div>
-      {menuNode}
+      {menu && <ContextMenu items={eventMenuItems(event, open)} position={menu} onClose={() => setMenu(null)} />}
     </>
+  )
+}
+
+// Loop A (Kai: "I can't right click what is in the up next section") → the one grammar: a
+// task-backed block is a task row. Its Tomorrow moves the block to the same time tomorrow (a block
+// keeps the time it was given), and its menu can also take it off the calendar.
+function UpNextTaskRow({ event, task, open, rowStyle, borderTop, sel, check, cells }: { event: CalendarEvent; task: Task; open: () => void; rowStyle: React.CSSProperties; borderTop: string; sel: RowSelection; check: React.ReactNode; cells: (checkSlot: React.ReactNode) => React.ReactNode }) {
+  const g = useTodayRow(task, { ...sel, actions: { tomorrow: () => moveBlockToTomorrow(event), unschedule: () => unscheduleWithUndo(event) }, tomorrowHint: blockTomorrowHint(event), canUnschedule: true })
+  return (
+    <SwipeRow
+      id={`upnext-${event.id}`}
+      onClick={open}
+      onContextMenu={g.onContextMenu}
+      title="Open task"
+      style={{ borderTop, background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined }}
+      contentStyle={rowStyle}
+      {...g.swipeProps}
+      overlay={g.menuNode}
+    >
+      {cells(g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : check)}
+      {!g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />}
+    </SwipeRow>
   )
 }
 

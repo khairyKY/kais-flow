@@ -1,0 +1,522 @@
+[
+  {
+    "name": "phone-day no transform on the row while it is swiped",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "phone-day pressed row: no scale(0.97) shrink (a bare .kf-lift does shrink)",
+    "ok": true,
+    "detail": "row none, control matrix(0.97, 0, 0, 0.97, 0, 0)"
+  },
+  {
+    "name": "phone-day swipe right under 40% rests open at 196",
+    "ok": true,
+    "detail": "196"
+  },
+  {
+    "name": "phone-day partial reveal = Tomorrow · Pick date · Project",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date\",\"Project\"]"
+  },
+  {
+    "name": "phone-day action labels ≥ 12px",
+    "ok": true,
+    "detail": "12px"
+  },
+  {
+    "name": "phone-day right layer is --swipe-right-bg",
+    "ok": true,
+    "detail": "rgb(138, 154, 126) vs rgb(138, 154, 126)"
+  },
+  {
+    "name": "phone-day opening one row closes the other",
+    "ok": true,
+    "detail": "row3 0, row4 -96"
+  },
+  {
+    "name": "phone-day swipe left under the line rests on Delete (96)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day tap on an open row closes it (no open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day a short swipe springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day past 40%: \"Tomorrow · <day> 09:00\"",
+    "ok": true,
+    "detail": "\"Tomorrow\\nTUE 09:00\""
+  },
+  {
+    "name": "phone-day haptic tick at the line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day commit toasts \"Moved to tomorrow\" + Undo",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\"]"
+  },
+  {
+    "name": "phone-day one toast host (no double toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day row now reads Tomorrow 09:00",
+    "ok": true,
+    "detail": "Search for a good node.js source to study from | CAREER | TOMORROW 09:00 | 3H30M | ☆"
+  },
+  {
+    "name": "phone-day Undo puts the date back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day delete commit: row gone, no confirm dialog",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day toast \"Moved to Trash\" + Undo",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "phone-day Undo brings the row back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day vertical drag with 7px drift never moves the row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day …and the page scrolls",
+    "ok": true,
+    "detail": "2858 → 3040"
+  },
+  {
+    "name": "phone-day zoom 1.25: 100 screen px = 80 CSS px",
+    "ok": true,
+    "detail": "80"
+  },
+  {
+    "name": "phone-day ⋯ is a 48 × 48 target",
+    "ok": true,
+    "detail": "48 × 48"
+  },
+  {
+    "name": "phone-day ⋯ sheet items in MK order",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "phone-day Tomorrow hint \"<day> 09:00\"",
+    "ok": true,
+    "detail": "Tomorrow TUE 09:00"
+  },
+  {
+    "name": "phone-day sheet rows 52 tall",
+    "ok": true,
+    "detail": "52"
+  },
+  {
+    "name": "phone-day Delete last, in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(156, 81, 57) vs rgb(156, 81, 57)"
+  },
+  {
+    "name": "phone-day Priority opens its own sheet",
+    "ok": true,
+    "detail": "[\"None\",\"Medium\",\"High\",\"Critical\"]"
+  },
+  {
+    "name": "phone-day choosing closes the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day hold → \"1 selected\" app bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day hold gives a haptic tick",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day bulk bar: Done · Tomorrow · Pick date · Project · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day bulk bar replaces the tab bar",
+    "ok": true,
+    "detail": "bulk"
+  },
+  {
+    "name": "phone-day select circle 24",
+    "ok": true,
+    "detail": "24"
+  },
+  {
+    "name": "phone-day selected row wears --select-bg",
+    "ok": true,
+    "detail": "rgba(77, 106, 117, 0.1) vs rgba(77, 106, 117, 0.1)"
+  },
+  {
+    "name": "phone-day no ⋯ or checkbox while selecting",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day a tap adds a row: \"2 selected\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Select all",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ✕ exits selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Esc/Back exits selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day deselecting the last exits",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day bulk Tomorrow → \"2 tasks moved to tomorrow\"",
+    "ok": true,
+    "detail": "[\"2 tasks moved to tomorrow\"]"
+  },
+  {
+    "name": "phone-day bulk Delete → Trash + Undo, no confirm",
+    "ok": true,
+    "detail": "[\"2 tasks moved to tomorrow\",\"2 tasks moved to Trash\"]"
+  },
+  {
+    "name": "phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night no transform on the row while it is swiped",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "phone-night pressed row: no scale(0.97) shrink (a bare .kf-lift does shrink)",
+    "ok": true,
+    "detail": "row none, control matrix(0.97, 0, 0, 0.97, 0, 0)"
+  },
+  {
+    "name": "phone-night swipe right under 40% rests open at 196",
+    "ok": true,
+    "detail": "196"
+  },
+  {
+    "name": "phone-night partial reveal = Tomorrow · Pick date · Project",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date\",\"Project\"]"
+  },
+  {
+    "name": "phone-night action labels ≥ 12px",
+    "ok": true,
+    "detail": "12px"
+  },
+  {
+    "name": "phone-night right layer is --swipe-right-bg",
+    "ok": true,
+    "detail": "rgb(168, 192, 154) vs rgb(168, 192, 154)"
+  },
+  {
+    "name": "phone-night opening one row closes the other",
+    "ok": true,
+    "detail": "row3 0, row4 -96"
+  },
+  {
+    "name": "phone-night swipe left under the line rests on Delete (96)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night tap on an open row closes it (no open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night a short swipe springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night past 40%: \"Tomorrow · <day> 09:00\"",
+    "ok": true,
+    "detail": "\"Tomorrow\\nTUE 09:00\""
+  },
+  {
+    "name": "phone-night haptic tick at the line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night commit toasts \"Moved to tomorrow\" + Undo",
+    "ok": true,
+    "detail": "[\"Moved to tomorrow\"]"
+  },
+  {
+    "name": "phone-night one toast host (no double toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night row now reads Tomorrow 09:00",
+    "ok": true,
+    "detail": "Search for a good node.js source to study from | CAREER | TOMORROW 09:00 | 3H30M | ☆"
+  },
+  {
+    "name": "phone-night Undo puts the date back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night delete commit: row gone, no confirm dialog",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night toast \"Moved to Trash\" + Undo",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "phone-night Undo brings the row back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night vertical drag with 7px drift never moves the row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night …and the page scrolls",
+    "ok": true,
+    "detail": "2858 → 3022"
+  },
+  {
+    "name": "phone-night zoom 1.25: 100 screen px = 80 CSS px",
+    "ok": true,
+    "detail": "80"
+  },
+  {
+    "name": "phone-night ⋯ is a 48 × 48 target",
+    "ok": true,
+    "detail": "48 × 48"
+  },
+  {
+    "name": "phone-night ⋯ sheet items in MK order",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "phone-night Tomorrow hint \"<day> 09:00\"",
+    "ok": true,
+    "detail": "Tomorrow TUE 09:00"
+  },
+  {
+    "name": "phone-night sheet rows 52 tall",
+    "ok": true,
+    "detail": "52"
+  },
+  {
+    "name": "phone-night Delete last, in --acc-terra-ink",
+    "ok": true,
+    "detail": "rgb(226, 148, 115) vs rgb(226, 148, 115)"
+  },
+  {
+    "name": "phone-night Priority opens its own sheet",
+    "ok": true,
+    "detail": "[\"None\",\"Medium\",\"High\",\"Critical\"]"
+  },
+  {
+    "name": "phone-night choosing closes the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night hold → \"1 selected\" app bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night hold gives a haptic tick",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night bulk bar: Done · Tomorrow · Pick date · Project · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night bulk bar replaces the tab bar",
+    "ok": true,
+    "detail": "bulk"
+  },
+  {
+    "name": "phone-night select circle 24",
+    "ok": true,
+    "detail": "24"
+  },
+  {
+    "name": "phone-night selected row wears --select-bg",
+    "ok": true,
+    "detail": "rgba(169, 197, 211, 0.12) vs rgba(169, 197, 211, 0.12)"
+  },
+  {
+    "name": "phone-night no ⋯ or checkbox while selecting",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night a tap adds a row: \"2 selected\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Select all",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ✕ exits selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Esc/Back exits selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night deselecting the last exits",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night bulk Tomorrow → \"2 tasks moved to tomorrow\"",
+    "ok": true,
+    "detail": "[\"2 tasks moved to tomorrow\"]"
+  },
+  {
+    "name": "phone-night bulk Delete → Trash + Undo, no confirm",
+    "ok": true,
+    "detail": "[\"2 tasks moved to tomorrow\",\"2 tasks moved to Trash\"]"
+  },
+  {
+    "name": "phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day right-click = the same list, same order",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "desktop-day ⋯ opens the same menu",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "desktop-day menu Tomorrow → toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day a mouse drag never swipes",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "desktop-day ⌃-click selects → pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day pill: Done · Tomorrow · Pick date · Move · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Esc clears the selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night right-click = the same list, same order",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "desktop-night ⋯ opens the same menu",
+    "ok": true,
+    "detail": "[\"Tomorrow\",\"Pick date…\",\"Move to project…\",\"Priority\",\"Repeat\",\"Remind\",\"Add to Top 3\",\"Select\",\"Delete\"]"
+  },
+  {
+    "name": "desktop-night menu Tomorrow → toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night a mouse drag never swipes",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "desktop-night ⌃-click selects → pill bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night pill: Done · Tomorrow · Pick date · Move · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Esc clears the selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

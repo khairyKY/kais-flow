@@ -2,12 +2,11 @@ import { useState, type ReactNode } from 'react'
 import { Button, SectionLabel } from './kit'
 import { BottomSheet, type SheetDetent } from './BottomSheet'
 import { ActionSheet } from './ActionSheet'
-import { ToastHost } from './ToastHost'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from './States'
 import { toastUndo } from '../lib/undo'
 
 // Mobile Kit on /design-system (dev only): Bottom sheet, Action sheet, Undo toast, States.
-// The page sits outside AppLayout, so it mounts its own ToastHost.
+// The page sits outside AppLayout; KitReference mounts the one ToastHost (two hosts drew every toast twice).
 
 const icon = (d: string) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -130,7 +129,6 @@ export function KitSheetsDemo() {
         />
       )}
 
-      <ToastHost />
     </>
   )
 }

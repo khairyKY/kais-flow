@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { BottomSheet } from './BottomSheet'
+import { Icon } from './Icon'
 
 // ── MK Action Sheet — the ⋯ menu on a phone (DS-CHANGELOG §3): a content-sized BottomSheet,
 // header title Source Serif 20 + meta mono 12, rows 52 with a 24 icon slot (--ink-muted),
@@ -13,6 +14,8 @@ export interface ActionSheetItem {
   icon?: ReactNode
   hint?: ReactNode
   destructive?: boolean
+  /** The row opens a second picker (MK Action Sheet draws a chevron after the hint). */
+  chevron?: boolean
   onSelect: () => void
 }
 
@@ -59,6 +62,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
             <span className="kf-as-icon" aria-hidden>{item.icon}</span>
             <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>
             {item.hint != null && <span className="kf-as-hint">{item.hint}</span>}
+            {item.chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
           </button>
         )
         // Full-bleed rows: the sheet body has 20px gutters, the rows carry their own.

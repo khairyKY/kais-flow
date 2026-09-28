@@ -67,7 +67,7 @@ function TidyDuplicates() {
     const rest = c.tasks.filter((t) => t.id !== c.keep.id)
     const prevRule = c.keep.recurrence_rule ?? null
     if (c.rule) setRecurrence(c.keep, c.rule)
-    rest.forEach(deleteTask) // outbox soft-delete — lands in Trash, restorable
+    rest.forEach((t) => deleteTask(t)) // outbox soft-delete — lands in Trash, restorable
     toastUndo(
       `"${c.title}" tidied — kept 1 of ${c.tasks.length}${c.cadence ? `, repeats ${c.cadence}` : ''}.`,
       () => {

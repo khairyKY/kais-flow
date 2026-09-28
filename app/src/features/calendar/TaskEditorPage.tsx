@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   useTasks, createTask, renameTask, rescheduleDue, setLabels, setSomeday, setRecurrence,
-  setReminder, setDuration, toggleTop3, deleteTask, toggleTaskWithUndo, snoozeTask,
+  setReminder, setDuration, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo,
 } from '../tasks/api'
 import { useCalendarEvents } from './api'
 import { EmojiText } from '../../components/EmojiText'
@@ -14,7 +14,6 @@ import { localTimeKey, localToIso } from './eventTime'
 import { localDateKey } from '../routines/streaks'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { Select } from '../../components/Select'
-import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { useGoalStore } from '../today/goalStore'
@@ -68,8 +67,6 @@ export function TaskEditorPage() {
   const [notes, setNotesLocal] = useState(task?.notes ?? '')
   const [labelInput, setLabelInput] = useState('')
   const [subtaskInput, setSubtaskInput] = useState('')
-  const [snoozePos, setSnoozePos] = useState<{ x: number; y: number } | null>(null)
-  const [deleting, setDeleting] = useState(false)
   const isMobile = useIsMobile()
   const { goalTaskId } = useGoalStore()
   const [sheetSchedule, setSheetSchedule] = useState(false)
@@ -157,7 +154,7 @@ export function TaskEditorPage() {
   }
 
   function handleDelete() {
-    deleteTask(task!)
+    deleteTasksWithUndo([task!])
     navigate('/tasks')
   }
 
@@ -405,18 +402,9 @@ export function TaskEditorPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              {deleting ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)' }}>Delete this task?</span>
-                  <button type="button" onClick={handleDelete} style={{ font: 'inherit', fontSize: 11.5, color: 'var(--text-on-accent)', background: 'var(--sig-overdue)', border: 'none', borderRadius: 999, padding: '5px 14px', cursor: 'pointer' }}>Delete</button>
-                  <button type="button" onClick={() => setDeleting(false)} style={{ font: 'inherit', fontSize: 11.5, color: 'var(--ink-muted)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 14px', cursor: 'pointer' }}>Cancel</button>
-                </div>
-              ) : (
-                <>
-                  <span onClick={() => setDeleting(true)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete task…</span>
-                  <FHelp>also removes its calendar block</FHelp>
-                </>
-              )}
+              {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. */}
+              <span onClick={handleDelete} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete task</span>
+              <FHelp>to Trash, with its calendar block · Undo</FHelp>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {/* J-17 / 2026-09-26 decision: every shortcut hint is the kit's keycap (was hand-rolled mono text). */}
@@ -507,32 +495,12 @@ export function TaskEditorPage() {
                 <span style={{ position: 'absolute', top: 2, left: task.someday ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 150ms' }} />
               </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)' }}>
-              <div>
-                <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Snoozed</div>
-                <FHelp style={{ marginTop: 2 }}>{task.snoozed_until ? `until ${new Date(task.snoozed_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '—'}</FHelp>
-              </div>
-              {task.snoozed_until ? (
-                <span onClick={() => writeRow('tasks', { ...task, snoozed_until: null })} style={{ ...chipStyle, cursor: 'pointer' }}>clear</span>
-              ) : (
-                <span onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ ...chipStyle, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>snooze…</span>
-              )}
-            </div>
           </div>
 
           <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
         </div>
       </div>
 
-      {snoozePos && (
-        <SnoozeMenu
-          position={snoozePos}
-          title={task.title}
-          onClose={() => setSnoozePos(null)}
-          onSnooze={(until) => snoozeTask(task, until)}
-          onSomeday={() => setSomeday(task, true)}
-        />
-      )}
     </div>
   )
 }

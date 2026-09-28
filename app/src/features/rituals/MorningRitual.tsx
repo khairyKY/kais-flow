@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, rescheduleDue, deleteTask, toggleTop3 } from '../tasks/api'
+import { useTasks, deleteTasksWithUndo, moveToTomorrowWithUndo, toggleTop3 } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { localToIso } from '../calendar/eventTime'
@@ -26,12 +26,6 @@ const STEP_TITLES: Record<Step, string> = {
   top3: 'Pick your Top-3',
   inbox: 'Inbox to zero',
   block: 'Time-block your day',
-}
-
-function tomorrowIso(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString()
 }
 
 function daysOver(dueAt: string): number {
@@ -238,8 +232,8 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
                     {daysOver(t.due_at!)}d over
                   </span>
-                  <Pill onClick={() => rescheduleDue(t, tomorrowIso())}>push to tomorrow</Pill>
-                  <RLink onClick={() => deleteTask(t)} color="var(--acc-terra)">drop</RLink>
+                  <Pill onClick={() => moveToTomorrowWithUndo([t])}>push to tomorrow</Pill>
+                  <RLink onClick={() => deleteTasksWithUndo([t])} color="var(--acc-terra)">drop</RLink>
                 </div>
               ))
             )}

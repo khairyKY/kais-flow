@@ -24,7 +24,8 @@ vi.mock('../../lib/activity', () => ({
 }))
 vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn() }))
 
-const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo } = await import('./api')
+const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } = await import('./api')
+const { scheduleTomorrow } = await import('../../lib/dateShortcuts')
 const { useToastStore } = await import('../../lib/toastStore')
 
 function task(over: Partial<Task> = {}): Task {
@@ -220,5 +221,44 @@ describe('a repeating task keeps reminding (Polish F2a)', () => {
     cache = [t]
     skipNextOccurrence(t)
     expect(writes[0].row).toMatchObject({ due_at: '2026-09-29T06:00:00.000Z', reminder_at: null, reminder_sent: false })
+  })
+})
+
+describe("the row grammar's delete and Tomorrow (Flow Audit §4)", () => {
+  // deleteTask looks the row up to animate its exit; with no row on screen it writes at once.
+  beforeEach(() => void vi.stubGlobal('document', { getElementById: () => null }))
+
+  it('delete goes straight to Trash — no confirm — and says so with an Undo that restores it', async () => {
+    const t = task({ recurrence_rule: null })
+    cache = [t]
+    deleteTasksWithUndo([t])
+    expect(cache[0].deleted_at).toBeTruthy()
+    expect(lastToast().message).toBe('Moved to Trash')
+    lastToast().onUndo!()
+    await flush()
+    expect(cache).toEqual([{ ...t, deleted_at: null }])
+    expect(activity.map((a) => a.type)).toEqual(['task.deleted', 'task.restored'])
+  })
+
+  it('a bulk delete is one toast, and its Undo brings every row back', async () => {
+    const a = task({ recurrence_rule: null })
+    const b = task({ recurrence_rule: null })
+    cache = [a, b]
+    deleteTasksWithUndo([a, b])
+    expect(lastToast().message).toBe('2 tasks moved to Trash')
+    lastToast().onUndo!()
+    await flush()
+    expect(cache.every((t) => t.deleted_at === null)).toBe(true)
+  })
+
+  it('Tomorrow is tomorrow 09:00, and Undo puts the old date and someday flag back', async () => {
+    const t = task({ recurrence_rule: null, due_at: null, someday: true })
+    cache = [t]
+    moveToTomorrowWithUndo([t])
+    expect(cache[0]).toMatchObject({ due_at: scheduleTomorrow(), someday: false })
+    expect(lastToast().message).toBe('Moved to tomorrow')
+    lastToast().onUndo!()
+    await flush()
+    expect(cache).toEqual([t])
   })
 })

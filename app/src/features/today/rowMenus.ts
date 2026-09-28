@@ -1,21 +1,13 @@
-// Today's row menus (Loop A, 2026-09-26 daily cycle). Kai: "I can't right click what is in the up
-// next section." docs/DAILY-CYCLE.md: "Every row that shows a task behaves like a task: click opens
-// it, right-click gives the task menu, the checkbox completes it with Undo. No display-only task
-// rows anywhere."
-//
-// No new data paths: every action below is an existing tasks/api or calendar/api call, and every
-// calendar change toasts the same Undo the calendar block's own menu does (CalendarPage.tsx
-// unscheduleWithUndo / deleteWithUndo, and the drag-move Undo). Labels reuse the words those menus
-// already use — "Complete"/"Reopen" and "Open details" (Today's task rows), "Unschedule" (the
-// calendar block) — so one action reads the same everywhere.
+// Today's Up next blocks (Loop A, 2026-09-26 daily cycle): a block's own moves — tomorrow at the same
+// time, off the calendar — each with the calendar's own Undo, and the menu of a plain event. Task
+// rows (Top 3, the goal card, task-backed Up next) use the one task-row grammar (features/tasks).
 
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, cairoToIso } from '../calendar/eventTime'
 import { deleteEvent, moveOrResizeEvent, restoreEvent } from '../calendar/api'
-import { completeTaskWithUndo, deleteTask, reopenTaskWithUndo, rescheduleDue, setSomeday, toggleTop3 } from '../tasks/api'
-import type { CalendarEvent, Task } from '../../lib/types'
+import type { CalendarEvent } from '../../lib/types'
 
 /** The same Cairo wall-clock slot one Cairo day later, same length. DST-safe: the new start is
  * read from the tz database for its own date, not "+24h" (Egypt shifts its clock twice a year). */
@@ -52,45 +44,18 @@ export function moveBlockToTomorrow(event: CalendarEvent): void {
   toastUndo(`Moved to tomorrow · ${event.title}`, () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day))
 }
 
-export interface RowMenuContext {
-  /** Opens the row: a task's editor, or the calendar for a plain event. */
-  open: () => void
-  /** The one Start focus path (./startFocus). */
-  startFocus: (task: Task) => void
+/** The hint beside an Up next block's Tomorrow: its own time, a Cairo day on ("Mon 18:00"). A block
+ * keeps the time it was given — only undated "Tomorrow" means 09:00 (lib/dateShortcuts). */
+export function blockTomorrowHint(event: CalendarEvent): string {
+  const next = new Date(sameTimeTomorrow(event.starts_at, event.ends_at).starts_at)
+  return `${next.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Africa/Cairo' })} ${cairoTimeKey(next)}`
 }
 
-/** The menu on every task row Today draws (Top 3, the goal card, All open). The same items and
- * order the row had since Kai's 2026-07-21 ruling, with Start focus added on top. */
-export function taskMenuItems(task: Task, ctx: RowMenuContext & { selected?: boolean; onToggleSelect?: () => void }): ContextMenuItem[] {
-  const done = !!task.completed_at
+/** The menu on an Up next row with no task behind it: it only opens or goes. (A task-backed row
+ * gets the task row's own ⋯ list — features/tasks/TaskMenu.) */
+export function eventMenuItems(event: CalendarEvent, open: () => void): ContextMenuItem[] {
   return [
-    { label: 'Start focus', onClick: () => ctx.startFocus(task), disabled: done },
-    done ? { label: 'Reopen', onClick: () => reopenTaskWithUndo(task) } : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
-    { label: task.top3 ? 'Unstar' : 'Star for today', onClick: () => toggleTop3(task) },
-    { label: 'Due today', onClick: () => rescheduleDue(task, new Date().toISOString()), disabled: done },
-    { label: 'Due tomorrow', onClick: () => rescheduleDue(task, new Date(Date.now() + 86_400_000).toISOString()), disabled: done },
-    { label: 'Someday', onClick: () => setSomeday(task, true), disabled: done },
-    ...(ctx.onToggleSelect && !done ? [{ label: ctx.selected ? 'Deselect' : 'Select', onClick: ctx.onToggleSelect, shortcut: '⌃click' }] : []),
-    { label: 'Open details', onClick: ctx.open },
-    { label: 'Delete', danger: true, onClick: () => deleteTask(task) },
-  ]
-}
-
-/** The menu on an Up next row. A block linked to a task gets the task's moves plus the block's
- * own (tomorrow, off the calendar); a plain event only opens or goes. */
-export function upNextMenuItems(event: CalendarEvent, task: Task | undefined, ctx: RowMenuContext): ContextMenuItem[] {
-  if (!task) {
-    return [
-      { label: 'Open in calendar', onClick: ctx.open },
-      { label: 'Delete', danger: true, onClick: () => deleteEventWithUndo(event) },
-    ]
-  }
-  const done = task.status === 'done'
-  return [
-    { label: 'Start focus', onClick: () => ctx.startFocus(task), disabled: done },
-    done ? { label: 'Reopen', onClick: () => reopenTaskWithUndo(task) } : { label: 'Complete', onClick: () => completeTaskWithUndo(task) },
-    { label: 'Open details', onClick: ctx.open },
-    { label: 'Move to tomorrow', onClick: () => moveBlockToTomorrow(event), disabled: done },
-    { label: 'Unschedule', onClick: () => unscheduleWithUndo(event) },
+    { label: 'Open in calendar', onClick: open },
+    { label: 'Delete', danger: true, onClick: () => deleteEventWithUndo(event) },
   ]
 }

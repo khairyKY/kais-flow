@@ -1,21 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../calendar/api', () => ({ deleteEvent: vi.fn(), moveOrResizeEvent: vi.fn(), restoreEvent: vi.fn() }))
-vi.mock('../tasks/api', () => ({
-  completeTaskWithUndo: vi.fn(),
-  reopenTaskWithUndo: vi.fn(),
-  deleteTask: vi.fn(),
-  rescheduleDue: vi.fn(),
-  setSomeday: vi.fn(),
-  toggleTop3: vi.fn(),
-}))
 vi.mock('../../lib/undo', () => ({ toastUndo: vi.fn() }))
 
 import { deleteEvent, moveOrResizeEvent, restoreEvent } from '../calendar/api'
-import { completeTaskWithUndo, reopenTaskWithUndo } from '../tasks/api'
 import { toastUndo } from '../../lib/undo'
-import { sameTimeTomorrow, taskMenuItems, upNextMenuItems } from './rowMenus'
-import type { CalendarEvent, Task } from '../../lib/types'
+import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, sameTimeTomorrow, unscheduleWithUndo } from './rowMenus'
+import type { CalendarEvent } from '../../lib/types'
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-26 (EEST).
 const cairo = (day: number, hhmm: string) => {
@@ -23,21 +14,11 @@ const cairo = (day: number, hhmm: string) => {
   return new Date(Date.UTC(2026, 8, day, h - 3, m)).toISOString()
 }
 
-const task = (over: Partial<Task> = {}): Task => ({
-  id: 't1', project_id: null, domain_id: null, area_id: null, title: 'Write the brief', notes: null, status: 'todo',
-  due_at: null, scheduled_start: null, scheduled_end: null, top3: true, snoozed_until: null, recurrence_rule: null,
-  labels: [], priority: null, duration_min: null, someday: false, reminder_at: null, reminder_sent: false,
-  completed_at: null, created_at: cairo(20, '09:00'), updated_at: cairo(20, '09:00'), ...over,
-})
-
 const event = (over: Partial<CalendarEvent> = {}): CalendarEvent => ({
   id: 'e1', title: 'Deep work', starts_at: cairo(26, '10:00'), ends_at: cairo(26, '11:30'), all_day: false, task_id: null,
   source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: 'event', color: null,
   created_at: cairo(25, '09:00'), updated_at: cairo(25, '09:00'), ...over,
 })
-
-const labels = (items: { label: string }[]) => items.map((i) => i.label)
-const item = (items: { label: string; onClick?: () => void; disabled?: boolean }[], label: string) => items.find((i) => i.label === label)!
 
 describe('sameTimeTomorrow', () => {
   it('keeps the Cairo wall-clock time and the length, one day on', () => {
@@ -54,46 +35,21 @@ describe('sameTimeTomorrow', () => {
   })
 })
 
-describe('upNextMenuItems', () => {
-  const ctx = { open: vi.fn(), startFocus: vi.fn() }
+describe('an Up next block', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('a task-backed block: Start focus · Complete · Open details · Move to tomorrow · Unschedule', () => {
-    const t = task()
-    const items = upNextMenuItems(event({ task_id: t.id, type: 'task' }), t, ctx)
-    expect(labels(items)).toEqual(['Start focus', 'Complete', 'Open details', 'Move to tomorrow', 'Unschedule'])
-    item(items, 'Start focus').onClick!()
-    expect(ctx.startFocus).toHaveBeenCalledWith(t)
-    item(items, 'Complete').onClick!()
-    expect(completeTaskWithUndo).toHaveBeenCalledWith(t)
-    item(items, 'Open details').onClick!()
-    expect(ctx.open).toHaveBeenCalled()
-  })
-
-  it('a done task reads Reopen, and cannot be focused or moved', () => {
-    const t = task({ status: 'done', completed_at: cairo(26, '09:00'), top3: false })
-    const items = upNextMenuItems(event({ task_id: t.id, type: 'task' }), t, ctx)
-    expect(labels(items)).toContain('Reopen')
-    expect(item(items, 'Start focus').disabled).toBe(true)
-    expect(item(items, 'Move to tomorrow').disabled).toBe(true)
-    item(items, 'Reopen').onClick!()
-    expect(reopenTaskWithUndo).toHaveBeenCalledWith(t)
-  })
-
-  it('Move to tomorrow moves the block a Cairo day on, with an Undo that puts it back', () => {
-    const t = task()
-    const e = event({ task_id: t.id, type: 'task' })
-    item(upNextMenuItems(e, t, ctx), 'Move to tomorrow').onClick!()
+  it('Tomorrow moves the block a Cairo day on at its own time, with an Undo that puts it back', () => {
+    const e = event({ task_id: 't1', type: 'task' })
+    expect(blockTomorrowHint(e)).toBe('Sun 10:00')
+    moveBlockToTomorrow(e)
     expect(moveOrResizeEvent).toHaveBeenCalledWith(e, cairo(27, '10:00'), cairo(27, '11:30'))
-    const undo = vi.mocked(toastUndo).mock.calls[0][1]
-    undo()
+    vi.mocked(toastUndo).mock.calls[0][1]()
     expect(moveOrResizeEvent).toHaveBeenLastCalledWith(e, e.starts_at, e.ends_at, false)
   })
 
-  it('Unschedule takes the block off the calendar with the calendar\'s own Undo', () => {
-    const t = task()
-    const e = event({ task_id: t.id, type: 'task' })
-    item(upNextMenuItems(e, t, ctx), 'Unschedule').onClick!()
+  it("Unschedule takes the block off the calendar with the calendar's own Undo", () => {
+    const e = event({ task_id: 't1', type: 'task' })
+    unscheduleWithUndo(e)
     expect(deleteEvent).toHaveBeenCalledWith(e)
     expect(vi.mocked(toastUndo).mock.calls[0][0]).toBe('Unscheduled · Deep work')
     vi.mocked(toastUndo).mock.calls[0][1]()
@@ -102,27 +58,13 @@ describe('upNextMenuItems', () => {
 
   it('a plain event: Open in calendar · Delete (with Undo)', () => {
     const e = event()
-    const items = upNextMenuItems(e, undefined, ctx)
-    expect(labels(items)).toEqual(['Open in calendar', 'Delete'])
-    item(items, 'Open in calendar').onClick!()
-    expect(ctx.open).toHaveBeenCalled()
-    item(items, 'Delete').onClick!()
+    const open = vi.fn()
+    const items = eventMenuItems(e, open)
+    expect(items.map((i) => i.label)).toEqual(['Open in calendar', 'Delete'])
+    items[0].onClick!()
+    expect(open).toHaveBeenCalled()
+    items[1].onClick!()
     expect(deleteEvent).toHaveBeenCalledWith(e)
     expect(vi.mocked(toastUndo).mock.calls[0][0]).toBe('Deleted · Deep work')
-  })
-})
-
-describe('taskMenuItems', () => {
-  const ctx = { open: vi.fn(), startFocus: vi.fn() }
-
-  it('keeps the row menu as it was, with Start focus on top', () => {
-    expect(labels(taskMenuItems(task(), { ...ctx, onToggleSelect: vi.fn() }))).toEqual([
-      'Start focus', 'Complete', 'Unstar', 'Due today', 'Due tomorrow', 'Someday', 'Select', 'Open details', 'Delete',
-    ])
-  })
-  it('a done row reopens and cannot be focused', () => {
-    const items = taskMenuItems(task({ completed_at: cairo(26, '09:00'), status: 'done', top3: false }), ctx)
-    expect(labels(items).slice(0, 3)).toEqual(['Start focus', 'Reopen', 'Star for today'])
-    expect(item(items, 'Start focus').disabled).toBe(true)
   })
 })
