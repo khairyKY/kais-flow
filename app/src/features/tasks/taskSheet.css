@@ -8,7 +8,7 @@
 
 /* Title: Source Serif 20/26 at rest; tapped, the same text becomes a field (4c). */
 .ts-title {
-  flex: 1; min-width: 0; margin: 0 0 0 -8px; padding: 11px 8px 8px; box-sizing: border-box;
+  flex: 1; min-width: 0; margin: 0 0 0 -8px; padding: 7px 8px 8px; box-sizing: border-box; /* + the body's 4px top = the drawing's 11 */
   border: none; border-radius: 8px; background: none; outline: none; resize: none; overflow: hidden;
   field-sizing: content; /* ponytail: grows with the text in current Chrome/WebView/Safari; an older engine shows one line */
   overflow-wrap: anywhere; font-family: var(--font-display); font-size: var(--fs-display-m); font-weight: var(--fw-medium);

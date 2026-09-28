@@ -90,7 +90,7 @@ export function TaskSheet({ id }: { id: string }) {
     return (
       <BottomSheet
         detent={loading ? 'medium' : 'content'}
-        handleGap={loading ? 0 : 14}
+        handleGap={loading ? 4 : 14}
         onClose={dismiss}
         footer={loading ? () => (
           <>
@@ -177,7 +177,7 @@ export function TaskSheet({ id }: { id: string }) {
   return (
     <BottomSheet
       detent="medium"
-      handleGap={0}
+      handleGap={4} // room for the title field's focus ring (4c)
       onClose={dismiss}
       footer={(close, keyboardUp) =>
         keyboardUp ? null : (
