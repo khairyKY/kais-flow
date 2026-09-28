@@ -33,16 +33,14 @@ import {
   completeTaskWithUndo,
   undoCompletion,
   createTask,
-  snoozeTask,
   setSomeday,
   setProject,
   rescheduleDue,
-  deleteTask,
-  restoreTask,
+  deleteTasksWithUndo,
+  moveToTomorrowWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { BulkBar } from '../../components/BulkBar'
-import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -186,7 +184,6 @@ export function ProjectDetailPage() {
   // Hoisted above the project/area early returns (E7 — hooks must not sit inside a branch).
   const [milestoneBloom, setMilestoneBloom] = useState(0)
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [bulkSnoozePos, setBulkSnoozePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
   const selectedTasks = tasks.filter((t) => selected.has(t.id))
@@ -209,10 +206,8 @@ export function ProjectDetailPage() {
     toastUndo(`${plural(batch.length)} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
-  const bulkSnooze = (until: string) => {
-    const batch = selectedTasks
-    batch.forEach((t) => snoozeTask(t, until))
-    toastUndo(`${plural(batch.length)} snoozed.`, () => batch.forEach((t) => writeRow('tasks', t)))
+  const bulkTomorrow = () => {
+    moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
   const bulkSomeday = () => {
@@ -233,24 +228,15 @@ export function ProjectDetailPage() {
     toastUndo(`${plural(batch.length)} moved.`, () => batch.forEach((t) => setProject(t, t.project_id, t.domain_id)))
     clearSelection()
   }
+  // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
   const bulkDelete = () => {
-    const batch = selectedTasks
-    setConfirm({
-      title: `Delete ${plural(batch.length)}?`,
-      body: 'Any calendar blocks scheduled for them go too.',
-      confirmLabel: 'Delete',
-      onConfirm: () => {
-        setConfirm(null)
-        batch.forEach((t) => deleteTask(t))
-        toastUndo(`${plural(batch.length)} deleted.`, () => batch.forEach((t) => restoreTask(t)))
-        clearSelection()
-      },
-    })
+    deleteTasksWithUndo(selectedTasks)
+    clearSelection()
   }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onComplete: bulkComplete, onSnooze: bulkSnooze, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
       : undefined
 
   // Rendered by both the project and the area branch.
@@ -260,15 +246,14 @@ export function ProjectDetailPage() {
         <BulkBar
           count={selected.size}
           onComplete={bulkComplete}
-          onSnooze={(e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY })}
+          onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
         />
       )}
-      {bulkSnoozePos && <SnoozeMenu position={bulkSnoozePos} onClose={() => setBulkSnoozePos(null)} onSnooze={bulkSnooze} onSomeday={bulkSomeday} />}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )

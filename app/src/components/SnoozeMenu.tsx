@@ -1,6 +1,7 @@
 import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
+import { scheduleTomorrow } from '../lib/dateShortcuts'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
 import { Float } from './Float'
 
@@ -81,7 +82,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
   const presets: { label: string; dot: string; at: Date; sheetLabel: string | null; sheetMeta: string }[] = [
     { label: 'Later today', dot: 'var(--acc-hydrangea)', at: new Date(now.getTime() + 3 * 60 * 60 * 1000), sheetLabel: 'Later today', sheetMeta: '+3h' },
     { label: 'This evening', dot: 'var(--acc-lavender)', at: thisEvening(now), sheetLabel: null, sheetMeta: '' },
-    { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: atTime(addDays(now, 1), 9), sheetLabel: 'Tomorrow morning', sheetMeta: '09:00' },
+    { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: new Date(scheduleTomorrow(now)), sheetLabel: 'Tomorrow morning', sheetMeta: '09:00' },
     { label: 'Next week', dot: 'var(--acc-moss)', at: nextMonday(now), sheetLabel: 'Next week', sheetMeta: 'Mon' },
   ]
 
