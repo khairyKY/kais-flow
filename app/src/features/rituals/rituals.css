@@ -65,7 +65,9 @@
 .rt-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .rt-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .rt-trail { flex: none; align-self: center; padding-right: var(--sp-2); }
-.rt-row.is-pressed .rt-row-main { background: var(--pressed-overlay); }
+.rt .kf-row-more { width: var(--touch-min); height: var(--touch-min); margin: 0; }
+.rt .kf-row-more > svg { width: 24px; height: 24px; }
+.rt .kf-select-circle { margin: 0; }
 
 /* Carry-over's second line: Segmented + ghost Drop (ruling 2). */
 .rt-below { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-1); padding: 0 var(--sp-1) var(--sp-2) var(--sp-3); margin-top: -6px; }
@@ -205,7 +207,7 @@
 .rt-desk-head { display: flex; align-items: center; gap: var(--sp-1); padding: var(--sp-4) var(--sp-3) var(--sp-1) 28px; flex: none; }
 .rt-desk-title { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-medium); line-height: 1.15; color: var(--ink-body); }
 .rt-desk-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: var(--sp-1) var(--sp-3) var(--sp-3); overflow-y: auto; align-items: start; }
-.rt-desk-cols .rt-sec.is-first { padding-top: 0; }
+.rt-desk-cols > div > .rt-sec:first-child { padding-top: 0; }
 .rt-desk-foot { flex: none; display: flex; align-items: center; gap: var(--sp-6); padding: 14px var(--sp-5) var(--sp-4) 28px; border-top: 1px dashed var(--line-dashed); }
 .rt-desk .rt-summary { grid-column: 1 / -1; min-height: 480px; }
 /* The kit's phone sizes (kit.css, max-width 767px) — Plan ruling 8 keeps them on desktop. */

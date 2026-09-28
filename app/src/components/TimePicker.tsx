@@ -120,7 +120,7 @@ export function TimePicker({ day, value, duration, onDone, onClose, onClear, eve
     <BottomSheet
       detent="full"
       onClose={onClose}
-      title={<SheetTitle title="Time" meta={day ? `${title ? `${title} · ` : ''}${dayTitle(day, cairoDateKey(new Date()))}` : title} />}
+      title={<SheetTitle title="Time" meta={day ? (title ? `${title} · ${dayTitle(day, cairoDateKey(new Date())).split(' · ')[0]}` : dayTitle(day, cairoDateKey(new Date()))) : title} />}
       footer={(close) => (
         <>
           {onClear && <Button type="button" variant="ghost" onClick={() => { onClear(); close() }}>No time</Button>}

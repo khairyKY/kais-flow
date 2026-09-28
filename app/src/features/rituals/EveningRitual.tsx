@@ -11,6 +11,7 @@ import { Button, Checkbox, Star } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { cairoDateKey, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { playSound, closeTheGarden } from '../../lib/sounds'
+import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
@@ -69,6 +70,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const focused = focusedToday(timeEntries, now)
   const stats = [`${doneToday} done`, ...(focused > 0 ? [`${span(focused)} focused`] : [])]
   const selecting = selected.size > 0
+  useEscapeStack(selecting, () => setSelected(new Set())) // Back leaves selection mode before the sheet
   const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
 
   // "Sweep" is walked once nothing is left in it here; "One line" once a line is saved.
@@ -222,7 +224,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
               task={t}
               done={done}
               selected={sel}
-              lead={selecting ? <SelectCircle on={sel} title={t.title} /> : <Checkbox checked={done} label={t.title} bloom={t.top3} onChange={(next) => check(t, next)} />}
+              lead={selecting && !done ? <SelectCircle on={sel} title={t.title} /> : <Checkbox checked={done} label={t.title} bloom={t.top3} onChange={(next) => check(t, next)} />}
               meta={[
                 !done && projectName(t.project_id) && <Meta key="p" dot="var(--acc-moss)">{projectName(t.project_id)}</Meta>,
                 late > 0 && <Meta key="o" tone="var(--sig-overdue)">Overdue {late}d</Meta>,
@@ -243,7 +245,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
               swipe={{
                 actions: done || rolled ? undefined : { tomorrow: () => roll([t]) },
                 onLongPress: done ? undefined : () => setSelected(new Set([t.id])),
-                selecting,
+                selecting: selecting && !done,
                 onSelectTap: () => toggleSel(t.id),
               }}
             />
@@ -339,10 +341,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
         closeRef.current = close
         return selecting ? (
           <div className="rt-foot-row" style={{ flex: 1 }}>
-            <span className="rt-mono" style={{ flex: 1 }}>{selected.size} selected</span>
-            <Button type="button" variant="ghost" onClick={() => setSelected(new Set())}>
-              Cancel
-            </Button>
+            <span className="rt-mono" style={{ flex: 1, minWidth: 0 }}>{selected.size} selected</span>
             <Button type="button" variant="secondary" icon={<Icon name="tomorrow" size={20} />} onClick={bulkTomorrow}>
               Tomorrow
             </Button>

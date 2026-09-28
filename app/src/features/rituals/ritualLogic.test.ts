@@ -128,6 +128,10 @@ describe('Workload line', () => {
     const w = planWorkload([...DAY, busy('16:00', '17:30')], picks, suggestTimes(picks, DAY, {}, NOW), NOW)
     expect(w).toEqual({ text: "~6h 30m planned · you'll finish around 17:30", over: 0 })
   })
+  it('the 18:00 gym is outside the working day: not workload, not the finish', () => {
+    const w = planWorkload([...DAY, busy('18:00', '19:00', 'Gym')], picks, suggestTimes(picks, DAY, {}, NOW), NOW)
+    expect(w).toEqual({ text: "~5h planned · you'll finish around 14:00", over: 0 })
+  })
   it('6e: past 18:00 → "you\'d finish" and the minutes over', () => {
     const p: PickIn[] = [{ id: 'budget', dur: 240 }]
     const b = [busy('09:00', '14:30')]
@@ -192,14 +196,14 @@ describe("Shut down — Tomorrow's 3", () => {
   const milk = task('milk')
   const omar = task('omar', { top3: true, due_at: iso('09:00', 30) })
   const plants = task('plants', { due_at: iso('09:00', 29) })
-  it('due tomorrow → leftovers (Top 3 first) → starred → due this week', () => {
+  it('due tomorrow → leftovers (Top 3 first) → due this week', () => {
     const s = tomorrowSuggestions([plants, omar, milk, node, review, tyre], [milk, review, node], at('21:40'))
     expect(s.map((x) => [x.task.id, x.why])).toEqual([
       ['tyre', 'Due tomorrow'],
       ['review', 'Left today'],
       ['node', 'Left today'],
       ['milk', 'Left today'],
-      ['omar', 'Starred'],
+      ['plants', 'Due Tue'],
     ])
     expect(tomorrowSuggestions([plants], [], at('21:40'))).toEqual([{ task: plants, why: 'Due Tue' }])
   })

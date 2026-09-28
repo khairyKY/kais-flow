@@ -158,8 +158,9 @@ export interface Workload {
  * of the last block or placed slot, with anything unplaced added after it, rounded up to 10 min. */
 export function planWorkload(busy: readonly Busy[], picks: readonly PickIn[], slots: readonly Slot[], nowMin: number): Workload {
   const from = Math.max(nowMin, DAY_FROM)
-  const ahead = busy.filter((b) => b.end > from)
-  const meetings = ahead.reduce((n, b) => n + b.end - Math.max(b.start, from), 0)
+  // The working day's calendar still ahead, clipped to 09:00–18:00 (an 18:00 gym isn't workload).
+  const ahead = busy.filter((b) => b.end > from && b.start < DAY_TO).map((b) => ({ start: Math.max(b.start, from), end: Math.min(b.end, DAY_TO) }))
+  const meetings = ahead.reduce((n, b) => n + b.end - b.start, 0)
   const loose = picks.filter((p) => !p.booked)
   const pickMin = loose.reduce((n, p) => n + p.dur, 0)
   const planned = meetings + pickMin
@@ -237,8 +238,10 @@ export interface Suggestion {
   why: string
 }
 
-/** Tomorrow's 3 suggestions (ruling 2): due tomorrow → today's leftovers (Top 3 first) → starred
- * elsewhere → due later this week. Leftovers read "Left today" even once rolled to tomorrow. */
+/** Tomorrow's 3 suggestions (ruling 2): due tomorrow → today's leftovers (Top 3 first) → due later
+ * this week. Leftovers read "Left today" even once rolled to tomorrow. The ruling's "→ starred"
+ * step has nothing left to add: every open star is on today's plate (Today's own rule), so a
+ * starred task is already a leftover. */
 export function tomorrowSuggestions(tasks: readonly Task[], sweep: readonly Task[], now: Date, cap = 5): Suggestion[] {
   const today = cairoDateKey(now)
   const tomorrow = addDaysToKey(today, 1)
@@ -251,7 +254,6 @@ export function tomorrowSuggestions(tasks: readonly Task[], sweep: readonly Task
   open.filter((t) => !left.has(t.id) && dueKey(t) === tomorrow).forEach((t) => add(t, 'Due tomorrow'))
   const leftovers = sweep.filter((t) => left.has(t.id) && !t.someday)
   ;[...leftovers.filter((t) => t.top3), ...leftovers.filter((t) => !t.top3)].forEach((t) => add(t, 'Left today'))
-  open.filter((t) => t.top3).forEach((t) => add(t, 'Starred'))
   open
     .filter((t) => {
       const k = dueKey(t)
