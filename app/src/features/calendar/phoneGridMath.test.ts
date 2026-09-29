@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { bubbleText, dayBlocks, dragSpan, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel } from './phoneGridMath'
+import { allDayOn, bubbleText, dayBlocks, dragSpan, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel } from './phoneGridMath'
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).
@@ -42,6 +42,11 @@ describe('blocks: spans, clipping, the 15-minute drag', () => {
   it('a span round-trips to the same instants; 24:00 is the next day', () => {
     expect(spanIso({ day: '2026-09-27', start: 975, end: 1005 })).toEqual({ starts_at: iso('16:15'), ends_at: iso('16:45') })
     expect(spanIso({ day: '2026-09-27', start: 1380, end: 1440 }).ends_at).toBe(iso('00:00', 28))
+  })
+  it('all-day events are dates: on their days only (end exclusive)', () => {
+    const off = ev('00:00', '00:00', 27, { all_day: true, starts_at: '2026-10-02T00:00:00.000Z', ends_at: '2026-10-03T00:00:00.000Z' })
+    expect(allDayOn([off], ['2026-10-02'])).toEqual([off])
+    expect(allDayOn([off], ['2026-10-01', '2026-10-03'])).toEqual([])
   })
   it('a day\'s blocks are clipped to it; all-day and deleted are not drawn', () => {
     const late = ev('23:00', '01:00', 27, { ends_at: iso('01:00', 28) })

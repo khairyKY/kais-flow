@@ -9,7 +9,7 @@ import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
-import { bubbleText, columnLabel, dayBlocks, dragSpan, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { allDayOn, bubbleText, columnLabel, dayBlocks, dragSpan, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
 // look, radius 3), the MK Now line. Our own, not FullCalendar — the touch design needs a hold that
@@ -312,6 +312,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   }
 
   const showNow = days.includes(today)
+  // All-day events (the grid draws none): one chip row over the hours, only when the shown days hold one.
+  const allDay = allDayOn(events, days)
   const bubble = lift && (lift.mode ?? 'move')
   return (
     <div className="pc-grid">
@@ -319,6 +321,15 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         <div className="pc-colhead" style={{ transform: sliding ? `translateX(${swipeX}px)` : undefined }}>
           {days.map((d) => (
             <span key={d} className={d === today ? 'is-today' : undefined}>{columnLabel(d, days.length > 3)}</span>
+          ))}
+        </div>
+      )}
+      {allDay.length > 0 && (
+        <div className="pc-allday">
+          {allDay.map((e) => (
+            <button key={e.id} type="button" className="pc-allday-chip" style={{ '--pc-fill': look(e).fill } as CSSProperties} onClick={() => onTapBlock(e)}>
+              <EmojiText text={e.title} />
+            </button>
           ))}
         </div>
       )}
@@ -354,7 +365,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             {panes.map((p) => {
               const pdays = p ? days.map((d) => addDays(d, p * step)) : days
               return (
-                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? `translateX(${swipeX}px)` : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
+                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? `translateX(${swipeX}px)` : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
                   {pdays.map((d) => column(d, p === 0))}
                   {pdays.includes(today) && <span className="pc-nowline" style={{ top: minToPx(nowMin) }} />}
                 </div>

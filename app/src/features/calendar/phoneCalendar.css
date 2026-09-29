@@ -70,6 +70,13 @@
 .pc-colhead { flex: none; height: 32px; display: flex; padding-left: 60px; border-bottom: 1px solid var(--line-card); }
 .pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
 .pc-colhead > span.is-today { color: var(--acc-terra-ink); }
+.pc-allday { flex: none; display: flex; gap: var(--sp-1); padding: var(--sp-1) var(--sp-1) var(--sp-1) 60px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line-card); }
+.pc-allday-chip {
+  position: relative; flex: none; max-width: 100%; height: 32px; padding: 0 10px; border: none; border-radius: var(--radius-sharp); cursor: pointer;
+  background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); font: inherit; font-size: 14px; font-weight: var(--fw-medium);
+  color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pc-allday-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-2)) 0; }
 .pc-scroll { position: relative; flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .pc-canvas { position: relative; height: calc(24 * 64px); }
 .pc-hour { position: absolute; left: 0; right: 0; display: flex; align-items: flex-start; pointer-events: none; }
@@ -83,6 +90,9 @@
 .pc-pane { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; }
 .pc-col { position: relative; flex: 1; min-width: 0; }
 .pc-pane.is-multi .pc-col, .pc-track.is-sliding .pc-col { border-left: 1px dashed var(--line-dashed); }
+/* Week: ~47px columns — the title gets the room (the checkbox lives in the block sheet). */
+.pc-pane.is-week .pc-block-body { padding: 4px; }
+.pc-pane.is-week .pc-check { display: none; }
 
 /* ── Blocks: fill only, radius 3 (MK Week Strip look); hue from the kind (--pc-fill / --pc-ink). ── */
 .pc-block {

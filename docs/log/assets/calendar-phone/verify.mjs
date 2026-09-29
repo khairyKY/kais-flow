@@ -79,6 +79,7 @@ const EVENTS = [
   ev(9, 'Weekly review', '10:00', '11:00', 29, null, 'time_block'),
   ev(10, 'Dentist', '16:00', '17:00', 29, DENT),
   ev(11, 'Workshop', '08:00', '13:00', 30),
+  { ...ev(12, 'Company offsite', '00:00', '00:00', 30), starts_at: '2026-10-02T00:00:00.000Z', ends_at: '2026-10-03T00:00:00.000Z', all_day: true },
 ]
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const tables = () => ({ tasks: TASKS, calendar_events: EVENTS, projects: PROJECTS, domains: DOMAINS, app_settings: [SETTINGS] })
@@ -558,6 +559,15 @@ for (const theme of ['day', 'night']) {
     check(`${name} the hours around it stay tappable (quick create)`, (await dialog(page).locator('.pc-qc-title').count()) === 1)
     await page.keyboard.press('Escape')
     await sleep(400)
+    // An all-day event (none are drawn on the grid): a chip row over the hours on its day only.
+    await tap(cdp, page.locator('.pc-day').nth(5))
+    check('all-day: Fri Oct 2 shows "Company offsite" in a chip row over the hours (not a clear day)', (await page.locator('.pc-allday-chip').allInnerTexts()).join() === 'Company offsite' && (await page.locator('.pc-block').count()) === 0 && (await page.locator('.pc-empty').count()) === 0)
+    await tap(cdp, page.locator('.pc-allday-chip'))
+    check('all-day: tap → its sheet, "Event · All day", no Time row (it stays a date)', (await text(dialog(page).locator('.pc-bs-meta'))) === 'EVENT · ALL DAY' && (await dialog(page).locator('.kf-as-row').count()) === 0)
+    await page.keyboard.press('Escape')
+    await sleep(400)
+    await tap(cdp, page.locator('.pc-day').nth(4))
+    check('all-day: not on the day before', (await page.locator('.pc-allday').count()) === 0)
     await tap(cdp, page.getByRole('button', { name: 'Plan my day' }))
     await sleep(800)
     check(`${name} Plan my day → the ritual sheet`, (await page.locator('[role="dialog"]', { hasText: 'Plan my day' }).count()) >= 1)

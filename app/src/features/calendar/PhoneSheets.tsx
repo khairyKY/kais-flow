@@ -156,7 +156,7 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
   const done = task?.status === 'done'
   const today = cairoDateKey(new Date())
   const kind = task ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
-  const meta = [kind, task ? project?.name : durationLabel(len)].filter(Boolean).join(' · ')
+  const meta = [kind, task ? project?.name : event.all_day ? 'All day' : durationLabel(len)].filter(Boolean).join(' · ')
   const opens = [task?.notes ? 'Notes' : null, subtasks ? `${subtasks} subtask${subtasks > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
   return (
     <>
@@ -187,7 +187,8 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
             </div>
             <div className="pc-bs-rows">
               <style>{ACTION_ROW_CSS}</style>
-              <Row icon="clock" label="Time" hint={`${dayHint(span.day, today)} · ${rangeText(span.start, span.end)}`} onClick={() => setPicker('time')} />
+              {/* An all-day event keeps its date; there is no time to move here. */}
+              {!event.all_day && <Row icon="clock" label="Time" hint={`${dayHint(span.day, today)} · ${rangeText(span.start, span.end)}`} onClick={() => setPicker('time')} />}
               {task && <Row icon="tasks" label="Open the task" hint={opens || undefined} onClick={() => { close(); openTask(task.id) }} />}
               {task && <Row icon="remind" label="Remind" hint={task.reminder_at ? remindChip(task.reminder_at, task.due_at) : 'Off'} onClick={() => setPicker('remind')} />}
             </div>
@@ -195,7 +196,7 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
           </>
         )}
       </BottomSheet>
-      <Held rect={slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
+      <Held rect={event.all_day ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
       {picker === 'time' && (
         <TimePicker
           day={span.day}

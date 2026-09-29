@@ -16,7 +16,7 @@ import { filterByScope } from '../tasks/grouping'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { moveOrResizeEvent, resizeEvent, useCalendarEvents } from './api'
-import { dayBlocks, eventSpan, movedText, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { allDayOn, dayBlocks, eventSpan, movedText, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
@@ -107,7 +107,7 @@ export function PhoneCalendar() {
   if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
   const blockTask = block?.task_id ? taskById.get(block.task_id) : undefined
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
-  const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0
+  const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0 && allDayOn(events, days).length === 0
   const strip = weekPage(anchor, today)
 
   return (
@@ -153,7 +153,7 @@ export function PhoneCalendar() {
 
       {(tasksPending || unscheduled.length > 0) && (
         <div className="pc-uns">
-          <span className="pc-uns-label">Unscheduled · {tasksPending ? '' : unscheduled.length}</span>
+          <span className="pc-uns-label">Unscheduled{tasksPending ? '' : ` · ${unscheduled.length}`}</span>
           {tasksPending
             ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
             : unscheduled.map((t) => (

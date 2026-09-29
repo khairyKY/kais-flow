@@ -90,6 +90,12 @@ export function dayBlocks<E extends CalendarEvent>(events: readonly E[], day: st
   return out
 }
 
+/** All-day events on any of `days`. Their dates are calendar dates in no zone (QuickCreate and a synced
+ * all-day event store T00:00Z, the end exclusive), so they are read as dates, not instants. */
+export function allDayOn<E extends CalendarEvent>(events: readonly E[], days: readonly string[]): E[] {
+  return events.filter((e) => e.all_day && !e.deleted_at && days.some((d) => e.starts_at.slice(0, 10) <= d && d < e.ends_at.slice(0, 10)))
+}
+
 export type DragMode = 'move' | 'top' | 'bottom'
 
 /** Where a lifted block lands: moved by `dMin` (and `dDay` columns), start and end on the 15-min
