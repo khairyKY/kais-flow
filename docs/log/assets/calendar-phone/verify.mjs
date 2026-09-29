@@ -614,7 +614,7 @@ for (const theme of ['day', 'night']) {
 // ── Desktop 1280: the FullCalendar layout, unchanged (week view, the rail, no phone grid). ──
 for (const theme of want('desktop') ? ['day', 'night'] : []) {
   const name = `desktop-${theme}`
-  const { ctx, page, errors } = await open('/calendar', { view: desktop, theme })
+  const { ctx, page, errors, state } = await open('/calendar', { view: desktop, theme })
   await shot(page, name)
   check(`${name} FullCalendar week + the rail, no phone grid`, (await page.locator('.fc').count()) === 1 && (await page.locator('.fc-timegrid-col').count()) >= 7 && (await page.locator('.cal-rail').count()) === 1 && (await page.locator('.pc').count()) === 0)
   check(`${name} the shell's top bar is still there`, await page.locator('.app-topbar').isVisible())
@@ -622,6 +622,13 @@ for (const theme of want('desktop') ? ['day', 'night'] : []) {
     await page.locator('.fc-event', { hasText: 'Lunch with Omar' }).first().click()
     await sleep(400)
     check(`${name} a block click still opens the details panel`, (await page.locator('input[placeholder="Add title"]').inputValue().catch(() => '')) === 'Lunch with Omar')
+    await page.keyboard.press('Escape')
+    await sleep(300)
+    const w0 = state.writes.length
+    await page.locator('.fc-event', { hasText: 'Call the' }).first().click({ button: 'right' })
+    await page.getByText('Unschedule', { exact: true }).click()
+    await sleep(400)
+    check(`${name} right-click → Unschedule still writes the delete + "Unscheduled" toast (shared deleteEventWithUndo)`, writesOf(state, 'calendar_events', w0).some((e) => e.id === eid(3) && e.deleted_at) && (await toasts(page)).includes('Unscheduled · Call the tyre supplier'), JSON.stringify(await toasts(page)))
   }
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
   await ctx.close()
