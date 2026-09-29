@@ -3,7 +3,7 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent, restoreEvent } from './api'
+import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTask, deleteEvent, deleteEventWithUndo } from './api'
 // Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
 // checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
@@ -226,19 +226,9 @@ function DesktopCalendar() {
     if (event) openExisting(event)
   }
 
-  // Punch 6 (calendar slice): every destructive calendar mutation captures prior state and
-  // undoes through the same api fns — never a bare toast.
-  function unscheduleWithUndo(event: CalendarEvent) {
-    const prior = { ...event }
-    deleteEvent(event)
-    toastUndo(`Unscheduled · ${event.title}`, () => restoreEvent(prior))
-  }
-
-  function deleteWithUndo(event: CalendarEvent) {
-    const prior = { ...event }
-    deleteEvent(event)
-    toastUndo(`Deleted · ${event.title}`, () => restoreEvent(prior))
-  }
+  // Punch 6 (calendar slice): every destructive calendar mutation undoes through the same api — never a bare toast.
+  const unscheduleWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Unscheduled')
+  const deleteWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Deleted')
 
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
