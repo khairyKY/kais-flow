@@ -16,6 +16,13 @@
       "port": 5199
     },
     {
+      "name": "kais-flow-mock",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5243", "--strictPort", "--mode", "mock"],
+      "cwd": "app",
+      "port": 5243
+    },
+    {
       "name": "kais-flow-preview",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "preview", "--port", "4174", "--strictPort"],

@@ -242,6 +242,19 @@ export function moveToTomorrowWithUndo(tasks: Task[]): void {
   )
 }
 
+/** The task sheet's ⋯ → Duplicate: an open copy (same fields, not on the calendar, not in Top 3),
+ * with "Duplicated · Undo" — the Undo removes the copy outright (it never should have existed). */
+export function duplicateTaskWithUndo(task: Task): Task {
+  const now = nowIso()
+  // Like a spawned repeat (completion.ts): an imported row's idempotency key stays with the original.
+  const { external_ref: _importKey, ...rest } = task as Task & { external_ref?: unknown }
+  const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, scheduled_start: null, scheduled_end: null, reminder_sent: false, created_at: now, updated_at: now }
+  writeRow('tasks', copy)
+  logActivity('task.created', 'task', copy.id, { duplicate_of: task.id })
+  toastUndo('Duplicated', () => writeRow('tasks', { id: copy.id }, 'delete'))
+  return copy
+}
+
 export function restoreTask(task: Task): void {
   restoreEventsForTask(task.id)
   writeRow('tasks', { ...task, deleted_at: null })

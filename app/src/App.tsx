@@ -48,6 +48,8 @@ const OnboardingGate = page(() => import('./features/onboarding/OnboardingGate')
 const ImportPage = page(() => import('./features/import/ImportPage'), 'ImportPage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
+// Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the pages so the first tap opens it at once.
+pageLoaders.push(() => import('./features/tasks/TaskSheet'))
 
 // Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
 // (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,

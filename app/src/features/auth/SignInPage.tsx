@@ -1,159 +1,189 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import { authLinkOrigin } from '../../lib/platform'
+import { useOnline } from '../../lib/useOnline'
+import { OfflineChip } from '../../components/States'
 import { useAuth } from './AuthProvider'
-import { AuthShell, BackLink, CardCta, CardMessage, Field, Fields, HandLine, Notice, TextLink } from './AuthLayout'
-import { MIN_PASSWORD_LENGTH, calmAuthLine, resetRequestLooksSent } from './authLogic'
+import { Cta, Field, FirstRunPage, Hero, LinkButton, PasswordField, Plant, ProblemCard, ResetSent } from './AuthLayout'
+import { authProblem, passwordRule, type AuthProblem } from './authLogic'
+import { isRecovering, rememberEmail, rememberedEmail, requestReset } from './recovery'
 
-// J-11: 'forgot' is the password-reset request step. /reset's "Send a new link" lands here
-// with ?forgot, so there is one request form, not two.
+// First Run.dc.html — 9a sign up · 9b-1/2/3 its errors · 9j sign in · 9k-1 reset link sent.
+// 'forgot' asks for the address when "Forgot password?" is tapped with the field empty (not drawn);
+// /reset's "Use a different email" lands here with ?forgot. Email confirmation is off (Kai,
+// 2026-09-28 — no domain for SMTP yet), so sign-up returns a session and "/" routes the new
+// account to onboarding. 9c–9f (check your email, resend cooldown, expired, confirmed) wait for
+// a domain + SMTP.
 type Mode = 'signin' | 'signup' | 'forgot'
+
+const OFFLINE_CHIP: Record<Mode, string> = {
+  signup: 'Offline — connect to sign up',
+  signin: 'Offline — connect to sign in',
+  forgot: 'Offline — connect to send the link',
+}
 
 export function SignInPage() {
   const { session, loading } = useAuth()
   const [searchParams] = useSearchParams()
-  const [mode, setMode] = useState<Mode>(searchParams.has('forgot') ? 'forgot' : 'signin')
-  const [email, setEmail] = useState('')
+  const online = useOnline()
+  // A device that has signed in before opens on sign in, pre-filled; a fresh one on sign up (9a).
+  const [email, setEmail] = useState(rememberedEmail)
+  const [mode, setMode] = useState<Mode>(searchParams.has('forgot') ? 'forgot' : email ? 'signin' : 'signup')
   const [password, setPassword] = useState('')
-  const [notice, setNotice] = useState<string | null>(null)
+  const [problem, setProblem] = useState<AuthProblem | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  // Non-null once an email is on its way — swaps the form for the matching "sent" state.
-  const [sent, setSent] = useState<{ kind: 'signup' | 'reset'; to: string } | null>(null)
+  const [sentTo, setSentTo] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
 
-  // Polish A: into the app through "/" — its index OnboardingGate sends a brand-new account to
-  // /onboarding once and everyone else on to /today (it waits for settings, so no flash).
-  if (!loading && session) return <Navigate to="/" replace />
+  // Into the app through "/" — its OnboardingGate sends a brand-new account to /onboarding once.
+  // A reset link opened in another tab reaches this one too (supabase-js broadcasts the
+  // PASSWORD_RECOVERY event), so 9k-1's "Waiting for the link…" moves on to the new-password form.
+  if (!loading && session) return <Navigate to={isRecovering() ? '/reset' : '/'} replace />
 
-  function rememberEmail() {
-    try {
-      localStorage.setItem('kf.lastEmail', email)
-    } catch {
-      /* private mode — Settings just shows "signed in" */
+  function go(next: Mode) {
+    setMode(next)
+    setProblem(null)
+  }
+
+  async function sendReset() {
+    setSubmitting(true)
+    const failed = await requestReset(email)
+    setSubmitting(false)
+    if (failed) setProblem(authProblem(failed))
+    else setSentTo(email)
+  }
+
+  // 9j: one tap when the address is already typed; otherwise ask for it first.
+  function forgot() {
+    setProblem(null)
+    if (emailRef.current?.checkValidity()) void sendReset()
+    else {
+      go('forgot')
+      emailRef.current?.focus()
     }
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setNotice(null)
+  async function handleSubmit(e?: FormEvent) {
+    e?.preventDefault()
+    if (submitting) return
+    setProblem(null)
+    if (mode === 'forgot') return sendReset()
+    if (mode === 'signup' && passwordRule(password).state !== 'ok') {
+      passwordRef.current?.focus()
+      return
+    }
     setSubmitting(true)
     if (mode === 'signin') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       setSubmitting(false)
-      if (error) setNotice(calmAuthLine(error.message))
-      else rememberEmail()
+      if (error) setProblem(authProblem(error))
+      else rememberEmail(email)
       return
     }
-    if (mode === 'forgot') {
-      // The email link opens /reset (ResetPage), which trades it for a recovery session.
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${authLinkOrigin()}/reset` })
-      setSubmitting(false)
-      // Same confirmation whether or not the account exists — see resetRequestLooksSent.
-      if (resetRequestLooksSent(error)) setSent({ kind: 'reset', to: email })
-      else setNotice(calmAuthLine(error?.message ?? ''))
-      return
-    }
-    // Sign-up: Supabase's default email-verification flow. The confirmation link redirects
-    // back to origin; supabase-js (detectSessionInUrl) picks the session out of the URL hash,
-    // then the index OnboardingGate routes the fresh account into /onboarding.
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${authLinkOrigin()}/` },
-    })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${authLinkOrigin()}/` } })
     setSubmitting(false)
-    if (error) {
-      setNotice(calmAuthLine(error.message))
-      return
+    if (error) return setProblem(authProblem(error))
+    // With confirmation on, GoTrue hides an existing account as a user with no identities.
+    if (data.user?.identities?.length === 0) return setProblem({ kind: 'in-use' })
+    rememberEmail(email)
+    // Confirmation switched on in the dashboard (parked 9c): there is no session to go on with.
+    if (!data.session) {
+      go('signin')
+      setProblem({ kind: 'line', text: 'Confirm your email with the link we sent, then sign in.' })
     }
-    // Confirmed-email obfuscation: an existing account comes back as a user with no identities.
-    if (data.user && data.user.identities?.length === 0) {
-      setNotice('This garden is already planted — sign in instead.')
-      return
-    }
-    rememberEmail()
-    setSent({ kind: 'signup', to: email })
   }
 
-  function switchMode(next: Mode) {
-    setMode(next)
-    setNotice(null)
-  }
+  const retry = () => formRef.current?.requestSubmit()
+  const card = problem && problem.kind !== 'in-use' && <ProblemCard problem={problem} onRetry={retry} />
 
-  function backToSignIn() {
-    setSent(null)
-    switchMode('signin')
-  }
-
-  const signup = mode === 'signup'
-  const forgot = mode === 'forgot'
+  if (sentTo)
+    return (
+      <FirstRunPage onSubmit={(e) => e.preventDefault()}>
+        <ResetSent
+          email={sentTo}
+          onBack={() => {
+            setSentTo(null)
+            go('signin')
+          }}
+        />
+      </FirstRunPage>
+    )
 
   return (
-    <AuthShell onSubmit={handleSubmit}>
-      {sent?.kind === 'signup' ? (
-        <>
-          <CardMessage>
-            A seed's been sent to <b>{sent.to}</b> — click it to sprout your garden ✿
-          </CardMessage>
-          <HandLine top={12}>then come back and sign in</HandLine>
-          <BackLink onClick={backToSignIn}>← Back to sign in</BackLink>
-        </>
-      ) : sent?.kind === 'reset' ? (
-        <>
-          <CardMessage>
-            If there's an account for <b>{sent.to}</b>, a link to set a new password is on its way.
-          </CardMessage>
-          <HandLine top={12}>check your inbox — and the spam folder, just in case</HandLine>
-          <BackLink onClick={backToSignIn}>← Back to sign in</BackLink>
-        </>
+    <FirstRunPage onSubmit={(e) => void handleSubmit(e)} formRef={formRef}>
+      {mode === 'signup' ? (
+        <Hero art={<Plant src="/ds/assets/clover/seedling.png" />} title="Create your account">
+          Your days, planned in one quiet place.
+        </Hero>
+      ) : mode === 'signin' ? (
+        <Hero art={<Plant src="/ds/assets/clover/resting.png" />} title="Welcome back">
+          Sign in to pick up where you left off.
+        </Hero>
       ) : (
-        <>
-          <HandLine>
-            {signup ? 'a garden of your own starts here' : forgot ? "we'll email you a link to choose a new password" : 'welcome back to the garden'}
-          </HandLine>
-
-          <Fields>
-            <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-            {!forgot && (
-              <Field
-                label="Password"
-                type="password"
-                required
-                minLength={signup ? MIN_PASSWORD_LENGTH : undefined}
-                autoComplete={signup ? 'new-password' : 'current-password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            )}
-          </Fields>
-
-          {notice && <Notice>{notice}</Notice>}
-
-          <CardCta disabled={submitting}>
-            {signup
-              ? submitting ? 'Planting…' : 'Plant your garden'
-              : forgot
-                ? submitting ? 'Sending…' : 'Send reset link'
-                : submitting ? 'Signing in…' : 'Sign in'}
-          </CardCta>
-
-          {/* J-11 (Kai's ruling): the doorways are conventional underlined links; the garden
-              voice lives in the button copy, not here. */}
-          {mode === 'signin' && (
-            <div style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-              <TextLink onClick={() => switchMode('signup')}>Create an account</TextLink>
-              <TextLink onClick={() => switchMode('forgot')}>Forgot password?</TextLink>
-            </div>
-          )}
-          {signup && (
-            <div style={{ marginTop: 18, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--text-secondary)' }}>
-              Already have an account? <TextLink onClick={() => switchMode('signin')}>Sign in</TextLink>
-            </div>
-          )}
-          {forgot && <BackLink onClick={() => switchMode('signin')}>← Back to sign in</BackLink>}
-        </>
+        <Hero art={<Plant src="/ds/assets/clover/resting.png" />} title="Reset your password">
+          We'll email you a link to set a new one.
+        </Hero>
       )}
-    </AuthShell>
+
+      <div className="fr-stack">
+        {!online && (
+          <div>
+            <OfflineChip>{OFFLINE_CHIP[mode]}</OfflineChip>
+          </div>
+        )}
+        <Field
+          label="Email"
+          type="email"
+          required
+          autoComplete="email"
+          inputMode="email"
+          inputRef={emailRef}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          below={
+            problem?.kind === 'in-use' && (
+              <div style={{ marginTop: 8 }}>
+                <ProblemCard problem={problem} email={email} onSignIn={() => go('signin')} onRetry={retry} />
+              </div>
+            )
+          }
+        />
+        {mode !== 'forgot' && (
+          <div>
+            <PasswordField
+              label="Password"
+              rule={mode === 'signup'}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              inputRef={passwordRef}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {mode === 'signin' && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <LinkButton onClick={forgot}>Forgot password?</LinkButton>
+              </div>
+            )}
+          </div>
+        )}
+        {card}
+        <Cta loading={submitting}>{mode === 'signup' ? 'Create account' : mode === 'signin' ? 'Sign in' : 'Send reset link'}</Cta>
+        {mode === 'signup' ? (
+          <div className="fr-alt">
+            Already have an account?<LinkButton onClick={() => go('signin')}>Sign in</LinkButton>
+          </div>
+        ) : mode === 'signin' ? (
+          <div className="fr-alt">
+            New here?<LinkButton onClick={() => go('signup')}>Create an account</LinkButton>
+          </div>
+        ) : (
+          <div className="fr-alt">
+            <LinkButton onClick={() => go('signin')}>Back to sign in</LinkButton>
+          </div>
+        )}
+      </div>
+    </FirstRunPage>
   )
 }

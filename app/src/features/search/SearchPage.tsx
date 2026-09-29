@@ -1,4 +1,5 @@
 import { useTasks } from '../tasks/api'
+import { useOpenTask } from '../tasks/openTask'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { searchHitHref, SEARCH_GROUPS } from './api'
@@ -124,6 +125,7 @@ function RestingResult({ onRetry }: { onRetry: () => void }) {
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
+  const openTask = useOpenTask()
   const { data: allTasks = [] } = useTasks()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
@@ -153,7 +155,8 @@ export function SearchPage() {
   }, [results])
 
   function goTo(hit: SearchHit) {
-    navigate(searchHitHref(hit, allTasks))
+    if (hit.entity_type === 'task') openTask(hit.entity_id, searchHitHref(hit, allTasks)) // the sheet on a phone
+    else navigate(searchHitHref(hit, allTasks))
   }
 
   // Counts are over everything found; the rendered groups honour the chip.

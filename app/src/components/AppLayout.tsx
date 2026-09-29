@@ -11,6 +11,7 @@ import { useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
 import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
+import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
@@ -23,6 +24,8 @@ const CommandBar = lazy(() => import('../features/command-bar/CommandBar').then(
 const ChatPanel = lazy(() => import('../features/chat/ChatPanel').then((m) => ({ default: m.ChatPanel })))
 const SearchOverlay = lazy(() => import('../features/search/SearchOverlay').then((m) => ({ default: m.SearchOverlay })))
 const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ default: m.ShortcutOverlay })))
+// Wave N: a phone opens a task as this sheet over the current page (`?task=<id>`, features/tasks/openTask).
+const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => ({ default: m.TaskSheet })))
 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
@@ -509,6 +512,7 @@ export function AppLayout() {
   useFocusTicker()
   const motionOn = useMotionEnabled()
   const { pathname } = useLocation()
+  const openTaskId = useSearchParams()[0].get(TASK_PARAM)
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -802,6 +806,7 @@ export function AppLayout() {
         {searchOpen && <SearchOverlay open onClose={() => setSearchOpen(false)} />}
         {chatOpen && <ChatPanel open onClose={() => setChatOpen(false)} />}
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
+        {openTaskId && <TaskSheet key={openTaskId} id={openTaskId} />}
       </Suspense>
       <ToastHost />
       {signOutFlow.prompt}

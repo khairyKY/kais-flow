@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   MIN_PASSWORD_LENGTH,
+  authProblem,
   calmAuthLine,
-  newPasswordProblem,
+  inboxUrl,
+  passwordRule,
   readAuthRedirect,
   resetRequestLooksSent,
   resetView,
@@ -45,22 +47,50 @@ describe('readAuthRedirect', () => {
   })
 })
 
-describe('newPasswordProblem', () => {
-  it(`asks for at least ${MIN_PASSWORD_LENGTH} characters`, () => {
-    expect(newPasswordProblem('1234567', '1234567')).toContain(`at least ${MIN_PASSWORD_LENGTH}`)
-    expect(newPasswordProblem('', '')).toContain(`at least ${MIN_PASSWORD_LENGTH}`)
+describe('passwordRule', () => {
+  it('reads neutral before anything is typed', () => {
+    expect(passwordRule('')).toEqual({ state: 'empty', text: `${MIN_PASSWORD_LENGTH}+ characters` })
+  })
+
+  it('counts what is missing while short (9b-2)', () => {
+    expect(passwordRule('12345')).toEqual({ state: 'short', text: 'Use 8 or more characters — 3 to go' })
+    expect(passwordRule('1234567').text).toContain('1 to go')
   })
 
   it('exactly the minimum is enough', () => {
-    expect(newPasswordProblem('12345678', '12345678')).toBeNull()
+    expect(passwordRule('12345678')).toEqual({ state: 'ok', text: '8+ characters' })
+  })
+})
+
+describe('authProblem', () => {
+  it('a fetch that never reached the server is offline (9b-3)', () => {
+    expect(authProblem({ message: 'Failed to fetch', status: 0 })).toEqual({ kind: 'offline' })
   })
 
-  it('the two fields must match', () => {
-    expect(newPasswordProblem('longenough1', 'longenough2')).toContain("don't match")
+  it('an address that already has an account is in-use (9b-1)', () => {
+    expect(authProblem({ message: 'User already registered', code: 'user_already_exists', status: 422 })).toEqual({ kind: 'in-use' })
+    expect(authProblem({ message: 'x', code: 'email_exists', status: 422 })).toEqual({ kind: 'in-use' })
+    expect(authProblem({ message: 'User already registered' })).toEqual({ kind: 'in-use' })
   })
 
-  it('length is checked before the match', () => {
-    expect(newPasswordProblem('short', 'other')).toContain('at least')
+  it('everything else is one calm line', () => {
+    expect(authProblem({ message: 'Invalid login credentials', code: 'invalid_credentials', status: 400 })).toEqual({
+      kind: 'line',
+      text: "That email and password don't match a garden here — try again.",
+    })
+    expect(authProblem({ message: 'Bad gateway', status: 502 })).toEqual({ kind: 'line', text: "That didn't take root — try again in a moment." })
+  })
+})
+
+describe('inboxUrl', () => {
+  it('knows the big webmail inboxes, whatever the case', () => {
+    expect(inboxUrl('kai@gmail.com')).toBe('https://mail.google.com/mail/u/0/#inbox')
+    expect(inboxUrl('Kai@Outlook.com')).toBe('https://outlook.live.com/mail/')
+  })
+
+  it('anything else has no button', () => {
+    expect(inboxUrl('kai@example.com')).toBeNull()
+    expect(inboxUrl('not-an-email')).toBeNull()
   })
 })
 

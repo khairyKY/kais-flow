@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, useLocation, useNavigate, useRouteError } from 'react-router'
 import { Button } from './kit'
 import { useAuth } from '../features/auth/AuthProvider'
-import { AuthShell, BackLink, CardCta, CardMessage, HandLine } from '../features/auth/AuthLayout'
+import { Cta, FirstRunPage, Hero, LinkButton, Plant } from '../features/auth/AuthLayout'
 
 // ── Polish A (new-user audit 2026-09-26): an unknown address, or a page that crashed while
 // rendering, used to show React Router's developer screen ("Unexpected Application Error! …
@@ -9,7 +9,7 @@ import { AuthShell, BackLink, CardCta, CardMessage, HandLine } from '../features
 // no raw text from the failure, and never the word "error" on screen — the details still go to
 // the console (React logs every caught crash there).
 // No design exists for these yet: composed from existing parts only — Stub's centred column
-// inside the app shell, and J-11's doorway card (AuthLayout, as /reset's expired-link state
+// inside the app shell, and the first-run page (AuthLayout, as /reset's expired-link state
 // uses it) when there is no shell to stand in. Flagged for the Phase C design pass. ──
 
 type Kind = 'not-found' | 'crash'
@@ -46,18 +46,25 @@ function StatePage({ kind, bare }: { kind: Kind; bare: boolean }) {
 
   if (bare) {
     return (
-      <AuthShell onSubmit={(e) => e.preventDefault()}>
-        <CardMessage>{title}.</CardMessage>
-        <HandLine top={12}>{line}</HandLine>
-        {kind === 'crash' ? (
-          <>
-            <CardCta onClick={reload}>Reload</CardCta>
-            {showHome && <BackLink onClick={goHome}>← {home.label}</BackLink>}
-          </>
-        ) : (
-          <CardCta onClick={goHome}>{home.label}</CardCta>
-        )}
-      </AuthShell>
+      <FirstRunPage onSubmit={(e) => e.preventDefault()}>
+        <Hero art={<Plant src="/ds/assets/clover/seedling.png" />} title={title}>
+          {line}
+        </Hero>
+        <div className="fr-stack">
+          {kind === 'crash' ? (
+            <>
+              <Cta onClick={reload}>Reload</Cta>
+              {showHome && (
+                <div className="fr-alt">
+                  <LinkButton onClick={goHome}>{home.label}</LinkButton>
+                </div>
+              )}
+            </>
+          ) : (
+            <Cta onClick={goHome}>{home.label}</Cta>
+          )}
+        </div>
+      </FirstRunPage>
     )
   }
 

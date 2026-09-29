@@ -5,9 +5,11 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
+import { DURATIONS, durationLabel } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import type { Domain, Project, Task } from '../../lib/types'
+import { createProject } from '../projects/api'
 import { shortcutHint } from './listShortcuts'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
@@ -33,6 +35,8 @@ export interface TaskMenuActions {
   unschedule?: () => void
   /** The date picker's No date (single task). */
   clearDate?: () => void
+  /** The task sheet's Duration chip. */
+  duration?: (min: number | null) => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -46,11 +50,11 @@ export interface BulkActions {
   onDelete: () => void
 }
 
-type Sub = 'date' | 'project' | 'priority' | 'repeat' | 'remind'
+export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration'
 export interface MenuAnchor {
   at: { x: number; y: number }
-  /** Open straight on a picker (the swipe's Pick date / Project). */
-  sub?: Sub
+  /** Open straight on a picker (the swipe's Pick date / Project, the task sheet's chips). */
+  sub?: MenuSub
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
@@ -87,11 +91,12 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const startFocus = useStartFocus()
-  const [sub, setSub] = useState<Sub | undefined>(anchor.sub)
+  const [sub, setSub] = useState<MenuSub | undefined>(anchor.sub)
   const { at } = anchor
   const base = task.due_at || task.scheduled_start
 
-  const options: Record<'priority' | 'repeat' | 'remind', Option[]> = {
+  const options: Record<'priority' | 'repeat' | 'remind' | 'duration', Option[]> = {
+    duration: [null, ...DURATIONS].map((m) => ({ label: m ? durationLabel(m) : 'None', run: () => actions.duration?.(m) })),
     priority: [null, 3, 2, 1].map((p) => ({ label: p ? PRIORITY_LABELS[p] : 'None', color: priorityColor(p) ?? undefined, run: () => actions.priority(p) })),
     repeat: [
       { label: 'Never', run: () => actions.repeat(null) },
@@ -127,14 +132,23 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
   if (sub === 'date') {
     return <ScheduleMenu position={at} title={ctx.bulkCount ? undefined : task.title} value={due} onClose={onClose} onSchedule={actions.schedule} onSomeday={actions.someday} onClear={clearDate} />
   }
-  if (sub === 'project' && !isMobile) {
-    return <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={ctx.bulkCount ? null : task.project_id} onSelect={actions.move} onClose={onClose} />
+  if (sub === 'project') {
+    return (
+      <ProjectPicker
+        position={at}
+        projects={projects}
+        domains={domains}
+        currentProjectId={ctx.bulkCount ? null : task.project_id}
+        onSelect={actions.move}
+        onClose={onClose}
+        meta={ctx.bulkCount ? undefined : task.title}
+        onCreate={(name) => actions.move(createProject(name, null).id, null)}
+      />
+    )
   }
   if (sub) {
-    const list: Option[] = sub === 'project'
-      ? [{ label: 'No project', run: () => actions.move(null, null) }, ...projects.map((p) => ({ label: p.name, run: () => actions.move(p.id, p.domain_id ?? null) }))]
-      : options[sub]
-    const title = { project: 'Move to project', priority: 'Priority', repeat: 'Repeat', remind: 'Remind' }[sub]
+    const list = options[sub]
+    const title = { priority: 'Priority', repeat: 'Repeat', remind: 'Remind', duration: 'Duration' }[sub]
     return isMobile
       ? <ActionSheet key={sub} title={title} meta={task.title} items={list.map((o) => ({ label: o.label, onSelect: o.run }))} onClose={onClose} />
       : <ContextMenu position={at} onClose={onClose} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: o.run }))} />

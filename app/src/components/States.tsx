@@ -68,8 +68,9 @@ export function EmptyState({ image = '/ds/assets/hydrangea/zero.png', line, acti
   )
 }
 
-/** Inline failure where the data would be. Background failures use a Retry toast instead. */
-export function ErrorCard({ message, onRetry }: { message: ReactNode; onRetry?: () => void }) {
+/** Inline failure where the data would be. Background failures use a Retry toast instead.
+ * `retryLabel` renames the one action (First Run 9b-1: "Sign in instead"). */
+export function ErrorCard({ message, onRetry, retryLabel = 'Retry' }: { message: ReactNode; onRetry?: () => void; retryLabel?: string }) {
   return (
     <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 4px 14px', background: 'var(--paper-parchment)', border: '1px solid var(--line-control)', borderRadius: 3 }}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flex: 'none' }}>
@@ -79,22 +80,23 @@ export function ErrorCard({ message, onRetry }: { message: ReactNode; onRetry?: 
       <span style={{ flex: 1, minHeight: 40, display: 'flex', alignItems: 'center', fontSize: 14, lineHeight: 1.4, color: 'var(--ink-body)' }}>{message}</span>
       {onRetry && (
         <button type="button" onClick={onRetry} style={{ flex: 'none', height: 48, padding: '0 12px', border: 'none', background: 'none', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-terra-ink)', cursor: 'pointer', borderRadius: 3 }}>
-          Retry
+          {retryLabel}
         </button>
       )}
     </div>
   )
 }
 
-/** h 32 chip under a page title while offline; rows that haven't synced carry their own pending ring. */
-export function OfflineChip() {
+/** h 32 chip under a page title while offline; rows that haven't synced carry their own pending ring.
+ * A page with nothing to sync names what waits for the connection instead (First Run 9b-3). */
+export function OfflineChip({ children = 'Offline — changes will sync' }: { children?: ReactNode }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 32, padding: '0 12px', border: '1px solid var(--sig-offline)', borderRadius: 999, fontSize: 13, color: 'var(--sig-offline)', boxSizing: 'border-box' }}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flex: 'none' }}>
         <path d="M7 18h9.5a3.8 3.8 0 0 0 .7-7.5A5.5 5.5 0 0 0 6.6 9.3 4.4 4.4 0 0 0 7 18z" />
         <path d="M4 4l16 16" />
       </svg>
-      Offline — changes will sync
+      {children}
     </span>
   )
 }
