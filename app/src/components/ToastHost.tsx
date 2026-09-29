@@ -49,7 +49,10 @@ const CSS = `
  * toast shows; null = the stylesheet's placement. */
 function sheetFooterDock(): number | null {
   if (!window.matchMedia('(max-width: 767px)').matches) return null
-  const footer = document.querySelector('[aria-modal="true"] [data-sheet-footer]')
+  // Only the top sheet counts (sheets portal into <body> in order): an action sheet over the task
+  // sheet has no footer, so the toast docks at the top instead of over the action rows.
+  const modals = document.querySelectorAll('[aria-modal="true"]')
+  const footer = modals[modals.length - 1]?.querySelector('[data-sheet-footer]')
   if (!footer) return null
   return (window.innerHeight - footer.getBoundingClientRect().top) / uiZoom() + 8
 }

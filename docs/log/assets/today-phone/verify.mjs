@@ -289,7 +289,8 @@ for (const theme of ['day', 'night']) {
     check(`${name} done goal: four-leaf, gold check, struck`, (await count(page, `[id="task-${id(GOAL)}"] .tp-goal-title.is-done`)) === 1 && /four_leaf/.test(await page.locator(`[id="task-${id(GOAL)}"] img`).last().getAttribute('src')))
     await page.locator('.tp-ritual').getByRole('button', { name: 'Shut down' }).click()
     await sleep(600)
-    check(`${name} Shut down opens the evening ritual`, (await page.getByText(/Closing · 1 of 5/i).count()) >= 1)
+    // v1.0.11 redrew Shut down (Shutdown.dc.html): the sheet's title replaced "Closing · 1 of 5".
+    check(`${name} Shut down opens the evening ritual`, await page.getByRole('dialog').filter({ hasText: /Shut down/ }).first().waitFor({ timeout: 5000 }).then(() => true, () => false))
     await phoneBasics(page, name, errors)
     await ctx.close()
   }

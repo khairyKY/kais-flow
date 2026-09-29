@@ -243,6 +243,8 @@ for (const theme of ['day', 'night']) {
       await sleep(300)
       const add = taskWrites(state, w1)
       check(`${name} Add a subtask → a child row`, add.some((r) => r.title === 'Ask for the delivery note' && r.parent_task_id === id(TYRE)), JSON.stringify(add.map((r) => r.title)))
+      // The subtask's "Done" toast sits just above the sheet footer (MK 6l) — over the Focus pill; let it go first.
+      await page.waitForFunction(() => !document.querySelector('.kf-toast'), null, { timeout: 9000 }).catch(() => {})
       await tap(cdp, sheetOf(page).getByRole('button', { name: 'Focus · 25:00' }))
       await sleep(600)
       check(`${name} Focus → /focus on this task`, new URL(page.url()).pathname === '/focus' && (await sheetOf(page).count()) === 0, page.url())
