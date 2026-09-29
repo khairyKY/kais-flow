@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { SheetTitle } from '../../components/TimePicker'
 import { EmojiText } from '../../components/EmojiText'
@@ -9,6 +8,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { SwipeRow } from '../tasks/SwipeRow'
 import type { Task } from '../../lib/types'
 import './rituals.css'
+import { useOpenTask } from '../tasks/openTask'
 
 // ── The chrome both rituals share (SCREENS-2026-09-28 §Plan my day / §Shut down): on a phone a
 // full-height kit BottomSheet (✕, Back and a swipe down close it and keep progress); on desktop a
@@ -157,7 +157,7 @@ export function KitRow({ task, lead, meta, trail, below, done, swipe, selected, 
   selected?: boolean
   className?: string
 }) {
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const shown = meta.filter(Boolean)
   return (
     <SwipeRow
@@ -169,7 +169,7 @@ export function KitRow({ task, lead, meta, trail, below, done, swipe, selected, 
     >
       <div className="rt-row-main">
         <span className="rt-hit">{lead}</span>
-        <div className="rt-body" onClick={() => navigate(`/tasks/${task.id}`)}>
+        <div className="rt-body" onClick={() => openTask(task.id)}>
           <div className={`rt-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
           {shown.length > 0 && <div className="rt-meta">{shown}</div>}
         </div>
