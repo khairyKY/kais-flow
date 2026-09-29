@@ -325,6 +325,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       <div
         ref={scrollRef}
         className="pc-scroll"
+        // A checkbox stops its own pointerdown (it never lifts), so the "swallow the next click" flag
+        // left by a swipe is cleared here, in the capture phase, before anything else sees the press.
+        onPointerDownCapture={() => {
+          g.current.swallow = false
+        }}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}

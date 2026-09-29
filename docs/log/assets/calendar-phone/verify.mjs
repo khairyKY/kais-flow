@@ -327,7 +327,7 @@ for (const theme of ['day', 'night']) {
   s7n: {
     if (!want('7n')) break s7n
     const name = '7n-day'
-    const { ctx, page, cdp, errors } = await open()
+    const { ctx, page, cdp, errors, state } = await open()
     await tap(cdp, page.locator('.pc-title'))
     await shot(page, name)
     const rows = await dialog(page).locator('.kf-as-row').evaluateAll((els) => els.map((e) => [e.innerText.replace(/\s+/g, ' ').trim(), e.getAttribute('aria-current')]))
@@ -340,6 +340,18 @@ for (const theme of ['day', 'night']) {
     check('7h-day the strip washes 27–29', JSON.stringify(await page.locator('.pc-day').evaluateAll((els) => els.map((e) => e.dataset.range ?? null))) === JSON.stringify(['start', 'mid', 'end', null, null, null, null]))
     check('7h-day blocks from all three days; short ones title only', (await page.locator('.pc-block', { hasText: 'Weekly review' }).count()) === 1 && (await page.locator('.pc-block', { hasText: 'Lunch with Sam' }).count()) === 1 && !(await text(block(page, 3))).includes('15:00'))
     check('7h-day the day header row is 32px', (await page.locator('.pc-colhead').evaluate((e) => e.getBoundingClientRect().height)) === 32)
+    // A lifted block moves across columns: one column right = the next day, same time.
+    const tb = await block(page, 3).boundingBox()
+    const cw = (await page.locator('.pc-col').first().boundingBox()).width
+    const w3 = state.writes.length
+    await drag(cdp, { x: tb.x + tb.width / 2, y: tb.y + 16 }, { hold: 550, dx: cw, steps: 8, stepMs: 40 })
+    const x3 = writesOf(state, 'calendar_events', w3)
+    check('7h-day a lifted block dragged one column right → Mon 28, same time ("Moved to Mon 28 15:00")', x3.length === 1 && x3[0].starts_at === iso('15:00', 28) && x3[0].ends_at === iso('15:30', 28) && (await toasts(page)).includes('Moved to Mon 28 15:00'), JSON.stringify(x3.map((x) => x.starts_at)))
+    await tap(cdp, page.locator('.kf-toast', { hasText: 'Moved to Mon 28' }).getByRole('button', { name: 'Undo' }))
+    // A swipe leaves no stale "swallow": the very next tap on a block's checkbox still ticks it.
+    const w4 = state.writes.length
+    await tap(cdp, block(page, 3).locator('.kf-checkbox'))
+    check('7h-day a block checkbox right after a gesture still completes the task', writesOf(state, 'tasks', w4).some((t) => t.id === id(TYRE) && t.status === 'done'))
     const g = await page.locator('.pc-scroll').boundingBox()
     await drag(cdp, { x: 300, y: g.y + 200 }, { dx: -200, steps: 10 })
     await sleep(300)
