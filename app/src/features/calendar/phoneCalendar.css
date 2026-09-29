@@ -78,9 +78,11 @@
 
 /* Only the columns slide on a day swipe (7b); the hour labels and lines stay put. */
 .pc-track { position: absolute; top: 0; bottom: 0; left: 60px; right: 0; }
+/* clip, not hidden: `hidden` would make the track the blocks' scroll container and unstick their titles. */
+.pc-track.is-sliding { overflow-x: clip; }
 .pc-pane { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; }
 .pc-col { position: relative; flex: 1; min-width: 0; }
-.pc-pane.is-multi .pc-col { border-left: 1px dashed var(--line-dashed); }
+.pc-pane.is-multi .pc-col, .pc-track.is-sliding .pc-col { border-left: 1px dashed var(--line-dashed); }
 
 /* ── Blocks: fill only, radius 3 (MK Week Strip look); hue from the kind (--pc-fill / --pc-ink). ── */
 .pc-block {
@@ -130,7 +132,7 @@
 
 /* 7i — the empty day sits over the grid; the hours stay tappable around it. */
 .pc-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.pc-empty > * { pointer-events: auto; }
+.pc-empty button { pointer-events: auto; }
 /* daisy/future.png is a tall stem (132 × 318): at the kit's 120 wide it would fill the grid; drawn ~120 tall. */
 .pc-empty img { width: 50px !important; }
 
@@ -144,17 +146,19 @@
 .pc-qc-title:focus { box-shadow: var(--focus-ring); caret-color: var(--acc-terra-ink); }
 .pc-qc-chips { display: flex; gap: var(--sp-2); margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
 .pc-qc-chips > * { flex: none; }
-/* The tapped slot, drawn over the scrim so you see where it lands. */
-.pc-qc-slot {
-  position: fixed; z-index: 1001; display: flex; align-items: center; gap: var(--sp-2); padding: 0 10px; box-sizing: border-box; pointer-events: none;
-  border-radius: var(--radius-sharp); background: linear-gradient(var(--block-lavender), var(--block-lavender)), var(--paper-parchment);
-  box-shadow: inset 0 0 0 1.5px var(--acc-lavender-deep); --pc-ink: var(--acc-lavender-text); overflow: hidden;
+/* The slot (7c) or block (7d) a sheet is about, drawn over the scrim where it sits on the grid. */
+.pc-held {
+  position: fixed; z-index: 1001; display: flex; align-items: flex-start; gap: var(--sp-2); padding: 0 10px; box-sizing: border-box; pointer-events: none;
+  border-radius: var(--radius-sharp); background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
+  box-shadow: inset 0 0 0 1.5px var(--pc-edge); overflow: hidden;
 }
+.pc-held > * { line-height: 32px; }
 
 .pc-bs-head { display: flex; align-items: flex-start; gap: var(--sp-1); margin: 0 0 var(--sp-3) -13px; }
 .pc-bs-head .kf-checkbox { margin: 13px; flex: none; }
 .pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }
 .pc-bs-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
 .pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
 .pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }
 .pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }

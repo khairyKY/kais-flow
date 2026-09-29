@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ACTION_ROW_CSS } from '../../components/ActionSheet'
 import { BottomSheet } from '../../components/BottomSheet'
@@ -27,6 +27,19 @@ import { eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode,
 // tasks/api (the outbox), and every removal carries Undo. ──
 
 type Rect = { left: number; top: number; width: number; height: number }
+export type SlotRect = (day: string, start: number, end: number) => Rect | null
+
+/** The slot or block a sheet is about, drawn over the scrim where it sits on the grid (7c, 7d). */
+function Held({ rect, fill, ink, edge, title, time }: { rect: Rect | null; fill: string; ink: string; edge: string; title: string; time: string }) {
+  if (!rect) return null
+  return createPortal(
+    <div className="pc-held" style={{ ...rect, '--pc-fill': fill, '--pc-ink': ink, '--pc-edge': edge } as CSSProperties} aria-hidden>
+      <span className="pc-name">{title}</span>
+      <span className="pc-time">{time}</span>
+    </div>,
+    document.body,
+  )
+}
 
 /** A kit action row (ActionSheet's look): icon · label · hint · chevron. */
 function Row({ icon, label, hint, onClick }: { icon: IconName; label: string; hint?: string; onClick: () => void }) {
@@ -42,7 +55,7 @@ function Row({ icon, label, hint, onClick }: { icon: IconName; label: string; hi
 
 /** 7c — tap an empty slot: Task (default) or Event, 30 minutes, the keyboard up at once. The slot is
  * drawn over the scrim with the title as you type. Save waits for a title. */
-export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: string; start: number; slotRect: (start: number, end: number) => Rect | null; onClose: () => void }) {
+export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: string; start: number; slotRect: SlotRect; onClose: () => void }) {
   const [kind, setKind] = useState<'task' | 'event'>('task')
   const [title, setTitle] = useState('')
   const [start, setStart] = useState(at)
@@ -56,7 +69,6 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
     else createEvent(name, starts_at, ends_at, 'event')
     close()
   }
-  const rect = slotRect(start, start + dur)
   return (
     <>
       <BottomSheet onClose={onClose} handleGap={8}>
@@ -91,14 +103,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
           </div>
         )}
       </BottomSheet>
-      {rect &&
-        createPortal(
-          <div className="pc-qc-slot" style={rect} aria-hidden>
-            <span className="pc-name">{name || (kind === 'task' ? 'New task' : 'New event')}</span>
-            <span className="pc-time">{rangeText(start, start + dur)}</span>
-          </div>,
-          document.body,
-        )}
+      <Held rect={slotRect(day, start, start + dur)} fill="var(--block-lavender)" ink="var(--acc-lavender-text)" edge="var(--acc-lavender-deep)" title={name || (kind === 'task' ? 'New task' : 'New event')} time={rangeText(start, start + dur)} />
       {timeOpen && (
         <TimePicker
           day={day}
@@ -119,8 +124,10 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
 /** 7d — tap a block. A task block: its checkbox marks the task done; Time moves it; Open the task is
  * the task sheet; Remind is the task's; Unschedule sends it back to the strip; Delete removes the
  * block only (the task stays). A plain event: Time and Delete. */
-export function BlockSheet({ event, task, project, domains, projects, subtasks, pending, onMove, onClose }: {
+export function BlockSheet({ event, look, slotRect, task, project, domains, projects, subtasks, pending, onMove, onClose }: {
   event: CalendarEvent
+  look: { fill: string; ink: string }
+  slotRect: SlotRect
   task?: Task
   project?: Project
   domains: Domain[]
@@ -133,6 +140,12 @@ export function BlockSheet({ event, task, project, domains, projects, subtasks, 
   const openTask = useOpenTask()
   const [picker, setPicker] = useState<'time' | 'remind' | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  // Delete / Unschedule: the sheet leaves first, then the block goes and the Undo toast lands on the page.
+  const after = useRef<(() => void) | null>(null)
+  const closeThen = (close: () => void, write: () => void) => {
+    after.current = write
+    close()
+  }
   useEffect(() => {
     if (savedAt == null) return
     const t = window.setTimeout(() => setSavedAt(null), SAVED_MS)
@@ -149,14 +162,17 @@ export function BlockSheet({ event, task, project, domains, projects, subtasks, 
     <>
       <BottomSheet
         detent="medium"
-        onClose={onClose}
+        onClose={() => {
+          onClose()
+          after.current?.()
+        }}
         handleGap={8}
         footer={(close) => (
           <>
-            <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={() => { close(); deleteEventWithUndo(event, 'Deleted') }}>
+            <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={() => closeThen(close, () => deleteEventWithUndo(event, 'Deleted'))}>
               Delete
             </Button>
-            {task && <Button variant="secondary" onClick={() => { close(); deleteEventWithUndo(event, 'Unscheduled') }}>Unschedule</Button>}
+            {task && <Button variant="secondary" onClick={() => closeThen(close, () => deleteEventWithUndo(event, 'Unscheduled'))}>Unschedule</Button>}
           </>
         )}
       >
@@ -166,7 +182,7 @@ export function BlockSheet({ event, task, project, domains, projects, subtasks, 
               {task && <Checkbox checked={done} onChange={() => (done ? uncompleteTask(task) : completeTaskWithUndo(task))} label={task.title} />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className={`pc-bs-title${done ? ' is-done' : ''}`}><EmojiText text={task?.title ?? event.title} /></div>
-                <div className="pc-bs-meta">{meta}</div>
+                <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
               </div>
             </div>
             <div className="pc-bs-rows">
@@ -179,6 +195,7 @@ export function BlockSheet({ event, task, project, domains, projects, subtasks, 
           </>
         )}
       </BottomSheet>
+      <Held rect={slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
       {picker === 'time' && (
         <TimePicker
           day={span.day}

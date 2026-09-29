@@ -16,7 +16,7 @@ import { filterByScope } from '../tasks/grouping'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { moveOrResizeEvent, resizeEvent, useCalendarEvents } from './api'
-import { dayBlocks, movedText, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { dayBlocks, eventSpan, movedText, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
@@ -84,6 +84,8 @@ export function PhoneCalendar() {
   /** A drop, a resize or the block sheet's Time: one write, one toast with Undo (7m). */
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
     const prior = { ...e }
+    // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
+    if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, 80)
     const { starts_at, ends_at } = spanIso(to)
     if (mode === 'move') {
       moveOrResizeEvent(e, starts_at, ends_at)
@@ -94,12 +96,15 @@ export function PhoneCalendar() {
     }
   }
 
+  const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
+
   function goToday() {
     setAnchor(today)
     gridRef.current?.centerNow()
   }
 
   const block = sheet?.k === 'block' ? events.find((e) => e.id === sheet.id) : undefined
+  if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
   const blockTask = block?.task_id ? taskById.get(block.task_id) : undefined
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
   const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0
@@ -177,7 +182,11 @@ export function PhoneCalendar() {
           gridRef.current?.scrollToMinute(start, 80)
           setSheet({ k: 'create', day, start })
         }}
-        onTapBlock={(e) => setSheet({ k: 'block', id: e.id })}
+        onTapBlock={(e) => {
+          // The block stays in view above its sheet, drawn over the scrim (7d).
+          gridRef.current?.scrollToMinute(eventSpan(e).start, 80)
+          setSheet({ k: 'block', id: e.id })
+        }}
         onCommit={commit}
         overlay={
           emptyDay && (
@@ -203,11 +212,13 @@ export function PhoneCalendar() {
         />
       )}
       {sheet?.k === 'create' && (
-        <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={(s, e) => gridRef.current?.rectOf(sheet.day, s, e) ?? null} onClose={() => setSheet(null)} />
+        <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
         <BlockSheet
           event={block}
+          look={look(block)}
+          slotRect={slotRect}
           task={blockTask}
           project={blockTask?.project_id ? projects.find((p) => p.id === blockTask.project_id) : undefined}
           projects={projects}

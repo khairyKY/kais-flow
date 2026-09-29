@@ -29,7 +29,7 @@ export interface PhoneGridHandle {
   centerNow(): void
   /** Scroll so `minute` sits `offset` px under the grid's top edge. */
   scrollToMinute(minute: number, offset: number): void
-  /** Screen rect of a span in the visible columns (quick create draws its slot over the scrim). */
+  /** Screen rect of a span in the visible columns (a sheet draws its slot or block over the scrim). */
   rectOf(day: string, start: number, end: number): { left: number; top: number; width: number; height: number } | null
 }
 
@@ -235,9 +235,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const t = now.getTime()
     const live = !lifted && evStart <= t && t < evEnd
     const past = !lifted && evEnd <= t
-    // Two lines when there's room and it reads better: the running block ("Now · 20m left") in the
-    // day view; any block 56px+ in the narrow columns, where the time can't sit beside the title.
-    const stacked = multi ? h >= 56 : live
+    // Two lines (title, then time) from 56px: always in the narrow columns, where the time can't sit
+    // beside the title; in the day view for blocks without a checkbox (a task keeps its one row, 7f).
+    const stacked = h >= 56 && (multi || !lk.check)
     const time = live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : rangeText(s.start, s.end)
     // A move into another column (3 days / week) slides the same node over, so the finger never loses it.
     const colShift = lifted ? days.indexOf(lifted.draft.day) - days.indexOf(lifted.orig.day) : 0
@@ -344,11 +344,12 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               <i />
             </div>
           ))}
-          <div ref={trackRef} className="pc-track" style={{ transform: sliding ? `translateX(${swipeX}px)` : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
+          {/* The track stays put (it clips the slide to the columns); the panes move. */}
+          <div ref={trackRef} className={`pc-track${sliding ? ' is-sliding' : ''}`}>
             {panes.map((p) => {
               const pdays = p ? days.map((d) => addDays(d, p * step)) : days
               return (
-                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}`} style={{ left: `${p * 100}%` }}>
+                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? `translateX(${swipeX}px)` : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
                   {pdays.map((d) => column(d, p === 0))}
                   {pdays.includes(today) && <span className="pc-nowline" style={{ top: minToPx(nowMin) }} />}
                 </div>
