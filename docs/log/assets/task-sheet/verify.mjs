@@ -571,14 +571,15 @@ for (const theme of ['day', 'night']) {
   {
     const name = 'from-calendar'
     const { ctx, page, cdp, errors } = await open('/calendar')
-    const block = page.locator('.fc-event', { hasText: 'Call the tyre supplier' }).first()
+    // v1.0.13: the phone calendar is PhoneCalendar (7d): a block opens its block sheet → "Open the task".
+    const block = page.locator('.pc-block', { hasText: 'Call the tyre supplier' }).first()
     await block.scrollIntoViewIfNeeded().catch(() => {})
-    await tap(cdp, block)
+    await tap(cdp, block.locator('.pc-name'))
     await sleep(300)
-    await tap(cdp, page.getByRole('button', { name: /Open task/ }).first())
+    await tap(cdp, page.locator('[role="dialog"]').last().locator('.kf-as-row', { hasText: 'Open the task' }))
     await sleep(500)
     await shot(page, name)
-    check(`${name} a block → Open task → the sheet over the calendar`, (await sheetOf(page).count()) === 1 && new URL(page.url()).pathname === '/calendar' && param(page) === id(TYRE), page.url())
+    check(`${name} a block → Open the task → the sheet over the calendar`, (await sheetOf(page).count()) === 1 && new URL(page.url()).pathname === '/calendar' && param(page) === id(TYRE), page.url())
     await sheetBasics(page, name, errors)
     await ctx.close()
   }
