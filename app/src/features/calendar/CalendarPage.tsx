@@ -26,9 +26,9 @@ import { EventDetailsPanel } from './EventDetailsPanel'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
-import { SCROLL_LEAD_DESKTOP_MIN, SCROLL_LEAD_PHONE_MIN } from './gridClock'
 import { useDayRollover } from './useDayRollover'
 import { useIsMobile } from '../../components/BottomSheet'
+import { PhoneCalendar } from './PhoneCalendar'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
@@ -39,16 +39,11 @@ const RAIL_W_KEY = 'kf.calRailWidth'
 // Polish D: '1' = the user folded the Unscheduled rail, '0' = they opened it; unset = automatic
 // (folded only when the visible days wouldn't keep their minimum width beside it — weekFit.ts).
 const RAIL_FOLD_KEY = 'kf.calRailFolded'
-// Polish F2b (conductor decision 2026-09-26): on a phone the rail stacked above the grid left the
-// grid ~211px tall, so there it starts folded to one tap-to-open strip. '0' = the user opened it,
-// '1' = they folded it again; unset = folded. Its own key: the phone rail is a different control
-// (a strip above the grid, not the desktop's side strip) with a different default.
-const RAIL_FOLD_PHONE_KEY = 'kf.calRailFoldedPhone'
 const DEFAULT_RAIL_W = 244
 const RAIL_MIN = 150
 const RAIL_MAX = 760
 
-// ── Calendar.dc.html 1a (desktop: task rail + time-grid) · 1b (iPhone day view). ──
+// ── Calendar.dc.html 1a (desktop: task rail + time-grid). Phones: PhoneCalendar (Calendar Phone.dc.html). ──
 
 type ViewKind = 'day' | 'ndays' | 'week' | 'month'
 const VIEW_MAP: Record<ViewKind, CalendarGridView> = { day: 'timeGridDay', ndays: 'customDayCount', week: 'rollingWeek', month: 'dayGridMonth' }
@@ -74,51 +69,6 @@ function weekNumber(d: Date): number {
 }
 
 /** FullCalendar's range end is exclusive — subtract a day so a "last day" label reads right. */
-/** Calendar.dc.html 1b week strip: the seven days around the shown day; tap one to go there.
- * Today is the lavender pill, the shown day is ink. */
-function WeekStrip({ anchor, weekStartsMon, onPick }: { anchor: Date; weekStartsMon: boolean; onPick: (d: Date) => void }) {
-  const first = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate())
-  first.setDate(first.getDate() - ((first.getDay() - (weekStartsMon ? 1 : 0) + 7) % 7))
-  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString()
-  const today = new Date()
-  const days = Array.from({ length: 7 }, (_, i) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i))
-  return (
-    <div className="cal-week" style={{ display: 'flex', padding: '12px 10px 0' }}>
-      {days.map((d) => {
-        const isToday = same(d, today)
-        const shown = same(d, anchor)
-        return (
-          <button
-            key={d.toISOString()}
-            type="button"
-            onClick={() => onPick(d)}
-            aria-current={shown ? 'date' : undefined}
-            aria-label={d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            style={{ flex: 1, minHeight: 44, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}
-          >
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: isToday ? 'var(--acc-lavender-text)' : 'var(--ink-faint)' }}>
-              {d.toLocaleDateString('en-US', { weekday: 'narrow' })}
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 15,
-                lineHeight: '28px',
-                width: 28,
-                borderRadius: 999,
-                color: shown ? 'var(--paper-parchment)' : isToday ? 'var(--acc-lavender-text)' : 'var(--ink-body)',
-                background: shown ? 'var(--ink-body)' : isToday ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
-              }}
-            >
-              {d.getDate()}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
   if (viewKind === 'month') return start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   if (viewKind === 'day') return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -167,7 +117,12 @@ const RAIL_TILTS = [0, -0.4, 0, 0.4]
 // re-render → another fresh array… "Show weekends" off crashed the page (max update depth).
 const WEEKEND_DAYS = [0, 6]
 
+/** Phones (< 768px) get the touch calendar; desktop keeps the FullCalendar layout below. */
 export function CalendarPage() {
+  return useIsMobile() ? <PhoneCalendar /> : <DesktopCalendar />
+}
+
+function DesktopCalendar() {
   const openTask = useOpenTask()
   const { data: events = [] } = useCalendarEvents()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
@@ -184,10 +139,7 @@ export function CalendarPage() {
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'today' })
-  // Calendar.dc.html 1b — phones open on the day view, not a 7-column squeeze.
-  const [viewKind, setViewKind] = useState<ViewKind>(() =>
-    typeof window !== 'undefined' && window.innerWidth <= 767 ? 'day' : 'week',
-  )
+  const [viewKind, setViewKind] = useState<ViewKind>('week')
   // Effects 21 — the chip created by a rail drop plays settle-in once.
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
@@ -382,7 +334,7 @@ export function CalendarPage() {
   // page out at ~1024px, and the 244px rail beside a week left two of seven days on screen.
   // Calendar.dc.html keeps the rail on desktop, so it stays wherever the week still fits beside
   // it; where it doesn't, it folds to a strip (the week gets the room) and one click brings it
-  // back. Phones keep their own layout (rail above the grid, 1b) and never fold.
+  // back.
   const shellRef = useRef<HTMLDivElement>(null)
   const [shellWidth, setShellWidth] = useState(0)
   useEffect(() => {
@@ -400,26 +352,11 @@ export function CalendarPage() {
       return null
     }
   })
-  const isMobile = useIsMobile()
-  const [, setPhoneRailOpen] = useState(() => {
-    try {
-      return localStorage.getItem(RAIL_FOLD_PHONE_KEY) === '0'
-    } catch {
-      return false
-    }
-  })
-  // Calendar.dc.html 1b: on a phone the unscheduled tasks are a chip strip under the header,
-  // always there when there is something to plant (the fold bar pushed the grid down a row).
-  const railFolded = isMobile
-    ? railTasks.length === 0
-    : railPref
-      ? railPref === 'folded'
-      : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
+  const railFolded = railPref ? railPref === 'folded' : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
   function setRailFolded(folded: boolean) {
-    if (isMobile) setPhoneRailOpen(!folded)
-    else setRailPref(folded ? 'folded' : 'open')
+    setRailPref(folded ? 'folded' : 'open')
     try {
-      localStorage.setItem(isMobile ? RAIL_FOLD_PHONE_KEY : RAIL_FOLD_KEY, folded ? '1' : '0')
+      localStorage.setItem(RAIL_FOLD_KEY, folded ? '1' : '0')
     } catch {
       /* private mode — the choice lasts this visit */
     }
@@ -457,7 +394,6 @@ export function CalendarPage() {
         .cal-railsplit { flex: none; width: 7px; cursor: col-resize; position: relative; }
         .cal-railsplit::after { content: ""; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }
         .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
-        @media (max-width: 767px) { .cal-railsplit { display: none; } }
         /* Polish D: the folded rail — a strip with the sidebar's own round collapse button
            (AppLayout's .kf-collapse-btn look) and the rail's own mono label, read upward. */
         .cal-rail.is-folded { display: none; }
@@ -486,52 +422,19 @@ export function CalendarPage() {
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
-        /* Polish F2b: the phone's folded rail — one strip in 1b's own language (the chip strip's
-           mono label between dashed rules), the round knob pointing down to open it. */
-        .cal-rail-bar { flex: none; width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border: none; border-bottom: 1px dashed var(--line-solid); background: none; font: inherit; cursor: pointer; }
-        .cal-rail-bar-label { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
-        .cal-rail-knob .cal-rail-knob-glyph { display: inline-block; }
-        @media (max-width: 767px) {
-          /* Calendar.dc.html 1b: header, week strip, unscheduled chip strip, then a full-bleed
-             day grid that runs to the tab bar. cal-main dissolves so the rail can sit between
-             the week strip and the grid (order). */
-          /* Full-bleed: out through app-main-content's 20px/16px padding and down to the tab bar
-             (its 88px bottom padding clears the bar; ~12px of air stays above the mic button). */
-          .cal-shell { flex-direction: column; margin: -20px -16px -28px; height: calc(100% + 48px); }
-          .cal-main { display: contents; }
-          .cal-head { order: 1; padding: 10px 16px 0; margin-bottom: 0 !important; }
-          .cal-week { order: 2; }
-          .cal-rail { order: 3; width: 100%; border-right: none; border-bottom: none; padding: 10px 16px 12px; overflow: visible; }
-          .cal-rail-extra { display: none !important; }
-          .cal-rail-cards { flex-direction: row; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-          .cal-rail-cards > div { flex: 0 0 160px; padding: 8px 10px !important; }
-          .cal-grid-card { order: 4; flex: 1; min-height: 0; border: none !important; border-top: 1px solid var(--line-card) !important; border-radius: 0 !important; box-shadow: none !important; }
-        }
       `}</style>
 
       <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
-        {railFolded && !isMobile && (
+        {railFolded && (
           <button type="button" className="cal-rail-tab" onClick={() => setRailFolded(false)} title="Show unscheduled" aria-label={`Show unscheduled tasks (${railTasks.length})`}>
             <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true">›</span>
             <span className="cal-rail-tab-label">Unscheduled · {railTasks.length}</span>
-          </button>
-        )}
-        {false && railFolded && isMobile && (
-          <button type="button" className="cal-rail-bar" onClick={() => setRailFolded(false)} aria-expanded={false} aria-label={`Show unscheduled tasks (${railTasks.length})`}>
-            <span className="cal-rail-bar-label">Unscheduled · {railTasks.length}</span>
-            <span className="cal-rail-knob kf-collapse-btn" aria-hidden="true"><span className="cal-rail-knob-glyph" style={{ transform: 'rotate(90deg)' }}>›</span></span>
           </button>
         )}
         {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
         <aside className={railFolded ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Unscheduled</div>
-            {/* Polish F2b: the phone rail folds back up from here (desktop folds from the splitter). */}
-            {false && isMobile && (
-              <button type="button" className="cal-rail-knob kf-collapse-btn kf-hit" aria-expanded={true} aria-label="Hide unscheduled tasks" onClick={() => setRailFolded(true)}>
-                <span className="cal-rail-knob-glyph" style={{ transform: 'rotate(-90deg)' }}>›</span>
-              </button>
-            )}
           </div>
           <div className="cal-rail-extra" style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
@@ -656,14 +559,14 @@ export function CalendarPage() {
         )}
 
         <div className="cal-main">
-          <div className="cal-head" style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 10 : 20, marginBottom: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
-              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: isMobile ? 40 : 52, filter: 'var(--shadow-drop-sm)' }} />
+          <div className="cal-head" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                  {isMobile ? `Calendar · Week ${weekNumber(rangeInfo?.start ?? new Date())}` : `Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
+                  {`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
                 </div>
-                <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
+                <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
                   {rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, viewKind) : ''}
                 </h1>
               </div>
@@ -709,13 +612,6 @@ export function CalendarPage() {
             </div>
           </div>
 
-          {isMobile && (
-            <WeekStrip
-              anchor={rangeInfo?.start ?? new Date()}
-              weekStartsMon={viewOpts.weekStartsMon}
-              onPick={(d) => gridRef.current?.gotoDate(d)}
-            />
-          )}
           <div className={['cal-grid-card', motionOn && 'cal-motion-on'].filter(Boolean).join(' ')} style={{ flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 4, boxShadow: 'var(--shadow-panel)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {/* Kai 2026-07-21: "why cant I scroll horizontally in the week view" — the grid
                 keeps ≥170px per day column (CalendarGrid sets its own min-width) and scrolls
@@ -758,8 +654,6 @@ export function CalendarPage() {
               hiddenDays={viewOpts.showWeekends ? undefined : WEEKEND_DAYS}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
-              scrollLeadMinutes={isMobile ? SCROLL_LEAD_PHONE_MIN : SCROLL_LEAD_DESKTOP_MIN}
-              phone={isMobile}
               dayCount={dayCount}
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}

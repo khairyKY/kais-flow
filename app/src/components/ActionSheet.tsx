@@ -16,6 +16,8 @@ export interface ActionSheetItem {
   destructive?: boolean
   /** The row opens a second picker (MK Action Sheet draws a chevron after the hint). */
   chevron?: boolean
+  /** The current choice (Calendar Phone 7n's view list): sage wash + check. */
+  selected?: boolean
   onSelect: () => void
 }
 
@@ -27,6 +29,7 @@ export const ACTION_ROW_CSS = `
   .kf-as-row:active { background: var(--pressed-overlay); }
   .kf-as-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
   .kf-as-row.is-destructive { color: var(--acc-terra-ink); }
+  .kf-as-row[aria-current='true'] { background: var(--block-sage); color: var(--acc-sage-text); font-weight: 600; }
   .kf-as-icon { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); }
   .kf-as-row.is-destructive .kf-as-icon { color: var(--acc-terra-ink); }
   .kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
@@ -55,6 +58,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
             key={item.label}
             type="button"
             className={`kf-as-row${item.destructive ? ' is-destructive' : ''}`}
+            aria-current={item.selected || undefined}
             onClick={() => {
               item.onSelect()
               close()
@@ -64,6 +68,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
             <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>
             {item.hint != null && <span className="kf-as-hint">{item.hint}</span>}
             {item.chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
+            {item.selected && <Icon name="check" size={20} />}
           </button>
         )
         // Full-bleed rows: the sheet body has 20px gutters, the rows carry their own.
