@@ -20,10 +20,8 @@ export function headerDay(date: Date, now: Date): { delta: number; weekday: stri
   }
 }
 
-/** How far above the now-line the grid opens. A phone's day grid is short (Polish F2b, conductor
- * decision 2026-09-26: with a 2h lead the now-line landed behind the tab bar), so it gets 1h. */
+/** How far above the now-line the grid opens (the phone's own grid centres the now line instead). */
 export const SCROLL_LEAD_DESKTOP_MIN = 120
-export const SCROLL_LEAD_PHONE_MIN = 60
 
 /** Where the grid opens: `leadMinutes` (2h by default) above the now-line, floored to its 30-min
  * slot (so the top edge sits on a grid line), never before midnight. FullCalendar `scrollTime` /

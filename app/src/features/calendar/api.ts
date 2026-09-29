@@ -4,6 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { fetchAll } from '../../lib/fetchAll'
+import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 
 export function useCalendarEvents() {
@@ -119,6 +120,14 @@ export function deleteEvent(event: CalendarEvent): void {
   writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
   if (event.task_id) touchTaskSchedule(event.task_id, null, null)
   logActivity('calendar_event.deleted', 'calendar_event', event.id, {})
+}
+
+/** Takes a block off the calendar with Undo — "Unscheduled · <title>" / "Deleted · <title>". The task
+ * stays either way (Punch 6: capture the prior row, undo through the same api). */
+export function deleteEventWithUndo(event: CalendarEvent, verb: 'Unscheduled' | 'Deleted'): void {
+  const prior = { ...event }
+  deleteEvent(event)
+  toastUndo(`${verb} · ${event.title}`, () => restoreEvent(prior))
 }
 
 /** Deleting a task deletes its block too (called from the tasks feature after user confirms). */

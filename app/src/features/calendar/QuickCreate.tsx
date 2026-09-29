@@ -16,7 +16,7 @@ import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { writeRow } from '../../lib/outbox'
 
-// ── Editor.dc.html 2a/2b (compact popover) · 2c (phone sheet) · 1b/1c/1d field
+// ── Editor.dc.html 2a/2b (compact popover) · 1b/1c/1d field
 // content (expanded, via "More options ↗"). One component: the kind switcher
 // (Task/Event/Block) picks which field set renders below the title. ──
 
@@ -26,7 +26,7 @@ export interface QuickCreateProps {
   initialKind: QuickCreateKind
   /** The grid slot that was clicked/dragged — null when opened from the rail's bare "quick add". */
   slot: { date: string; start: string; end: string; allDay: boolean } | null
-  /** Screen position to anchor the compact popover near. Ignored on phone widths (bottom sheet). */
+  /** Screen position to anchor the compact popover near. */
   anchor: { x: number; y: number } | null
   onClose: () => void
 }
@@ -81,14 +81,6 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const { data: domains = [] } = useDomains()
-
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
 
   const [kind, setKind] = useState<QuickCreateKind>(initialKind)
   const [expanded, setExpanded] = useState(false)
@@ -463,27 +455,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     </>
   )
 
-  // Editor.dc.html 2c — the phone sheet gets a full-width terra CTA with the editor link
-  // centered under it, not the desktop's left/right footer row.
-  const footer = isMobile && !expanded ? (
-    <>
-      <button
-        type="button"
-        onClick={(e) => submit(e.currentTarget)}
-        style={{ width: '100%', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 14.5, padding: 14, borderRadius: 999, boxShadow: 'var(--shadow-cta)', marginTop: 16, cursor: 'pointer' }}
-      >
-        {KIND_META[kind].cta}
-      </button>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 10 }}>
-        <button type="button" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          Full editor ↗
-        </button>
-        {/* deviation(2026-07-18 audit): export says "swipe down to dismiss" but the sheet has
-            no swipe gesture — the hint names the dismiss that actually works. */}
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>tap outside to dismiss</span>
-      </div>
-    </>
-  ) : (
+  const footer = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: expanded ? 22 : 14, paddingTop: expanded ? 16 : 11, borderTop: '1px dashed var(--line-dashed)' }}>
       {expanded ? (
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
@@ -521,29 +493,11 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
     </>
   )
 
-  // ── Container: mobile bottom sheet · desktop popover (near click) · expanded modal (centered) ──
+  // ── Container: desktop popover (near click) · expanded modal (centered). Phones: PhoneSheets. ──
   // Motion 3c — scrim and card arrive together, 210ms up-and-settle (entryFadeUp is the
   // token keyframe; qcFadeIn is the scrim's plain fade). Exits stay instant for now —
   // delayed-unmount helper is a foundation-level ask.
   const overlayAnim = <style>{'@keyframes qcFadeIn{from{opacity:0}}'}</style>
-
-  if (isMobile) {
-    return (
-      <>
-        {overlayAnim}
-        <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, animation: 'qcFadeIn 210ms var(--ease-out)' }} />
-        <div
-          className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderBottom: 'none', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 40px rgba(var(--kf-shadow-rgb, 60,52,38),0.28)', padding: '14px 20px calc(22px + env(safe-area-inset-bottom))', maxHeight: '88dvh', overflowY: 'auto', overscrollBehavior: 'contain', animation: 'entryFadeUp 210ms var(--ease-out)' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0 10px' }}>
-            <span style={{ width: 38, height: 4.5, borderRadius: 3, background: 'var(--line-solid)' }} />
-          </div>
-          {body}
-        </div>
-      </>
-    )
-  }
 
   if (expanded || !anchor) {
     return (
