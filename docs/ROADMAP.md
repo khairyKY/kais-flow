@@ -44,6 +44,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-09-29** — **v1.0.12 (Wave N): the phone Task sheet + First run.** On a phone a task opens as a sheet over the page you're on (desktop keeps the editor page); every edit saves at once. First run: sign up → your first 3 things → Today; sign in; password reset. Email confirmation stays parked until a domain + SMTP exist. Open: should moving a task's date carry its reminder?
 - **2026-09-28** — **v1.0.11 (Wave N): Plan my day + Shut down redrawn** to the Claude Design screens. Plan always suggests times; Shut down is the one evening entry for tomorrow's 3 (offered from 17:00; no "Plan tomorrow"). Toasts over a sheet sit above its footer.
 - **2026-09-28** — **v1.0.10 (Wave M): our own pickers.** The MK Date Picker (quick picks + month grid + Set time) and MK Time Picker (free slots from the calendar, 15-minute list, durations) replace every native date/time input — the July FIX-7/J-25 leftover. **Wave N starts:** Today on the phone (NOW slip only while something runs, flat ritual card, each item once). Open: Next week on a Sunday (next day vs the Monday after).
 - **2026-09-28** — **v1.0.9 (Wave L): one task-row grammar.** Swipe right = Tomorrow (09:00, everywhere), swipe left = Trash + Undo (no confirm), ⋯ on every task row (phone action sheet = desktop right-click), hold to select with a phone bulk bar. Task Snooze removed (Someday lives in the date picker). Start focus stays in ⋯.
