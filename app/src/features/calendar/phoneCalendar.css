@@ -1,0 +1,179 @@
+/* The phone calendar — design-export/Calendar Phone.dc.html 7a–7n (390 × 844). Mobile Kit sizes
+   (DS-CHANGELOG §3); only rendered < 768px. Tokens only. */
+
+/* The page draws its own MK top bar (title · Today), like Today: the shell's mono strip steps aside. */
+@media (max-width: 767px) {
+  .app-shell:has(.pc) .app-topbar { display: none !important; }
+}
+
+/* Full-bleed, exactly down to the tab bar: out through .app-main-content's phone padding (20 top,
+   16 sides, tab bar + 24 bottom) — the grid scrolls inside itself. */
+.pc {
+  display: flex;
+  flex-direction: column;
+  margin: calc(-1 * var(--sp-5)) calc(-1 * var(--gutter-phone)) calc(-1 * var(--sp-6));
+  height: calc(100% + var(--sp-5) + var(--sp-6));
+  overflow: hidden;
+}
+
+/* ── Header: the title is the view switch (7n); Today re-centres on the now line. ── */
+.pc-head { flex: none; height: var(--topbar-h); display: flex; align-items: center; padding: 0 var(--sp-1) 0 var(--gutter-phone); }
+.pc-h1 { flex: 1; min-width: 0; margin: 0; font: inherit; }
+.pc-title {
+  display: flex; align-items: center; gap: 6px; height: var(--touch-min); max-width: 100%; padding: 0; border: none; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-page-title); line-height: 1.15; letter-spacing: -0.015em;
+  color: var(--ink-body); white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
+.pc-chev { flex: none; color: var(--ink-muted); transition: transform var(--dur-quick) var(--ease-out); }
+.pc-title[aria-expanded='true'] .pc-chev { transform: rotate(180deg); }
+.pc-offline { flex: none; padding: var(--sp-2) var(--gutter-phone); }
+
+/* ── MK Week Strip: 7 × (48 × 76) · letter mono 12 · 40 circle Inter 16 · today terra-ink ring ·
+   the shown day ink-filled · 4px dot when the day holds something. ── */
+.pc-week { flex: none; display: flex; padding: 0 var(--sp-2); }
+.pc-day {
+  position: relative; flex: 1; height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-1);
+  padding: 0; border: none; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pc-day > * { position: relative; }
+.pc-day[data-range]::before { content: ''; position: absolute; inset: var(--sp-1) 0; background: var(--select-bg); }
+.pc-day[data-range='start']::before { border-radius: 34px 0 0 34px; }
+.pc-day[data-range='end']::before { border-radius: 0 34px 34px 0; }
+.pc-day-l { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-day[data-today] .pc-day-l { color: var(--acc-terra-ink); }
+.pc-day-n { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: var(--fw-medium); color: var(--ink-body); }
+.pc-day[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
+.pc-day[aria-current] .pc-day-n { background: var(--ink-body); color: var(--paper-parchment); box-shadow: none; font-weight: var(--fw-semibold); }
+.pc-day-dot { width: 4px; height: 4px; border-radius: 50%; }
+.pc-day-dot[data-on] { background: var(--ink-faint); }
+
+/* ── Unscheduled strip: 56px, the 1b paper cards at kit size (40 tall, a 48 hit). ── */
+.pc-uns {
+  flex: none; height: 56px; display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--gutter-phone);
+  overflow-x: auto; scrollbar-width: none; white-space: nowrap;
+}
+.pc-uns::-webkit-scrollbar { display: none; }
+.pc-uns-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-chip {
+  position: relative; flex: none; display: inline-flex; align-items: center; gap: var(--sp-2); height: 40px; padding: 0 var(--sp-3);
+  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); box-shadow: var(--shadow-crisp);
+  font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pc-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-1)) 0; }
+.pc-chip[aria-expanded='true'] { border-color: var(--ink-body); box-shadow: inset 0 0 0 0.5px var(--ink-body); }
+.pc-chip.is-skel { width: 132px; border: none; box-shadow: none; background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
+.pc-chip-t { font-size: 14px; color: var(--ink-body); }
+.pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+
+/* ── The grid: 64px hours, a 60px hour gutter, dashed hour lines. ── */
+.pc-grid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
+.pc-colhead { flex: none; height: 32px; display: flex; padding-left: 60px; border-bottom: 1px solid var(--line-card); }
+.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+.pc-colhead > span.is-today { color: var(--acc-terra-ink); }
+.pc-allday { flex: none; display: flex; gap: var(--sp-1); padding: var(--sp-1) var(--sp-1) var(--sp-1) 60px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line-card); }
+.pc-allday-chip {
+  position: relative; flex: none; max-width: 100%; height: 32px; padding: 0 10px; border: none; border-radius: var(--radius-sharp); cursor: pointer;
+  background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); font: inherit; font-size: 14px; font-weight: var(--fw-medium);
+  color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pc-allday-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-2)) 0; }
+.pc-scroll { position: relative; flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.pc-canvas { position: relative; height: calc(24 * 64px); }
+.pc-hour { position: absolute; left: 0; right: 0; display: flex; align-items: flex-start; pointer-events: none; }
+.pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-faint); }
+.pc-hour > i { flex: 1; border-top: 1px dashed var(--line-dashed); }
+
+/* Only the columns slide on a day swipe (7b); the hour labels and lines stay put. */
+.pc-track { position: absolute; top: 0; bottom: 0; left: 60px; right: 0; }
+/* clip, not hidden: `hidden` would make the track the blocks' scroll container and unstick their titles. */
+.pc-track.is-sliding { overflow-x: clip; }
+.pc-pane { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; }
+.pc-col { position: relative; flex: 1; min-width: 0; }
+.pc-pane.is-multi .pc-col, .pc-track.is-sliding .pc-col { border-left: 1px dashed var(--line-dashed); }
+/* Week: ~47px columns — the title gets the room (the checkbox lives in the block sheet). */
+.pc-pane.is-week .pc-block-body { padding: 4px; }
+.pc-pane.is-week .pc-check { display: none; }
+
+/* ── Blocks: fill only, radius 3 (MK Week Strip look); hue from the kind (--pc-fill / --pc-ink). ── */
+.pc-block {
+  position: absolute; border-radius: var(--radius-sharp); cursor: pointer;
+  background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+.pc-block.is-past { opacity: 0.55; filter: saturate(0.6); }
+/* A block scrolled half off keeps its title in the visible part. */
+.pc-block-body {
+  position: sticky; top: 0; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; max-height: 100%; padding: 0 10px; overflow: hidden;
+}
+.pc-block-body.is-stacked { flex-wrap: wrap; align-content: flex-start; row-gap: 0; padding: 6px 10px; }
+.pc-block-body.is-stacked .pc-name { flex: 1 1 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 18px; }
+.pc-block-body.is-stacked .pc-time { flex-basis: 100%; }
+.pc-check { flex: none; display: inline-flex; }
+.pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-time { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-block.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
+
+/* 7e/7f — lifted: scale 1.04, +1.2°, --shadow-popover (Motion 5b); its old place a dashed outline. */
+.pc-block.is-lifted {
+  z-index: 3; touch-action: none; box-shadow: var(--shadow-popover);
+  transform: translateX(var(--pc-shift, 0px)) scale(1.04) rotate(1.2deg);
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+}
+.pc-ghost { position: absolute; border: 1px dashed var(--ink-hairline); border-radius: var(--radius-sharp); pointer-events: none; }
+/* Resize handles sit outside the block's edges, each its own 48px target. */
+.pc-handle { position: absolute; left: 50%; width: 96px; height: var(--touch-min); margin-left: -48px; display: flex; justify-content: center; touch-action: none; }
+.pc-handle.is-top { bottom: 100%; align-items: flex-end; }
+.pc-handle.is-bottom { top: 100%; align-items: flex-start; }
+.pc-handle > i { width: 32px; height: 6px; margin: 1px 0; border-radius: 3px; background: var(--pc-ink); box-shadow: 0 0 0 1.5px var(--paper-parchment); }
+
+/* ── MK Now line: 1.5px terra-ink, 10px dot at the gutter, a 22px time tag. ── */
+.pc-nowline { position: absolute; left: 2px; right: 0; height: 1.5px; margin-top: -0.75px; background: var(--acc-terra-ink); z-index: 4; pointer-events: none; }
+.pc-nowdot { position: absolute; left: 58px; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--acc-terra-ink); z-index: 4; pointer-events: none; }
+.pc-nowtag, .pc-bubble {
+  position: absolute; left: var(--sp-1); height: 22px; margin-top: -11px; padding: 0 6px; border-radius: var(--radius-pill);
+  font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none;
+}
+.pc-nowtag { background: var(--acc-terra-ink); color: var(--on-terra); z-index: 4; }
+/* The time bubble while a block is lifted: the inverted toast pair. */
+.pc-bubble { background: var(--toast-bg); color: var(--toast-ink); box-shadow: var(--shadow-toast); z-index: 6; }
+
+.pc-skel { position: absolute; border-radius: var(--radius-sharp); background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
+
+/* 7i — the empty day sits over the grid; the hours stay tappable around it. */
+.pc-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.pc-empty button { pointer-events: auto; }
+/* daisy/future.png is a tall stem (132 × 318): at the kit's 120 wide it would fill the grid; drawn ~120 tall. */
+.pc-empty img { width: 50px !important; }
+
+/* ── Sheets ── */
+.pc-qc { display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-2); }
+.pc-qc-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.pc-qc-title {
+  height: 52px; padding: 0 var(--gutter-phone); border: 1px solid var(--line-control); border-radius: var(--radius-md); background: var(--paper-bone);
+  font: inherit; font-size: 16px; color: var(--ink-body); outline: none;
+}
+.pc-qc-title:focus { box-shadow: var(--focus-ring); caret-color: var(--acc-terra-ink); }
+.pc-qc-chips { display: flex; gap: var(--sp-2); margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
+.pc-qc-chips > * { flex: none; }
+/* The slot (7c) or block (7d) a sheet is about, drawn over the scrim where it sits on the grid. */
+.pc-held {
+  position: fixed; z-index: 1001; display: flex; align-items: flex-start; gap: var(--sp-2); padding: 0 10px; box-sizing: border-box; pointer-events: none;
+  border-radius: var(--radius-sharp); background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
+  box-shadow: inset 0 0 0 1.5px var(--pc-edge); overflow: hidden;
+}
+.pc-held > * { line-height: 32px; }
+
+.pc-bs-head { display: flex; align-items: flex-start; gap: var(--sp-1); margin: 0 0 var(--sp-3) -13px; }
+.pc-bs-head .kf-checkbox { margin: 13px; flex: none; }
+.pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }
+.pc-bs-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
+.pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }
+.pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }
+.pc-bs-save.is-pending { color: var(--sig-offline); }
+.pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }
+
+.pc-slots { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0 var(--sp-4); }
+.pc-hint { display: flex; align-items: center; gap: var(--sp-2); margin: calc(-1 * var(--sp-1)) 0 var(--sp-3); font-size: 14px; color: var(--ink-muted); }

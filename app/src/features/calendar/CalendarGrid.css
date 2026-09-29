@@ -11,7 +11,7 @@
      grid wrapper) rides the same --s scale as the zoom compensation — slot height, type and
      insets all breathe together. M keeps the contract's 54px/hour exactly. */
   --s: calc(var(--kf-ui-scale, 1) * var(--kf-cal-density, 1));
-  /* Text-only scale: small grid type rises on a phone (.kf-cal-phone) without growing the slots. */
+  /* Text-only scale (the time rows): kept apart from --s so type can move without the slots. */
   --s-text: var(--s);
   --fc-border-color: var(--line-dashed);
   --fc-page-bg-color: transparent;
@@ -555,11 +555,3 @@
 @media (hover: hover) {
   .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }
 }
-
-/* Phone (Calendar.dc.html 1b): hour labels sit in a slim gutter, 9px mono, 14px from the edge. */
-.kf-cal-phone .fc .fc-timegrid-slot-label-cushion,
-.kf-cal-phone .fc .fc-timegrid-axis-cushion { padding: 0 4px 0 10px; }
-.kf-cal-phone .fc .fc-timegrid-slot-label { vertical-align: top; }
-.kf-cal-phone .fc .fc-scrollgrid { border-left: none; border-right: none; }
-.kf-cal-phone .fc .fc-scrollgrid-section-header > * { border-bottom-width: 1px; }
-.kf-cal-phone { --s-text: calc(var(--s) * 1.22); }
