@@ -371,8 +371,8 @@ export function TaskSheet({ id }: { id: string }) {
               onClose={() => setMore(false)}
               items={[
                 // The icon set has no duplicate / link glyph yet: plus and send stand in (SCREENS §Task sheet).
-                { label: 'Duplicate', icon: <Icon name="plus" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
-                { label: 'Copy link', icon: <Icon name="send" size={24} />, onSelect: copyLink },
+                { label: 'Duplicate', icon: <Icon name="duplicate" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
+                { label: 'Copy link', icon: <Icon name="link" size={24} />, onSelect: copyLink },
                 { label: 'Delete', icon: <Icon name="delete" size={24} />, hint: 'Undo 6s', destructive: true, onSelect: () => closeThen(close, () => deleteTasksWithUndo([t])) },
               ]}
             />
