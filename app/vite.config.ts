@@ -37,7 +37,7 @@ export default defineConfig({
     buildStamp(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: "Kai's Flow",
         short_name: 'KaisFlow',
@@ -65,11 +65,10 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
           },
-          // Interim icon (design-integration/PLAN.md SHIP P1: "interim clover four_leaf" until
-          // Kai's art): the clover sits inside the central safe zone, so the same file serves as
-          // the maskable icon Android crops into its own shape.
+          // Kai's Final — Source Serif K (App Icons.dc.html). The maskable one is full-bleed paper with
+          // the K inside the 80% safe circle; the two above keep the design's rounded corners.
           {
-            src: 'icon-512.png',
+            src: 'icon-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
