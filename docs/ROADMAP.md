@@ -44,6 +44,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-10-02** — **v1.0.14: the app icon is Kai's "Final — Source Serif K"** (a Source Serif K on warm paper) on web, Android (adaptive) and Windows.
 - **2026-09-29** — **v1.0.13: Calendar on the phone — Wave N complete.** A touch calendar of our own on phones (swipe days, 3-day/week, hold-to-move with a time bubble, resize handles, tap a gap to create, block sheet); FullCalendar stays for desktop. The whole Claude Design refresh (Waves K–N) is now in the app. Open: tap a task block → block sheet (as drawn) or straight to the task?
 - **2026-09-29** — **v1.0.12 (Wave N): the phone Task sheet + First run.** On a phone a task opens as a sheet over the page you're on (desktop keeps the editor page); every edit saves at once. First run: sign up → your first 3 things → Today; sign in; password reset. Email confirmation stays parked until a domain + SMTP exist. Open: should moving a task's date carry its reminder?
 - **2026-09-28** — **v1.0.11 (Wave N): Plan my day + Shut down redrawn** to the Claude Design screens. Plan always suggests times; Shut down is the one evening entry for tomorrow's 3 (offered from 17:00; no "Plan tomorrow"). Toasts over a sheet sit above its footer.
