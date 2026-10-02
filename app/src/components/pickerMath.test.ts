@@ -96,6 +96,13 @@ describe('atDay — a picked day at 09:00 Cairo unless a time is set', () => {
 
 describe('quickPicks', () => {
   const sunday = new Date('2026-09-27T10:00:00+03:00')
+  it('never offers the same day twice: This weekend drops on a Saturday (= Today) and a Friday (= Tomorrow)', () => {
+    const labels = (at: string) => quickPicks(new Date(at), true).map((p) => p.label)
+    expect(labels('2026-10-03T10:00:00+03:00')).toEqual(['Today', 'Tomorrow', 'Next week']) // Saturday
+    expect(labels('2026-10-02T10:00:00+03:00')).toEqual(['Today', 'Tomorrow', 'Next week']) // Friday
+    expect(labels('2026-10-01T10:00:00+03:00')).toEqual(['Today', 'Tomorrow', 'This weekend', 'Next week']) // Thursday
+  })
+
   it('the MK drawing: Today Sun 27 · Tomorrow Mon 28 · 09:00 · This weekend Sat 3 Oct', () => {
     const q = quickPicks(sunday, true)
     expect(q.map((p) => [p.label, p.hint])).toEqual([
@@ -121,9 +128,6 @@ describe('quickPicks', () => {
   })
   it('uses the Cairo day, not the device day (01:30 Cairo = 22:30Z the day before)', () => {
     expect(quickPicks(new Date('2026-09-26T22:30:00Z'), false)[0].day).toBe('2026-09-27')
-  })
-  it('on a Saturday, this weekend is today', () => {
-    expect(quickPicks(new Date('2026-10-03T12:00:00+03:00'), false)[2].day).toBe('2026-10-03')
   })
   it('across the October switch back to winter time', () => {
     const q = quickPicks(new Date('2026-10-28T12:00:00+03:00'), true)

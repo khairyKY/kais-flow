@@ -107,19 +107,21 @@ export interface QuickPick {
   hint: string
 }
 
-/** MK Date Picker's four dated quick picks. This weekend = the coming Saturday (today, on a
- * Saturday). `withTime` adds "· 09:00" to Tomorrow's hint where the caller stores an instant. */
+/** MK Date Picker's dated quick picks (up to four, one per day). This weekend = the coming Saturday. `withTime` adds "· 09:00" to Tomorrow's hint where the caller stores an instant. */
 export function quickPicks(now: Date, withTime: boolean): QuickPick[] {
   const today = cairoDateKey(now)
   const weekend = addDays(today, (6 - weekday(today) + 7) % 7)
   const tomorrow = addDays(today, 1)
   const nextWeek = addDays(today, daysUntilNextWeek(now))
-  return [
+  const picks: QuickPick[] = [
     { key: 'today', label: 'Today', day: today, iso: scheduleToday(now), hint: dayHint(today, today) },
     { key: 'tomorrow', label: 'Tomorrow', day: tomorrow, iso: scheduleTomorrow(now), hint: dayHint(tomorrow, today) + (withTime ? ' · 09:00' : '') },
     { key: 'weekend', label: 'This weekend', day: weekend, iso: atDay(weekend), hint: dayHint(weekend, today) },
     { key: 'nextweek', label: 'Next week', day: nextWeek, iso: scheduleNextWeek(now), hint: dayHint(nextWeek, today) },
   ]
+  // Kai 2026-10-03: a pick landing on the same day as one above it is noise — This weekend is Today
+  // on a Saturday and Tomorrow on a Friday — so only the first pick for each day stays.
+  return picks.filter((p, i) => picks.findIndex((q) => q.day === p.day) === i)
 }
 
 /** Days holding an open task (due or scheduled) or a live event — the grid's 4px dots. */
