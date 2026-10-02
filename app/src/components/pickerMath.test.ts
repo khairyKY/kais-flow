@@ -102,11 +102,10 @@ describe('quickPicks', () => {
       ['Today', 'Sun 27'],
       ['Tomorrow', 'Mon 28 · 09:00'],
       ['This weekend', 'Sat 3 Oct'],
-      // The drawing says Mon 5 Oct; the app's one Next week (the `3` key, the planning board) is the
-      // coming Monday, which on a Sunday is tomorrow. Kept the app's — see the pickers handoff.
-      ['Next week', 'Mon 28'],
+      // Kai 2026-10-03: as drawn — on a Sunday, Next week skips tomorrow's Monday.
+      ['Next week', 'Mon 5 Oct'],
     ])
-    expect(q.map((p) => p.day)).toEqual(['2026-09-27', '2026-09-28', '2026-10-03', '2026-09-28'])
+    expect(q.map((p) => p.day)).toEqual(['2026-09-27', '2026-09-28', '2026-10-03', '2026-10-05'])
     expect(quickPicks(new Date('2026-09-30T10:00:00+03:00'), false)[3].hint).toBe('Mon 5 Oct')
   })
   it('Today, Tomorrow and Next week are the app-wide shortcuts, never now+24h', () => {

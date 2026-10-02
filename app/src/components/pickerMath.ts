@@ -1,4 +1,4 @@
-import { cairoDateKey, daysUntilNextMonday, scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
+import { cairoDateKey, daysUntilNextWeek, scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
 import { cairoTimeKey, cairoToIso } from '../features/calendar/eventTime'
 import type { CalendarEvent, Task } from '../lib/types'
 
@@ -113,7 +113,7 @@ export function quickPicks(now: Date, withTime: boolean): QuickPick[] {
   const today = cairoDateKey(now)
   const weekend = addDays(today, (6 - weekday(today) + 7) % 7)
   const tomorrow = addDays(today, 1)
-  const nextWeek = addDays(today, daysUntilNextMonday(now))
+  const nextWeek = addDays(today, daysUntilNextWeek(now))
   return [
     { key: 'today', label: 'Today', day: today, iso: scheduleToday(now), hint: dayHint(today, today) },
     { key: 'tomorrow', label: 'Tomorrow', day: tomorrow, iso: scheduleTomorrow(now), hint: dayHint(tomorrow, today) + (withTime ? ' · 09:00' : '') },

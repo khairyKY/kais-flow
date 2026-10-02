@@ -279,11 +279,9 @@ describe('planningColumns', () => {
         const now = new Date(`2026-07-${String(6 + i).padStart(2, '0')}T${time}:00+03:00`)
         const due = scheduleNextWeek(now)
         const cols = planningColumns([task({ due_at: due })], now)
-        // Sunday is the one real exception: "next Monday" literally is tomorrow, and the
-        // board's own Tomorrow column takes precedence over Next week for a diff of 1 — not
-        // the bug being guarded against here (that was This week wrongly swallowing it).
-        const cairoWeekday = now.toLocaleDateString('en-US', { timeZone: 'Africa/Cairo', weekday: 'short' })
-        const expectedKey = cairoWeekday === 'Sun' ? 'tomorrow' : 'nextWeek'
+        // Sunday too, since 2026-10-03: Next week skips tomorrow's Monday (daysUntilNextWeek), so the
+        // drop no longer falls into the board's Tomorrow column.
+        const expectedKey = 'nextWeek'
         const label = `weekday offset ${i} at ${time} Cairo`
         expect(cols.find((c) => c.key === expectedKey)!.tasks, label).toHaveLength(1)
         expect(cols.find((c) => c.key === 'week')!.tasks, label).toHaveLength(0)
