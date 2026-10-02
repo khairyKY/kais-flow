@@ -9,7 +9,7 @@ import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
-import { allDayOn, bubbleText, columnLabel, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
 // look, radius 3), the MK Now line. Our own, not FullCalendar — the touch design needs a hold that
@@ -208,7 +208,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   }
 
   /** While the finger sits within 48px of the grid's top or bottom edge, the grid scrolls under it
-   * (faster the deeper, capped) and the block keeps tracking. The browser clamps at the day's ends. */
+   * (faster the deeper, capped) and the block keeps tracking, stopping at the day's ends. */
   function edgeScroll(t: number, last: number) {
     const s = g.current
     const el = scrollRef.current
@@ -223,7 +223,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const px = Math.trunc(s.acc)
     s.acc -= px
     if (px) {
-      el.scrollTop += px
+      // The browser stops at 00:00; 24:00 is ours to hold — a lifted block's handle hangs below the canvas.
+      el.scrollTop = Math.min(el.scrollTop + px, minToPx(DAY_MIN) - el.clientHeight)
       track()
     }
     s.raf = requestAnimationFrame((next) => edgeScroll(next, t))
