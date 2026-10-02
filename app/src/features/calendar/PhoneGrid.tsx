@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { Checkbox } from '../../components/kit'
+import { Checkbox, Chip } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { addDays, durationLabel, toMin } from '../../components/pickerMath'
 import { longPress, tick } from '../../lib/haptics'
@@ -9,12 +9,13 @@ import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
-import { allDayOn, bubbleText, columnLabel, dayBlocks, dragSpan, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { allDayOn, bubbleText, columnLabel, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
 // look, radius 3), the MK Now line. Our own, not FullCalendar — the touch design needs a hold that
 // lifts a block with a time bubble in the gutter, resize handles outside the block, a lift that stays
-// until you tap elsewhere or press Back, and a day swipe where only the columns slide. ──
+// until you tap elsewhere or press Back, a drag that scrolls the grid at its edges, and a day swipe
+// where only the columns slide. ──
 
 export interface BlockLook {
   /** Kind hue (CALENDAR.md §3): the fill and its ink. */
@@ -54,6 +55,8 @@ interface Props {
   onPage: (dir: 1 | -1) => void
   onTapSlot: (day: string, start: number) => void
   onTapBlock: (e: CalendarEvent) => void
+  /** The "+N" chip on 4+ blocks at once: the blocks it stands for. */
+  onTapMore: (hidden: CalendarEvent[]) => void
   onCommit: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
   /** Over the grid, not scrolling with it (the empty day). */
   overlay?: ReactNode
@@ -62,7 +65,7 @@ interface Props {
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
-export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onCommit, overlay }, ref) {
+export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onTapMore, onCommit, overlay }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const [lift, setLift] = useState<Lift | null>(null)
@@ -70,13 +73,20 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   liftRef.current = lift
   const [swipeX, setSwipeX] = useState(0)
   const [settling, setSettling] = useState(false)
-  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag', sx: 0, sy: 0, dx: 0, lastX: 0, lastT: 0, v: 0, timer: 0, swallow: false })
+  // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
+  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
   const multi = days.length > 1
   const nowMin = toMin(cairoTimeKey(now))
 
   // Back (and Esc) puts a lifted block down before anything else closes.
   useEscapeStack(!!lift, () => setLift(null))
-  useEffect(() => () => window.clearTimeout(g.current.timer), [])
+  useEffect(
+    () => () => {
+      window.clearTimeout(g.current.timer)
+      cancelAnimationFrame(g.current.raf)
+    },
+    [],
+  )
 
   // A block picked up by a hold began as a pan-y touch: only a non-passive touchmove can keep the page
   // from scrolling under the drag (touch-action is fixed at touchstart). A day swipe likewise.
@@ -116,7 +126,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     if ((e.pointerType === 'mouse' && e.button !== 0) || !e.isPrimary || settling) return
     const s = g.current
     const target = e.target as Element
-    Object.assign(s, { id: e.pointerId, kind: 'idle', sx: e.clientX, sy: e.clientY, dx: 0, lastX: e.clientX, lastT: e.timeStamp, v: 0, swallow: false })
+    Object.assign(s, { id: e.pointerId, kind: 'idle', sx: e.clientX, sy: e.clientY, st0: scrollRef.current?.scrollTop ?? 0, dx: 0, lastX: e.clientX, lastY: e.clientY, lastT: e.timeStamp, v: 0, swallow: false })
     window.clearTimeout(s.timer)
     const handle = target.closest<HTMLElement>('[data-pc-handle]')?.dataset.pcHandle as DragMode | undefined
     const blockEl = target.closest<HTMLElement>('.pc-block')
@@ -155,17 +165,13 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const dt = e.timeStamp - s.lastT
     if (dt > 0) s.v = (e.clientX - s.lastX) / z / dt
     s.lastX = e.clientX
+    s.lastY = e.clientY
     s.lastT = e.timeStamp
     if (s.kind === 'drag') {
-      const l = liftRef.current
-      if (!l?.mode) return
-      const cols = days.length
-      const col = days.indexOf(l.orig.day)
-      const dDay = cols > 1 && col >= 0 ? Math.max(-col, Math.min(cols - 1 - col, Math.round(dx / (width() / cols)))) : 0
-      const draft = dragSpan(l.orig, l.mode, pxToMin(dy), l.mode === 'move' ? dDay : 0)
-      if (!same(draft, l.draft)) {
-        tick() // one tick per 15-minute step
-        setLift({ ...l, draft })
+      track()
+      if (!s.raf) {
+        s.acc = 0
+        s.raf = requestAnimationFrame((t) => edgeScroll(t, t - 16))
       }
       return
     }
@@ -182,6 +188,45 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     }
     s.dx = dx
     setSwipeX(dx)
+  }
+
+  /** The lifted block follows the finger on the 15-min grid — through any scroll since the press. */
+  function track() {
+    const s = g.current
+    const l = liftRef.current
+    if (!l?.mode) return
+    const z = uiZoom()
+    const dy = (s.lastY - s.sy) / z + (scrollRef.current?.scrollTop ?? s.st0) - s.st0
+    const cols = days.length
+    const col = days.indexOf(l.orig.day)
+    const dDay = cols > 1 && col >= 0 ? Math.max(-col, Math.min(cols - 1 - col, Math.round((s.lastX - s.sx) / z / (width() / cols)))) : 0
+    const draft = dragSpan(l.orig, l.mode, pxToMin(dy), l.mode === 'move' ? dDay : 0)
+    if (same(draft, l.draft)) return
+    tick() // one tick per 15-minute step
+    liftRef.current = { ...l, draft } // the next frame of an edge scroll reads it before React re-renders
+    setLift(liftRef.current)
+  }
+
+  /** While the finger sits within 48px of the grid's top or bottom edge, the grid scrolls under it
+   * (faster the deeper, capped) and the block keeps tracking. The browser clamps at the day's ends. */
+  function edgeScroll(t: number, last: number) {
+    const s = g.current
+    const el = scrollRef.current
+    const z = uiZoom()
+    const r = el?.getBoundingClientRect()
+    const v = el && r && s.kind === 'drag' && liftRef.current?.mode ? edgeScrollSpeed(s.lastY / z, r.top / z, r.bottom / z) : 0
+    if (!el || !v) {
+      s.raf = 0
+      return
+    }
+    s.acc += v * Math.min(t - last, 50) // whole pixels only: a fractional scrollTop can round away
+    const px = Math.trunc(s.acc)
+    s.acc -= px
+    if (px) {
+      el.scrollTop += px
+      track()
+    }
+    s.raf = requestAnimationFrame((next) => edgeScroll(next, t))
   }
 
   function up(e: ReactPointerEvent<HTMLDivElement>) {
@@ -214,7 +259,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   }
 
   function tapGrid(e: React.MouseEvent) {
-    if ((e.target as Element).closest('.pc-block')) return
+    if ((e.target as Element).closest('.pc-block, .pc-more')) return
     const r = trackRef.current?.getBoundingClientRect()
     if (!r) return
     const col = Math.max(0, Math.min(days.length - 1, Math.floor(((e.clientX - r.left) / r.width) * days.length)))
@@ -298,7 +343,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         )}
         {blocks.map((b) => {
           const slot = ov.get(b.event.id)
-          if (slot?.kind === 'hidden') return null // ponytail: 4+ at once — no "+N more" on the phone yet
+          if (slot?.kind === 'hidden') return null // 4+ at once: under the topmost's "+N" chip
           const geo =
             slot?.kind === 'pair'
               ? { left: `calc(${inset.l}px + ${slot.lane} * (${full} / 2 + 2px))`, width: `calc(${full} / 2 - 2px)` }
@@ -306,6 +351,19 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
                 ? { left: `calc(${inset.l}px + ${slot.lane} * 0.22 * ${full})`, width: `calc(0.56 * ${full})` }
                 : { left: `${inset.l}px`, width: `calc${full}` }
           return block(b.event, b.start, b.end, geo)
+        })}
+        {/* At most three drawn at once; the rest collapse into "+N" at the top-right of the stack. */}
+        {blocks.map((b) => {
+          const slot = ov.get(b.event.id)
+          if (slot?.kind !== 'stack' || !slot.hidden.length || lift?.id === b.event.id) return null
+          const hidden = slot.hidden.map((id) => events.find((x) => x.id === id)).filter((x) => x !== undefined)
+          return (
+            <span key={`more-${b.event.id}`} className="pc-more" style={{ top: minToPx(b.start) + 2, right: inset.r + 2 }}>
+              <Chip tone="bordered" style={{ height: 'var(--sp-6)', padding: '0 var(--sp-2)', background: 'var(--paper-parchment)' }} onClick={() => onTapMore(hidden)}>
+                +{hidden.length}
+              </Chip>
+            </span>
+          )
         })}
       </div>
     )

@@ -6,17 +6,17 @@ import { addDays, daysWithItems } from '../../components/pickerMath'
 import { EmptyState, OfflineChip } from '../../components/States'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { useOutboxMarks } from '../../lib/outbox'
-import { toastUndo } from '../../lib/undo'
 import { useOnline } from '../../lib/useOnline'
 import type { CalendarEvent } from '../../lib/types'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { filterByScope } from '../tasks/grouping'
+import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { moveOrResizeEvent, resizeEvent, useCalendarEvents } from './api'
-import { allDayOn, dayBlocks, eventSpan, movedText, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { moveEventWithUndo, useCalendarEvents } from './api'
+import { allDayOn, dayBlocks, eventSpan, rangeText, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
@@ -31,6 +31,7 @@ type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
   | { k: 'block'; id: string }
+  | { k: 'more'; ids: string[] }
   | { k: 'schedule'; id: string }
   | { k: 'plan' }
 
@@ -53,6 +54,7 @@ export function PhoneCalendar() {
   const [anchor, setAnchor] = useState(today)
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)
+  const openTask = useOpenTask()
 
   // A page left open past midnight: if it was showing today, it follows the new day.
   const [seenToday, setSeenToday] = useState(today)
@@ -81,19 +83,19 @@ export function PhoneCalendar() {
     return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) } }
   }
 
-  /** A drop, a resize or the block sheet's Time: one write, one toast with Undo (7m). */
+  /** A drop, a resize or the event sheet's Time: one write, one toast with Undo (7m). */
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
-    const prior = { ...e }
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
     if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, 80)
-    const { starts_at, ends_at } = spanIso(to)
-    if (mode === 'move') {
-      moveOrResizeEvent(e, starts_at, ends_at)
-      toastUndo(movedText(from, to, today), () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at))
-    } else {
-      resizeEvent(e, starts_at, ends_at)
-      toastUndo(`Resized to ${rangeText(to.start, to.end)}`, () => resizeEvent(prior, prior.starts_at, prior.ends_at))
-    }
+    moveEventWithUndo(e, from, to, mode)
+  }
+
+  /** A task opens as itself — the Task sheet over the calendar (Kai 2026-10-03, one tap less); a plain
+   * event (or a block whose task isn't here) opens the event sheet (7d). The block stays in view above. */
+  function tapBlock(e: CalendarEvent) {
+    if (!e.all_day) gridRef.current?.scrollToMinute(eventSpan(e).start, 80)
+    if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
+    else setSheet({ k: 'block', id: e.id })
   }
 
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
@@ -105,7 +107,6 @@ export function PhoneCalendar() {
 
   const block = sheet?.k === 'block' ? events.find((e) => e.id === sheet.id) : undefined
   if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
-  const blockTask = block?.task_id ? taskById.get(block.task_id) : undefined
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
   const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0 && allDayOn(events, days).length === 0
   const strip = weekPage(anchor, today)
@@ -182,11 +183,8 @@ export function PhoneCalendar() {
           gridRef.current?.scrollToMinute(start, 80)
           setSheet({ k: 'create', day, start })
         }}
-        onTapBlock={(e) => {
-          // The block stays in view above its sheet, drawn over the scrim (7d).
-          gridRef.current?.scrollToMinute(eventSpan(e).start, 80)
-          setSheet({ k: 'block', id: e.id })
-        }}
+        onTapBlock={tapBlock}
+        onTapMore={(hidden) => setSheet({ k: 'more', ids: hidden.map((e) => e.id) })}
         onCommit={commit}
         overlay={
           emptyDay && (
@@ -215,18 +213,19 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet
-          event={block}
-          look={look(block)}
-          slotRect={slotRect}
-          task={blockTask}
-          project={blockTask?.project_id ? projects.find((p) => p.id === blockTask.project_id) : undefined}
-          projects={projects}
-          domains={domains}
-          subtasks={blockTask ? tasks.filter((t) => t.parent_task_id === blockTask.id && !t.deleted_at).length : 0}
-          pending={marks.pending.has(block.id)}
-          onMove={commit}
+        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onClose={() => setSheet(null)} />
+      )}
+      {sheet?.k === 'more' && (
+        <ActionSheet
+          title={`${sheet.ids.length} more`}
+          meta="At the same time"
           onClose={() => setSheet(null)}
+          items={events
+            .filter((e) => sheet.ids.includes(e.id))
+            .map((e) => {
+              const s = eventSpan(e)
+              return { label: e.title, icon: <Icon name={e.task_id ? 'tasks' : 'calendar'} />, hint: rangeText(s.start, s.end), onSelect: () => tapBlock(e) }
+            })}
         />
       )}
       {scheduling && (
