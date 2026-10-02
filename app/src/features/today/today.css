@@ -211,6 +211,8 @@
 .tp-link:active { background: var(--pressed-overlay); }
 .tp-sub { padding: 14px var(--gutter-phone) 0; font-size: var(--fs-meta); letter-spacing: 0.07em; color: var(--ink-faint); }
 .tp-sub.is-first { padding-top: var(--sp-1); }
+/* A folded routine time ("Later · Evening 0/2"): a whole-row 48px target that opens it in place. */
+.tp-fold-line { display: flex; align-items: center; width: 100%; min-height: var(--touch-min); padding-top: 0; text-align: left; background: none; border: 0; cursor: pointer; }
 .tp-pad { padding: var(--sp-2) var(--gutter-phone); display: flex; flex-direction: column; gap: 10px; }
 
 /* A list band: parchment, card line on top, dashed hairline under each row. */
