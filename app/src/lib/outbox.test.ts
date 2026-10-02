@@ -55,6 +55,7 @@ vi.mock('./queryClient', () => ({
   queryClient: {
     setQueryData: (key: unknown[], updater: unknown) => setQueryDataMock(key, updater),
     cancelQueries: vi.fn(),
+    getQueryData: () => undefined,
     getQueryCache: () => ({ subscribe: vi.fn() }),
   },
 }))
