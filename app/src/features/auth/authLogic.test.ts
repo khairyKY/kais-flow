@@ -5,9 +5,14 @@ import {
   calmAuthLine,
   inboxUrl,
   passwordRule,
+  RESEND_WAIT_MS,
+  authLinkLanding,
   readAuthRedirect,
+  resendLabel,
   resetRequestLooksSent,
   resetView,
+  signInView,
+  signUpOutcome,
   type AuthRedirect,
 } from './authLogic'
 
@@ -32,13 +37,18 @@ describe('readAuthRedirect', () => {
     expect(readAuthRedirect(`${ORIGIN}/reset#access_token=a&type=recovery&error_code=otp_expired`).kind).toBe('error')
   })
 
-  it('a sign-up confirmation or magic link is not a recovery', () => {
-    expect(readAuthRedirect(`${ORIGIN}/#access_token=a&type=signup`)).toEqual({ kind: 'none' })
+  it('a sign-up confirmation is confirmed, not a recovery; a magic link is neither', () => {
+    expect(readAuthRedirect(`${ORIGIN}/#access_token=a&expires_in=3600&refresh_token=r&token_type=bearer&type=signup`)).toEqual({ kind: 'confirmed' })
     expect(readAuthRedirect(`${ORIGIN}/#access_token=a&type=magiclink`)).toEqual({ kind: 'none' })
   })
 
-  it('type=recovery without tokens is not a recovery', () => {
+  it('type=recovery or type=signup without tokens is nothing', () => {
     expect(readAuthRedirect(`${ORIGIN}/reset#type=recovery`)).toEqual({ kind: 'none' })
+    expect(readAuthRedirect(`${ORIGIN}/#type=signup`)).toEqual({ kind: 'none' })
+  })
+
+  it('a used confirmation link is an error too (9e)', () => {
+    expect(readAuthRedirect(`${ORIGIN}/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired`)).toEqual({ kind: 'error', code: 'otp_expired' })
   })
 
   it('a plain address is nothing', () => {
@@ -167,5 +177,84 @@ describe('calmAuthLine', () => {
   it('keeps the existing sign-in lines', () => {
     expect(calmAuthLine('Invalid login credentials')).toContain("don't match a garden")
     expect(calmAuthLine('Email rate limit exceeded')).toContain('short rest')
+  })
+})
+
+describe('authLinkLanding', () => {
+  const confirmed: AuthRedirect = { kind: 'confirmed' }
+  const expired: AuthRedirect = { kind: 'error', code: 'otp_expired' }
+
+  it('a confirmation link on "/" plays 9f on /sign-in first', () => {
+    expect(authLinkLanding(confirmed, '/')).toBe('/sign-in?confirmed')
+    expect(authLinkLanding(confirmed, '/sign-in?confirmed')).toBeNull()
+  })
+
+  it('a used or expired link outside /reset is 9e; on /reset it stays for 9k-3', () => {
+    expect(authLinkLanding(expired, '/')).toBe('/sign-in?expired')
+    expect(authLinkLanding(expired, '/sign-in?expired')).toBeNull()
+    expect(authLinkLanding(expired, '/reset')).toBeNull()
+  })
+
+  it('a reset link still goes to /reset; nothing else moves', () => {
+    expect(authLinkLanding({ kind: 'recovery' }, '/')).toBe('/reset')
+    expect(authLinkLanding({ kind: 'recovery' }, '/reset')).toBeNull()
+    expect(authLinkLanding({ kind: 'none' }, '/today')).toBeNull()
+  })
+})
+
+describe('signUpOutcome', () => {
+  const user = { identities: [{ id: 'i' }] }
+
+  it('a session means confirmation is off: straight on (today)', () => {
+    expect(signUpOutcome({ user, session: { access_token: 't' } })).toBe('signed-in')
+  })
+
+  it('no session means confirmation is on: check your email (9c)', () => {
+    expect(signUpOutcome({ user, session: null })).toBe('check-email')
+  })
+
+  it('no identities is GoTrue hiding an existing account (9b-1)', () => {
+    expect(signUpOutcome({ user: { identities: [] }, session: null })).toBe('in-use')
+  })
+})
+
+describe('signInView', () => {
+  const base = { link: null, loading: false, hasSession: false, waiting: false } as const
+
+  it('the plain form, and an ordinary session goes in', () => {
+    expect(signInView(base)).toBe('form')
+    expect(signInView({ ...base, hasSession: true })).toBe('in')
+  })
+
+  it('9c waits; a session arriving there plays 9f', () => {
+    expect(signInView({ ...base, waiting: true })).toBe('check-email')
+    expect(signInView({ ...base, waiting: true, hasSession: true })).toBe('confirmed')
+  })
+
+  it('a confirmation link shows 9f while signing in, and 9e if its tokens did not hold', () => {
+    expect(signInView({ ...base, link: 'confirmed', loading: true })).toBe('confirmed')
+    expect(signInView({ ...base, link: 'confirmed', hasSession: true })).toBe('confirmed')
+    expect(signInView({ ...base, link: 'confirmed' })).toBe('expired')
+  })
+
+  it('an expired link is 9e, unless this device is already signed in', () => {
+    expect(signInView({ ...base, link: 'expired' })).toBe('expired')
+    expect(signInView({ ...base, link: 'expired', hasSession: true })).toBe('in')
+  })
+})
+
+describe('resendLabel', () => {
+  const sent = Date.UTC(2026, 9, 3, 12, 0, 0)
+
+  it('counts the minute down in the label (9d)', () => {
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent)).toBe('Resend in 1:00')
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent + 12_000)).toBe('Resend in 0:48')
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent + 12_300)).toBe('Resend in 0:48')
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent + 59_001)).toBe('Resend in 0:01')
+  })
+
+  it('reads plainly once the minute is up (9c)', () => {
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent + RESEND_WAIT_MS)).toBe('Resend link')
+    expect(resendLabel(sent + RESEND_WAIT_MS, sent + 90_000)).toBe('Resend link')
   })
 })
