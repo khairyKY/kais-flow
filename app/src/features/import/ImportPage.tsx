@@ -9,6 +9,7 @@ import { parseAkiflow } from './adapters/akiflow'
 import { parseCsv, csvToBatch, guessMapping, CSV_TARGETS, type CsvMapping } from './adapters/csv'
 import { parseTodoist } from './adapters/todoist'
 import { parseTickTick } from './adapters/ticktick'
+import { parseMarkdown, type MarkdownOptions } from './adapters/markdown'
 import {
   fetchAllExistingRefs, commitBatch, planCommit, undoImport, refKey, KINDS,
   type ExistingRefs, type ImportSummary, type Kind, type Counts,
@@ -18,13 +19,14 @@ import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'csv'
 // One line each: what to drop, and where the source's own menus hide the export.
 const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
   akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
   todoist: { label: 'Todoist', accept: '.csv', multiple: true, how: 'Todoist: open a project → ⋯ → Export as a template → Download CSV · one file per project, several at once is fine', match: 'todoist csvs carry no ids — a re-import matches tasks by file + section + title' },
   ticktick: { label: 'TickTick', accept: '.csv', how: 'TickTick (web): Settings → Account → Backup & Restore → Generate backup — the .csv it downloads' },
   notion: { label: 'Notion', accept: '.csv', how: 'Notion: open the database → ⋯ → Export → Markdown & CSV, unzip, pick the .csv · you check the columns next', match: 'notion csvs carry no page ids — duplicates are matched by a hash of title + due + project' },
+  markdown: { label: 'Obsidian / Markdown', accept: '.md,.markdown', multiple: true, how: 'Obsidian needs no export — pick .md files, or the whole vault folder below · "- [ ]" lines become tasks', match: 'matched by file + task text — a changed date or tag re-imports as the same task' },
   csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
 }
 
@@ -153,6 +155,8 @@ export function ImportPage() {
   const [includeEvents, setIncludeEvents] = useState(false)
   const [includeToRead, setIncludeToRead] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const folderRef = useRef<HTMLInputElement>(null)
+  const [md, setMd] = useState<MarkdownOptions>({ projectFrom: 'none', paragraphsToInbox: false })
   const opts = { includeCompleted, includeEvents, includeToRead }
   const src = SOURCES[source]
 
@@ -172,6 +176,12 @@ export function ImportPage() {
     switch (source) {
       case 'akiflow':
         return parseAkiflow(JSON.parse(await first.text()))
+      case 'markdown': {
+        // A picked vault folder brings everything — keep the notes, skip Obsidian's own config/trash.
+        const notes = files.filter((f) => /\.(md|markdown)$/i.test(f.name) && !/(^|\/)\.(obsidian|trash)\//.test(f.webkitRelativePath))
+        if (!notes.length) throw new Error('no .md files')
+        return parseMarkdown(await Promise.all(notes.map(async (f) => ({ path: f.webkitRelativePath || f.name, text: await f.text() }))), md)
+      }
       case 'ticktick':
         return parseTickTick(await first.text())
       case 'todoist':
@@ -196,7 +206,7 @@ export function ImportPage() {
       batch = await parse(files)
     } catch {
       setStep({ name: 'pick' })
-      setTrouble(`That didn't read as a ${src.label} file. ${src.how}.`)
+      setTrouble(`Couldn't read that as ${src.label} — ${src.how}.`)
       return
     }
     if (batch) await toPreview(batch)
@@ -288,6 +298,40 @@ export function ImportPage() {
                 }}
               />
             </div>
+            {source === 'markdown' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--ink-body)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
+                  Projects from
+                  <select
+                    value={md.projectFrom}
+                    onChange={(e) => setMd({ ...md, projectFrom: e.target.value as MarkdownOptions['projectFrom'] })}
+                    style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '6px 10px', fontSize: 12.5, color: 'var(--ink-body)', font: 'inherit' }}
+                  >
+                    <option value="none">nowhere — tasks land loose</option>
+                    <option value="heading">the heading above each task</option>
+                    <option value="file">each file's name</option>
+                  </select>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={md.paragraphsToInbox} onChange={(e) => setMd({ ...md, paragraphsToInbox: e.target.checked })} />
+                  Also bring plain paragraphs in, as Inbox notes
+                </label>
+                <div>
+                  <Button variant="secondary" onClick={() => folderRef.current?.click()}>Pick a vault folder…</Button>
+                  <input
+                    ref={(el) => { folderRef.current = el; el?.setAttribute('webkitdirectory', '') }}
+                    type="file"
+                    data-testid="import-folder"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      void handleFiles(Array.from(e.target.files ?? []))
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             {trouble && <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--acc-terra)' }}>{trouble}</p>}
           </div>
         )}
