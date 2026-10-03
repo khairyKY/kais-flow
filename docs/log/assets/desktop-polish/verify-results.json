@@ -132,12 +132,12 @@
   {
     "name": "calendar-day drag preview has a real time, no \"Invalid Date\"",
     "ok": true,
-    "detail": "6:00 AM"
+    "detail": "9:00 AM"
   },
   {
     "name": "calendar-day drag of three quarter-hours → a 45-minute slot (15-min snap)",
     "ok": true,
-    "detail": "6:00 AM – 6:45 AM"
+    "detail": "9:00 AM – 9:45 AM"
   },
   {
     "name": "calendar-day quick-create shows the duration on the When row",
@@ -172,7 +172,7 @@
   {
     "name": "calendar-day a plain click still opens a 30-minute slot",
     "ok": true,
-    "detail": "6:00 AM – 6:30 AM"
+    "detail": "9:00 AM – 9:30 AM"
   },
   {
     "name": "calendar-day quick-create time list inside the window",
@@ -267,7 +267,7 @@
   {
     "name": "trash → Restore writes deleted_at null",
     "ok": true,
-    "detail": "[{\"id\":\"30000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":null,\"name\":\"Old garden bed\",\"description\":null,\"color\":null,\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-03T05:15:36.742Z\"}]"
+    "detail": "[{\"id\":\"30000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":null,\"name\":\"Old garden bed\",\"description\":null,\"color\":null,\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-03T08:25:11.673Z\"}]"
   },
   {
     "name": "trash no page errors",
@@ -577,12 +577,12 @@
   {
     "name": "calendar-night drag preview has a real time, no \"Invalid Date\"",
     "ok": true,
-    "detail": "6:00 AM"
+    "detail": "9:00 AM"
   },
   {
     "name": "calendar-night drag of three quarter-hours → a 45-minute slot (15-min snap)",
     "ok": true,
-    "detail": "6:00 AM – 6:45 AM"
+    "detail": "9:00 AM – 9:45 AM"
   },
   {
     "name": "calendar-night quick-create shows the duration on the When row",
@@ -617,7 +617,7 @@
   {
     "name": "calendar-night a plain click still opens a 30-minute slot",
     "ok": true,
-    "detail": "6:00 AM – 6:30 AM"
+    "detail": "9:00 AM – 9:30 AM"
   },
   {
     "name": "calendar-night quick-create time list inside the window",
