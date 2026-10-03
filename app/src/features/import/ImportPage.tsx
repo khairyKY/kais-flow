@@ -11,6 +11,7 @@ import { parseTodoist } from './adapters/todoist'
 import { parseTickTick } from './adapters/ticktick'
 import { parseMarkdown, type MarkdownOptions } from './adapters/markdown'
 import { parseKindle } from './adapters/kindle'
+import { parseGoodreads } from './adapters/goodreads'
 import {
   fetchAllExistingRefs, commitBatch, planCommit, undoImport, refKey, KINDS,
   type ExistingRefs, type ImportSummary, type Kind, type Counts,
@@ -20,7 +21,7 @@ import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'kindle' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'kindle' | 'goodreads' | 'csv'
 // One line each: what to drop, and where the source's own menus hide the export.
 const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
   akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
@@ -29,6 +30,7 @@ const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolea
   notion: { label: 'Notion', accept: '.csv', how: 'Notion: open the database → ⋯ → Export → Markdown & CSV, unzip, pick the .csv · you check the columns next', match: 'notion csvs carry no page ids — duplicates are matched by a hash of title + due + project' },
   markdown: { label: 'Obsidian / Markdown', accept: '.md,.markdown', multiple: true, how: 'Obsidian needs no export — pick .md files, or the whole vault folder below · "- [ ]" lines become tasks', match: 'matched by file + task text — a changed date or tag re-imports as the same task' },
   kindle: { label: 'Kindle highlights', accept: '.txt', how: 'Kindle: plug it in by USB, open the Kindle drive → documents → My Clippings.txt', match: 'books match by title — one already in your Library is reused, highlights already there are skipped' },
+  goodreads: { label: 'Goodreads books', accept: '.csv', how: 'Goodreads: My Books → Import and export (left column, under Tools) → Export Library, then download the .csv', match: 'books match by title — one already in your Library is left as it is · reviews come in as notes on the book' },
   csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
 }
 
@@ -186,6 +188,8 @@ export function ImportPage() {
       }
       case 'kindle':
         return parseKindle(await first.text())
+      case 'goodreads':
+        return parseGoodreads(await first.text())
       case 'ticktick':
         return parseTickTick(await first.text())
       case 'todoist':
