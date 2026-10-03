@@ -77,6 +77,11 @@ jobs:
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
           grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
           grep -n 'uses-permission' "$manifest"
+          # The share sheet: shared text opens the app (MainActivity.onNewIntent → /share). text/*
+          # covers text/plain. Images wait for Paper capture, so no image/* yet.
+          sed -i 's#</activity>#    <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="text/*" />\n            </intent-filter>\n\n        &#' "$manifest"
+          grep -q 'android.intent.action.SEND' "$manifest" || { echo "::error::the SEND intent filter was not added to the manifest"; exit 1; }
+          sed -n '/<activity/,/<\/activity>/p' "$manifest"
           grep -n 'app_name' "$main/res/values/strings.xml"
 
       # versionCode uses Tauri's formula (major·1000000 + minor·1000 + patch), so a release APK still
@@ -192,6 +197,7 @@ jobs:
           echo '----- activity lifecycle'; cat shots/lifecycle.txt || true
           echo '----- second cold start'; cat shots/lifecycle-2nd.txt || true
           echo '----- window insets'; cat shots/window.txt || true
+          echo '----- share sheet'; cat shots/share-targets.txt shots/share.txt || true
           echo '----- ui tree (text + bounds)'; grep -o 'text="[^"]*"[^>]*bounds="[^"]*"' shots/ui.xml | head -60 || true
           echo '----- logcat (webview / console)'; tail -80 shots/logcat.txt || true
       - uses: actions/upload-artifact@v4

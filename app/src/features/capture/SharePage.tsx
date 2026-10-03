@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { captureText } from '../inbox/api'
+import { sharedText } from './shareText'
 
 // ── Punch 24 — the Android share target's landing route. The PWA manifest
 // (`share_target` in vite.config.ts) points Chrome's share sheet at GET /share?title&text&url;
+// the Android app's share intent lands here too (native/android/MainActivity.java → ?text&title);
 // this page turns that payload into an Inbox capture and hands the user to the Inbox so the
 // thing they just shared is visibly there.
 //
@@ -19,11 +21,7 @@ export function SharePage() {
   useEffect(() => {
     if (captured.current) return // StrictMode runs effects twice; one share = one capture
     captured.current = true
-    const parts = ['title', 'text', 'url']
-      .map((key) => params.get(key)?.trim())
-      .filter((v): v is string => !!v)
-    // Chrome commonly puts the same URL in both `text` and `url`; don't capture it twice.
-    const raw = [...new Set(parts)].join('\n')
+    const raw = sharedText(['title', 'text', 'url'].map((key) => params.get(key)))
     if (raw) captureText(raw)
     navigate('/inbox', { replace: true })
   }, [params, navigate])

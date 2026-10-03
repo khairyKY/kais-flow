@@ -153,6 +153,9 @@ if (typeof window !== 'undefined') {
 
 // M1b: Android Back (lib/androidBack.ts) — only the Capacitor shell has one.
 if (isCapacitorShell()) void import('./lib/androidBack').then((m) => m.installAndroidBack(() => void router.navigate('/today', { replace: true })))
+// The Android share sheet: MainActivity.onNewIntent hands an open page `/share?text&title` here, so a
+// share navigates in place instead of reloading the app. `true` tells the shell it was handled.
+if (isCapacitorShell()) Object.assign(window, { kaisFlowOpen: (path: string) => (void router.navigate(path), true) })
 
 function App() {
   return (
