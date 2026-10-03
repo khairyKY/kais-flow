@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { EmojiText } from '../../components/EmojiText'
+import React, { useState, useMemo, useRef } from 'react'
+import { TaskPicker } from './TaskPicker'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useTasks, completeTaskWithUndo } from '../tasks/api'
@@ -125,6 +125,7 @@ export function FocusPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [taskPickerOpen, setTaskPickerOpen] = useState(false)
+  const pickerAnchor = useRef<HTMLSpanElement>(null)
   const [eveningOpen, setEveningOpen] = useState(false)
 
   // Active task selection
@@ -873,6 +874,7 @@ export function FocusPage() {
                 title="Complete task"
               />
               <span
+                ref={pickerAnchor}
                 onClick={() => setTaskPickerOpen(!taskPickerOpen)}
                 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed var(--line-dashed)' }}
                 title="Click to select another task"
@@ -881,30 +883,9 @@ export function FocusPage() {
               </span>
               {activeTask?.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 17 }}>★</span>}
 
-              {/* Task Picker dropdown */}
+              {/* Task Picker — searchable, kept inside the window (Kai 2026-10-03) */}
               {taskPickerOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '8px 0', zIndex: 50, width: 320, maxHeight: 200, overflowY: 'auto' }}>
-                  <div style={{ padding: '4px 12px 8px', borderBottom: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Select a task to focus on
-                  </div>
-                  {tasks.filter(t => t.status === 'todo').map(t => (
-                    <div
-                      key={t.id}
-                      onClick={() => handleSelectTask(t.id)}
-                      style={{ padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                      className="task-picker-row"
-                    >
-                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginRight: 8 }}><EmojiText text={t.title} /></span>
-                      {t.top3 && <span style={{ color: 'var(--acc-terra)' }}>★</span>}
-                    </div>
-                  ))}
-                  {tasks.filter(t => t.status === 'todo').length === 0 && (
-                    // States t1 voice — hand line, no alarm, never "error"
-                    <div style={{ padding: '12px', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>
-                      all clear — nothing waiting ✿
-                    </div>
-                  )}
-                </div>
+                <TaskPicker tasks={tasks} anchorRef={pickerAnchor} onPick={handleSelectTask} onClose={() => setTaskPickerOpen(false)} />
               )}
             </div>
 
