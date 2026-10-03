@@ -14,9 +14,10 @@ import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } f
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
-import { useIntegrations, connectGithub, syncGithub, disconnectGithub, type IntegrationStatus } from './api'
+import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, CAPTURE_URL } from './captureKey'
 import { Button } from '../../components/kit'
+import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
@@ -428,29 +429,26 @@ function TimezoneCard() {
   )
 }
 
+const TONE_DOT = { ok: 'var(--acc-sage)', bad: 'var(--acc-terra)', off: 'var(--line-solid)' } as const
+
 function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
   const { data: integrations = [] } = useIntegrations()
-  const google = integrations.find((i) => i.provider === 'google')
-  const github = integrations.find((i) => i.provider === 'github')
+  const gh = githubState(integrations.find((i) => i.provider === 'github'))
   return (
     <SCard>
-      <div style={{ ...flabel, marginBottom: 12 }}>Integrations · Google Calendar</div>
+      <div style={{ ...flabel, marginBottom: 12 }}>Integrations</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: google ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
-          {google ? `Connected · last synced ${new Date(google.updated_at).toLocaleString()}` : 'Not connected'}
-        </span>
-        <span style={{ flex: 1 }} />
-        <button type="button" disabled={!google} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: google ? 'pointer' : 'default', opacity: google ? 1 : 0.5 }}>Sync now</button>
-        {/* Punch 8: Disconnect had no handler and there's no disconnect API — integrations
-            are v1.1. Nothing clickable that does nothing; the status above stays truthful. */}
-      </div>
-      <div style={fhelp}>mirrors events in and out invisibly — never its own UI · scopes: calendar.events read/write</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: github ? 'var(--acc-gold-warm)' : 'var(--line-solid)', flex: 'none' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: TONE_DOT[gh.tone], flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>GitHub · issues → inbox</span>
         <span style={{ flex: 1 }} />
-        <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{github ? 'configured' : 'not connected'}</span>
+        <span style={{ ...chip, border: '1px solid var(--line-solid)', color: gh.tone === 'bad' ? 'var(--acc-terra)' : 'var(--ink-muted)' }}>{gh.text}</span>
+      </div>
+      {/* Google Calendar sync is a later integrations wave — nothing syncs yet, so no button. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--line-solid)', flex: 'none' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Google Calendar · sync</span>
+        <span style={{ flex: 1 }} />
+        <SoonChip label="Coming soon" />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--line-solid)', flex: 'none' }} />
@@ -468,13 +466,44 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
   )
 }
 
-const RITUAL_REMINDERS_KEY = 'kf_ritual_reminders'
+// Ritual reminders, synced per account (app_settings, 0045): notify's 15-minute cron sends each one
+// at the user's own time (supabase/functions/notify/ritual.ts). Cairo time until per-user timezones.
+const RITUALS = [
+  { kind: 'morning_digest', label: 'Morning digest', help: 'your Top 3 and anything slipping', at: '08:00' },
+  { kind: 'evening_nudge', label: 'Evening nudge', help: 'only when a routine was missed', at: '21:00' },
+] as const
+
+function RitualReminders() {
+  const { data: s } = useAppSettings()
+  if (!s) return null
+  return (
+    <>
+      {RITUALS.map((r) => {
+        const on = s[`${r.kind}_on` as const] !== false
+        return (
+          <div key={r.kind} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{r.label}</div>
+              <div style={fhelp}>{r.help}</div>
+            </div>
+            <TimeField
+              value={(s[`${r.kind}_at` as const] ?? r.at).slice(0, 5)}
+              onChange={(v) => v && updateAppSetting(`${r.kind}_at` as const, v)}
+              style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px', opacity: on ? 1 : 0.5 }}
+            />
+            <Toggle on={on} onToggle={() => updateAppSetting(`${r.kind}_on` as const, !on)} />
+          </div>
+        )
+      })}
+      <div style={fhelp}>Cairo time · a nudge, never a lock</div>
+    </>
+  )
+}
 
 function PushCard() {
   const { data: subs = [] } = useMyPushSubscriptions()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [remindersOn, setRemindersOn] = useState(() => localStorage.getItem(RITUAL_REMINDERS_KEY) !== '0')
   const supported = isPushSupported()
   const thisDeviceLabel = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 60) : ''
   const subscribed = subs.some((s) => s.device_label === thisDeviceLabel)
@@ -536,19 +565,8 @@ function PushCard() {
         </div>
       )}
       {message && <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '10px 0 0' }}>{message}</p>}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
-        <div>
-          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Ritual reminders</div>
-          <div style={fhelp}>morning 8:30 · evening 21:30 — a nudge, never a lock</div>
-        </div>
-        <Toggle
-          on={remindersOn}
-          onToggle={() => {
-            const next = !remindersOn
-            setRemindersOn(next)
-            localStorage.setItem(RITUAL_REMINDERS_KEY, next ? '1' : '0')
-          }}
-        />
+      <div style={{ marginTop: 14, paddingTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
+        <RitualReminders />
       </div>
       <div style={fhelp}>iphone: install to home screen first (share → add to home screen) — safari tabs can't receive push</div>
     </SCard>
@@ -601,25 +619,6 @@ function ResurfacingCard() {
       {row('low', 'Low priority', 'the long shelf')}
       <div style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
         press Later and it goes quiet — then wanders back ✿
-      </div>
-    </SCard>
-  )
-}
-
-// Punch 54: hidden from the page until the endpoint is real (v1.1); exported so it compiles.
-export function CaptureApiCard() {
-  return (
-    <SCard>
-      <div style={{ ...flabel, marginBottom: 12 }}>Capture API · external capture</div>
-      <p style={{ margin: '0 0 12px', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
-        Post text or voice into the same pipeline from anywhere — Tasker, a share-sheet, a bookmarklet.
-      </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</span>
-      </div>
-      <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', lineHeight: 1.7, color: 'var(--ink-muted)' }}>
-        POST /capture · body: {'{"text": "send the quote tomorrow 3pm"}'}
-        <br />→ parsed, filed, or held in Inbox — same as ⌘K
       </div>
     </SCard>
   )
@@ -812,7 +811,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: failing ? 'var(--acc-terra)' : 'var(--acc-sage)', flex: 'none' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: failing ? 'var(--acc-terra)' : 'var(--ink-muted)', textAlign: 'right' }}>
-              {failing ? 'Token expired — reconnect' : `Connected as @${github.login ?? '?'} · synced ${github.synced_at ? new Date(github.synced_at).toLocaleTimeString() : 'not yet'}`}
+              {failing ? '' : `@${github.login ?? '?'} · `}{githubState(github).text}
             </span>
           </div>
         ) : (
@@ -864,7 +863,6 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
 function IntegrationsPage() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
-  const google = integrations.find((i) => i.provider === 'google')
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -882,30 +880,8 @@ function IntegrationsPage() {
           </span>
         }
         name="Google Calendar"
-        desc="Your calendar stays ours; Google syncs silently underneath."
-        status={
-          google ? (
-            <div style={{ textAlign: 'right', flex: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Connected · synced {new Date(google.updated_at).toLocaleTimeString()}</span>
-              </div>
-            </div>
-          ) : (
-            <SoonChip />
-          )
-        }
-      />
-
-      <ProviderRow
-        icon={
-          <span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M18 9.5a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6M10.3 19.5a2 2 0 0 0 3.4 0" /></svg>
-          </span>
-        }
-        name="Pushover"
-        desc="Delivers ritual reminders and due nudges to any device."
-        status={<SoonChip />}
+        desc="Planned: a quiet sync underneath our own calendar. Not built yet — nothing syncs."
+        status={<SoonChip label="Coming soon" />}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
@@ -929,7 +905,6 @@ function IntegrationsPage() {
   )
 }
 
-// Exported only to keep it compiling while hidden ([K-26] — returns in v2 with a real audio layer).
 // Settings.dc.html 3a — master row with the whisper↔full meter, six sounds each with a
 // working preview, quiet hours. Kai un-cut Sounds on 2026-07-26; the voices are synthesised
 // in lib/sounds.ts (no audio files — $0 and weightless).
@@ -1016,9 +991,9 @@ export function SoundCatalogCard() {
   )
 }
 
-// Punch 54: 'Capture API' left the page (endpoint unbuilt) — and a nav row that scrolls to
-// nothing is a dead control, so it left the sub-nav too. 'Sound' returned when Kai un-cut it
-// (2026-07-26); 'Resurfacing' is the cooldown card (punch 21); 'Trash' is punch 50's entry point.
+// The capture endpoint's key card lives on the Integrations page, so it has no row of its own.
+// 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card
+// (punch 21); 'Trash' is punch 50's entry point.
 const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile', 'App'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
@@ -1079,8 +1054,6 @@ function DesktopSettings() {
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>
-            {/* Punch 54: the Capture API endpoint doesn't exist yet — the card only said
-                "not set up yet" with dead controls. Hidden until it's real (v1.1). */}
             <div id="settings-Resurfacing"><ResurfacingCard /></div>
             <ImportCard />
             <div id="settings-Trash"><TrashCard /></div>
@@ -1102,7 +1075,6 @@ function MobileSettings() {
   const { data: subs = [] } = useMyPushSubscriptions()
   const { data: deletedItems = [] } = useDeletedItems()
   const github = integrations.find((i) => i.provider === 'github')
-  const google = integrations.find((i) => i.provider === 'google')
   const { mode, setMode } = useThemeMode()
   // Final polish (2026-09-26): the phone's Appearance card drew a static 60% "slider" and had no
   // Interface size at all. Both now drive the same prefs as the desktop card.
@@ -1112,8 +1084,8 @@ function MobileSettings() {
 
   const rows: { label: string; value: ReactNode; to?: string }[] = [
     { label: 'Timezone', value: settings?.timezone ?? '—' },
-    { label: 'Google Calendar', value: google ? <><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)', display: 'inline-block' }} /> Connected</> : 'Not connected' },
-    { label: 'GitHub', value: github ? (github.status === 'failing' ? 'Token expired' : 'Connected') : 'Not connected' },
+    { label: 'Google Calendar', value: 'Coming soon' },
+    { label: 'GitHub', value: githubState(github).text },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
     { label: 'Capture API', value: 'not set up' },
     // Punch 50: the phone's only way into Trash.
@@ -1167,6 +1139,12 @@ function MobileSettings() {
           return r.to ? <Link key={r.label} to={r.to} style={rowStyle}>{inner}</Link> : <div key={r.label} style={rowStyle}>{inner}</div>
         })}
       </div>
+
+      {/* The phone is where the pushes land, so its reminder times live here too. */}
+      <SCard style={{ marginTop: 12, boxShadow: 'var(--shadow-crisp)' }}>
+        <div style={{ ...flabel, marginBottom: 2 }}>Ritual reminders</div>
+        <RitualReminders />
+      </SCard>
 
       {/* P6: the phone has no Integrations page, so the GitHub row (connect / sync) sits here. */}
       <div style={{ marginTop: 12 }}>

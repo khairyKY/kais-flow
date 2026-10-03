@@ -14,6 +14,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
+import { ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -223,8 +224,10 @@ async function sendToSubscriptions(
 
 type UserResult = { user_id: string; skipped: boolean; failed?: true } & SendResult
 
-/** pg_cron path: every user with a push device gets their own payload on their own devices. */
-async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response> {
+/** pg_cron path: every user with a push device gets their own payload on their own devices.
+ * `scheduled` (the 15-minute digest/nudge jobs, 0045): only users whose own reminder time is due on
+ * this tick. Without it (a manual service-role call) the time is ignored; an off reminder stays off. */
+async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean): Promise<Response> {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   const clock = runClock()
 
@@ -259,6 +262,22 @@ async function runForAllUsers(req: Request, kind: NotifyKind): Promise<Response>
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
     for (const row of dueOwners ?? []) userIds.add(row.user_id as string)
+  }
+
+  // Settings › Notifications › Ritual reminders (app_settings, 0045). A failed read sends nothing:
+  // better one missed digest than every user getting one on every tick.
+  if (kind === 'morning_digest' || kind === 'evening_nudge') {
+    const { data: rows, error } = await supabase
+      .from('app_settings')
+      .select('user_id, morning_digest_on, morning_digest_at, evening_nudge_on, evening_nudge_at')
+      .in('user_id', [...userIds])
+    if (error) throw error
+    const byUser = new Map(((rows ?? []) as (RitualSettings & { user_id: string })[]).map((r) => [r.user_id, r]))
+    const now = new Date(clock.nowIso)
+    for (const id of userIds) {
+      const s = byUser.get(id)
+      if (!(scheduled ? ritualDue(kind, s, now) : ritualOn(kind, s))) userIds.delete(id)
+    }
   }
 
   let sent = 0
@@ -331,7 +350,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { kind } = (await req.json()) as { kind: NotifyKind }
+    const { kind, scheduled } = (await req.json()) as { kind: NotifyKind; scheduled?: boolean }
 
     if (!serviceRole) {
       // Digests, nudges, reminders and sweeps are cron-only; a user may only test their own devices.
@@ -340,7 +359,7 @@ Deno.serve(async (req) => {
     }
 
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
-    return await runForAllUsers(req, kind)
+    return await runForAllUsers(req, kind, scheduled === true)
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
     console.error('notify:', e)

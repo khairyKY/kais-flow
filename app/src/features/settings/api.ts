@@ -17,6 +17,16 @@ export interface IntegrationStatus {
   synced_at: string | null
 }
 
+/** GitHub's real state, read off the row github-sync keeps: status flips to 'failing' on a 401,
+ * synced_at is stamped only after a sync that went through (so a stale date shows a stuck sync). */
+export function githubState(github?: Pick<IntegrationStatus, 'status' | 'synced_at'>): { text: string; tone: 'ok' | 'bad' | 'off' } {
+  if (!github) return { text: 'Not connected', tone: 'off' }
+  if (github.status === 'failing') return { text: 'Token expired — reconnect', tone: 'bad' }
+  if (!github.synced_at) return { text: 'Connected · not synced yet', tone: 'ok' }
+  const at = new Date(github.synced_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo' })
+  return { text: `Connected · synced ${at}`, tone: 'ok' }
+}
+
 export function useIntegrations() {
   return useQuery({
     queryKey: ['integrations'],

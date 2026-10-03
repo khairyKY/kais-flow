@@ -177,6 +177,11 @@ export interface AppSettings {
   calendar_day_count: number
   /** The view the calendar opens on (migration 0043); null/absent = the platform's own default. */
   calendar_default_view?: 'day' | '3day' | 'week' | null
+  /** Ritual reminders (migration 0045): on/off + Cairo wall-clock time, 'HH:MM' (Postgres reads back 'HH:MM:SS'). */
+  morning_digest_on?: boolean
+  morning_digest_at?: string
+  evening_nudge_on?: boolean
+  evening_nudge_at?: string
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
