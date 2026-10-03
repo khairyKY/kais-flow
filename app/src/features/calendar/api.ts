@@ -6,6 +6,8 @@ import { logActivity } from '../../lib/activity'
 import { fetchAll } from '../../lib/fetchAll'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
+import { cairoDateKey } from '../../lib/dateShortcuts'
+import { movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
 
 export function useCalendarEvents() {
   return useQuery({
@@ -113,6 +115,20 @@ export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: stri
   const patch: Partial<Task> = { scheduled_start: startsAt, scheduled_end: endsAt }
   if (durationMin !== task.duration_min) patch.duration_min = durationMin
   writeRow('tasks', { ...task, ...patch })
+}
+
+/** A block moved or resized on the phone (a drop, a handle, a sheet's time): one write, one toast
+ * with Undo (7m) — "Moved to 16:15" / "Resized to 15:00–16:15". */
+export function moveEventWithUndo(event: CalendarEvent, from: Span, to: Span, mode: DragMode): void {
+  const prior = { ...event }
+  const { starts_at, ends_at } = spanIso(to)
+  if (mode === 'move') {
+    moveOrResizeEvent(event, starts_at, ends_at)
+    toastUndo(movedText(from, to, cairoDateKey(new Date())), () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at))
+  } else {
+    resizeEvent(event, starts_at, ends_at)
+    toastUndo(`Resized to ${rangeText(to.start, to.end)}`, () => resizeEvent(prior, prior.starts_at, prior.ends_at))
+  }
 }
 
 /** Deleting a block un-schedules its task but the task itself survives. */

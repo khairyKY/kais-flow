@@ -25,3 +25,22 @@ export function groupRoutinesByTime<T extends { time_of_day: string | null }>(ro
   if (anytime.length > 0) groups.push({ key: 'anytime', label: 'Anytime', items: anytime })
   return groups
 }
+
+/** The named time a Cairo hour falls in: morning before 12:00, afternoon until 17:00, then evening. */
+export function namedTimeAt(hour: number): NamedTime {
+  return hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+}
+
+/**
+ * Kai 2026-10-03 (Today Phone 2a draws "Morning 1/3"): Today shows the routines for the time it is
+ * now, plus Anytime ones; every other named group folds into one quiet line, "Earlier" or "Later",
+ * so nothing is hidden — the evening routines just don't crowd the morning.
+ */
+export function splitByTimeOfDay<T>(groups: RoutineTimeGroup<T>[], hour: number) {
+  const now = namedTimeAt(hour)
+  const shown = groups.filter((g) => g.key === now || g.key === 'anytime')
+  const folded = groups
+    .filter((g) => !shown.includes(g))
+    .map((g) => ({ ...g, when: NAMED_TIMES.indexOf(g.key as NamedTime) < NAMED_TIMES.indexOf(now) ? ('Earlier' as const) : ('Later' as const) }))
+  return { shown, folded }
+}

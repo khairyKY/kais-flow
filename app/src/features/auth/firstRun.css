@@ -271,6 +271,82 @@
   font-weight: 500;
 }
 
+/* 9f email confirmed: no wordmark, the broken seal either side of the seedling, a sage line
+   filling while it signs in. The halves fall open and the seedling comes up — the one flourish. */
+.fr-confirmed {
+  margin-top: 150px;
+}
+.fr-confirmed .fr-hand {
+  margin-top: 10px;
+  text-align: center;
+}
+.fr-sprout {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 120px;
+  margin-bottom: 8px;
+}
+.fr-sprout img {
+  width: auto;
+  height: 64px;
+  filter: var(--shadow-drop-sm);
+  animation: fr-seal-left var(--dur-bloom) var(--ease-out) both;
+}
+.fr-sprout img:nth-child(2) {
+  height: 104px;
+  transform-origin: 50% 100%;
+  animation-name: fr-sprout-up;
+}
+.fr-sprout img:nth-child(3) {
+  animation-name: fr-seal-right;
+}
+@keyframes fr-seal-left {
+  from { transform: rotate(0) translate(18px, 6px); }
+  to { transform: rotate(-14deg) translateY(6px); }
+}
+@keyframes fr-seal-right {
+  from { transform: rotate(0) translate(-18px, 6px); }
+  to { transform: rotate(12deg) translateY(6px); }
+}
+@keyframes fr-sprout-up {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.fr-progress {
+  position: relative;
+  height: 2px;
+  margin: 28px 40px 0;
+  border-radius: 1px;
+  background: var(--line-card);
+}
+.fr-progress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  border-radius: 1px;
+  background: var(--acc-sage-text);
+  transform-origin: left;
+  /* Most of the way while signing in (the drawn 62%), the rest once the session is here. */
+  transform: scaleX(0.62);
+  animation: fr-fill 900ms var(--ease-out) backwards;
+  transition: transform 1100ms var(--ease-natural);
+}
+.fr-progress[data-ready] span {
+  transform: none;
+}
+@keyframes fr-fill {
+  from { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-sprout img,
+  .fr-progress span {
+    animation-duration: 1ms;
+    transition-duration: 1ms;
+  }
+}
+
 /* Onboarding (9g / 9h). */
 .fr-hand {
   font-family: var(--font-hand);
@@ -362,6 +438,9 @@
   }
   .fr-stack {
     margin-top: 28px;
+  }
+  .fr-confirmed {
+    margin-top: 48px;
   }
   .fr-foot {
     margin-top: 28px;

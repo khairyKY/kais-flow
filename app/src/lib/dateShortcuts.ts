@@ -86,8 +86,15 @@ export function daysUntilNextMonday(now: Date = new Date()): number {
   return ((1 - weekday + 7) % 7) || 7
 }
 
+/** Days to "Next week": the coming Monday — except on a Sunday, where that Monday is tomorrow and
+ * "Next week" would just repeat Tomorrow, so it's the Monday after (MK Date Picker: Sun 27 → Mon 5). */
+export function daysUntilNextWeek(now: Date = new Date()): number {
+  const d = daysUntilNextMonday(now)
+  return d === 1 ? 8 : d
+}
+
 export function scheduleNextWeek(now: Date = new Date()): string {
-  return cairoDayAt(now, daysUntilNextMonday(now), 9)
+  return cairoDayAt(now, daysUntilNextWeek(now), 9)
 }
 
 /** Planning board's "This week" column drop target — a fixed 2-day-out placeholder date

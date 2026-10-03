@@ -207,6 +207,13 @@ for (const theme of ['day', 'night']) {
     check(`${name} Plan sits to the right of the card text`, btn && title && btn.x > title.x + title.width - 1 && Math.abs(btn.y + btn.height / 2 - (title.y + title.height / 2)) < 30, JSON.stringify({ btn, title }))
     check(`${name} card is flat (no tilt)`, (await card.evaluate((e) => getComputedStyle(e).transform)) === 'none')
     check(`${name} four section labels`, JSON.stringify(await labels(page)) === JSON.stringify(['TOP 3', 'UP NEXT', 'ROUTINES · 1/5', 'MORE FOR TODAY · 3']), JSON.stringify(await labels(page)))
+    // Kai 2026-10-03: at 07:40 only the morning routines show; the evening folds into one line that opens in place.
+    const seen = async (n) => (await page.getByText(n, { exact: true }).count()) > 0
+    const fold = page.locator('.tp-fold-line')
+    check(`${name} routines: morning shown, evening folded into "Later · Evening 0/2"`, (await seen('Glass of water')) && (await seen('Read 20 pages')) && !(await seen('Tidy the desk')) && (await fold.count()) === 1 && (await fold.innerText()).replace(/\s+/g, ' ').trim().toUpperCase() === 'LATER · EVENING 0/2', await fold.innerText().catch(() => 'no fold line'))
+    await fold.scrollIntoViewIfNeeded()
+    await fold.click()
+    check(`${name} tapping the fold line opens the evening routines in place`, (await seen('Tidy the desk')) && (await seen('Phone on the charger')) && (await fold.count()) === 0)
     const up = await upnextIds(page)
     check(`${name} Up next = deep work, call, gym (goal's block skipped)`, JSON.stringify(up) === JSON.stringify([E(1), E(3), E(4)]), JSON.stringify(up))
     check(`${name} goal card carries its block time`, (await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)).includes('13:30–15:00'), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))

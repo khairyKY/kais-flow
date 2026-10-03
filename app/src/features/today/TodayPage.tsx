@@ -13,7 +13,7 @@ import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
 import { computeStreak, localDateKey, routinesForToday, todayTally } from '../routines/streaks'
-import { groupRoutinesByTime } from '../routines/routineGrouping'
+import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
@@ -303,6 +303,9 @@ export function TodayPage() {
   // both come from the Routines page's own definition of today (streaks.ts todayTally /
   // routinesForToday: scheduled today, or already checked off today), so the two pages agree.
   const routineGroups = groupRoutinesByTime(routinesForToday(routines, completions)).filter((g) => g.items.length > 0)
+  // Kai 2026-10-03: the phone shows the routines for now (+ Anytime); other times fold into one line each.
+  const routineSplit = splitByTimeOfDay(routineGroups, Number(cairoTimeKey(now).slice(0, 2)))
+  const [openRoutineGroups, setOpenRoutineGroups] = useState<string[]>([])
   const doneKeys = useMemo(() => {
     const today = localDateKey(new Date())
     return new Set(completions.filter((c) => c.completed_on === today).map((c) => c.routine_id))
@@ -583,14 +586,21 @@ export function TodayPage() {
               // Polish D: routines exist but every one rests today — say so, don't invite planting.
               <div className="tp-quiet">{hasActiveRoutines ? 'Nothing on repeat today' : 'Nothing on repeat yet — plant one on Routines'}</div>
             ) : (
-              routineGroups.map((g, i) => (
-                <div key={g.key}>
-                  {routineGroups.length > 1 && <div className={`tp-sub${i === 0 ? ' is-first' : ''}`} style={{ paddingBottom: 6 }}>{g.label}</div>}
-                  <div className="tp-list">
-                    {g.items.map((r) => <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} compact />)}
+              <>
+                {[...routineSplit.shown, ...routineSplit.folded.filter((g) => openRoutineGroups.includes(g.key))].map((g, i) => (
+                  <div key={g.key}>
+                    {routineGroups.length > 1 && <div className={`tp-sub${i === 0 ? ' is-first' : ''}`} style={{ paddingBottom: 6 }}>{g.label}</div>}
+                    <div className="tp-list">
+                      {g.items.map((r) => <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} compact />)}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {routineSplit.folded.filter((g) => !openRoutineGroups.includes(g.key)).map((g) => (
+                  <button key={g.key} type="button" className="tp-sub tp-fold-line" onClick={() => setOpenRoutineGroups((o) => [...o, g.key])}>
+                    {g.when} · {g.label} {g.items.filter((r) => doneKeys.has(r.id)).length}/{g.items.length}
+                  </button>
+                ))}
+              </>
             )}
           </section>
         )}

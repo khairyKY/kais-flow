@@ -9,10 +9,12 @@ import {
   planStatus,
   planWorkload,
   resumeMeta,
+  searchOpen,
   seedDayName,
   suggestTimes,
   swapIn,
   sweepRows,
+  toPlace,
   tomorrowSuggestions,
   withPick,
   type PickIn,
@@ -153,12 +155,50 @@ describe('Workload line', () => {
   })
 })
 
-describe('Plan footer status', () => {
+describe('Plan footer status + Start the day', () => {
   const carry = [{ id: 'a', due: null, choice: 'today' as const }, { id: 'b', due: null }, { id: 'c', due: null }]
-  it('mid-carry-over → "1 of 3 decided"; otherwise picks · timed; none → "0 picked"', () => {
-    expect(planStatus(carry, 2, 0)).toBe('1 of 3 decided')
-    expect(planStatus(carry.slice(1), 2, 0)).toBe('2 picked · 0 timed')
-    expect(planStatus([], 0, 0)).toBe('0 picked')
+  const picks: PickIn[] = [{ id: 'audit', dur: 120 }, { id: 'tyre', dur: 30 }, { id: 'node', dur: 45 }, { id: 'call', dur: 30, booked: { start: m('16:00'), end: m('16:30') } }]
+  // audit suggested, tyre set by you, node "No time", call already on the calendar.
+  const slots = suggestTimes(picks, DAY, { tyre: { at: m('15:00'), dur: 30 }, node: { at: null, dur: 45 } }, NOW)
+  it('mid-carry-over → "1 of 3 decided"; otherwise picks · timed (suggested counts); none → "0 picked"', () => {
+    expect(planStatus(carry, slots)).toBe('1 of 3 decided')
+    expect(planStatus(carry.slice(1), slots)).toBe('4 picked · 3 timed')
+    expect(planStatus([], suggestTimes(picks.slice(0, 2), DAY, {}, NOW))).toBe('2 picked · 2 timed')
+    expect(planStatus([], suggestTimes(picks.slice(0, 2), [busy('09:00', '18:00')], {}, NOW))).toBe('2 picked · 0 timed')
+    expect(planStatus([], [])).toBe('0 picked')
+  })
+  it('Start the day places every timed pick (suggested or set), never "No time" or a booked one', () => {
+    expect(toPlace(slots).map((s) => [s.id, s.kind, s.start])).toEqual([
+      ['audit', 'suggested', m('10:30')],
+      ['tyre', 'accepted', m('15:00')],
+    ])
+    expect(toPlace(suggestTimes(picks, [busy('09:00', '18:00')], {}, NOW))).toEqual([])
+  })
+})
+
+describe('Pick your 3 — search all tasks', () => {
+  const P = [{ id: 'p-fin', name: 'Finance' }, { id: 'p-flow', name: "Kai's Flow" }]
+  const seed = task('seed', { title: 'Finish the flow audit', project_id: 'p-flow' })
+  const soon = task('soon', { title: 'Call the tyre supplier', due_at: iso('09:00', 29) })
+  const sooner = task('sooner', { title: 'Water the plants', due_at: iso('09:00', 28) })
+  const loose = task('loose', { title: 'Renew the car licence' })
+  const budget = task('budget', { title: 'Draft the Q4 budget', project_id: 'p-fin' })
+  const finance = task('finance', { title: 'Finance call notes' })
+  const gone = task('gone', { title: 'Finance old', status: 'done' })
+  const trashed = task('trashed', { title: 'Finance trashed', deleted_at: iso('06:00') })
+  const all = [loose, budget, soon, seed, sooner, finance, gone, trashed]
+  it('empty query: the suggestions first, then every other open task by due date (none last)', () => {
+    expect(searchOpen(all, P, [seed], '').map((t) => t.id)).toEqual(['seed', 'sooner', 'soon', 'loose', 'budget', 'finance'])
+    expect(searchOpen(all, P, [seed], '  ').map((t) => t.id)).toEqual(['seed', 'sooner', 'soon', 'loose', 'budget', 'finance'])
+  })
+  it('title matches first, then project-name matches; done and trashed never', () => {
+    expect(searchOpen(all, P, [seed], 'FINANCE').map((t) => t.id)).toEqual(['finance', 'budget'])
+    expect(searchOpen(all, P, [seed], 'licence').map((t) => t.id)).toEqual(['loose'])
+  })
+  it('every word must match, in any order; nothing matches → empty', () => {
+    expect(searchOpen(all, P, [seed], 'audit flow').map((t) => t.id)).toEqual(['seed'])
+    expect(searchOpen(all, P, [seed], "kai's").map((t) => t.id)).toEqual(['seed'])
+    expect(searchOpen(all, P, [seed], 'dentist')).toEqual([])
   })
 })
 

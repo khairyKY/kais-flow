@@ -114,6 +114,19 @@ export function bubbleText(s: Span, mode: DragMode): string {
   return `${fromMin(mode === 'top' ? s.start : s.end)} · ${durationLabel(s.end - s.start)}`
 }
 
+export const EDGE_PX = 48
+/** px/ms — ~13px a frame at 60Hz, about 12 hours of grid in two seconds. */
+export const EDGE_MAX_SPEED = 0.8
+
+/** A lifted block dragged near the grid's top or bottom edge scrolls it: px/ms (− up, + down), 0
+ * outside the 48px edge zones. The deeper into the zone, the faster; a finger past the edge is full speed. */
+export function edgeScrollSpeed(y: number, top: number, bottom: number): number {
+  const up = top + EDGE_PX - y
+  if (up > 0) return -EDGE_MAX_SPEED * Math.min(1, up / EDGE_PX)
+  const down = y - (bottom - EDGE_PX)
+  return down > 0 ? EDGE_MAX_SPEED * Math.min(1, down / EDGE_PX) : 0
+}
+
 /** 7m's toast: "Moved to 16:15" (another day: "Moved to Mon 28 16:15"). */
 export function movedText(from: Span, to: Span, today: string): string {
   return `Moved to ${to.day === from.day ? '' : `${dayHint(to.day, today)} `}${fromMin(to.start)}`

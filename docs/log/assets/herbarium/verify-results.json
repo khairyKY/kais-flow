@@ -1,0 +1,162 @@
+[
+  {
+    "name": "desktop-day opens on beat 1",
+    "ok": true
+  },
+  {
+    "name": "desktop-day no auto-advance after 3s",
+    "ok": true
+  },
+  {
+    "name": "desktop-day Next → beat 2",
+    "ok": true
+  },
+  {
+    "name": "desktop-day the ledger stamps 4 rows",
+    "ok": true
+  },
+  {
+    "name": "desktop-day → key → beat 3",
+    "ok": true
+  },
+  {
+    "name": "desktop-day ← key → back to beat 2",
+    "ok": true
+  },
+  {
+    "name": "desktop-day the press closes (gap 188 → 146 → 130px)",
+    "ok": true
+  },
+  {
+    "name": "desktop-day typing in the line keeps beat 3 (← moves the caret, not the step)",
+    "ok": true
+  },
+  {
+    "name": "desktop-day Press it archives the project",
+    "ok": true
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true
+  },
+  {
+    "name": "desktop-night opens on beat 1",
+    "ok": true
+  },
+  {
+    "name": "desktop-night no auto-advance after 3s",
+    "ok": true
+  },
+  {
+    "name": "desktop-night Next → beat 2",
+    "ok": true
+  },
+  {
+    "name": "desktop-night the ledger stamps 4 rows",
+    "ok": true
+  },
+  {
+    "name": "desktop-night → key → beat 3",
+    "ok": true
+  },
+  {
+    "name": "desktop-night ← key → back to beat 2",
+    "ok": true
+  },
+  {
+    "name": "desktop-night the press closes (gap 188 → 154 → 130px)",
+    "ok": true
+  },
+  {
+    "name": "desktop-night typing in the line keeps beat 3 (← moves the caret, not the step)",
+    "ok": true
+  },
+  {
+    "name": "desktop-night Press it archives the project",
+    "ok": true
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true
+  },
+  {
+    "name": "phone-day opens on beat 1",
+    "ok": true
+  },
+  {
+    "name": "phone-day no auto-advance after 3s",
+    "ok": true
+  },
+  {
+    "name": "phone-day Next → beat 2",
+    "ok": true
+  },
+  {
+    "name": "phone-day the ledger stamps 4 rows",
+    "ok": true
+  },
+  {
+    "name": "phone-day → key → beat 3",
+    "ok": true
+  },
+  {
+    "name": "phone-day ← key → back to beat 2",
+    "ok": true
+  },
+  {
+    "name": "phone-day the press closes (gap 150 → 110 → 104px)",
+    "ok": true
+  },
+  {
+    "name": "phone-day typing in the line keeps beat 3 (← moves the caret, not the step)",
+    "ok": true
+  },
+  {
+    "name": "phone-day Press it archives the project",
+    "ok": true
+  },
+  {
+    "name": "phone-day no page errors",
+    "ok": true
+  },
+  {
+    "name": "phone-night opens on beat 1",
+    "ok": true
+  },
+  {
+    "name": "phone-night no auto-advance after 3s",
+    "ok": true
+  },
+  {
+    "name": "phone-night Next → beat 2",
+    "ok": true
+  },
+  {
+    "name": "phone-night the ledger stamps 4 rows",
+    "ok": true
+  },
+  {
+    "name": "phone-night → key → beat 3",
+    "ok": true
+  },
+  {
+    "name": "phone-night ← key → back to beat 2",
+    "ok": true
+  },
+  {
+    "name": "phone-night the press closes (gap 150 → 132 → 104px)",
+    "ok": true
+  },
+  {
+    "name": "phone-night typing in the line keeps beat 3 (← moves the caret, not the step)",
+    "ok": true
+  },
+  {
+    "name": "phone-night Press it archives the project",
+    "ok": true
+  },
+  {
+    "name": "phone-night no page errors",
+    "ok": true
+  }
+]

@@ -6,14 +6,16 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button, Checkbox, Chip, Star } from '../../components/kit'
-import { durationLabel, fromMin } from '../../components/pickerMath'
+import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { EmptyState, OfflineChip } from '../../components/States'
+import { TimePicker } from '../../components/TimePicker'
 import { tomorrowHint } from '../../lib/dateShortcuts'
 import { useOutboxMarks } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { useOnline } from '../../lib/useOnline'
-import { scheduleTask, useCalendarEvents } from '../calendar/api'
+import { deleteEventWithUndo, moveEventWithUndo, scheduleTask, useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
+import { eventSpan } from '../calendar/phoneGridMath'
 import { useDomains } from '../domains/api'
 import { useFocusStore } from '../focus/focusStore'
 import { useProjects } from '../projects/api'
@@ -53,6 +55,7 @@ export function TaskSheet({ id }: { id: string }) {
   const [saved, setSaved] = useState<{ at: number; field: string } | null>(null)
   const [, rerender] = useReducer((n: number) => n + 1, 0)
   const [picker, setPicker] = useState<MenuSub | null>(null)
+  const [blockTime, setBlockTime] = useState(false)
   const [more, setMore] = useState(false)
   const [labelMenu, setLabelMenu] = useState<string | null>(null)
   const [label, setLabel] = useState('')
@@ -122,6 +125,7 @@ export function TaskSheet({ id }: { id: string }) {
   const done = t.status === 'done' || !!t.completed_at
   const project = projects.find((p) => p.id === t.project_id)
   const block = events.find((e) => e.task_id === t.id)
+  const span = block && eventSpan(block)
   const subs = t.parent_task_id ? null : tasks.filter((c) => c.parent_task_id === t.id)
   const pendingOffline = !online && pending.has(t.id)
   const line = saveLine(t, saved?.at ?? null, now, pendingOffline)
@@ -310,15 +314,16 @@ export function TaskSheet({ id }: { id: string }) {
 
           {(block || suggestion) && <div className="ts-sec">Schedule on calendar</div>}
           {block ? (
-            // The calendar's own block sheet (07d) holds Unschedule / Delete; until the phone calendar
-            // lands, the card opens the calendar.
-            <button type="button" className="ts-block kf-press" onClick={() => void navigate('/calendar')}>
-              <span>
-                <b>On your calendar</b>
-                <small>{blockLine(block, now)}</small>
-              </span>
-              <Icon name="chevright" size={24} />
-            </button>
+            // The block's own actions live here (Kai 2026-10-03: a task block on the calendar opens this
+            // sheet, not a block sheet first): Change time moves it, Unschedule takes it off — the task stays.
+            <div className="ts-block">
+              <b>On your calendar</b>
+              <small>{blockLine(block, now)}</small>
+              <div className="ts-block-acts">
+                <Button variant="ghost" icon={<Icon name="clock" size={20} />} onClick={() => setBlockTime(true)}>Change time</Button>
+                <Button variant="ghost" onClick={() => edit('schedule', () => deleteEventWithUndo(block, 'Unscheduled'))}>Unschedule</Button>
+              </div>
+            </div>
           ) : (
             suggestion && (
               <>
@@ -364,6 +369,20 @@ export function TaskSheet({ id }: { id: string }) {
               domains={domains}
             />
           )}
+          {blockTime && block && span && (
+            <TimePicker
+              day={span.day}
+              value={fromMin(span.start)}
+              duration={span.end - span.start}
+              title={t.title}
+              onDone={(hhmm, d) => {
+                const start = toMin(hhmm)
+                const to = { day: span.day, start, end: start + (d ?? span.end - span.start) }
+                if (to.start !== span.start || to.end !== span.end) edit('schedule', () => moveEventWithUndo(block, span, to, d ? 'bottom' : 'move'))
+              }}
+              onClose={() => setBlockTime(false)}
+            />
+          )}
           {more && (
             <ActionSheet
               title={t.title}
@@ -371,8 +390,8 @@ export function TaskSheet({ id }: { id: string }) {
               onClose={() => setMore(false)}
               items={[
                 // The icon set has no duplicate / link glyph yet: plus and send stand in (SCREENS §Task sheet).
-                { label: 'Duplicate', icon: <Icon name="plus" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
-                { label: 'Copy link', icon: <Icon name="send" size={24} />, onSelect: copyLink },
+                { label: 'Duplicate', icon: <Icon name="duplicate" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
+                { label: 'Copy link', icon: <Icon name="link" size={24} />, onSelect: copyLink },
                 { label: 'Delete', icon: <Icon name="delete" size={24} />, hint: 'Undo 6s', destructive: true, onSelect: () => closeThen(close, () => deleteTasksWithUndo([t])) },
               ]}
             />

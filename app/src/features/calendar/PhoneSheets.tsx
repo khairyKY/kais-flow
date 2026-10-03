@@ -6,23 +6,20 @@ import { DatePicker } from '../../components/DatePicker'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
-import { Button, Checkbox, Chip, SectionLabel } from '../../components/kit'
+import { Button, Chip, SectionLabel } from '../../components/kit'
 import { DURATIONS, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { SheetTitle, TimePicker } from '../../components/TimePicker'
-import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
-import type { CalendarEvent, Domain, Project, Task } from '../../lib/types'
+import type { CalendarEvent, Task } from '../../lib/types'
 import { Segmented } from '../rituals/RitualChrome'
-import { completeTaskWithUndo, createTask, uncompleteTask } from '../tasks/api'
-import { useOpenTask } from '../tasks/openTask'
-import { TaskMenu } from '../tasks/TaskMenu'
-import { remindChip, SAVED_MS } from '../tasks/taskSheetMath'
-import { taskActions } from '../tasks/useRowGrammar'
+import { createTask } from '../tasks/api'
+import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEvent, deleteEventWithUndo, scheduleTask } from './api'
 import { cairoToIso } from './eventTime'
 import { eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 
-// ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the block sheet,
+// ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
 // tasks/api (the outbox), and every removal carries Undo. ──
 
@@ -121,31 +118,20 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   )
 }
 
-/** 7d — tap a block. A task block: its checkbox marks the task done; Time moves it; Open the task is
- * the task sheet; Remind is the task's; Unschedule sends it back to the strip; Delete removes the
- * block only (the task stays). A plain event: Time and Delete. */
-export function BlockSheet({ event, look, slotRect, task, project, domains, projects, subtasks, pending, onMove, onClose }: {
+/** 7d — tap a plain event (a task block opens as its task, the Task sheet): Time moves it, Delete
+ * removes it with Undo. An all-day event keeps its date — no Time. */
+export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: {
   event: CalendarEvent
   look: { fill: string; ink: string }
   slotRect: SlotRect
-  task?: Task
-  project?: Project
-  domains: Domain[]
-  projects: Project[]
-  subtasks: number
   pending: boolean
   onMove: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
   onClose: () => void
 }) {
-  const openTask = useOpenTask()
-  const [picker, setPicker] = useState<'time' | 'remind' | null>(null)
+  const [timeOpen, setTimeOpen] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
-  // Delete / Unschedule: the sheet leaves first, then the block goes and the Undo toast lands on the page.
+  // Delete: the sheet leaves first, then the block goes and the Undo toast lands on the page.
   const after = useRef<(() => void) | null>(null)
-  const closeThen = (close: () => void, write: () => void) => {
-    after.current = write
-    close()
-  }
   useEffect(() => {
     if (savedAt == null) return
     const t = window.setTimeout(() => setSavedAt(null), SAVED_MS)
@@ -153,11 +139,9 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
   }, [savedAt])
   const span = eventSpan(event)
   const len = span.end - span.start
-  const done = task?.status === 'done'
   const today = cairoDateKey(new Date())
-  const kind = task ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
-  const meta = [kind, task ? project?.name : event.all_day ? 'All day' : durationLabel(len)].filter(Boolean).join(' · ')
-  const opens = [task?.notes ? 'Notes' : null, subtasks ? `${subtasks} subtask${subtasks > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
+  const kind = event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
+  const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
   return (
     <>
       <BottomSheet
@@ -168,41 +152,40 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
         }}
         handleGap={8}
         footer={(close) => (
-          <>
-            <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={() => closeThen(close, () => deleteEventWithUndo(event, 'Deleted'))}>
-              Delete
-            </Button>
-            {task && <Button variant="secondary" onClick={() => closeThen(close, () => deleteEventWithUndo(event, 'Unscheduled'))}>Unschedule</Button>}
-          </>
+          <Button
+            variant="ghost"
+            className="pc-bs-delete"
+            icon={<Icon name="delete" size={20} />}
+            onClick={() => {
+              after.current = () => deleteEventWithUndo(event, 'Deleted')
+              close()
+            }}
+          >
+            Delete
+          </Button>
         )}
       >
-        {(close) => (
+        {() => (
           <>
             <div className="pc-bs-head">
-              {task && <Checkbox checked={done} onChange={() => (done ? uncompleteTask(task) : completeTaskWithUndo(task))} label={task.title} />}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className={`pc-bs-title${done ? ' is-done' : ''}`}><EmojiText text={task?.title ?? event.title} /></div>
-                <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
-              </div>
+              <div className="pc-bs-title"><EmojiText text={event.title} /></div>
+              <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
             </div>
             <div className="pc-bs-rows">
               <style>{ACTION_ROW_CSS}</style>
-              {/* An all-day event keeps its date; there is no time to move here. */}
-              {!event.all_day && <Row icon="clock" label="Time" hint={`${dayHint(span.day, today)} · ${rangeText(span.start, span.end)}`} onClick={() => setPicker('time')} />}
-              {task && <Row icon="tasks" label="Open the task" hint={opens || undefined} onClick={() => { close(); openTask(task.id) }} />}
-              {task && <Row icon="remind" label="Remind" hint={task.reminder_at ? remindChip(task.reminder_at, task.due_at) : 'Off'} onClick={() => setPicker('remind')} />}
+              {!event.all_day && <Row icon="clock" label="Time" hint={`${dayHint(span.day, today)} · ${rangeText(span.start, span.end)}`} onClick={() => setTimeOpen(true)} />}
             </div>
             {(pending || savedAt != null) && <div className={`pc-bs-save${pending ? ' is-pending' : ''}`}>{pending ? '○ Pending sync' : '✓ Saved'}</div>}
           </>
         )}
       </BottomSheet>
       <Held rect={event.all_day ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
-      {picker === 'time' && (
+      {timeOpen && (
         <TimePicker
           day={span.day}
           value={fromMin(span.start)}
           duration={len}
-          title={task?.title ?? event.title}
+          title={event.title}
           onDone={(hhmm, d) => {
             const start = toMin(hhmm)
             const to = { day: span.day, start, end: start + (d ?? len) }
@@ -210,18 +193,7 @@ export function BlockSheet({ event, look, slotRect, task, project, domains, proj
             onMove(event, span, to, d ? 'bottom' : 'move')
             setSavedAt(Date.now())
           }}
-          onClose={() => setPicker(null)}
-        />
-      )}
-      {picker === 'remind' && task && (
-        <TaskMenu
-          task={task}
-          anchor={{ at: { x: 0, y: 0 }, sub: 'remind' }}
-          actions={taskActions(task)}
-          ctx={{ tomorrowHint: tomorrowHint(), projectName: project?.name }}
-          projects={projects}
-          domains={domains}
-          onClose={() => setPicker(null)}
+          onClose={() => setTimeOpen(false)}
         />
       )}
     </>

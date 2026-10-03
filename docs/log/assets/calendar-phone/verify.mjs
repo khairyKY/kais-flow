@@ -21,7 +21,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail !== '' ? ' — ' + detail : ''}`)
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-// ONLY=7d,7e runs just those scenes (desktop = the desktop pass); unset runs everything.
+const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+const snap15 = (m) => Math.round(m / 15) * 15
+// ONLY=7d,7e runs just those scenes (desktop = the desktop pass; more = +N; edge = auto-scroll); unset runs everything.
 const want = (k) => !process.env.ONLY || process.env.ONLY.split(',').includes(k)
 
 // ── session ──
@@ -88,7 +90,7 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 const desktop = { viewport: { width: 1280, height: 800 } }
 
-/** Opens `route` with the day's data. `hold` delays REST answers (loading). */
+/** Opens `route` with the day's data (or `rows`). `hold` delays REST answers (loading). */
 async function open(route = '/calendar', o = {}) {
   const view = o.view ?? phone
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
@@ -96,7 +98,7 @@ async function open(route = '/calendar', o = {}) {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', sess)
   }, [o.theme ?? 'day', JSON.stringify(session)])
-  const state = { hold: o.hold ?? 0, rows: tables(), writes: [] }
+  const state = { hold: o.hold ?? 0, rows: o.rows ?? tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
     const url = new URL(req.url())
@@ -158,6 +160,7 @@ const toastSoon = (page, msg) => page.locator('.kf-toast-msg', { hasText: msg })
 const writesOf = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').map((w) => w.body)
 const block = (page, n) => page.locator(`.pc-block[data-id="${eid(n)}"]`)
 const dialog = (page) => page.locator('[role="dialog"]').last()
+const taskSheet = (page) => page.locator('[role="dialog"]').filter({ has: page.locator('.ts-top') })
 const title = (page) => text(page.locator('.pc-title'))
 const scrollTop = (page) => page.locator('.pc-scroll').evaluate((e) => e.scrollTop)
 /** Pretend the on-screen keyboard is up (px): the sheet reads visualViewport like a real IME. */
@@ -227,59 +230,70 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
   }
 
-  // 7d / 7l-d — tap a task block: the block sheet.
+  // 7d / 7l-d — tap a task block: the Task sheet at once (Kai 2026-10-03), its block card holding Change
+  // time and Unschedule; a plain event keeps the event sheet (Time · Delete).
   s7d: {
     if (!want('7d')) break s7d
     const name = night ? '7l-d-night' : '7d-day'
     const { ctx, page, cdp, errors, state } = await open('/calendar', { theme })
     await tap(cdp, block(page, 3).locator('.pc-name'))
-    const d = dialog(page)
-    check(`${name} tap a block → the block sheet (medium, 506)`, Math.abs((await d.boundingBox()).height - 506) <= 2)
-    check(`${name} title, "Task block · Shaheen Tasks"`, (await text(d.locator('.pc-bs-title'))) === 'Call the tyre supplier' && (await text(d.locator('.pc-bs-meta'))) === 'TASK BLOCK · SHAHEEN TASKS')
-    const held = await page.locator('.pc-held').boundingBox()
-    check(`${name} the block stays in view above its sheet, drawn over the scrim`, (await text(page.locator('.pc-held'))).startsWith('Call the tyre supplier') && held.y >= (await page.locator('.pc-scroll').boundingBox()).y && held.y + held.height <= (await d.boundingBox()).y, JSON.stringify(held))
-    const rows = await d.locator('.kf-as-row').allInnerTexts()
-    check(`${name} rows: Time · Open the task · Remind`, rows.map((r) => r.replace(/\s+/g, ' ').trim()).join(' | ') === 'Time SUN 27 · 15:00–15:30 | Open the task NOTES · 2 SUBTASKS | Remind 10M BEFORE', JSON.stringify(rows))
-    check(`${name} footer: Delete · Unschedule`, (await d.getByRole('button', { name: 'Delete' }).count()) === 1 && (await d.getByRole('button', { name: 'Unschedule' }).count()) === 1)
-    // Time → the time sheet → 16:15 → Done: one move, "Moved to 16:15", Saved.
-    const w0 = state.writes.length
-    await tap(cdp, d.locator('.kf-as-row', { hasText: 'Time' }))
-    await page.locator('.kf-pk-time', { hasText: '16:15' }).scrollIntoViewIfNeeded()
-    await tap(cdp, page.locator('.kf-pk-time', { hasText: '16:15' }))
-    await tap(cdp, page.getByRole('button', { name: 'Done' }))
-    await sleep(300)
-    const moved = writesOf(state, 'calendar_events', w0)
-    check(`${name} Time → 16:15 → one move write + "Moved to 16:15"`, moved.length === 1 && moved[0].starts_at === iso('16:15') && moved[0].ends_at === iso('16:45') && (await toasts(page)).includes('Moved to 16:15'), JSON.stringify(moved.map((m) => m.starts_at)))
-    check(`${name} …the sheet says "✓ Saved" and the new time`, (await text(d.locator('.pc-bs-save'))) === '✓ SAVED' && (await text(d.locator('.kf-as-row', { hasText: 'Time' }))).includes('16:15–16:45'))
+    await sleep(400)
+    const ts = taskSheet(page)
+    check(`${name} tap a task block → the Task sheet straight away, over /calendar (?task=)`, new URL(page.url()).pathname === '/calendar' && new URL(page.url()).searchParams.get('task') === id(TYRE) && (await ts.count()) === 1 && (await ts.locator('.ts-title').inputValue()) === 'Call the tyre supplier' && (await page.locator('.pc-bs-title').count()) === 0 && (await dialog(page).count()) === 1, page.url())
+    const card = ts.locator('.ts-block')
+    await card.scrollIntoViewIfNeeded()
+    check(`${name} its block card: On your calendar · Sun 27 · 15:00–15:30 · 30m, Change time · Unschedule`, (await text(card.locator('small'))) === 'SUN 27 · 15:00–15:30 · 30M' && (await card.getByRole('button', { name: 'Change time' }).count()) === 1 && (await card.getByRole('button', { name: 'Unschedule' }).count()) === 1, await text(card))
     await shot(page, name)
     if (!night) {
-      const w1 = state.writes.length
-      await tap(cdp, d.getByRole('checkbox'))
-      check(`${name} its checkbox marks the task done (+ Done toast)`, writesOf(state, 'tasks', w1).some((t) => t.id === id(TYRE) && t.status === 'done') && (await toasts(page)).some((t) => t.startsWith('Done')), JSON.stringify(await toasts(page)))
-      await tap(cdp, d.getByRole('checkbox'))
-      const w2 = state.writes.length
-      await tap(cdp, d.getByRole('button', { name: 'Unschedule' }))
+      // Change time → the Time sheet for the block's day → 16:15 → Done: one move, "Moved to 16:15 · Undo".
+      const w0 = state.writes.length
+      await tap(cdp, card.getByRole('button', { name: 'Change time' }))
+      check(`${name} Change time → the Time sheet, meta the task`, (await text(page.locator('.kf-pk-meta'))).includes('CALL THE TYRE SUPPLIER'), await text(page.locator('.kf-pk-meta')))
+      await page.locator('.kf-pk-time', { hasText: '16:15' }).scrollIntoViewIfNeeded()
+      await tap(cdp, page.locator('.kf-pk-time', { hasText: '16:15' }))
+      await tap(cdp, page.getByRole('button', { name: 'Done' }))
       await sleep(300)
-      const un = writesOf(state, 'calendar_events', w2)
-      const unDetail = [un.some((e) => e.id === eid(3) && e.deleted_at), writesOf(state, 'tasks', w2).some((t) => t.id === id(TYRE) && t.scheduled_start === null), await toastSoon(page, 'Unscheduled · Call the tyre supplier'), await page.locator('.pc-chip', { hasText: 'Call the tyre supplier' }).count(), await dialog(page).count()]
-      check(`${name} Unschedule → the block off the calendar, the task back in the strip, Undo`, unDetail.join() === 'true,true,true,1,0', JSON.stringify(unDetail) + JSON.stringify(await toasts(page)))
+      const moved = writesOf(state, 'calendar_events', w0)
+      check(`${name} …Done → one move write 16:15–16:45 (+ the task's schedule), "Moved to 16:15 · Undo"`, moved.length === 1 && moved[0].id === eid(3) && moved[0].starts_at === iso('16:15') && moved[0].ends_at === iso('16:45') && writesOf(state, 'tasks', w0).some((t) => t.id === id(TYRE) && t.scheduled_start === iso('16:15')) && (await page.locator('.kf-toast', { hasText: 'Moved to 16:15' }).getByRole('button', { name: 'Undo' }).count()) === 1, JSON.stringify(moved.map((m) => m.starts_at)))
+      check(`${name} …the sheet stays, its card reads 16:15–16:45, "Saved"`, (await ts.count()) === 1 && (await text(card.locator('small'))).includes('16:15–16:45') && (await text(ts.locator('.ts-save'))) === 'SAVED', `${await text(card.locator('small'))} / ${await text(ts.locator('.ts-save'))}`)
+      await shot(page, '7d-change-time-day')
+      const w1 = state.writes.length
+      await tap(cdp, page.locator('.kf-toast', { hasText: 'Moved to 16:15' }).getByRole('button', { name: 'Undo' }))
+      await sleep(300)
+      check(`${name} …Undo → back to 15:00–15:30`, writesOf(state, 'calendar_events', w1).some((x) => x.id === eid(3) && x.starts_at === iso('15:00')) && (await text(card.locator('small'))).includes('15:00–15:30'))
+      // Unschedule → the block leaves the calendar, the task stays (and its sheet), Undo puts it back.
+      const w2 = state.writes.length
+      await tap(cdp, card.getByRole('button', { name: 'Unschedule' }))
+      await sleep(300)
+      const un = [writesOf(state, 'calendar_events', w2).some((e) => e.id === eid(3) && e.deleted_at), writesOf(state, 'tasks', w2).some((t) => t.id === id(TYRE) && t.scheduled_start === null && !t.deleted_at), await toastSoon(page, 'Unscheduled · Call the tyre supplier'), await ts.count(), await ts.locator('.ts-block').count(), await block(page, 3).count()]
+      check(`${name} Unschedule → block deleted, task unscheduled (not deleted), "Unscheduled · …" + Undo; the sheet stays, the card goes`, un.join() === 'true,true,true,1,0,0', JSON.stringify(un))
+      await shot(page, '7d-unschedule-day')
       await tap(cdp, page.locator('.kf-toast', { hasText: 'Unscheduled' }).getByRole('button', { name: 'Undo' }))
-      check(`${name} …Undo puts the block back (and its sheet stays closed)`, (await block(page, 3).count()) === 1 && writesOf(state, 'calendar_events', w2).some((e) => e.id === eid(3) && e.deleted_at === null) && (await dialog(page).count()) === 0)
-      // Open the task → the task sheet over the calendar.
-      await tap(cdp, block(page, 3).locator('.pc-name'))
-      await tap(cdp, dialog(page).locator('.kf-as-row', { hasText: 'Open the task' }))
-      await sleep(400)
-      check(`${name} Open the task → the task sheet over /calendar (?task=)`, new URL(page.url()).pathname === '/calendar' && new URL(page.url()).searchParams.get('task') === id(TYRE) && (await page.locator('.ts-top').count()) === 1, page.url())
+      await sleep(300)
+      check(`${name} …Undo → the block and the card come back`, writesOf(state, 'calendar_events', w2).some((e) => e.id === eid(3) && e.deleted_at === null) && (await ts.locator('.ts-block').count()) === 1 && (await block(page, 3).count()) === 1)
       await page.keyboard.press('Escape')
       await sleep(500)
-      // A plain event: Time and Delete only; Delete → Deleted + Undo.
+      check(`${name} closing it leaves /calendar as it was`, (await ts.count()) === 0 && !new URL(page.url()).searchParams.has('task'), page.url())
+      // A plain event: the event sheet — "Event · 1h", Time only, Delete; no task, no Unschedule.
       await tap(cdp, block(page, 2).locator('.pc-name'))
       const e = dialog(page)
-      check(`${name} a plain event: "Event · 1h", Time only, Delete (no Unschedule)`, (await text(e.locator('.pc-bs-meta'))) === 'EVENT · 1H' && (await e.locator('.kf-as-row').count()) === 1 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0)
+      check(`${name} a plain event → the event sheet: "Event · 1h", Time only, Delete (no Unschedule, no checkbox)`, (await text(e.locator('.pc-bs-meta'))) === 'EVENT · 1H' && (await e.locator('.kf-as-row').count()) === 1 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0 && (await e.getByRole('checkbox').count()) === 0 && !new URL(page.url()).searchParams.has('task'))
+      const held = await page.locator('.pc-held').boundingBox()
+      check(`${name} …the event stays in view above its sheet, drawn over the scrim`, (await text(page.locator('.pc-held'))).startsWith('Lunch with Omar') && held.y >= (await page.locator('.pc-scroll').boundingBox()).y && held.y + held.height <= (await e.boundingBox()).y, JSON.stringify(held))
+      check(`${name} …its title sits on the sheet's gutter`, Math.abs((await e.locator('.pc-bs-title').boundingBox()).x - 20) <= 1, (await e.locator('.pc-bs-title').boundingBox()).x)
+      await shot(page, '7d-event-day')
       const w3 = state.writes.length
+      await tap(cdp, e.locator('.kf-as-row', { hasText: 'Time' }))
+      await page.locator('.kf-pk-time', { hasText: '14:30' }).scrollIntoViewIfNeeded()
+      await tap(cdp, page.locator('.kf-pk-time', { hasText: '14:30' }))
+      await tap(cdp, page.getByRole('button', { name: 'Done' }))
+      await sleep(300)
+      const m3 = writesOf(state, 'calendar_events', w3)
+      check(`${name} …Time → 14:30 → one write + "Moved to 14:30", "✓ Saved"`, m3.length === 1 && m3[0].starts_at === iso('14:30') && (await toasts(page)).includes('Moved to 14:30') && (await text(e.locator('.pc-bs-save'))) === '✓ SAVED', JSON.stringify(m3.map((m) => m.starts_at)))
+      const w4 = state.writes.length
       await tap(cdp, e.getByRole('button', { name: 'Delete' }))
       await sleep(300)
-      check(`${name} Delete → the block goes, "Deleted · Lunch with Omar" + Undo`, writesOf(state, 'calendar_events', w3).some((x) => x.id === eid(2) && x.deleted_at) && (await toasts(page)).includes('Deleted · Lunch with Omar') && (await block(page, 2).count()) === 0)
+      check(`${name} …Delete → the block goes, "Deleted · Lunch with Omar" + Undo`, writesOf(state, 'calendar_events', w4).some((x) => x.id === eid(2) && x.deleted_at) && (await toastSoon(page, 'Deleted · Lunch with Omar')) && (await block(page, 2).count()) === 0)
     }
     await basics(page, name, errors)
     await ctx.close()
@@ -541,6 +555,136 @@ for (const theme of ['day', 'night']) {
     await drag(cdp, center(await page.locator('.pc-handle.is-top').boundingBox()), { dy: -32, steps: 6, stepMs: 40 })
     const e2 = writesOf(state, 'calendar_events', w1)
     check(`${name} the top handle up 32px → starts 14:30, end kept`, e2.length === 1 && e2[0].starts_at === iso('14:30') && e2[0].ends_at === iso('16:15'), JSON.stringify(e2))
+    await basics(page, name, errors)
+    await ctx.close()
+  }
+
+  // +N (Kai 2026-10-03) — 4 blocks at once: three drawn, the 4th behind a "+1" kit chip at the stack's
+  // top-right; the chip lists it (time + title) and a row opens it the way a tap does.
+  sMore: {
+    if (!want('more')) break sMore
+    const name = 'more-day'
+    const rows = tables()
+    rows.calendar_events = [...EVENTS, ev(20, 'Design review', '11:00', '12:30'), ev(21, 'Budget', '11:00', '12:00'), ev(22, 'Call Omar', '11:30', '12:30'), ev(23, 'Review Kai', '11:45', '12:45', 27, REVIEW)]
+    const { ctx, page, cdp, errors, state } = await open('/calendar', { rows })
+    await page.locator('.pc-scroll').evaluate((e) => (e.scrollTop = 10.5 * 64))
+    await sleep(200)
+    const drawn = await Promise.all([20, 21, 22, 23].map((n) => block(page, n).count()))
+    check(`${name} 4 at once → 3 drawn (Design review · Budget · Call Omar), the 4th (Review Kai) not`, drawn.join() === '1,1,1,0', drawn.join())
+    const chip = page.locator('.pc-more .kf-chip')
+    const cb = await chip.boundingBox()
+    const ob = await block(page, 22).boundingBox()
+    check(`${name} one "+1" kit chip (24 tall) at the stack's top-right — Call Omar's corner`, (await chip.count()) === 1 && (await text(chip)) === '+1' && Math.round(cb.height) === 24 && Math.abs(cb.x + cb.width - (ob.x + ob.width - 2)) <= 1 && Math.abs(cb.y - (ob.y + 2)) <= 1, JSON.stringify([cb, ob]))
+    await shot(page, name)
+    const w0 = state.writes.length
+    await tap(cdp, chip)
+    const list = dialog(page)
+    const listRows = (await list.locator('.kf-as-row').allInnerTexts()).map((r) => r.replace(/\s+/g, ' ').trim())
+    check(`${name} tap "+1" → its list: "1 more", Review Kai 11:45–12:45 (and no quick create, no write)`, (await list.innerText()).startsWith('1 more') && listRows.join(' | ') === 'Review Kai 11:45–12:45' && (await page.locator('.pc-qc-title').count()) === 0 && state.writes.length === w0, JSON.stringify(listRows))
+    await shot(page, 'more-list-day')
+    await tap(cdp, list.locator('.kf-as-row', { hasText: 'Review Kai' }))
+    await sleep(500)
+    check(`${name} …a row opens it like a tap: the Task sheet over /calendar, the list gone`, (await taskSheet(page).count()) === 1 && new URL(page.url()).searchParams.get('task') === id(REVIEW) && (await page.locator('[role="dialog"]', { hasText: '1 more' }).count()) === 0, page.url())
+    await page.keyboard.press('Escape')
+    await sleep(500)
+    await basics(page, name, errors)
+    await ctx.close()
+  }
+
+  // Auto-scroll (Kai 2026-10-03): a lifted block dragged into the grid's top/bottom 48px scrolls it; the
+  // block and the bubble keep tracking the finger on the 15-min grid; the day's ends stop it.
+  sEdge: {
+    if (!want('edge')) break sEdge
+    const name = 'edge-day'
+    const { ctx, page, cdp, errors, state } = await open()
+    const g = await page.locator('.pc-scroll').boundingBox()
+    const bottom = Math.round(g.y + g.height)
+    const mid = Math.round(g.y + g.height / 2)
+    const b = await block(page, 3).boundingBox()
+    const f = { x: Math.round(b.x + 120), y: Math.round(b.y + 16) }
+    const st0 = await scrollTop(page)
+    const w0 = state.writes.length
+    await drag(cdp, f, { hold: 550, dy: bottom - 12 - f.y, steps: 10, stepMs: 30, keep: true })
+    await sleep(500)
+    const stDeep = await scrollTop(page)
+    check(`${name} a lifted block held 12px from the bottom edge scrolls the grid down`, stDeep > st0 + 100, `${st0} → ${stDeep}`)
+    await shot(page, name) // mid-scroll: the block under the finger at the bottom edge, the bubble on it
+    for (let i = 1; i <= 6; i++) {
+      await touch(cdp, 'touchMove', [{ x: f.x, y: Math.round(bottom - 12 + ((mid - bottom + 12) * i) / 6) }])
+      await sleep(30)
+    }
+    await sleep(300)
+    const st1 = await scrollTop(page)
+    await sleep(300)
+    check(`${name} …out of the zone, it stops`, (await scrollTop(page)) === st1, `${st1} → ${await scrollTop(page)}`)
+    const want1 = snap15(900 + ((mid - f.y + st1 - st0) * 60) / 64)
+    const fingerAt = Math.abs((await yOf(page, hm(want1))) + 16 - mid)
+    check(`${name} …the block stays under the finger through the scroll: bubble ${hm(want1)}, the block's start within a snap of the finger`, (await text(page.locator('.pc-bubble'))) === hm(want1) && fingerAt <= 8, `${await text(page.locator('.pc-bubble'))} · ${fingerAt}px`)
+    await touch(cdp, 'touchEnd', [])
+    await sleep(500)
+    const e1 = writesOf(state, 'calendar_events', w0)
+    check(`${name} …drop → one write at ${hm(want1)} (30 min kept), "Moved to ${hm(want1)}"`, e1.length === 1 && e1[0].starts_at === iso(hm(want1)) && e1[0].ends_at === iso(hm(want1 + 30)) && (await toastSoon(page, `Moved to ${hm(want1)}`)), JSON.stringify(e1.map((x) => x.starts_at)))
+
+    // Up: the top 48px scroll it back (from 19:15, clear of the "Moved" toast docked at the bottom).
+    const b2 = await block(page, 3).boundingBox()
+    const f2 = { x: Math.round(b2.x + 120), y: Math.round(b2.y + 16) }
+    const st2 = await scrollTop(page)
+    const w1 = state.writes.length
+    await drag(cdp, f2, { hold: 550, dy: Math.round(g.y) + 12 - f2.y, steps: 10, stepMs: 30, keep: true })
+    await sleep(400)
+    const stUp = await scrollTop(page)
+    await touch(cdp, 'touchEnd', [])
+    await sleep(500)
+    const e2 = writesOf(state, 'calendar_events', w1)
+    const m2 = e2[0] ? (Date.parse(e2[0].starts_at) - Date.parse(iso('00:00'))) / 60_000 : -1
+    check(`${name} near the top edge it scrolls up, and the drop lands earlier, on the 15-min grid`, stUp < st2 - 100 && e2.length === 1 && m2 < want1 && m2 % 15 === 0, `${st2} → ${stUp} · ${e2[0]?.starts_at}`)
+
+    // Past the bottom edge (the finger on the tab bar) is full speed — to the end of the day, where it stops.
+    const b3 = await block(page, 3).boundingBox()
+    const f3 = { x: Math.round(b3.x + 120), y: Math.round(b3.y + 16) }
+    const w2 = state.writes.length
+    await drag(cdp, f3, { hold: 550, dy: bottom + 20 - f3.y, steps: 10, stepMs: 30, keep: true })
+    await sleep(2500)
+    // 24:00 at the grid's bottom edge — not past it, though the lifted block's handle hangs below the canvas.
+    const end = await page.locator('.pc-scroll').evaluate((e) => e.querySelector('.pc-canvas').offsetHeight - e.clientHeight)
+    check(`${name} past the edge: full speed to the end of the day, where it stops (24:00 on the bottom edge); the block can't leave the day (23:30)`, (await scrollTop(page)) === end && (await text(page.locator('.pc-bubble'))) === '23:30', `${await scrollTop(page)} / ${end} · ${await text(page.locator('.pc-bubble'))}`)
+    await touch(cdp, 'touchEnd', [])
+    await sleep(500)
+    const e3 = writesOf(state, 'calendar_events', w2)
+    check(`${name} …dropped there: 23:30–24:00`, e3.length === 1 && e3[0].starts_at === iso('23:30') && e3[0].ends_at === iso('00:00', 28), JSON.stringify(e3.map((x) => [x.starts_at, x.ends_at])))
+    await basics(page, name, errors)
+    await ctx.close()
+  }
+  // 7f + auto-scroll: a resize handle dragged into the bottom zone grows the block past the screen.
+  sEdgeResize: {
+    if (!want('edge')) break sEdgeResize
+    const name = 'edge-resize-day'
+    const { ctx, page, cdp, errors, state } = await open()
+    const g = await page.locator('.pc-scroll').boundingBox()
+    const bottom = Math.round(g.y + g.height)
+    const mid = Math.round(g.y + g.height / 2) + 40
+    const b = await block(page, 3).boundingBox()
+    await drag(cdp, { x: b.x + 120, y: b.y + 16 }, { hold: 550, steps: 0 })
+    await sleep(300)
+    const hb = await page.locator('.pc-handle.is-bottom').boundingBox()
+    const h = { x: Math.round(hb.x + hb.width / 2), y: Math.round(hb.y + hb.height / 2) }
+    const st0 = await scrollTop(page)
+    const w0 = state.writes.length
+    await drag(cdp, h, { dy: bottom - 12 - h.y, steps: 8, stepMs: 30, keep: true })
+    await sleep(400)
+    for (let i = 1; i <= 6; i++) {
+      await touch(cdp, 'touchMove', [{ x: h.x, y: Math.round(bottom - 12 + ((mid - bottom + 12) * i) / 6) }])
+      await sleep(30)
+    }
+    await sleep(300)
+    const st1 = await scrollTop(page)
+    const end = snap15(930 + ((mid - h.y + st1 - st0) * 60) / 64)
+    check(`${name} the bottom handle in the zone scrolls the grid; the bubble reads the new end ${hm(end)}`, st1 > st0 + 100 && (await text(page.locator('.pc-bubble'))).startsWith(`${hm(end)} ·`), `${st0} → ${st1} · ${await text(page.locator('.pc-bubble'))}`)
+    await shot(page, name)
+    await touch(cdp, 'touchEnd', [])
+    await sleep(500)
+    const e = writesOf(state, 'calendar_events', w0)
+    check(`${name} …release → 15:00–${hm(end)}, "Resized to 15:00–${hm(end)}"`, e.length === 1 && e[0].starts_at === iso('15:00') && e[0].ends_at === iso(hm(end)) && (await toastSoon(page, `Resized to 15:00–${hm(end)}`)), JSON.stringify(e.map((x) => [x.starts_at, x.ends_at])))
     await basics(page, name, errors)
     await ctx.close()
   }

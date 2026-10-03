@@ -67,8 +67,11 @@ export function DatePicker(p: DatePickerProps) {
   const today = cairoDateKey(now)
   const initialDay = value ? (mode === 'day' ? value : cairoDateKey(new Date(value))) : null
   const [day, setDay] = useState(initialDay)
-  const [focusKey, setFocusKey] = useState(initialDay ?? today)
-  const [month, setMonth] = useState(() => monthOf(initialDay ?? today))
+  // Rescheduling an overdue task means picking a day from now on, so a past value opens on this month
+  // (its day stays selected — Done without a tap keeps it).
+  const opensOn = initialDay && initialDay >= today ? initialDay : today
+  const [focusKey, setFocusKey] = useState(opensOn)
+  const [month, setMonth] = useState(() => monthOf(opensOn))
   const [stage, setStage] = useState<'date' | 'time'>('date')
   const [time, setTime] = useState<string | null>(null)
   const [dur, setDur] = useState(duration ?? null)

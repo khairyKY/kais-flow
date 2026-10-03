@@ -124,7 +124,8 @@ describe('daysUntilNextMonday (Cairo weekday)', () => {
   it('Sunday is 1 for its whole Cairo day, including the minutes that are Saturday in UTC', () => {
     expect(daysUntilNextMonday(new Date('2026-07-12T00:00:00+03:00'))).toBe(1) // 21:00Z Sat
     expect(daysUntilNextMonday(new Date('2026-07-12T23:59:00+03:00'))).toBe(1)
-    expect(scheduleNextWeek(new Date('2026-07-12T00:00:00+03:00'))).toBe('2026-07-13T06:00:00.000Z')
+    // …but Next week on a Sunday skips that Monday (it would repeat Tomorrow) → the Monday after.
+    expect(scheduleNextWeek(new Date('2026-07-12T00:00:00+03:00'))).toBe('2026-07-20T06:00:00.000Z')
   })
   it('Monday is 7 for its whole Cairo day, including the minutes that are Sunday in UTC', () => {
     expect(daysUntilNextMonday(new Date('2026-07-13T00:00:00+03:00'))).toBe(7) // 21:00Z Sun
