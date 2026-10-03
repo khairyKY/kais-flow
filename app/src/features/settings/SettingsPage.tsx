@@ -257,20 +257,25 @@ function AppearanceCard() {
       </div>
       {/* R4 (Kai 2026-07-20): "things look most natural [at] 110% but everything feels small."
           Labelled in the same percentages he used, so the control speaks his language. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-        <div>
+      {/* Wraps under its label when the five sizes don't fit beside it (Kai 2026-10-03: at 150% they
+          ran off the card and the whole page scrolled sideways); wrapped, they share the full row. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <div style={{ flex: '1 1 160px' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Interface size</div>
           {/* Polish F2b: the default is per device (125% on a computer, 100% on a phone or a
               touch-first screen), so the caption names this device's own normal. */}
           <div style={fhelp}>scales the whole app · {Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device's normal</div>
         </div>
-        <Seg<UiScale>
-          value={scale}
-          onChange={setScale}
-          options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))}
-        />
+        <div style={{ flex: '1 1 300px', maxWidth: 400 }}>
+          <Seg<UiScale>
+            fill
+            value={scale}
+            onChange={setScale}
+            options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))}
+          />
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Paper texture</div>
           <div style={fhelp}>the grain over everything · {grain.pct}%</div>
@@ -948,7 +953,7 @@ export function SoundCatalogCard() {
   return (
     <SCard tapeTint="color-mix(in oklch, var(--acc-hydrangea) 40%, transparent)" style={{ scrollMarginTop: 24 }}>
       <div style={{ ...flabel, marginBottom: 4 }}>Sound · the garden's voice</div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Sound</div>
           <div style={fhelp}>quiet, papery, never musical</div>

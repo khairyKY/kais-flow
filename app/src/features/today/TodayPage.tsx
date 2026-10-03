@@ -729,7 +729,9 @@ export function TodayPage() {
   )
 
   return (
-    <div style={{ maxWidth: 1010, margin: '0 auto' }}>
+    // Kai 2026-10-03: the shared page width, left-aligned like Tasks (it was 1010 centred, and
+    // shrank to its content inside the flex route — index.css .kf-route > *).
+    <div style={{ maxWidth: 'var(--kf-page-max)' }}>
       {terrarium}
       {header}
 
@@ -741,7 +743,8 @@ export function TodayPage() {
 
       <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 264px', gap: 44, alignItems: 'start' }}>
+      {/* The side column (Routines · Slipping) grows with the page too, from 264 to 340. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) clamp(264px, 28%, 340px)', gap: 44, alignItems: 'start' }}>
         <div className="kf-bulk-anchor" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
           {birthdayCards}
           <section className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
