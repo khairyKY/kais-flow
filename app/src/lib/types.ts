@@ -139,6 +139,8 @@ export interface Routine {
   steps?: string[]
   /** Domain this routine tends (migration 0028), per the New Routine form's Domain picker. */
   domain_id?: string | null
+  /** The streak goal in days (migration 0046), null = none: the streak reads "12 / 30". */
+  goal_days?: number | null
   created_at: string
   updated_at: string
 }

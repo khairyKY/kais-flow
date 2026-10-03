@@ -11,6 +11,22 @@ export interface ParsedCommand {
   projectId: string | null
   domainMatch: string | null
   projectMatch: string | null
+  /** `*label` words, in order, once each — the `*` the app shows labels with (task editor, Library tags). */
+  labels: string[]
+}
+
+/** `*calls`, `*q3-review`: a `*` at a word start, then letters, digits, `_` or `-`. */
+const LABEL_RE = /(^|\s)\*([\p{L}\p{N}_-]+)/gu
+
+/** Pulls every `*label` out of the text (Kai 2026-10-03: labels in quick add). Run before the date
+ * parse so a `*today` label is never read as a date. */
+export function stripLabels(input: string): { text: string; labels: string[] } {
+  const labels: string[] = []
+  const text = input.replace(LABEL_RE, (_, lead: string, label: string) => {
+    if (!labels.includes(label)) labels.push(label)
+    return lead
+  })
+  return { text: text.replace(/\s{2,}/g, ' ').trim(), labels }
 }
 
 /** Matches `30m`, `1h`, or `1h30m` anywhere in the text. */
@@ -59,8 +75,8 @@ export function stripPriorityAndDuration(input: string): PriorityDurationTokens 
 /** Does this parse carry enough structure to create a task directly, instead of falling through
  * to a bare Inbox capture? Priority/duration count as structure too — matching a `!`/`30m`-only
  * command (e.g. "buy milk !!") that has no date/project still means "create a task now". */
-export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'>): boolean {
-  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null)
+export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[] }): boolean {
+  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length)
 }
 
 export interface ParseCommandOptions {
@@ -100,7 +116,8 @@ export function parseCommand(
   projects: Project[],
   { now = new Date(), zone = 'device' }: ParseCommandOptions = {},
 ): ParsedCommand {
-  const stripped = stripPriorityAndDuration(input)
+  const { text: unlabelled, labels } = stripLabels(input)
+  const stripped = stripPriorityAndDuration(unlabelled)
   let text = stripped.text
   const { priority, durationMin } = stripped
 
@@ -138,5 +155,5 @@ export function parseCommand(
 
   const title = text.replace(/\s{2,}/g, ' ').trim()
 
-  return { title, dueAt, durationMin, priority, domainId, projectId, domainMatch, projectMatch }
+  return { title, dueAt, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
 }

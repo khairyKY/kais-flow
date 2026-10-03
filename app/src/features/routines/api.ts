@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import { localDateKey } from './streaks'
+import { challengeDays, localDateKey } from './streaks'
 import { fetchAll } from '../../lib/fetchAll'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
@@ -83,11 +83,13 @@ export function createChallenge(
     active: true,
     steps,
     domain_id: domainId,
+    // The form's "N day streak" is the streak goal too (0046): the row reads "12 / 30".
+    goal_days: challengeDays(startDate, endDate),
     created_at: nowIso(),
     updated_at: nowIso(),
   }
   writeRow('routines', routine)
-  logActivity('routine.created', 'routine', routine.id, { name, challenge: true })
+  logActivity('routine.created', 'routine', routine.id, { name, challenge: true, goal_days: routine.goal_days })
   return routine
 }
 

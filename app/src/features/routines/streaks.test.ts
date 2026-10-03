@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateCompletionRate, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakRiskMessage, todayTally } from './streaks'
+import { aggregateCompletionRate, challengeDays, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakOfGoal, streakRiskMessage, todayTally } from './streaks'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
@@ -372,5 +372,20 @@ describe('days before a routine was planted are neither misses nor rain', () => 
     expect(computeTrellisDays(dates, DAILY, 7, NOW, since).map((d) => d.state)).toEqual(['off', 'grew', 'grew', 'rained', 'grew', 'grew', 'off'])
     expect(computeGraceStreak(dates, DAILY, NOW, since).current).toBe(computeStreak(dates, DAILY, NOW).current)
     expect(computeGraceStreak(dates, DAILY, NOW, since).rainedDates).toEqual([dayKey(-3)])
+  })
+})
+
+describe('the streak goal (migration 0046)', () => {
+  it('a challenge window counts both ends, across a month and a DST change', () => {
+    expect(challengeDays('2026-09-01', '2026-09-30')).toBe(30)
+    expect(challengeDays('2026-10-03', '2026-10-03')).toBe(1)
+    expect(challengeDays('2026-10-20', '2026-11-18')).toBe(30)
+  })
+
+  it('reads "12 / 30" against a goal, the bare count without one', () => {
+    expect(streakOfGoal(12, 30)).toBe('12 / 30')
+    expect(streakOfGoal(31, 30)).toBe('31 / 30')
+    expect(streakOfGoal(12, null)).toBe('12')
+    expect(streakOfGoal(0, undefined)).toBe('0')
   })
 })

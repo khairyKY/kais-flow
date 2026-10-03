@@ -322,3 +322,13 @@ export function streakRiskMessage(routines: Routine[], completions: RoutineCompl
   if (!worst) return null
   return `${worst.name}'s ${worst.current}-day streak is on the line — complete it today to keep it.`
 }
+
+/** Days in a challenge window, both ends counted ("YYYY-MM-DD" keys; Sep 1 → Sep 30 = 30). */
+export function challengeDays(start: string, end: string): number {
+  return Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1
+}
+
+/** A streak against its goal (migration 0046): "12 / 30", or just "12" with no goal. */
+export function streakOfGoal(current: number, goalDays: number | null | undefined): string {
+  return goalDays ? `${current} / ${goalDays}` : String(current)
+}

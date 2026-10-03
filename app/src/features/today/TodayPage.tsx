@@ -50,9 +50,12 @@ import { ritualProgress, type RitualState } from './dayPhase'
 import { upNextClock, upNextLabel } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
+import { LabelChips } from '../tasks/TaskRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
 import { useOpenTask } from '../tasks/openTask'
 import { DayCard, RitualCard } from './DayCard'
+import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
+import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
 import { useStarEvents } from './api'
 import { starredIds, top3OfToday } from './top3Today'
@@ -518,6 +521,7 @@ export function TodayPage() {
 
         {card === 'slip' && slip && <NowSlip event={slip} task={slipTask} now={now} sel={slipTask ? rowSelection(slipTask) : {}} />}
         {card && card !== 'slip' && <RitualCard kind={card} day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />}
+        {card && <FirstTodayHint />}
         {birthdayCards.length > 0 && <div style={{ padding: '8px 16px 0' }}>{birthdayCards}</div>}
 
         {empty ? (
@@ -740,6 +744,7 @@ export function TodayPage() {
       <div className="kf-daycard-slot" style={{ marginTop: 20 }}>
         <DayCard day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} onOpenRitual={openRitual} />
       </div>
+      {!tasksPending && <FirstTodayHint style={{ padding: '10px 0 0 24px', fontSize: 'var(--fs-hand-l)' }} />}
 
       <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />
 
@@ -889,6 +894,23 @@ function PhoneSection({ label, link, first }: { label: string; link?: { to: stri
       )}
     </div>
   )
+}
+
+/** First Run 9i: the one Caveat line under the next-move card on a brand-new account's first Today
+ * (./firstTodayHint). Mounted only under a card, so only a tap while it shows clears it. */
+function FirstTodayHint({ style }: { style?: React.CSSProperties }) {
+  const uid = useAuth().session?.user.id
+  const [on, setOn] = useState(() => firstTodayHintPending(uid))
+  useEffect(() => {
+    if (!on) return
+    const off = () => {
+      clearFirstTodayHint(uid)
+      setOn(false)
+    }
+    document.addEventListener('pointerdown', off, { capture: true, once: true })
+    return () => document.removeEventListener('pointerdown', off, { capture: true })
+  }, [on, uid])
+  return on ? <div className="tp-hand tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
 }
 
 /** The NOW slip (MK 11, option 1b "Taped slip"): only while a block actually runs (./todayLayout).
@@ -1241,6 +1263,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
             dueDays === 0 && <span key="d">Due today</span>,
             task.duration_min != null && <span key="m">{formatDuration(task.duration_min)}</span>,
             task.recurrence_rule && <span key="r">↻</span>,
+            !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
           ].filter(Boolean)
     return (
       <SwipeRow {...rowProps} className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
@@ -1282,7 +1305,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
       {check}
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <div style={{ fontSize: hollow ? 14.5 : 15, ...title }}><EmojiText text={task.title} /></div>
-        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}{dueBadges}</>)}
+        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
       </div>
       {tail}
     </SwipeRow>

@@ -39,6 +39,8 @@ export interface CreateTaskInput {
   reminderOffsetMin?: number | null
   durationMin?: number | null
   priority?: number | null
+  /** Quick add's `*label` words. */
+  labels?: string[]
   /** One level deep (Akiflow model) — callers must not pass a task that is itself a child. */
   parentTaskId?: string | null
   /** Where the task came from (0027) — a filed GitHub issue keeps its url here. */
@@ -63,7 +65,7 @@ export function createTask(input: CreateTaskInput): Task {
     top3: false,
     snoozed_until: null,
     recurrence_rule: null,
-    labels: [],
+    labels: input.labels ?? [],
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,
     someday: false,

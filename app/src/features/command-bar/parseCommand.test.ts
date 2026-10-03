@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCommand'
+import { hasStructure, parseCommand, stripLabels, stripPriorityAndDuration } from './parseCommand'
 import type { Domain, Project } from '../../lib/types'
 
 const domains: Domain[] = [
@@ -138,6 +138,34 @@ describe('hasStructure', () => {
 
   it('is false for plain free text with no structure at all', () => {
     expect(hasStructure({ dueAt: null, domainId: null, projectId: null, priority: null, durationMin: null })).toBe(false)
+  })
+
+  it('a label alone is structure: "buy milk *errands" is a task with that label', () => {
+    expect(hasStructure({ dueAt: null, domainId: null, projectId: null, priority: null, durationMin: null, labels: ['errands'] })).toBe(true)
+    expect(hasStructure({ dueAt: null, domainId: null, projectId: null, priority: null, durationMin: null, labels: [] })).toBe(false)
+  })
+})
+
+describe('*labels (Kai 2026-10-03)', () => {
+  it('every *word becomes a label, once, and leaves the title', () => {
+    const r = parseCommand('call Omar *calls tomorrow 3pm *q3-review #shaheen *calls', domains, projects)
+    expect(r.labels).toEqual(['calls', 'q3-review'])
+    expect(r.title).toBe('call Omar')
+    expect(r.projectId).toBe('p1')
+    expect(r.dueAt).not.toBeNull()
+  })
+
+  it('a label that reads like a date stays a label', () => {
+    const r = parseCommand('water the plants *today', domains, projects)
+    expect(r.labels).toEqual(['today'])
+    expect(r.dueAt).toBeNull()
+    expect(r.title).toBe('water the plants')
+  })
+
+  it('a * inside a word or on its own is text, and none means []', () => {
+    expect(parseCommand('5*3 is 15', domains, projects)).toMatchObject({ labels: [], title: '5*3 is 15' })
+    expect(parseCommand('rate it * stars', domains, projects).labels).toEqual([])
+    expect(stripLabels('*calls')).toEqual({ text: '', labels: ['calls'] })
   })
 })
 
