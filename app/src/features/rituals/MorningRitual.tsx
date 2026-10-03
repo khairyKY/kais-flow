@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
 import { useTasks, completeTaskWithUndo, createTask, deleteTasksWithUndo, rescheduleDue, setSomeday, toggleTop3 } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
@@ -14,8 +13,10 @@ import { Button, Checkbox, Chip, Star } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { TimePicker } from '../../components/TimePicker'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { useIsMobile } from '../../components/BottomSheet'
 import { busyOnDay, fromMin, toMin } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
+import { useEscapeStack } from '../../lib/overlayStack'
 import { toastAction } from '../../lib/undo'
 import { logRitualFinished, logRitualStep, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, morningPreselection, top3Diff } from './loopDay'
@@ -31,9 +32,11 @@ import {
   pickCandidates,
   planStatus,
   planWorkload,
+  searchOpen,
   span,
   suggestTimes,
   swapIn,
+  toPlace,
   withPick,
   type CarryChoice,
   type CarryEntry,
@@ -47,10 +50,12 @@ import type { InboxItem, Project, Domain, Task } from '../../lib/types'
 // ── Plan my day — design-export/Plan.dc.html 6a–6m + SCREENS-2026-09-28 §Plan my day rulings 1–8.
 // One scrolling sheet: Carry-over · Inbox · Pick your 3 · Suggested times, a sticky footer with the
 // workload and the one terra action. Carry-over and Inbox choices apply at once; the picks and
-// accepted times are a draft (kept across ✕ / Back / swipe-down / reload for this loop day) that
-// "Start the day" writes. Each finished section logs its step, so a plan closed half-way reads
-// "2 of 4 done" + Resume on Today (6m). Kai: Plan my day is always TODAY's plan — after 17:00 the
-// Today card offers Shut down instead (no 6g "Plan tomorrow"); the morning always suggests times. ──
+// times are a draft (kept across ✕ / Back / swipe-down / reload for this loop day) that "Start the
+// day" writes. Each finished section logs its step, so a plan closed half-way reads "2 of 4 done" +
+// Resume on Today (6m). Kai: Plan my day is always TODAY's plan — after 17:00 the Today card offers
+// Shut down instead (no 6g "Plan tomorrow"); the morning always suggests times. Kai 2026-10-03:
+// Pick your 3 searches every open task in place, and a suggested time needs no ✓ — Start the day
+// places every pick that has a time. ──
 
 interface PlanDraft {
   carry: CarryEntry[]
@@ -68,7 +73,7 @@ const CARRY_OPTIONS: { value: CarryChoice; label: string }[] = [
 export function MorningRitual({ onClose }: { onClose: () => void }) {
   const now = new Date()
   const today = cairoDateKey(now)
-  const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const { data: tasks = [], isPending } = useTasks()
   const { data: inbox = [] } = usePendingInboxItems()
   const { data: events = [] } = useCalendarEvents()
@@ -78,7 +83,6 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const setGoal = useGoalStore((s) => s.setGoal)
   const seeds = useSeedsFor(loopDayKey(now))
   const [draft, setDraft, clearDraft] = useDraft<PlanDraft>('plan', loopDayKey(now), () => ({ carry: [], picks: null, chosen: {} }))
-  const [changing, setChanging] = useState<string | null>(null)
   const finished = useRef(false)
 
   const byId = new Map(tasks.map((t) => [t.id, t]))
@@ -88,6 +92,28 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const candidates = pickCandidates(tasks, seeds, selection, carried, now)
   const seedIds = new Set(seeds.map((t) => t.id))
   const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
+
+  // Kai 2026-10-03: pick from every open task right here — search, or "Show all" under the
+  // suggestions. Esc clears the search before it closes the sheet; "/" finds it on desktop.
+  const [query, setQuery] = useState('')
+  const [showAll, setShowAll] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const open = searchOpen(tasks, projects, candidates, '')
+  const pool = open.filter((t) => !carried.has(t.id))
+  const found = query.trim() ? searchOpen(tasks, projects, candidates, query) : null
+  const listed = found ?? (showAll ? pool : candidates)
+  useEscapeStack(query !== '', () => setQuery(''))
+  const [changing, setChanging] = useState<string | null>(null)
+  useEffect(() => {
+    if (isMobile || changing) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || (e.target as Element | null)?.closest?.('input, textarea, select, [contenteditable="true"]')) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isMobile, changing])
 
   // Suggested times (ruling 5): every pick gets a slot on today's calendar, 09–18.
   const busy = busyOnDay(events, today)
@@ -100,15 +126,15 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   })
   const slots = suggestTimes(pickIns, busy, draft.chosen, nowMin)
   const workload = planWorkload(busy, pickIns, slots, nowMin)
-  const timed = slots.filter((s) => s.kind === 'accepted' || s.kind === 'booked').length
 
   // Each section finished here logs its step once (the Today card's "2 of 4 done", 6m). Only a
   // change made on this screen counts — a section that was already empty when it opened doesn't.
+  // Suggested times counts once every pick's time is yours (set, "No time", or already booked).
   const flags: Record<(typeof PLAN_STEPS)[number], boolean> = {
     overdue: carry.every((e) => e.choice),
     inbox: inbox.length === 0,
     top3: selection.length >= 3,
-    block: slots.length > 0 && timed === slots.length,
+    block: slots.length > 0 && slots.every((s) => s.kind === 'booked' || !!draft.chosen[s.id]),
   }
   const prevFlags = useRef(flags)
   const loggedHere = useRef(new Set<string>())
@@ -161,13 +187,8 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     const e = carry.find((x) => x.id === t.id)
     if (e && r.picks.includes(t.id) && e.choice !== 'today') choose(e, t, 'today')
   }
-  function setChosen(id: string, c: Chosen | null) {
-    setDraft((d) => {
-      const chosen = { ...d.chosen }
-      if (c) chosen[id] = c
-      else delete chosen[id]
-      return { chosen }
-    })
+  function setChosen(id: string, c: Chosen) {
+    setDraft((d) => ({ chosen: { ...d.chosen, [id]: c } }))
   }
   function addTyped(title: string) {
     const t = createTask({ title, dueAt: scheduleToday() })
@@ -175,16 +196,17 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     if (!r.full) setDraft({ picks: r.picks })
   }
 
-  // "Start the day" (6 intro): the picks become the Top 3 (the first one the goal), the accepted
-  // times go on the calendar, every section counts as walked, and the ritual is finished.
+  // "Start the day" (6 intro): the picks become the Top 3 (the first one the goal), every pick with
+  // a time (suggested or set) goes on the calendar, every section counts as walked, and the ritual
+  // is finished.
   function start(close: () => void) {
     const { unstar, star } = top3Diff(selection, tasks)
     unstar.forEach(toggleTop3)
     star.forEach(toggleTop3)
     setGoal(selection[0] ?? null)
-    for (const s of slots) {
+    for (const s of toPlace(slots)) {
       const t = byId.get(s.id)
-      if (t && s.kind === 'accepted') scheduleTask(t, cairoToIso(today, fromMin(s.start)), cairoToIso(today, fromMin(s.end)))
+      if (t) scheduleTask(t, cairoToIso(today, fromMin(s.start)), cairoToIso(today, fromMin(s.end)))
     }
     for (const step of PLAN_STEPS) if (!stepsToday?.morning.has(step) && !loggedHere.current.has(step)) logRitualStep('morning', step)
     logRitualFinished('morning', [...PLAN_STEPS])
@@ -257,13 +279,38 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
   const picksSection = (
     <>
-      <Section label={`Pick your 3 · ${selection.length}/3`} link={{ label: 'All tasks', onClick: () => navigate('/tasks') }} />
+      <Section label={`Pick your 3 · ${selection.length}/3`} />
+      {open.length > 0 && (
+        <div className="rt-search">
+          {/* No autoFocus: on a phone the keyboard stays down until the field is tapped. */}
+          <input
+            ref={searchRef}
+            type="search"
+            className="rt-input"
+            value={query}
+            placeholder="Search all tasks…"
+            aria-label="Search all tasks"
+            enterKeyHint="search"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      )}
       {clearMorning && (
         <ClearMorning onAdd={addTyped} full={selection.length >= 3} title={candidates.length === 0} />
       )}
-      {candidates.map((t) => (
-        <PlanRow key={t.id} task={t} picked={selection.includes(t.id)} onStar={() => togglePick(t)} projects={projects} domains={domains} meta={pickMeta(t, pickIndex(t.id))} />
+      {listed.map((t) => (
+        // A carried row found by the search is the Carry-over row's twin — its own DOM id.
+        <PlanRow key={t.id} rowId={carried.has(t.id) ? `rt-found-${t.id}` : undefined} task={t} picked={selection.includes(t.id)} onStar={() => togglePick(t)} projects={projects} domains={domains} meta={pickMeta(t, pickIndex(t.id))} />
       ))}
+      {found?.length === 0 && <div className="rt-hint">No open task matches “{query.trim()}”.</div>}
+      {!found && pool.length > candidates.length && (
+        <div className="rt-more">
+          <button type="button" className="rt-link" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
+            {showAll ? 'Show fewer' : `Show all ${pool.length} open tasks`}
+            <Icon name="chevdown" size={16} style={showAll ? { transform: 'rotate(180deg)' } : undefined} />
+          </button>
+        </div>
+      )}
     </>
   )
 
@@ -280,11 +327,11 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             <span>Your calendar is full from {fromMin(Math.max(DAY_FROM, Math.ceil(nowMin / 15) * 15))} to 18:00.</span>
           </div>
         )}
+        {toPlace(slots).length > 0 && <div className="rt-hint">Times are suggestions — tap one to change it. Start the day puts them on your calendar.</div>}
         <Timeline busy={busy} slots={slots} changing={changing} />
-        {slots.map((s) => {
-          const t = byId.get(s.id)!
-          return <TimeRow key={s.id} task={t} slot={s} changing={changing === s.id} onChange={() => setChanging(s.id)} onAccept={() => setChosen(s.id, s.kind === 'accepted' ? null : { at: s.start, dur: s.end - s.start })} />
-        })}
+        {slots.map((s) => (
+          <TimeRow key={s.id} task={byId.get(s.id)!} slot={s} changing={changing === s.id} onChange={() => setChanging(s.id)} />
+        ))}
       </>
     )
 
@@ -315,7 +362,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         footer={(close) => (
           <RitualFoot
             workload={<WorkloadLine text={workload.text} over={workload.over ? `${span(workload.over)} over` : undefined} />}
-            status={planStatus(carry, selection.length, timed)}
+            status={planStatus(carry, slots)}
             cta={
               <Button type="button" onClick={() => start(close)}>
                 Start the day
@@ -342,8 +389,9 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
 /** A kit task row in the plan: [check][title + meta][star][⋯], the row grammar (swipe right =
  * Tomorrow, left = Drop/Delete, ⋯), and the star = this plan's pick (ruling 3–4). */
-function PlanRow({ task, picked, onStar, meta, below, projects, domains, actions }: {
+function PlanRow({ task, rowId, picked, onStar, meta, below, projects, domains, actions }: {
   task: Task
+  rowId?: string
   picked: boolean
   onStar: () => void
   meta: ReactNode[]
@@ -366,7 +414,7 @@ function PlanRow({ task, picked, onStar, meta, below, projects, domains, actions
           <RowMenuButton title={task.title} onOpen={g.openMenu} />
         </>
       }
-      swipe={{ ...g.swipeProps, overlay: g.menuNode, onContextMenu: g.onContextMenu }}
+      swipe={{ ...g.swipeProps, overlay: g.menuNode, onContextMenu: g.onContextMenu, ...(rowId && { id: rowId }) }}
     />
   )
 }
@@ -442,7 +490,7 @@ function ClearMorning({ onAdd, full, title }: { onAdd: (title: string) => void; 
 }
 
 /** The 09–18 mini timeline + legend (ruling 5): calendar = lavender, suggested = dashed sage,
- * accepted = sage fill, being changed = focus ring. */
+ * set by you = sage fill, being changed = focus ring. */
 function Timeline({ busy, slots, changing }: { busy: { start: number; end: number }[]; slots: Slot[]; changing: string | null }) {
   const x = (m: number) => `${((Math.min(DAY_TO, Math.max(DAY_FROM, m)) - DAY_FROM) / (DAY_TO - DAY_FROM)) * 100}%`
   const w = (a: number, b: number) => `${((Math.min(DAY_TO, b) - Math.max(DAY_FROM, a)) / (DAY_TO - DAY_FROM)) * 100}%`
@@ -468,7 +516,7 @@ function Timeline({ busy, slots, changing }: { busy: { start: number; end: numbe
         ))}
       </div>
       <div className="rt-legend">
-        {[['event', 'Calendar'], ['suggested', 'Suggested'], ['accepted', 'Accepted']].map(([k, label]) => (
+        {[['event', 'Calendar'], ['suggested', 'Suggested'], ['accepted', 'Set by you']].map(([k, label]) => (
           <span key={k}>
             <span className={`rt-sw rt-k-${k}`} />
             {label}
@@ -479,9 +527,10 @@ function Timeline({ busy, slots, changing }: { busy: { start: number; end: numbe
   )
 }
 
-/** A suggested-time row: the time pill (tap = the Time Picker) and the ✓ (the NOW slip's 40px Done
- * circle, filled once accepted). No free slot, or "No time" → a secondary "Pick one". */
-function TimeRow({ task, slot, changing, onChange, onAccept }: { task: Task; slot: Slot; changing: boolean; onChange: () => void; onAccept: () => void }) {
+/** A suggested-time row: one time pill (tap = the Time Picker) — dashed while it's our suggestion,
+ * solid once it's yours (Kai 2026-10-03: the ✓ beside it confused; there's nothing to accept, Start
+ * the day places it). No free slot, or "No time" → a secondary "Pick one". */
+function TimeRow({ task, slot, changing, onChange }: { task: Task; slot: Slot; changing: boolean; onChange: () => void }) {
   const dur = slot.end - slot.start
   const loose = slot.kind === 'noslot' || slot.kind === 'untimed'
   const meta = [
@@ -493,7 +542,7 @@ function TimeRow({ task, slot, changing, onChange, onAccept }: { task: Task; slo
     slot.kind === 'noslot' && <Meta key="n" tone="var(--sig-amber)">No free slot</Meta>,
     slot.kind === 'untimed' && <Meta key="u">No time</Meta>,
   ].filter(Boolean)
-  const accepted = slot.kind === 'accepted' || slot.kind === 'booked'
+  const mine = slot.kind === 'accepted' || slot.kind === 'booked'
   return (
     <div className="rt-trow" id={`rt-time-${task.id}`}>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -505,16 +554,14 @@ function TimeRow({ task, slot, changing, onChange, onAccept }: { task: Task; slo
           Pick one
         </Button>
       ) : (
-        <>
-          <button type="button" className={`rt-pill${changing ? ' is-changing' : accepted ? ' rt-k-accepted is-accepted' : ''}`} onClick={onChange} aria-label={`Change the time of "${task.title}"`}>
-            {fromMin(slot.start)}–{fromMin(slot.end)}
-          </button>
-          <button type="button" className="rt-ok" aria-pressed={accepted} aria-label={`${accepted ? 'Accepted' : 'Accept'}: ${task.title}`} disabled={slot.kind === 'booked'} onClick={onAccept}>
-            <span>
-              <Icon name="check" size={20} strokeWidth={accepted ? 2.2 : 2} />
-            </span>
-          </button>
-        </>
+        <button
+          type="button"
+          className={`rt-pill${changing ? ' is-changing' : mine ? ' rt-k-accepted is-set' : ' is-suggested'}`}
+          onClick={onChange}
+          aria-label={`${mine ? 'Time' : 'Suggested time'} for "${task.title}": ${fromMin(slot.start)}–${fromMin(slot.end)}. Change it`}
+        >
+          {fromMin(slot.start)}–{fromMin(slot.end)}
+        </button>
       )}
     </div>
   )
