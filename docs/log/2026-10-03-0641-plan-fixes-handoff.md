@@ -112,5 +112,5 @@ Unchanged write paths:
 - **A booked pick's pill is solid.** Tapping it opens the picker, but a new time doesn't move the existing block. This is pre-existing behaviour (`suggestTimes` keeps booked first).
 - **Desktop Day card copy unchanged:** "Plan your day · ~5 min" / "Begin".
 - **Not checked on hardware:** the soft keyboard over the full-height sheet while searching.
-- **This worktree's `app/node_modules` was installed for the gate.** Delete it, or the worktree, when done.
+- **This worktree's `app/node_modules` was installed for the gate and deleted afterwards** to save disk. Run `npm ci` (about 15s) before re-running anything here.
 - No `docs/ROADMAP.md` or `docs/log/INDEX.md` edits.
