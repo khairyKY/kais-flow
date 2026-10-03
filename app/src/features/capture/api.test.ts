@@ -7,19 +7,30 @@ const push = vi.fn()
 const writeRow = vi.fn()
 const createTask = vi.fn()
 
+// The server-side claim processQueuedCaptures makes: from().update().eq().eq().select() → claimRows.
+const claimCalls: unknown[][] = []
+let claimRows: { id: string }[] = []
+const claim = {
+  update: (...a: unknown[]) => (claimCalls.push(['update', ...a]), claim),
+  eq: (...a: unknown[]) => (claimCalls.push(['eq', ...a]), claim),
+  select: async () => ({ data: claimRows, error: null }),
+}
+let cachedInbox: unknown[] = []
+
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { access_token: 'user-token' } } }) },
     functions: { invoke: (...args: unknown[]) => invoke(...args) },
+    from: (table: string) => (claimCalls.push(['from', table]), claim),
   },
 }))
-vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => [] } }))
+vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'inbox_items' ? cachedInbox : []) } }))
 vi.mock('../../lib/outbox', () => ({ writeRow: (...args: unknown[]) => writeRow(...args) }))
 vi.mock('../../lib/activity', () => ({ logActivity: vi.fn() }))
 vi.mock('../../lib/toastStore', () => ({ useToastStore: { getState: () => ({ push }) } }))
 vi.mock('../tasks/api', () => ({ createTask: (...args: unknown[]) => createTask(...args) }))
 
-const { captureWithAI, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
+const { captureWithAI, processQueuedCaptures, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
 const { AI_ALLOWANCE_USED_UP, DailyLimitError, INBOX_WITHOUT_AI } = await import('./aiAllowance')
 
 const json = (status: number, body: unknown) =>
@@ -31,6 +42,9 @@ beforeEach(() => {
   push.mockReset()
   writeRow.mockReset()
   createTask.mockReset()
+  claimCalls.length = 0
+  claimRows = []
+  cachedInbox = []
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -126,5 +140,40 @@ describe('saveUntranscribedVoiceNote (Polish E: never lose a recording)', () => 
     expect(Object.keys(item).sort()).toEqual(
       ['id', 'kind', 'raw_text', 'transcript', 'ai_parse', 'confidence', 'status', 'filed_task_id', 'payload', 'snoozed_until', 'created_at', 'updated_at'].sort(),
     )
+  })
+})
+
+// ?file=1 on the capture endpoint (supabase/functions/capture) queues the item with needs_parse.
+describe('processQueuedCaptures with an endpoint capture', () => {
+  const item = {
+    id: 'i1', kind: 'text', raw_text: 'dentist friday 3pm', transcript: null, ai_parse: null, confidence: null, status: 'pending',
+    filed_task_id: null, payload: { source: 'capture', needs_parse: true }, snoozed_until: null,
+    created_at: '2026-10-01T20:00:00.000Z', updated_at: '2026-10-01T20:00:00.000Z',
+  }
+  const parse = { kind: 'task', cleaned_text: 'dentist friday 3pm', title: 'Dentist', due_at: '2026-10-02T12:00:00.000Z', confidence: 0.9 }
+
+  it('claims it on the server, parses it as of when it was sent and files the task', async () => {
+    cachedInbox = [item]
+    claimRows = [{ id: 'i1' }]
+    invoke.mockResolvedValue({ data: parse, error: null })
+    createTask.mockReturnValue({ id: 't1', title: 'Dentist' })
+
+    await processQueuedCaptures()
+
+    expect(claimCalls).toEqual([['from', 'inbox_items'], ['update', { payload: { source: 'capture' } }], ['eq', 'id', 'i1'], ['eq', 'payload->>needs_parse', 'true']])
+    expect((invoke.mock.calls[0][1] as { body: { context: { today: string } } }).body.context.today).toBe(item.created_at)
+    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dentist', dueAt: parse.due_at }))
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i1', status: 'filed', filed_task_id: 't1', payload: { source: 'capture' } }))
+  })
+
+  it('leaves it alone when another device claimed it first', async () => {
+    cachedInbox = [item]
+    claimRows = []
+
+    await processQueuedCaptures()
+
+    expect(invoke).not.toHaveBeenCalled()
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).not.toHaveBeenCalled()
   })
 })
