@@ -52,6 +52,11 @@ export async function deleteCaptureKey(id: string): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ['capture_keys'] })
 }
 
+/** The copy-paste curl line (Settings' how-to, docs/CAPTURE.md). The key rides in the header, never the address. */
+export function curlRecipe(key = '<your key>'): string {
+  return `curl -X POST ${CAPTURE_URL} -H "Authorization: Bearer ${key}" -H "Content-Type: application/json" -d '{"text": "call the tyre supplier"}'`
+}
+
 /** A bookmarklet that sends the current page (selection, else title + URL) to the Inbox. */
 // ponytail: `key` is spliced into a JS string unescaped — safe only because newCaptureKey()'s
 // base64url alphabet has no quote or backslash. Escape it if keys ever come from elsewhere.

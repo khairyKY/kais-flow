@@ -15,7 +15,8 @@ import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
 import { Select } from '../../components/Select'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, type IntegrationStatus } from './api'
-import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, CAPTURE_URL } from './captureKey'
+import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
+import { useToastStore } from '../../lib/toastStore'
 import { Button } from '../../components/kit'
 import { useDeletedItems } from '../trash/api'
 
@@ -606,25 +607,6 @@ function ResurfacingCard() {
   )
 }
 
-// Punch 54: hidden from the page until the endpoint is real (v1.1); exported so it compiles.
-export function CaptureApiCard() {
-  return (
-    <SCard>
-      <div style={{ ...flabel, marginBottom: 12 }}>Capture API · external capture</div>
-      <p style={{ margin: '0 0 12px', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
-        Post text or voice into the same pipeline from anywhere — Tasker, a share-sheet, a bookmarklet.
-      </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</span>
-      </div>
-      <div style={{ marginTop: 10, background: 'color-mix(in oklch, var(--ink-body) 5%, transparent)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', lineHeight: 1.7, color: 'var(--ink-muted)' }}>
-        POST /capture · body: {'{"text": "send the quote tomorrow 3pm"}'}
-        <br />→ parsed, filed, or held in Inbox — same as ⌘K
-      </div>
-    </SCard>
-  )
-}
-
 // P-IMPORT entry card — Settings.dc.html 2a Integrations-card language.
 function ImportCard() {
   return (
@@ -717,8 +699,14 @@ function CaptureKeyCard() {
     setErr(null)
     try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
   }
+  const copy = (text: string, what: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: `${what} copied` }),
+      () => setErr('Couldn’t reach the clipboard — select the text and copy it by hand.'),
+    )
   const mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.6, color: 'var(--ink-muted)', wordBreak: 'break-all' }
   const box: CSSProperties = { marginTop: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '9px 12px' }
+  const how: CSSProperties = { margin: '8px 0 0', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }
   return (
     <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>External capture endpoint</div>
@@ -733,13 +721,8 @@ function CaptureKeyCard() {
           <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-body)' }}>Your capture key — copy it now, it won’t be shown again:</div>
           <div style={{ ...box, ...mono, color: 'var(--ink-body)' }}>{shown}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(shown)}>Copy key</Button>
-            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(bookmarklet(shown))}>Copy bookmarklet</Button>
-          </div>
-          <div style={{ ...box, ...mono }}>
-            POST {CAPTURE_URL}
-            <br />Authorization: Bearer {'<key>'}
-            <br />{'{"text": "call the supplier", "url": "https://…"}'}
+            <Button variant="secondary" onClick={() => copy(shown, 'Key')}>Copy key</Button>
+            <Button variant="secondary" onClick={() => copy(bookmarklet(shown), 'Bookmarklet')}>Copy bookmarklet</Button>
           </div>
           <div style={fhelp}>bookmarklet: make a new bookmark and paste it as the address · it sends the selected text, or the page</div>
         </>
@@ -756,6 +739,25 @@ function CaptureKeyCard() {
       </div>
       {err && <div style={{ ...fhelp, color: 'var(--acc-terra)' }}>{err}</div>}
       <div style={fhelp}>anything POSTed here lands in your inbox · a new key stops the old one</div>
+      {/* The short version of docs/CAPTURE.md. The key only ever goes in the header. */}
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', cursor: 'pointer', minHeight: 24 }}>How to send things here</summary>
+        <div style={{ ...box, ...mono }}>
+          POST {CAPTURE_URL}
+          <br />Authorization: Bearer {'<your key>'}
+          <br />Content-Type: application/json
+          <br />{'{"text": "call the supplier", "url": "https://…"}'}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <Button variant="secondary" onClick={() => copy(CAPTURE_URL, 'Address')}>Copy address</Button>
+        </div>
+        <p style={how}><b>Android share sheet</b> — nothing to set up: share text or a link to Kai’s Flow from any app.</p>
+        <p style={how}><b>iPhone · Shortcuts</b> — new shortcut, show it in the Share Sheet (no input: Ask for Text) → Get Contents of URL: the address, Method POST, Headers Authorization = Bearer + your key, Request Body JSON with text = Shortcut Input.</p>
+        <p style={how}><b>Android · HTTP Shortcuts or Tasker</b> — a POST to the address with the same header, content type application/json and the body above.</p>
+        <p style={how}><b>Computer</b> — the bookmarklet (Copy bookmarklet, right after making a key), or curl:</p>
+        <div style={{ ...box, ...mono, marginTop: 6 }}>{curlRecipe()}</div>
+        <p style={how}><b>Let the AI file it</b> — add <span style={{ fontFamily: 'var(--font-mono)' }}>?file=1</span> to the address: a line like “dentist friday 3pm” becomes a task with its date when the app next opens (uses today’s AI allowance).</p>
+      </details>
     </SCard>
   )
 }
@@ -1101,6 +1103,7 @@ function MobileSettings() {
   const { data: settings } = useAppSettings()
   const { data: subs = [] } = useMyPushSubscriptions()
   const { data: deletedItems = [] } = useDeletedItems()
+  const { data: captureKey } = useCaptureKey()
   const github = integrations.find((i) => i.provider === 'github')
   const google = integrations.find((i) => i.provider === 'google')
   const { mode, setMode } = useThemeMode()
@@ -1115,7 +1118,7 @@ function MobileSettings() {
     { label: 'Google Calendar', value: google ? <><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc-sage)', display: 'inline-block' }} /> Connected</> : 'Not connected' },
     { label: 'GitHub', value: github ? (github.status === 'failing' ? 'Token expired' : 'Connected') : 'Not connected' },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
-    { label: 'Capture API', value: 'not set up' },
+    { label: 'Capture API', value: captureKey ? 'On' : 'Not set up' },
     // Punch 50: the phone's only way into Trash.
     { label: 'Trash', value: `${deletedItems.length} resting`, to: '/trash' },
   ]
@@ -1171,6 +1174,11 @@ function MobileSettings() {
       {/* P6: the phone has no Integrations page, so the GitHub row (connect / sync) sits here. */}
       <div style={{ marginTop: 12 }}>
         <GithubProvider github={github} />
+      </div>
+
+      {/* The capture key and its how-to: the same card as the desktop's Integrations page. */}
+      <div style={{ marginTop: 12 }}>
+        <CaptureKeyCard />
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>
