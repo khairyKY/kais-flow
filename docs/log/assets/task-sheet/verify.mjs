@@ -226,7 +226,7 @@ for (const theme of ['day', 'night']) {
     const x = await sheetOf(page).getByRole('button', { name: 'Close' }).boundingBox()
     check(`${name} ✕ sits in the 48px handle row`, x && x.y - box.y < 48 && x.height === 48, JSON.stringify(x))
     check(`${name} subtasks 1/3`, (await text(sheetOf(page).locator('.ts-sec'))) === 'SUBTASKS · 1/3')
-    check(`${name} block card: On your calendar · Sun 27 · 15:00–15:30 · 30m`, (await text(sheetOf(page).locator('.ts-block'))).replace(/\n/g, ' ') === 'On your calendar SUN 27 · 15:00–15:30 · 30M', await text(sheetOf(page).locator('.ts-block')))
+    check(`${name} block card: On your calendar · Sun 27 · 15:00–15:30 · 30m · Change time · Unschedule`, (await text(sheetOf(page).locator('.ts-block'))).replace(/\n/g, ' ') === 'On your calendar SUN 27 · 15:00–15:30 · 30M Change time Unschedule', await text(sheetOf(page).locator('.ts-block')))
     check(`${name} Focus pill`, (await sheetOf(page).getByRole('button', { name: 'Focus · 25:00' }).count()) === 1)
     await sheetOf(page).locator('.ts-focus').scrollIntoViewIfNeeded()
     await shot(page, name)
@@ -571,15 +571,13 @@ for (const theme of ['day', 'night']) {
   {
     const name = 'from-calendar'
     const { ctx, page, cdp, errors } = await open('/calendar')
-    // v1.0.13: the phone calendar is PhoneCalendar (7d): a block opens its block sheet → "Open the task".
+    // Kai 2026-10-03: a task block on the phone calendar opens as its task — the sheet at once, no block sheet first.
     const block = page.locator('.pc-block', { hasText: 'Call the tyre supplier' }).first()
     await block.scrollIntoViewIfNeeded().catch(() => {})
     await tap(cdp, block.locator('.pc-name'))
-    await sleep(300)
-    await tap(cdp, page.locator('[role="dialog"]').last().locator('.kf-as-row', { hasText: 'Open the task' }))
     await sleep(500)
     await shot(page, name)
-    check(`${name} a block → Open the task → the sheet over the calendar`, (await sheetOf(page).count()) === 1 && new URL(page.url()).pathname === '/calendar' && param(page) === id(TYRE), page.url())
+    check(`${name} a task block → the sheet over the calendar, in one tap`, (await sheetOf(page).count()) === 1 && (await page.locator('[role="dialog"]').count()) === 1 && new URL(page.url()).pathname === '/calendar' && param(page) === id(TYRE), page.url())
     await sheetBasics(page, name, errors)
     await ctx.close()
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { allDayOn, bubbleText, dayBlocks, dragSpan, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel } from './phoneGridMath'
+import { allDayOn, bubbleText, dayBlocks, dragSpan, edgeScrollSpeed, EDGE_MAX_SPEED, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel } from './phoneGridMath'
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).
@@ -93,6 +93,25 @@ describe('day swipe: 40% or a fling commits', () => {
     expect(swipeStep(-40, -0.8, 326)).toBe(1)
     expect(swipeStep(40, 0.8, 326)).toBe(-1)
     expect(swipeStep(40, -0.8, 326)).toBe(0)
+  })
+})
+
+describe('auto-scroll while dragging a lifted block', () => {
+  // The grid's scroll area: 200 → 776 on screen.
+  it('nothing outside the 48px edge zones', () => {
+    expect(edgeScrollSpeed(400, 200, 776)).toBe(0)
+    expect(edgeScrollSpeed(248, 200, 776)).toBe(0)
+    expect(edgeScrollSpeed(728, 200, 776)).toBe(0)
+  })
+  it('deeper into a zone is faster: up near the top, down near the bottom', () => {
+    expect(edgeScrollSpeed(752, 200, 776)).toBeCloseTo(EDGE_MAX_SPEED / 2)
+    expect(edgeScrollSpeed(764, 200, 776)).toBeCloseTo((EDGE_MAX_SPEED * 3) / 4)
+    expect(edgeScrollSpeed(224, 200, 776)).toBeCloseTo(-EDGE_MAX_SPEED / 2)
+  })
+  it('capped: at the edge or past it (a finger on the tab bar) is full speed', () => {
+    expect(edgeScrollSpeed(776, 200, 776)).toBe(EDGE_MAX_SPEED)
+    expect(edgeScrollSpeed(840, 200, 776)).toBe(EDGE_MAX_SPEED)
+    expect(edgeScrollSpeed(120, 200, 776)).toBe(-EDGE_MAX_SPEED)
   })
 })
 

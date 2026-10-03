@@ -4,22 +4,54 @@ import { Button, Chip, SectionLabel } from '../../components/kit'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useTasks, setRecurrence, deleteTask, restoreTask } from '../tasks/api'
 import { toastUndo } from '../../lib/undo'
-import type { ImportBatch } from './adapters/shared'
+import { type ImportBatch, mergeBatches } from './adapters/shared'
 import { parseAkiflow } from './adapters/akiflow'
 import { parseCsv, csvToBatch, guessMapping, CSV_TARGETS, type CsvMapping } from './adapters/csv'
-import { fetchAllExistingRefs, commitBatch, type ExistingRefs, type ImportSummary } from './api'
+import { parseTodoist } from './adapters/todoist'
+import { parseTickTick } from './adapters/ticktick'
+import { parseMarkdown, type MarkdownOptions } from './adapters/markdown'
+import { parseKindle } from './adapters/kindle'
+import { parseGoodreads } from './adapters/goodreads'
+import {
+  fetchAllExistingRefs, commitBatch, planCommit, undoImport, refKey, KINDS,
+  type ExistingRefs, type ImportSummary, type Kind, type Counts,
+} from './api'
 import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 
-// P-IMPORT tier-0 wizard: source → file → (csv mapping) → preview → import → summary.
+// P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'kindle' | 'goodreads' | 'csv'
+// One line each: what to drop, and where the source's own menus hide the export.
+const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
+  akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
+  todoist: { label: 'Todoist', accept: '.csv', multiple: true, how: 'Todoist: open a project → ⋯ → Export as a template → Download CSV · one file per project, several at once is fine', match: 'todoist csvs carry no ids — a re-import matches tasks by file + section + title' },
+  ticktick: { label: 'TickTick', accept: '.csv', how: 'TickTick (web): Settings → Account → Backup & Restore → Generate backup — the .csv it downloads' },
+  notion: { label: 'Notion', accept: '.csv', how: 'Notion: open the database → ⋯ → Export → Markdown & CSV, unzip, pick the .csv · you check the columns next', match: 'notion csvs carry no page ids — duplicates are matched by a hash of title + due + project' },
+  markdown: { label: 'Obsidian / Markdown', accept: '.md,.markdown', multiple: true, how: 'Obsidian needs no export — pick .md files, or the whole vault folder below · "- [ ]" lines become tasks', match: 'matched by file + task text — a changed date or tag re-imports as the same task' },
+  kindle: { label: 'Kindle highlights', accept: '.txt', how: 'Kindle: plug it in by USB, open the Kindle drive → documents → My Clippings.txt', match: 'books match by title — one already in your Library is reused, highlights already there are skipped' },
+  goodreads: { label: 'Goodreads books', accept: '.csv', how: 'Goodreads: My Books → Import and export (left column, under Tools) → Export Library, then download the .csv', match: 'books match by title — one already in your Library is left as it is · reviews come in as notes on the book' },
+  csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
+}
+
 type Step =
   | { name: 'pick' }
-  | { name: 'mapping'; rows: string[][]; fileName: string; mapping: CsvMapping }
+  | { name: 'reading' }
+  | { name: 'mapping'; source: 'csv' | 'notion'; rows: string[][]; fileName: string; mapping: CsvMapping }
   | { name: 'preview'; batch: ImportBatch; existing: ExistingRefs }
-  | { name: 'importing'; done: number; total: number }
-  | { name: 'summary'; summary: ImportSummary }
+  | { name: 'importing'; done: number; total: number; undoing?: boolean }
+  | { name: 'summary'; summary: ImportSummary; undone?: boolean }
+
+const NOUN: Record<Kind, [string, string]> = {
+  projects: ['project', 'projects'], tasks: ['task', 'tasks'], events: ['event', 'events'], books: ['book', 'books'],
+  quotes: ['highlight', 'highlights'], notes: ['note', 'notes'], inbox: ['inbox note', 'inbox notes'],
+}
+const TONE = { projects: 'sage', tasks: 'tasks', events: 'hydrangea', books: 'gold', quotes: 'lavender', notes: 'clover', inbox: 'inbox' } as const
+const count = (k: Kind, n: number) => `${n} ${NOUN[k][n === 1 ? 0 : 1]}`
+/** "12 tasks · 2 projects" — non-zero kinds only. */
+function describe(c: Counts) {
+  return KINDS.filter((k) => c[k] > 0).map((k) => count(k, c[k])).join(' · ')
+}
 
 const card: React.CSSProperties = {
   background: 'var(--paper-parchment)', border: '1px solid var(--line-card)',
@@ -125,43 +157,96 @@ export function ImportPage() {
   const [trouble, setTrouble] = useState<string | null>(null)
   const [includeCompleted, setIncludeCompleted] = useState(false)
   const [includeEvents, setIncludeEvents] = useState(false)
+  const [includeToRead, setIncludeToRead] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const folderRef = useRef<HTMLInputElement>(null)
+  const [md, setMd] = useState<MarkdownOptions>({ projectFrom: 'none', paragraphsToInbox: false })
+  const opts = { includeCompleted, includeEvents, includeToRead }
+  const src = SOURCES[source]
 
   async function toPreview(batch: ImportBatch) {
     try {
       const existing = await fetchAllExistingRefs()
       setStep({ name: 'preview', batch, existing })
     } catch {
+      setStep({ name: 'pick' })
       setTrouble("Couldn't check for already-imported rows — check the connection and try again.")
     }
   }
 
-  async function handleFile(file: File) {
-    setTrouble(null)
-    const text = await file.text()
-    if (source === 'akiflow') {
-      try {
-        await toPreview(parseAkiflow(JSON.parse(text)))
-      } catch {
-        setTrouble("This file didn't read as an Akiflow dump — it should be the akiflow-dump.json from the PROMPT-BANK prompt.")
+  /** The chosen source's adapter over the picked file(s); null = handed off to the mapping step. */
+  async function parse(files: File[]): Promise<ImportBatch | null> {
+    const first = files[0]
+    switch (source) {
+      case 'akiflow':
+        return parseAkiflow(JSON.parse(await first.text()))
+      case 'markdown': {
+        // A picked vault folder brings everything — keep the notes, skip Obsidian's own config/trash.
+        const notes = files.filter((f) => /\.(md|markdown)$/i.test(f.name) && !/(^|\/)\.(obsidian|trash)\//.test(f.webkitRelativePath))
+        if (!notes.length) throw new Error('no .md files')
+        return parseMarkdown(await Promise.all(notes.map(async (f) => ({ path: f.webkitRelativePath || f.name, text: await f.text() }))), md)
       }
-    } else {
-      const rows = parseCsv(text)
-      if (rows.length < 2) {
-        setTrouble('This file looks empty — a header row plus at least one task row is needed.')
-        return
+      case 'kindle':
+        return parseKindle(await first.text())
+      case 'goodreads':
+        return parseGoodreads(await first.text())
+      case 'ticktick':
+        return parseTickTick(await first.text())
+      case 'todoist':
+        return mergeBatches(await Promise.all(files.map(async (f) => parseTodoist(await f.text(), f.name))))
+      case 'notion':
+      case 'csv': {
+        const rows = parseCsv(await first.text())
+        if (rows.length < 2) throw new Error('a header row plus at least one row is needed')
+        setStep({ name: 'mapping', source, rows, fileName: first.name, mapping: recallMapping(first.name) ?? guessMapping(rows[0]) })
+        return null
       }
-      setStep({ name: 'mapping', rows, fileName: file.name, mapping: recallMapping(file.name) ?? guessMapping(rows[0]) })
     }
+  }
+
+  async function handleFiles(list: File[]) {
+    setTrouble(null)
+    const files = src.multiple ? list : list.slice(0, 1)
+    if (!files.length) return
+    setStep({ name: 'reading' })
+    let batch: ImportBatch | null
+    try {
+      batch = await parse(files)
+    } catch {
+      setStep({ name: 'pick' })
+      setTrouble(`Couldn't read that as ${src.label} — ${src.how}.`)
+      return
+    }
+    if (batch) await toPreview(batch)
   }
 
   async function runImport(batch: ImportBatch, existing: ExistingRefs) {
     setStep({ name: 'importing', done: 0, total: 0 })
-    const summary = await commitBatch(batch, existing, { includeCompleted, includeEvents }, (done, total) =>
-      setStep({ name: 'importing', done, total }),
-    )
+    const summary = await commitBatch(batch, existing, opts, (done, total) => setStep({ name: 'importing', done, total }))
     setStep({ name: 'summary', summary })
   }
+
+  async function runUndo(summary: ImportSummary) {
+    setStep({ name: 'importing', done: 0, total: 0, undoing: true })
+    await undoImport(summary, (done, total) => setStep({ name: 'importing', done, total, undoing: true }))
+    setStep({ name: 'summary', summary, undone: true })
+  }
+
+  function reset() {
+    setStep({ name: 'pick' })
+    setIncludeCompleted(false)
+    setIncludeEvents(false)
+    setIncludeToRead(false)
+  }
+
+  const toggle = (checked: boolean, set: (v: boolean) => void, label: string) => (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 8, fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>
+      <input type="checkbox" checked={checked} onChange={(e) => set(e.target.checked)} />
+      {label}
+    </label>
+  )
+  const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }
+  const rowTitle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 
   return (
     <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '30px 36px 44px' }}>
@@ -176,8 +261,8 @@ export function ImportPage() {
         {step.name === 'pick' && (
           <div style={card}>
             <SectionLabel style={{ marginBottom: 14 }}>Source</SectionLabel>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
-              {([['akiflow', 'Akiflow JSON'], ['csv', 'Generic CSV']] as const).map(([v, label]) => (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+              {(Object.keys(SOURCES) as Source[]).map((v) => (
                 <button
                   key={v}
                   type="button"
@@ -190,7 +275,7 @@ export function ImportPage() {
                     fontWeight: source === v ? 600 : 400,
                   }}
                 >
-                  {label}
+                  {SOURCES[v].label}
                 </button>
               ))}
             </div>
@@ -198,8 +283,7 @@ export function ImportPage() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault()
-                const f = e.dataTransfer.files[0]
-                if (f) void handleFile(f)
+                void handleFiles(Array.from(e.dataTransfer.files))
               }}
               onClick={() => fileRef.current?.click()}
               style={{
@@ -207,23 +291,63 @@ export function ImportPage() {
                 textAlign: 'center', cursor: 'pointer', background: 'var(--paper-bone)',
               }}
             >
-              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Drop the file here, or click to pick it</div>
-              <div style={{ ...help, marginTop: 8 }}>
-                {source === 'akiflow' ? 'akiflow-dump.json · from the prompt-bank dump prompt' : 'a .csv with a header row · you map the columns next'}
-              </div>
+              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Drop the file{src.multiple ? 's' : ''} here, or click to pick</div>
+              <div style={{ ...help, marginTop: 8, textTransform: 'none', letterSpacing: '0.04em', lineHeight: 1.5 }}>{src.how}</div>
               <input
                 ref={fileRef}
                 type="file"
-                accept={source === 'akiflow' ? '.json' : '.csv'}
+                data-testid="import-file"
+                accept={src.accept}
+                multiple={!!src.multiple}
                 style={{ display: 'none' }}
                 onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) void handleFile(f)
+                  void handleFiles(Array.from(e.target.files ?? []))
                   e.target.value = ''
                 }}
               />
             </div>
+            {source === 'markdown' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--ink-body)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
+                  Projects from
+                  <select
+                    value={md.projectFrom}
+                    onChange={(e) => setMd({ ...md, projectFrom: e.target.value as MarkdownOptions['projectFrom'] })}
+                    style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '6px 10px', fontSize: 12.5, color: 'var(--ink-body)', font: 'inherit' }}
+                  >
+                    <option value="none">nowhere — tasks land loose</option>
+                    <option value="heading">the heading above each task</option>
+                    <option value="file">each file's name</option>
+                  </select>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={md.paragraphsToInbox} onChange={(e) => setMd({ ...md, paragraphsToInbox: e.target.checked })} />
+                  Also bring plain paragraphs in, as Inbox notes
+                </label>
+                <div>
+                  <Button variant="secondary" onClick={() => folderRef.current?.click()}>Pick a vault folder…</Button>
+                  <input
+                    ref={(el) => { folderRef.current = el; el?.setAttribute('webkitdirectory', '') }}
+                    type="file"
+                    data-testid="import-folder"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      void handleFiles(Array.from(e.target.files ?? []))
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             {trouble && <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--acc-terra)' }}>{trouble}</p>}
+          </div>
+        )}
+
+        {step.name === 'reading' && (
+          <div style={card}>
+            <SectionLabel style={{ marginBottom: 8 }}>Reading</SectionLabel>
+            <div style={help}>sorting the seeds…</div>
           </div>
         )}
 
@@ -260,7 +384,8 @@ export function ImportPage() {
                 style={Object.values(step.mapping).includes('title') ? undefined : { opacity: 0.5, cursor: 'default' }}
                 onClick={() => {
                   rememberMapping(step.fileName, step.mapping)
-                  void toPreview(csvToBatch(step.rows, step.mapping))
+                  setStep({ name: 'reading' })
+                  void csvToBatch(step.rows, step.mapping, step.source).then(toPreview)
                 }}
               >
                 Continue to preview
@@ -272,53 +397,61 @@ export function ImportPage() {
 
         {step.name === 'preview' && (() => {
           const { batch, existing } = step
-          const dupTasks = batch.tasks.filter((t) => existing.tasks.has(`${t.external_ref.source} ${t.external_ref.id}`)).length
-          const dupProjects = batch.projects.filter((p) => existing.projects.has(`${p.external_ref.source} ${p.external_ref.id}`)).length
+          const plan = planCommit(batch, existing, opts)
+          const writes = Object.fromEntries(KINDS.map((k) => [k, plan.rows[k].length])) as Counts
+          const total = KINDS.reduce((n, k) => n + writes[k], 0)
           const completedCount = batch.tasks.filter((t) => t.done).length
-          const willImport =
-            batch.tasks.length - dupTasks - (includeCompleted ? 0 : batch.tasks.filter((t) => t.done && !existing.tasks.has(`${t.external_ref.source} ${t.external_ref.id}`)).length)
+          const toReadCount = batch.books.filter((b) => b.shelf === 'to-read').length
+          const quotesOf = (title: string) => batch.quotes.filter((q) => q.book === title).length
           return (
             <div style={card}>
               <SectionLabel style={{ marginBottom: 14 }}>Preview</SectionLabel>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-                <Chip tone="sage">{batch.projects.length} projects{dupProjects ? ` · ${dupProjects} already here` : ''}</Chip>
-                <Chip tone="tasks">{batch.tasks.length} tasks{dupTasks ? ` · ${dupTasks} already here` : ''}</Chip>
-                {batch.events.length > 0 && <Chip tone="hydrangea">{batch.events.length} events</Chip>}
+              <div data-testid="import-counts" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                {KINDS.filter((k) => batch[k].length > 0).map((k) => (
+                  <Chip key={k} tone={TONE[k]}>{count(k, batch[k].length)}{plan.skipped[k] ? ` · ${plan.skipped[k]} already here` : ''}</Chip>
+                ))}
                 {completedCount > 0 && <Chip>{completedCount} completed</Chip>}
               </div>
-              {batch.source === 'csv' && (
-                <div style={{ ...help, marginBottom: 10 }}>csv rows have no ids — duplicates are matched by a hash of title + due + project</div>
-              )}
+              {SOURCES[batch.source as Source]?.match && <div style={{ ...help, marginBottom: 10 }}>{SOURCES[batch.source as Source].match}</div>}
               <div style={{ borderTop: '1px dashed var(--line-dashed)', marginTop: 8 }}>
                 {batch.tasks.slice(0, 5).map((t) => {
-                  const dup = existing.tasks.has(`${t.external_ref.source} ${t.external_ref.id}`)
+                  const dup = existing.tasks.has(refKey(t.external_ref.source, t.external_ref.id))
                   const projectName = batch.projects.find((p) => p.external_ref.id === t.sourceProjectId)?.name
                   return (
-                    <div key={t.external_ref.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-                      <span style={{ fontSize: 13, color: t.done ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: t.done ? 'line-through' : 'none', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                    <div key={t.external_ref.id} style={row}>
+                      <span style={{ ...rowTitle, color: t.done ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</span>
                       {projectName && <span style={{ ...help, textTransform: 'none', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{projectName}</span>}
+                      {t.recurrence_rule && <span style={help}>↻</span>}
                       <span style={help}>{fmtDate(t.due_at)}</span>
                       {t.priority && <span style={help}>{'!'.repeat(4 - t.priority)}</span>}
                       {dup && <Chip tone="gold">already here</Chip>}
                     </div>
                   )
                 })}
-                {batch.tasks.length > 5 && <div style={{ ...help, padding: '9px 0' }}>… and {batch.tasks.length - 5} more</div>}
-                {batch.tasks.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', padding: '12px 0' }}>Nothing to bring in from this file.</div>}
+                {batch.tasks.length === 0 && batch.books.slice(0, 5).map((b) => (
+                  <div key={b.title} style={row}>
+                    <span style={rowTitle}>{b.title}</span>
+                    {b.author && <span style={{ ...help, textTransform: 'none', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.author}</span>}
+                    <span style={help}>{quotesOf(b.title) ? count('quotes', quotesOf(b.title)) : b.shelf}</span>
+                  </div>
+                ))}
+                {batch.tasks.length === 0 && batch.books.length === 0 && [...batch.notes.map((n) => n.title ?? n.body), ...batch.inbox.map((i) => i.raw_text)].slice(0, 5).map((text, i) => (
+                  <div key={i} style={row}><span style={rowTitle}>{text}</span></div>
+                ))}
+                {(() => {
+                  const shown = batch.tasks.length || batch.books.length || batch.notes.length + batch.inbox.length
+                  return shown > 5 ? <div style={{ ...help, padding: '9px 0' }}>… and {shown - 5} more</div> : null
+                })()}
+                {KINDS.every((k) => batch[k].length === 0) && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', padding: '12px 0' }}>Nothing to bring in from this file.</div>}
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 14, fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>
-                <input type="checkbox" checked={includeCompleted} onChange={(e) => setIncludeCompleted(e.target.checked)} />
-                Include completed tasks ({completedCount})
-              </label>
-              {batch.source === 'akiflow' && (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 8, fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={includeEvents} onChange={(e) => setIncludeEvents(e.target.checked)} />
-                  Include calendar events ({batch.events.length})
-                </label>
-              )}
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 18 }}>
-                <Button onClick={() => void runImport(batch, existing)}>Import {willImport} task{willImport === 1 ? '' : 's'}</Button>
-                <Button variant="ghost" onClick={() => setStep({ name: 'pick' })}>Start over</Button>
+              {completedCount > 0 && toggle(includeCompleted, setIncludeCompleted, `Include completed tasks (${completedCount})`)}
+              {batch.events.length > 0 && toggle(includeEvents, setIncludeEvents, `Include calendar events (${batch.events.length})`)}
+              {toReadCount > 0 && toggle(includeToRead, setIncludeToRead, `Include the want-to-read shelf (${toReadCount}) — they land as reading, page 0`)}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 18, flexWrap: 'wrap' }}>
+                <Button disabled={!total} style={total ? undefined : { opacity: 0.5, cursor: 'default' }} onClick={() => void runImport(batch, existing)}>
+                  {total ? `Import ${describe(writes)}` : 'Nothing new to import'}
+                </Button>
+                <Button variant="ghost" onClick={reset}>Start over</Button>
               </div>
             </div>
           )
@@ -326,31 +459,43 @@ export function ImportPage() {
 
         {step.name === 'importing' && (
           <div style={card}>
-            <SectionLabel style={{ marginBottom: 14 }}>Importing</SectionLabel>
+            <SectionLabel style={{ marginBottom: 14 }}>{step.undoing ? 'Taking it back' : 'Importing'}</SectionLabel>
             <div style={{ height: 4, borderRadius: 2, background: 'var(--line-solid)', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${step.total ? Math.round((step.done / step.total) * 100) : 0}%`, background: 'var(--acc-sage)', transition: 'width 200ms' }} />
             </div>
-            <div style={{ ...help, marginTop: 10 }}>planting {step.done} of {step.total}…</div>
+            <div style={{ ...help, marginTop: 10 }}>{step.undoing ? 'lifting' : 'planting'} {step.done} of {step.total}…</div>
           </div>
         )}
 
-        {step.name === 'summary' && (
-          <div style={card}>
-            <SectionLabel style={{ marginBottom: 14 }}>Done</SectionLabel>
-            <div style={{ fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.7 }}>
-              {step.summary.written.projects} projects · {step.summary.written.tasks} tasks
-              {step.summary.written.events > 0 && <> · {step.summary.written.events} events</>} brought in.
+        {step.name === 'summary' && (() => {
+          const { written, skipped } = step.summary
+          const already = KINDS.reduce((n, k) => n + skipped[k], 0)
+          const toLibrary = written.books + written.quotes > 0
+          return (
+            <div style={card}>
+              <SectionLabel style={{ marginBottom: 14 }}>{step.undone ? 'Taken back' : 'Done'}</SectionLabel>
+              <div data-testid="import-summary" style={{ fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.7 }}>
+                {step.undone
+                  ? <>Undone — {describe(written) || 'nothing'} removed. Tasks and inbox notes wait in the Trash.</>
+                  : <>{describe(written) || 'Nothing new'} brought in.</>}
+              </div>
+              {!step.undone && (
+                <div style={{ ...help, marginTop: 8 }}>
+                  {already} already here, left untouched
+                  {skipped.completed > 0 && <> · {skipped.completed} completed left behind</>}
+                  {skipped.toRead > 0 && <> · {skipped.toRead} want-to-read left behind</>}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+                {!step.undone && <Button onClick={() => navigate(toLibrary ? '/library' : '/tasks')}>{toLibrary ? 'See the library' : 'See the tasks'}</Button>}
+                <Button variant="secondary" onClick={reset}>Import another file</Button>
+                {!step.undone && step.summary.rows.length > 0 && (
+                  <Button variant="ghost" onClick={() => void runUndo(step.summary)}>Undo this import</Button>
+                )}
+              </div>
             </div>
-            <div style={{ ...help, marginTop: 8 }}>
-              {step.summary.skipped.tasks + step.summary.skipped.projects + step.summary.skipped.events} already here, left untouched
-              {step.summary.skipped.completed > 0 && <> · {step.summary.skipped.completed} completed left behind</>}
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <Button onClick={() => navigate('/tasks')}>See the tasks</Button>
-              <Button variant="secondary" onClick={() => { setStep({ name: 'pick' }); setIncludeCompleted(false); setIncludeEvents(false) }}>Import another file</Button>
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         <TidyDuplicates />
       </div>

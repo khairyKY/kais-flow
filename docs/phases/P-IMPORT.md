@@ -116,3 +116,42 @@ dedicated canvas exists for the wizard itself).
   in the browser, drop `akiflow-dump.json`, confirm, re-import once to prove zero duplicates.
   Acceptance items stay unchecked until that run.
 - Later-tier adapters (todoist/ticktick/notion/markdown) untouched.
+
+**Integrations wave 1 — file importers, 2026-10-03** (builder W, branch `claude/importers`;
+handoff `docs/log/2026-10-03-0723-importers-handoff.md`):
+
+- **Six more sources** in the picker, each a pure `adapters/<x>.ts` + a hand-written-fixture test,
+  with a one-line "how to export" on the pick card: `todoist.ts` (per-project CSV, several files
+  at once), `ticktick.ts` (backup CSV), Notion (the csv mapper with Notion-aware defaults, source
+  `notion`), `markdown.ts` (Obsidian/Markdown files or a vault folder), `kindle.ts`
+  (`My Clippings.txt` → Library), `goodreads.ts` (library export → Library).
+- **`api.ts` `planCommit`** — the pure plan the preview counts from and `commitBatch` writes.
+  `ImportBatch` grew `books`/`quotes`/`notes`/`inbox`; `ImportTask` grew `recurrence_rule` and
+  `sourceParentId` (subtasks nest one level deep, under the top-level ancestor, parents written
+  first). **Undo this import** on the summary: tasks/events/inbox items to the Trash with
+  `external_ref` cleared (so the file can be imported again), projects/books/quotes/notes removed;
+  `logActivity('import.undone')`.
+- **Deviation — books/quotes dedupe without `external_ref`:** neither table has the column (0027
+  skipped them) and this wave adds no migration. Books match by main title (`titleKey`: before the
+  first `:`/`(`, letters+digits only), quotes by book + text. An existing hand-added book is reused.
+  Ceiling: two different books sharing a main title collapse; the Goodreads rating of a book with
+  no review is kept nowhere (a review/private notes becomes a note on the book holding the whole
+  row in `external_ref.raw`). Follow-up: `external_ref` on `books`/`quotes` for exact idempotency.
+- **Deviation — Todoist priority is NOT inverted:** Todoist's CSV help page says PRIORITY 1 = p1
+  (highest) … 4 = p4 — the same way round as ours (1 = "!!!"). 4 → no priority. (Its REST API is
+  the inverted one.)
+- **Deviation — ⏳ scheduled / 🛫 start → `due_at`**, not `scheduled_start`: in the app that is a
+  timed calendar block and an Obsidian date has no time.
+- **Dates:** free text goes through `shared.parseLooseDate` — chrono with the command bar's Cairo
+  reference; no time → that day's Cairo midnight (like every other date-only import); "every …"
+  → `parseRecurrence` → RRULE, due = its next occurrence. The generic CSV adapter now uses it too
+  (it used `new Date(text)`, which read "October 5, 2026" on the device's zone).
+- **Fixed:** the preview's "already here" flags never matched — the page keyed refs with a space,
+  `api.ts` with a NUL. Both use `refKey` now (the NUL is written `\u0000`, so git sees text again).
+- **Big files:** adapters hand the event loop back every 50–250 rows (`eachChunked`); one
+  `Intl.DateTimeFormat` per zone instead of one per date. 5,000-row Todoist/Notion CSVs, a
+  20,000-clipping file and a 2,000-file vault parse in 1–2 s with no slice over ~90 ms.
+- Not built: a dropped folder via drag (pick it with "Pick a vault folder…" instead — drop takes
+  files); non-English Todoist `DATE_LANG` (chrono is English-only here; the string stays in raw);
+  Markdown → `journal_entries`/`notes` from the step-3 bullet (paragraphs go to the Inbox on
+  opt-in, per the wave brief).
