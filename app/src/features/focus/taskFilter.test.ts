@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterFocusTasks } from './TaskPicker'
+import { filterFocusTasks } from './taskFilter'
 
 const t = (title: string, status = 'todo') => ({ title, status: status as 'todo' | 'done' })
 const TASKS = [t('Call the tyre supplier'), t('Send the Q3 numbers to Priya'), t('Fix your portfolio', 'done'), t('Call the bank about the mortgage')]

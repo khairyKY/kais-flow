@@ -5,13 +5,7 @@ import { placeSelect } from '../../components/selectPlacement'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
 import type { Task } from '../../lib/types'
-
-/** The tasks the Focus picker offers for `query`: open ones whose title holds every typed word
- * (any order, any case), in the order given. */
-export function filterFocusTasks<T extends Pick<Task, 'title' | 'status'>>(tasks: T[], query: string): T[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  return tasks.filter((t) => t.status === 'todo' && words.every((w) => t.title.toLowerCase().includes(w)))
-}
+import { filterFocusTasks } from './taskFilter'
 
 /** Focus → "Select a task to focus on" (Kai 2026-10-03: the long list had no search and ran past
  * the window). Type to filter, ↑/↓ to move, Enter picks (the first match until you move), Esc
