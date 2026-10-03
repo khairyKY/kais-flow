@@ -164,6 +164,10 @@ async function shooter(scale) {
     const ok = await pg.evaluate(async () => {
       const faces = ['400 30px "Source Serif 4"', '500 30px "Source Serif 4"', '400 14px "Inter Tight"', '500 14px "Inter Tight"', '600 14px "Inter Tight"', '400 12px "Courier Prime"', '500 19px Caveat']
       await Promise.all(faces.map((f) => document.fonts.load(f)))
+      await document.fonts.ready
+      // Fonts that arrive late re-lay the page out; let two frames paint it before the shot
+      // (without this the first page per scale came out in fallback fonts).
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
       return faces.every((f) => document.fonts.check(f))
     })
     if (!ok) throw new Error('web fonts did not load')
