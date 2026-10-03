@@ -88,9 +88,6 @@ Function ${UN}KfGuiInit
     System::Call 'user32::ReleaseDC(p 0, p r1)'
   ${EndIf}
   StrCpy $KfDpi $0
-  !ifdef KF_PREVIEW_DPI ; installer_preview.py: draw at another Windows scale than this PC's
-    StrCpy $KfDpi ${KF_PREVIEW_DPI}
-  !endif
   ; The scales render_installer.mjs ships; others resample the next one up.
   ${If} $KfDpi <= 96
     StrCpy $KfPct 100
@@ -538,9 +535,7 @@ FunctionEnd
 
 Function KfPlantedLeave
   ${If} $KfToggle = 1
-    !ifndef KF_PREVIEW
-      Call RunMainBinary
-    !endif
+    Call RunMainBinary
   ${EndIf}
 FunctionEnd
 

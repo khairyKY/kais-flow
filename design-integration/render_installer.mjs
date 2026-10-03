@@ -10,8 +10,10 @@
 // them to installer/layout.nsh for the NSIS script.
 //
 //   node design-integration/render_installer.mjs            → installer bitmaps + layout.nsh
-//   node design-integration/render_installer.mjs --previews → also docs/log/assets/installer/*.png
-//                                                             (pages with the live parts drawn in)
+//   node design-integration/render_installer.mjs --previews → also docs/log/assets/installer/mock-*.png:
+//                                                             mockups (the same page HTML with the live
+//                                                             parts drawn in), never screenshots of a
+//                                                             running installer
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'

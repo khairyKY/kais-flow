@@ -2,8 +2,7 @@
 ; nsis/installer.nsi) with our own pages: Welcome -> Planting -> Planted, Uproot -> Uprooting ->
 ; Uprooted, drawn by installer/kaisflow.nsh. Everything Tauri relies on is kept as it was (WebView2
 ; bootstrap, registry keys, shortcuts, AppUserModelID, uninstaller, /P /S /UPDATE /NS /R flags).
-; Changes are marked "Kai's Flow:". `KF_PREVIEW` (makensis -DKF_PREVIEW, used only by
-; design-integration/installer_preview.py) walks the pages without touching the machine.
+; Changes are marked "Kai's Flow:". design-integration/installer_check.py compiles it locally.
 Unicode true
 ManifestDPIAware true
 ; Add in `dpiAwareness` `PerMonitorV2` to manifest for Windows 10 1607+ (note this should not affect lower versions since they should be able to ignore this and pick up `dpiAware` `true` set by `ManifestDPIAware true`)
@@ -291,7 +290,6 @@ Section EarlyChecks
 SectionEnd
 
 Section WebView2
-  !ifndef KF_PREVIEW ; Kai's Flow
   ; Check if Webview2 is already installed and skip this section
   ${If} ${RunningX64}
     ReadRegStr $4 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
@@ -381,17 +379,9 @@ Section WebView2
       ${EndIf}
     !endif
   ${EndIf}
-  !endif ; KF_PREVIEW
 SectionEnd
 
 Section Install
-  !ifdef KF_PREVIEW ; Kai's Flow: walk the pages, change nothing on this PC
-    SetDetailsPrint textonly
-    DetailPrint "Planting ${MAINBINARYNAME}.exe"
-    Sleep 2500
-    WriteUninstaller "$TEMP\kf-preview-uninstall.exe"
-    SetAutoClose true
-  !else
   ; Kai's Flow: one calm line on the Planting page instead of the file-by-file log.
   SetDetailsPrint textonly
   DetailPrint "Planting ${MAINBINARYNAME}.exe"
@@ -493,7 +483,6 @@ Section Install
 
   ; Kai's Flow: Planting moves on by itself (to Planted; or closes, when passive).
   SetAutoClose true
-  !endif ; KF_PREVIEW
 SectionEnd
 
 Function .onInstSuccess
@@ -530,12 +519,6 @@ Function un.onInit
 FunctionEnd
 
 Section Uninstall
-  !ifdef KF_PREVIEW ; Kai's Flow: walk the pages, change nothing on this PC
-    SetDetailsPrint textonly
-    DetailPrint "Lifting ${MAINBINARYNAME}.exe"
-    Sleep 2500
-    SetAutoClose true
-  !else
   ; Kai's Flow: one calm line on the Uprooting page instead of the file-by-file log.
   SetDetailsPrint textonly
   DetailPrint "Lifting ${MAINBINARYNAME}.exe"
@@ -655,7 +638,6 @@ Section Uninstall
 
   ; Kai's Flow: Uprooting moves on by itself (to Uprooted; or closes, when passive or updating).
   SetAutoClose true
-  !endif ; KF_PREVIEW
 SectionEnd
 
 Function RestorePreviousInstallLocation
