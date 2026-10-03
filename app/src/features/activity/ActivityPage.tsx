@@ -334,7 +334,9 @@ export function ActivityPage() {
         {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Activity / Africa/Cairo" strip —
             that was Activity.dc.html's mock of the shell topbar (<main>'s first child, 42px), and
             the real shell already draws the topbar above this page. */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '34px 48px 40px', maxWidth: 880 }}>
+        {/* Kai 2026-10-03: no scroller of its own — unbounded (the route grows with the page), it
+            only swallowed the wheel; the shell's .app-main-content scrolls the page. */}
+        <div style={{ flex: 1, padding: '34px 48px 40px', maxWidth: 880 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>

@@ -221,7 +221,8 @@ export function TrashPage() {
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Settings · Trash" strip — that was
           Trash.dc.html's mock of the shell topbar, which the real shell already draws. */}
-      <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+      {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
+      <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 760, maxWidth: '100%', padding: '0 34px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
