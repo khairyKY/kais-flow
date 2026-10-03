@@ -914,17 +914,17 @@ function IntegrationsPage() {
         <span style={flabel}>Capture from anywhere</span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
         <CaptureKeyCard />
         <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <svg width="20" height="30" viewBox="0 0 20 32" style={{ flex: 'none' }}><rect x="1" y="1" width="18" height="30" rx="4" fill="none" stroke="var(--ink-faint)" strokeWidth="1.6" /><circle cx="10" cy="26.5" r="1.6" fill="var(--ink-faint)" /></svg>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>Share target</div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.5 }}>Share to Kai's Flow from any app on your phone — links, screenshots, half-thoughts.</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.5 }}>Share to Kai's Flow from any app on your phone — links, notes, half-thoughts.</div>
             </div>
           </div>
-          <div style={{ ...fhelp, marginTop: 9 }}>appears in the share sheet once the app is installed</div>
+          <div style={{ ...fhelp, marginTop: 9 }}>appears in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
         </SCard>
       </div>
     </div>

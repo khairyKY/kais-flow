@@ -1,0 +1,152 @@
+[
+  {
+    "name": "phone: Capture API row reads the real state (no key)",
+    "ok": true,
+    "detail": "Not set up"
+  },
+  {
+    "name": "phone: capture card is on the Settings page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: card says not set up yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Create key shows a kf_ key once",
+    "ok": true,
+    "detail": "kf_W4HU…"
+  },
+  {
+    "name": "phone: only the key's SHA-256 is saved",
+    "ok": true,
+    "detail": "3179c8c3e2b5a77bdda573d782f4bba9f4097b73069a2220fd7ef11ce99ae629"
+  },
+  {
+    "name": "phone: the key never appears in any request address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Capture API row turns On",
+    "ok": true,
+    "detail": "On"
+  },
+  {
+    "name": "phone: New key / Turn off offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Copy key puts the key on the clipboard",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Copy key confirms with a toast",
+    "ok": true,
+    "detail": "Key copied"
+  },
+  {
+    "name": "phone: how-to shows the endpoint address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: how-to covers share sheet, iPhone, Android apps, computer, ?file=1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: how-to curl line keeps the key in the header",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Copy address copies the endpoint",
+    "ok": true,
+    "detail": "http://127.0.0.1:9/functions/v1/capture"
+  },
+  {
+    "name": "phone: no horizontal scroll at 390 with the how-to open",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone: Turn off deletes the key row",
+    "ok": true,
+    "detail": "?id=eq.c0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "phone: row back to Not set up",
+    "ok": true,
+    "detail": "Not set up"
+  },
+  {
+    "name": "phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: card shows the key state",
+    "ok": true,
+    "detail": "key made 3 Oct · last used 3 Oct"
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "share: lands on the Inbox",
+    "ok": true,
+    "detail": "http://localhost:5251/inbox"
+  },
+  {
+    "name": "share: one Inbox item with the shared text, subject not repeated",
+    "ok": true,
+    "detail": "[\"Great article https://x.test/a\"]"
+  },
+  {
+    "name": "share: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "file=1: claimed with a conditional update",
+    "ok": true,
+    "detail": "?id=eq.i0000000-0000-4000-8000-000000000009&payload->>needs_parse=eq.true&select=id"
+  },
+  {
+    "name": "file=1: claim drops only the flag",
+    "ok": true,
+    "detail": "{\"payload\":{\"source\":\"capture\"}}"
+  },
+  {
+    "name": "file=1: parsed once, as of the capture time",
+    "ok": true,
+    "detail": "[\"2026-10-02T20:00:00.000Z\"]"
+  },
+  {
+    "name": "file=1: a task with its date is created",
+    "ok": true,
+    "detail": "[[\"Dentist\",\"2026-10-09T12:00:00.000Z\"]]"
+  },
+  {
+    "name": "file=1: the Inbox item is marked filed, payload kept",
+    "ok": true,
+    "detail": "{\"status\":\"filed\",\"payload\":{\"source\":\"capture\"}}"
+  },
+  {
+    "name": "file=1: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
