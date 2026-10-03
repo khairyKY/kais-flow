@@ -279,9 +279,13 @@ function DesktopCalendar() {
   // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
   // the form shows the clicked time on Cairo's clock and saves that exact instant back.
   function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number }) {
+    // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
+    // makes the half-hour it always did. A drag keeps exactly what was dragged.
+    const startMs = new Date(info.start).getTime()
+    const end = !info.allDay && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
       kind: 'event',
-      slot: slotFields(info.start, info.end, info.allDay),
+      slot: slotFields(info.start, end, info.allDay),
       anchor: { x: info.x, y: info.y },
     })
   }

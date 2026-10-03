@@ -343,8 +343,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
       // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
       // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
+      // Kai 2026-10-03: drags, moves and resizes land on quarter hours (the time fields' own
+      // 15-min list); the drawn grid stays half-hourly. A plain click still makes 30 min
+      // (CalendarPage.handleGridCreate widens a one-snap selection).
       slotDuration="00:30:00"
-      snapDuration="00:30:00"
+      snapDuration="00:15:00"
       // Punch 37: edge auto-scroll while dragging is FC's own AutoScroller — enabled by default,
       // wired to `.fc-scroller` (the time-grid's vertical scroller), 50px edge zone, quadratic
       // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.

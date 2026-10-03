@@ -4,6 +4,8 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { QUARTERS as OPTIONS } from '../../components/pickerMath'
 import { TimePicker } from '../../components/TimePicker'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { uiZoom } from '../../lib/uiScale'
+import { placeSelect, type SelectPlacement } from '../../components/selectPlacement'
 
 // ── C5 (2026-07-18 audit): themed replacement for native <input type="time"> — the OS
 // time-picker chrome can't take the parchment tokens. A plain text input stays for typing
@@ -51,7 +53,7 @@ export function TimeField({ value, onChange, style, day }: {
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [text, setText] = useState(() => format12(value))
-  const [pos, setPos] = useState({ left: 0, top: 0, width: 0 })
+  const [pos, setPos] = useState<SelectPlacement | null>(null)
   const [highlight, setHighlight] = useState(0)
 
   useEscapeStack(open, () => setOpen(false))
@@ -60,9 +62,12 @@ export function TimeField({ value, onChange, style, day }: {
   function openMenu() {
     const el = inputRef.current
     if (!el) return
+    // Kai 2026-10-03: the list opened half off the right edge at 125–150% — the rect is VISUAL px
+    // and `position: fixed` takes LAYOUT px (lib/uiScale uiZoom), so the zoom applied twice. The
+    // Select's placement (zoom-divided, flipped above when there's more room, kept inside) instead.
+    const z = uiZoom()
     const r = el.getBoundingClientRect()
-    const below = r.bottom + PANEL_MAX_H + 8 <= window.innerHeight
-    setPos({ left: r.left, top: below ? r.bottom + 4 : Math.max(8, r.top - PANEL_MAX_H - 4), width: Math.max(r.width, 104) })
+    setPos(placeSelect({ left: r.left / z, top: r.top / z, bottom: r.bottom / z, width: r.width / z }, { width: window.innerWidth / z, height: window.innerHeight / z }, OPTIONS.length, false))
     setHighlight(nearestIndex(value))
     setOpen(true)
   }
@@ -143,17 +148,18 @@ export function TimeField({ value, onChange, style, day }: {
       {sheet && (
         <TimePicker day={day} value={value || null} onDone={(t) => { if (t !== value) onChange(t) }} onClose={() => setSheet(false)} />
       )}
-      {open &&
+      {open && pos &&
         createPortal(
           <div
             ref={panelRef}
             role="listbox"
             style={{
               position: 'fixed',
-              left: Math.max(8, Math.min(pos.left, window.innerWidth - pos.width - 8)),
+              left: pos.left,
               top: pos.top,
-              width: pos.width,
-              maxHeight: PANEL_MAX_H,
+              bottom: pos.bottom,
+              width: pos.minWidth,
+              maxHeight: Math.min(PANEL_MAX_H, pos.maxHeight),
               overflowY: 'auto',
               zIndex: 1000,
               background: 'var(--paper-parchment)',

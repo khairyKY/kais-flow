@@ -31,6 +31,8 @@ import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
+import { Float } from './Float'
+import { uiZoom } from '../lib/uiScale'
 import { splitKeyCombo } from '../lib/shortcuts'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
@@ -209,10 +211,23 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
     if (showSpecies && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
     return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
   }
+  const [fly, setFly] = useState<{ x: number; y: number } | null>(null)
+  const showFly = (e: React.SyntheticEvent<HTMLElement>) => {
+    if (!collapsed) return
+    const r = e.currentTarget.getBoundingClientRect()
+    const z = uiZoom() // visual → layout px
+    setFly({ x: r.right / z + 8, y: (r.top + r.height / 2) / z })
+  }
+  const hideFly = () => setFly(null)
   return (
     <Link
       to={item.to}
       className={`kf-side-row${isActive ? ' kf-active' : ''}`}
+      onMouseEnter={showFly}
+      onMouseLeave={hideFly}
+      onFocus={showFly}
+      onBlur={hideFly}
+      onClick={hideFly}
       style={{
         position: 'relative',
         display: 'flex',
@@ -230,6 +245,7 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
       {isActive && (
         <span
           aria-hidden="true"
+          className="kf-nav-tape"
           style={{
             position: 'absolute',
             top: -6,
@@ -249,14 +265,18 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
       </span>
       {/* R4 (2026-07-20 audit): an icon-only rail is unreadable on its own — "this would make
           the nav bar dysfunctional". Hovering a collapsed row flies its name out to the right,
-          in the export's own nav type (14px, --ink-body on parchment with the card border). */}
-      {collapsed && (
-        <span className="kf-nav-flyout" aria-hidden="true">
-          {item.label}
-        </span>
+          in the export's own nav type (14px, --ink-body on parchment with the card border).
+          Kai 2026-10-03: drawn on <body> (fixed, beside the row) so the collapsed rail can scroll
+          on a short window without clipping it (F7 kept the rail unscrollable for this). */}
+      {collapsed && fly && (
+        <Float>
+          <span className="kf-nav-flyout" aria-hidden="true" style={{ left: fly.x, top: fly.y }}>
+            {item.label}
+          </span>
+        </Float>
       )}
       {item.badge === 'inbox' && pendingInbox > 0 && (
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+        <span className="app-nav-badge" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
       )}
     </Link>
   )
@@ -607,17 +627,27 @@ export function AppLayout() {
         }
         /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
            width and the label floats over the page. Styled to the export's nav row: parchment,
-           card border, crisp shadow, 14px --ink-body. */
-        .app-sidebar.collapsed .kf-nav-flyout {
-          position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
-          white-space: nowrap; pointer-events: none; opacity: 0;
+           card border, crisp shadow, 14px --ink-body. NavRow places it (fixed, on <body>). */
+        .kf-nav-flyout {
+          position: fixed; transform: translateY(-50%);
+          white-space: nowrap; pointer-events: none;
           background: var(--paper-parchment); border: 1px solid var(--line-card);
           box-shadow: var(--shadow-crisp); border-radius: 6px; padding: 6px 11px;
           font-size: 14px; color: var(--ink-body); z-index: 60;
-          transition: opacity var(--dur-quick) var(--ease-out);
+          animation: kfFadeIn var(--dur-quick) var(--ease-out);
         }
-        .app-sidebar.collapsed .kf-side-row:hover .kf-nav-flyout,
-        .app-sidebar.collapsed .kf-side-row:focus-visible .kf-nav-flyout { opacity: 1; }
+        /* The collapsed rail scrolls when a short window can't hold it (it used to run under the
+           pinned footer at 125–150%); no scrollbar strip on a 64px rail. */
+        .app-sidebar.collapsed .app-sidebar-col { scrollbar-width: none; }
+        .app-sidebar.collapsed .app-sidebar-col::-webkit-scrollbar { display: none; }
+        /* Kai 2026-10-03: collapsed, a row's 12px side padding + its 18px icon (42) were wider than
+           the rail leaves it (35), so the icon overflowed the box to the right: the active box read
+           off-centre to the left, its tape poked out past it, and a strip sat empty on the right.
+           The box now hugs the centred icon, the tape centres on the box, and the inbox count
+           rides its corner instead of pushing the icon aside. */
+        .app-sidebar.collapsed .kf-side-row { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; }
+        .app-sidebar.collapsed .kf-nav-tape { left: 50% !important; width: 24px !important; margin-left: -12px; }
+        .app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }
         .app-sidebar.collapsed .app-sidebar-header,
         .app-sidebar.collapsed .app-nav-label,
         .app-sidebar.collapsed .app-footer-label,
@@ -727,12 +757,11 @@ export function AppLayout() {
           {collapsed ? '›' : '‹'}
         </button>
 
-        {/* F7 fix: overflowY:auto forces overflow-x to auto too, which clipped the collapsed-rail
-            hover flyouts at the 64px edge. Collapsed, the icon column fits without scrolling, so
-            the container goes overflow-visible and the flyouts float over the page.
-            ponytail: on a very short viewport the collapsed rail clips its tail instead of
-            scrolling — flip to a portal if that ever matters. */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: collapsed ? 'visible' : 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
+        {/* F7 kept this column overflow-visible when collapsed, because overflow-y:auto clipped the
+            hover flyouts at the 64px edge — so at 125–150% the icon column ran under the pinned
+            footer instead of scrolling (Kai 2026-10-03). The flyouts now draw on <body> (NavRow),
+            so the column scrolls in both states. */}
+        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
 
         {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
             answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
