@@ -16,7 +16,7 @@ import { resolveTag, daysOverdue, formatDuration } from '../tasks/taskDisplay'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
-import { useAppSettings, updateAppSetting } from '../../lib/settings'
+import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
@@ -30,6 +30,7 @@ import { useDayRollover } from './useDayRollover'
 import { useIsMobile } from '../../components/BottomSheet'
 import { PhoneCalendar } from './PhoneCalendar'
 import { ContextMenu } from '../../components/ContextMenu'
+import { Icon } from '../../components/Icon'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
 import type { ContextMenuItem } from '../../components/ContextMenu'
@@ -161,7 +162,18 @@ function DesktopCalendar() {
   const motionOn = useMotionEnabled()
   const conflicts = useMemo(() => computeConflicts(events), [events])
   const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
-  const dayCount = settings?.calendar_day_count ?? 4
+  // Kai 2026-10-03: Settings → Calendar → "Opens on" (synced; unset = Week here). Applied once, when
+  // the settings row arrives — a view picked after that is the person's own. '3 days' is the N-day
+  // view held at 3 for this visit, without touching the popover's remembered N.
+  const defaultView = useCalendarDefaultView('week')
+  const [opened, setOpened] = useState(false)
+  const [visitDays, setVisitDays] = useState<number | null>(null)
+  if (defaultView && !opened) {
+    setOpened(true)
+    setViewKind(defaultView === 'day' ? 'day' : defaultView === '3day' ? 'ndays' : 'week')
+    if (defaultView === '3day') setVisitDays(3)
+  }
+  const dayCount = visitDays ?? settings?.calendar_day_count ?? 4
 
   function patchViewOpts(patch: Partial<CalViewOptions>) {
     setViewOpts((v) => {
@@ -179,6 +191,7 @@ function DesktopCalendar() {
     else if (cell === 'M') setViewKind('month')
     else {
       updateAppSetting('calendar_day_count', Number(cell))
+      setVisitDays(null)
       setViewKind('ndays')
     }
   }
@@ -594,7 +607,8 @@ function DesktopCalendar() {
                 }}
               >
                 {viewKind === 'day' ? 'Day' : viewKind === 'ndays' ? `${dayCount} days` : viewKind === 'week' ? 'Week' : 'Month'}
-                <span aria-hidden="true" style={{ fontSize: 12, color: 'var(--ink-muted)' }}>⚟</span>
+                {/* Kai 2026-10-03: the ⚟ glyph read as "≤" — the kit's dropdown chevron, as the phone's title uses. */}
+                <Icon name="chevdown" size={14} style={{ color: 'var(--ink-muted)' }} />
               </span>
               <span onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</span>
               <span onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer' }}>Today</span>

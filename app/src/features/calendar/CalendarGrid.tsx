@@ -474,6 +474,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
+        // A mirror (the drag-select preview, or a block mid-drag/resize) has no kf props of its own
+        // — or the original block's — so its labels read the event's live times. Kai 2026-10-03:
+        // a narrow column (150%) drew the preview's start-only label as clockTime(undefined),
+        // "Invalid Date".
+        const startMs = arg.event.start?.getTime() ?? p.kfStart
+        const endMs = arg.event.end?.getTime() ?? p.kfEnd
 
         // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
         let timeText = arg.timeText
@@ -484,10 +490,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         } else if ((p.kfOv || narrow) && arg.timeText) {
           // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The
           // narrow-column tier (< 170px) reads the same way (Polish D).
-          timeText = clockTime(p.kfStart)
+          timeText = clockTime(startMs)
         } else if (p.kfFull && arg.timeText) {
           // full tier has room for the duration suffix (§2 "as space allows")
-          const mins = Math.round((p.kfEnd - p.kfStart) / 60_000)
+          const mins = Math.round((endMs - startMs) / 60_000)
           timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
         }
         // §7 outbox suffixes ride the time row

@@ -1,5 +1,6 @@
 import { uiZoom } from '../../lib/uiScale'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { placeAtPointer } from '../../components/selectPlacement'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
@@ -111,6 +112,24 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
 
   useEscapeStack(true, onClose)
   useBodyScrollLock(true)
+
+  // The compact popover's place, from its measured size (VISUAL px ÷ zoom = layout px, lib/uiScale).
+  const popRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  useLayoutEffect(() => {
+    const el = popRef.current
+    if (!el || !anchor) return
+    const place = () => {
+      const z = uiZoom()
+      const r = el.getBoundingClientRect()
+      setPos(placeAtPointer({ x: anchor.x / z, y: anchor.y / z }, { width: r.width / z, height: r.height / z }, { width: window.innerWidth / z, height: window.innerHeight / z }))
+    }
+    place()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(place)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [anchor, expanded])
 
   // T-4: the title's "friday 3pm" is read on Cairo's clock too (parseCommand's zone option).
   const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects, { zone: 'cairo' }) : null), [kind, title, domains, projects])
@@ -287,8 +306,29 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   }
 
   const gridCols = expanded ? '1fr 1fr' : '1fr'
+  const durationText = durationMin > 0 ? (durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`) : null
 
-  const dateTimeRow = (
+  // Kai 2026-10-03: the compact popover overran a 150% window (Due, Block, Priority, Project each on
+  // their own row + a hint line). One "when" row instead: date · start–end · duration. A task's due
+  // time and its block start were already the same field (startTime), so nothing is lost.
+  const whenRow = (
+    <div>
+      <FLabel>{kind === 'task' ? 'Due · block' : 'When'}</FLabel>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <DateInput value={date} title={kind === 'task' ? 'Due date' : 'Date'} onChange={(v) => { setDate(v); markDateTouched() }} style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} />
+        {!allDay && (
+          <>
+            <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
+            <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
+            <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
+            {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  const dateTimeRow = !expanded ? whenRow : (
     <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 12 }}>
       <div>
         <FLabel>{kind === 'task' ? 'Due' : 'Date'}</FLabel>
@@ -308,7 +348,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />
             <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
             <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} />
-            {durationMin > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? durationMin % 60 + 'm' : ''}` : `${durationMin}m`}</span>}
+            {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
           </div>
         </div>
       )}
@@ -317,7 +357,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
 
   const taskFields = (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 12, marginTop: 12 }}>
+      {/* Compact: priority beside project (Kai 2026-10-03) — the seg keeps its size, the select takes the rest. */}
+      <div style={{ display: 'grid', gridTemplateColumns: expanded ? gridCols : 'auto minmax(0, 1fr)', gap: 12, marginTop: 12 }}>
         <div>
           <FLabel>Priority</FLabel>
           <Seg
@@ -393,9 +434,6 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             </label>
           </div>
         </>
-      )}
-      {!expanded && slot && (
-        <FHelp style={{ marginTop: 9 }}>lands in Tasks · this slot becomes its time block, blush-edged</FHelp>
       )}
     </>
   )
@@ -519,19 +557,23 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
   // popover lands scale-times away from the click and the clamps measure the wrong viewport
   // (Kai's clipped popup on the last visible day at 125%). Viewport units are also unreliable
   // inside zoomed content, so the width/height caps are computed here in px too.
+  // Kai 2026-10-03: the old clamps guessed a 420px height, so a taller popover at 150% scrolled
+  // inside itself. It is measured instead (pre-paint, and again whenever its content changes
+  // height) and placed beside the pointer, flipped/shifted to fit (placeAtPointer). It only
+  // scrolls when the window itself is shorter than the popover.
   const z = uiZoom()
   const vw = window.innerWidth / z
   const vh = window.innerHeight / z
-  const left = Math.max(8, Math.min(anchor.x / z, vw - 350))
-  const top = Math.max(8, Math.min(anchor.y / z, vh - 420))
+  const at = pos ?? { left: Math.max(8, Math.min(anchor.x / z, vw - 368)), top: Math.max(8, anchor.y / z) }
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
       <div
+        ref={popRef}
         className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left, top, width: 330, maxWidth: vw - 16, maxHeight: vh - top - 8, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ position: 'fixed', left: at.left, top: at.top, width: 360, maxWidth: vw - 16, maxHeight: vh - 16, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
       >
         {body}
       </div>

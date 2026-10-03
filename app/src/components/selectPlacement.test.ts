@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampSelectLeft, placeSelect, SELECT_CHROME, SELECT_EDGE, SELECT_MAX_H, SELECT_TOUCH_ROW_H } from './selectPlacement'
+import { clampSelectLeft, placeAtPointer, placeSelect, SELECT_CHROME, SELECT_EDGE, SELECT_MAX_H, SELECT_TOUCH_ROW_H } from './selectPlacement'
 
 // A 390px phone at the default 125% interface size lays out 312 × 675 layout px.
 const PHONE = { width: 312, height: 675 }
@@ -53,5 +53,26 @@ describe('clampSelectLeft', () => {
   })
   it('leaves a panel that fits alone', () => {
     expect(clampSelectLeft(40, 100, 312)).toBe(40)
+  })
+})
+
+describe('placeAtPointer', () => {
+  // 1280×720 at 150% = 853×480 layout px; QuickCreate is 360 wide.
+  const VIEW = { width: 853, height: 480 }
+  const SIZE = { width: 360, height: 300 }
+  it('opens right of and below the pointer when it fits', () => {
+    expect(placeAtPointer({ x: 100, y: 60 }, SIZE, VIEW)).toEqual({ left: 100, top: 60 })
+  })
+  it('flips to the left of a pointer near the right edge', () => {
+    expect(placeAtPointer({ x: 700, y: 60 }, SIZE, VIEW).left).toBe(340)
+  })
+  it('flips above a pointer near the bottom', () => {
+    expect(placeAtPointer({ x: 100, y: 400 }, SIZE, VIEW).top).toBe(100)
+  })
+  it('shifts inside the window when neither side fits', () => {
+    expect(placeAtPointer({ x: 100, y: 240 }, { width: 360, height: 420 }, VIEW).top).toBe(VIEW.height - 420 - SELECT_EDGE)
+  })
+  it('pins a popover taller than the window to the top edge', () => {
+    expect(placeAtPointer({ x: 100, y: 240 }, { width: 360, height: 600 }, VIEW).top).toBe(SELECT_EDGE)
   })
 })

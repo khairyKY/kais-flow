@@ -46,6 +46,24 @@ export function clampSelectLeft(left: number, width: number, viewportWidth: numb
   return Math.max(SELECT_EDGE, Math.min(left, viewportWidth - width - SELECT_EDGE))
 }
 
+/** Where a popover opened at a pointer goes (all LAYOUT px, like placeSelect): right of and below
+ * the pointer, flipped to the pointer's other side on an axis where it would run past the edge,
+ * then kept SELECT_EDGE inside the viewport — one taller/wider than the room pins to the top/left.
+ * QuickCreate measures its real size and places with this (Kai 2026-10-03: at 150% it overran). */
+export function placeAtPointer(
+  pointer: { x: number; y: number },
+  size: { width: number; height: number },
+  viewport: { width: number; height: number },
+): { left: number; top: number } {
+  const axis = (at: number, size: number, room: number) => {
+    const max = room - size - SELECT_EDGE
+    if (at <= max) return Math.max(SELECT_EDGE, at) // fits after the pointer
+    if (at - size >= SELECT_EDGE) return at - size // fits before it
+    return Math.max(SELECT_EDGE, max) // neither: as close to the far edge as the room allows
+  }
+  return { left: axis(pointer.x, size.width, viewport.width), top: axis(pointer.y, size.height, viewport.height) }
+}
+
 export function placeSelect(
   trigger: TriggerRect,
   viewport: { width: number; height: number },

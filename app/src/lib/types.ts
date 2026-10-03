@@ -30,6 +30,8 @@ export interface Project {
   }>
   engagement_model?: string | null
   completion_summary?: string | null
+  /** In Trash since (migration 0044); absent before it is pushed. */
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -152,6 +154,8 @@ export interface Area {
   description: string | null
   color: string | null
   sort_order: number
+  /** In Trash since (migration 0044); absent before it is pushed. */
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -171,6 +175,8 @@ export interface AppSettings {
   digest_hour: number
   slipping_default_days: number
   calendar_day_count: number
+  /** The view the calendar opens on (migration 0043); null/absent = the platform's own default. */
+  calendar_default_view?: 'day' | '3day' | 'week' | null
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
