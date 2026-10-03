@@ -266,10 +266,11 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
 
   // Settings › Notifications › Ritual reminders (app_settings, 0045). A failed read sends nothing:
   // better one missed digest than every user getting one on every tick.
-  if (kind === 'morning_digest' || kind === 'evening_nudge') {
+  if ((kind === 'morning_digest' || kind === 'evening_nudge') && userIds.size > 0) {
     const { data: rows, error } = await supabase
       .from('app_settings')
       .select('user_id, morning_digest_on, morning_digest_at, evening_nudge_on, evening_nudge_at')
+      // ponytail: one IN list in the URL (~37 chars a user); chunk it past a few hundred push users.
       .in('user_id', [...userIds])
     if (error) throw error
     const byUser = new Map(((rows ?? []) as (RitualSettings & { user_id: string })[]).map((r) => [r.user_id, r]))
