@@ -196,7 +196,8 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# Gmail SMTP allows ~500 a day (docs/EMAIL.md); 60 an hour keeps one account well inside it.
+email_sent = 60
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -223,6 +224,8 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
+# Kai's call (2026-09-27): required before first use. Stays false until Gmail SMTP is live; the
+# release workflow's "Auth email" step pushes this flag to the hosted project (docs/EMAIL.md).
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
@@ -233,26 +236,50 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# $0 sender: a Gmail account with an App Password (smtp.gmail.com:587, STARTTLS, ~500 a day).
+# Nothing secret here: SMTP_USER / SMTP_PASS come from the environment — GitHub secrets for the
+# release workflow's "Auth email" step, which sends only these auth email settings to the hosted
+# project (docs/EMAIL.md says why not `supabase config push`). The sender is the Gmail address.
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "env(SMTP_USER)"
+pass = "env(SMTP_PASS)"
+admin_email = "env(SMTP_USER)"
+sender_name = "Kai's Flow"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Branded auth emails (supabase/templates). Template paths are relative to the repo root,
+# notification paths to supabase/ — the CLI resolves the two differently.
+[auth.email.template.confirmation]
+subject = "Confirm your email · Kai's Flow"
+content_path = "./supabase/templates/confirmation.html"
 
-# Uncomment to customize notification email template
-# [auth.email.notification.password_changed]
-# enabled = true
-# subject = "Your password has been changed"
-# content_path = "./templates/password_changed_notification.html"
+[auth.email.template.recovery]
+subject = "Reset your password · Kai's Flow"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your sign-in link · Kai's Flow"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new email · Kai's Flow"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.invite]
+subject = "You're invited to Kai's Flow"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your password was changed · Kai's Flow"
+content_path = "./templates/password_changed_notification.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Your email was changed · Kai's Flow"
+content_path = "./templates/email_changed_notification.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

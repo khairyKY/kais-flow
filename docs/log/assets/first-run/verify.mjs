@@ -1,4 +1,4 @@
-// First run (First Run.dc.html 9a–9m) on the REAL /sign-in, /reset, /onboarding and /today pages
+// First run (First Run.dc.html 9a–9m, 9c–9f with Confirm email on) on the REAL /sign-in, /reset, /onboarding and /today pages
 // against a MOCKED backend — builder D's recipe: the dev server runs with
 // VITE_SUPABASE_URL=http://127.0.0.1:9 (nothing listens there) and Playwright answers every auth and
 // REST call. No real account, address, password, token or network is involved: the addresses are
@@ -63,7 +63,8 @@ async function open(view, url, o = {}) {
     if (u.pathname.startsWith('/auth/v1/')) {
       const key = `${req.method()} ${u.pathname}`
       const answer = state.auth[key]
-      if (answer) return r.fulfill({ status: answer.status, contentType: 'application/json', body: JSON.stringify(answer.json) })
+      if (answer?.until) await answer.until // held until the test lets it through (9f "Signing you in…")
+      if (answer?.json) return r.fulfill({ status: answer.status, contentType: 'application/json', body: JSON.stringify(answer.json) })
       if (key === 'POST /auth/v1/signup' || key === 'POST /auth/v1/token') return r.fulfill({ json: session })
       if (key === 'POST /auth/v1/recover') return r.fulfill({ json: {} })
       if (key === 'POST /auth/v1/logout') return r.fulfill({ status: 204, body: '' })
@@ -87,8 +88,8 @@ async function open(view, url, o = {}) {
   await page.clock.install({ time: NOW })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${BASE}${url}`, { waitUntil: 'networkidle' })
-  await sleep(600)
+  await page.goto(`${BASE}${url}`, { waitUntil: o.waitUntil ?? 'networkidle' })
+  if (!o.waitUntil) await sleep(600)
   const cdp = v.hasTouch ? await ctx.newCDPSession(page) : null
   return { ctx, page, cdp, errors, state }
 }
@@ -177,11 +178,11 @@ for (const view of ['day', 'night', 'desktop']) {
     check(`${name} "Sign in" one tap away`, (await page.locator('.fr-alt').innerText()).includes('Already have an account?') && (await page.getByRole('button', { name: 'Sign in', exact: true }).count()) === 1)
     await shot(page, name)
     await basics(env, view, name)
-    // Create account → a session → "/" → onboarding (email confirmation is parked).
+    // Create account → a session (Confirm email off, as today) → "/" → onboarding, no 9c/9f.
     await tap(env, cta)
     await page.waitForURL('**/onboarding', { timeout: 5000 }).catch(() => {})
     const signup = calls(env, 'POST /auth/v1/signup')[0]
-    check(`${name} Create account signs up and lands on onboarding`, page.url().endsWith('/onboarding') && signup?.body?.email === EMAIL, page.url())
+    check(`${name} confirmation off: Create account signs up and lands straight on onboarding`, page.url().endsWith('/onboarding') && signup?.body?.email === EMAIL, page.url())
     check(`${name} the address is remembered for next time`, (await page.evaluate(() => localStorage.getItem('kf.lastEmail'))) === EMAIL)
     await env.ctx.close()
   }
@@ -254,6 +255,161 @@ for (const view of ['day', 'night', 'desktop']) {
     await tap(env, card.getByRole('button', { name: 'Retry' }))
     await page.waitForURL('**/onboarding', { timeout: 5000 }).catch(() => {})
     check(`${name} back online, Retry signs up`, page.url().endsWith('/onboarding'), page.url())
+    await env.ctx.close()
+  }
+
+  // ── Confirm email on (9c–9f): GoTrue answers sign-up with the user and no session. ──
+  const NO_SESSION = { 'POST /auth/v1/signup': { status: 200, json: user } }
+  const LINK = `access_token=${jwt}&expires_at=4102444800&expires_in=3600&refresh_token=demo&token_type=bearer&type=signup`
+  const here = phone ? 'this phone' : 'this device'
+  const resendBtn = (page) => page.locator('.fr-cta', { hasText: /^Resend/ })
+  async function signUpWaiting(env, email = EMAIL) {
+    await fill(env.page, 'Email', email)
+    await fill(env.page, 'Password', PASSWORD)
+    await tap(env, env.page.getByRole('button', { name: 'Create account' }))
+    await sleep(300)
+  }
+
+  // 9c / 9d — check your email; Resend counts down from the first arrival, then again after a send.
+  {
+    let name = tag('9c')
+    const env = await open(view, '/sign-in', { auth: { ...NO_SESSION } })
+    const { page } = env
+    await signUpWaiting(env)
+    check(`${name} no session → "Check your email" naming the address, still on /sign-in`, (await heading(page)) === 'Check your email' && (await page.locator('.fr-sub b').innerText()) === EMAIL && page.url().endsWith('/sign-in'), `${await heading(page)} ${page.url()}`)
+    check(`${name} sub: open it on ${here}, no need to sign in again`, (await page.locator('.fr-sub').innerText()) === `We sent a link to ${EMAIL}. Open it on ${here} and you're in — no need to sign in again.`, await page.locator('.fr-sub').innerText())
+    check(`${name} sealed envelope, waiting line, spam hint`, (await page.locator('.fr-envelope img').count()) === 2 && (await page.locator('.fr-waiting').innerText()).toUpperCase().includes('WAITING FOR THE LINK') && (await page.getByText('Not there? Check Spam or Promotions.').count()) === 1)
+    check(`${name} first arrival: Resend already counting down, disabled`, /^Resend in (1:00|0:59)$/.test(await resendBtn(page).innerText()) && (await resendBtn(page).isDisabled()), await resendBtn(page).innerText())
+    check(`${name} no inbox for example.test → Resend is the one CTA; "Wrong address? Change it"`, (await ctaCount(page)) === 1 && (await page.getByRole('link', { name: 'Open email app' }).count()) === 0 && (await page.locator('.fr-alt').innerText()).includes('Wrong address?') && (await page.getByRole('button', { name: 'Change it' }).count()) === 1)
+    await page.clock.fastForward(12_000)
+    await sleep(300)
+    check(`${name} 12s later: "Resend in 0:48"`, (await resendBtn(page).innerText()) === 'Resend in 0:48', await resendBtn(page).innerText())
+    await page.clock.fastForward(48_000)
+    await sleep(300)
+    check(`${name} after the minute: "Resend link", enabled`, (await resendBtn(page).innerText()) === 'Resend link' && (await resendBtn(page).isEnabled()), await resendBtn(page).innerText())
+    await shot(page, name)
+    await basics(env, view, name)
+
+    name = tag('9d')
+    await tap(env, resendBtn(page))
+    await sleep(400)
+    const resent = calls(env, 'POST /auth/v1/resend')
+    check(`${name} Resend sends the sign-up link again, back to "/"`, resent.length === 1 && resent[0].body?.type === 'signup' && resent[0].body?.email === EMAIL && decodeURIComponent(resent[0].search).includes(`redirect_to=${BASE}/`), JSON.stringify(resent))
+    check(`${name} toast "Sent a new link to …" and the countdown starts again`, (await page.locator('.kf-toast-msg').allInnerTexts()).some((t) => t.includes(`Sent a new link to ${EMAIL}`)) && /^Resend in (1:00|0:59)$/.test(await resendBtn(page).innerText()) && (await resendBtn(page).isDisabled()), await resendBtn(page).innerText())
+    await shot(page, name)
+    await basics(env, view, name)
+
+    await tap(env, page.getByRole('button', { name: 'Change it' }))
+    check(`${tag('9c')} Change it → 9a with the fields kept`, (await heading(page)) === 'Create your account' && (await page.getByLabel('Email', { exact: true }).inputValue()) === EMAIL && (await page.getByLabel('Password', { exact: true }).inputValue()) === PASSWORD)
+    await env.ctx.close()
+  }
+
+  // 9c with a webmail address: "Open email app" is the CTA, Resend (counting) secondary.
+  if (view === 'day' || view === 'desktop') {
+    const name = tag('9c-webmail')
+    const env = await open(view, '/sign-in', { auth: { ...NO_SESSION } })
+    await signUpWaiting(env, 'kai.flow.demo@gmail.com')
+    const link = env.page.getByRole('link', { name: 'Open email app' })
+    check(`${name} Open email app → the webmail inbox, Resend secondary`, (await link.getAttribute('href')) === 'https://mail.google.com/mail/u/0/#inbox' && (await ctaCount(env.page)) === 1 && (await env.page.locator('.kf-button--secondary', { hasText: /^Resend in/ }).count()) === 1)
+    await shot(env.page, name)
+    await env.ctx.close()
+  }
+
+  // GoTrue hides an address that already has an account (confirmation on) as no identities → 9b-1.
+  if (view === 'day') {
+    const name = tag('9b-1-hidden')
+    const env = await open(view, '/sign-in', { auth: { 'POST /auth/v1/signup': { status: 200, json: { ...user, identities: [] } } } })
+    await signUpWaiting(env)
+    check(`${name} no identities → the in-use card, not 9c`, (await env.page.locator('[role="alert"]').innerText().catch(() => '')).includes(`${EMAIL} already has an account.`) && (await heading(env.page)) === 'Create your account')
+    await env.ctx.close()
+  }
+
+  // 9c → the link opened in another tab: both tabs play 9f and go on to onboarding by themselves.
+  {
+    const name = tag('9c-heard')
+    const env = await open(view, '/sign-in', { auth: { ...NO_SESSION } })
+    await signUpWaiting(env)
+    const other = await env.ctx.newPage()
+    await other.clock.install({ time: NOW })
+    await other.goto(`${BASE}/#${LINK}`, { waitUntil: 'commit' })
+    const heard = await env.page.getByRole('heading', { name: 'Email confirmed ✿' }).waitFor({ timeout: 10_000 }).then(() => true, () => false)
+    check(`${name} the waiting tab notices the confirmation and plays 9f`, heard, await heading(env.page))
+    await env.page.waitForURL('**/onboarding', { timeout: 12_000 }).catch(() => {})
+    await other.waitForURL('**/onboarding', { timeout: 12_000 }).catch(() => {})
+    check(`${name} … then onboarding, in both tabs`, env.page.url().endsWith('/onboarding') && other.url().endsWith('/onboarding'), `${env.page.url()} ${other.url()} ${env.errors.join(' | ')} ${(await env.page.locator('body').innerText().catch(() => '')).slice(0, 160).replace(/\s+/g, ' ')}`)
+    await env.ctx.close()
+  }
+
+  // 9c → the link opened where this tab can't hear it (Gmail's browser, the Android shell):
+  // coming back to the tab tries the password once, quietly.
+  if (view === 'day') {
+    const name = tag('9c-return')
+    const env = await open(view, '/sign-in', { auth: { ...NO_SESSION, 'POST /auth/v1/token': { status: 400, json: { code: 'email_not_confirmed', error_code: 'email_not_confirmed', msg: 'Email not confirmed' } } } })
+    const { page } = env
+    await signUpWaiting(env)
+    const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+    await comeBack()
+    await sleep(500)
+    check(`${name} not confirmed yet: one quiet try, still 9c, nothing shown`, calls(env, 'POST /auth/v1/token').length === 1 && (await heading(page)) === 'Check your email' && (await page.locator('[role="alert"]').count()) === 0)
+    delete env.state.auth['POST /auth/v1/token']
+    await comeBack()
+    const heard = await page.getByRole('heading', { name: 'Email confirmed ✿' }).waitFor({ timeout: 5000 }).then(() => true, () => false)
+    await page.waitForURL('**/onboarding', { timeout: 6000 }).catch(() => {})
+    check(`${name} confirmed elsewhere: coming back signs in → 9f → onboarding`, heard && page.url().endsWith('/onboarding') && calls(env, 'POST /auth/v1/token')[1]?.body?.email === EMAIL, page.url())
+    await env.ctx.close()
+  }
+
+  // 9f — the confirmation link itself: lands on "/", plays 9f on /sign-in?confirmed while it signs
+  // in (held here so it can be looked at), then onboarding about a second after the session.
+  {
+    const name = tag('9f')
+    let release
+    const until = new Promise((r) => (release = r))
+    const env = await open(view, `/#${LINK}`, { waitUntil: 'commit', auth: { 'GET /auth/v1/user': { until } } })
+    const { page } = env
+    await page.getByRole('heading', { name: 'Email confirmed ✿' }).waitFor({ timeout: 8000 }).catch(() => {})
+    await sleep(800) // let the flourish settle for the picture
+    check(`${name} "/" re-pointed to /sign-in?confirmed: "Email confirmed ✿", "Signing you in…"`, new URL(page.url()).pathname + new URL(page.url()).search === '/sign-in?confirmed' && (await heading(page)) === 'Email confirmed ✿' && (await page.locator('.fr-sub').innerText()) === 'Signing you in…', page.url())
+    check(`${name} broken seal + seedling, the hand line, no wordmark, no button`, (await page.locator('.fr-sprout img').evaluateAll((imgs) => imgs.map((i) => i.naturalWidth > 0 && i.getAttribute('src')).join(' '))) === '/ds/assets/seal/broken-left.png /ds/assets/clover/seedling.png /ds/assets/seal/broken-right.png' && (await page.locator('.fr-hand').innerText()) === 'welcome to the garden' && (await page.locator('.fr-mark').count()) === 0 && (await page.locator('button:visible').count()) === 0)
+    check(`${name} stays while signing in`, page.url().includes('/sign-in'))
+    await shot(page, name)
+    await basics(env, view, name)
+    release()
+    await page.waitForURL('**/onboarding', { timeout: 6000 }).catch(() => {})
+    await page.getByText('What should we call you?').waitFor({ timeout: 5000 }).catch(() => {})
+    check(`${name} signed in → onboarding (9g)`, page.url().endsWith('/onboarding') && (await page.getByText('What should we call you?').count()) === 1, page.url())
+    await env.ctx.close()
+  }
+
+  // 9f's tokens didn't hold (the server refused them) → 9e.
+  if (view === 'day') {
+    const name = tag('9f-refused')
+    const env = await open(view, `/#${LINK}`, { email: EMAIL, auth: { 'GET /auth/v1/user': { status: 403, json: { code: 'bad_jwt', error_code: 'bad_jwt', msg: 'invalid JWT' } } } })
+    await env.page.getByRole('heading', { name: 'This link has expired' }).waitFor({ timeout: 5000 }).catch(() => {})
+    check(`${name} → "This link has expired"`, (await heading(env.page)) === 'This link has expired', await heading(env.page))
+    await env.ctx.close()
+  }
+
+  // 9e — a used or expired confirmation link: one tap sends a fresh one, then 9d.
+  {
+    const name = tag('9e')
+    const env = await open(view, '/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired', { email: EMAIL })
+    const { page } = env
+    check(`${name} "/" re-pointed to /sign-in?expired: "This link has expired" + the address`, new URL(page.url()).search === '?expired' && (await heading(page)) === 'This link has expired' && (await page.locator('.fr-sub').innerText()) === `Links last an hour and work once. We'll send a fresh one to ${EMAIL}.`, await page.locator('.fr-sub').innerText().catch(() => page.url()))
+    check(`${name} envelope back, Send a new link + Use a different email`, (await page.locator('img.fr-art--envelope').getAttribute('src')) === '/ds/assets/envelope/back.png' && (await ctaCount(page)) === 1 && (await page.getByRole('button', { name: 'Use a different email' }).count()) === 1)
+    await shot(page, name)
+    await basics(env, view, name)
+    await tap(env, page.getByRole('button', { name: 'Send a new link' }))
+    await sleep(400)
+    const resent = calls(env, 'POST /auth/v1/resend')
+    check(`${name} Send a new link → sent, 9d with its toast and countdown`, resent[0]?.body?.type === 'signup' && resent[0]?.body?.email === EMAIL && (await heading(page)) === 'Check your email' && (await page.locator('.kf-toast-msg').allInnerTexts()).some((t) => t.includes(`Sent a new link to ${EMAIL}`)) && /^Resend in (1:00|0:59)$/.test(await resendBtn(page).innerText()))
+    await env.ctx.close()
+  }
+  {
+    const name = tag('9e-other')
+    const env = await open(view, '/#error=access_denied&error_code=otp_expired', { email: EMAIL })
+    await tap(env, env.page.getByRole('button', { name: 'Use a different email' }))
+    check(`${name} Use a different email → 9a, the address kept`, (await heading(env.page)) === 'Create your account' && (await env.page.getByLabel('Email', { exact: true }).inputValue()) === EMAIL)
     await env.ctx.close()
   }
 
@@ -454,19 +610,20 @@ for (const view of ['day', 'night', 'desktop']) {
 // ── Side by side: the design frame | this build, same state. ──
 if (DESIGN) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 })
-  await page.goto(`${DESIGN}/${encodeURIComponent('First Run.dc.html')}`, { waitUntil: 'networkidle' })
+  // 'load', not 'networkidle': a slow Google Fonts request can keep the network busy for good.
+  await page.goto(`${DESIGN}/${encodeURIComponent('First Run.dc.html')}`, { waitUntil: 'load', timeout: 60_000 })
   await sleep(2500)
-  const pairs = [['9a', '9a-day'], ['9b-1', '9b-1-day'], ['9b-2', '9b-2-day'], ['9b-3', '9b-3-day'], ['9g', '9g-day'], ['9h', '9h-day'], ['9i', '9i-day'], ['9j', '9j-day'], ['9k-1', '9k-1-day'], ['9k-2', '9k-2-day'], ['9k-3', '9k-3-day'], ['9l-a', '9a-night'], ['9l-g', '9l-g-night'], ['9m-a', '9a-desktop'], ['9m-g', '9m-g-desktop']]
+  const pairs = [['9a', '9a-day'], ['9b-1', '9b-1-day'], ['9b-2', '9b-2-day'], ['9b-3', '9b-3-day'], ['9c', '9c-day'], ['9d', '9d-day'], ['9e', '9e-day'], ['9f', '9f-day'], ['9g', '9g-day'], ['9h', '9h-day'], ['9i', '9i-day'], ['9j', '9j-day'], ['9k-1', '9k-1-day'], ['9k-2', '9k-2-day'], ['9k-3', '9k-3-day'], ['9l-a', '9a-night'], ['9l-g', '9l-g-night'], ['9m-a', '9a-desktop'], ['9m-g', '9m-g-desktop']]
   for (const [frame] of pairs) {
     const el = page.locator(`[id="${frame}"] [data-screen-label]`)
-    await el.scrollIntoViewIfNeeded()
-    await el.screenshot({ path: path.join(OUT, `design-${frame}.png`) })
+    // A side-by-side is a picture, not a check: one the design page won't give up is skipped.
+    await el.screenshot({ path: path.join(OUT, `design-${frame}.png`), timeout: 10_000 }).catch((e) => console.log(`design ${frame} skipped: ${e.message.split('\n')[0]}`))
   }
   const uri = (f) => `data:image/png;base64,${fs.readFileSync(f).toString('base64')}`
   for (const [frame, ours] of pairs) {
     const d = path.join(OUT, `design-${frame}.png`)
     const o = path.join(OUT, `${ours}.png`)
-    if (!fs.existsSync(o)) continue
+    if (!fs.existsSync(o) || !fs.existsSync(d)) continue
     const w = frame.startsWith('9m') ? 1200 : 390
     await page.setViewportSize({ width: w * 2 + 40, height: 1000 })
     await page.setContent(`<body style="margin:0;background:#888;display:flex;gap:16px;padding:12px;font:12px monospace;color:#fff"><div><div>design ${frame}</div><img src="${uri(d)}" style="width:${w}px"></div><div><div>build ${ours}</div><img src="${uri(o)}" style="width:${w}px"></div></body>`)
