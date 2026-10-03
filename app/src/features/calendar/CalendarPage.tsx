@@ -697,7 +697,10 @@ function DesktopCalendar() {
           initialKind={quickCreate.kind}
           slot={quickCreate.slot}
           anchor={quickCreate.anchor}
-          onClose={() => setQuickCreate(null)}
+          onClose={() => {
+            setQuickCreate(null)
+            gridRef.current?.unselect()
+          }}
         />
       )}
       {contextMenu && (

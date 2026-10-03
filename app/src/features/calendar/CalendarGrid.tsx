@@ -39,6 +39,9 @@ export interface CalendarGridHandle {
   prev(): void
   next(): void
   today(): void
+  /** Drops the slot highlight (quick-create closed) — FullCalendar keeps it, and a click on a
+   * still-selected slot never selects again, so the same slot couldn't be reopened. */
+  unselect(): void
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -260,6 +263,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })
 
   useImperativeHandle(ref, () => ({
+    unselect: () => fcRef.current?.getApi().unselect(),
     prev: () => fcRef.current?.getApi().prev(),
     next: () => fcRef.current?.getApi().next(),
     // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
