@@ -18,19 +18,20 @@ import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'todoist' | 'ticktick' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'csv'
 // One line each: what to drop, and where the source's own menus hide the export.
 const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
   akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
   todoist: { label: 'Todoist', accept: '.csv', multiple: true, how: 'Todoist: open a project → ⋯ → Export as a template → Download CSV · one file per project, several at once is fine', match: 'todoist csvs carry no ids — a re-import matches tasks by file + section + title' },
   ticktick: { label: 'TickTick', accept: '.csv', how: 'TickTick (web): Settings → Account → Backup & Restore → Generate backup — the .csv it downloads' },
+  notion: { label: 'Notion', accept: '.csv', how: 'Notion: open the database → ⋯ → Export → Markdown & CSV, unzip, pick the .csv · you check the columns next', match: 'notion csvs carry no page ids — duplicates are matched by a hash of title + due + project' },
   csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
 }
 
 type Step =
   | { name: 'pick' }
   | { name: 'reading' }
-  | { name: 'mapping'; source: 'csv'; rows: string[][]; fileName: string; mapping: CsvMapping }
+  | { name: 'mapping'; source: 'csv' | 'notion'; rows: string[][]; fileName: string; mapping: CsvMapping }
   | { name: 'preview'; batch: ImportBatch; existing: ExistingRefs }
   | { name: 'importing'; done: number; total: number; undoing?: boolean }
   | { name: 'summary'; summary: ImportSummary; undone?: boolean }
@@ -175,6 +176,7 @@ export function ImportPage() {
         return parseTickTick(await first.text())
       case 'todoist':
         return mergeBatches(await Promise.all(files.map(async (f) => parseTodoist(await f.text(), f.name))))
+      case 'notion':
       case 'csv': {
         const rows = parseCsv(await first.text())
         if (rows.length < 2) throw new Error('a header row plus at least one row is needed')
