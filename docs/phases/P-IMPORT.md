@@ -62,15 +62,23 @@ entry card (Settings.dc.html 2a Integrations card language — flag for Kai's ey
 dedicated canvas exists for the wizard itself).
 
 ## Acceptance checklist
-- [ ] Kai's real Akiflow dump imports: tasks with priority/duration/dates/projects intact;
-      counts in the summary match the dump
-- [ ] Re-importing the same file twice → zero duplicates (external_ref upsert proven)
-- [ ] A generic CSV maps via the column mapper and lands correctly
-- [ ] A folder of .md files lands as journal/notes entries with sane dates
-- [ ] Airplane-mode import works (outbox queues, syncs on reconnect)
+- [x] Kai's real Akiflow dump imports: tasks with priority/duration/dates/projects intact;
+      counts in the summary match the dump — ROADMAP changelog 2026-07-19 (on Kai's account:
+      22 projects + 655 tasks, 248 completed; predates `docs/log/`)
+- [x] Re-importing the same file twice → zero duplicates (external_ref upsert proven) — same
+      2026-07-19 entry ("re-import proven a 0-dup no-op"); `docs/log/2026-10-03-0723-importers-handoff.md` ("· N already here" in the
+      preview, only the new rows written)
+- [x] A generic CSV maps via the column mapper and lands correctly — `docs/log/2026-10-03-0723-importers-handoff.md`
+      (`docs/log/assets/importers/verify.mjs` "Generic CSV": mapping step, 2 projects + 3 tasks
+      previewed, Cairo-time due written)
+- [ ] A folder of .md files lands as journal/notes entries with sane dates — not built: Markdown
+      lands as tasks (+ paragraphs to the Inbox on opt-in), see the 2026-10-03 notes
+- [ ] Airplane-mode import works (outbox queues, syncs on reconnect) — not verified
 - [ ] No import data hits any network endpoint except Supabase (and Groq ONLY if the user
-      clicks the mapping-assist button)
-- [ ] Every import run visible in Activity via logActivity
+      clicks the mapping-assist button) — true by design (parsing is local; the Groq assist was
+      never built), but no network capture has been recorded
+- [x] Every import run visible in Activity via logActivity — `docs/log/2026-10-03-0723-importers-handoff.md` (verify.mjs: exactly one
+      `import.run` per source, desktop + phone)
 
 ## Pitfalls
 - Big dumps: chunk the outbox writes; don't build one 5,000-row transaction. Show progress.
