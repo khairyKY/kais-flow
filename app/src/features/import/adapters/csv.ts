@@ -87,7 +87,7 @@ export async function csvToBatch(rows: string[][], mapping: CsvMapping, source: 
       sourceProjectId: project,
       external_ref: { source, id, raw },
     })
-  })
+  }, 50) // chrono reads every date cell — small chunks keep each blocking slice short
 
   const projects = [...projectNames].map((name) => ({
     name,

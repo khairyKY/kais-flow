@@ -88,7 +88,7 @@ export async function parseTodoist(text: string, fileName: string, now: Date = n
       sourceParentId: indent > 1 ? (parents[indent - 1] ?? null) : null,
       external_ref: { source: 'todoist', id, raw: { ...Object.fromEntries(header.map((h, i) => [h, r[i] ?? ''])), project, section } },
     })
-  })
+  }, 50) // chrono reads every DATE cell — small chunks keep each blocking slice short
 
   return { ...emptyBatch('todoist'), projects: [{ name: project, external_ref: { source: 'todoist', id: projectId, raw: { name: project, file: fileName } } }], tasks }
 }

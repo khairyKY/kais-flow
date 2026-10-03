@@ -19,7 +19,7 @@
 import { parseCsv } from './csv'
 import {
   type ImportBatch, type ImportTask, type ImportNote,
-  naiveLocalToUtc, stableHash, zoneOr, eachChunked, emptyBatch,
+  naiveLocalToUtc, dayIn, stableHash, zoneOr, eachChunked, emptyBatch,
 } from './shared'
 
 const PRIORITY: Record<string, number> = { '5': 1, '3': 2, '1': 3 }
@@ -33,7 +33,7 @@ function instant(v: string): string | null {
 
 /** The calendar day an instant falls on in `tz`, as that day's Cairo midnight. */
 function dayOf(iso: string, tz: string): string {
-  return naiveLocalToUtc(new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date(iso)))
+  return naiveLocalToUtc(dayIn(tz, new Date(iso)))
 }
 
 export async function parseTickTick(text: string): Promise<ImportBatch> {

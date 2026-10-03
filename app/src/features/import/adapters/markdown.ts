@@ -34,13 +34,14 @@ const SCHEDULED = dated('⏳|⌛')
 const START = dated('🛫')
 const DONE = dated('✅|❌')
 const REPEAT = /🔁️?\s*([^📅📆🗓⏳⌛🛫✅➕❌⏫🔼🔽🔺⏬🆔⛔#]*)/u
+const REPEAT_ALL = new RegExp(REPEAT.source, 'gu')
 const PRIORITY: [RegExp, number][] = [[/🔺|⏫/u, 1], [/🔼/u, 2], [/🔽|⏬/u, 3]]
 const TAG = /(^|\s)#([\p{L}\p{N}_/-]+)/gu
 
 function clean(s: string): string {
   return s
     .replace(/(?:📅|📆|🗓|⏳|⌛|🛫|✅|➕|❌)️?\s*\d{4}-\d{2}-\d{2}/gu, '')
-    .replace(new RegExp(REPEAT.source, 'gu'), '')
+    .replace(REPEAT_ALL, '')
     .replace(/[🔺⏫🔼🔽⏬]️?/gu, '')
     .replace(/(?:🆔|⛔)️?\s*\S+/gu, '')
     .replace(TAG, (m, pre: string, tag: string) => (/^\d+$/.test(tag) ? m : pre))

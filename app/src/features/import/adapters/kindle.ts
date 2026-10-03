@@ -59,7 +59,9 @@ export async function parseKindle(text: string): Promise<ImportBatch> {
 
     const clip: Clip = { text: body, book, author, page: where, key: textKey(body), loc: locText ? parseInt(locText, 10) : null }
     const list = clips.get(k) ?? []
-    const prev = list.findIndex((c) => c.key.includes(clip.key) || clip.key.includes(c.key) || (c.loc != null && c.loc === clip.loc))
+    // An edit never moves a highlight's start far, so only nearby clippings are compared (a 20k-clipping file stays fast).
+    const near = (c: Clip) => c.loc == null || clip.loc == null || Math.abs(c.loc - clip.loc) <= 100
+    const prev = list.findIndex((c) => near(c) && ((c.loc != null && c.loc === clip.loc) || c.key.includes(clip.key) || clip.key.includes(c.key)))
     if (prev >= 0) list.splice(prev, 1)
     list.push(clip)
     clips.set(k, list)

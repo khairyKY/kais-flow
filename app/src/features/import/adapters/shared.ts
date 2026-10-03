@@ -118,13 +118,36 @@ export function zoneOr(tz: string | null | undefined): string {
   }
 }
 
-function tzOffsetMs(tz: string, date: Date): number {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', {
+// Building an Intl.DateTimeFormat costs far more than using one — a 40k-task vault spent most of
+// its parse here — so one per zone, reused.
+const clocks = new Map<string, Intl.DateTimeFormat>()
+const dayFormats = new Map<string, Intl.DateTimeFormat>()
+function clockOf(tz: string) {
+  let f = clocks.get(tz)
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', {
       timeZone: tz,
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
     })
+    clocks.set(tz, f)
+  }
+  return f
+}
+
+/** YYYY-MM-DD of the calendar day `date` falls on in `tz`. */
+export function dayIn(tz: string, date: Date): string {
+  let f = dayFormats.get(tz)
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-CA', { timeZone: tz })
+    dayFormats.set(tz, f)
+  }
+  return f.format(date)
+}
+
+function tzOffsetMs(tz: string, date: Date): number {
+  const parts = Object.fromEntries(
+    clockOf(tz)
       .formatToParts(date)
       .map((p) => [p.type, p.value]),
   )
@@ -199,7 +222,7 @@ export function parseLooseDate(text: string, now: Date = new Date(), tz: string 
 
 /** Today's midnight on `tz`'s wall clock, as UTC — the due date of a repeat with no start. */
 export function todayMidnight(now: Date = new Date(), tz: string = TZ): string {
-  return naiveLocalToUtc(new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now), tz)
+  return naiveLocalToUtc(dayIn(tz, now), tz)
 }
 
 const WEEKDAY: Record<string, string> = { mo: 'MO', tu: 'TU', we: 'WE', th: 'TH', fr: 'FR', sa: 'SA', su: 'SU' }
