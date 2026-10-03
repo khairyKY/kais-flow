@@ -49,6 +49,7 @@ const task = (n, title, over = {}) => ({
 })
 const done = (at) => ({ status: 'done', completed_at: iso(at), top3: false })
 const REVIEW = 1, UNTITLED = 2, AUDIT = 3, TYRE = 4, NODE = 5, PLANTS = 6, OMAR = 7, MILK = 8, BUDGET = 9, GYMT = 10, D1 = 11, D2 = 12, D3 = 13, D4 = 14
+const LICENCE = 15, BILL = 16, INVOICE = 17
 const ev = (n, title, from, to, taskN = null, day = 27) => ({
   id: `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`, user_id: UID, title, starts_at: iso(from, day), ends_at: iso(to, day), all_day: false,
   task_id: taskN ? id(taskN) : null, source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: taskN ? 'task' : 'event', color: null, created_at: DAY0, updated_at: DAY0, deleted_at: null,
@@ -69,6 +70,8 @@ function planDay(o = {}) {
     task(TYRE, 'Call the tyre supplier', { duration_min: 30 }),
     task(NODE, 'Search for a good node.js source', { duration_min: o.budget ? 240 : 45, project_id: o.budget ? P_FIN : P_FLOW, due_at: iso('09:00', 29), ...(o.budget ? { title: 'Draft the Q4 budget' } : null) }),
     task(PLANTS, 'Water the balcony plants', { duration_min: 10, due_at: iso('09:00') }),
+    // Plan fixes (Kai 2026-10-03): more open tasks than the suggestions hold.
+    ...(o.more ? [task(LICENCE, 'Renew the car licence', { duration_min: 60 }), task(BILL, 'Pay the electricity bill', { duration_min: 15, project_id: P_FIN }), task(INVOICE, 'Send the September invoice', { duration_min: 20, due_at: iso('17:00') })] : []),
   ]
   const events = o.busy
     ? [ev(1, 'Deep work — forecasting', '09:00', '12:00'), ev(2, 'Workshop', '12:00', '13:30'), ev(3, 'Client day', '13:30', '16:00'), ev(4, 'Reviews', '16:00', '18:00')]
@@ -267,7 +270,7 @@ for (const theme of ['day', 'night']) {
   check(`${name} four sections in order`, JSON.stringify(await labels(page)) === JSON.stringify(['CARRY-OVER · 2', 'INBOX · 2', 'PICK YOUR 3 · 2/3', 'SUGGESTED TIMES']), JSON.stringify(await labels(page)))
   check(`${name} carry rows: overdue meta + Segmented + Drop`, /OVERDUE 64D/i.test(await text(row(page, REVIEW))) && /FROM YESTERDAY/i.test(await text(row(page, UNTITLED))) && (await row(page, REVIEW).getByRole('radio').count()) === 3 && (await row(page, REVIEW).getByRole('button', { name: 'Drop' }).count()) === 1)
   check(`${name} inbox rows: capture meta, project chip, Dismiss, File`, /VOICE · LAST NIGHT 23:10/i.test(await text(page.locator('.rt-inbox').first())) && /TYPED · FRI/i.test(await text(page.locator('.rt-inbox').nth(1))) && /KAI.S FLOW/i.test(await text(page.locator('.rt-inbox').first())), (await text(page.locator('.rt-inbox').first())).replace(/\n/g, ' '))
-  check(`${name} footer: workload + status + Start the day`, /~\d+h.* planned · you'll finish around \d\d:\d0/.test(await text(page.locator('.rt-wl'))) && /2 PICKED · 0 TIMED/i.test(await text(page.locator('.rt-foot'))) && (await page.getByRole('button', { name: 'Start the day' }).count()) === 1, await text(page.locator('.rt-foot')))
+  check(`${name} footer: workload + status (suggested times count as timed) + Start the day`, /~\d+h.* planned · you'll finish around \d\d:\d0/.test(await text(page.locator('.rt-wl'))) && /2 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))) && (await page.getByRole('button', { name: 'Start the day' }).count()) === 1, await text(page.locator('.rt-foot')))
   await phoneBasics(page, name, errors)
   await ctx.close()
 }
@@ -303,15 +306,16 @@ if (want('6c')) {
   check('6c seeds pre-selected: stars on, sprout "Seed", the first is "✶ Goal"', (await audit.locator('.kf-star[aria-pressed="true"]').count()) === 1 && /✶ GOAL/i.test(await text(audit)) && /SEED/i.test(await text(audit)) && /SEED/i.test(await text(row(page, TYRE))) && !/GOAL/i.test(await text(row(page, TYRE))), (await text(audit)).replace(/\n/g, ' '))
   check('6c unstarred rows: node.js, plants (due today)', (await row(page, NODE).locator('.kf-star[aria-pressed="false"]').count()) === 1 && /DUE TODAY/i.test(await text(row(page, PLANTS))))
   check('6c carried rows are not listed again under Pick your 3', (await page.locator(`[id="rt-${id(REVIEW)}"]`).count()) === 1)
-  // 6d: third pick, accept two, change the third → the time picker.
+  // 6d: third pick → every pick has a dashed suggested pill; change the third → the time picker.
   await tap(cdp, row(page, NODE).locator('.kf-star'))
-  await scrollSheet(page, '.rt-tl')
+  await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Suggested", "i"))')
   const times = page.locator('.rt-trow')
   check('6d every pick gets a suggested time (always suggests)', (await times.count()) === 3 && (await page.locator('.rt-trow .rt-pill').count()) === 3, await times.count())
   check('6d the first slot follows Deep work', /10:30–12:30/.test(await text(times.first())) && /AFTER DEEP WORK/i.test(await text(times.first())), (await text(times.first())).replace(/\n/g, ' '))
-  await tap(cdp, times.nth(0).locator('.rt-ok'))
-  await tap(cdp, times.nth(1).locator('.rt-ok'))
-  check('6d ✓ fills once accepted; status 3 picked · 2 timed', (await page.locator('.rt-ok[aria-pressed="true"]').count()) === 2 && /3 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
+  const borders = () => page.locator('.rt-trow .rt-pill').evaluateAll((els) => els.map((e) => getComputedStyle(e).borderTopStyle))
+  check('6d no ✓ / Accept button on any row (plan fixes)', (await page.locator('.rt-ok').count()) === 0 && (await sheet(page).getByRole('button', { name: /accept/i }).count()) === 0)
+  check('6d suggested pills read as proposals: dashed', (await page.locator('.rt-pill.is-suggested').count()) === 3 && JSON.stringify(await borders()) === JSON.stringify(['dashed', 'dashed', 'dashed']), JSON.stringify(await borders()))
+  check('6d one plain line explains it; legend Calendar · Suggested · Set by you; 3 picked · 3 timed', (await text(sheet(page))).includes('Times are suggestions — tap one to change it. Start the day puts them on your calendar.') && /CALENDAR\s*SUGGESTED\s*SET BY YOU/i.test(await text(page.locator('.rt-legend'))) && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), (await text(page.locator('.rt-legend'))).replace(/\n/g, ' ') + ' | ' + (await text(page.locator('.rt-foot'))))
   await tap(cdp, times.nth(2).locator('.rt-pill'))
   await sleep(400)
   check('6d the pill being changed wears the focus ring; the timeline shows it', (await page.locator('.rt-pill.is-changing').count()) === 1 && (await page.locator('.rt-tl-b.rt-k-changing').count()) === 1)
@@ -323,12 +327,12 @@ if (want('6c')) {
   await sleep(400)
   await scrollSheet(page, '.rt-tl')
   await shot(page, '6d-day')
-  check('6d Done → the picked slot is accepted, after Lunch', /14:00–14:45/.test(await text(times.nth(2))) && /AFTER LUNCH WITH OMAR/i.test(await text(times.nth(2))) && (await page.locator('.rt-ok[aria-pressed="true"]').count()) === 3 && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
+  check('6d Done → the set pill turns solid (the others stay dashed), after Lunch', /14:00–14:45/.test(await text(times.nth(2))) && /AFTER LUNCH WITH OMAR/i.test(await text(times.nth(2))) && (await times.nth(2).locator('.rt-pill.is-set').count()) === 1 && JSON.stringify(await borders()) === JSON.stringify(['dashed', 'dashed', 'solid']) && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), JSON.stringify(await borders()) + ' ' + (await text(page.locator('.rt-foot'))))
   // No time: the ghost in the picker's footer.
   await tap(cdp, times.nth(2).locator('.rt-pill'))
   await tap(cdp, page.locator('[role="dialog"]').last().getByRole('button', { name: 'No time' }))
   await sleep(400)
-  check('6d "No time" → the row turns into "Pick one"', /NO TIME/i.test(await text(times.nth(2))) && (await times.nth(2).getByRole('button', { name: 'Pick one' }).count()) === 1)
+  check('6d "No time" → the row turns into "Pick one"; 3 picked · 2 timed', /NO TIME/i.test(await text(times.nth(2))) && (await times.nth(2).getByRole('button', { name: 'Pick one' }).count()) === 1 && /3 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
   // 6l: a 4th star → the swap toast.
   await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Pick your 3", "i"))')
   await tap(cdp, row(page, PLANTS).locator('.kf-star'))
@@ -337,13 +341,20 @@ if (want('6c')) {
   check('6l 4th star → "Top 3 is full — swap one out?" with Swap', (await toasts(page)).includes('Top 3 is full — swap one out?') && (await page.locator('.kf-toast').getByRole('button', { name: 'Swap' }).count()) === 1, JSON.stringify(await toasts(page)))
   await tap(cdp, page.locator('.kf-toast').getByRole('button', { name: 'Swap' }))
   check('6l Swap: the goal stays, the last pick gives way', (await row(page, PLANTS).locator('.kf-star[aria-pressed="true"]').count()) === 1 && (await row(page, NODE).locator('.kf-star[aria-pressed="false"]').count()) === 1 && /✶ GOAL/i.test(await text(row(page, AUDIT))))
-  // Start the day writes the picks, the goal, the accepted times, the ritual.
+  // The swapped-in pick gets "No time": it stays a pick, but nothing goes on the calendar for it.
+  await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Suggested", "i"))')
+  await tap(cdp, times.nth(2).locator('.rt-pill'))
+  await tap(cdp, page.locator('[role="dialog"]').last().getByRole('button', { name: 'No time' }))
+  await sleep(400)
+  check('6l the plants pick set to No time; 3 picked · 2 timed', /Water the balcony plants/.test(await text(times.nth(2))) && /NO TIME/i.test(await text(times.nth(2))) && /3 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
+  // Start the day writes the picks, the goal, every timed pick (no ✓ needed), the ritual.
   await tap(cdp, page.getByRole('button', { name: 'Start the day' }))
   await sleep(900)
   const starred = (state.rows.tasks ?? []).filter((t) => t.top3).map((t) => t.id).sort()
   check('Start the day: the picks become the Top 3', JSON.stringify(starred) === JSON.stringify([id(AUDIT), id(TYRE), id(PLANTS)].sort()), JSON.stringify(starred))
   const blocks = (state.rows.calendar_events ?? []).filter((e) => e.task_id && !e.id.startsWith('e0'))
-  check('Start the day: accepted times go on the calendar (2 blocks, Cairo 10:30 / 12:30)', blocks.length === 2 && blocks.some((b) => b.starts_at === iso('10:30')), JSON.stringify(blocks.map((b) => b.starts_at)))
+  check('Start the day: the timed picks go on the calendar as suggested (2 blocks, Cairo 10:30 / 12:30), untouched', blocks.length === 2 && blocks.some((b) => b.task_id === id(AUDIT) && b.starts_at === iso('10:30') && b.ends_at === iso('12:30')) && blocks.some((b) => b.task_id === id(TYRE) && b.starts_at === iso('12:30')), JSON.stringify(blocks.map((b) => b.starts_at)))
+  check('Start the day: the "No time" pick stays unscheduled', !blocks.some((b) => b.task_id === id(PLANTS)), JSON.stringify(blocks.map((b) => b.task_id)))
   check('Start the day: ritual.finished (morning) logged; the sheet is gone', state.writes.some((w) => w.row.event_type === 'ritual.finished' && w.row.payload?.ritual === 'morning') && (await page.locator('.rt').count()) === 0)
   check('Start the day: Today no longer offers Plan', (await page.locator('.tp-ritual').count()) === 0 || !(await text(page.locator('.tp-ritual'))).includes('Plan my day'), await text(page.locator('.tp-ritual')))
   check('Start the day: the goal is the first pick', (await page.evaluate(() => localStorage.getItem('kf_goal_task_id'))) === id(AUDIT))
@@ -457,6 +468,91 @@ for (const theme of ['day', 'night']) {
   await page.locator('[data-day-card]').getByRole('button', { name: 'Begin' }).click()
   await sleep(500)
   check(`${name} …and keeps progress`, (await page.locator('[id="rt-' + id(REVIEW) + '"]').getByRole('radio', { name: 'Tomorrow' }).getAttribute('aria-checked')) === 'true')
+  check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── Plan fixes (Kai 2026-10-03): pick from every open task without leaving Plan — search + Show all. ──
+const ALL_OPEN = ['Review Kai', 'Untitled task', 'Finish the flow audit', 'Call the tyre supplier', 'Search for a good node.js source', 'Water the balcony plants', 'Renew the car licence', 'Pay the electricity bill', 'Send the September invoice']
+for (const theme of ['day', 'night']) {
+  if (!want('6s')) continue
+  const name = `6s-search-${theme}`
+  const { ctx, page, cdp, errors } = await open({ kind: 'plan', at: '07:40', more: true }, theme)
+  await openPlan(page, cdp)
+  const dlg = sheet(page)
+  const search = dlg.getByRole('searchbox', { name: 'Search all tasks' })
+  check(`${name} Pick your 3 opens with "Search all tasks…"; the keyboard stays down (no focus)`, (await search.count()) === 1 && (await search.getAttribute('placeholder')) === 'Search all tasks…' && !(await search.evaluate((e) => e === document.activeElement)))
+  check(`${name} no "All tasks" link out of the sheet`, (await dlg.getByRole('button', { name: /All tasks/i }).count()) === 0)
+  const more = dlg.getByRole('button', { name: /Show all \d+ open tasks/i })
+  check(`${name} suggestions stop at 4; "Show all 7 open tasks" under them`, /SHOW ALL 7 OPEN TASKS/i.test(await text(more)) && (await row(page, LICENCE).count()) === 0 && (await row(page, NODE).count()) === 0, await text(more))
+  await tap(cdp, more)
+  const all = await text(dlg)
+  check(`${name} Show all: every open task is in Plan — carry-over (overdue), due today, the rest`, ALL_OPEN.every((t) => all.includes(t)) && (await row(page, LICENCE).count()) === 1 && (await row(page, INVOICE).count()) === 1, ALL_OPEN.filter((t) => !all.includes(t)).join(', '))
+  if (theme === 'day') {
+    await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Pick your 3", "i"))')
+    await shot(page, `${name}-all`)
+  }
+  await tap(cdp, dlg.getByRole('button', { name: 'Show fewer' }))
+  check(`${name} Show fewer folds back to the suggestions`, (await row(page, LICENCE).count()) === 0)
+  // Search: a task the suggestions don't hold; star it right there.
+  await tap(cdp, search)
+  await search.fill('licence')
+  await sleep(300)
+  check(`${name} search "licence" finds it (not a suggestion); only matches are listed`, (await row(page, LICENCE).count()) === 1 && (await row(page, AUDIT).count()) === 0 && (await dlg.getByRole('button', { name: /Show all/i }).count()) === 0)
+  await tap(cdp, row(page, LICENCE).locator('.kf-star'))
+  check(`${name} starring a result picks it in place: 3/3, a suggested time, 3 picked · 3 timed`, (await row(page, LICENCE).locator('.kf-star[aria-pressed="true"]').count()) === 1 && (await labels(page)).includes('PICK YOUR 3 · 3/3') && (await page.locator(`[id="rt-time-${id(LICENCE)}"] .rt-pill.is-suggested`).count()) === 1 && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), JSON.stringify(await labels(page)))
+  await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Pick your 3", "i"))')
+  await shot(page, name)
+  // By project name, then a 4th star from the results → the swap toast.
+  await search.fill('finance')
+  await sleep(300)
+  check(`${name} search matches the project name too ("finance" → the electricity bill)`, (await row(page, BILL).count()) === 1 && /FINANCE/i.test(await text(row(page, BILL))))
+  await tap(cdp, row(page, BILL).locator('.kf-star'))
+  await sleep(300)
+  check(`${name} a 4th star from the search → "Top 3 is full — swap one out?"`, (await toasts(page)).includes('Top 3 is full — swap one out?'), JSON.stringify(await toasts(page)))
+  await tap(cdp, page.locator('.kf-toast').getByRole('button', { name: 'Swap' }))
+  check(`${name} Swap: the bill in, the licence out, the goal (first) stays`, (await row(page, BILL).locator('.kf-star[aria-pressed="true"]').count()) === 1 && (await page.locator(`[id="rt-time-${id(BILL)}"]`).count()) === 1 && (await page.locator(`[id="rt-time-${id(LICENCE)}"]`).count()) === 0 && /Finish the flow audit/.test(await text(page.locator('.rt-trow').first())))
+  // A carried row is found too (its own id), and an empty search says so.
+  await search.fill('review')
+  await sleep(300)
+  check(`${name} search finds a carried task too, without a duplicate id`, (await page.locator(`[id="rt-found-${id(REVIEW)}"]`).count()) === 1 && (await row(page, REVIEW).count()) === 1)
+  await search.fill('dentist')
+  await sleep(300)
+  check(`${name} nothing matches → one quiet line`, (await text(dlg)).includes('No open task matches “dentist”.'))
+  // Back/Esc clears the search first; the sheet stays.
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  check(`${name} Esc clears the search first; the sheet stays`, (await search.inputValue()) === '' && (await page.locator('.rt').count()) === 1)
+  await phoneBasics(page, name, errors)
+  await ctx.close()
+}
+
+// Desktop: "/" focuses the search, Esc clears it, a second Esc closes (progress kept).
+for (const theme of ['day', 'night']) {
+  if (!want('6t')) continue
+  const name = `6t-desktop-search-${theme}`
+  const { ctx, page, errors } = await open({ kind: 'plan', at: '07:40', more: true }, theme, DESKTOP)
+  await page.locator('[data-day-card]').getByRole('button', { name: 'Begin' }).click()
+  await sleep(600)
+  const search = page.locator('.rt-desk').getByRole('searchbox', { name: 'Search all tasks' })
+  check(`${name} opens without focusing the search`, !(await search.evaluate((e) => e === document.activeElement)))
+  await page.keyboard.press('/')
+  check(`${name} "/" focuses the search (and types nothing)`, (await search.evaluate((e) => e === document.activeElement)) && (await search.inputValue()) === '')
+  await page.keyboard.type('licence')
+  await sleep(300)
+  await row(page, LICENCE).locator('.kf-star').click()
+  await sleep(200)
+  await shot(page, name)
+  check(`${name} found + starred in place: 3/3, a dashed suggested pill`, (await labels(page)).includes('PICK YOUR 3 · 3/3') && (await page.locator(`[id="rt-time-${id(LICENCE)}"] .rt-pill.is-suggested`).count()) === 1, JSON.stringify(await labels(page)))
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  check(`${name} Esc clears the search first; the panel stays`, (await search.inputValue()) === '' && (await page.locator('.rt-desk').count()) === 1)
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  check(`${name} a second Esc closes the panel`, (await page.locator('.rt-desk').count()) === 0)
+  await page.locator('[data-day-card]').getByRole('button', { name: 'Begin' }).click()
+  await sleep(500)
+  check(`${name} …and the searched pick is kept`, (await row(page, LICENCE).locator('.kf-star[aria-pressed="true"]').count()) === 1)
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
