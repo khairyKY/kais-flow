@@ -7,7 +7,8 @@ import {
   unsubscribeThisDevice,
   sendTestNotification,
 } from '../notifications/api'
-import { useAppSettings, updateAppSetting } from '../../lib/settings'
+import { useAppSettings, updateAppSetting, useCalendarDefaultView, type CalendarDefaultView } from '../../lib/settings'
+import { appPlatform, buildStamp, checkForUpdate, installedVersion, openDownload, reloadToUpdate, type UpdateResult } from '../../lib/appUpdate'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
@@ -302,6 +303,83 @@ function AppearanceCard() {
   )
 }
 
+// Kai 2026-10-03: the view the calendar opens on, synced (app_settings.calendar_default_view) so
+// the computer and the phone agree. Until one is picked the row shows this device's own default.
+function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefaultView }) {
+  const view = useCalendarDefaultView(platformDefault)
+  return (
+    <Seg<CalendarDefaultView>
+      value={view ?? platformDefault}
+      onChange={(v) => updateAppSetting('calendar_default_view', v)}
+      options={[
+        { value: 'day', label: 'Day' },
+        { value: '3day', label: '3 days' },
+        { value: 'week', label: 'Week' },
+      ]}
+    />
+  )
+}
+
+function CalendarCard() {
+  return (
+    <SCard tapeTint="color-mix(in oklch, var(--acc-lavender) 40%, transparent)">
+      <div style={{ ...flabel, marginBottom: 4 }}>Calendar</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0 2px' }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Opens on</div>
+          <div style={fhelp}>on every device · the toolbar still switches it any time</div>
+        </div>
+        <CalendarViewSeg platformDefault="week" />
+      </div>
+    </SCard>
+  )
+}
+
+// Kai 2026-10-03: "Check for updates" — one button for the web app, the Android app and the
+// Windows app (lib/appUpdate.ts says how each one checks).
+function AppUpdateCard() {
+  const platform = appPlatform()
+  const stamp = buildStamp()
+  const [installed, setInstalled] = useState<string | null>(null)
+  const [state, setState] = useState<'idle' | 'checking' | UpdateResult>('idle')
+  useEffect(() => {
+    if (platform !== 'web') void installedVersion(platform).then(setInstalled)
+  }, [platform])
+  const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo' }) : null
+  const current = platform === 'web' ? (stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build') : installed ? `v${installed.replace(/^v/, '')}` : 'version unknown'
+  const r = typeof state === 'object' ? state : null
+  const file = platform === 'android' ? 'APK' : 'installer'
+  const line =
+    !r ? null
+    : r.kind === 'reload' ? 'A new version is ready'
+    : r.kind === 'download' ? `${r.version} is out`
+    : r.kind === 'pending' ? `${r.version} is out — its ${file} is still on its way, try again in a few minutes`
+    : r.kind === 'current' ? `You're on the latest (${r.version ?? current})`
+    : r.kind === 'dev' ? 'This is a development build — nothing to compare it with'
+    : 'Couldn’t reach the update check — look at the connection and try again'
+  return (
+    <SCard>
+      <div style={{ ...flabel, marginBottom: 12 }}>App · Kai's Flow</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <Button
+          variant="secondary"
+          disabled={state === 'checking'}
+          onClick={() => {
+            setState('checking')
+            void checkForUpdate(platform).then(setState)
+          }}
+        >
+          {state === 'checking' ? 'Checking…' : 'Check for updates'}
+        </Button>
+        {line && <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>}
+        {r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
+        {r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
+      </div>
+      <div style={fhelp}>{current}{built ? ` · built ${built}` : ''}</div>
+    </SCard>
+  )
+}
+
 function TimezoneCard() {
   const { data: settings } = useAppSettings()
   const [custom, setCustom] = useState('')
@@ -571,7 +649,7 @@ function TrashCard() {
         <span style={{ flex: 1 }} />
         <Link to="/trash" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, textDecoration: 'none' }}>Open trash</Link>
       </div>
-      <div style={fhelp}>deleted tasks, inbox items, events and journal entries · composts after 30 days</div>
+      <div style={fhelp}>deleted tasks, inbox items, events, journal entries, projects and areas · composts after 30 days</div>
     </SCard>
   )
 }
@@ -936,7 +1014,7 @@ export function SoundCatalogCard() {
 // Punch 54: 'Capture API' left the page (endpoint unbuilt) — and a nav row that scrolls to
 // nothing is a dead control, so it left the sub-nav too. 'Sound' returned when Kai un-cut it
 // (2026-07-26); 'Resurfacing' is the cooldown card (punch 21); 'Trash' is punch 50's entry point.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile', 'App'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -980,7 +1058,11 @@ function DesktopSettings() {
         </div>
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, padding: '30px 36px 44px', maxWidth: active === 'Integrations' ? 780 : 760, display: 'flex', flexDirection: 'column', gap: 18, overflowY: 'auto' }}>
+      {/* Kai 2026-10-03: no scroller of its own. Its height was never bounded (the route grows with
+          the page — index.css .kf-route), so it never scrolled; it only swallowed the wheel (an
+          overflow-y:auto box gets overscroll-behavior: contain) and the page behind it, the one real
+          scroller (.app-main-content), stood still unless the pointer was over the left nav. */}
+      <div style={{ flex: 1, minWidth: 0, padding: '30px 36px 44px', maxWidth: active === 'Integrations' ? 780 : 760, display: 'flex', flexDirection: 'column', gap: 18 }}>
         {active === 'Integrations' ? (
           <IntegrationsPage />
         ) : (
@@ -988,6 +1070,7 @@ function DesktopSettings() {
             <div id="settings-Appearance"><AppearanceCard /></div>
             {/* Sounds un-cut by Kai 2026-07-26 — now a real synthesised layer (lib/sounds.ts). */}
             <div id="settings-Sound"><SoundCatalogCard /></div>
+            <div id="settings-Calendar"><CalendarCard /></div>
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
             <div id="settings-Notifications"><PushCard /></div>
@@ -997,6 +1080,7 @@ function DesktopSettings() {
             <ImportCard />
             <div id="settings-Trash"><TrashCard /></div>
             <div id="settings-Profile"><ProfileCard /></div>
+            <div id="settings-App"><AppUpdateCard /></div>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)', padding: '0 4px' }}>
               everything saves as you touch it — the SAVED chip just says so ✿
             </div>
@@ -1053,7 +1137,15 @@ function MobileSettings() {
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Paper texture</span>
           <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 160 }} />
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
+          <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Calendar opens on</span>
+          <CalendarViewSeg platformDefault="day" />
+        </div>
       </SCard>
+
+      <div style={{ marginTop: 12 }}>
+        <AppUpdateCard />
+      </div>
 
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', marginTop: 12, overflow: 'hidden' }}>
         {rows.map((r, i) => {

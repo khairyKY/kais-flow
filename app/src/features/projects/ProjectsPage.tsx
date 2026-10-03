@@ -1,8 +1,12 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, useTimeEntries, restoreProject, isThisMonth } from './api'
-import { useAreas } from '../areas/api'
+import { useProjects, useTimeEntries, restoreProject, isThisMonth, renameProject, deleteProjectWithUndo } from './api'
+import { useAreas, renameArea, deleteAreaWithUndo } from '../areas/api'
+import { ContextMenu } from '../../components/ContextMenu'
+import { ActionSheet } from '../../components/ActionSheet'
+import { Icon } from '../../components/Icon'
+import type { IconName } from '../../components/icons/kf'
 import { NewProjectModal } from './NewProjectModal'
 import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
@@ -50,6 +54,36 @@ const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
   return `/ds/assets/wisteria/${wisteriaStage(pct)}.png`
+}
+
+/** A row's name, edited in place (the row menu's Rename): Enter or leaving it saves, Esc keeps the old name. */
+function RenameField({ value, onDone, style }: { value: string; onDone: (next: string | null) => void; style?: React.CSSProperties }) {
+  const [text, setText] = useState(value)
+  const done = useRef(false)
+  const finish = (next: string | null) => {
+    if (done.current) return
+    done.current = true
+    onDone(next)
+  }
+  return (
+    <input
+      autoFocus
+      aria-label="Name"
+      value={text}
+      onFocus={(e) => e.currentTarget.select()}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') finish(text.trim() || null)
+        if (e.key === 'Escape') {
+          e.stopPropagation()
+          finish(null)
+        }
+      }}
+      onBlur={() => finish(text.trim() || null)}
+      style={{ font: 'inherit', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5, padding: '2px 6px', margin: '-3px -7px', minWidth: 0, width: '100%', ...style }}
+    />
+  )
 }
 
 export function ProjectsPage() {
@@ -180,6 +214,75 @@ export function ProjectsPage() {
 
   const isEmpty = allProjects.length === 0 && areas.length === 0
 
+  // Kai 2026-10-03: a project / area row's own menu — right-click on a computer, ⋯ everywhere
+  // (an ActionSheet on a phone). Rename edits the name in place; Delete = Trash + Undo.
+  const [menu, setMenu] = useState<{ kind: 'project' | 'area'; id: string; name: string; x: number; y: number } | null>(null)
+  const [renaming, setRenaming] = useState<string | null>(null)
+  const openMenu = (kind: 'project' | 'area', id: string, name: string, x: number, y: number) => setMenu({ kind, id, name, x, y })
+  const rowMenu = (kind: 'project' | 'area', id: string, name: string) => ({
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault()
+      openMenu(kind, id, name, e.clientX, e.clientY)
+    },
+  })
+  const moreButton = (kind: 'project' | 'area', id: string, name: string) => (
+    <button
+      type="button"
+      className="pj-more kf-hit"
+      aria-label={`More for ${name}`}
+      aria-haspopup="menu"
+      onClick={(e) => {
+        e.stopPropagation()
+        const r = e.currentTarget.getBoundingClientRect()
+        openMenu(kind, id, name, r.left, r.bottom)
+      }}
+    >
+      <Icon name="dots" size={20} />
+    </button>
+  )
+  const nameOf = (id: string, name: string, style?: React.CSSProperties) =>
+    renaming === id ? (
+      <RenameField
+        value={name}
+        style={style}
+        onDone={(next) => {
+          setRenaming(null)
+          if (!next || next === name) return
+          const p = allProjects.find((x) => x.id === id)
+          if (p) renameProject(p, next)
+          const a = areas.find((x) => x.id === id)
+          if (a) renameArea(a, next)
+        }}
+      />
+    ) : (
+      <EmojiText text={name} />
+    )
+  const menuActions = (m: NonNullable<typeof menu>): { label: string; icon: IconName; danger?: boolean; run: () => void }[] => {
+    const project = m.kind === 'project' ? allProjects.find((p) => p.id === m.id) : undefined
+    const area = m.kind === 'area' ? areas.find((a) => a.id === m.id) : undefined
+    return [
+      { label: 'Open', icon: 'chevright', run: () => navigate(`/projects/${m.id}`) },
+      { label: 'Rename', icon: 'label', run: () => setRenaming(m.id) },
+      // The press ceremony archives it when it closes (punch 51), with its own Undo.
+      ...(project ? [{ label: 'Finish & press', icon: 'check' as IconName, run: () => navigate(`/herbarium?press=${project.id}`) }] : []),
+      { label: 'Delete', icon: 'delete', danger: true, run: () => (project ? deleteProjectWithUndo(project) : area && deleteAreaWithUndo(area)) },
+    ]
+  }
+  const menuLayer = menu && (isMobile ? (
+    <ActionSheet
+      title={menu.name}
+      meta={menu.kind === 'project' ? 'Project' : 'Area'}
+      onClose={() => setMenu(null)}
+      items={menuActions(menu).map((a) => ({ label: a.label, icon: <Icon name={a.icon} />, destructive: a.danger, onSelect: a.run }))}
+    />
+  ) : (
+    <ContextMenu
+      position={{ x: menu.x, y: menu.y }}
+      onClose={() => setMenu(null)}
+      items={menuActions(menu).map((a) => ({ label: a.label, icon: <Icon name={a.icon} size={16} />, danger: a.danger, onClick: a.run }))}
+    />
+  ))
+
   // States t1 / 1c — unplanted projects: pots on a shelf, soil at the ready.
   const renderEmptyState = () => (
     <div style={{ padding: '52px 40px 56px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -245,13 +348,14 @@ export function ProjectsPage() {
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
+                  {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)', minWidth: 0 }}>{nameOf(p.id, p.name)}</div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
                     {/* J-19: on the meta line, not beside the name — the title row has no room at 390px. */}
@@ -263,6 +367,7 @@ export function ProjectsPage() {
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                     {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : 'no date'}
                   </span>
+                  {moreButton('project', p.id, p.name)}
                 </div>
               )
             })}
@@ -281,13 +386,14 @@ export function ProjectsPage() {
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
+                  {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)', minWidth: 0 }}>{nameOf(p.id, p.name)}</div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
@@ -298,6 +404,7 @@ export function ProjectsPage() {
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                     retainer
                   </span>
+                  {moreButton('project', p.id, p.name)}
                 </div>
               )
             })}
@@ -315,11 +422,12 @@ export function ProjectsPage() {
               <div
                 key={a.id}
                 onClick={() => navigate(`/projects/${a.id}`)}
+                {...rowMenu('area', a.id, a.name)}
                 className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
-                <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-body)' }}>{nameOf(a.id, a.name)}</span>
                 {isSlipping ? (
                   mobileSlippingChip
                 ) : (
@@ -327,12 +435,14 @@ export function ProjectsPage() {
                     {count} open
                   </span>
                 )}
+                {moreButton('area', a.id, a.name)}
               </div>
             )
           })}
           </>}
         </div>
         {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
+        {menuLayer}
       </div>
     )
   }
@@ -470,13 +580,14 @@ export function ProjectsPage() {
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
+                  {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)', minWidth: 0 }}>{nameOf(p.id, p.name)}</div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                       {slip && slippingChip(slip.days_since)}
                     </div>
@@ -488,6 +599,7 @@ export function ProjectsPage() {
                     {stat.doneMilestones} / {stat.totalMilestones} milestones
                   </span>
                   <span style={mchipLast}>{p.target_date ? `target ${dayMonth(p.target_date)}` : 'no date'}</span>
+                  {moreButton('project', p.id, p.name)}
                 </div>
               )
             })}
@@ -504,13 +616,14 @@ export function ProjectsPage() {
                 <div
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
+                  {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)', minWidth: 0 }}>{nameOf(p.id, p.name)}</div>
                       {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                       {slip && slippingChip(slip.days_since)}
                     </div>
@@ -524,6 +637,7 @@ export function ProjectsPage() {
                     retainer
                   </span>
                   <span style={mchipLast} />
+                  {moreButton('project', p.id, p.name)}
                 </div>
               )
             })}
@@ -540,12 +654,13 @@ export function ProjectsPage() {
                 <div
                   key={a.id}
                   onClick={() => navigate(`/projects/${a.id}`)}
+                  {...rowMenu('area', a.id, a.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={a.name} /></span>
+                    <span style={{ fontSize: 15, color: 'var(--ink-body)' }}>{nameOf(a.id, a.name, { width: 'auto' })}</span>
                     {domain && <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain.name}</span>}
                   </div>
                   {slippingItem ? (
@@ -554,6 +669,7 @@ export function ProjectsPage() {
                     <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>area</span>
                   )}
                   <span style={mchipLast}>{count} open</span>
+                  {moreButton('area', a.id, a.name)}
                 </div>
               )
             })}
@@ -596,6 +712,7 @@ export function ProjectsPage() {
                           <div
                             key={p.id}
                             onClick={() => navigate(`/projects/${p.id}`)}
+                            {...rowMenu('project', p.id, p.name)}
                             className="kf-lift-tilt"
                             style={{
                               display: 'block',
@@ -753,6 +870,7 @@ export function ProjectsPage() {
 
       {/* NEW PROJECT MODAL */}
       {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
+      {menuLayer}
     </div>
   )
 }

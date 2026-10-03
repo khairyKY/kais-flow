@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
 import type { Project, TimeEntry } from '../../lib/types'
 
 export function useProjects() {
@@ -12,6 +13,8 @@ export function useProjects() {
       if (error) throw error
       return data as Project[]
     },
+    // Trashed projects (0044) stay in the cache for Undo; no list shows them (Trash reads its own).
+    select: (projects) => projects.filter((p) => !p.deleted_at),
   })
 }
 
@@ -90,6 +93,20 @@ export function restoreProject(project: Project): void {
   const updated = { ...project, status: 'active', updated_at: nowIso() }
   writeRow('projects', updated)
   logActivity('project.restored', 'project', project.id, {})
+}
+
+/** Kai 2026-10-03 (Projects ⋯ / right-click → Delete): to Trash, no confirm, "Moved to Trash ·
+ * Undo". Its tasks keep their project_id while it rests there, so Undo or Trash → Restore puts
+ * everything back; only composting it (30 days) lets them go, to no project (migration 0044). */
+export function deleteProjectWithUndo(project: Project): void {
+  writeRow('projects', { ...project, deleted_at: nowIso(), updated_at: nowIso() })
+  logActivity('project.deleted', 'project', project.id, { name: project.name })
+  toastUndo('Moved to Trash', () => restoreTrashedProject(project))
+}
+
+export function restoreTrashedProject(project: Project): void {
+  writeRow('projects', { ...project, deleted_at: null, updated_at: nowIso() })
+  logActivity('project.restored', 'project', project.id, { from: 'trash' })
 }
 
 export function updateProjectColor(project: Project, color: string | null): void {

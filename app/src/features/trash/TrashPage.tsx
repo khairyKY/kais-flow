@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useDeletedItems, restoreItem, deleteItemForever, type DeletedItem } from './api'
+import { useDeletedItems, restoreItem, deleteItemForever, TRASH_TABLE, type DeletedItem } from './api'
 import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { toastAction } from '../../lib/undo'
@@ -32,8 +32,7 @@ export function TrashPage() {
 
   const navigate = useNavigate()
 
-  const baseKey = (type: DeletedItem['type']) =>
-    type === 'Task' ? 'tasks' : type === 'Inbox' ? 'inbox_items' : type === 'Event' ? 'calendar_events' : 'journal_entries'
+  const baseKey = (type: DeletedItem['type']) => TRASH_TABLE[type]
 
   // Punch 9 (Trash slice): a restore that only says where it went makes you go find it.
   const DESTINATION: Record<DeletedItem['type'], { label: string; to: string }> = {
@@ -41,6 +40,8 @@ export function TrashPage() {
     Inbox: { label: 'Inbox', to: '/inbox' },
     Event: { label: 'Calendar', to: '/calendar' },
     Journal: { label: 'Journal', to: '/journal' },
+    Project: { label: 'Projects', to: '/projects' },
+    Area: { label: 'Projects', to: '/projects' },
   }
 
   // writeRow only patches the base-table cache, never ['deleted_items'] — remove optimistically
