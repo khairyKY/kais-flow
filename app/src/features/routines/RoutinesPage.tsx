@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
-import { computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, todayTally, type StreakStatus } from './streaks'
+import { challengeDays, computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, streakOfGoal, todayTally, type StreakStatus } from './streaks'
 import { vineStage } from '../../lib/growthStages'
 import { groupRoutinesByTime } from './routineGrouping'
 import { useToastStore } from '../../lib/toastStore'
@@ -104,9 +104,9 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }
         // phone row it could only wrap over the routine's name.
         !isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{ZERO_ROW_LABEL[status]}</span>
       ) : (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--sig-streak)' }}>
+        <span aria-label={routine.goal_days ? `${current} of ${routine.goal_days} days` : `${current} day streak`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--sig-streak)' }}>
           <FlameIcon />
-          {current}
+          {streakOfGoal(current, routine.goal_days)}
         </span>
       )}
       <DayDots routine={routine} completions={completions} onOpen={onOpenTrellis} />
@@ -332,7 +332,7 @@ function ChallengeCard({ routine, completions }: { routine: Routine; completions
   const end = routine.challenge_end!
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current } = computeStreak(dates, routine.cadence)
-  const totalDays = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1
+  const totalDays = routine.goal_days ?? challengeDays(start, end)
   const doneInRange = dates.filter((d) => d >= start && d <= end).length
   const pct = totalDays > 0 ? Math.min(100, Math.round((doneInRange / totalDays) * 100)) : 0
   const endLabel = new Date(`${end}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

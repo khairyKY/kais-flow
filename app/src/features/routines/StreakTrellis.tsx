@@ -1,5 +1,5 @@
 import { useEscapeStack } from '../../lib/overlayStack'
-import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, trellisCaption, type TrellisDay } from './streaks'
+import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, streakOfGoal, trellisCaption, type TrellisDay } from './streaks'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
@@ -77,7 +77,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 3 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{current} days</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakOfGoal(current, routine.goal_days)} days</span>
                   {held.length > 0 && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                       <DropletIcon size={8} />
