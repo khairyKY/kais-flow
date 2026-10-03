@@ -6,6 +6,8 @@ import { Cta, Field, FirstRunPage, LinkButton, Plant } from '../auth/AuthLayout'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
 import { DatePicker } from '../../components/DatePicker'
 import { uiZoom } from '../../lib/uiScale'
+import { useAuth } from '../auth/AuthProvider'
+import { markFirstTodayHint } from '../today/firstTodayHint'
 import { readFirstThing, whenChip, withPicked, type PickedDate } from './firstThings'
 
 // ── First Run.dc.html 9g (empty) / 9h (filled, a date parse chip) / 9l-g night / 9m-g desktop:
@@ -17,6 +19,7 @@ const PLACEHOLDERS = ['e.g. Call the supplier tomorrow 3pm', 'Second thing', 'Th
 
 export function OnboardingPage() {
   const { data: settings } = useAppSettings()
+  const { session } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   // WA-1 punch 3: without ?replant a finished account is bounced to /today — onboarding runs once.
@@ -55,6 +58,7 @@ export function OnboardingPage() {
 
   function finish(to: string, withThings: boolean) {
     completeOnboarding(name, withThings ? things.filter((t) => t !== null) : [])
+    if (!replant) markFirstTodayHint(session?.user.id) // 9i: the first Today explains its top card
     navigate(to, { replace: true })
   }
 
