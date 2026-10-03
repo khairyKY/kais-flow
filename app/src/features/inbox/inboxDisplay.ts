@@ -53,3 +53,9 @@ export function dismissedAgo(iso: string): string {
 export function daysAgo(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000))
 }
+
+/** A GitHub issue link — only ever a github.com page (payloads and task refs are the user's own
+ * rows, but they end up as hrefs). */
+export function githubUrl(url: unknown): string | null {
+  return typeof url === 'string' && url.startsWith('https://github.com/') ? url : null
+}

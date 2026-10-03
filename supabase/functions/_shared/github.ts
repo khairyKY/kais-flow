@@ -66,6 +66,8 @@ export interface GhIssue {
   html_url: string
   repository_url: string
   updated_at: string
+  /** When the issue was opened — the Inbox row's age. */
+  created_at?: string
   labels?: ({ name?: string } | string)[]
 }
 
@@ -76,6 +78,9 @@ export interface IssuePayload {
   url: string | null
   labels: string[]
   updated_at: string
+  /** Absent on rows stored before 2026-10-03 until their issue next changes; the Inbox falls back to
+   * when the row arrived. */
+  created_at: string | null
 }
 
 export function toPayload(issue: GhIssue): IssuePayload {
@@ -88,6 +93,7 @@ export function toPayload(issue: GhIssue): IssuePayload {
     url: issue.html_url.startsWith('https://github.com/') ? issue.html_url : null,
     labels: (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : (l.name ?? ''))).filter(Boolean),
     updated_at: issue.updated_at,
+    created_at: issue.created_at ?? null,
   }
 }
 

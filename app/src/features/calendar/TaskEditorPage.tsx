@@ -9,6 +9,7 @@ import { useCalendarEvents } from './api'
 import { EmojiText } from '../../components/EmojiText'
 import { MiniFocus } from '../focus/MiniFocus'
 import { useAllInboxItems } from '../inbox/api'
+import { githubUrl } from '../inbox/inboxDisplay'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { localTimeKey, localToIso } from './eventTime'
@@ -92,6 +93,7 @@ export function TaskEditorPage() {
   const reminderOffset = task.due_at && task.reminder_at ? String(Math.round((new Date(task.due_at).getTime() - new Date(task.reminder_at).getTime()) / 60000)) : ''
   const linkedEvent = events.find((e) => e.task_id === task.id)
   const linkedInbox = inboxItems.find((i) => i.filed_task_id === task.id)
+  const issueUrl = githubUrl(task.external_ref?.url) // a filed GitHub issue (P6 step 4)
   const project = task.project_id ? projects.find((p) => p.id === task.project_id) : null
   const area = task.area_id ? areas.find((a) => a.id === task.area_id) : null
   const stage = taskCherryStage(task)
@@ -160,6 +162,9 @@ export function TaskEditorPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
             {linkedInbox?.kind === 'voice' && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>
+            )}
+            {issueUrl && (
+              <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', textDecoration: 'none' }}>View issue ↗</a>
             )}
             {task.priority != null && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: priorityColor(task.priority) ?? 'var(--acc-gold)' }}>
