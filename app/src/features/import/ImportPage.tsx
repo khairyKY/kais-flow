@@ -10,6 +10,7 @@ import { parseCsv, csvToBatch, guessMapping, CSV_TARGETS, type CsvMapping } from
 import { parseTodoist } from './adapters/todoist'
 import { parseTickTick } from './adapters/ticktick'
 import { parseMarkdown, type MarkdownOptions } from './adapters/markdown'
+import { parseKindle } from './adapters/kindle'
 import {
   fetchAllExistingRefs, commitBatch, planCommit, undoImport, refKey, KINDS,
   type ExistingRefs, type ImportSummary, type Kind, type Counts,
@@ -19,7 +20,7 @@ import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'notion' | 'markdown' | 'kindle' | 'csv'
 // One line each: what to drop, and where the source's own menus hide the export.
 const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
   akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
@@ -27,6 +28,7 @@ const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolea
   ticktick: { label: 'TickTick', accept: '.csv', how: 'TickTick (web): Settings → Account → Backup & Restore → Generate backup — the .csv it downloads' },
   notion: { label: 'Notion', accept: '.csv', how: 'Notion: open the database → ⋯ → Export → Markdown & CSV, unzip, pick the .csv · you check the columns next', match: 'notion csvs carry no page ids — duplicates are matched by a hash of title + due + project' },
   markdown: { label: 'Obsidian / Markdown', accept: '.md,.markdown', multiple: true, how: 'Obsidian needs no export — pick .md files, or the whole vault folder below · "- [ ]" lines become tasks', match: 'matched by file + task text — a changed date or tag re-imports as the same task' },
+  kindle: { label: 'Kindle highlights', accept: '.txt', how: 'Kindle: plug it in by USB, open the Kindle drive → documents → My Clippings.txt', match: 'books match by title — one already in your Library is reused, highlights already there are skipped' },
   csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
 }
 
@@ -182,6 +184,8 @@ export function ImportPage() {
         if (!notes.length) throw new Error('no .md files')
         return parseMarkdown(await Promise.all(notes.map(async (f) => ({ path: f.webkitRelativePath || f.name, text: await f.text() }))), md)
       }
+      case 'kindle':
+        return parseKindle(await first.text())
       case 'ticktick':
         return parseTickTick(await first.text())
       case 'todoist':
