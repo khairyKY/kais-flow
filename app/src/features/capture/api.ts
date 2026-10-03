@@ -16,7 +16,8 @@ function nowIso(): string {
   return new Date().toISOString()
 }
 
-async function callParseCapture(rawText: string): Promise<ParseResult> {
+// `today` is when the words were said: a queued capture parsed hours later still reads "tomorrow" from then.
+async function callParseCapture(rawText: string, today = nowIso()): Promise<ParseResult> {
   const domains = queryClient.getQueryData<Domain[]>(['domains']) ?? []
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
 
@@ -26,7 +27,7 @@ async function callParseCapture(rawText: string): Promise<ParseResult> {
       context: {
         domains: domains.map((d) => ({ id: d.id, name: d.name })),
         projects: projects.map((p) => ({ id: p.id, name: p.name, domain_id: p.domain_id })),
-        today: nowIso(),
+        today,
         timezone: 'Africa/Cairo',
       },
     },
@@ -162,16 +163,44 @@ export function saveUntranscribedVoiceNote(): InboxItem {
   return item
 }
 
-/** Reconnect hook: parse any captures that were queued while offline. */
+let parsingQueued = false
+
+/** Parses captures queued with `needs_parse`: ones made offline (run on reconnect), and ones sent
+ * to the capture endpoint with `?file=1` (supabase/functions/capture — run by AppLayout once they
+ * show up). Same confidence-gated auto-file as a live capture. */
 export async function processQueuedCaptures(): Promise<void> {
-  if (!navigator.onLine) return
+  if (!navigator.onLine || parsingQueued) return
+  parsingQueued = true
+  try {
+    await parseQueued()
+  } finally {
+    parsingQueued = false
+  }
+}
+
+async function parseQueued(): Promise<void> {
   const items = queryClient.getQueryData<InboxItem[]>(['inbox_items']) ?? []
   const pending = items.filter(
     (i) => i.status === 'pending' && i.payload && (i.payload as { needs_parse?: boolean }).needs_parse,
   )
   for (const item of pending) {
+    // The rest of the payload stays (overrides, the endpoint's source/url); only the flag goes.
+    const { needs_parse: _queued, ...rest } = item.payload as Record<string, unknown>
+    const payload = Object.keys(rest).length ? rest : null
     try {
-      const parse = await callParseCapture(item.raw_text)
+      // An endpoint capture reaches every open device at once: claim it on the server first (a
+      // conditional update — no row back means another device has it). One that fails to parse
+      // after the claim simply stays in the Inbox, like any capture.
+      if (rest.source === 'capture') {
+        const { data: claimed, error } = await supabase
+          .from('inbox_items')
+          .update({ payload })
+          .eq('id', item.id)
+          .eq('payload->>needs_parse', 'true')
+          .select('id')
+        if (error || !claimed?.length) continue
+      }
+      const parse = await callParseCapture(item.raw_text, item.created_at)
       if (parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
         const task = createTask({
           title: parse.title,
@@ -187,19 +216,20 @@ export async function processQueuedCaptures(): Promise<void> {
           filed_task_id: task.id,
           ai_parse: parse as unknown as Record<string, unknown>,
           confidence: parse.confidence,
-          payload: null,
+          payload,
         })
-        logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence, source: 'reconnect' })
+        logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence, source: rest.source === 'capture' ? 'capture' : 'reconnect' })
       } else {
         writeRow('inbox_items', {
           ...item,
           ai_parse: parse as unknown as Record<string, unknown>,
           confidence: parse.confidence,
-          payload: null,
+          payload,
         })
       }
     } catch {
-      // leave it queued with needs_parse — retried on the next reconnect
+      // leave it queued with needs_parse — retried on the next reconnect (a claimed endpoint
+      // capture isn't: it stays in the Inbox, unparsed, like any capture)
     }
   }
 }

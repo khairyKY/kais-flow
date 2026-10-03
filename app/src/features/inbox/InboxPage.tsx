@@ -27,7 +27,7 @@ import { InboxBulkBar } from './InboxBulkBar'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { Button, Chip, KeyCombo } from '../../components/kit'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
-import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, isToday } from './inboxDisplay'
+import { countWord, daysAgo, dismissedAgo, formatCaptured, formatDue, githubUrl, isToday } from './inboxDisplay'
 import type { InboxItem, InboxKind } from '../../lib/types'
 import './Inbox.css'
 
@@ -371,10 +371,7 @@ export function InboxPage() {
             {githubItems.length > 0 && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: isMobile ? '22px 0 10px' : '30px 0 10px' }}>
-                  {/* WB-4 punch 9: "· Shaheen/website" was the export's sample repo — hardcoded, so
-                      it would have named the wrong repo for anyone (and Kai's own repo for a stranger).
-                      Nothing stores a repo on an inbox item, so it's dropped rather than guessed —
-                      same treatment as the retainer's "/ 10h · renews 1 Aug" (punch 42). */}
+                  {/* WB-4 punch 9: no hardcoded sample repo here — each row names its own (payload.repo). */}
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
@@ -768,11 +765,16 @@ function TriageCard({
   )
 }
 
-// ── GitHub-ranked row ──
+// ── GitHub row (P6 step 4): source glyph · title · repo#n ↗ · labels · age. No AI rank — the
+// group is ordered by the issue's last update (github-sync's ponytail note). ──
 function GithubRow({ item, compact, highlighted, selected, selectionActive, onToggleSelect, onFile, onDismiss }: { item: InboxItem; compact?: boolean; highlighted?: boolean; selected?: boolean; selectionActive?: boolean; onToggleSelect?: () => void; onFile: () => void; onDismiss: () => void }) {
-  const payload = item.payload as { number?: number; rank?: number; repo?: string; url?: string } | null
-  // Only ever a github.com page as a link (payload is the user's own row, but still).
-  const issueUrl = payload?.url?.startsWith('https://github.com/') ? payload.url : null
+  const payload = item.payload as { number?: number; repo?: string; url?: string; labels?: unknown[]; created_at?: string | null } | null
+  const issueUrl = githubUrl(payload?.url)
+  const ref = `${payload?.repo ?? ''}${payload?.number ? `#${payload.number}` : ''}`
+  const labels = (payload?.labels ?? []).filter((l): l is string => typeof l === 'string' && l !== '')
+  const meta = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' } as const
+  // The issue's own age; rows stored before it was kept fall back to when they arrived.
+  const age = daysAgo(payload?.created_at ?? item.created_at)
   return (
     <div
       id={`inbox-${item.id}`}
@@ -789,22 +791,25 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
       style={{ background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, var(--paper-parchment))' : 'var(--paper-parchment)', border: '1px solid var(--line-card)', outline: highlighted ? '2px solid color-mix(in srgb, var(--acc-hydrangea) 50%, transparent)' : 'none', outlineOffset: 2, borderRadius: 3, boxShadow: `${selected ? 'inset 2px 0 0 var(--acc-sage), ' : ''}${highlighted ? 'var(--shadow-card)' : 'var(--shadow-crisp)'}`, padding: compact ? '10px 13px' : '13px 19px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
-      <KindChip kind="github_issue" />
-      <span style={{ flex: 1, fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</span>
-      {!compact && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
-          {payload?.rank ? `rank ${payload.rank} · ` : ''}{daysAgo(item.created_at)}d
-        </span>
-      )}
-      {(payload?.repo || payload?.number) && (
-        issueUrl ? (
-          <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
-            {payload?.repo}{payload?.number ? `#${payload.number}` : ''} ↗
-          </a>
-        ) : (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{payload?.repo}{payload?.number ? `#${payload.number}` : ''}</span>
-        )
-      )}
+      <svg role="img" aria-label="GitHub issue" width="16" height="16" viewBox="0 0 24 24" fill="var(--ink-muted)" style={{ flex: 'none' }}>
+        <title>GitHub issue</title>
+        <path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.8 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 4-2.4 4.8-4.6 5.1.4.3.7 1 .7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.8C22 6.6 17.5 2 12 2Z" />
+      </svg>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</div>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+          {ref && (issueUrl ? (
+            <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ ...meta, color: 'var(--ink-muted)' }}>{ref} ↗</a>
+          ) : (
+            <span style={meta}>{ref}</span>
+          ))}
+          {labels.slice(0, 3).map((l) => (
+            <span key={l} style={{ ...meta, color: 'var(--ink-faint)', padding: '0 7px', border: '1px solid var(--line-solid)', borderRadius: 999 }}>{l}</span>
+          ))}
+          {labels.length > 3 && <span style={meta}>+{labels.length - 3}</span>}
+          <span style={meta} title={payload?.created_at ? 'opened on GitHub' : 'in the inbox'}>{age}d</span>
+        </div>
+      </div>
       <Button type="button" variant="cta" onClick={onFile} style={{ fontSize: compact ? 10.5 : 12, padding: compact ? '6px 10px' : '7px 13px' }}>File</Button>
       {!compact && <Button type="button" variant="ghost" onClick={onDismiss} style={{ fontSize: 12, padding: '7px 4px' }}>Dismiss</Button>}
     </div>

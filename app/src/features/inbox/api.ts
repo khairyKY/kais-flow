@@ -5,7 +5,7 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { createTask } from '../tasks/api'
-import { dayWord, formatDue } from './inboxDisplay'
+import { dayWord, formatDue, githubUrl } from './inboxDisplay'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import type { InboxItem, Task } from '../../lib/types'
@@ -110,6 +110,9 @@ export function fileToTask(
   // passing it through, so every manual filing silently dropped it — and the punch-7 toast
   // could never truthfully say "· Today". Default to the parse; an explicit opt still wins.
   const parsedDue = (item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null
+  // P6 step 4: a filed GitHub issue keeps its link (the task's "View issue").
+  const issue = item.kind === 'github_issue' ? (item.payload as { node_id?: string; url?: string } | null) : null
+  const issueUrl = githubUrl(issue?.url)
   const task = createTask({
     title: opts.title?.trim() || item.raw_text,
     domainId: opts.domainId ?? null,
@@ -117,6 +120,7 @@ export function fileToTask(
     dueAt: opts.dueAt ?? parsedDue,
     priority: overrides?.priority_override ?? null,
     durationMin: overrides?.duration_override ?? null,
+    externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : null,
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })

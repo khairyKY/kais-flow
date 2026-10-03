@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag } from './taskDisplay'
+import { daysOverdue, formatDuration, labelOptions, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
 function task(patch: Partial<Task>): Task {
@@ -103,5 +103,20 @@ describe('resolveTag', () => {
   })
   it('returns null when nothing is tagged', () => {
     expect(resolveTag(task({}), domains, projects, areas)).toBeNull()
+  })
+})
+
+describe('rowLabels', () => {
+  it('shows up to two, the rest as a count', () => {
+    expect(rowLabels([])).toEqual({ shown: [], more: 0 })
+    expect(rowLabels(['calls', 'admin'])).toEqual({ shown: ['calls', 'admin'], more: 0 })
+    expect(rowLabels(['calls', 'admin', 'q3', 'home'])).toEqual({ shown: ['calls', 'admin'], more: 2 })
+    expect(rowLabels(null)).toEqual({ shown: [], more: 0 })
+  })
+})
+
+describe('labelOptions', () => {
+  it('every label once, A–Z ignoring case', () => {
+    expect(labelOptions([{ labels: ['calls', 'Admin'] }, { labels: ['calls'] }, { labels: [] }, { labels: ['bills'] }])).toEqual(['Admin', 'bills', 'calls'])
   })
 })

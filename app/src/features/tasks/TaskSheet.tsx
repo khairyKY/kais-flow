@@ -18,6 +18,7 @@ import { cairoToIso } from '../calendar/eventTime'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useDomains } from '../domains/api'
 import { useFocusStore } from '../focus/focusStore'
+import { githubUrl } from '../inbox/inboxDisplay'
 import { useProjects } from '../projects/api'
 import { useStartFocus } from '../today/startFocus'
 import { completeTaskWithUndo, deleteTasksWithUndo, duplicateTaskWithUndo, reopenTaskWithUndo, setDuration, setLabels, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
@@ -131,6 +132,7 @@ export function TaskSheet({ id }: { id: string }) {
   const line = saveLine(t, saved?.at ?? null, now, pendingOffline)
   const recurring = !!t.recurrence_rule && !!t.due_at
   const next = recurring && !done ? nextDates(t.recurrence_rule!, t.due_at!) : null
+  const issueUrl = githubUrl(t.external_ref?.url) // a filed GitHub issue (P6 step 4)
   const dur = t.duration_min || 30
   const suggestion = block || done ? null : suggestTimes(events, t.due_at, now, dur)
 
@@ -275,6 +277,12 @@ export function TaskSheet({ id }: { id: string }) {
               <Icon name="repeat" size={16} />
               {next}
             </div>
+          )}
+          {issueUrl && (
+            <a className="ts-next" href={issueUrl} target="_blank" rel="noopener noreferrer">
+              <Icon name="link" size={16} />
+              View issue ↗
+            </a>
           )}
 
           <textarea className="ts-notes" value={draft.notes} placeholder="Add notes" aria-label="Notes" onChange={(e) => draft.setNotes(e.target.value)} onBlur={draft.saveNotes} />

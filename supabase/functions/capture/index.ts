@@ -2,10 +2,12 @@
 // personal capture key from Settings) → a pending text item in that user's Inbox, the same as a
 // ⌘K capture. No AI step here: the item waits in the Inbox, so an automation can't spend the
 // shared Groq quota. Deployed with verify_jwt = false because the key is not a JWT; the key IS the
-// auth (only its SHA-256 is stored, migration 0041).
+// auth (only its SHA-256 is stored, migration 0041). Recipes: docs/CAPTURE.md.
 //
 //   curl -X POST <project>/functions/v1/capture -H "Authorization: Bearer kf_…" \
 //        -H "Content-Type: application/json" -d '{"text":"call the tyre supplier"}'
+//
+// Opt-in AI filing: POST …/capture?file=1 queues the item for the app's own parse (see below).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { z } from 'npm:zod@^4'
 
@@ -73,6 +75,10 @@ Deno.serve(async (req) => {
 
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
+    // ?file=1: queue it for the AI instead (needs_parse). The app files it — a task with its date
+    // when the parse is confident, else it stays in the Inbox — once it reaches an open device
+    // (features/capture/api.ts processQueuedCaptures), on that user's own AI allowance.
+    const fileIt = new URL(req.url).searchParams.get('file') === '1'
     const rawText = body.url && !body.text.includes(body.url) ? `${body.text}\n${body.url}` : body.text
     const { error: insErr } = await db.from('inbox_items').insert({
       id,
@@ -80,7 +86,7 @@ Deno.serve(async (req) => {
       kind: 'text',
       raw_text: rawText,
       status: 'pending',
-      payload: { source: 'capture', ...(body.url ? { url: body.url } : {}) },
+      payload: { source: 'capture', ...(body.url ? { url: body.url } : {}), ...(fileIt ? { needs_parse: true } : {}) },
       created_at: now,
       updated_at: now,
     })

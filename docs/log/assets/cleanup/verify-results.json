@@ -1,0 +1,262 @@
+[
+  {
+    "name": "desktop settings [github none]: the summary row says \"Not connected\"",
+    "ok": true,
+    "detail": "GitHub · issues → inboxNot connected"
+  },
+  {
+    "name": "desktop settings: no \"Sync now\" button (Google Calendar has no sync yet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings: Google Calendar is an honest \"Coming soon\" row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings: no Pushover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings: the old \"configured\" read-out is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings [github none]: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings [github failing]: the summary row says \"Token expired — reconnect\"",
+    "ok": true,
+    "detail": "GitHub · issues → inboxToken expired — reconnect"
+  },
+  {
+    "name": "desktop settings [github failing]: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings [github ok]: the summary row says \"Connected · synced 3 Oct, 11:37\"",
+    "ok": true,
+    "detail": "GitHub · issues → inboxConnected · synced 3 Oct, 11:37"
+  },
+  {
+    "name": "desktop settings [github ok]: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop settings [github fresh]: the summary row says \"Connected · not synced yet\"",
+    "ok": true,
+    "detail": "GitHub · issues → inboxConnected · not synced yet"
+  },
+  {
+    "name": "desktop settings [github fresh]: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "reminders: two named time fields at the defaults (08:00, 21:00)",
+    "ok": true,
+    "detail": "8:00 AM / 9:00 PM"
+  },
+  {
+    "name": "reminders: the old device-only copy is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "reminders: one switch per reminder, both on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "reminders: the morning time is written to app_settings (07:45)",
+    "ok": true,
+    "detail": "[{\"at\":\"07:45\"},{\"at\":\"07:45\",\"on\":false}]"
+  },
+  {
+    "name": "reminders: turning the evening nudge off writes evening_nudge_on: false (and keeps 07:45)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "reminders: the switch shows off, the field dims",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "reminders: nothing about them went to localStorage",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "integrations page: Google Calendar says \"Coming soon\" and nothing syncs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "integrations page: no Pushover row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop reminders + integrations: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone settings: Google Calendar row says \"Coming soon\"",
+    "ok": true,
+    "detail": "Google CalendarComing soon"
+  },
+  {
+    "name": "phone settings: GitHub row says the token expired",
+    "ok": true,
+    "detail": "GitHubToken expired — reconnect"
+  },
+  {
+    "name": "phone settings: no Pushover, no fake sync",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone settings: a Ritual reminders card with both reminders",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone settings: turning the morning digest off writes app_settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone settings: no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox: each GitHub row has the small GitHub glyph",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox: repo#number links to the issue",
+    "ok": true,
+    "detail": "https://github.com/acme/app/issues/7"
+  },
+  {
+    "name": "desktop inbox: three labels, then +1",
+    "ok": true,
+    "detail": "GitHub issueLogin button does nothing on Safariacme/app#7 ↗buguip1+15dFileDismiss"
+  },
+  {
+    "name": "desktop inbox: age = days since the issue was opened (5d)",
+    "ok": true,
+    "detail": "5d"
+  },
+  {
+    "name": "desktop inbox: an older row without created_at falls back to its inbox age (2d)",
+    "ok": true,
+    "detail": "2d"
+  },
+  {
+    "name": "desktop inbox: no \"rank\" left over",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox: File writes a task that keeps the issue link (external_ref)",
+    "ok": true,
+    "detail": "[{\"source\":\"github\",\"id\":\"I_kwDOseven\",\"url\":\"https://github.com/acme/app/issues/7\"}]"
+  },
+  {
+    "name": "desktop inbox: the inbox row is marked filed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox: each GitHub row has the small GitHub glyph",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox: repo#number links to the issue",
+    "ok": true,
+    "detail": "https://github.com/acme/app/issues/7"
+  },
+  {
+    "name": "phone inbox: three labels, then +1",
+    "ok": true,
+    "detail": "GitHub issueLogin button does nothing on Safariacme/app#7 ↗buguip1+15dFile"
+  },
+  {
+    "name": "phone inbox: age = days since the issue was opened (5d)",
+    "ok": true,
+    "detail": "5d"
+  },
+  {
+    "name": "phone inbox: an older row without created_at falls back to its inbox age (2d)",
+    "ok": true,
+    "detail": "2d"
+  },
+  {
+    "name": "phone inbox: no \"rank\" left over",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox: File writes a task that keeps the issue link (external_ref)",
+    "ok": true,
+    "detail": "[{\"source\":\"github\",\"id\":\"I_kwDOseven\",\"url\":\"https://github.com/acme/app/issues/7\"}]"
+  },
+  {
+    "name": "phone inbox: the inbox row is marked filed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop task editor: \"View issue\" links to the issue",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop task editor: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone task sheet: \"View issue\" links to the issue",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone task sheet: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop task editor: a plain task shows no \"View issue\"",
+    "ok": true,
+    "detail": ""
+  }
+]

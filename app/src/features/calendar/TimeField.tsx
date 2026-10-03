@@ -40,10 +40,12 @@ function nearestIndex(v: string): number {
   return Math.min(95, h * 4 + Math.round((m || 0) / 15))
 }
 
-export function TimeField({ value, onChange, style, day }: {
+export function TimeField({ value, onChange, style, day, ariaLabel = 'Time' }: {
   value: string
   onChange: (v: string) => void
   style?: CSSProperties
+  /** Names the field when a form has more than one time (default "Time"). */
+  ariaLabel?: string
   /** Phone sheet: the Cairo day ("YYYY-MM-DD") whose calendar gives the free slots and busy rows. */
   day?: string | null
 }) {
@@ -132,7 +134,7 @@ export function TimeField({ value, onChange, style, day }: {
         ref={inputRef}
         value={text}
         placeholder="—:—"
-        aria-label="Time"
+        aria-label={ariaLabel}
         onChange={(e) => {
           setText(e.target.value)
           const p = parseTimeText(e.target.value)

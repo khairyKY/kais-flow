@@ -9,6 +9,7 @@ const issue = (n: number, over: Partial<GhIssue> = {}): GhIssue => ({
   html_url: `https://github.com/acme/app/issues/${n}`,
   repository_url: 'https://api.github.com/repos/acme/app',
   updated_at: '2026-09-27T10:00:00Z',
+  created_at: '2026-09-20T09:00:00Z',
   labels: [{ name: 'bug' }],
   ...over,
 })
@@ -56,8 +57,9 @@ describe('searchQueries', () => {
 describe('toPayload', () => {
   it('keeps repo, labels and a github.com url only', () => {
     expect(toPayload(issue(7))).toEqual({
-      node_id: 'I_7', number: 7, repo: 'acme/app', url: 'https://github.com/acme/app/issues/7', labels: ['bug'], updated_at: '2026-09-27T10:00:00Z',
+      node_id: 'I_7', number: 7, repo: 'acme/app', url: 'https://github.com/acme/app/issues/7', labels: ['bug'], updated_at: '2026-09-27T10:00:00Z', created_at: '2026-09-20T09:00:00Z',
     })
+    expect(toPayload(issue(7, { created_at: undefined })).created_at).toBeNull()
     expect(toPayload(issue(7, { html_url: 'javascript:alert(1)' })).url).toBeNull()
   })
 })

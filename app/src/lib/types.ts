@@ -64,6 +64,9 @@ export interface Task {
   deleted_at?: string | null
   /** Subtasks (migration 0029): set → this task is a child of that task. One level deep. */
   parent_task_id?: string | null
+  /** Origin key (0027, unique per user+source+id): an import's {source, id, raw}, or a filed GitHub
+   * issue's {source: 'github', id: node_id, url}. Never copied onto a duplicate/next occurrence. */
+  external_ref?: { source: string; id: string; url?: string; raw?: unknown } | null
   created_at: string
   updated_at: string
 }
@@ -136,6 +139,8 @@ export interface Routine {
   steps?: string[]
   /** Domain this routine tends (migration 0028), per the New Routine form's Domain picker. */
   domain_id?: string | null
+  /** The streak goal in days (migration 0046), null = none: the streak reads "12 / 30". */
+  goal_days?: number | null
   created_at: string
   updated_at: string
 }
@@ -177,6 +182,11 @@ export interface AppSettings {
   calendar_day_count: number
   /** The view the calendar opens on (migration 0043); null/absent = the platform's own default. */
   calendar_default_view?: 'day' | '3day' | 'week' | null
+  /** Ritual reminders (migration 0045): on/off + Cairo wall-clock time, 'HH:MM' (Postgres reads back 'HH:MM:SS'). */
+  morning_digest_on?: boolean
+  morning_digest_at?: string
+  evening_nudge_on?: boolean
+  evening_nudge_at?: string
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

@@ -1,0 +1,54 @@
+PASS desktop settings [github none]: the summary row says "Not connected" — GitHub · issues → inboxNot connected
+PASS desktop settings: no "Sync now" button (Google Calendar has no sync yet)
+PASS desktop settings: Google Calendar is an honest "Coming soon" row
+PASS desktop settings: no Pushover
+PASS desktop settings: the old "configured" read-out is gone
+PASS desktop settings [github none]: no page errors
+PASS desktop settings [github failing]: the summary row says "Token expired — reconnect" — GitHub · issues → inboxToken expired — reconnect
+PASS desktop settings [github failing]: no page errors
+PASS desktop settings [github ok]: the summary row says "Connected · synced 3 Oct, 11:37" — GitHub · issues → inboxConnected · synced 3 Oct, 11:37
+PASS desktop settings [github ok]: no page errors
+PASS desktop settings [github fresh]: the summary row says "Connected · not synced yet" — GitHub · issues → inboxConnected · not synced yet
+PASS desktop settings [github fresh]: no page errors
+PASS reminders: two named time fields at the defaults (08:00, 21:00) — 8:00 AM / 9:00 PM
+PASS reminders: the old device-only copy is gone
+PASS reminders: one switch per reminder, both on
+PASS reminders: the morning time is written to app_settings (07:45) — [{"at":"07:45"},{"at":"07:45","on":false}]
+PASS reminders: turning the evening nudge off writes evening_nudge_on: false (and keeps 07:45)
+PASS reminders: the switch shows off, the field dims
+PASS reminders: nothing about them went to localStorage
+PASS integrations page: Google Calendar says "Coming soon" and nothing syncs
+PASS integrations page: no Pushover row
+PASS desktop reminders + integrations: no page errors
+PASS phone settings: Google Calendar row says "Coming soon" — Google CalendarComing soon
+PASS phone settings: GitHub row says the token expired — GitHubToken expired — reconnect
+PASS phone settings: no Pushover, no fake sync
+PASS phone settings: a Ritual reminders card with both reminders
+PASS phone settings: turning the morning digest off writes app_settings
+PASS phone settings: no horizontal scroll at 390 — 390
+PASS phone settings: no page errors
+PASS desktop inbox: each GitHub row has the small GitHub glyph
+PASS desktop inbox: repo#number links to the issue — https://github.com/acme/app/issues/7
+PASS desktop inbox: three labels, then +1 — GitHub issueLogin button does nothing on Safariacme/app#7 ↗buguip1+15dFileDismiss
+PASS desktop inbox: age = days since the issue was opened (5d) — 5d
+PASS desktop inbox: an older row without created_at falls back to its inbox age (2d) — 2d
+PASS desktop inbox: no "rank" left over
+PASS desktop inbox: File writes a task that keeps the issue link (external_ref) — [{"source":"github","id":"I_kwDOseven","url":"https://github.com/acme/app/issues/7"}]
+PASS desktop inbox: the inbox row is marked filed
+PASS desktop inbox: no page errors
+PASS phone inbox: each GitHub row has the small GitHub glyph
+PASS phone inbox: repo#number links to the issue — https://github.com/acme/app/issues/7
+PASS phone inbox: three labels, then +1 — GitHub issueLogin button does nothing on Safariacme/app#7 ↗buguip1+15dFile
+PASS phone inbox: age = days since the issue was opened (5d) — 5d
+PASS phone inbox: an older row without created_at falls back to its inbox age (2d) — 2d
+PASS phone inbox: no "rank" left over
+PASS phone inbox: File writes a task that keeps the issue link (external_ref) — [{"source":"github","id":"I_kwDOseven","url":"https://github.com/acme/app/issues/7"}]
+PASS phone inbox: the inbox row is marked filed
+PASS phone inbox: no page errors
+PASS desktop task editor: "View issue" links to the issue
+PASS desktop task editor: no page errors
+PASS phone task sheet: "View issue" links to the issue
+PASS phone task sheet: no page errors
+PASS desktop task editor: a plain task shows no "View issue"
+
+52/52 passed

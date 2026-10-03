@@ -554,6 +554,12 @@ export function AppLayout() {
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
   const { data: pendingInbox = [] } = usePendingInboxItems()
+  // Captures queued for the AI (needs_parse: the capture endpoint's ?file=1, or made offline) are
+  // filed once they're here — not only on a reconnect, which a fresh start never sees.
+  const queuedForAi = pendingInbox.some((i) => (i.payload as { needs_parse?: boolean } | null)?.needs_parse)
+  useEffect(() => {
+    if (queuedForAi) void import('../features/capture/api').then((m) => m.processQueuedCaptures())
+  }, [queuedForAi])
 
   // Cold boot shouldn't animate content in (nothing else on screen is settling yet) — only
   // genuine client-side route landings should. True only for the very first render.

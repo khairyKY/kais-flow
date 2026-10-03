@@ -13,6 +13,8 @@ import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
+import { labelOptions } from './taskDisplay'
+import { stripLabels } from '../command-bar/parseCommand'
 import { useListKeys } from '../../components/useListKeys'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
@@ -106,7 +108,11 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
   return null
 }
 
-function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void }) {
+// The tools' triggers (Sort, Label): mono meta, no box — the click-cycler look J-12 kept.
+const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }
+const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span>
+
+function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
   // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
   // (a deep link to Done/All would otherwise land on a tab scrolled out of sight).
@@ -161,6 +167,19 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       </div>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
         <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
+        {/* Kai 2026-10-03: a Label filter beside Sort, the same popover — only once a label exists. */}
+        {(labels.length > 0 || label) && (
+          <Select
+            value={label ?? ''}
+            onChange={(v) => onLabel(v || null)}
+            options={[{ value: '', label: 'All labels' }, ...labels.map((l) => ({ value: l, label: l }))]}
+            title="Filter by label"
+            ariaLabel="Label filter"
+            className="kf-hit"
+            display={<>Label · {label ?? 'All'} {CARET}</>}
+            style={label ? { ...TOOL_TRIGGER, color: 'var(--ink-body)' } : TOOL_TRIGGER}
+          />
+        )}
         {/* R4-21 (2026-07-20 audit): this was a dead span (cursor:default, no handler) drawn
             with the `⚟` glyph, then a click-cycler. J-12 (Kai): "a popover listing the options"
             instead of clicking through Smart → Due → Priority → A–Z — the themed Select's own
@@ -175,8 +194,8 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
           // Polish F2a (FIX-6 decision "add a subtle ▾"): the trigger opens a menu, so it shows the
           // caret the app's other menu triggers carry (BulkBar, Inbox bulk, People) — hairline ink,
           // the label's own size.
-          display={<><SortIcon /> {SORT_LABELS[sort]} <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span></>}
-          style={{ gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }}
+          display={<><SortIcon /> {SORT_LABELS[sort]} {CARET}</>}
+          style={TOOL_TRIGGER}
         />
       </span>
     </div>
@@ -526,7 +545,8 @@ export function TasksPage() {
   const [domainChip, setDomainChip] = useState<string | null>(null)
 
   const filteredBase = filterByList(displayTasks, list, now)
-  const filtered = domainChip ? filteredBase.filter((t) => effectiveDomainId(t, projects, areas) === domainChip) : filteredBase
+  const [labelFilter, setLabelFilter] = useState<string | null>(null)
+  const filtered = filteredBase.filter((t) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter)))
   const [sort, setSort] = useState<SortKey>('smart')
   const groups = applySort(groupTasks(filtered, now), sort)
   // U-7: 411 rows rendered at once made a 31,000px page (6,196 nodes). Each group shows its first
@@ -686,7 +706,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} />
+        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
@@ -758,7 +778,8 @@ export function TasksPage() {
             onSubmit={(e) => {
               e.preventDefault()
               if (title.trim()) {
-                createTask({ title: title.trim(), dueAt: activeTab === 'today' ? now.toISOString() : undefined })
+                const { text, labels } = stripLabels(title) // `*label` words, as in the command bar
+                createTask({ title: text || title.trim(), labels, dueAt: activeTab === 'today' ? now.toISOString() : undefined })
                 seedPlant(e.currentTarget, motion) // Motion 5f — the seed drops out of the quick-add
               }
               setTitle('')

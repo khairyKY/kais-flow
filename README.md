@@ -97,6 +97,8 @@ I paid for [Akiflow](https://akiflow.com) (~$19–34/month) to get one inbox, a 
 - ✅ **Voice capture.** The mic records with `MediaRecorder`, Groq Whisper (`whisper-large-v3-turbo`) transcribes, and the AI parse files it. Works from the phone's home screen.
 - ✅ **AI filing with a confidence gate.** A JSON-schema-constrained Groq call returns `{kind, cleaned_text, project, due, duration, priority, confidence}`. At ≥ 0.75 it files the item automatically. Below that it stays in the Inbox rather than guessing wrong.
 - ✅ **Universal Inbox.** One triage queue with snooze, multi-select, bulk actions and a "Dismissed" pile that clears itself after 30 days.
+- ✅ **GitHub issues → Inbox** (P6). Connect a read-only token in Settings; open issues assigned to you, or in repos you watch, arrive every 30 minutes with their repo, labels and age, and closed ones leave on their own. A filed issue keeps a "View issue" link.
+- ✅ **Capture from anywhere** (P6). A personal capture key for a bookmarklet, phone shortcuts or `curl`, plus the PWA share target.
 - ✅ **Import.** Akiflow export and generic CSV importers. Re-importing is safe because every row carries an `external_ref`, so a second run adds no duplicates. Tested on a real 655-task Akiflow account.
 
 ### Plan: decide what today is for
@@ -125,9 +127,7 @@ I paid for [Akiflow](https://akiflow.com) (~$19–34/month) to get one inbox, a 
 
 ### Coming
 
-- 🗓 **GitHub issues → Inbox**, ranked by AI (P6)
 - 🗓 **Optional Google Calendar mirror** running invisibly in the background. The calendar you see is always ours.
-- 🗓 **Desktop and Android builds with Tauri** alongside the PWA
 - 🗓 **Content pipeline, retainers, Kindle highlights** (P7)
 
 ---
@@ -437,9 +437,9 @@ kais-flow/
 | P5 | AI chat, hybrid search, resurfacing | ✅ |
 | Retrofit | Areas, reminders, notification history, then Akiflow-depth UX (smart lists, durations, keyboard layer, planning board) | ✅ |
 | P-IMPORT | Akiflow and CSV import | ✅ |
-| **Botanical** | **Design export → live UI, hardening, then ship as PWA and Tauri apps** | 🌱 current |
-| P6 | Integrations: GitHub issues → Inbox, labels, share target | 🗓 |
-| P7 | Life-OS completion, then the Akiflow parity audit and cancelling the subscription 🎉 | 🗓 |
+| Botanical | Design export → live UI, hardening, then ship: PWA, Android (Capacitor) and Windows (Tauri) apps on GitHub Releases | ✅ v1.0.0, 2026-09-26 |
+| **P6** | **Integrations: GitHub issues → Inbox, capture endpoint + share target, ritual reminder times (built); smart lists, `*label` syntax, Google Calendar sync (not yet)** | 🌱 mostly built |
+| **P7** | **Life-OS completion: Library, People, Projects (mostly built); content pipeline, then the Akiflow parity audit and cancelling the subscription 🎉** | 🌱 mostly built |
 
 The build's current state, with a dated log of every decision, is in [`docs/ROADMAP.md`](docs/ROADMAP.md). The original research and the full feature parity matrix are in [`PLAN.md`](PLAN.md).
 

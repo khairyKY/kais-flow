@@ -28,14 +28,14 @@ P2 done (inbox pipeline + AI ranking pattern). P5 useful but not required.
 `github-sync`: `{ action: 'sync' }` → `{ fetched, new, updated, dismissed, ranked }`. Cron-invoked via pg_net + manual refresh button.
 
 ## Acceptance checklist
-- [ ] Newly-assigned GitHub issue appears in Inbox ≤30 min with a sensible priority + one-line reason
-- [ ] Re-running sync creates no duplicates (node_id dedupe)
-- [ ] Issue closed on GitHub → its pending inbox item auto-dismisses
-- [ ] PAT absent from client bundle and from any client-readable table select
-- [ ] A smart list ("due this week #shaheen") survives reload and appears on the other device
-- [ ] `buy tires *errand !!` creates a priority-2 task labeled `errand`; the label renders as a chip and a label smart list finds it
-- [ ] Settings shows integrations status, theme switch (persists via `data-theme`), ritual reminder times that actually reschedule the notify cron, and the org-admin tools; the Tasks page no longer opens with the admin console (#66 closed)
-- [ ] Sharing a URL from the phone's share sheet lands it in the Inbox with a backlink
+- [ ] Newly-assigned GitHub issue appears in Inbox ≤30 min with a sensible priority + one-line reason — *half:* it arrives within 30 min (0042 cron, `docs/log/2026-09-27-0711-p6-github-handoff.md`), but there is no priority or reason: step 3 was skipped on purpose
+- [x] Re-running sync creates no duplicates (node_id dedupe) — `docs/log/2026-09-27-0711-p6-github-handoff.md` (mocked run: a node_id known in any status is never re-inserted; 0027's unique index is the backstop; `githubPlan.test.ts`)
+- [x] Issue closed on GitHub → its pending inbox item auto-dismisses — `docs/log/2026-09-27-0711-p6-github-handoff.md` (the closed issue dismissed with `dismiss_reason: 'closed on GitHub'`; a still-open one only stamped `checked_at`)
+- [x] PAT absent from client bundle and from any client-readable table select — `docs/log/2026-09-27-0711-p6-github-handoff.md` (client selects JSON paths `login`/`status`/`synced_at` only; `grep github_pat_ dist` finds only the input placeholder)
+- [ ] A smart list ("due this week #shaheen") survives reload and appears on the other device — not built
+- [ ] `buy tires *errand !!` creates a priority-2 task labeled `errand`; the label renders as a chip and a label smart list finds it — not built (`!!` works; there is no `*label` syntax and no smart lists; labels exist as chips on the task)
+- [ ] Settings shows integrations status, theme switch (persists via `data-theme`), ritual reminder times that actually reschedule the notify cron, and the org-admin tools; the Tasks page no longer opens with the admin console (#66 closed) — *partly:* integrations status, theme switch and ritual reminder times read by the notify cron are there (`docs/log/2026-10-03-1330-cleanup-handoff.md`); the org-admin move (#66) is not done
+- [ ] Sharing a URL from the phone's share sheet lands it in the Inbox with a backlink — the `/share` route lands the text + URL in the Inbox (`docs/log/2026-09-26-0607-polish-a-handoff.md`, checked by URL on desktop); a real phone share sheet hasn't been verified
 
 ## Verification
 Assign yourself a test issue → wait/trigger sync → check Inbox · `select payload->>'node_id', count(*) from inbox_items where kind='github_issue' group by 1 having count(*)>1;` returns nothing · build-grep for the PAT pattern.
@@ -53,4 +53,9 @@ Assign yourself a test issue → wait/trigger sync → check Inbox · `select pa
 - **Closed detection is verified, not inferred.** Pending items missing from the results are checked with `GET /repos/{repo}/issues/{n}` (≤20 per sync, least-recently-checked first): `closed` → dismissed with `dismiss_reason` 'closed on GitHub'; 404/410 → 'gone from GitHub'; still open (unassigned, repo unwatched) → left pending, stamped `checked_at`. This avoids dismissing an issue that merely fell out of scope as "closed".
 - **No resurrection:** new issues are inserted only if no row exists for the node_id in any status (filed, dismissed, trashed). Because dismissed rows compost after 30 days (0032), after the first sync only issues updated since the previous sync (minus 1 h slack for search-index lag) are inserted — a dismissed issue returns only if it sees new activity. Reconnecting resets this (first sync after connect is a full one).
 - **401 → `status: 'failing'`**; Settings shows "Token expired — reconnect" and the cron skips failing rows until the user reconnects.
-- **Not done here:** file→task doesn't carry `payload.url` onto the task ("view issue" link), no source icon beyond the existing kind chip, no labels/age/priority-reason columns on the row (the row shows `repo#number ↗` linking to the issue). Steps 5–7 untouched.
+- **Not done here** *(the first three are done as of 2026-10-03, below)*: file→task doesn't carry `payload.url` onto the task ("view issue" link), no source icon beyond the existing kind chip, no labels/age/priority-reason columns on the row (the row shows `repo#number ↗` linking to the issue). Steps 5–7 untouched.
+
+**2026-10-03 — cleanup (builder X, branch `claude/cleanup`)** (handoff: `docs/log/2026-10-03-1330-cleanup-handoff.md`)
+- **Step 4 finished, minus the AI part.** GitHub Inbox rows: a small GitHub glyph (instead of the "GitHub" kind chip), the title, then `repo#n ↗`, up to three labels (+N) and the issue's age. `github-sync` now stores the issue's `created_at` in the payload; rows stored before that show how long they've been in the Inbox until their issue next changes (no backfill). Filing an issue writes `tasks.external_ref = {source:'github', id: node_id, url}` (0027's column — no migration) and the phone task sheet + desktop task editor show "View issue". Only `https://github.com/` links ever render (`githubUrl`). Still no rank/priority reason (step 3).
+- **Step 6, ritual reminder times:** morning digest + evening nudge each have an on/off and a time per user (`app_settings`, migration 0045), on the desktop Notifications card and a phone card. The cron doesn't get rescheduled per user: both jobs now tick every 15 min with `scheduled: true`, and notify sends each user's reminder on the first tick at or after their time (Cairo wall-clock, `notify/ritual.ts`). A manual service-role call without `scheduled` ignores the time (the backend test suites rely on that) but honours off.
+- **Settings honesty:** Google Calendar shows "Coming soon" everywhere (no fake Sync now); the Pushover row is gone (never planned, not $0 — web push replaced it); the summary card's GitHub row shows the real state (token expired / connected · synced <day, time> / not synced yet) instead of "configured".

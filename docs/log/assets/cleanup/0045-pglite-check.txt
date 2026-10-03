@@ -1,0 +1,66 @@
+{
+ "existing": {
+  "morning_digest_on": true,
+  "m": "08:00:00",
+  "evening_nudge_on": true,
+  "e": "21:00:00"
+ },
+ "written": {
+  "morning_digest_on": false,
+  "m": "07:45:00",
+  "e": "22:30:00"
+ },
+ "jobs": [
+  [
+   "evening-nudge",
+   "*/15 * * * *"
+  ],
+  [
+   "morning-digest",
+   "*/15 * * * *"
+  ],
+  [
+   "task-reminder-sweep",
+   "*/5 * * * *"
+  ]
+ ],
+ "calls": [
+  {
+   "url": "https://eqbbkitofgyxxrfggpbu.supabase.co/functions/v1/notify",
+   "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer SRK-test"
+   },
+   "body": {
+    "kind": "evening_nudge",
+    "scheduled": true
+   },
+   "timeout_ms": 5000
+  },
+  {
+   "url": "https://eqbbkitofgyxxrfggpbu.supabase.co/functions/v1/notify",
+   "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer SRK-test"
+   },
+   "body": {
+    "kind": "morning_digest",
+    "scheduled": true
+   },
+   "timeout_ms": 5000
+  }
+ ]
+}
+{
+  existingRowGetsDefaults: true,
+  clientWriteReadsBack: true,
+  notATimeRejected: true,
+  oneJobEach: true,
+  everyQuarterHour: true,
+  otherJobKept: true,
+  twoCalls: true,
+  url: true,
+  auth: true,
+  bodies: true
+}
+PASS

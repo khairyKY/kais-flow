@@ -19,14 +19,26 @@ import { useJournalEntries } from '../journal/api'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 
+/** The three desktop panes (shelf 230 + list 220 + a readable reader) need this much of the page.
+ * At 150% interface size a 1280px window leaves the page ~611 CSS px (the root zoom shrinks it,
+ * but media queries still see 1280), so the reader pushed the page sideways. */
+const THREE_PANES_MIN = 880
+
+/** A phone, or a page too narrow for three panes: both get the single-column layout. */
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
   useEffect(() => {
     const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
+    const page = document.querySelector('.app-main-content')
+    const on = () => setIsMobile(mq.matches || (!!page && page.clientWidth < THREE_PANES_MIN))
     on()
     mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
+    const ro = page && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(on) : null
+    if (page) ro?.observe(page)
+    return () => {
+      mq.removeEventListener('change', on)
+      ro?.disconnect()
+    }
   }, [])
   return isMobile
 }
@@ -836,7 +848,9 @@ export function LibraryPage() {
           </div>
 
           {/* Sub-column: MAIN READER SECTION */}
-          <div style={{ flex: 1, display: 'flex' }}>
+          {/* minWidth 0: a flex item's min-width defaults to its content's widest unbreakable run, so at
+              150% the reader held the page wider than the window and it scrolled sideways. */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex' }}>
             
             {/* BOOK DETAIL VIEW (if selectedBookId is active) */}
             {activeBook ? (
@@ -1058,7 +1072,7 @@ export function LibraryPage() {
                         value={newThoughtText}
                         onChange={(e) => setNewThoughtText(e.target.value)}
                         placeholder="add a thought to this over time…"
-                        style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
+                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
                       />
                       <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add</button>
                     </div>
@@ -1122,7 +1136,7 @@ export function LibraryPage() {
                         value={newThoughtText}
                         onChange={(e) => setNewThoughtText(e.target.value)}
                         placeholder="add a thought to this over time…"
-                        style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
+                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
                       />
                       <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add</button>
                     </div>

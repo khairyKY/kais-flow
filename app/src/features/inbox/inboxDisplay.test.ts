@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countWord, dayWord, daysAgo, dismissedAgo, isToday } from './inboxDisplay'
+import { countWord, dayWord, daysAgo, dismissedAgo, githubUrl, isToday } from './inboxDisplay'
 
 describe('countWord', () => {
   it('spells out zero through ten', () => {
@@ -60,5 +60,15 @@ describe('daysAgo', () => {
   })
   it('floors to whole days', () => {
     expect(daysAgo(new Date(Date.now() - 3 * 86_400_000 - 3600_000).toISOString())).toBe(3)
+  })
+})
+
+describe('githubUrl', () => {
+  it('passes only github.com pages through as links', () => {
+    expect(githubUrl('https://github.com/acme/app/issues/7')).toBe('https://github.com/acme/app/issues/7')
+    expect(githubUrl('https://github.com.evil.example/x')).toBeNull()
+    expect(githubUrl('javascript:alert(1)')).toBeNull()
+    expect(githubUrl(undefined)).toBeNull()
+    expect(githubUrl(42)).toBeNull()
   })
 })
