@@ -8,6 +8,7 @@ import { type ImportBatch, mergeBatches } from './adapters/shared'
 import { parseAkiflow } from './adapters/akiflow'
 import { parseCsv, csvToBatch, guessMapping, CSV_TARGETS, type CsvMapping } from './adapters/csv'
 import { parseTodoist } from './adapters/todoist'
+import { parseTickTick } from './adapters/ticktick'
 import {
   fetchAllExistingRefs, commitBatch, planCommit, undoImport, refKey, KINDS,
   type ExistingRefs, type ImportSummary, type Kind, type Counts,
@@ -17,11 +18,12 @@ import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
 
-type Source = 'akiflow' | 'todoist' | 'csv'
+type Source = 'akiflow' | 'todoist' | 'ticktick' | 'csv'
 // One line each: what to drop, and where the source's own menus hide the export.
 const SOURCES: Record<Source, { label: string; accept: string; multiple?: boolean; how: string; match?: string }> = {
   akiflow: { label: 'Akiflow JSON', accept: '.json', how: 'akiflow-dump.json · from the prompt-bank dump prompt' },
   todoist: { label: 'Todoist', accept: '.csv', multiple: true, how: 'Todoist: open a project → ⋯ → Export as a template → Download CSV · one file per project, several at once is fine', match: 'todoist csvs carry no ids — a re-import matches tasks by file + section + title' },
+  ticktick: { label: 'TickTick', accept: '.csv', how: 'TickTick (web): Settings → Account → Backup & Restore → Generate backup — the .csv it downloads' },
   csv: { label: 'Generic CSV', accept: '.csv', how: 'a .csv with a header row · you map the columns next', match: 'csv rows have no ids — duplicates are matched by a hash of title + due + project' },
 }
 
@@ -169,6 +171,8 @@ export function ImportPage() {
     switch (source) {
       case 'akiflow':
         return parseAkiflow(JSON.parse(await first.text()))
+      case 'ticktick':
+        return parseTickTick(await first.text())
       case 'todoist':
         return mergeBatches(await Promise.all(files.map(async (f) => parseTodoist(await f.text(), f.name))))
       case 'csv': {
