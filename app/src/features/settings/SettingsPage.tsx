@@ -488,6 +488,7 @@ function RitualReminders() {
             </div>
             <TimeField
               value={(s[`${r.kind}_at` as const] ?? r.at).slice(0, 5)}
+              ariaLabel={`${r.label} time`}
               onChange={(v) => v && updateAppSetting(`${r.kind}_at` as const, v)}
               style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px', opacity: on ? 1 : 0.5 }}
             />
