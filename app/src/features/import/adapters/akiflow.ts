@@ -24,7 +24,7 @@
 import { z } from 'zod'
 import {
   type ImportBatch, type ImportTask, type ImportEvent,
-  naiveLocalToUtc, mapPriority, stripBreaks,
+  naiveLocalToUtc, mapPriority, stripBreaks, emptyBatch,
 } from './shared'
 
 const akiflowTask = z.object({
@@ -117,5 +117,5 @@ export function parseAkiflow(json: unknown): ImportBatch {
     external_ref: { source: 'akiflow', id: e.id, raw: (rawItems.events?.[i] ?? e) as Record<string, unknown> },
   }))
 
-  return { source: 'akiflow', projects, tasks, events }
+  return { ...emptyBatch('akiflow'), projects, tasks, events }
 }

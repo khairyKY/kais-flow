@@ -1,14 +1,16 @@
-// Generic CSV adapter — the universal fallback. parseCsv is a minimal RFC 4180 reader
-// (quotes, escaped quotes, CRLF); csvToBatch applies a user-chosen column → field mapping.
+// Generic CSV adapter — the universal fallback, and Notion's database export (same mapping step,
+// Notion-aware defaults). parseCsv is a minimal RFC 4180 reader (quotes, escaped quotes, CRLF,
+// a leading BOM); csvToBatch applies a user-chosen column → field mapping.
 // CSV rows have no stable source id, so external_ref.id = hash(title+due+project)
 // (the wizard says so in the preview). Pure, no app imports.
 
 import {
   type ImportBatch, type ImportTask,
-  naiveLocalToUtc, mapPriority, stableHash,
+  mapPriority, stableHash, parseLooseDate, eachChunked, emptyBatch,
 } from './shared'
 
 export function parseCsv(text: string): string[][] {
+  text = text.replace(/^﻿/, '') // Notion/Excel exports start with a BOM — it would glue onto the first header
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -39,15 +41,13 @@ export type CsvTarget = (typeof CSV_TARGETS)[number]
 /** column index → target field ('title' required to import). */
 export type CsvMapping = Record<number, CsvTarget>
 
-function parseDue(value: string): string | null {
-  const v = value.trim()
-  if (!v) return null
-  if (/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$/.test(v)) return naiveLocalToUtc(v.replace(' ', 'T'))
-  const d = new Date(v)
-  return isNaN(d.getTime()) ? null : d.toISOString()
+/** Notion's cell shapes, harmless elsewhere: a relation reads "Garden (https://www.notion.so/…)",
+ *  a date range "October 5, 2026 → October 7, 2026" (the start is the due date). */
+function clean(v: string): string {
+  return v.replace(/\s*\(https?:\/\/[^)]*\)/g, '').split('→')[0].trim()
 }
 
-export function csvToBatch(rows: string[][], mapping: CsvMapping): ImportBatch {
+export async function csvToBatch(rows: string[][], mapping: CsvMapping, source: 'csv' | 'notion' = 'csv', now: Date = new Date()): Promise<ImportBatch> {
   const [, ...data] = rows // row 0 = headers
   const col = (target: CsvTarget) => {
     const e = Object.entries(mapping).find(([, t]) => t === target)
@@ -59,16 +59,17 @@ export function csvToBatch(rows: string[][], mapping: CsvMapping): ImportBatch {
   const seen = new Set<string>()
   const projectNames = new Set<string>()
   const tasks: ImportTask[] = []
-  for (const r of data) {
+  await eachChunked(data, (r) => {
     const title = cell(r, 'title')
-    if (!title) continue
-    const project = cell(r, 'project') || null
-    const due = parseDue(cell(r, 'due'))
+    if (!title) return
+    const projectCell = clean(cell(r, 'project'))
+    const project = (source === 'notion' ? projectCell.split(',')[0].trim() : projectCell) || null // a Notion multi-relation keeps its first
+    const due = parseLooseDate(clean(cell(r, 'due')), now)
     const id = stableHash(`${title}|${due ?? ''}|${project ?? ''}`)
-    if (seen.has(id)) continue // ponytail: identical title+due+project rows collapse to one
+    if (seen.has(id)) return // ponytail: identical title+due+project rows collapse to one
     seen.add(id)
     if (project) projectNames.add(project)
-    const done = /^(true|yes|1|done|x|completed)$/i.test(cell(r, 'done'))
+    const done = /^(true|yes|1|done|x|complete|completed|checked)$/i.test(cell(r, 'done'))
     const duration = parseInt(cell(r, 'duration'), 10)
     const raw = Object.fromEntries(rows[0].map((h, i) => [h || `col${i}`, r[i] ?? '']))
     tasks.push({
@@ -84,31 +85,36 @@ export function csvToBatch(rows: string[][], mapping: CsvMapping): ImportBatch {
       completed_at: null,
       labels: cell(r, 'labels') ? cell(r, 'labels').split(/[;,]/).map((s) => s.trim()).filter(Boolean) : [],
       sourceProjectId: project,
-      external_ref: { source: 'csv', id, raw },
+      external_ref: { source, id, raw },
     })
-  }
+  })
 
   const projects = [...projectNames].map((name) => ({
     name,
-    external_ref: { source: 'csv', id: `project:${name}`, raw: { name } },
+    external_ref: { source, id: `project:${name}`, raw: { name } },
   }))
 
-  return { source: 'csv', projects, tasks, events: [] }
+  return { ...emptyBatch(source), projects, tasks }
 }
 
-/** Guess a mapping from header names — the user confirms/edits it in the mapping step. */
+/** Guess a mapping from header names — the user confirms/edits it in the mapping step. One column
+ *  per field (the first wins), and Notion's bookkeeping columns ("Created time", "Last edited",
+ *  "Date Created") never pass for the due date. */
 export function guessMapping(headers: string[]): CsvMapping {
   const m: CsvMapping = {}
+  const taken = new Set<CsvTarget>()
+  const set = (i: number, t: CsvTarget) => { if (!taken.has(t)) { m[i] = t; taken.add(t) } }
   headers.forEach((h, i) => {
     const k = h.trim().toLowerCase()
-    if (/^(title|task|name|summary)$/.test(k)) m[i] = 'title'
-    else if (/note|description|content/.test(k)) m[i] = 'notes'
-    else if (/due|date|deadline/.test(k)) m[i] = 'due'
-    else if (/priority/.test(k)) m[i] = 'priority'
-    else if (/project|list/.test(k)) m[i] = 'project'
-    else if (/duration|estimate/.test(k)) m[i] = 'duration'
-    else if (/done|complete|status/.test(k)) m[i] = 'done'
-    else if (/label|tag/.test(k)) m[i] = 'labels'
+    if (/created|edited|updated|modified/.test(k)) return
+    if (/^(title|task|name|summary|task name)$/.test(k)) set(i, 'title')
+    else if (/note|description|content/.test(k)) set(i, 'notes')
+    else if (/due|date|deadline/.test(k)) set(i, 'due')
+    else if (/priority/.test(k)) set(i, 'priority')
+    else if (/project|list/.test(k)) set(i, 'project')
+    else if (/duration|estimate/.test(k)) set(i, 'duration')
+    else if (/done|complete|status|checkbox/.test(k)) set(i, 'done')
+    else if (/label|tag/.test(k)) set(i, 'labels')
   })
   return m
 }
