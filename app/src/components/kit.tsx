@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { playSound } from '../lib/sounds'
 import { useMotionEnabled } from '../lib/motion'
@@ -77,8 +77,9 @@ type ChipProps = {
   selected?: boolean
   loading?: boolean
   disabled?: boolean
-  /** Makes the chip a button (48 hit on touch) — e.g. a parse chip opening its picker. */
-  onClick?: () => void
+  /** Makes the chip a button (48 hit on touch) — e.g. a parse chip opening its picker (anchored on
+   * the event's chip). */
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
 export function Chip({ tone = 'bordered', children, style, icon, selected, loading, disabled, onClick }: ChipProps) {

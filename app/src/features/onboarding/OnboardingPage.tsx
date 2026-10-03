@@ -4,7 +4,9 @@ import { Button, Chip } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { Cta, Field, FirstRunPage, LinkButton, Plant } from '../auth/AuthLayout'
 import { useAppSettings, needsOnboarding, completeOnboarding } from './api'
-import { readFirstThing, whenChip } from './firstThings'
+import { DatePicker } from '../../components/DatePicker'
+import { uiZoom } from '../../lib/uiScale'
+import { readFirstThing, whenChip, withPicked, type PickedDate } from './firstThings'
 
 // ── First Run.dc.html 9g (empty) / 9h (filled, a date parse chip) / 9l-g night / 9m-g desktop:
 // the one onboarding screen. An optional name and three lines that become today's Top 3; Start
@@ -23,11 +25,24 @@ export function OnboardingPage() {
   const [lines, setLines] = useState(['', '', ''])
   const lineRefs = useRef<(HTMLInputElement | null)[]>([])
   const prefilled = useRef(false)
+  // 9h: a tap on a line's date chip opens the date picker; its pick rides on that line.
+  const [picked, setPicked] = useState<(PickedDate | undefined)[]>([])
+  const [picking, setPicking] = useState<{ line: number; at: { x: number; y: number } } | null>(null)
   // Read as you type; one clock per render so the three chips agree.
-  const things = useMemo(() => {
+  const parsed = useMemo(() => {
     const now = new Date()
     return lines.map((l) => readFirstThing(l, now))
   }, [lines])
+  const things = parsed.map((t, i) => withPicked(t, picked[i]))
+  const pick = (line: number, at: string | null) => {
+    const over = parsed[line]?.dueAt
+    if (!over) return
+    setPicked((ps) => {
+      const next = [...ps]
+      next[line] = { over, at }
+      return next
+    })
+  }
   const ready = things.some(Boolean)
 
   useEffect(() => {
@@ -115,7 +130,15 @@ export function OnboardingPage() {
               </div>
               {due && (
                 <div className="fr-when">
-                  <Chip tone="date">{whenChip(due)}</Chip>
+                  <Chip
+                    tone="date"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect()
+                      setPicking({ line: i, at: { x: r.left, y: r.bottom + 4 * uiZoom() } })
+                    }}
+                  >
+                    {whenChip(due)}
+                  </Chip>
                 </div>
               )}
             </div>
@@ -129,6 +152,20 @@ export function OnboardingPage() {
           <LinkButton onClick={() => finish('/settings/import', false)}>Import from Akiflow / CSV instead</LinkButton>
         </div>
       </div>
+
+      {picking && things[picking.line]?.dueAt && (
+        <DatePicker
+          title="Due date"
+          meta={things[picking.line]?.title}
+          value={things[picking.line]?.dueAt ?? null}
+          quick
+          withTime
+          position={picking.at}
+          onPick={(at) => pick(picking.line, at)}
+          onClear={() => pick(picking.line, null)}
+          onClose={() => setPicking(null)}
+        />
+      )}
     </FirstRunPage>
   )
 }
