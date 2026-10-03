@@ -51,11 +51,16 @@ adb shell cmd package query-activities --brief -a android.intent.action.SEND -t 
 adb logcat -c
 adb shell am force-stop "$pkg"
 adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -n "$pkg/.MainActivity"
-sleep 15
+sleep 4
+adb exec-out screencap -p > shots/3-share-cold-4s.png
+sleep 11
 adb exec-out screencap -p > shots/3-share-cold.png
+{ echo "after the cold share: pid $(adb shell pidof "$pkg")"; adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'; } > shots/share-state.txt
 adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "'hello again'" --es android.intent.extra.SUBJECT "'a page'" -n "$pkg/.MainActivity"
 sleep 5
+adb exec-out screencap -p > shots/4-share-warm.png
 adb logcat -d -s KaisFlowShare:I > shots/share.txt
+adb logcat -d -v time | grep -iE 'AndroidRuntime|FATAL|has died|died|KaisFlowShare|kaisflow|chromium|Console|Capacitor|ActivityTaskManager' | tail -150 > shots/share-logcat.txt
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
