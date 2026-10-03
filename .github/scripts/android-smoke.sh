@@ -43,6 +43,34 @@ adb shell am force-stop "$pkg"
 { adb shell am start -W -n "$pkg/.MainActivity" | grep -E 'LaunchState|TotalTime'
   sleep 10
   adb logcat -d -b events | grep -E 'wm_(on_create_called|on_destroy_called|relaunch)' | grep -i kaisflow; } > shots/lifecycle-2nd.txt 2>&1
+
+# The share sheet (MainActivity.onNewIntent): the SEND filter offers the app for text; a share into a
+# closed app loads /share?text=…, and a share into the open app navigates the page in place
+# (window.kaisFlowOpen). Signed out here, so the page then goes on to sign-in — the log is the proof.
+adb shell cmd package query-activities --brief -a android.intent.action.SEND -t text/plain > shots/share-targets.txt
+adb logcat -c
+adb shell am force-stop "$pkg"
+adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -n "$pkg/.MainActivity"
+sleep 4
+adb exec-out screencap -p > shots/3-share-cold-4s.png
+sleep 11
+adb exec-out screencap -p > shots/3-share-cold.png
+{ echo "after the cold share: pid $(adb shell pidof "$pkg")"; adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'; } > shots/share-state.txt
+# The warm case needs the page up. On a freshly booted emulator Play services restarts now and
+# then, and Android kills the app with it: "depends on provider …gms/.fonts.provider.FontsProvider
+# in dying proc com.google.android.gms.persistent" (runs 37115560734, 37116749969). If the app is
+# gone, open it again first and say so (share-logcat.txt shows why); the cold share above has
+# already been logged.
+if [ -z "$(adb shell pidof "$pkg")" ]; then
+  echo 'WARN: the app process was gone before the warm share; relaunching' | tee -a shots/share-state.txt
+  adb shell am start -W -n "$pkg/.MainActivity"
+  sleep 12
+fi
+adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "'hello again'" --es android.intent.extra.SUBJECT "'a page'" -n "$pkg/.MainActivity"
+sleep 5
+adb exec-out screencap -p > shots/4-share-warm.png
+adb logcat -d -s KaisFlowShare:I > shots/share.txt
+adb logcat -d -v time | grep -iE 'AndroidRuntime|FATAL|has died|died|KaisFlowShare|kaisflow|chromium|Console|Capacitor|ActivityTaskManager' | tail -150 > shots/share-logcat.txt
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
@@ -50,3 +78,6 @@ if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; the
 fi
 case "$resumed" in *"$pkg"*) echo 'FAIL: Back on the sign-in page left the app in front'; exit 1 ;; esac
 [ -n "$alive" ] || { echo 'FAIL: the app process died on Back'; exit 1; }
+grep -q "$pkg/" shots/share-targets.txt || { echo 'FAIL: the app is not offered in the share sheet for text'; exit 1; }
+grep -q 'load /share?text=hello[[:space:]]*$' shots/share.txt || { echo 'FAIL: a share into the closed app did not load /share'; exit 1; }
+grep -q 'page /share?text=hello%20again&title=a%20page' shots/share.txt || { echo 'FAIL: a share into the open app did not navigate the page'; exit 1; }
