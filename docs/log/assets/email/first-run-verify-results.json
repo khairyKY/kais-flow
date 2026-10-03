@@ -1,0 +1,2037 @@
+[
+  {
+    "name": "9a-day a fresh device opens on sign up",
+    "ok": true,
+    "detail": "Create your account"
+  },
+  {
+    "name": "9a-day live rule turns sage at 8+",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day password hidden, \"Show\" is a word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day Show reveals, then reads Hide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day inputs are 48 tall",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "9a-day one CTA, full width, 48",
+    "ok": true,
+    "detail": "{\"x\":16,\"y\":445.6875,\"width\":358,\"height\":48}"
+  },
+  {
+    "name": "9a-day \"Sign in\" one tap away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9a-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9a-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-day confirmation off: Create account signs up and lands straight on onboarding",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9a-day the address is remembered for next time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-day card names the address",
+    "ok": true,
+    "detail": "kai@example.test already has an account.\nSign in instead"
+  },
+  {
+    "name": "9b-1-day card sits under the email field, above Password",
+    "ok": true,
+    "detail": "{\"email\":{\"x\":31,\"y\":260.6875,\"width\":342,\"height\":46},\"cb\":{\"x\":16,\"y\":315.6875,\"width\":358,\"height\":58},\"pwLabel\":{\"x\":16,\"y\":389.6875,\"width\":358,\"height\":20}}"
+  },
+  {
+    "name": "9b-1-day still one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-1-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-day Sign in instead → 9j with the address filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-day terra line: \"Use 8 or more characters — 3 to go\"",
+    "ok": true,
+    "detail": "Use 8 or more characters — 3 to go"
+  },
+  {
+    "name": "9b-2-day the box shows the focus ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-day Create account sends nothing and keeps the password field focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-2-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-2-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day offline chip \"Offline — connect to sign up\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day card: \"No connection. Your details are kept…\" + Retry",
+    "ok": true,
+    "detail": "No connection. Your details are kept — try again when you're online.\nRetry"
+  },
+  {
+    "name": "9b-3-day details kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day card sits right above the CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-3-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-3-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-day back online, Retry signs up",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9c-day no session → \"Check your email\" naming the address, still on /sign-in",
+    "ok": true,
+    "detail": "Check your email http://localhost:5246/sign-in"
+  },
+  {
+    "name": "9c-day sub: open it on this phone, no need to sign in again",
+    "ok": true,
+    "detail": "We sent a link to kai@example.test. Open it on this phone and you're in — no need to sign in again."
+  },
+  {
+    "name": "9c-day sealed envelope, waiting line, spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-day first arrival: Resend already counting down, disabled",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9c-day no inbox for example.test → Resend is the one CTA; \"Wrong address? Change it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-day 12s later: \"Resend in 0:48\"",
+    "ok": true,
+    "detail": "Resend in 0:48"
+  },
+  {
+    "name": "9c-day after the minute: \"Resend link\", enabled",
+    "ok": true,
+    "detail": "Resend link"
+  },
+  {
+    "name": "9c-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9c-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9c-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9d-day Resend sends the sign-up link again, back to \"/\"",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/resend\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2F\",\"body\":{\"email\":\"kai@example.test\",\"type\":\"signup\",\"gotrue_meta_security\":{},\"code_challenge\":null,\"code_challenge_method\":null}}]"
+  },
+  {
+    "name": "9d-day toast \"Sent a new link to …\" and the countdown starts again",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9d-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9d-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9d-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9d-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-day Change it → 9a with the fields kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-webmail-day Open email app → the webmail inbox, Resend secondary",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-hidden-day no identities → the in-use card, not 9c",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-heard-day the waiting tab notices the confirmation and plays 9f",
+    "ok": true,
+    "detail": "Email confirmed ✿"
+  },
+  {
+    "name": "9c-heard-day … then onboarding, in both tabs",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding http://localhost:5246/onboarding  KAI'S FLOW · SUN 27 SEPT · SYNCED ● Today Inbox Calendar More"
+  },
+  {
+    "name": "9c-return-day not confirmed yet: one quiet try, still 9c, nothing shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-return-day confirmed elsewhere: coming back signs in → 9f → onboarding",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9f-day \"/\" re-pointed to /sign-in?confirmed: \"Email confirmed ✿\", \"Signing you in…\"",
+    "ok": true,
+    "detail": "http://localhost:5246/sign-in?confirmed#access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDBmMTc1YTAiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImV4cCI6NDEwMjQ0NDgwMH0.x&expires_at=4102444800&expires_in=3600&refresh_token=demo&token_type=bearer&type=signup"
+  },
+  {
+    "name": "9f-day broken seal + seedling, the hand line, no wordmark, no button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-day stays while signing in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9f-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9f-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-day signed in → onboarding (9g)",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9f-refused-day → \"This link has expired\"",
+    "ok": true,
+    "detail": "This link has expired"
+  },
+  {
+    "name": "9e-day \"/\" re-pointed to /sign-in?expired: \"This link has expired\" + the address",
+    "ok": true,
+    "detail": "Links last an hour and work once. We'll send a fresh one to kai@example.test."
+  },
+  {
+    "name": "9e-day envelope back, Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9e-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-day Send a new link → sent, 9d with its toast and countdown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-other-day Use a different email → 9a, the address kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day one screen: name (optional) + 3 lines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day Start disabled until a line has text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day first line focused with the example",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day Skip top-right, Import under Start",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day Start pinned to the bottom",
+    "ok": true,
+    "detail": "716"
+  },
+  {
+    "name": "9g-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9g-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9g-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9g-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-day the date parses into a chip under its line only",
+    "ok": true,
+    "detail": "[\"TOMORROW · 15:00\"]"
+  },
+  {
+    "name": "9h-day Start enabled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9h-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9h-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-day Start → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9i-day three tasks, every one Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",true],[\"Finish the flow audit\",true],[\"Gym\",true]]"
+  },
+  {
+    "name": "9i-day date words left the title and stayed as the date",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",\"2026-09-28T12:00:00.000Z\"],[\"Finish the flow audit\",null],[\"Gym\",null]]"
+  },
+  {
+    "name": "9i-day name saved, onboarded",
+    "ok": true,
+    "detail": "{\"id\":true,\"user_id\":\"00000000-0000-4000-8000-000000f175a0\",\"timezone\":\"Africa/Cairo\",\"display_name\":\"Kai\",\"workspace_name\":\"Personal\",\"seed_avatar\":null,\"onboarded_at\":\"2026-09-27T04:40:02.357Z\",\"created_at\":\"2026-09-27T04:00:00Z\",\"updated_at\":\"2026-09-27T04:00:00Z\"}"
+  },
+  {
+    "name": "9i-day Today lists the three",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "skip-day Skip → Today, onboarded, nothing created",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day a device that signed in before opens on \"Welcome back\", pre-filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day no rule line on sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day Forgot password? right-aligned under the field, 48 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9j-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9j-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day wrong password → calm line, no raw text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-day right password → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-1-day one tap sends the link to the typed address",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/recover\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2Freset\",\"body\":{\"email\":\"kai@example.test\",\"code_challenge\":null,\"code_challenge_method\":null,\"gotrue_meta_security\":{}}}]"
+  },
+  {
+    "name": "9k-1-day \"Reset link sent\" names the address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day waiting line + spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day no inbox known for example.test → Resend is the one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-1-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day Resend sends again, with a toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-day Back to sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-webmail-day Open email app → the webmail inbox, Resend secondary",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-day asks for the address (no send, email focused)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-day Send reset link → 9k-1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day \"Set a new password\" for the account",
+    "ok": true,
+    "detail": "For kai@example.test. You'll stay signed in on this phone."
+  },
+  {
+    "name": "9k-2-day one password field (no confirm) + Show",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day ← in the bar instead of the wordmark",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day a short password isn't sent",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-2-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-2-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-day Save password → Today, signed in, with a toast",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-3-day \"This reset link has expired\" + the address",
+    "ok": true,
+    "detail": "Reset links last an hour and work once. We'll send a new one to kai@example.test."
+  },
+  {
+    "name": "9k-3-day Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-day no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-3-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-day theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-3-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-day Send a new link → sent (9k-1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-other-day Use a different email → the request form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night a fresh device opens on sign up",
+    "ok": true,
+    "detail": "Create your account"
+  },
+  {
+    "name": "9a-night live rule turns sage at 8+",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night password hidden, \"Show\" is a word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night Show reveals, then reads Hide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night inputs are 48 tall",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "9a-night one CTA, full width, 48",
+    "ok": true,
+    "detail": "{\"x\":16,\"y\":445.6875,\"width\":358,\"height\":48}"
+  },
+  {
+    "name": "9a-night \"Sign in\" one tap away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9a-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9a-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-night confirmation off: Create account signs up and lands straight on onboarding",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9a-night the address is remembered for next time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-night card names the address",
+    "ok": true,
+    "detail": "kai@example.test already has an account.\nSign in instead"
+  },
+  {
+    "name": "9b-1-night card sits under the email field, above Password",
+    "ok": true,
+    "detail": "{\"email\":{\"x\":31,\"y\":260.6875,\"width\":342,\"height\":46},\"cb\":{\"x\":16,\"y\":315.6875,\"width\":358,\"height\":58},\"pwLabel\":{\"x\":16,\"y\":389.6875,\"width\":358,\"height\":20}}"
+  },
+  {
+    "name": "9b-1-night still one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-1-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9b-1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-night Sign in instead → 9j with the address filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-night terra line: \"Use 8 or more characters — 3 to go\"",
+    "ok": true,
+    "detail": "Use 8 or more characters — 3 to go"
+  },
+  {
+    "name": "9b-2-night the box shows the focus ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-night Create account sends nothing and keeps the password field focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-2-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9b-2-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night offline chip \"Offline — connect to sign up\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night card: \"No connection. Your details are kept…\" + Retry",
+    "ok": true,
+    "detail": "No connection. Your details are kept — try again when you're online.\nRetry"
+  },
+  {
+    "name": "9b-3-night details kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night card sits right above the CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9b-3-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9b-3-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-night back online, Retry signs up",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9c-night no session → \"Check your email\" naming the address, still on /sign-in",
+    "ok": true,
+    "detail": "Check your email http://localhost:5246/sign-in"
+  },
+  {
+    "name": "9c-night sub: open it on this phone, no need to sign in again",
+    "ok": true,
+    "detail": "We sent a link to kai@example.test. Open it on this phone and you're in — no need to sign in again."
+  },
+  {
+    "name": "9c-night sealed envelope, waiting line, spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-night first arrival: Resend already counting down, disabled",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9c-night no inbox for example.test → Resend is the one CTA; \"Wrong address? Change it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-night 12s later: \"Resend in 0:48\"",
+    "ok": true,
+    "detail": "Resend in 0:48"
+  },
+  {
+    "name": "9c-night after the minute: \"Resend link\", enabled",
+    "ok": true,
+    "detail": "Resend link"
+  },
+  {
+    "name": "9c-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9c-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9c-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9d-night Resend sends the sign-up link again, back to \"/\"",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/resend\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2F\",\"body\":{\"email\":\"kai@example.test\",\"type\":\"signup\",\"gotrue_meta_security\":{},\"code_challenge\":null,\"code_challenge_method\":null}}]"
+  },
+  {
+    "name": "9d-night toast \"Sent a new link to …\" and the countdown starts again",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9d-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9d-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9d-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9d-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-night Change it → 9a with the fields kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-heard-night the waiting tab notices the confirmation and plays 9f",
+    "ok": true,
+    "detail": "Email confirmed ✿"
+  },
+  {
+    "name": "9c-heard-night … then onboarding, in both tabs",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding http://localhost:5246/onboarding  KAI'S FLOW · SUN 27 SEPT · SYNCED ● Today Inbox Calendar More"
+  },
+  {
+    "name": "9f-night \"/\" re-pointed to /sign-in?confirmed: \"Email confirmed ✿\", \"Signing you in…\"",
+    "ok": true,
+    "detail": "http://localhost:5246/sign-in?confirmed#access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDBmMTc1YTAiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImV4cCI6NDEwMjQ0NDgwMH0.x&expires_at=4102444800&expires_in=3600&refresh_token=demo&token_type=bearer&type=signup"
+  },
+  {
+    "name": "9f-night broken seal + seedling, the hand line, no wordmark, no button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-night stays while signing in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9f-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9f-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-night signed in → onboarding (9g)",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9e-night \"/\" re-pointed to /sign-in?expired: \"This link has expired\" + the address",
+    "ok": true,
+    "detail": "Links last an hour and work once. We'll send a fresh one to kai@example.test."
+  },
+  {
+    "name": "9e-night envelope back, Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9e-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9e-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-night Send a new link → sent, 9d with its toast and countdown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-other-night Use a different email → 9a, the address kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night one screen: name (optional) + 3 lines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night Start disabled until a line has text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night first line focused with the example",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night Skip top-right, Import under Start",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night Start pinned to the bottom",
+    "ok": true,
+    "detail": "716"
+  },
+  {
+    "name": "9l-g-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9l-g-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9l-g-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9l-g-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-night the date parses into a chip under its line only",
+    "ok": true,
+    "detail": "[\"TOMORROW · 15:00\"]"
+  },
+  {
+    "name": "9h-night Start enabled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9h-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9h-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-night Start → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9i-night three tasks, every one Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",true],[\"Finish the flow audit\",true],[\"Gym\",true]]"
+  },
+  {
+    "name": "9i-night date words left the title and stayed as the date",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",\"2026-09-28T12:00:00.000Z\"],[\"Finish the flow audit\",null],[\"Gym\",null]]"
+  },
+  {
+    "name": "9i-night name saved, onboarded",
+    "ok": true,
+    "detail": "{\"id\":true,\"user_id\":\"00000000-0000-4000-8000-000000f175a0\",\"timezone\":\"Africa/Cairo\",\"display_name\":\"Kai\",\"workspace_name\":\"Personal\",\"seed_avatar\":null,\"onboarded_at\":\"2026-09-27T04:40:02.707Z\",\"created_at\":\"2026-09-27T04:00:00Z\",\"updated_at\":\"2026-09-27T04:00:00Z\"}"
+  },
+  {
+    "name": "9i-night Today lists the three",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "skip-night Skip → Today, onboarded, nothing created",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night a device that signed in before opens on \"Welcome back\", pre-filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night no rule line on sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night Forgot password? right-aligned under the field, 48 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9j-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9j-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night wrong password → calm line, no raw text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-night right password → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-1-night one tap sends the link to the typed address",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/recover\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2Freset\",\"body\":{\"email\":\"kai@example.test\",\"code_challenge\":null,\"code_challenge_method\":null,\"gotrue_meta_security\":{}}}]"
+  },
+  {
+    "name": "9k-1-night \"Reset link sent\" names the address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night waiting line + spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night no inbox known for example.test → Resend is the one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-1-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9k-1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night Resend sends again, with a toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-night Back to sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-night asks for the address (no send, email focused)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-night Send reset link → 9k-1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night \"Set a new password\" for the account",
+    "ok": true,
+    "detail": "For kai@example.test. You'll stay signed in on this phone."
+  },
+  {
+    "name": "9k-2-night one password field (no confirm) + Show",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night ← in the bar instead of the wordmark",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night a short password isn't sent",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-2-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9k-2-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-night Save password → Today, signed in, with a toast",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-3-night \"This reset link has expired\" + the address",
+    "ok": true,
+    "detail": "Reset links last an hour and work once. We'll send a new one to kai@example.test."
+  },
+  {
+    "name": "9k-3-night Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-night no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "9k-3-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-night theme night",
+    "ok": true,
+    "detail": "night"
+  },
+  {
+    "name": "9k-3-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-night Send a new link → sent (9k-1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-other-night Use a different email → the request form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop a fresh device opens on sign up",
+    "ok": true,
+    "detail": "Create your account"
+  },
+  {
+    "name": "9a-desktop live rule turns sage at 8+",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop password hidden, \"Show\" is a word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop Show reveals, then reads Hide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop inputs are 48 tall",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "9a-desktop one CTA, full width, 48",
+    "ok": true,
+    "detail": "{\"x\":280,\"y\":496.9,\"width\":400,\"height\":48}"
+  },
+  {
+    "name": "9a-desktop \"Sign in\" one tap away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9a-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9a-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":656.9}}"
+  },
+  {
+    "name": "9a-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9a-desktop confirmation off: Create account signs up and lands straight on onboarding",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9a-desktop the address is remembered for next time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-desktop card names the address",
+    "ok": true,
+    "detail": "kai@example.test already has an account.\nSign in instead"
+  },
+  {
+    "name": "9b-1-desktop card sits under the email field, above Password",
+    "ok": true,
+    "detail": "{\"email\":{\"x\":368.5,\"y\":389.625,\"width\":480.5,\"height\":58},\"cb\":{\"x\":350,\"y\":458.625,\"width\":500,\"height\":72},\"pwLabel\":{\"x\":350,\"y\":550.625,\"width\":500,\"height\":25}}"
+  },
+  {
+    "name": "9b-1-desktop still one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9b-1-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-1-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":722.5}}"
+  },
+  {
+    "name": "9b-1-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-1-desktop Sign in instead → 9j with the address filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-desktop terra line: \"Use 8 or more characters — 3 to go\"",
+    "ok": true,
+    "detail": "Use 8 or more characters — 3 to go"
+  },
+  {
+    "name": "9b-2-desktop the box shows the focus ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-desktop Create account sends nothing and keeps the password field focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-2-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9b-2-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-2-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":656.9}}"
+  },
+  {
+    "name": "9b-2-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-desktop offline chip \"Offline — connect to sign up\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-desktop card: \"No connection. Your details are kept…\" + Retry",
+    "ok": true,
+    "detail": "No connection. Your details are kept — try again when you're online.\nRetry"
+  },
+  {
+    "name": "9b-3-desktop details kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-desktop card sits right above the CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9b-3-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9b-3-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":778.5}}"
+  },
+  {
+    "name": "9b-3-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9b-3-desktop back online, Retry signs up",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9c-desktop no session → \"Check your email\" naming the address, still on /sign-in",
+    "ok": true,
+    "detail": "Check your email http://localhost:5246/sign-in"
+  },
+  {
+    "name": "9c-desktop sub: open it on this device, no need to sign in again",
+    "ok": true,
+    "detail": "We sent a link to kai@example.test. Open it on this device and you're in — no need to sign in again."
+  },
+  {
+    "name": "9c-desktop sealed envelope, waiting line, spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-desktop first arrival: Resend already counting down, disabled",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9c-desktop no inbox for example.test → Resend is the one CTA; \"Wrong address? Change it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-desktop 12s later: \"Resend in 0:48\"",
+    "ok": true,
+    "detail": "Resend in 0:48"
+  },
+  {
+    "name": "9c-desktop after the minute: \"Resend link\", enabled",
+    "ok": true,
+    "detail": "Resend link"
+  },
+  {
+    "name": "9c-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9c-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9c-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":558.9}}"
+  },
+  {
+    "name": "9c-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9d-desktop Resend sends the sign-up link again, back to \"/\"",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/resend\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2F\",\"body\":{\"email\":\"kai@example.test\",\"type\":\"signup\",\"gotrue_meta_security\":{},\"code_challenge\":null,\"code_challenge_method\":null}}]"
+  },
+  {
+    "name": "9d-desktop toast \"Sent a new link to …\" and the countdown starts again",
+    "ok": true,
+    "detail": "Resend in 1:00"
+  },
+  {
+    "name": "9d-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9d-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9d-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":558.9}}"
+  },
+  {
+    "name": "9d-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-desktop Change it → 9a with the fields kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-webmail-desktop Open email app → the webmail inbox, Resend secondary",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9c-heard-desktop the waiting tab notices the confirmation and plays 9f",
+    "ok": true,
+    "detail": "Email confirmed ✿"
+  },
+  {
+    "name": "9c-heard-desktop … then onboarding, in both tabs",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding http://localhost:5246/onboarding  ‹ Kai's Flow PERSONAL · CAIRO a field journal of days ✿ PLAN › Due Today 0 This Week 0 This Month 0 Upcoming 0 Someday 0 TEND Today Inbox Calendar Tasks Project"
+  },
+  {
+    "name": "9f-desktop \"/\" re-pointed to /sign-in?confirmed: \"Email confirmed ✿\", \"Signing you in…\"",
+    "ok": true,
+    "detail": "http://localhost:5246/sign-in?confirmed#access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDBmMTc1YTAiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImV4cCI6NDEwMjQ0NDgwMH0.x&expires_at=4102444800&expires_in=3600&refresh_token=demo&token_type=bearer&type=signup"
+  },
+  {
+    "name": "9f-desktop broken seal + seedling, the hand line, no wordmark, no button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-desktop stays while signing in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9f-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9f-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":464.9}}"
+  },
+  {
+    "name": "9f-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9f-desktop signed in → onboarding (9g)",
+    "ok": true,
+    "detail": "http://localhost:5246/onboarding"
+  },
+  {
+    "name": "9e-desktop \"/\" re-pointed to /sign-in?expired: \"This link has expired\" + the address",
+    "ok": true,
+    "detail": "Links last an hour and work once. We'll send a fresh one to kai@example.test."
+  },
+  {
+    "name": "9e-desktop envelope back, Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9e-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9e-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":511.4}}"
+  },
+  {
+    "name": "9e-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-desktop Send a new link → sent, 9d with its toast and countdown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9e-other-desktop Use a different email → 9a, the address kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9m-g-desktop one screen: name (optional) + 3 lines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9m-g-desktop Start disabled until a line has text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9m-g-desktop first line focused with the example",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9m-g-desktop Skip top-right, Import under Start",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9m-g-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9m-g-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9m-g-desktop desktop 9m: fern, wordmark bar top-left, centred 460 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":250,\"y\":0,\"width\":460,\"height\":691.2}}"
+  },
+  {
+    "name": "9m-g-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-desktop the date parses into a chip under its line only",
+    "ok": true,
+    "detail": "[\"TOMORROW · 15:00\"]"
+  },
+  {
+    "name": "9h-desktop Start enabled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9h-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9h-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9h-desktop desktop 9m: fern, wordmark bar top-left, centred 460 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":250,\"y\":0,\"width\":460,\"height\":725.2}}"
+  },
+  {
+    "name": "9h-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-desktop Start → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9i-desktop three tasks, every one Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",true],[\"Finish the flow audit\",true],[\"Gym\",true]]"
+  },
+  {
+    "name": "9i-desktop date words left the title and stayed as the date",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier\",\"2026-09-28T12:00:00.000Z\"],[\"Finish the flow audit\",null],[\"Gym\",null]]"
+  },
+  {
+    "name": "9i-desktop name saved, onboarded",
+    "ok": true,
+    "detail": "{\"id\":true,\"user_id\":\"00000000-0000-4000-8000-000000f175a0\",\"timezone\":\"Africa/Cairo\",\"display_name\":\"Kai\",\"workspace_name\":\"Personal\",\"seed_avatar\":null,\"onboarded_at\":\"2026-09-27T04:40:02.616Z\",\"created_at\":\"2026-09-27T04:00:00Z\",\"updated_at\":\"2026-09-27T04:00:00Z\"}"
+  },
+  {
+    "name": "9i-desktop Today lists the three",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9i-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "skip-desktop Skip → Today, onboarded, nothing created",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop a device that signed in before opens on \"Welcome back\", pre-filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop no rule line on sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop Forgot password? right-aligned under the field, 48 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9j-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9j-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":672.9}}"
+  },
+  {
+    "name": "9j-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop wrong password → calm line, no raw text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9j-desktop right password → Today",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-1-desktop one tap sends the link to the typed address",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"path\":\"/auth/v1/recover\",\"search\":\"?redirect_to=http%3A%2F%2Flocalhost%3A5246%2Freset\",\"body\":{\"email\":\"kai@example.test\",\"code_challenge\":null,\"code_challenge_method\":null,\"gotrue_meta_security\":{}}}]"
+  },
+  {
+    "name": "9k-1-desktop \"Reset link sent\" names the address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-desktop waiting line + spam hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-desktop no inbox known for example.test → Resend is the one CTA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9k-1-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-1-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":558.9}}"
+  },
+  {
+    "name": "9k-1-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-desktop Resend sends again, with a toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-desktop Back to sign in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-webmail-desktop Open email app → the webmail inbox, Resend secondary",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-desktop asks for the address (no send, email focused)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "forgot-empty-desktop Send reset link → 9k-1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-desktop \"Set a new password\" for the account",
+    "ok": true,
+    "detail": "For kai@example.test. You'll stay signed in on this device."
+  },
+  {
+    "name": "9k-2-desktop one password field (no confirm) + Show",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-desktop ← in the bar instead of the wordmark",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-desktop a short password isn't sent",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9k-2-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-2-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":526.9}}"
+  },
+  {
+    "name": "9k-2-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-2-desktop Save password → Today, signed in, with a toast",
+    "ok": true,
+    "detail": "http://localhost:5246/today"
+  },
+  {
+    "name": "9k-3-desktop \"This reset link has expired\" + the address",
+    "ok": true,
+    "detail": "Reset links last an hour and work once. We'll send a new one to kai@example.test."
+  },
+  {
+    "name": "9k-3-desktop Send a new link + Use a different email",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1200"
+  },
+  {
+    "name": "9k-3-desktop theme day",
+    "ok": true,
+    "detail": "day"
+  },
+  {
+    "name": "9k-3-desktop desktop 9m: fern, wordmark bar top-left, centred 400 column (CSS px at 1.25×)",
+    "ok": true,
+    "detail": "{\"fern\":true,\"bar\":{\"x\":36,\"y\":18,\"width\":900,\"height\":48},\"col\":{\"x\":280,\"y\":0,\"width\":400,\"height\":511.4}}"
+  },
+  {
+    "name": "9k-3-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-desktop Send a new link → sent (9k-1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-3-other-desktop Use a different email → the request form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "9k-1-waiting-day the waiting tab moves on to \"Set a new password\"",
+    "ok": true,
+    "detail": "http://localhost:5246/reset"
+  }
+]
