@@ -11,6 +11,8 @@ export interface FirstThing {
   dueAt: string | null
   durationMin: number | null
   priority: number | null
+  /** `*label` words, when the line has any. */
+  labels?: string[]
 }
 
 /** One onboarding line → the task it becomes, or null for an empty line. */
@@ -18,7 +20,7 @@ export function readFirstThing(line: string, now: Date = new Date()): FirstThing
   const text = line.trim()
   if (!text) return null
   const p = parseCommand(text, [], [], { now, zone: 'cairo' })
-  return { title: p.title || text, dueAt: p.dueAt, durationMin: p.durationMin, priority: p.priority }
+  return { title: p.title || text, dueAt: p.dueAt, durationMin: p.durationMin, priority: p.priority, ...(p.labels.length ? { labels: p.labels } : null) }
 }
 
 /** The date parse chip under a line (9h): "Tomorrow · 15:00", Cairo's day and 24h clock. */

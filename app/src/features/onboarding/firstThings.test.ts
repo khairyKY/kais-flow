@@ -25,8 +25,9 @@ describe('readFirstThing', () => {
     expect(readFirstThing('   ', NOW)).toBeNull()
   })
 
-  it('duration and priority ride along like the command bar', () => {
+  it('duration, priority and *labels ride along like the command bar', () => {
     expect(readFirstThing('Gym 1h !!', NOW)).toEqual({ title: 'Gym', dueAt: null, durationMin: 60, priority: 2 })
+    expect(readFirstThing('Gym *health', NOW)).toEqual({ title: 'Gym', dueAt: null, durationMin: null, priority: null, labels: ['health'] })
   })
 
   it('a line that is only a date keeps its words as the title', () => {

@@ -56,3 +56,14 @@ export function resolveTag(task: Task, domains: Domain[], projects: Project[], a
   }
   return null
 }
+
+/** A row's labels (Kai 2026-10-03): the first `max` as chips in its meta, the rest as "+N". */
+export function rowLabels(labels: readonly string[] | null | undefined, max = 2): { shown: string[]; more: number } {
+  const all = labels ?? []
+  return { shown: all.slice(0, max), more: Math.max(0, all.length - max) }
+}
+
+/** Every label in use, once, A–Z ignoring case — Tasks' Label filter options. */
+export function labelOptions(tasks: readonly Pick<Task, 'labels'>[]): string[] {
+  return [...new Set(tasks.flatMap((t) => t.labels ?? []))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+}

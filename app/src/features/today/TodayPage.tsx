@@ -50,6 +50,7 @@ import { ritualProgress, type RitualState } from './dayPhase'
 import { upNextClock, upNextLabel } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
+import { LabelChips } from '../tasks/TaskRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
 import { useOpenTask } from '../tasks/openTask'
 import { DayCard, RitualCard } from './DayCard'
@@ -1262,6 +1263,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
             dueDays === 0 && <span key="d">Due today</span>,
             task.duration_min != null && <span key="m">{formatDuration(task.duration_min)}</span>,
             task.recurrence_rule && <span key="r">↻</span>,
+            !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
           ].filter(Boolean)
     return (
       <SwipeRow {...rowProps} className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
@@ -1303,7 +1305,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
       {check}
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <div style={{ fontSize: hollow ? 14.5 : 15, ...title }}><EmojiText text={task.title} /></div>
-        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}{dueBadges}</>)}
+        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
       </div>
       {tail}
     </SwipeRow>

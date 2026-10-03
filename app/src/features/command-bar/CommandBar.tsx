@@ -108,6 +108,7 @@ export function CommandBar() {
         dueAt: parsed.dueAt,
         durationMin: parsed.durationMin,
         priority: parsed.priority,
+        labels: parsed.labels,
       })
     } else {
       captureText(trimmed)
@@ -260,6 +261,11 @@ export function CommandBar() {
                 → {matchChip}
               </span>
             )}
+            {parsed.labels.map((l) => (
+              <span key={l} style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>
+                *{l}
+              </span>
+            ))}
             {unmatched && (
               <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                 → Inbox (unfiled)

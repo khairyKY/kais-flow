@@ -6,11 +6,11 @@ import { completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, rescheduleDue } f
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
-import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag } from './taskDisplay'
+import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import { checkAction } from './completion'
 import { scheduleToday } from '../../lib/dateShortcuts'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { Checkbox } from '../../components/kit'
+import { Checkbox, Chip } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
@@ -47,6 +47,25 @@ const metaStyle: React.CSSProperties = {
   gap: '4px 14px',
   alignItems: 'center',
   flexWrap: 'wrap',
+}
+
+// The kit's bordered chip, sized down to sit in a mono meta line (its own height and 9px desktop
+// type are for standalone chips).
+const LABEL_CHIP: React.CSSProperties = { height: 'auto', padding: '1px 6px', fontSize: 'inherit', letterSpacing: 'inherit', lineHeight: 'inherit' }
+
+/** A row's labels in its meta (Kai 2026-10-03): up to two kit chips, then "+N". */
+export function LabelChips({ labels }: { labels: readonly string[] | null | undefined }) {
+  const { shown, more } = rowLabels(labels)
+  return (
+    <>
+      {shown.map((l) => (
+        <Chip key={l} tone="bordered" style={LABEL_CHIP}>
+          {l}
+        </Chip>
+      ))}
+      {more > 0 && <span aria-label={`${more} more label${more === 1 ? '' : 's'}`}>+{more}</span>}
+    </>
+  )
 }
 
 export interface TaskRowProps {
@@ -317,6 +336,7 @@ export function TaskRow({
           )}
           {task.recurrence_rule && <span>↻</span>}
           {isGoal && <span style={{ color: 'var(--acc-gold)' }}>✶ Goal</span>}
+          <LabelChips labels={task.labels} />
         </div>
       </div>
 
