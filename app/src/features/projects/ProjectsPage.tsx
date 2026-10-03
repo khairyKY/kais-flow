@@ -310,7 +310,7 @@ export function ProjectsPage() {
   // Render Mobile (iPhone variant 1c)
   if (isMobile) {
     return (
-      <div style={{ maxWidth: 398, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: '100%', maxWidth: 398, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
         <div style={{ flex: 1, padding: '16px 18px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

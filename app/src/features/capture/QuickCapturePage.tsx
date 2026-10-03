@@ -59,7 +59,7 @@ export function QuickCapturePage() {
   }
 
   return (
-    <div style={{ padding: '24px 0 36px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ width: '100%', padding: '24px 0 36px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '0 0 24px' }}>
         <span
           style={{
