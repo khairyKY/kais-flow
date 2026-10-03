@@ -56,10 +56,11 @@ adb exec-out screencap -p > shots/3-share-cold-4s.png
 sleep 11
 adb exec-out screencap -p > shots/3-share-cold.png
 { echo "after the cold share: pid $(adb shell pidof "$pkg")"; adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'; } > shots/share-state.txt
-# The warm case needs the page up. A freshly booted emulator has once killed the process in this
-# gap (run 37115560734: the home screen at 15 s; the next run kept it). If that
-# happens, open the app again first and say so (share-logcat.txt then shows why); the cold share
-# above has already been logged.
+# The warm case needs the page up. On a freshly booted emulator Play services restarts now and
+# then, and Android kills the app with it: "depends on provider …gms/.fonts.provider.FontsProvider
+# in dying proc com.google.android.gms.persistent" (runs 37115560734, 37116749969). If the app is
+# gone, open it again first and say so (share-logcat.txt shows why); the cold share above has
+# already been logged.
 if [ -z "$(adb shell pidof "$pkg")" ]; then
   echo 'WARN: the app process was gone before the warm share; relaunching' | tee -a shots/share-state.txt
   adb shell am start -W -n "$pkg/.MainActivity"
