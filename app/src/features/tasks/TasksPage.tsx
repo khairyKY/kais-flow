@@ -648,7 +648,7 @@ export function TasksPage() {
   // Header, tabs, caption, chips and quick-add all live in the grid's LEFT column
   // (Tasks.dc.html:253-256) so the Organize rail starts level with the header.
   return (
-    <div className="tasks-page" style={{ maxWidth: 1180 }}>
+    <div className="tasks-page" style={{ maxWidth: 'var(--kf-page-max)' }}>
       {/* Tasks.dc.html 1b (iPhone): single column, no Organize rail — the rail is desktop-only.
           Polish D (2026-09-26 audit): the switch was `@media (max-width: 767px)`, but media
           queries read the WINDOW, which the root 125% zoom (lib/uiScale.ts) doesn't shrink — a

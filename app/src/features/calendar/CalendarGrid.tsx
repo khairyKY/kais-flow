@@ -39,6 +39,9 @@ export interface CalendarGridHandle {
   prev(): void
   next(): void
   today(): void
+  /** Drops the slot highlight (quick-create closed) — FullCalendar keeps it, and a click on a
+   * still-selected slot never selects again, so the same slot couldn't be reopened. */
+  unselect(): void
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -260,6 +263,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })
 
   useImperativeHandle(ref, () => ({
+    unselect: () => fcRef.current?.getApi().unselect(),
     prev: () => fcRef.current?.getApi().prev(),
     next: () => fcRef.current?.getApi().next(),
     // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
@@ -343,8 +347,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
       // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
       // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
+      // Kai 2026-10-03: drags, moves and resizes land on quarter hours (the time fields' own
+      // 15-min list); the drawn grid stays half-hourly. A plain click still makes 30 min
+      // (CalendarPage.handleGridCreate widens a one-snap selection).
       slotDuration="00:30:00"
-      snapDuration="00:30:00"
+      snapDuration="00:15:00"
       // Punch 37: edge auto-scroll while dragging is FC's own AutoScroller — enabled by default,
       // wired to `.fc-scroller` (the time-grid's vertical scroller), 50px edge zone, quadratic
       // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
@@ -474,6 +481,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
+        // A mirror (the drag-select preview, or a block mid-drag/resize) has no kf props of its own
+        // — or the original block's — so its labels read the event's live times. Kai 2026-10-03:
+        // a narrow column (150%) drew the preview's start-only label as clockTime(undefined),
+        // "Invalid Date".
+        const startMs = arg.event.start?.getTime() ?? p.kfStart
+        const endMs = arg.event.end?.getTime() ?? p.kfEnd
 
         // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
         let timeText = arg.timeText
@@ -484,10 +497,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         } else if ((p.kfOv || narrow) && arg.timeText) {
           // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The
           // narrow-column tier (< 170px) reads the same way (Polish D).
-          timeText = clockTime(p.kfStart)
+          timeText = clockTime(startMs)
         } else if (p.kfFull && arg.timeText) {
           // full tier has room for the duration suffix (§2 "as space allows")
-          const mins = Math.round((p.kfEnd - p.kfStart) / 60_000)
+          const mins = Math.round((endMs - startMs) / 60_000)
           timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
         }
         // §7 outbox suffixes ride the time row

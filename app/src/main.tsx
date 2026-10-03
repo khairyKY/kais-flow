@@ -25,6 +25,8 @@ import './features/projects/xfx.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import { isNativeShell, syncShellChrome } from './lib/platform'
+import { setSwRegistration } from './lib/appUpdate'
+import { installNativeMenuGuard } from './lib/nativeMenu'
 
 // Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build
 // until a second reload. In autoUpdate mode this reloads the page as soon as the new version
@@ -34,12 +36,16 @@ import { isNativeShell, syncShellChrome } from './lib/platform'
 if (!isNativeShell()) registerSW({
   immediate: true,
   onRegisteredSW(_url, registration) {
+    setSwRegistration(registration) // Settings → Check for updates → Reload
     // Browsers only look for a new build on navigation — also look whenever the tab comes back.
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') void registration?.update()
     })
   },
 })
+
+// Kai 2026-10-03: no WebView Back/Refresh/Print menu on a right-click — ours, or none (lib/nativeMenu).
+installNativeMenuGuard()
 
 // M1: once styles have settled, give the Android shell the page colour for its bar strips.
 if (isNativeShell()) window.addEventListener('load', () => syncShellChrome(document.documentElement.dataset.theme === 'night' ? 'night' : 'day'))

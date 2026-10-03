@@ -690,7 +690,9 @@ export function LibraryPage() {
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
           
           {/* Sub-column: SHELF CONTENT LIST (to choose items in active category) */}
-          <div style={{ width: 220, flex: 'none', borderRight: '1px dashed var(--line-solid)', overflowY: 'auto', padding: '16px 12px' }}>
+          {/* Kai 2026-10-03: neither column scrolls on its own — the page around them has no bounded
+              height, so they never did; they only swallowed the wheel. */}
+          <div style={{ width: 220, flex: 'none', borderRight: '1px dashed var(--line-solid)', padding: '16px 12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {activeTab} ({activeTab === 'quotes' ? filteredQuotes.length : activeTab === 'notes' ? filteredNotes.length : filteredBooks.length})
@@ -834,7 +836,7 @@ export function LibraryPage() {
           </div>
 
           {/* Sub-column: MAIN READER SECTION */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex' }}>
+          <div style={{ flex: 1, display: 'flex' }}>
             
             {/* BOOK DETAIL VIEW (if selectedBookId is active) */}
             {activeBook ? (

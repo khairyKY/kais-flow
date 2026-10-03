@@ -4,26 +4,40 @@ import { writeRow } from '../../lib/outbox'
 import { restoreTask } from '../tasks/api'
 import { restoreInboxItem } from '../inbox/api'
 import { restoreJournalEntry } from '../journal/api'
+import { restoreTrashedProject } from '../projects/api'
+import { restoreTrashedArea } from '../areas/api'
 import { INBOX_COLUMNS, TASK_COLUMNS } from '../../lib/columns'
-import type { Task, InboxItem, JournalEntry } from '../../lib/types'
+import type { Task, InboxItem, JournalEntry, Project, Area } from '../../lib/types'
 
 export interface DeletedItem {
   id: string
-  type: 'Task' | 'Inbox' | 'Event' | 'Journal'
+  type: 'Task' | 'Inbox' | 'Event' | 'Journal' | 'Project' | 'Area'
   title: string
   deleted_at: string
   rawRow: any
+}
+
+/** The table each Trash type lives in (its base query key is the same name). */
+export const TRASH_TABLE: Record<DeletedItem['type'], string> = {
+  Task: 'tasks',
+  Inbox: 'inbox_items',
+  Event: 'calendar_events',
+  Journal: 'journal_entries',
+  Project: 'projects',
+  Area: 'areas',
 }
 
 export function useDeletedItems() {
   return useQuery({
     queryKey: ['deleted_items'],
     queryFn: async () => {
-      const [tasksRes, inboxRes, calendarRes, journalRes] = await Promise.all([
+      const [tasksRes, inboxRes, calendarRes, journalRes, projectsRes, areasRes] = await Promise.all([
         supabase.from('tasks').select(TASK_COLUMNS).not('deleted_at', 'is', null),
         supabase.from('inbox_items').select(INBOX_COLUMNS).not('deleted_at', 'is', null),
         supabase.from('calendar_events').select('*').not('deleted_at', 'is', null),
-        supabase.from('journal_entries').select('*').not('deleted_at', 'is', null)
+        supabase.from('journal_entries').select('*').not('deleted_at', 'is', null),
+        supabase.from('projects').select('*').not('deleted_at', 'is', null),
+        supabase.from('areas').select('*').not('deleted_at', 'is', null),
       ])
       if (tasksRes.error) throw tasksRes.error
       if (inboxRes.error) throw inboxRes.error
@@ -42,6 +56,14 @@ export function useDeletedItems() {
       for (const j of (journalRes.data || [])) {
         list.push({ id: j.id, type: 'Journal', title: j.body ? `"${j.body.slice(0, 50)}..."` : '"draft"', deleted_at: j.deleted_at!, rawRow: j })
       }
+      // ponytail: before migration 0044 is pushed these two have no deleted_at and answer 400 —
+      // the rest of the Trash still lists rather than failing whole.
+      for (const p of ((projectsRes.error ? [] : projectsRes.data) as Project[])) {
+        list.push({ id: p.id, type: 'Project', title: p.name, deleted_at: p.deleted_at!, rawRow: p })
+      }
+      for (const a of ((areasRes.error ? [] : areasRes.data) as Area[])) {
+        list.push({ id: a.id, type: 'Area', title: a.name, deleted_at: a.deleted_at!, rawRow: a })
+      }
       return list.sort((a, b) => b.deleted_at.localeCompare(a.deleted_at))
     }
   })
@@ -53,13 +75,11 @@ export function restoreItem(item: DeletedItem): void {
   else if (item.type === 'Inbox') restoreInboxItem(row as InboxItem, true) // TrashPage pushes its own "Restored to Inbox"
   else if (item.type === 'Event') writeRow('calendar_events', { ...row, deleted_at: null })
   else if (item.type === 'Journal') restoreJournalEntry(row as JournalEntry)
+  else if (item.type === 'Project') restoreTrashedProject(row as Project)
+  else restoreTrashedArea(row as Area)
 }
 
+/** Gone for good. A project's or area's tasks stay — the FKs set them to no project / no area. */
 export function deleteItemForever(item: DeletedItem): void {
-  const row = item.rawRow
-  const table = item.type === 'Task' ? 'tasks' :
-                item.type === 'Inbox' ? 'inbox_items' :
-                item.type === 'Event' ? 'calendar_events' :
-                'journal_entries'
-  writeRow(table, row, 'delete')
+  writeRow(TRASH_TABLE[item.type], item.rawRow, 'delete')
 }

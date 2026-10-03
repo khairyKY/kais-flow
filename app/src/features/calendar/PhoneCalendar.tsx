@@ -20,6 +20,7 @@ import { allDayOn, dayBlocks, eventSpan, rangeText, tapStart, viewStep, viewTitl
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
+import { useCalendarDefaultView } from '../../lib/settings'
 
 const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => ({ default: m.MorningRitual })))
 
@@ -51,6 +52,14 @@ export function PhoneCalendar() {
   const now = useMinuteNow()
   const today = cairoDateKey(now)
   const [view, setView] = useState<PhoneView>('day')
+  // Settings → the calendar's default view (synced): applied once when settings load, then the
+  // title's Day / 3 days / Week switch is the reader's own — same pattern as the desktop calendar.
+  const defaultView = useCalendarDefaultView('day')
+  const [openedOnDefault, setOpenedOnDefault] = useState(false)
+  if (defaultView && !openedOnDefault) {
+    setOpenedOnDefault(true)
+    if (defaultView !== view) setView(defaultView)
+  }
   const [anchor, setAnchor] = useState(today)
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)

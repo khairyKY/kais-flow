@@ -44,6 +44,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-10-03** — **v1.0.16:** Kai's desktop screenshots fixed (Settings scroll, our right-click menu, area delete, Focus search, quick-create at 150%, time list, sidebar rail, 15-minute snapping, main width); a synced default calendar view; a Check for updates button; and a Windows installer that looks like the app.
 - **2026-10-03** — **v1.0.15 (Wave O):** Kai handed the UX calls to the conductor (next week on Sunday = the Monday after; reminders keep their lead time; phone routines fold by time of day; tap a calendar task block → the Task sheet). Plan my day gets search + pick-in-place and loses the confusing ✓; the pressing ceremony waits for the reader; six importers; email confirmation screens + branded templates ready for free Gmail SMTP (off until the secrets exist).
 - **2026-10-02** — **v1.0.14: the app icon is Kai's "Final — Source Serif K"** (a Source Serif K on warm paper) on web, Android (adaptive) and Windows.
 - **2026-09-29** — **v1.0.13: Calendar on the phone — Wave N complete.** A touch calendar of our own on phones (swipe days, 3-day/week, hold-to-move with a time bubble, resize handles, tap a gap to create, block sheet); FullCalendar stays for desktop. The whole Claude Design refresh (Waves K–N) is now in the app. Open: tap a task block → block sheet (as drawn) or straight to the task?

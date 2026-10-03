@@ -249,7 +249,8 @@ export function ImportPage() {
   const rowTitle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 
   return (
-    <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '30px 36px 44px' }}>
+    // Kai 2026-10-03: no scroller of its own — unbounded, it only swallowed the wheel (SettingsPage).
+    <div style={{ flex: 1, minWidth: 0, padding: '30px 36px 44px' }}>
       <div style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--ink-body)' }}>Import data</h2>

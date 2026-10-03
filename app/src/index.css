@@ -39,6 +39,16 @@ body,
   height: 100%;
   min-height: 0;
 }
+/* Kai 2026-10-03 ("the width of the main view somehow is bugged"): in this flex column a page root
+   with `margin: 0 auto` doesn't stretch — auto margins turn stretch off — so it shrinks to its
+   content and sits centred in empty paper (Today did). Such a root states `width: 100%` itself
+   (Perennials, Quick capture, the phone Projects list). Not a rule here: roots that bleed past the
+   gutters with negative margins (the phone calendar, Focus) must keep stretching. */
+/* The desktop page width the dashboard pages share (Today, Tasks): they grow with the window up
+   to this, inside the shell's gutters. */
+:root {
+  --kf-page-max: 1280px;
+}
 .kf-route[data-initial] {
   animation: none;
 }

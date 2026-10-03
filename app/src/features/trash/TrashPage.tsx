@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useDeletedItems, restoreItem, deleteItemForever, type DeletedItem } from './api'
+import { useDeletedItems, restoreItem, deleteItemForever, TRASH_TABLE, type DeletedItem } from './api'
 import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { toastAction } from '../../lib/undo'
@@ -32,8 +32,7 @@ export function TrashPage() {
 
   const navigate = useNavigate()
 
-  const baseKey = (type: DeletedItem['type']) =>
-    type === 'Task' ? 'tasks' : type === 'Inbox' ? 'inbox_items' : type === 'Event' ? 'calendar_events' : 'journal_entries'
+  const baseKey = (type: DeletedItem['type']) => TRASH_TABLE[type]
 
   // Punch 9 (Trash slice): a restore that only says where it went makes you go find it.
   const DESTINATION: Record<DeletedItem['type'], { label: string; to: string }> = {
@@ -41,6 +40,8 @@ export function TrashPage() {
     Inbox: { label: 'Inbox', to: '/inbox' },
     Event: { label: 'Calendar', to: '/calendar' },
     Journal: { label: 'Journal', to: '/journal' },
+    Project: { label: 'Projects', to: '/projects' },
+    Area: { label: 'Projects', to: '/projects' },
   }
 
   // writeRow only patches the base-table cache, never ['deleted_items'] — remove optimistically
@@ -220,7 +221,8 @@ export function TrashPage() {
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Settings · Trash" strip — that was
           Trash.dc.html's mock of the shell topbar, which the real shell already draws. */}
-      <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+      {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
+      <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 760, maxWidth: '100%', padding: '0 34px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

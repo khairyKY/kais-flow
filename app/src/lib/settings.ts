@@ -48,6 +48,23 @@ export function useOwner(): { flow: string; workspace: string; pending: boolean 
   }
 }
 
+/** The day-count views both calendars have (Settings → Calendar → Opens on). */
+export type CalendarDefaultView = 'day' | '3day' | 'week'
+export const CALENDAR_DEFAULT_VIEWS: readonly CalendarDefaultView[] = ['day', '3day', 'week']
+
+/** A stored `calendar_default_view`, or null when it was never chosen (or isn't one we know). */
+export function parseCalendarDefaultView(raw: unknown): CalendarDefaultView | null {
+  return CALENDAR_DEFAULT_VIEWS.includes(raw as CalendarDefaultView) ? (raw as CalendarDefaultView) : null
+}
+
+/** The view a calendar opens on: the synced choice, else `platformDefault` (desktop 'week', phone
+ * 'day'). `undefined` while the settings row is still loading — open on the platform default and
+ * switch once this resolves (CalendarPage's DesktopCalendar shows how). */
+export function useCalendarDefaultView(platformDefault: CalendarDefaultView): CalendarDefaultView | undefined {
+  const { data } = useAppSettings()
+  return data ? (parseCalendarDefaultView(data.calendar_default_view) ?? platformDefault) : undefined
+}
+
 export function updateAppSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
   const settings = queryClient.getQueryData<AppSettings>(['app_settings']) ?? DEFAULT_SETTINGS
   writeRow('app_settings', { ...settings, [key]: value })

@@ -335,7 +335,8 @@ export function HerbariumPage() {
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Projects · Herbarium" strip — that
           was Herbarium.dc.html's mock of the shell topbar, which the real shell already draws. */}
-      <div style={{ flex: 1, padding: '32px 0 48px', display: 'flex', justifyContent: 'center', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+      {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
+      <div style={{ flex: 1, padding: '32px 0 48px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
         <div style={{ width: 880, maxWidth: '100%', padding: '0 34px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 12 }}>
             <div>

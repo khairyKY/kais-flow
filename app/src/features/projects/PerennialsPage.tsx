@@ -205,7 +205,7 @@ export function PerennialsPage() {
   // Render Perennials Empty state (1b)
   if (activeSeries.length === 0) {
     return (
-      <div style={{ maxWidth: 560, margin: '60px auto 0', background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '60px auto 0', background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
         <div style={{ background: 'var(--paper-linen)', padding: '44px 40px 46px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18 }}>
@@ -375,7 +375,7 @@ export function PerennialsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '85vh', position: 'relative' }}>
+    <div style={{ width: '100%', maxWidth: 860, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '85vh', position: 'relative' }}>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
       <div style={{ padding: '28px 0 48px', position: 'relative', zIndex: 10 }}>

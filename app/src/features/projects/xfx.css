@@ -106,3 +106,10 @@
 .kf-num { appearance: textfield; -moz-appearance: textfield; }
 .kf-num::-webkit-outer-spin-button,
 .kf-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Kai 2026-10-03: the Projects rows' ⋯ (the same menu as their right-click). Quiet until the row
+   is hovered or the button is focused; always there on touch, which has no hover or right-click. */
+.pj-more { flex: none; width: 28px; height: 28px; padding: 0; border: none; border-radius: 6px; background: none; color: var(--ink-faint); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity var(--dur-quick) var(--ease-out); }
+.kf-lift:hover .pj-more, .pj-more:focus-visible { opacity: 1; }
+.pj-more:hover { background: var(--paper-bone); color: var(--ink-body); }
+@media (hover: none), (pointer: coarse) { .pj-more { opacity: 1; } }

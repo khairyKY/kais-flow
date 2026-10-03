@@ -1,0 +1,752 @@
+[
+  {
+    "name": "settings-day @150% wheel over the content cards scrolls the page",
+    "ok": true,
+    "detail": "266.6666564941406"
+  },
+  {
+    "name": "settings-day @150% wheel over the left nav still scrolls it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day @150% no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day Calendar → Opens on shows Week (desktop default) when unset",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day picking 3 days writes calendar_default_view = '3day'",
+    "ok": true,
+    "detail": "[\"3day\"]"
+  },
+  {
+    "name": "settings-day and the row shows it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day @100% wheel over the content cards scrolls the page",
+    "ok": true,
+    "detail": "400"
+  },
+  {
+    "name": "settings-day @100% wheel over the left nav still scrolls it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day @100% no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-day @100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "/settings/import wheel over the page content scrolls it",
+    "ok": true,
+    "detail": "scrollable=true scrollTop=200"
+  },
+  {
+    "name": "/activity wheel over the page content scrolls it",
+    "ok": true,
+    "detail": "scrollable=true scrollTop=70"
+  },
+  {
+    "name": "/herbarium wheel over the page content scrolls it",
+    "ok": true,
+    "detail": "scrollable=true scrollTop=200"
+  },
+  {
+    "name": "/trash wheel over the page content scrolls it",
+    "ok": true,
+    "detail": "scrollable=false scrollTop=0"
+  },
+  {
+    "name": "/library wheel over the page content scrolls it",
+    "ok": true,
+    "detail": "scrollable=true scrollTop=200"
+  },
+  {
+    "name": "calendar-day default unset → opens on WEEK (7 columns)",
+    "ok": true,
+    "detail": "WEEK · 7"
+  },
+  {
+    "name": "calendar-day view button: the kit chevdown, no ⚟",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day unset no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day default day → opens on DAY (1 column)",
+    "ok": true,
+    "detail": "DAY · 1"
+  },
+  {
+    "name": "calendar-day day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day default 3day → opens on 3 DAYS (3 columns)",
+    "ok": true,
+    "detail": "3 DAYS · 3"
+  },
+  {
+    "name": "calendar-day view button: the kit chevdown, no ⚟",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day 3day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day default week → opens on WEEK (7 columns)",
+    "ok": true,
+    "detail": "WEEK · 7"
+  },
+  {
+    "name": "calendar-day week no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day drag preview has a real time, no \"Invalid Date\"",
+    "ok": true,
+    "detail": "9:00 AM"
+  },
+  {
+    "name": "calendar-day drag of three quarter-hours → a 45-minute slot (15-min snap)",
+    "ok": true,
+    "detail": "9:00 AM – 9:45 AM"
+  },
+  {
+    "name": "calendar-day quick-create shows the duration on the When row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day quick-create (Event) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":64,\"bottom\":503,\"left\":475,\"right\":1015,\"sh\":291,\"ch\":291,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-day quick-create (Task) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":29.5,\"bottom\":503,\"left\":475,\"right\":1015,\"sh\":314,\"ch\":314,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-day task: priority and project share one row, no hint line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day quick-create (Time block) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":165.375,\"bottom\":708,\"left\":475,\"right\":1015,\"sh\":360,\"ch\":360,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-day quick-create every field reachable: title, date, 2 times, kind switch, More options, Create",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-day a plain click still opens a 30-minute slot",
+    "ok": true,
+    "detail": "9:00 AM – 9:30 AM"
+  },
+  {
+    "name": "calendar-day quick-create time list inside the window",
+    "ok": true,
+    "detail": "{\"x\":837.015625,\"y\":277.875,\"width\":240,\"height\":336}"
+  },
+  {
+    "name": "calendar-day drag scene no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "task editor-day @125% time list opens inside the window, under/over its field",
+    "ok": true,
+    "detail": "list {\"x\":1064.59375,\"y\":77.78125,\"width\":200,\"height\":280} field {\"x\":1064.60693359375,\"y\":362.78094482421875,\"width\":142.188720703125,\"height\":46.4268798828125}"
+  },
+  {
+    "name": "task editor-day @125% the list steps in 15 minutes",
+    "ok": true,
+    "detail": "96 · 12:00 AM, 12:15 AM, 12:30 AM"
+  },
+  {
+    "name": "task editor-day @125% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "task editor-day @150% time list opens inside the window, under/over its field",
+    "ok": true,
+    "detail": "list {\"x\":1021.5625,\"y\":21.9375,\"width\":240,\"height\":336} field {\"x\":1021.5626220703125,\"y\":363.92645263671875,\"width\":170.780029296875,\"height\":55.3133544921875}"
+  },
+  {
+    "name": "task editor-day @150% the list steps in 15 minutes",
+    "ok": true,
+    "detail": "96 · 12:00 AM, 12:15 AM, 12:30 AM"
+  },
+  {
+    "name": "task editor-day @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day right-click an area → Open · Rename · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day right-click a project → Open · Rename · Finish & press · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day the WebView's own menu is blocked on the page, kept in a text field and over selected text",
+    "ok": true,
+    "detail": "{\"page\":true,\"input\":false,\"selected\":false}"
+  },
+  {
+    "name": "projects-day ⋯ → Rename edits in place and writes the name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day area Delete → deleted_at written, no confirm, logged",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day its tasks are not touched",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day the row leaves, \"Moved to Trash · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day Undo puts the area back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash lists the trashed area with an Area badge",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash → Restore writes deleted_at null",
+    "ok": true,
+    "detail": "[{\"id\":\"30000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":null,\"name\":\"Old garden bed\",\"description\":null,\"color\":null,\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-03T08:25:11.673Z\"}]"
+  },
+  {
+    "name": "trash no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus-day picker opens inside the 150% window with the search field focused",
+    "ok": true,
+    "detail": "{\"top\":12,\"bottom\":360,\"left\":599.3125,\"right\":1079.3125,\"focus\":\"Search tasks to focus on\"}"
+  },
+  {
+    "name": "focus-day typing filters by title",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier\"]"
+  },
+  {
+    "name": "focus-day Enter picks the first match and closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus-day arrows move, Esc closes",
+    "ok": true,
+    "detail": "Plan the forecasting logic"
+  },
+  {
+    "name": "focus-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @100% every box centred in the rail, its icon centred in the box",
+    "ok": true,
+    "detail": "{\"maxOff\":9.5367431640625e-7,\"maxIconOff\":0.0000019073486328125,\"tapeInside\":true,\"footerHit\":true}"
+  },
+  {
+    "name": "rail-day @100% the active tape sits on its box",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @100% the footer stays reachable (the column scrolls, it never runs under)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @100% hover label beside its row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @125% every box centred in the rail, its icon centred in the box",
+    "ok": true,
+    "detail": "{\"maxOff\":0.0000019073486328125,\"maxIconOff\":0.00000286102294921875,\"tapeInside\":true,\"footerHit\":true}"
+  },
+  {
+    "name": "rail-day @125% the active tape sits on its box",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @125% the footer stays reachable (the column scrolls, it never runs under)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @125% hover label beside its row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @125% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @150% every box centred in the rail, its icon centred in the box",
+    "ok": true,
+    "detail": "{\"maxOff\":0.0000019073486328125,\"maxIconOff\":0.0000019073486328125,\"tapeInside\":true,\"footerHit\":true}"
+  },
+  {
+    "name": "rail-day @150% the active tape sits on its box",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @150% the footer stays reachable (the column scrolls, it never runs under)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @150% hover label beside its row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-day @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1920×1080 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1598,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1920×1080 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1598,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "day 1920×1080 @100%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1920×1080 @100% rail: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1776,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1920×1080 @100% rail: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1776,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "day 1920×1080 @100% rail: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1920×1080 @125%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1214,\"width\":1214,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1920×1080 @125%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1214,\"width\":1214,\"left\":40}"
+  },
+  {
+    "name": "day 1920×1080 @125%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1920×1080 @150%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":958,\"width\":958,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1920×1080 @150%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":958,\"width\":958,\"left\":40}"
+  },
+  {
+    "name": "day 1920×1080 @150%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1280×720 @150%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":531,\"width\":531,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1280×720 @150%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":531,\"width\":531,\"left\":40}"
+  },
+  {
+    "name": "day 1280×720 @150%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1280×720 @150% rail: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":709,\"width\":709,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1280×720 @150% rail: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":709,\"width\":709,\"left\":40}"
+  },
+  {
+    "name": "day 1280×720 @150% rail: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-day 1280×720 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":958,\"width\":958,\"left\":40}"
+  },
+  {
+    "name": "tasks-day 1280×720 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":958,\"width\":958,\"left\":40}"
+  },
+  {
+    "name": "day 1280×720 @100%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates (web) a newer deploy → \"A new version is ready\" + Reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates (web) shows this build + its date",
+    "ok": true,
+    "detail": "APP · KAI'S FLOW / Check for updates / A new version is ready / Reload / build aaaaaaa · built 2 Oct 2026"
+  },
+  {
+    "name": "updates (web) same commit → You're on the latest",
+    "ok": true,
+    "detail": "APP · KAI'S FLOW / Check for updates / You're on the latest (build aaaaaaa) / build aaaaaaa · built 2 Oct 2026"
+  },
+  {
+    "name": "updates (web) offline → a calm line, no crash",
+    "ok": true,
+    "detail": "APP · KAI'S FLOW / Check for updates / Couldn’t reach the update check — look at the connection and try again / build aaaaaaa · built 2 Oct 2026"
+  },
+  {
+    "name": "updates (Windows) shows the installed version",
+    "ok": true,
+    "detail": "APP · KAI'S FLOW / Check for updates / v1.0.14"
+  },
+  {
+    "name": "updates (Windows) newer release → \"v1.0.15 is out\" + Download, one request",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates (Windows) Download asks for the Windows installer",
+    "ok": true,
+    "detail": "https://api.github.com/repos/khairyKY/kais-flow/releases/latest https://github.com/khairyKY/kais-flow/releases/download/v1.0.15/kais-flow-v1.0.15-windows-setup.exe"
+  },
+  {
+    "name": "updates (Windows) same version → You're on the latest (v1.0.14)",
+    "ok": true,
+    "detail": "APP · KAI'S FLOW / Check for updates / You're on the latest (v1.0.14) / v1.0.14"
+  },
+  {
+    "name": "updates (Windows) offline → a calm line, no crash",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-night @150% wheel over the content cards scrolls the page",
+    "ok": true,
+    "detail": "266.6666564941406"
+  },
+  {
+    "name": "settings-night @150% wheel over the left nav still scrolls it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-night @150% no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-night Calendar → Opens on shows Week (desktop default) when unset",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-night picking 3 days writes calendar_default_view = '3day'",
+    "ok": true,
+    "detail": "[\"3day\"]"
+  },
+  {
+    "name": "settings-night and the row shows it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-night @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night default 3day → opens on 3 DAYS (3 columns)",
+    "ok": true,
+    "detail": "3 DAYS · 3"
+  },
+  {
+    "name": "calendar-night view button: the kit chevdown, no ⚟",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night 3day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night drag preview has a real time, no \"Invalid Date\"",
+    "ok": true,
+    "detail": "9:00 AM"
+  },
+  {
+    "name": "calendar-night drag of three quarter-hours → a 45-minute slot (15-min snap)",
+    "ok": true,
+    "detail": "9:00 AM – 9:45 AM"
+  },
+  {
+    "name": "calendar-night quick-create shows the duration on the When row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night quick-create (Event) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":64,\"bottom\":503,\"left\":475,\"right\":1015,\"sh\":291,\"ch\":291,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-night quick-create (Task) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":29.5,\"bottom\":503,\"left\":475,\"right\":1015,\"sh\":314,\"ch\":314,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-night task: priority and project share one row, no hint line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night quick-create (Time block) fits the 150% window, no inner scroll",
+    "ok": true,
+    "detail": "{\"top\":165.375,\"bottom\":708,\"left\":475,\"right\":1015,\"sh\":360,\"ch\":360,\"vw\":1280,\"vh\":720}"
+  },
+  {
+    "name": "calendar-night quick-create every field reachable: title, date, 2 times, kind switch, More options, Create",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-night a plain click still opens a 30-minute slot",
+    "ok": true,
+    "detail": "9:00 AM – 9:30 AM"
+  },
+  {
+    "name": "calendar-night quick-create time list inside the window",
+    "ok": true,
+    "detail": "{\"x\":837.015625,\"y\":277.875,\"width\":240,\"height\":336}"
+  },
+  {
+    "name": "calendar-night drag scene no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "task editor-night @150% time list opens inside the window, under/over its field",
+    "ok": true,
+    "detail": "list {\"x\":1021.5625,\"y\":21.9375,\"width\":240,\"height\":336} field {\"x\":1021.5626220703125,\"y\":363.92645263671875,\"width\":170.780029296875,\"height\":55.3133544921875}"
+  },
+  {
+    "name": "task editor-night @150% the list steps in 15 minutes",
+    "ok": true,
+    "detail": "96 · 12:00 AM, 12:15 AM, 12:30 AM"
+  },
+  {
+    "name": "task editor-night @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night right-click an area → Open · Rename · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night right-click a project → Open · Rename · Finish & press · Delete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night the WebView's own menu is blocked on the page, kept in a text field and over selected text",
+    "ok": true,
+    "detail": "{\"page\":true,\"input\":false,\"selected\":false}"
+  },
+  {
+    "name": "projects-night area Delete → deleted_at written, no confirm, logged",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night its tasks are not touched",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night the row leaves, \"Moved to Trash · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night Undo puts the area back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus-night picker opens inside the 150% window with the search field focused",
+    "ok": true,
+    "detail": "{\"top\":12,\"bottom\":360,\"left\":599.3125,\"right\":1079.3125,\"focus\":\"Search tasks to focus on\"}"
+  },
+  {
+    "name": "focus-night typing filters by title",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier\"]"
+  },
+  {
+    "name": "focus-night Enter picks the first match and closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus-night arrows move, Esc closes",
+    "ok": true,
+    "detail": "Plan the forecasting logic"
+  },
+  {
+    "name": "focus-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-night @150% every box centred in the rail, its icon centred in the box",
+    "ok": true,
+    "detail": "{\"maxOff\":0.0000019073486328125,\"maxIconOff\":0.0000019073486328125,\"tapeInside\":true,\"footerHit\":true}"
+  },
+  {
+    "name": "rail-night @150% the active tape sits on its box",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-night @150% the footer stays reachable (the column scrolls, it never runs under)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-night @150% hover label beside its row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rail-night @150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-night 1920×1080 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1598,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "tasks-night 1920×1080 @100%: fills the column up to 1280, from the gutter",
+    "ok": true,
+    "detail": "{\"avail\":1598,\"width\":1280,\"left\":40}"
+  },
+  {
+    "name": "night 1920×1080 @100%: Today and Tasks are the same width",
+    "ok": true,
+    "detail": ""
+  }
+]
