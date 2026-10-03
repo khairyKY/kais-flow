@@ -156,35 +156,41 @@ jobs:
           echo "::error::The live site still serves '${live:-nothing}' after 10 minutes, expected ${want:0:7}. Check Cloudflare → Workers Builds."
           exit 1
 
-      # Auth email (docs/EMAIL.md): Gmail SMTP, the branded templates and the Confirm email switch,
-      # read from supabase/config.toml and PATCHed to the hosted Auth config. Only these fields are
-      # sent: `supabase config push` would also overwrite site_url, the redirect allow-list, the
-      # password minimum and providers with config.toml's local-dev values. After the live check, so
-      # the app that shows 9c–9f is already out. Does nothing until both SMTP secrets exist.
-      - name: Auth email (Gmail SMTP, templates, Confirm email)
+      # Auth links + email (docs/EMAIL.md). Kai 2026-10-04: a new account's confirmation link went to
+      # http://localhost:3000 — the hosted project still had Supabase's factory Site URL, and the app's
+      # emailRedirectTo is ignored unless it's on the redirect allow-list. So every release sets the Site
+      # URL + allow-list to the real app and sends the branded templates from config.toml. Gmail SMTP and
+      # the Confirm email switch still wait for the SMTP_USER / SMTP_PASS secrets. Only these fields are
+      # PATCHed: `supabase config push` would overwrite the password minimum and providers too.
+      - name: Auth links + email (Site URL, redirects, templates; Gmail SMTP when its secrets exist)
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
           set -euo pipefail
-          if [ -z "$SMTP_USER" ] || [ -z "$SMTP_PASS" ]; then
-            echo "- Auth email: no SMTP_USER / SMTP_PASS secrets yet, left as it is (docs/EMAIL.md)" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          HAS_SMTP=no; [ -n "$SMTP_USER" ] && [ -n "$SMTP_PASS" ] && HAS_SMTP=yes
+          export HAS_SMTP
           body="$RUNNER_TEMP/auth-email.json"
           python3 - > "$body" <<'PY'
           import json, os, re, tomllib
           auth = tomllib.load(open("supabase/config.toml", "rb"))["auth"]
           email, smtp = auth["email"], auth["email"]["smtp"]
           env = lambda v: re.sub(r"^env\((\w+)\)$", lambda m: os.environ[m.group(1)], v)
+          app = os.environ["APP_URL"].rstrip("/")
           body = {
-              "smtp_host": smtp["host"], "smtp_port": str(smtp["port"]),
-              # Google shows an App Password in groups of four; the spaces aren't part of it.
-              "smtp_user": env(smtp["user"]), "smtp_pass": env(smtp["pass"]).replace(" ", ""),
-              "smtp_admin_email": env(smtp["admin_email"]), "smtp_sender_name": smtp["sender_name"],
-              "rate_limit_email_sent": auth["rate_limit"]["email_sent"],
-              "mailer_autoconfirm": not email["enable_confirmations"],
+              # Where auth emails send people: the live app, and each shell's own origin.
+              "site_url": app,
+              "uri_allow_list": ",".join([f"{app}/**", "https://localhost/**", "http://tauri.localhost/**", "tauri://localhost/**"]),
           }
+          if os.environ["HAS_SMTP"] == "yes":
+              body.update({
+                  "smtp_host": smtp["host"], "smtp_port": str(smtp["port"]),
+                  # Google shows an App Password in groups of four; the spaces aren't part of it.
+                  "smtp_user": env(smtp["user"]), "smtp_pass": env(smtp["pass"]).replace(" ", ""),
+                  "smtp_admin_email": env(smtp["admin_email"]), "smtp_sender_name": smtp["sender_name"],
+                  "rate_limit_email_sent": auth["rate_limit"]["email_sent"],
+                  "mailer_autoconfirm": not email["enable_confirmations"],
+              })
           for name, t in email["template"].items():  # content_path: relative to the repo root
               body[f"mailer_subjects_{name}"] = t["subject"]
               body[f"mailer_templates_{name}_content"] = open(t["content_path"], encoding="utf-8").read()
@@ -194,18 +200,30 @@ jobs:
               body[f"mailer_templates_{name}_notification_content"] = open(os.path.join("supabase", n["content_path"]), encoding="utf-8").read()
           print(json.dumps(body))
           PY
-          code="$(curl -sS -o "$RUNNER_TEMP/auth-email-reply.json" -w '%{http_code}' -X PATCH \
+          patch() { curl -sS -o "$RUNNER_TEMP/auth-email-reply.json" -w '%{http_code}' -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @"$body")"
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @"$1"; }
+          why() { jq -r '.message // .error // "no message"' "$RUNNER_TEMP/auth-email-reply.json" 2>/dev/null; }
+          code="$(patch "$body")"
+          if [ "${code:0:1}" != 2 ] && [ "$HAS_SMTP" = no ]; then
+            # Without custom SMTP Supabase may refuse template edits; the links are what must land.
+            echo "::warning::Supabase refused the branded templates without custom SMTP ($code): $(why). Setting the links only."
+            jq '{site_url, uri_allow_list}' "$body" > "$body.links" && mv "$body.links" "$body"
+            code="$(patch "$body")"
+          fi
           rm -f "$body"
           if [ "${code:0:1}" != 2 ]; then
             # The reply to a failed PATCH is an error message; the success reply (the whole config) is never printed.
-            echo "::error::Supabase refused the auth email settings ($code): $(jq -r '.message // .error // "no message"' "$RUNNER_TEMP/auth-email-reply.json" 2>/dev/null)"
+            echo "::error::Supabase refused the auth settings ($code): $(why)"
             exit 1
           fi
           rm -f "$RUNNER_TEMP/auth-email-reply.json"
-          confirm="$(python3 -c 'import tomllib; print("on" if tomllib.load(open("supabase/config.toml","rb"))["auth"]["email"]["enable_confirmations"] else "off")')"
-          echo "- Auth email: Gmail SMTP + branded templates ✓, Confirm email $confirm" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$HAS_SMTP" = yes ]; then
+            confirm="$(python3 -c 'import tomllib; print("on" if tomllib.load(open("supabase/config.toml","rb"))["auth"]["email"]["enable_confirmations"] else "off")')"
+            echo "- Auth: links → $APP_URL ✓, Gmail SMTP + branded templates ✓, Confirm email $confirm" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Auth: links → $APP_URL ✓, branded templates sent; Supabase's built-in sender until SMTP_USER / SMTP_PASS exist (docs/EMAIL.md)" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # A GitHub Release per version (tag at the live master commit, generated notes), then the Android
   # APK and Windows installer built from the same tree and attached to it. A release made with
