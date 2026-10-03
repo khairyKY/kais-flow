@@ -59,10 +59,10 @@ export function inboxUrl(email: string): string | null {
 }
 
 /** What an auth email link left in the address bar. GoTrue's implicit flow (supabase-js's
- * default, which this app uses) puts a recovery session in the hash —
- * `#access_token=…&type=recovery` — and a used or expired link comes back as
+ * default, which this app uses) puts the session in the hash — `#access_token=…&type=recovery`
+ * for a reset, `type=signup` for a confirmed email — and a used or expired link comes back as
  * `#error=access_denied&error_code=otp_expired&…`. The query string is read too, for PKCE. */
-export type AuthRedirect = { kind: 'recovery' } | { kind: 'error'; code: string } | { kind: 'none' }
+export type AuthRedirect = { kind: 'recovery' } | { kind: 'confirmed' } | { kind: 'error'; code: string } | { kind: 'none' }
 
 export function readAuthRedirect(href: string): AuthRedirect {
   const url = new URL(href)
@@ -70,14 +70,61 @@ export function readAuthRedirect(href: string): AuthRedirect {
   const get = (key: string) => hash.get(key) ?? url.searchParams.get(key)
   if (get('error') || get('error_code') || get('error_description'))
     return { kind: 'error', code: get('error_code') ?? get('error') ?? 'unknown' }
-  if (get('type') === 'recovery' && get('access_token')) return { kind: 'recovery' }
+  if (!get('access_token')) return { kind: 'none' }
+  if (get('type') === 'recovery') return { kind: 'recovery' }
+  if (get('type') === 'signup') return { kind: 'confirmed' }
   return { kind: 'none' }
+}
+
+/** Where an email link has to land before the router reads the address (`path` = pathname +
+ * search), or null to stay. A reset link → /reset (9k-2 / 9k-3, its own expired page). A sign-up
+ * confirmation lands on "/" (its emailRedirectTo), which would walk straight through to
+ * onboarding — so it goes to /sign-in?confirmed for 9f first, and a used or expired one to
+ * /sign-in?expired (9e). The hash rides along so supabase-js still finds the tokens. */
+export function authLinkLanding(redirect: AuthRedirect, path: string): string | null {
+  const to =
+    redirect.kind === 'recovery' ? '/reset'
+    : redirect.kind === 'confirmed' ? '/sign-in?confirmed'
+    : redirect.kind === 'error' && !path.startsWith('/reset') ? '/sign-in?expired'
+    : null
+  return to && to !== path ? to : null
+}
+
+/** What signUp's answer means (9a → 9b-1 / 9c / onboarding). With Confirm email on, GoTrue hides
+ * an address that already has an account as a user with no identities, and a real new account
+ * comes back without a session until the link is opened. With it off, there is a session now. */
+export function signUpOutcome(data: { user: { identities?: unknown[] } | null; session: unknown }): 'in-use' | 'check-email' | 'signed-in' {
+  if (data.user?.identities?.length === 0) return 'in-use'
+  return data.session ? 'signed-in' : 'check-email'
+}
+
+/** Which face /sign-in shows. `link` is what an email link said (?confirmed / ?expired), `waiting`
+ * is 9c's "check your email". A session that arrives on 9c (the link opened in another tab) or
+ * from a confirmation link plays 9f before going in; confirmation tokens that didn't hold are 9e. */
+export type SignInView = 'confirmed' | 'in' | 'expired' | 'check-email' | 'form'
+
+export function signInView(s: { link: 'confirmed' | 'expired' | null; loading: boolean; hasSession: boolean; waiting: boolean }): SignInView {
+  if (s.hasSession) return s.link === 'confirmed' || s.waiting ? 'confirmed' : 'in'
+  if (s.link === 'confirmed') return s.loading ? 'confirmed' : 'expired'
+  if (s.link === 'expired') return 'expired'
+  return s.waiting ? 'check-email' : 'form'
+}
+
+/** 9c / 9d: Resend waits a minute after each send — GoTrue's own 60s between confirmation mails.
+ * The button counts down in its label ("Resend in 0:48"), so disabled is never the only signal. */
+export const RESEND_WAIT_MS = 60_000
+
+export function resendLabel(until: number, now: number): string {
+  const left = Math.ceil((until - now) / 1000)
+  if (left <= 0) return 'Resend link'
+  return `Resend in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`
 }
 
 /** Enumeration guard for the "Forgot password?" request. GoTrue answers an unknown email with
  * 200 and sends nothing, but answers a known email that was mailed moments ago with 429 — so a
  * 429 has to read exactly like success, or the difference tells a stranger the account exists.
- * Anything else (offline, server trouble) is shown as a retry, which reveals nothing. */
+ * Anything else (offline, server trouble) is shown as a retry, which reveals nothing. The same
+ * holds for resending a sign-up confirmation (9d / 9e). */
 export function resetRequestLooksSent(error: { status?: number } | null): boolean {
   return !error || error.status === 429
 }

@@ -28,10 +28,10 @@ describe('guessMapping', () => {
   })
 })
 
-describe('csvToBatch', () => {
-  const mapping: CsvMapping = { 0: 'title', 1: 'notes', 2: 'due', 3: 'priority', 4: 'project', 5: 'done' }
-  const batch = csvToBatch(parseCsv(csv), mapping)
+const mapping: CsvMapping = { 0: 'title', 1: 'notes', 2: 'due', 3: 'priority', 4: 'project', 5: 'done' }
+const batch = await csvToBatch(parseCsv(csv), mapping)
 
+describe('csvToBatch', () => {
   it('maps rows to tasks and derives projects from distinct values', () => {
     expect(batch.tasks).toHaveLength(3) // 4 data rows, 1 collapses as duplicate key
     expect(batch.projects.map((p) => p.name).sort()).toEqual(['Garden', 'Work'])
@@ -44,8 +44,8 @@ describe('csvToBatch', () => {
     expect(batch.tasks[1].due_at).toBe('2026-07-21T11:30:00.000Z') // 14:30 Cairo → 11:30 UTC
   })
 
-  it('external_ref.id = hash(title+due+project) — stable across parses (idempotency)', () => {
-    const again = csvToBatch(parseCsv(csv), mapping)
+  it('external_ref.id = hash(title+due+project) — stable across parses (idempotency)', async () => {
+    const again = await csvToBatch(parseCsv(csv), mapping)
     expect(again.tasks[0].external_ref.id).toBe(batch.tasks[0].external_ref.id)
     expect(batch.tasks[0].external_ref.id).toBe(stableHash('Repot the basil|2026-07-19T21:00:00.000Z|Garden'))
   })

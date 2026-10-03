@@ -3,7 +3,7 @@ import { cairoTimeKey } from '../calendar/eventTime'
 import { fromMin, type Busy } from '../../components/pickerMath'
 import { filterByList } from '../tasks/grouping'
 import { addDaysToKey, MAX_SEEDS, seedTargetDate } from './loopDay'
-import type { InboxItem, Task } from '../../lib/types'
+import type { InboxItem, Project, Task } from '../../lib/types'
 
 // ── The pure half of Plan my day (Plan.dc.html 6a–6m) and Shut down (Shutdown.dc.html 8a–8h):
 // which rows each section lists, the suggested times, the workload line, and what Close the day
@@ -84,6 +84,23 @@ export function pickCandidates(tasks: readonly Task[], seeds: readonly Task[], p
   const byId = new Map(open.map((t) => [t.id, t]))
   const extra = picks.filter((id) => !shown.some((t) => t.id === id)).map((id) => byId.get(id)).filter((t): t is Task => !!t)
   return [...shown, ...extra]
+}
+
+/** Pick your 3's search and "Show all" (Kai 2026-10-03: pick from every task without leaving Plan).
+ * Every open task: the suggestions first, then the rest by due date (none last). A query keeps the
+ * tasks whose title has every word, then those whose project name has them. */
+export function searchOpen(tasks: readonly Task[], projects: readonly Pick<Project, 'id' | 'name'>[], suggested: readonly Task[], query: string): Task[] {
+  const open = tasks.filter((t) => t.status === 'todo' && !t.deleted_at)
+  const first = suggested.filter((s) => open.some((t) => t.id === s.id))
+  const due = (t: Task) => (t.due_at ? Date.parse(t.due_at) : Infinity)
+  const rest = open.filter((t) => !first.some((s) => s.id === t.id)).sort((a, b) => due(a) - due(b) || 0)
+  const all = [...first, ...rest]
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return all
+  const has = (s: string | undefined) => !!s && words.every((w) => s.toLowerCase().includes(w))
+  const project = new Map(projects.map((p) => [p.id, p.name]))
+  const byTitle = all.filter((t) => has(t.title))
+  return [...byTitle, ...all.filter((t) => !byTitle.includes(t) && has(project.get(t.project_id ?? '')))]
 }
 
 /** A pick's time, as the user left it: a start (minutes into the Cairo day) + length, or null =
@@ -178,12 +195,17 @@ export function planWorkload(busy: readonly Busy[], picks: readonly PickIn[], sl
   return { text: `~${span(planned)} planned · you${over ? "'d" : "'ll"} finish around ${fromMin(finish)}`, over }
 }
 
+/** What Start the day puts on the calendar (Kai 2026-10-03: no per-row ✓): every pick with a time,
+ * suggested or set by you. "No time", no free slot, and a block already there are left alone. */
+export const toPlace = (slots: readonly Slot[]): Slot[] => slots.filter((s) => s.kind === 'suggested' || s.kind === 'accepted')
+
 /** The footer's mono status (6a/6b/6f): mid-way through deciding the carry-over, how many are
- * decided; otherwise the picks and how many have a time. */
-export function planStatus(carry: readonly CarryEntry[], picks: number, timed: number): string {
+ * decided; otherwise the picks and how many will have a time once the day starts. */
+export function planStatus(carry: readonly CarryEntry[], slots: readonly Slot[]): string {
   const decided = carry.filter((e) => e.choice).length
   if (decided > 0 && decided < carry.length) return `${decided} of ${carry.length} decided`
-  return picks > 0 ? `${picks} picked · ${timed} timed` : '0 picked'
+  const timed = slots.filter((s) => s.kind !== 'untimed' && s.kind !== 'noslot').length
+  return slots.length > 0 ? `${slots.length} picked · ${timed} timed` : '0 picked'
 }
 
 /** A 4th star: the swap puts the new one in the last seat, the goal (first) always stays. */

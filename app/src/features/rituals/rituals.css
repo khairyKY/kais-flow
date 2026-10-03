@@ -34,7 +34,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .rt-link:active { background: var(--pressed-overlay); }
-.rt-link:focus-visible, .rt-icon:focus-visible, .rt-seg-opt:focus-visible, .rt-ok:focus-visible, .rt-pill:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.rt-link:focus-visible, .rt-icon:focus-visible, .rt-seg-opt:focus-visible, .rt-pill:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .rt-collapsed { font-size: var(--fs-body-s); color: var(--ink-muted); white-space: nowrap; }
 
 .rt-icon {
@@ -122,6 +122,11 @@
 .rt-input::placeholder { color: var(--ink-faint); }
 .rt-input:focus { outline: none; box-shadow: var(--focus-ring); }
 
+/* Pick your 3: search every open task + "Show all" (Kai 2026-10-03); a quiet explaining line. */
+.rt-search { padding: var(--sp-1) var(--gutter-phone) var(--sp-2); }
+.rt-more { padding-left: var(--sp-2); }
+.rt-hint { padding: var(--sp-1) var(--gutter-phone) var(--sp-2); font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+
 /* Suggested times: the 09–18 mini timeline + legend (ruling 5). */
 .rt-tl { padding: 6px var(--gutter-phone) 10px; }
 .rt-tl-bar { position: relative; height: 38px; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); overflow: hidden; }
@@ -156,12 +161,10 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.rt-pill.is-accepted { border-color: transparent; color: var(--acc-sage-text); font-weight: var(--fw-semibold); }
+/* Suggested = dashed (a proposal); set by you = solid sage. */
+.rt-pill.is-suggested { border: 1.5px dashed var(--acc-sage-text); }
+.rt-pill.is-set { border-color: transparent; color: var(--acc-sage-text); font-weight: var(--fw-semibold); }
 .rt-pill.is-changing { border: 2px solid var(--focus); font-weight: var(--fw-semibold); }
-.rt-ok { width: var(--touch-min); height: var(--touch-min); flex: none; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.rt-ok > span { width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--paper-bone); border: 1px solid var(--line-control); color: var(--acc-sage-text); transition: transform var(--dur-press) var(--ease-standard); }
-.rt-ok[aria-pressed='true'] > span { background: var(--acc-sage-text); border-color: var(--acc-sage-text); color: var(--paper-parchment); }
-.rt-ok:active > span { transform: scale(0.92); }
 
 /* Footer (ruling 6) and the workload line (MK Workload). */
 .rt-foot { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }

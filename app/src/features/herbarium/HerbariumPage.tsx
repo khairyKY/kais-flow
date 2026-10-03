@@ -98,10 +98,17 @@ export function HerbariumPage() {
     }
   }, [searchParams, projects])
 
+  // Kai 2026-10-03: the beats used to auto-advance every 2.2s — too fast to read or to watch the press
+  // close. Now the reader moves on: Next, → or Enter; ← goes back. Beat 3's line field keeps its keys.
   useEffect(() => {
-    if (!pressingProject || ceremonyBeat === 3) return
-    const t = setTimeout(() => setCeremonyBeat((b) => (b === 1 ? 2 : 3)), 2200)
-    return () => clearTimeout(t)
+    if (!pressingProject) return
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest('input, textarea')) return
+      if ((e.key === 'ArrowRight' || e.key === 'Enter') && ceremonyBeat < 3) { e.preventDefault(); setCeremonyBeat((b) => (b === 1 ? 2 : 3)) }
+      if (e.key === 'ArrowLeft' && ceremonyBeat > 1) { e.preventDefault(); setCeremonyBeat((b) => (b === 3 ? 2 : 1)) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [pressingProject, ceremonyBeat])
 
   const seasonalGroups = useMemo(() => {
@@ -224,6 +231,18 @@ export function HerbariumPage() {
     )
   }
 
+  // The press closes (1.6s), the ledger stamps row by row, the specimen settles. With motion off
+  // (Settings → Botanical animations, or reduced motion) each beat simply shows its end state.
+  const PRESS_CSS = `
+    @keyframes hbClose { from { height: 150px } to { height: 104px } }
+    @keyframes hbFlatten { from { transform: scaleY(1); filter: saturate(1) } to { transform: scaleY(0.7); filter: saturate(0.6) } }
+    @keyframes hbStamp { 0% { opacity: 0; transform: scale(1.12) } 60% { opacity: 1; transform: scale(0.98) } 100% { opacity: 1; transform: scale(1) } }
+    @keyframes hbSettle { from { opacity: 0; transform: translateY(-10px) scaleY(1) } to { opacity: 1; transform: translateY(0) scaleY(0.94) } }
+    .hb-press-gap { animation: hbClose 1.6s cubic-bezier(.3,0,.2,1) .4s both }
+    .hb-press-plant { animation: hbFlatten 1.6s cubic-bezier(.3,0,.2,1) .4s both }
+    .hb-stamp { animation: hbStamp 420ms ease-out both }
+    .hb-settle { animation: hbSettle 700ms cubic-bezier(.2,0,0,1) both }
+  `
   const renderPressingCeremony = () => {
     if (!pressingProject) return null
     const p = pressingProject
@@ -235,6 +254,7 @@ export function HerbariumPage() {
     const doneMilestones = milestones.filter(m => m.completed).length
     return (
       <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+        <style>{PRESS_CSS}</style>
         <div className="kf-overlay-card" style={isMobile
           ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
@@ -242,13 +262,16 @@ export function HerbariumPage() {
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
-              <div style={{ width: 190, height: 150, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
-                <img src={imgSource} alt="" style={{ height: 140, transform: 'scaleY(0.82)', transformOrigin: '50% 100%', filter: 'saturate(0.7)' }} />
+              <div className={motion ? 'hb-press-gap' : undefined} style={{ width: 190, height: motion ? undefined : 104, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
+                <img src={imgSource} alt="" className={motion ? 'hb-press-plant' : undefined} style={{ height: 140, transformOrigin: '50% 100%', ...(motion ? {} : { transform: 'scaleY(0.7)', filter: 'saturate(0.6)' }) }} />
               </div>
               <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
-            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer' }}>skip</span>
+              <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
+            </div>
           </>)}
           {ceremonyBeat === 2 && (<>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
@@ -256,7 +279,7 @@ export function HerbariumPage() {
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>
               <div style={{ marginTop: 18, borderTop: '1px dashed var(--line-dashed)' }}>
                 {[['Planted', formatDayMonth(p.created_at).toUpperCase()], ['Bloomed', formatDayMonth(new Date().toISOString()).toUpperCase()], ['Hours', String(hours)], ['Milestones', `${doneMilestones}/${milestones.length}`]].map(([label, value], i) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 2px', borderBottom: i < 3 ? '1px dashed var(--line-dashed)' : 'none' }}>
+                  <div key={label} className={motion ? 'hb-stamp' : undefined} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 2px', borderBottom: i < 3 ? '1px dashed var(--line-dashed)' : 'none', animationDelay: `${300 + i * 380}ms` }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>
                   </div>
@@ -264,13 +287,16 @@ export function HerbariumPage() {
               </div>
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
-            <div onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', textAlign: 'right', cursor: 'pointer' }}>skip</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer' }}>skip</span>
+              <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
+            </div>
           </>)}
           {ceremonyBeat === 3 && (<>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: 110 }}>
-                <img src={imgSource} alt="" className="pressed" style={{ height: 100, transform: 'scaleY(0.94)' }} />
+                <img src={imgSource} alt="" className={`pressed${motion ? ' hb-settle' : ''}`} style={{ height: 100, transform: 'scaleY(0.94)' }} />
               </div>
               <div style={{ marginTop: 20, borderBottom: '1.5px dashed var(--line-dashed)', paddingBottom: 8, display: 'flex', alignItems: 'center' }}>
                 <input value={ceremonyLine} onChange={(e) => setCeremonyLine(e.target.value)} placeholder="One line for the field guide…" style={{ flex: 1, fontStyle: 'italic', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-body)', border: 'none', background: 'transparent', outline: 'none' }} />

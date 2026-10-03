@@ -1,0 +1,497 @@
+[
+  {
+    "name": "desktop Akiflow JSON: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Akiflow JSON: preview counts 2 projects / 3 tasks / 1 event / 1 completed",
+    "ok": true,
+    "detail": "2 projects | 3 tasks | 1 event | 1 completed"
+  },
+  {
+    "name": "desktop Akiflow JSON: writes {\"projects\":2,\"tasks\":2} (button \"Import 2 projects · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":2}"
+  },
+  {
+    "name": "desktop Akiflow JSON: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Akiflow JSON: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"akiflow\",\"written\":{\"projects\":2,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Akiflow JSON: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Todoist: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Todoist: preview counts 2 projects / 5 tasks",
+    "ok": true,
+    "detail": "2 projects | 5 tasks"
+  },
+  {
+    "name": "desktop Todoist: writes {\"projects\":2,\"tasks\":5} (button \"Import 2 projects · 5 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":5}"
+  },
+  {
+    "name": "desktop Todoist: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Todoist: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"todoist\",\"written\":{\"projects\":2,\"tasks\":5,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Todoist: Undo → every task to the Trash with its ref cleared, projects removed",
+    "ok": true,
+    "detail": "5 trashed, 2 deletes"
+  },
+  {
+    "name": "desktop Todoist: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop TickTick: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop TickTick: preview counts 2 projects / 6 tasks / 1 note / 2 completed",
+    "ok": true,
+    "detail": "2 projects | 6 tasks | 1 note | 2 completed"
+  },
+  {
+    "name": "desktop TickTick: writes {\"projects\":2,\"tasks\":4,\"notes\":1} (button \"Import 2 projects · 4 tasks · 1 note\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":4,\"notes\":1}"
+  },
+  {
+    "name": "desktop TickTick: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop TickTick: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"ticktick\",\"written\":{\"projects\":2,\"tasks\":4,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":1,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":2,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop TickTick: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Notion: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Notion: preview counts 1 project / 3 tasks / 1 completed",
+    "ok": true,
+    "detail": "1 project | 3 tasks | 1 completed"
+  },
+  {
+    "name": "desktop Notion: writes {\"projects\":1,\"tasks\":2} (button \"Import 1 project · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":1,\"tasks\":2}"
+  },
+  {
+    "name": "desktop Notion: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Notion: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"notion\",\"written\":{\"projects\":1,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Notion: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Obsidian / Markdown: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Obsidian / Markdown: preview counts 3 projects / 6 tasks / 2 inbox notes / 1 completed",
+    "ok": true,
+    "detail": "3 projects | 6 tasks | 2 inbox notes | 1 completed"
+  },
+  {
+    "name": "desktop Obsidian / Markdown: writes {\"projects\":3,\"tasks\":5,\"inbox_items\":2} (button \"Import 3 projects · 5 tasks · 2 inbox notes\")",
+    "ok": true,
+    "detail": "{\"projects\":3,\"tasks\":5,\"inbox_items\":2}"
+  },
+  {
+    "name": "desktop Obsidian / Markdown: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Obsidian / Markdown: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"markdown\",\"written\":{\"projects\":3,\"tasks\":5,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":2},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Obsidian / Markdown: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Kindle highlights: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Kindle highlights: preview counts 3 books / 4 highlights / 1 note",
+    "ok": true,
+    "detail": "3 books | 4 highlights | 1 note"
+  },
+  {
+    "name": "desktop Kindle highlights: writes {\"books\":3,\"quotes\":4,\"notes\":1} (button \"Import 3 books · 4 highlights · 1 note\")",
+    "ok": true,
+    "detail": "{\"books\":3,\"quotes\":4,\"notes\":1}"
+  },
+  {
+    "name": "desktop Kindle highlights: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Kindle highlights: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"kindle\",\"written\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":3,\"quotes\":4,\"notes\":1,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Kindle highlights: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Goodreads books: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Goodreads books: preview counts 4 books / 2 notes",
+    "ok": true,
+    "detail": "4 books | 2 notes"
+  },
+  {
+    "name": "desktop Goodreads books: writes {\"books\":2,\"notes\":2} (button \"Import 2 books · 2 notes\")",
+    "ok": true,
+    "detail": "{\"books\":2,\"notes\":2}"
+  },
+  {
+    "name": "desktop Goodreads books: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Goodreads books: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"goodreads\",\"written\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":2,\"quotes\":0,\"notes\":2,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":2}}"
+  },
+  {
+    "name": "desktop Goodreads books: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Generic CSV: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Generic CSV: preview counts 2 projects / 3 tasks / 1 completed",
+    "ok": true,
+    "detail": "2 projects | 3 tasks | 1 completed"
+  },
+  {
+    "name": "desktop Generic CSV: writes {\"projects\":2,\"tasks\":2} (button \"Import 2 projects · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":2}"
+  },
+  {
+    "name": "desktop Generic CSV: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Generic CSV: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"csv\",\"written\":{\"projects\":2,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "desktop Generic CSV: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Akiflow JSON: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Akiflow JSON: preview counts 2 projects / 3 tasks / 1 event / 1 completed",
+    "ok": true,
+    "detail": "2 projects | 3 tasks | 1 event | 1 completed"
+  },
+  {
+    "name": "phone Akiflow JSON: writes {\"projects\":2,\"tasks\":2} (button \"Import 2 projects · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":2}"
+  },
+  {
+    "name": "phone Akiflow JSON: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Akiflow JSON: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"akiflow\",\"written\":{\"projects\":2,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Akiflow JSON: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Todoist: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Todoist: preview counts 2 projects / 5 tasks",
+    "ok": true,
+    "detail": "2 projects | 5 tasks"
+  },
+  {
+    "name": "phone Todoist: writes {\"projects\":2,\"tasks\":5} (button \"Import 2 projects · 5 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":5}"
+  },
+  {
+    "name": "phone Todoist: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Todoist: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"todoist\",\"written\":{\"projects\":2,\"tasks\":5,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Todoist: Undo → every task to the Trash with its ref cleared, projects removed",
+    "ok": true,
+    "detail": "5 trashed, 2 deletes"
+  },
+  {
+    "name": "phone Todoist: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone TickTick: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone TickTick: preview counts 2 projects / 6 tasks / 1 note / 2 completed",
+    "ok": true,
+    "detail": "2 projects | 6 tasks | 1 note | 2 completed"
+  },
+  {
+    "name": "phone TickTick: writes {\"projects\":2,\"tasks\":4,\"notes\":1} (button \"Import 2 projects · 4 tasks · 1 note\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":4,\"notes\":1}"
+  },
+  {
+    "name": "phone TickTick: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone TickTick: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"ticktick\",\"written\":{\"projects\":2,\"tasks\":4,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":1,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":2,\"toRead\":0}}"
+  },
+  {
+    "name": "phone TickTick: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Notion: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Notion: preview counts 1 project / 3 tasks / 1 completed",
+    "ok": true,
+    "detail": "1 project | 3 tasks | 1 completed"
+  },
+  {
+    "name": "phone Notion: writes {\"projects\":1,\"tasks\":2} (button \"Import 1 project · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":1,\"tasks\":2}"
+  },
+  {
+    "name": "phone Notion: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Notion: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"notion\",\"written\":{\"projects\":1,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Notion: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Obsidian / Markdown: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Obsidian / Markdown: preview counts 3 projects / 6 tasks / 2 inbox notes / 1 completed",
+    "ok": true,
+    "detail": "3 projects | 6 tasks | 2 inbox notes | 1 completed"
+  },
+  {
+    "name": "phone Obsidian / Markdown: writes {\"projects\":3,\"tasks\":5,\"inbox_items\":2} (button \"Import 3 projects · 5 tasks · 2 inbox notes\")",
+    "ok": true,
+    "detail": "{\"projects\":3,\"tasks\":5,\"inbox_items\":2}"
+  },
+  {
+    "name": "phone Obsidian / Markdown: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Obsidian / Markdown: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"markdown\",\"written\":{\"projects\":3,\"tasks\":5,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":2},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Obsidian / Markdown: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Kindle highlights: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Kindle highlights: preview counts 3 books · 1 already here / 4 highlights · 1 already here / 1 note",
+    "ok": true,
+    "detail": "3 books · 1 already here | 4 highlights · 1 already here | 1 note"
+  },
+  {
+    "name": "phone Kindle highlights: writes {\"books\":2,\"quotes\":3,\"notes\":1} (button \"Import 2 books · 3 highlights · 1 note\")",
+    "ok": true,
+    "detail": "{\"books\":2,\"quotes\":3,\"notes\":1}"
+  },
+  {
+    "name": "phone Kindle highlights: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Kindle highlights: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"kindle\",\"written\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":2,\"quotes\":3,\"notes\":1,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":1,\"quotes\":1,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Kindle highlights: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Goodreads books: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Goodreads books: preview counts 4 books / 2 notes",
+    "ok": true,
+    "detail": "4 books | 2 notes"
+  },
+  {
+    "name": "phone Goodreads books: writes {\"books\":2,\"notes\":2} (button \"Import 2 books · 2 notes\")",
+    "ok": true,
+    "detail": "{\"books\":2,\"notes\":2}"
+  },
+  {
+    "name": "phone Goodreads books: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Goodreads books: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"goodreads\",\"written\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":2,\"quotes\":0,\"notes\":2,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":0,\"toRead\":2}}"
+  },
+  {
+    "name": "phone Goodreads books: want-to-read opt-in lands those as reading, page 0",
+    "ok": true,
+    "detail": "Four Thousand Weeks: Time Management for Mortals:finished, Dune (Dune, #1):reading, The Overstory:reading, Half a Book:reading"
+  },
+  {
+    "name": "phone Goodreads books: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Generic CSV: the pick card says how to export",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Generic CSV: preview counts 2 projects / 3 tasks / 1 completed",
+    "ok": true,
+    "detail": "2 projects | 3 tasks | 1 completed"
+  },
+  {
+    "name": "phone Generic CSV: writes {\"projects\":2,\"tasks\":2} (button \"Import 2 projects · 2 tasks\")",
+    "ok": true,
+    "detail": "{\"projects\":2,\"tasks\":2}"
+  },
+  {
+    "name": "phone Generic CSV: rows carry the mapped fields",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Generic CSV: one import.run in Activity",
+    "ok": true,
+    "detail": "{\"source\":\"csv\",\"written\":{\"projects\":2,\"tasks\":2,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0},\"skipped\":{\"projects\":0,\"tasks\":0,\"events\":0,\"books\":0,\"quotes\":0,\"notes\":0,\"inbox\":0,\"completed\":1,\"toRead\":0}}"
+  },
+  {
+    "name": "phone Generic CSV: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
