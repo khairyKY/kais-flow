@@ -12,6 +12,8 @@ import { useDomains } from '../domains/api'
 import { useCalendarEvents } from '../calendar/api'
 import { describeActivity, plural, type ActivityIcon, type ActivityNames } from './describe'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { KindGlyph } from '../notifications/KindGlyph'
+import { runNotificationAction } from '../notifications/actions'
 import '../projects/xfx.css'
 
 function useIsMobile(): boolean {
@@ -36,9 +38,11 @@ const CATEGORIES = [
   { id: 'journal', label: 'Journal', color: 'var(--acc-sage)' },
   // Punch 48: project events were already in the ledger with no chip that could select them.
   { id: 'projects', label: 'Projects', color: 'var(--acc-moss)' },
+  // Tray and Notifications.dc.html 12j: the notification history is this ledger's sent notices.
+  { id: 'notifications', label: 'Notifications', color: 'var(--acc-terra)' },
 ]
 
-const MOBILE_CATEGORIES = ['all', 'tasks', 'inbox', 'people', 'routines']
+const MOBILE_CATEGORIES = ['all', 'tasks', 'inbox', 'people', 'routines', 'notifications']
 
 // The row marks the page already drew, keyed by describe.ts's icon kind. `seedling` is new: an
 // existing asset for onboarding (it used to get an empty hydrangea disc).
@@ -88,6 +92,8 @@ const ICONS: Record<ActivityIcon, { icon: ReactNode; iconBg: string }> = {
     ),
   },
   seedling: { iconBg: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', icon: <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 16 }} /> },
+  // A sent notification draws its kind's own glyph (KindGlyph) — the same mark as in Settings.
+  notice: { iconBg: 'transparent', icon: null },
 }
 
 // Punch 48: the chip read "This week" while the filter was a rolling 7-day window and the
@@ -226,6 +232,7 @@ export function ActivityPage() {
     cat === 'calendar' ? 'color-mix(in oklch, var(--acc-lavender) 24%, transparent)' :
     cat === 'people' ? 'color-mix(in oklch, var(--acc-clover) 22%, transparent)' :
     cat === 'journal' ? 'color-mix(in oklch, var(--acc-moss) 20%, transparent)' :
+    cat === 'notifications' ? 'color-mix(in oklch, var(--acc-blossom) 24%, transparent)' :
     'color-mix(in oklch, var(--ink-body) 7%, transparent)'
 
   const chipColor = (cat: string) =>
@@ -235,6 +242,7 @@ export function ActivityPage() {
     cat === 'calendar' ? 'var(--acc-lavender-deep)' :
     cat === 'people' ? 'var(--acc-clover-text)' :
     cat === 'journal' ? 'var(--acc-sage-text)' :
+    cat === 'notifications' ? 'var(--acc-terra)' :
     'var(--ink-muted)'
 
   const styles = `
@@ -248,6 +256,9 @@ export function ActivityPage() {
     button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
     button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
     .chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
+    .anotice { display:flex; gap:6px; flex-wrap:wrap; margin-top:-8px; }
+    .anotice button { font:inherit; font-size:12.5px; font-weight:600; color:var(--ink-body); background:var(--paper-parchment); border:1px solid var(--line-control); border-radius:3px; padding:5px 10px; cursor:pointer; }
+    .anotice button:hover { background:var(--paper-bone); }
     .fhelp { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; color:var(--ink-hairline); }
     .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
     .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
@@ -259,9 +270,14 @@ export function ActivityPage() {
     return (
     <div className={motion ? 'aitem kf-stagger-item' : 'aitem'} style={motion ? staggerDelay(idx) : undefined} key={entry.id}>
       <div className="arail">
-        <span className="aicon" style={{ width: isMobile ? 26 : 30, height: isMobile ? 26 : 30, background: entry.info.iconBg }}>{entry.info.icon}</span>
+        {entry.info.notice ? (
+          <KindGlyph kind={entry.info.notice.kind} size={isMobile ? 26 : 30} />
+        ) : (
+          <span className="aicon" style={{ width: isMobile ? 26 : 30, height: isMobile ? 26 : 30, background: entry.info.iconBg }}>{entry.info.icon}</span>
+        )}
         {idx < groupLen - 1 && <span className="aline" />}
       </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
       <Body
         className="abody"
         {...(entry.info.href ? { type: 'button' as const, onClick: () => navigate(entry.info.href!) } : {})}
@@ -274,9 +290,21 @@ export function ActivityPage() {
         </span>
         <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
           <span className="chip" style={{ fontSize: isMobile ? 8 : 9.5, padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
-          <span className="fhelp">{isMobile ? formatTime(entry.created_at) : entry.info.details}</span>
+          {/* 12j: a sent notice keeps its body line on the phone too ("09:50 · Car"). */}
+          <span className="fhelp">{isMobile ? [formatTime(entry.created_at), entry.info.notice ? entry.info.details : ''].filter(Boolean).join(' · ') : entry.info.details}</span>
         </span>
       </Body>
+      {/* 12j: a missed notification's buttons still work from here (the same actions a push runs). */}
+      {entry.info.notice && entry.info.notice.actions.length > 0 && (
+        <div className="anotice" style={{ paddingBottom: isMobile ? 15 : 20 }}>
+          {entry.info.notice.actions.map((a) => (
+            <button key={a.action} type="button" onClick={() => void runNotificationAction({ action: a.action, taskIds: entry.info.notice!.taskIds, url: entry.info.href ?? '/today' }, navigate)}>
+              {a.title}
+            </button>
+          ))}
+        </div>
+      )}
+      </div>
     </div>
     )
   }
