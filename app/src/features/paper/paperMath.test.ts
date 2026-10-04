@@ -29,12 +29,17 @@ describe('resize maths', () => {
 describe('box → crop', () => {
   it('frames the padded box at the asked height, the image offset inside it', () => {
     // A 1200×1600 page; the line sits at x 10%, y 25%, 60% wide, 4% tall; no pad.
-    const f = cropFrame([0.1, 0.25, 0.6, 0.04], 1200, 1600, 32, 0)
+    const f = cropFrame([0.1, 0.25, 0.6, 0.04], 1200, 1600, 32, Infinity, 0)
     expect(f.height).toBe(32)
     expect(f.width).toBe(360) // 0.6×1200 = 720 image px at 0.5 px per px
     expect(f.imgWidth).toBe(600)
     expect(f.imgLeft).toBe(-60)
     expect(f.imgTop).toBe(-200)
+  })
+  it('a long line gets shorter rather than wider than the row', () => {
+    const f = cropFrame([0.1, 0.25, 0.6, 0.04], 1200, 1600, 32, 180, 0)
+    expect(f.width).toBe(180)
+    expect(f.height).toBe(16)
   })
   it('pads, but never past the edge of the photo', () => {
     const f = cropFrame([0, 0.99, 1, 0.01], 1000, 1000, 20)

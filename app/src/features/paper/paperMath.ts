@@ -54,23 +54,26 @@ export function rotatedSize(w: number, h: number, deg: number): { w: number; h: 
 export const QUALITIES = [0.82, 0.72, 0.62, 0.5] as const
 
 // ── box → crop ──
-/** A crop of `box` (0–1, [x,y,w,h]) from an image `natW`×`natH`, shown `height` px tall: the frame's
- * width and where the full image sits inside it (overflow hidden). `pad` widens the box a little so a
- * descender isn't clipped; the frame never reaches past the image. */
+/** A crop of `box` (0–1, [x,y,w,h]) from an image `natW`×`natH`, shown `height` px tall (shorter if
+ * that would be wider than `maxWidth`): the frame's size and where the full image sits inside it
+ * (overflow hidden). `pad` widens the box a little so a descender isn't clipped; the frame never
+ * reaches past the image. */
 export function cropFrame(
   box: readonly [number, number, number, number],
   natW: number,
   natH: number,
   height: number,
+  maxWidth = Infinity,
   pad = 0.012,
 ): { width: number; height: number; imgWidth: number; imgLeft: number; imgTop: number } {
   const x = Math.max(0, box[0] - pad)
   const y = Math.max(0, box[1] - pad)
   const w = Math.min(1 - x, box[2] + 2 * pad)
   const h = Math.min(1 - y, box[3] + 2 * pad)
+  height = Math.min(height, (maxWidth * h * natH) / (w * natW))
   const scale = height / (h * natH) // CSS px per image px
   const r = (n: number) => Math.round(n * 10) / 10 || 0 // no -0
-  return { width: r(w * natW * scale), height, imgWidth: r(natW * scale), imgLeft: r(-x * natW * scale), imgTop: r(-y * natH * scale) }
+  return { width: r(w * natW * scale), height: r(height), imgWidth: r(natW * scale), imgLeft: r(-x * natW * scale), imgTop: r(-y * natH * scale) }
 }
 
 // ── confidence ──

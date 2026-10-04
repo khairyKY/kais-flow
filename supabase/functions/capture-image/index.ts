@@ -33,6 +33,8 @@ const ReadBody = z.object({
   paths: z.array(z.string().max(200)).min(1).max(MAX_PAGES),
   page: z.number().int().min(0).max(MAX_PAGES - 1),
   projects: z.array(z.string().max(80)).max(60).optional(),
+  // When the photo was taken (a page saved offline is read later): the app reads "tomorrow" from then.
+  taken_at: z.string().datetime({ offset: true }).optional(),
 })
 
 class RateLimited extends Error {}
@@ -94,13 +96,18 @@ interface CaptureRow {
 async function read(req: Request, userId: string): Promise<Response> {
   const parsed = ReadBody.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return jsonResponse(req, { error: 'bad_request' }, 400)
-  const { capture_id, paths, page, projects = [] } = parsed.data
+  const { capture_id, paths, page, projects = [], taken_at } = parsed.data
+  const taken = taken_at ? Date.parse(taken_at) : NaN
+  const createdAt = taken <= Date.now() && taken > Date.now() - 30 * 86_400_000 ? new Date(taken).toISOString() : undefined
   if (page >= paths.length || !paths.every((p) => ownsPath(p, userId, capture_id))) return jsonResponse(req, { error: 'bad_request' }, 400)
 
   // First page creates the row; a retry or the next page finds it.
   const { error: insertError } = await service
     .from('captures')
-    .upsert({ id: capture_id, user_id: userId, storage_paths: paths, pages: paths.length, status: 'reading' }, { onConflict: 'id', ignoreDuplicates: true })
+    .upsert(
+      { id: capture_id, user_id: userId, storage_paths: paths, pages: paths.length, status: 'reading', ...(createdAt ? { created_at: createdAt } : {}) },
+      { onConflict: 'id', ignoreDuplicates: true },
+    )
   if (insertError) throw insertError
   const { data: row, error } = await service.from('captures').select('id, user_id, pages, pages_read, status, title, items').eq('id', capture_id).single<CaptureRow>()
   if (error) throw error

@@ -42,7 +42,7 @@ const {
 const { OUTBOX_KEY, writeRow } = await import('./outbox')
 
 const CACHE_KEY = 'kais-flow-query-cache'
-const PERSONAL = ['journal_entries', 'people', 'interactions', 'notes', 'push_subscriptions', 'commentary', 'quotes', 'deleted_items']
+const PERSONAL = ['journal_entries', 'people', 'interactions', 'notes', 'push_subscriptions', 'commentary', 'quotes', 'deleted_items', 'captures', 'capture', 'capture_urls']
 const KEPT = ['tasks', 'inbox_items', 'projects', 'domains', 'areas', 'calendar_events', 'routines', 'app_settings', 'books', 'activity_log']
 
 function fakeQuery(queryKey: unknown[], status: 'success' | 'pending' | 'error' = 'success'): Query {

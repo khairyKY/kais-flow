@@ -187,6 +187,8 @@ export interface AppSettings {
   morning_digest_at?: string
   evening_nudge_on?: boolean
   evening_nudge_at?: string
+  /** Paper capture (migration 0048): keep page photos 7 days (default) or delete them once reviewed. */
+  capture_keep_photos?: boolean
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
