@@ -36,11 +36,14 @@ function reminded(): string[] {
   }
 }
 
-/** The Windows app's own reminder sweep (WebView2 has no Web Push): every 30s, what came due. */
-function sweepReminders(from: Date, now: Date): void {
+/** The Windows app's own reminder sweep (WebView2 has no Web Push): every 30s, what came due.
+ * False while tasks haven't loaded yet — the window it covers waits for them. */
+function sweepReminders(from: Date, now: Date): boolean {
+  const tasks = queryClient.getQueryData<Task[]>(['tasks'])
+  if (!tasks) return false
   const seen = reminded()
-  const due = dueReminders(queryClient.getQueryData<Task[]>(['tasks']) ?? [], from, now).filter((t) => !seen.includes(`${t.id}@${t.reminder_at}`))
-  if (due.length === 0) return
+  const due = dueReminders(tasks, from, now).filter((t) => !seen.includes(`${t.id}@${t.reminder_at}`))
+  if (due.length === 0) return true
   try {
     localStorage.setItem(REMINDED_KEY, JSON.stringify([...seen, ...due.map((t) => `${t.id}@${t.reminder_at}`)].slice(-100)))
   } catch {
@@ -51,6 +54,7 @@ function sweepReminders(from: Date, now: Date): void {
   const rows = due.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
   const notice = deliver(reminderNotice(rows, prefs(), now), prefs(), now)
   if (notice) void showLocal(notice)
+  return true
 }
 
 /** "25 minutes tended ✿" when a round runs out — unless someone is looking at the app. */
@@ -129,8 +133,7 @@ export function TrayBridge(): null {
     let from = new Date(Date.now() - 10 * 60_000)
     const sweep = () => {
       const now = new Date()
-      sweepReminders(from, now)
-      from = now
+      if (sweepReminders(from, now)) from = now
     }
     sweep()
     const id = window.setInterval(sweep, 30_000)
