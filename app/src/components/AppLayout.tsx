@@ -26,6 +26,8 @@ const SearchOverlay = lazy(() => import('../features/search/SearchOverlay').then
 const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ default: m.ShortcutOverlay })))
 // Wave N: a phone opens a task as this sheet over the current page (`?task=<id>`, features/tasks/openTask).
 const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => ({ default: m.TaskSheet })))
+// Notification buttons, focus-done notices, the tray flyout's focus mirror and (Windows) the tray.
+const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => ({ default: m.TrayBridge })))
 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
@@ -842,6 +844,9 @@ export function AppLayout() {
         {chatOpen && <ChatPanel open onClose={() => setChatOpen(false)} />}
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
         {openTaskId && <TaskSheet key={openTaskId} id={openTaskId} />}
+      </Suspense>
+      <Suspense fallback={null}>
+        <TrayBridge />
       </Suspense>
       <ToastHost />
       {signOutFlow.prompt}

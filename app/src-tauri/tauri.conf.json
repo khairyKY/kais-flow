@@ -12,12 +12,14 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Kai's Flow",
         "width": 1280,
         "height": 800,
         "minWidth": 390,
         "minHeight": 600,
-        "useHttpsScheme": true
+        "useHttpsScheme": true,
+        "visible": false
       }
     ],
     "security": {

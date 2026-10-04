@@ -6,6 +6,8 @@ export const ICON_NAMES = [
   'drag', 'focus', 'inbox', 'journal', 'label', 'link', 'lock', 'mic', 'more', 'offline', 'people',
   'pickdate', 'plus', 'priority', 'project', 'projects', 'remind', 'repeat', 'review', 'routines', 'search',
   'send', 'settings', 'star', 'stop', 'tasks', 'today', 'tomorrow', 'undo',
+  // Tray and Notifications.dc.html 12l (bell, moon, focus-ring) + 12k's digest sprout.
+  'bell', 'moon', 'focus-ring', 'sprout',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]
