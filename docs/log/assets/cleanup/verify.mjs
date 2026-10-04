@@ -126,7 +126,10 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
   await morning.fill('7:45')
   await morning.press('Enter')
   await sleep(1200)
-  const switches = page.locator('#settings-Notifications [role="switch"]')
+  // v1.0.20 (Tray and Notifications 12i) folded the Ritual reminders card into Settings → Notifications'
+  // kind rows: find each reminder's switch by its row label, not by position.
+  const sw = (label) => page.locator('#settings-Notifications div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
+  const switches = { nth: (i) => sw(i === 0 ? 'Morning digest' : 'Evening nudge'), count: async () => (await sw('Morning digest').count()) + (await sw('Evening nudge').count()) }
   check('reminders: one switch per reminder, both on', (await switches.count()) === 2 && (await switches.nth(0).getAttribute('aria-checked')) === 'true' && (await switches.nth(1).getAttribute('aria-checked')) === 'true')
   await switches.nth(1).click()
   await sleep(1500)
@@ -156,8 +159,9 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
   check('phone settings: Google Calendar row says "Coming soon"', (await row('Google Calendar'))?.includes('Coming soon'), await row('Google Calendar'))
   check('phone settings: GitHub row says the token expired', (await row('GitHub'))?.includes('Token expired — reconnect'), await row('GitHub'))
   check('phone settings: no Pushover, no fake sync', !txt.includes('Pushover') && !txt.includes('Sync now'))
-  const sw = page.locator('[role="switch"]') // the phone page's only switches are the two reminders
-  check('phone settings: a Ritual reminders card with both reminders', (await sw.count()) === 2 && txt.includes('Ritual reminders') && (await page.getByLabel('Morning digest time').count()) === 1 && (await page.getByLabel('Evening nudge time').count()) === 1)
+  const swRow = (label) => page.locator('div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
+  const sw = { count: async () => (await swRow('Morning digest').count()) + (await swRow('Evening nudge').count()), nth: (i) => swRow(i === 0 ? 'Morning digest' : 'Evening nudge') }
+  check('phone settings: both reminders have a switch (Settings → Notifications)', (await sw.count()) === 2 && (await page.getByLabel('Morning digest time').count()) === 1 && (await page.getByLabel('Evening nudge time').count()) === 1)
   await sw.nth(0).click()
   await sleep(1500)
   check('phone settings: turning the morning digest off writes app_settings', written(state, 'app_settings').some((r) => r.morning_digest_on === false))
