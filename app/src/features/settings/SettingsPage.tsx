@@ -18,6 +18,12 @@ import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubSta
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useToastStore } from '../../lib/toastStore'
 import { Button } from '../../components/kit'
+import { Icon } from '../../components/Icon'
+import { KindGlyph } from '../notifications/KindGlyph'
+import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
+import { showLocal } from '../notifications/local'
+import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions/notify/copy.ts'
+import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 
@@ -467,59 +473,54 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
   )
 }
 
-// Ritual reminders, synced per account (app_settings, 0045): notify's 15-minute cron sends each one
-// at the user's own time (supabase/functions/notify/ritual.ts). Cairo time until per-user timezones.
-const RITUALS = [
-  { kind: 'morning_digest', label: 'Morning digest', help: 'your Top 3 and anything slipping', at: '08:00' },
-  { kind: 'evening_nudge', label: 'Evening nudge', help: 'only when a routine was missed', at: '21:00' },
-] as const
+// Settings → Notifications (Tray and Notifications.dc.html 12i), synced per account (app_settings
+// 0045 + 0048): notify reads every switch here (supabase/functions/notify/copy.ts `deliver`), and
+// the app's own notices (focus done; reminders in the Windows app) follow the same rules. Times are
+// Cairo wall-clock until per-user timezones. The Windows rows are this device's own.
+const RITUAL_AT = { morning_digest: '08:00', evening_nudge: '21:00' } as const
 
-function RitualReminders() {
-  const { data: s } = useAppSettings()
-  if (!s) return null
+function NotificationRow({ glyph, label, help, children }: { glyph: ReactNode; label: string; help?: ReactNode; children: ReactNode }) {
   return (
-    <>
-      {RITUALS.map((r) => {
-        const on = s[`${r.kind}_on` as const] !== false
-        return (
-          <div key={r.kind} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{r.label}</div>
-              <div style={fhelp}>{r.help}</div>
-            </div>
-            <TimeField
-              value={(s[`${r.kind}_at` as const] ?? r.at).slice(0, 5)}
-              ariaLabel={`${r.label} time`}
-              onChange={(v) => v && updateAppSetting(`${r.kind}_at` as const, v)}
-              style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px', opacity: on ? 1 : 0.5 }}
-            />
-            <Toggle on={on} onToggle={() => updateAppSetting(`${r.kind}_on` as const, !on)} />
-          </div>
-        )
-      })}
-      <div style={fhelp}>Cairo time · a nudge, never a lock</div>
-    </>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+      {glyph}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{label}</div>
+        {help && <div style={{ ...fhelp, marginTop: 2 }}>{help}</div>}
+      </div>
+      {children}
+    </div>
   )
 }
 
-function PushCard() {
+const timeStyle = (on: boolean): CSSProperties => ({ width: 84, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 10px', opacity: on ? 1 : 0.5 })
+
+function NotificationsCard() {
+  const { data: s } = useAppSettings()
   const { data: subs = [] } = useMyPushSubscriptions()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const tauri = isTauri()
+  const [trayShown, setTrayShown] = useState(readTrayShown)
+  const [autostart, setAutostart] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (tauri) void native<boolean>('autostart_get').then((on) => setAutostart(!!on))
+  }, [tauri])
   const supported = isPushSupported()
   const thisDeviceLabel = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 60) : ''
-  const subscribed = subs.some((s) => s.device_label === thisDeviceLabel)
+  const subscribed = subs.some((d) => d.device_label === thisDeviceLabel)
+  if (!s) return null
+  const quietOn = s.quiet_hours_on !== false
 
-  async function handleToggle() {
+  async function handleSubscribe() {
     setBusy(true)
     setMessage(null)
     try {
       if (subscribed) {
         await unsubscribeThisDevice()
-        setMessage('Unsubscribed this device.')
+        setMessage('This device won’t get notifications any more.')
       } else {
         await subscribeThisDevice()
-        setMessage('Subscribed! You should get pushes on this device now.')
+        setMessage('This device gets notifications now.')
       }
     } catch {
       // House rule: raw e.message can carry the word "error" / server text — calm copy only.
@@ -533,44 +534,114 @@ function PushCard() {
     setBusy(true)
     setMessage(null)
     try {
-      const result = await sendTestNotification()
-      setMessage(`Sent to ${result.sent} device(s), pruned ${result.pruned} dead subscription(s).`)
+      if (tauri) {
+        await showLocal(testNotice()) // the Windows app has no push; its toasts are its own
+        setMessage('Sent — it should be in the corner of the screen.')
+      } else {
+        const result = await sendTestNotification()
+        setMessage(`Sent to ${result.sent} device${result.sent === 1 ? '' : 's'}${result.pruned ? ` · ${result.pruned} old one${result.pruned === 1 ? '' : 's'} cleared` : ''}.`)
+      }
     } catch {
-      setMessage("The test push didn't go out — try again in a moment.")
+      setMessage("The test didn't go out — try again in a moment.")
     } finally {
       setBusy(false)
     }
   }
 
+  const pill: CSSProperties = { border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1, display: 'inline-flex', alignItems: 'center', gap: 6 }
+  const sub = (text: string) => <div style={{ ...flabel, margin: '16px 0 2px' }}>{text}</div>
+
   return (
     <SCard>
-      <div style={{ ...flabel, marginBottom: 12 }}>Notifications · push</div>
-      {!supported ? (
-        <p style={{ fontSize: 13.5, color: 'var(--acc-terra)', margin: 0 }}>
-          Not supported on this browser. On iPhone, install this app to your home screen first (Share → Add to Home Screen) — Safari tabs can't receive push, only installed PWAs can.
-        </p>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{subs.length} device{subs.length === 1 ? '' : 's'} subscribed</span>
-          {subs.map((s) => (
-            <span key={s.id} style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>
-              {s.device_label === thisDeviceLabel ? 'this device ✓' : (s.device_label ?? 'device').slice(0, 20)}
-            </span>
-          ))}
-          <span style={{ flex: 1 }} />
-          <button type="button" onClick={handleToggle} disabled={busy} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1 }}>
-            {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
-          </button>
-          <button type="button" onClick={handleTest} disabled={busy} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 14px', borderRadius: 999, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1 }}>
-            Send test push
-          </button>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={flabel}>Notifications</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6 }}>Calm by default. Each kind can be turned off; silent ones never make a sound.</div>
         </div>
+        <button type="button" onClick={handleTest} disabled={busy} style={pill}>
+          <Icon name="bell" size={15} /> Send a test notification
+        </button>
+      </div>
+
+      {sub('Kinds')}
+      {KIND_IDS.map((kind) => {
+        const k = KIND_LOOK[kind]
+        const key = `${kind}_on` as const
+        const on = s[key] !== false
+        const ritual = kind === 'morning_digest' || kind === 'evening_nudge' ? kind : null
+        return (
+          <NotificationRow key={kind} glyph={<KindGlyph kind={kind} />} label={k.label} help={`${k.channel} · ${k.silent ? '○ silent' : 'sound'}`}>
+            {ritual && (
+              <TimeField
+                value={(s[`${ritual}_at` as const] ?? RITUAL_AT[ritual]).slice(0, 5)}
+                ariaLabel={`${k.label} time`}
+                onChange={(v) => v && updateAppSetting(`${ritual}_at` as const, v)}
+                style={timeStyle(on)}
+              />
+            )}
+            <Toggle on={on} onToggle={() => updateAppSetting(key, !on)} />
+          </NotificationRow>
+        )
+      })}
+
+      {sub('Quiet')}
+      <NotificationRow
+        glyph={<span style={{ width: 30, display: 'flex', justifyContent: 'center', color: 'var(--ink-muted)' }}><Icon name="moon" size={18} /></span>}
+        label="Quiet hours"
+        help="Nothing makes a sound; the tray shows a moon"
+      >
+        <Toggle on={quietOn} onToggle={() => updateAppSetting('quiet_hours_on', !quietOn)} />
+      </NotificationRow>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0 10px 42px', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <TimeField value={(s.quiet_from ?? QUIET_FROM).slice(0, 5)} ariaLabel="Quiet from" onChange={(v) => v && updateAppSetting('quiet_from', v)} style={timeStyle(quietOn)} />
+        <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>to</span>
+        <TimeField value={(s.quiet_to ?? QUIET_TO).slice(0, 5)} ariaLabel="Quiet until" onChange={(v) => v && updateAppSetting('quiet_to', v)} style={timeStyle(quietOn)} />
+      </div>
+      <NotificationRow glyph={<span style={{ width: 30, display: 'flex', justifyContent: 'center', color: 'var(--ink-muted)' }}><Icon name="lock" size={18} /></span>} label="Show task names on the lock screen" help="Off: “Kai’s Flow · A reminder”">
+        <Toggle on={s.lock_screen_names === true} onToggle={() => updateAppSetting('lock_screen_names', !s.lock_screen_names)} />
+      </NotificationRow>
+
+      {tauri ? (
+        <>
+          {sub('Windows')}
+          <NotificationRow glyph={<span style={{ width: 30 }} />} label="Show in the system tray" help="The K by the clock, with a quick flyout">
+            <Toggle
+              on={trayShown}
+              onToggle={() => {
+                writeTrayShown(!trayShown)
+                setTrayShown(!trayShown)
+              }}
+            />
+          </NotificationRow>
+          <NotificationRow glyph={<span style={{ width: 30 }} />} label="Start with Windows" help="Opens quietly to the tray">
+            <Toggle on={!!autostart} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
+          </NotificationRow>
+        </>
+      ) : (
+        <>
+          {sub('This device')}
+          {!supported ? (
+            <p style={{ fontSize: 13.5, color: 'var(--acc-terra)', margin: '8px 0 0' }}>
+              Not supported on this browser. On iPhone, install this app to your home screen first (Share → Add to Home Screen) — Safari tabs can't receive push, only installed PWAs can.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 0' }}>
+              <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{subs.length} device{subs.length === 1 ? '' : 's'} subscribed</span>
+              {subs.map((d) => (
+                <span key={d.id} style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>
+                  {d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20)}
+                </span>
+              ))}
+              <span style={{ flex: 1 }} />
+              <button type="button" onClick={handleSubscribe} disabled={busy} style={pill}>
+                {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
+              </button>
+            </div>
+          )}
+        </>
       )}
       {message && <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '10px 0 0' }}>{message}</p>}
-      <div style={{ marginTop: 14, paddingTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
-        <RitualReminders />
-      </div>
-      <div style={fhelp}>iphone: install to home screen first (share → add to home screen) — safari tabs can't receive push</div>
+      <div style={fhelp}>Cairo time · a nudge, never a lock</div>
     </SCard>
   )
 }
@@ -1079,7 +1150,7 @@ function DesktopSettings() {
             <div id="settings-Calendar"><CalendarCard /></div>
             <div id="settings-Timezone"><TimezoneCard /></div>
             <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
-            <div id="settings-Notifications"><PushCard /></div>
+            <div id="settings-Notifications"><NotificationsCard /></div>
             <div id="settings-Resurfacing"><ResurfacingCard /></div>
             <ImportCard />
             <div id="settings-Trash"><TrashCard /></div>
@@ -1167,11 +1238,10 @@ function MobileSettings() {
         })}
       </div>
 
-      {/* The phone is where the pushes land, so its reminder times live here too. */}
-      <SCard style={{ marginTop: 12, boxShadow: 'var(--shadow-crisp)' }}>
-        <div style={{ ...flabel, marginBottom: 2 }}>Ritual reminders</div>
-        <RitualReminders />
-      </SCard>
+      {/* The phone is where the pushes land, so the whole Notifications card lives here too (12i). */}
+      <div style={{ marginTop: 12 }}>
+        <NotificationsCard />
+      </div>
 
       {/* P6: the phone has no Integrations page, so the GitHub row (connect / sync) sits here. */}
       <div style={{ marginTop: 12 }}>

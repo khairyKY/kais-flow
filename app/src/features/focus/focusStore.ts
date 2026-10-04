@@ -197,7 +197,14 @@ export function useFocusTicker(): void {
   const isRunning = useFocusStore((s) => s.isRunning)
   useEffect(() => {
     if (!isRunning) return
-    const id = setInterval(() => useFocusStore.getState().tick(), 1000)
+    // A hidden window's timers are throttled (a minimized tab, the Windows app closed to its tray:
+    // down to one run a minute), so each run ticks once per whole second that actually passed.
+    let last = Date.now()
+    const id = setInterval(() => {
+      const n = Math.floor((Date.now() - last) / 1000)
+      last += n * 1000
+      for (let i = 0; i < n && useFocusStore.getState().isRunning; i++) useFocusStore.getState().tick()
+    }, 1000)
     return () => clearInterval(id)
   }, [isRunning])
 }

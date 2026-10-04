@@ -1,4 +1,4 @@
-import { lazy, type ComponentType } from 'react'
+import { Suspense, lazy, type ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider, useMatches, type RouteObject } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
@@ -50,6 +50,8 @@ const ImportPage = page(() => import('./features/import/ImportPage'), 'ImportPag
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
 // Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the pages so the first tap opens it at once.
 pageLoaders.push(() => import('./features/tasks/TaskSheet'))
+// The Windows tray's flyout window (src-tauri tray.rs) — its own route, outside the shell, never warmed.
+const TrayFlyout = lazy(() => import('./features/tray/TrayFlyout').then((m) => ({ default: m.TrayFlyout })))
 
 // Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
 // (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,
@@ -91,6 +93,17 @@ function Shell() {
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage />, errorElement: <RouteErrorPage bare /> },
   { path: '/reset', element: <ResetPage />, errorElement: <RouteErrorPage bare /> },
+  {
+    path: '/tray',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={null}>
+          <TrayFlyout />
+        </Suspense>
+      </RequireAuth>
+    ),
+    errorElement: <RouteErrorPage bare />,
+  },
   ...galleries.public,
   {
     path: '/',

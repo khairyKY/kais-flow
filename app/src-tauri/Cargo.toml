@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 # The native shell (docs/phases/M1-android.md): the same built dist/ the web app serves, wrapped
-# in the system WebView. No app logic lives here.
+# in the system WebView. No app logic lives here — on Windows it also keeps the tray (src/tray.rs).
 [lib]
 name = "kais_flow_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
@@ -15,7 +15,18 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
+
+# Desktop only: the tray's "Start with Windows", and one running copy (closing to the tray would
+# otherwise let a second launch put a second K by the clock).
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+
+# Windows toasts with action buttons (Done · Tomorrow, Break 5 min · Keep going). Tauri's own crate —
+# tauri-plugin-notification wraps it but drops the buttons on desktop.
+[target.'cfg(windows)'.dependencies]
+tauri-winrt-notification = "0.8"
 
 [profile.release]
 codegen-units = 1

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The app window: core defaults only. The web app talks to Supabase over HTTPS itself.",
-  "windows": ["main"],
+  "description": "The app window and the tray flyout (the same app on /tray): core defaults only. The web app talks to Supabase over HTTPS itself; the tray commands are the app's own (src/tray.rs).",
+  "windows": ["main", "tray"],
   "permissions": ["core:default"]
 }
