@@ -4,7 +4,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
-import { hybridSearch, type SearchHit } from '../_shared/retrieval.ts'
+import { hybridSearch } from '../_shared/retrieval.ts'
+import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -15,17 +16,6 @@ const GROQ_CHAT_MODEL = Deno.env.get('GROQ_CHAT_MODEL') ?? 'openai/gpt-oss-120b'
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
-}
-
-function buildContext(hits: SearchHit[], top3: { title: string }[], slipping: { entity_name: string; days_since: number }[]) {
-  const items = hits.map((h) => `- [${h.entity_type}] ${h.title}${h.snippet ? `: ${h.snippet}` : ''}`.slice(0, 260)).join('\n')
-  const top3Line = top3.map((t) => t.title).join(', ') || 'none'
-  const slippingLine =
-    slipping
-      .slice(0, 5)
-      .map((s) => `${s.entity_name} (${Math.floor(s.days_since)}d)`)
-      .join(', ') || 'none'
-  return `Retrieved items from the user's system:\n${items || '(none found)'}\n\nToday's Top-3: ${top3Line}\nSlipping (untouched areas): ${slippingLine}`
 }
 
 Deno.serve(async (req) => {
@@ -65,15 +55,32 @@ Deno.serve(async (req) => {
     const hits = await hybridSearch(supabase, lastUser.content, 20)
     const { data: top3 } = await supabase.from('tasks').select('title').eq('top3', true).eq('status', 'todo')
     const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
+    // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit.
+    const now = new Date()
+    const until = dayStart(now, 'Africa/Cairo', 2).toISOString()
+    const [{ data: openTasks }, { data: events }, { count: inboxPending }] = await Promise.all([
+      supabase.from('tasks').select('title, due_at, scheduled_start, top3')
+        .eq('status', 'todo').is('deleted_at', null)
+        .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
+      supabase.from('calendar_events').select('title, starts_at, ends_at, all_day')
+        .is('deleted_at', null).gte('starts_at', dayStart(now).toISOString()).lt('starts_at', until).order('starts_at').limit(40),
+      supabase.from('inbox_items').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    ])
 
-    const systemPrompt = `You answer questions about the user's personal task/notes system using ONLY the context below. Cite the item titles you draw from. If the answer isn't in the context, say plainly "That's not in your data" rather than inventing an answer.\n\n${buildContext(hits, top3 ?? [], slipping ?? [])}`
+    const prompt = systemPrompt({
+      now,
+      hits,
+      top3: top3 ?? [],
+      slipping: slipping ?? [],
+      snapshot: snapshotText(now, openTasks ?? [], events ?? [], inboxPending ?? 0),
+    })
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: GROQ_CHAT_MODEL,
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        messages: [{ role: 'system', content: prompt }, ...messages],
         stream: true,
         temperature: 0.3,
         // Reasoning tokens count against the free plan's daily token budget; a grounded answer
