@@ -74,7 +74,7 @@
   faq(); wide.addEventListener('change', faq)
 
   // ── the current release, straight from GitHub (falls back to the version baked in at build) ──
-  const rel = $$('[data-release]')
+  const rel = $$('[data-release], [data-release-tag], [data-asset]')
   if (rel.length) {
     const apply = (r) => {
       const tag = r.tag, date = new Date(r.date)

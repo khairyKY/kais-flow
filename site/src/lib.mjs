@@ -107,7 +107,7 @@ const FONTS = {
 const THEME_JS = `try{var t=localStorage.getItem('kf-theme')}catch(e){}var d=document.documentElement;d.dataset.theme=t==='night'||t==='day'?t:matchMedia('(prefers-color-scheme: dark)').matches?'night':'day';d.classList.add('js')`
 
 /** A whole page. `site` = absolute origin for canonical/OG URLs. */
-export const page = ({ site, path, title, description, og = 'home', lang = 'en', body, alternates = false, cls = '' }) => {
+export const page = ({ site, path, title, description, og = 'home', lang = 'en', body, alternates = false, cls = '', noindex = path === '/404' }) => {
   const url = site + path
   const fullTitle = path === '/' ? title : `${title} · Kai’s Flow`
   return `<!doctype html>
@@ -117,7 +117,7 @@ export const page = ({ site, path, title, description, og = 'home', lang = 'en',
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${fullTitle}</title>
 <meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${url}">
+${noindex ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${url}">`}
 ${alternates ? `<link rel="alternate" hreflang="en" href="${site}/">\n<link rel="alternate" hreflang="ar" href="${site}/ar/">\n<link rel="alternate" hreflang="x-default" href="${site}/">\n` : ''}<meta property="og:type" content="website">
 <meta property="og:site_name" content="Kai’s Flow">
 <meta property="og:title" content="${esc(fullTitle)}">
