@@ -827,7 +827,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
     <ProviderRow
       icon={<GithubGlyph dim={!github} />}
       name="GitHub"
-      desc="Open issues assigned to you, plus any repos you watch, filed as inbox letters."
+      desc="Brings the open GitHub issues assigned to you (and repos you watch) into your Inbox, where you can turn them into tasks."
       status={
         github ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
@@ -846,7 +846,11 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
           {failing ? (
             !formOpen && <Button type="button" variant="secondary" onClick={() => setFormOpen(true)}>Reconnect</Button>
           ) : (
-            <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
+            <>
+              {/* A friend's feedback 2026-10-04: once connected, "GitHub" should lead to the issues. */}
+              <Link to="/inbox" className="kf-btn kf-press kf-button kf-button--cta" style={{ textDecoration: 'none' }}>See issues in your Inbox →</Link>
+              <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
+            </>
           )}
           <Button type="button" variant="ghost" onClick={() => void disconnect()} disabled={busy}>Disconnect</Button>
         </div>
