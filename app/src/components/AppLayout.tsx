@@ -29,6 +29,7 @@ const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => (
 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
+import { PaperHost } from '../features/paper/PaperHost'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -843,6 +844,7 @@ export function AppLayout() {
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
         {openTaskId && <TaskSheet key={openTaskId} id={openTaskId} />}
       </Suspense>
+      <PaperHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>

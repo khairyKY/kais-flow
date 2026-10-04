@@ -21,6 +21,7 @@ import { useFocusStore } from '../focus/focusStore'
 import { githubUrl } from '../inbox/inboxDisplay'
 import { useProjects } from '../projects/api'
 import { useStartFocus } from '../today/startFocus'
+import { usePaperStore } from '../paper/paperStore'
 import { completeTaskWithUndo, deleteTasksWithUndo, duplicateTaskWithUndo, reopenTaskWithUndo, setDuration, setLabels, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
 import { TASK_PARAM } from './openTask'
 import { TaskMenu, type MenuSub, type TaskMenuActions } from './TaskMenu'
@@ -283,6 +284,20 @@ export function TaskSheet({ id }: { id: string }) {
               <Icon name="link" size={16} />
               View issue ↗
             </a>
+          )}
+          {t.external_ref?.source === 'photo' && (
+            // Paper capture: the task came off a photographed page — reopen the photo (kept 7 days).
+            <button
+              type="button"
+              className="ts-next ts-photo"
+              onClick={() => {
+                const [captureId, page] = t.external_ref!.id.split(':')
+                usePaperStore.getState().show({ kind: 'photo', captureId, page: Number(page) || 0 })
+              }}
+            >
+              <Icon name="camera" size={16} />
+              From a photo of your page
+            </button>
           )}
 
           <textarea className="ts-notes" value={draft.notes} placeholder="Add notes" aria-label="Notes" onChange={(e) => draft.setNotes(e.target.value)} onBlur={draft.saveNotes} />

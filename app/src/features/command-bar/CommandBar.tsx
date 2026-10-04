@@ -11,6 +11,9 @@ import { formatDueChip } from './dueChip'
 import { useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { KeyChip, KeyCombo } from '../../components/kit'
+import { Icon } from '../../components/Icon'
+import { pickPhotos, usePaperStore } from '../paper/paperStore'
+import { imageFiles } from '../paper/image'
 
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
@@ -63,6 +66,8 @@ export function CommandBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
+  // Paper capture 11a: pages saved offline wait on this device until they can be read.
+  const waiting = usePaperStore((s) => s.waiting)
 
   useEffect(() => {
     function handlePrefill(e: Event) {
@@ -160,6 +165,12 @@ export function CommandBar() {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {waiting > 0 && (
+          <div className="pp-waiting" style={{ marginBottom: 10 }}>
+            <Icon name="offline" size={16} />
+            {waiting} {waiting === 1 ? 'page' : 'pages'} waiting · read when online
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--line-dashed)', paddingBottom: 12 }}>
           <svg width="17" height="18" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
             <rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--acc-terra)" />
@@ -172,6 +183,14 @@ export function CommandBar() {
             onChange={(e) => {
               setText(e.target.value)
               setJumpSelected(false)
+            }}
+            // Paper capture: a pasted photo of notes opens the quick look instead of landing as text.
+            onPaste={(e) => {
+              const files = imageFiles(e.clipboardData.files)
+              if (!files.length) return
+              e.preventDefault()
+              setOpen(false)
+              usePaperStore.getState().addFiles(files)
             }}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown' && jumpView) {
@@ -202,6 +221,19 @@ export function CommandBar() {
               outline: 'none',
             }}
           />
+          {/* Paper capture 11a: the camera beside the mic — a photo of your notes becomes tasks. */}
+          <button
+            type="button"
+            className="pp-cam"
+            aria-label="Scan paper"
+            title="Scan paper — a photo of your notes"
+            onClick={() => {
+              setOpen(false)
+              void pickPhotos('camera')
+            }}
+          >
+            <Icon name="camera" size={22} />
+          </button>
         </div>
         {jumpView && (
           <div
