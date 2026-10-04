@@ -58,7 +58,9 @@ function ReadyRow({ capture }: { capture: CaptureRow }) {
 
 /** Pages read (or being read) and not yet reviewed — nothing lands without a review. */
 export function ReadyScans() {
-  const { data: captures = [] } = useCaptures()
+  const { data = [] } = useCaptures()
+  // A read waits for review even after its photos are swept; an unread page without its photo can't be read.
+  const captures = data.filter((c) => c.status === 'done' || c.storage_paths.length > 0)
   if (!captures.length) return null
   return (
     <div style={{ marginTop: 16 }}>

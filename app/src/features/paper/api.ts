@@ -123,7 +123,7 @@ async function readFrom(id: string, paths: string[], from: number, takenAt: stri
   try {
     for (let page = from; page < paths.length; page++) {
       const answer = await callRead(id, paths, page, takenAt)
-      if (typeof answer === 'string') return stopped(id, answer)
+      if (typeof answer === 'string') return stopped(id, answer, page, paths, takenAt)
       patchCache(id, answer)
       const s = usePaperStore.getState()
       if (watching(id) && s.stage?.kind === 'reading') s.show({ ...s.stage, read: page + 1 })
@@ -143,7 +143,7 @@ async function readFrom(id: string, paths: string[], from: number, takenAt: stri
   }
 }
 
-function stopped(id: string, why: ReadStop) {
+function stopped(id: string, why: ReadStop, page: number, paths: string[], takenAt: string) {
   const s = usePaperStore.getState()
   const here = watching(id)
   if (why === 'daily_limit') {
@@ -158,6 +158,11 @@ function stopped(id: string, why: ReadStop) {
     // Groq is busy (or the connection dropped mid-read): calm, and try again in a while.
     patchCache(id, { status: 'queued', error: 'rate_limited' })
     if (here) s.close()
+    // The first page never reached the server, so it holds no row to resume from: this device
+    // remembers the uploaded pages and reads them on the next reconnect.
+    if (why === 'offline' && page === 0) {
+      void update<Waiting[]>(QUEUE_KEY, (q = []) => (q.some((e) => e.id === id) ? q : [...q, { id, takenAt, blobs: [], paths }])).then(refreshWaiting)
+    }
     toast(why === 'offline' ? "We'll read your page when you're back online." : "We'll read your page in a bit.")
     window.clearTimeout(retryTimer)
     retryTimer = window.setTimeout(() => void resumeScans(), 90_000)
@@ -235,11 +240,13 @@ interface Waiting {
   id: string
   takenAt: string
   blobs: Blob[]
+  /** Already uploaded (the connection went before the first read): only the read waits. */
+  paths?: string[]
 }
 
 export async function refreshWaiting(): Promise<void> {
   const queue = (await get<Waiting[]>(QUEUE_KEY)) ?? []
-  usePaperStore.setState({ waiting: queue.reduce((n, e) => n + e.blobs.length, 0) })
+  usePaperStore.setState({ waiting: queue.reduce((n, e) => n + (e.paths?.length ?? e.blobs.length), 0) })
 }
 
 async function queueOffline(id: string, blobs: Blob[], takenAt: string): Promise<void> {
@@ -259,13 +266,13 @@ export async function flushWaiting(): Promise<void> {
     for (const entry of (await get<Waiting[]>(QUEUE_KEY)) ?? []) {
       let paths: string[]
       try {
-        paths = await upload(entry.id, entry.blobs)
+        paths = entry.paths ?? (await upload(entry.id, entry.blobs))
       } catch {
         break // still no way through — next reconnect
       }
       await update<Waiting[]>(QUEUE_KEY, (q) => (q ?? []).filter((e) => e.id !== entry.id))
       await refreshWaiting()
-      usePaperStore.setState((s) => ({ local: { ...s.local, [entry.id]: s.local[entry.id] ?? entry.blobs.map((b) => URL.createObjectURL(b)) } }))
+      if (entry.blobs.length) usePaperStore.setState((s) => ({ local: { ...s.local, [entry.id]: s.local[entry.id] ?? entry.blobs.map((b) => URL.createObjectURL(b)) } }))
       void readUploaded(entry.id, paths, entry.takenAt)
     }
   } finally {

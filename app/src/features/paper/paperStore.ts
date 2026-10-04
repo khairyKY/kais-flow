@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { MAX_PAGES } from './paperMath'
 import { imageFiles } from './image'
+import { isCapacitorShell } from '../../lib/platform'
 
 // Paper capture's screen state (Paper Capture.dc.html 11a–11m). One flow at a time, mounted once in
 // AppLayout (PaperHost), opened from the capture sheet's camera, Inbox → Scan paper, a drop or a paste.
@@ -66,9 +67,15 @@ export async function pickPhotos(source: 'camera' | 'gallery'): Promise<void> {
   input.accept = 'image/*'
   input.multiple = true
   if (source === 'camera') {
-    // Asked before the input opens: a denied camera only ever says so here (the input just closes).
-    // Quick, so the click's user activation still holds for input.click() below.
-    const state = await navigator.permissions?.query({ name: 'camera' as PermissionName }).then((p) => p.state, () => null)
+    // A browser where the camera is blocked for the app says so only here (the input just closes).
+    // Quick, so the click's user activation still holds for input.click() below. The Android shell
+    // opens the camera app through an intent that needs no permission of ours, so it isn't asked.
+    let state: PermissionState | null = null
+    try {
+      if (!isCapacitorShell()) state = (await navigator.permissions?.query({ name: 'camera' as PermissionName }))?.state ?? null
+    } catch {
+      // 'camera' isn't a queryable permission here (Safari, Firefox): just open the input.
+    }
     if (state === 'denied') {
       usePaperStore.getState().show({ kind: 'denied' })
       return

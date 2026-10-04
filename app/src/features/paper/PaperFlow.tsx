@@ -140,9 +140,10 @@ function QuickLook() {
 
 // ── 11d · reading, you can leave ──
 function Reading({ stage }: { stage: Extract<Stage, { kind: 'reading' }> }) {
-  const local = usePaperStore((s) => s.local[stage.captureId])
+  const shown = usePageUrls(useCapture(stage.captureId))
   const drafts = usePaperStore((s) => s.pages)
-  const urls = local ?? drafts.map((p) => p.url)
+  // Until the pages are resized and up, the quick look's own copies.
+  const urls = shown.length ? shown : drafts.map((p) => p.url)
   const at = Math.min(stage.read, stage.total - 1)
   const leave = () => usePaperStore.setState({ away: true })
   return (
@@ -255,7 +256,6 @@ function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url
       tomorrowHint=""
       className="pp-row"
       contentClassName={`pp-row-fg${check ? ' is-check' : ''}`}
-      data-line={line.key}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
       overlay={menu && <ContextMenu items={menu.items} position={menu} onClose={() => setMenu(null)} />}
@@ -385,7 +385,7 @@ function PhoneResults({ id }: { id: string }) {
   if (!r.capture) return null
   const capture = r.capture
   return (
-    <BottomSheet detent="full" onClose={r.close} footer={() => <div className="pp-sheet-foot"><ResultsFoot count={r.lines.length} apply={r.apply} /></div>}>
+    <BottomSheet detent="full" onClose={r.close} footer={(_, keyboardUp) => (keyboardUp ? null : <div className="pp-sheet-foot"><ResultsFoot count={r.lines.length} apply={r.apply} /></div>)}>
       {() => (
         <div className="pp-sheet-body">
           <ResultsHead capture={capture} urls={r.urls} count={r.lines.length} onPhoto={() => r.viewPhoto()} />
