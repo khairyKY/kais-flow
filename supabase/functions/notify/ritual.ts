@@ -32,7 +32,7 @@ export function wallMinutes(now: Date, zone: string = RITUAL_ZONE): number {
 }
 
 /** "08:30" or Postgres's "08:30:00" → 510; null when it isn't a time. */
-function minutesOf(hm: string | null | undefined): number | null {
+export function minutesOf(hm: string | null | undefined): number | null {
   const m = /^(\d{1,2}):(\d{2})/.exec(hm ?? '')
   if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null
   return Number(m[1]) * 60 + Number(m[2])

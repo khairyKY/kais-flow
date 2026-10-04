@@ -1,5 +1,11 @@
-// P4: Web Push sender — digests, missed-routine nudges, overdue alerts. Invoked by pg_cron
+// P4: Web Push sender — digests, evening nudges, task reminders, overdue alerts. Invoked by pg_cron
 // (via pg_net) on a schedule, and by a manual "send test" button in Settings.
+//
+// Tray & notifications (2026-10-04): every payload is a `Notice` from copy.ts — the drawn title,
+// body and actions (Tray and Notifications.dc.html 12k) that app/public/sw-push.js shows as is —
+// and each user's Settings → Notifications decide it (copy.ts `deliver`): a kind turned off or
+// "Pause notifications for 1 hour" sends nothing, quiet hours send silently, and with "Show task
+// names on the lock screen" off (the default) no task name is in the payload at all.
 //
 // FIX-0 / S1: two callers, two branches, and nothing is ever fanned out across users.
 //  - pg_cron (service-role key from Vault): builds each user's payload from that user's rows only
@@ -14,7 +20,8 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
-import { ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
+import { ritualDue, ritualOn, wallMinutes, type RitualSettings } from './ritual.ts'
+import { deliver, digestNotice, nudgeNotice, overdueNotice, reminderNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -25,10 +32,9 @@ const CONTACT_EMAIL = Deno.env.get('VAPID_CONTACT_EMAIL') ?? 'mailto:example@exa
 type NotifyKind = 'morning_digest' | 'evening_nudge' | 'overdue' | 'task_reminder' | 'test'
 const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'overdue', 'task_reminder', 'test']
 
-interface PushPayload {
-  title: string
-  body: string
-}
+/** One user's app_settings row as notify reads it (select('*'), so a function deployed before
+ * migration 0048 still runs: the missing columns read as their defaults). */
+type UserPrefs = RitualSettings & NoticePrefs & { user_id: string }
 
 interface Subscription {
   id: string
@@ -48,56 +54,50 @@ interface SendResult {
 // Everything time-relative is computed once per invocation so every user in a cron run is judged
 // against the same clock (as the old single-payload version was).
 interface RunClock {
+  now: Date
   nowIso: string
-  today: string
   reminderWindowStart: string
+  /** Today on the Cairo wall clock (ritual.ts's zone), as UTC instants: [start, end). */
+  dayStart: string
+  dayEnd: string
 }
 
 function runClock(): RunClock {
   const now = Date.now()
+  // ponytail: Cairo midnight = now minus the wall-clock time of day; a DST-change day is an hour off.
+  const start = now - wallMinutes(new Date(now)) * 60_000 - (now % 60_000)
   return {
+    now: new Date(now),
     nowIso: new Date(now).toISOString(),
-    today: new Date(now).toISOString().slice(0, 10),
     reminderWindowStart: new Date(now - 10 * 60 * 1000).toISOString(),
+    dayStart: new Date(start).toISOString(),
+    dayEnd: new Date(start + 86_400_000).toISOString(),
   }
 }
 
-// `slipping` is a security_invoker view with no user_id column. The service role bypasses RLS, so
-// the view returns every user's rows; they are fetched once per run and each user only counts the
-// rows for domains/projects/areas they own.
-type SlippingRow = { entity_type: string; entity_id: string; days_since: number }
-
-async function slippingCountFor(
-  supabase: SupabaseClient,
-  userId: string,
-  allSlipping: () => Promise<SlippingRow[]>,
-): Promise<number> {
-  const [domains, projects, areas] = await Promise.all([
-    supabase.from('domains').select('id').eq('user_id', userId),
-    supabase.from('projects').select('id').eq('user_id', userId),
-    supabase.from('areas').select('id').eq('user_id', userId),
-  ])
-  const owned = new Set([
-    ...(domains.data ?? []).map((r) => `domain:${r.id}`),
-    ...(projects.data ?? []).map((r) => `project:${r.id}`),
-    ...(areas.data ?? []).map((r) => `area:${r.id}`),
-  ])
-  return (await allSlipping()).filter(
-    (r) => owned.has(`${r.entity_type}:${r.entity_id}`) && (r.days_since as number) > 7,
-  ).length
+/** The in-app history (Activity) keeps what was sent, always with names (it's behind the lock). */
+async function logNotice(supabase: SupabaseClient, userId: string, n: Notice): Promise<void> {
+  await supabase.from('activity_log').insert({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    event_type: `notify.${n.kind}`,
+    entity_type: 'notification',
+    entity_id: crypto.randomUUID(),
+    payload: { title: n.title, body: n.body },
+  })
 }
 
-/** One user's payload, built only from that user's rows. Wording is unchanged from pre-FIX-0. */
+const NAMES: NoticePrefs = { lock_screen_names: true }
+
+/** One user's notice, built only from that user's rows; `prefs` = their own settings. */
 async function buildPayload(
   supabase: SupabaseClient,
   kind: NotifyKind,
   userId: string,
   clock: RunClock,
-  allSlipping: () => Promise<SlippingRow[]>,
-): Promise<PushPayload | null> {
-  if (kind === 'test') {
-    return { title: "Kai's Flow", body: 'Test notification — push is wired up correctly.' }
-  }
+  prefs: NoticePrefs | undefined,
+): Promise<Notice | null> {
+  if (kind === 'test') return testNotice()
 
   if (kind === 'morning_digest') {
     const { data: tasks } = await supabase
@@ -106,43 +106,43 @@ async function buildPayload(
       .eq('user_id', userId)
       .eq('top3', true)
       .eq('status', 'todo')
-    const slippingCount = await slippingCountFor(supabase, userId, allSlipping)
+      .is('deleted_at', null)
+      .order('created_at')
     const top3 = (tasks ?? []).map((t) => t.title as string)
-    return {
-      title: 'Morning digest',
-      body: `Top-3: ${top3.length ? top3.join(', ') : 'none set'}. ${slippingCount} area(s) slipping.`,
-    }
+    const n = digestNotice(top3, prefs)
+    if (deliver(n, prefs, clock.now)) await logNotice(supabase, userId, digestNotice(top3, NAMES))
+    return n
   }
 
   if (kind === 'evening_nudge') {
-    const { data: routines } = await supabase
-      .from('routines')
-      .select('id, name')
-      .eq('user_id', userId)
-      .eq('active', true)
-    const { data: completions } = await supabase
-      .from('routine_completions')
-      .select('routine_id')
-      .eq('user_id', userId)
-      .eq('completed_on', clock.today)
-    const doneIds = new Set((completions ?? []).map((c) => c.routine_id as string))
-    const missed = (routines ?? []).filter((r) => !doneIds.has(r.id as string))
-    return missed.length === 0
-      ? null // nothing missed — don't send a nudge
-      : { title: 'Evening check-in', body: `Missed today: ${missed.map((r) => r.name as string).join(', ')}` }
+    // "4 done · 2 left": finished today, and still open for today (due today or before).
+    const [done, left] = await Promise.all([
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', clock.dayStart).lt('completed_at', clock.dayEnd),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').is('deleted_at', null).lt('due_at', clock.dayEnd),
+    ])
+    if (done.error || left.error) throw done.error ?? left.error
+    if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
+    const n = nudgeNotice(done.count ?? 0, left.count ?? 0)
+    if (deliver(n, prefs, clock.now)) await logNotice(supabase, userId, n)
+    return n
   }
 
   if (kind === 'task_reminder') {
     const { data: due } = await supabase
       .from('tasks')
-      .select('id, title')
+      .select('id, title, due_at, project:projects(name)')
       .eq('user_id', userId)
       .eq('status', 'todo')
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
     if (!due || due.length === 0) return null
-    for (const task of due) {
+    const tasks = due.map((t) => {
+      const project = t.project as { name?: string } | { name?: string }[] | null
+      return { id: t.id as string, title: t.title as string, due_at: t.due_at as string | null, project: (Array.isArray(project) ? project[0] : project)?.name ?? null }
+    })
+    for (const task of tasks) {
+      const said = reminderNotice([task], NAMES, clock.now)
       await supabase.from('tasks').update({ reminder_sent: true }).eq('id', task.id).eq('user_id', userId)
       await supabase.from('activity_log').insert({
         id: crypto.randomUUID(),
@@ -150,10 +150,10 @@ async function buildPayload(
         event_type: 'task.reminder_sent',
         entity_type: 'task',
         entity_id: task.id,
-        payload: { title: task.title },
+        payload: { title: task.title, notice: { title: said.title, body: said.body } },
       })
     }
-    return { title: 'Task reminder', body: `${due.length} reminder(s): ${due.map((t) => t.title as string).join(', ')}` }
+    return reminderNotice(tasks, prefs, clock.now)
   }
 
   // overdue
@@ -164,7 +164,7 @@ async function buildPayload(
     .eq('status', 'todo')
     .lt('due_at', clock.nowIso)
   if (!overdue || overdue.length === 0) return null
-  return { title: 'Overdue', body: `${overdue.length} task(s) overdue` }
+  return overdueNotice(overdue.length)
 }
 
 let appServerPromise: Promise<webpush.ApplicationServer> | null = null
@@ -185,7 +185,7 @@ async function sendToSubscriptions(
   supabase: SupabaseClient,
   userId: string,
   subs: Subscription[],
-  payload: PushPayload,
+  payload: Notice,
 ): Promise<SendResult> {
   const server = await appServer()
   const own = subs.filter((sub) => sub.user_id === userId) // defence in depth: never deliver across users
@@ -231,13 +231,6 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   const clock = runClock()
 
-  let slippingCache: Promise<SlippingRow[]> | null = null
-  const allSlipping = () =>
-    (slippingCache ??= (async () => {
-      const { data } = await supabase.from('slipping').select('entity_type, entity_id, days_since')
-      return (data ?? []) as SlippingRow[]
-    })())
-
   const { data: subRows, error: subError } = await supabase
     .from('push_subscriptions')
     .select('id, user_id, endpoint, keys')
@@ -264,20 +257,22 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     for (const row of dueOwners ?? []) userIds.add(row.user_id as string)
   }
 
-  // Settings › Notifications › Ritual reminders (app_settings, 0045). A failed read sends nothing:
-  // better one missed digest than every user getting one on every tick.
-  if ((kind === 'morning_digest' || kind === 'evening_nudge') && userIds.size > 0) {
+  // Settings › Notifications (app_settings, 0045 + 0048). A failed read sends nothing: better one
+  // missed digest than every user getting one on every tick (a reminder retries on the next sweep).
+  const prefsByUser = new Map<string, UserPrefs>()
+  if (userIds.size > 0) {
     const { data: rows, error } = await supabase
       .from('app_settings')
-      .select('user_id, morning_digest_on, morning_digest_at, evening_nudge_on, evening_nudge_at')
+      .select('*')
       // ponytail: one IN list in the URL (~37 chars a user); chunk it past a few hundred push users.
       .in('user_id', [...userIds])
     if (error) throw error
-    const byUser = new Map(((rows ?? []) as (RitualSettings & { user_id: string })[]).map((r) => [r.user_id, r]))
-    const now = new Date(clock.nowIso)
+    for (const r of (rows ?? []) as UserPrefs[]) prefsByUser.set(r.user_id, r)
+  }
+  if (kind === 'morning_digest' || kind === 'evening_nudge') {
     for (const id of userIds) {
-      const s = byUser.get(id)
-      if (!(scheduled ? ritualDue(kind, s, now) : ritualOn(kind, s))) userIds.delete(id)
+      const s = prefsByUser.get(id)
+      if (!(scheduled ? ritualDue(kind, s, clock.now) : ritualOn(kind, s))) userIds.delete(id)
     }
   }
 
@@ -288,7 +283,9 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
   for (const userId of userIds) {
     // One user's bad row or failed query must not cost every other user their notification.
     try {
-      const payload = await buildPayload(supabase, kind, userId, clock, allSlipping)
+      const prefs = prefsByUser.get(userId)
+      const built = await buildPayload(supabase, kind, userId, clock, prefs)
+      const payload = built && deliver(built, prefs, clock.now)
       const subs = subsByUser.get(userId) ?? []
       if (!payload || subs.length === 0) {
         users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 })
@@ -327,7 +324,7 @@ async function runTestForUser(req: Request, userId: string, token: string): Prom
     .select('id, user_id, endpoint, keys')
     .eq('user_id', userId)
   if (error) throw error
-  const payload = (await buildPayload(supabase, 'test', userId, runClock(), () => Promise.resolve([])))!
+  const payload = (await buildPayload(supabase, 'test', userId, runClock(), undefined))!
   const result = await sendToSubscriptions(supabase, userId, (subs ?? []) as Subscription[], payload)
   // `sent`/`pruned` at the top level are what Settings' "send test" reads (notifications/api.ts).
   return jsonResponse(req, { ...result, users: [{ user_id: userId, skipped: false, ...result }] })
