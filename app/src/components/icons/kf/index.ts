@@ -2,9 +2,9 @@
 // round caps/joins, fill none, currentColor. Copied verbatim minus the export's c2pa <metadata>
 // block (~8 KB per file), which would otherwise ride into the bundle 38 times.
 export const ICON_NAMES = [
-  'alert', 'back', 'calendar', 'check', 'chevdown', 'chevright', 'clock', 'close', 'delete', 'dots', 'duplicate',
-  'drag', 'focus', 'inbox', 'journal', 'label', 'link', 'lock', 'mic', 'more', 'offline', 'people',
-  'pickdate', 'plus', 'priority', 'project', 'projects', 'remind', 'repeat', 'review', 'routines', 'search',
+  'alert', 'back', 'calendar', 'camera', 'check', 'chevdown', 'chevright', 'clock', 'close', 'delete', 'dots', 'duplicate',
+  'drag', 'focus', 'image', 'inbox', 'journal', 'label', 'link', 'lock', 'mic', 'more', 'offline', 'people',
+  'pickdate', 'plus', 'priority', 'project', 'projects', 'remind', 'repeat', 'review', 'rotate', 'routines', 'search',
   'send', 'settings', 'star', 'stop', 'tasks', 'today', 'tomorrow', 'undo',
   // Tray and Notifications.dc.html 12l (bell, moon, focus-ring) + 12k's digest sprout.
   'bell', 'moon', 'focus-ring', 'sprout',

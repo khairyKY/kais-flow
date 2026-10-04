@@ -16,6 +16,7 @@ import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuiet
 import { Select } from '../../components/Select'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
+import { PaperSettingsCard } from '../paper/PaperSettings'
 import { useToastStore } from '../../lib/toastStore'
 import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
@@ -998,6 +999,8 @@ function IntegrationsPage() {
           <div style={{ ...fhelp, marginTop: 9 }}>appears in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
         </SCard>
       </div>
+      {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
+      <PaperSettingsCard />
     </div>
   )
 }
@@ -1251,6 +1254,9 @@ function MobileSettings() {
       {/* The capture key and its how-to: the same card as the desktop's Integrations page. */}
       <div style={{ marginTop: 12 }}>
         <CaptureKeyCard />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <PaperSettingsCard />
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>

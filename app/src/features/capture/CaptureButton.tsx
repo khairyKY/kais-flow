@@ -9,6 +9,7 @@ import { voiceLimitReachedToday } from './aiAllowance'
 import { LOCK_DISTANCE, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
 import './capture.css'
 import { longPress } from '../../lib/haptics'
+import { usePaperStore } from '../paper/paperStore'
 
 // The sheet (and its transcribe/parse chain) only loads once a take needs filing.
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -41,6 +42,8 @@ export function CaptureButton() {
   const held = useRef(false)
   const { session } = useAuth()
   const uid = session?.user.id
+  // Paper capture 11a: a dot while photographed pages wait offline.
+  const waiting = usePaperStore((s) => s.waiting)
 
   useEffect(() => () => {
     window.clearTimeout(pressTimer.current)
@@ -190,7 +193,7 @@ export function CaptureButton() {
         type="button"
         className="kf-capture kf-press"
         data-phase={hold.phase}
-        aria-label="Capture — tap to type, hold to talk"
+        aria-label={`Capture — tap to type, hold to talk${waiting ? ` · ${waiting} ${waiting === 1 ? 'page' : 'pages'} waiting` : ''}`}
         style={recording ? { transform: `translate(${hold.dx}px, ${hold.dy}px) scale(${GROWN})` } : undefined}
         onPointerDown={(e) => {
           if (e.button !== 0) return
@@ -215,6 +218,7 @@ export function CaptureButton() {
         }}
       >
         <Icon name="mic" size={24} />
+        {waiting > 0 && <span className="pp-capture-dot" aria-hidden="true" />}
       </button>
 
       {recording &&

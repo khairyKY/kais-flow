@@ -14,14 +14,16 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { jsonResponse } from './cors.ts'
 
-export type AiKind = 'chat' | 'parse' | 'stt'
+export type AiKind = 'chat' | 'parse' | 'stt' | 'vision'
 
-/** Calls per user per Cairo day. Env overrides are set by Kai as function secrets. */
-export const DEFAULT_DAILY_LIMITS: Readonly<Record<AiKind, number>> = { chat: 40, parse: 100, stt: 30 }
+/** Calls per user per Cairo day (vision: pages read — Paper capture's "15 pages today"). Env
+ * overrides are set by Kai as function secrets. */
+export const DEFAULT_DAILY_LIMITS: Readonly<Record<AiKind, number>> = { chat: 40, parse: 100, stt: 30, vision: 15 }
 const LIMIT_ENV: Readonly<Record<AiKind, string>> = {
   chat: 'AI_DAILY_LIMIT_CHAT',
   parse: 'AI_DAILY_LIMIT_PARSE',
   stt: 'AI_DAILY_LIMIT_STT',
+  vision: 'AI_DAILY_LIMIT_VISION',
 }
 
 /**
@@ -34,12 +36,16 @@ const LIMIT_ENV: Readonly<Record<AiKind, string>> = {
  * those so users see the calm "used up" line instead of Groq's 429. Chat and parse only have
  * separate budgets if GROQ_CHAT_MODEL and GROQ_PARSE_MODEL are different models. Raise via env
  * when Groq's limits (or the plan) change.
+ * Vision (checked 2026-10-04): Groq's one image model, qwen/qwen3.8-27b, gets 1K requests, 8K tokens a
+ * minute and 200K tokens a day on the free plan; a page costs 2,048 image tokens + the prompt + the
+ * answer + low reasoning, ~4–5K → ~40 pages a day for everyone.
  */
-export const DEFAULT_GLOBAL_LIMITS: Readonly<Record<AiKind, number>> = { chat: 80, parse: 150, stt: 1000 }
+export const DEFAULT_GLOBAL_LIMITS: Readonly<Record<AiKind, number>> = { chat: 80, parse: 150, stt: 1000, vision: 40 }
 const GLOBAL_LIMIT_ENV: Readonly<Record<AiKind, string>> = {
   chat: 'AI_GLOBAL_LIMIT_CHAT',
   parse: 'AI_GLOBAL_LIMIT_PARSE',
   stt: 'AI_GLOBAL_LIMIT_STT',
+  vision: 'AI_GLOBAL_LIMIT_VISION',
 }
 
 // A hung database must not hang the request: past this the check counts as unavailable.

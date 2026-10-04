@@ -31,6 +31,7 @@ const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => 
 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
+import { PaperHost } from '../features/paper/PaperHost'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -848,6 +849,7 @@ export function AppLayout() {
       <Suspense fallback={null}>
         <TrayBridge />
       </Suspense>
+      <PaperHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>

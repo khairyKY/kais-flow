@@ -14,12 +14,15 @@ import { longPress, tick } from '../../lib/haptics'
 
 
 export interface SwipeActions {
-  tomorrow: () => void
+  /** Without it there is no right swipe (Paper capture's results rows only drop, to the left). */
+  tomorrow?: () => void
   /** Without these two the right swipe is Tomorrow alone: past the line commits, short of it springs back. */
   pickDate?: (at: { x: number; y: number }) => void
   project?: (at: { x: number; y: number }) => void
   /** Without it there is no left swipe (Shut down's Sweep: nothing on that screen deletes). */
   delete?: () => void
+  /** The left action's word — "Delete" unless the row says otherwise ("Drop"). */
+  deleteLabel?: string
 }
 
 // One row open at a time: opening (or starting to drag) a row closes the last one.
@@ -101,7 +104,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
     if (dt > 0) s.v = (e.clientX - s.lastX) / z / dt
     s.lastX = e.clientX
     s.lastT = e.timeStamp
-    s.cur = Math.max(actions?.delete ? -s.width : 0, Math.min(s.width, s.x0 + dx))
+    s.cur = Math.max(actions?.delete ? -s.width : 0, Math.min(actions?.tomorrow ? s.width : 0, s.x0 + dx))
     const past = pastCommit(s.cur, s.width)
     if (past && !s.past) tick() // one tick as the line is crossed, not on the way back
     s.past = past
@@ -125,7 +128,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       setX(end === 'tomorrow' ? s.width : -s.width)
       window.setTimeout(() => {
         if (end === 'tomorrow') {
-          actions?.tomorrow()
+          actions?.tomorrow?.()
           setX(0)
         } else actions?.delete?.()
       }, SETTLE_MS)
@@ -171,7 +174,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       }}
       {...rest}
     >
-      {x > 0 && actions && (
+      {x > 0 && actions?.tomorrow && (
         <div className="kf-swipe-bg is-right">
           {past ? (
             <div className="kf-swipe-commit">
@@ -181,7 +184,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
             </div>
           ) : (
             <>
-              {act('tomorrow', 'Tomorrow', () => actions.tomorrow())}
+              {act('tomorrow', 'Tomorrow', () => actions.tomorrow?.())}
               {actions.pickDate && act('pickdate', 'Pick date', (el) => actions.pickDate?.(at(el)))}
               {actions.project && act('project', 'Project', (el) => actions.project?.(at(el)))}
             </>
@@ -192,7 +195,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         <div className="kf-swipe-bg is-left">
           <button type="button" className="kf-swipe-act is-delete" onClick={(e) => { e.stopPropagation(); actions.delete?.() }}>
             <Icon name="delete" size={24} />
-            <span>Delete</span>
+            <span>{actions.deleteLabel ?? 'Delete'}</span>
           </button>
         </div>
       )}

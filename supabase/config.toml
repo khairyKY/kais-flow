@@ -440,6 +440,9 @@ verify_jwt = true
 [functions.github-sync]
 verify_jwt = true
 
+[functions.capture-image]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

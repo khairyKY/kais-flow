@@ -195,6 +195,8 @@ export interface AppSettings {
   quiet_to?: string
   lock_screen_names?: boolean
   notify_paused_until?: string | null
+  /** Paper capture (migration 0049): keep page photos 7 days (default) or delete them once reviewed. */
+  capture_keep_photos?: boolean
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

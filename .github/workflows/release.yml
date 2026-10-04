@@ -27,7 +27,7 @@ permissions:
 env:
   PROJECT_REF: eqbbkitofgyxxrfggpbu
   APP_URL: https://kais-flow.kaidagoat.workers.dev
-  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync
+  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync capture-image
 
 jobs:
   gate:
