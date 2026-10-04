@@ -187,6 +187,16 @@ export interface AppSettings {
   morning_digest_at?: string
   evening_nudge_on?: boolean
   evening_nudge_at?: string
+  /** Settings → Notifications (migration 0048) — read by notify through notify/copy.ts `deliver`. */
+  task_reminder_on?: boolean
+  focus_done_on?: boolean
+  quiet_hours_on?: boolean
+  quiet_from?: string
+  quiet_to?: string
+  lock_screen_names?: boolean
+  notify_paused_until?: string | null
+  /** Paper capture (migration 0049): keep page photos 7 days (default) or delete them once reviewed. */
+  capture_keep_photos?: boolean
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

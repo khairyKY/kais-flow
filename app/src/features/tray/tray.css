@@ -1,0 +1,247 @@
+/* The tray flyout — Tray and Notifications.dc.html 12b / 12c. The window is the card (340 × 460,
+   borderless; Windows 11 rounds and shadows it). */
+html:has(.kf-tray),
+html:has(.kf-tray) body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper-parchment);
+}
+
+.kf-tray {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-parchment);
+  color: var(--ink-body);
+  font-family: var(--font-ui);
+  user-select: none;
+}
+.kf-tray::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--noise-url);
+  mix-blend-mode: multiply;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.kf-tray > * {
+  position: relative;
+}
+
+.kf-tray-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 16px 10px;
+}
+.kf-tray-date {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.kf-tray-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.kf-tray-now {
+  margin: 0 12px;
+  padding: 10px 6px 10px 12px;
+  border: 1px solid var(--line-card);
+  border-radius: 3px;
+  background: var(--paper-bone);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.kf-tray-now-text {
+  flex: 1;
+  min-width: 0;
+}
+.kf-tray-title {
+  margin-top: 3px;
+  font-size: 14.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kf-tray-check {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--line-control);
+  background: var(--paper-parchment);
+  color: var(--acc-sage-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.kf-tray-ring {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kf-tray-ring > span {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--paper-bone);
+  color: var(--acc-sage-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kf-tray-label {
+  padding: 14px 16px 4px;
+}
+.kf-tray-rows {
+  border-top: 1px solid var(--line-card);
+}
+.kf-tray-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px dashed var(--line-dashed);
+}
+.kf-tray-row-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.kf-tray-row.is-done .kf-tray-row-title {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+.kf-tray-star {
+  color: var(--star-on);
+  display: flex;
+}
+.kf-tray-empty {
+  padding: 12px 16px;
+  font-family: var(--font-hand);
+  font-size: 16px;
+  color: var(--ink-muted);
+}
+
+.kf-tray-capture {
+  margin: 14px 12px 0;
+  height: 44px;
+  box-sizing: border-box;
+  border: 1px solid var(--line-control);
+  border-radius: 3px;
+  background: var(--paper-bone);
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 12px;
+}
+.kf-tray-capture input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--ink-body);
+  font: inherit;
+  font-size: 14px;
+}
+.kf-tray-capture input::placeholder {
+  color: var(--ink-faint);
+}
+.kf-tray-capture button,
+.kf-tray-icon {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.kf-tray-focus {
+  margin: 10px 12px 0;
+  display: flex;
+  gap: 8px;
+}
+.kf-tray-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
+  border: 1px solid var(--line-control);
+  background: var(--paper-parchment);
+  color: var(--ink-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kf-tray-btn.is-cta {
+  border: none;
+  background: var(--acc-terra-ink);
+  color: var(--on-terra);
+  box-shadow: var(--shadow-cta);
+}
+
+.kf-tray-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 8px 0 16px;
+  border-top: 1px solid var(--line-card);
+  background: var(--paper-sidebar);
+}
+.kf-tray-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--acc-lavender-deep);
+  cursor: pointer;
+}
+.kf-tray button:focus-visible,
+.kf-tray input:focus-visible {
+  outline: 2px solid var(--acc-lavender);
+  outline-offset: 1px;
+}

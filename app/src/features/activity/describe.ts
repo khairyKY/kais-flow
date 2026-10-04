@@ -1,4 +1,6 @@
 import type { ActivityLogEntry } from '../../lib/types'
+import { digestNotice, nudgeNotice, reminderNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import type { KindId } from '../notifications/kinds'
 
 // What each activity_log row says on the Activity page (Activity.dc.html 1a/1b voice: a verb, the
 // thing, then a quiet detail line). One entry per event type the app actually writes — every
@@ -21,11 +23,13 @@ export type ActivityCategory =
   | 'projects'
   | 'review'
   | 'library'
+  /** What was sent: reminders, the digest, the nudge (Tray and Notifications.dc.html 12j). */
+  | 'notifications'
   /** Onboarding, and any event newer than this map. */
   | 'garden'
 
 /** Which of the page's existing row marks to draw (the page owns the pixels). */
-export type ActivityIcon = 'check' | 'cross' | 'inbox' | 'vine' | 'calendar' | 'clover' | 'fern' | 'plus' | 'seedling'
+export type ActivityIcon = 'check' | 'cross' | 'inbox' | 'vine' | 'calendar' | 'clover' | 'fern' | 'plus' | 'seedling' | 'notice'
 
 export interface ActivityLine {
   text: string
@@ -34,10 +38,12 @@ export interface ActivityLine {
   icon: ActivityIcon
   /** Where a click on the row goes; null when the thing has no page (or no longer exists). */
   href: string | null
+  /** A notification that was sent: drawn with its kind's glyph, and its buttons still work (12j). */
+  notice?: { kind: KindId; actions: NoticeAction[]; taskIds: string[] }
 }
 
 export interface ActivityNames {
-  task(id: string): { title: string; project_id: string | null } | undefined
+  task(id: string): { title: string; project_id: string | null; status?: string } | undefined
   project(id: string): string | undefined
   area(id: string): string | undefined
   domain(id: string): string | undefined
@@ -163,6 +169,17 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
       return line(named(name, (q) => `Paused ${q}`, 'Paused a task'))
     case 'task.resumed':
       return line(named(name, (q) => `Resumed ${q}`, 'Resumed a task'))
+    case 'task.reminder_sent': {
+      // The words it arrived with (notify logs them since 0048); older rows say it plainly.
+      const said = (payload?.notice ?? null) as { title?: string; body?: string } | null
+      const open = task ? task.status !== 'done' : false
+      return {
+        ...line(said?.title || named(name, (q) => `A reminder about ${q}`, 'A reminder'), said?.body ?? ''),
+        category: 'notifications',
+        icon: 'notice',
+        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date()).actions : [], taskIds: [id] },
+      }
+    }
     case 'task.skipped':
       return line(named(name, (q) => `Skipped this round of ${q}`, 'Skipped a round of a task'), 'the next one is planted')
     default:
@@ -542,6 +559,12 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
       return describeLibrary(e)
     case 'onboarding':
       return { text: 'Planted your garden', details: 'the welcome, done', category: 'garden', icon: 'seedling', href: null }
+    case 'notify': {
+      // notify.morning_digest / notify.evening_nudge: the notice as it was sent, with its buttons.
+      const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : 'morning_digest'
+      const sent = kind === 'morning_digest' ? digestNotice([], {}) : nudgeNotice(0, 0)
+      return { text: str(e.payload, 'title') || sent.title, details: str(e.payload, 'body'), category: 'notifications', icon: 'notice', href: '/today', notice: { kind, actions: sent.actions, taskIds: [] } }
+    }
     default: {
       // Anything newer than this map: say it plainly rather than print the raw event name.
       const verb = (type.split('.')[1] ?? type).replace(/_/g, ' ')

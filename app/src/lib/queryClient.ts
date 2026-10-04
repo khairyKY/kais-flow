@@ -17,6 +17,9 @@ export const UNPERSISTED_QUERY_ROOTS: ReadonlySet<string> = new Set([
   'commentary', // your own writing on notes and quotes (library)
   'quotes', // library passages you kept (the Library is parked, so nothing is lost offline)
   'deleted_items', // Trash: carries whole trashed journal entries (body, mood, gratitude)
+  'captures', // Paper capture: what your handwriting said (lecture notes, journal lines)
+  'capture', // one capture, opened from a task's photo link
+  'capture_urls', // signed photo URLs (an hour's life — no use on the next load)
 ])
 
 export function isUnpersistedQueryKey(queryKey: readonly unknown[]): boolean {

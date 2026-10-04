@@ -14,6 +14,7 @@ import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useOpenTask } from '../tasks/openTask'
 import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { ReadyScans, ScanPaperButton, SourceLabel } from '../paper/PaperInbox'
 import { hydrangeaAsset } from '../../lib/gardenAssets'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { Select } from '../../components/Select'
@@ -319,6 +320,10 @@ export function InboxPage() {
         Dismissed<span style={tabCountStyle}>{dismissedItems.length}</span>
         {tab === 'dismissed' && <span style={tabUnderline('var(--acc-hydrangea)')} />}
       </button>
+      {/* Paper capture: a photo of your notes becomes tasks (Paper Capture.dc.html 11g / 11m). */}
+      <span style={{ marginLeft: 'auto', paddingBottom: 6 }}>
+        <ScanPaperButton />
+      </span>
     </div>
   )
 
@@ -326,6 +331,7 @@ export function InboxPage() {
     <div style={{ maxWidth: isMobile ? undefined : 940, userSelect: selectionActive ? 'none' : undefined }}>
       {tab === 'dismissed' ? dismissedHeader : !zero && header}
       {tabsRow}
+      {tab === 'waiting' && <ReadyScans />}
 
       {tab === 'waiting' ? (
         itemsPending ? (
@@ -657,7 +663,7 @@ function TriageCard({
             caption moves to the end of the chip row below. */}
         {!compact && (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
-            {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
+            <SourceLabel item={item} label={KIND_LABEL[item.kind]} /> · {formatCaptured(item.created_at)}
           </span>
         )}
       </div>
@@ -680,7 +686,7 @@ function TriageCard({
             <span style={{ fontSize: size.meta, color: 'var(--ink-muted)', fontStyle: 'italic' }}>no AI read on this one — file it yourself</span>
           )}
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
-            {KIND_LABEL[item.kind]} · {formatCaptured(item.created_at)}
+            <SourceLabel item={item} label={KIND_LABEL[item.kind]} /> · {formatCaptured(item.created_at)}
           </span>
         </div>
       ) : (

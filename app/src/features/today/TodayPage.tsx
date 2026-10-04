@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, rescheduleDue, setProject, setSomeday, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
@@ -153,6 +153,15 @@ export function TodayPage() {
 
   const [morningOpen, setMorningOpen] = useState(false)
   const [eveningOpen, setEveningOpen] = useState(false)
+  // A notification's "Plan my day" / "Shut down" lands on /today?ritual=morning|evening (notify/copy.ts).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const ritualParam = searchParams.get('ritual')
+  useEffect(() => {
+    if (!ritualParam) return
+    if (ritualParam === 'morning') setMorningOpen(true)
+    if (ritualParam === 'evening') setEveningOpen(true)
+    setSearchParams((p) => (p.delete('ritual'), p), { replace: true })
+  }, [ritualParam, setSearchParams])
   const [celebrate, setCelebrate] = useState(false)
 
   const projectName = useMemo(() => new Map(projects.map((p) => [p.id, p.name] as const)), [projects])

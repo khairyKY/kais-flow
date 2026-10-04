@@ -193,3 +193,29 @@ describe('plural', () => {
     expect(plural(31, 'event')).toBe('31 events')
   })
 })
+
+describe('describeActivity — the notification history (Tray and Notifications.dc.html 12j)', () => {
+  it('a sent reminder reads as it arrived, with its glyph and working buttons while the task is open', () => {
+    const notice = { title: 'Send the invoice · in 10 min', body: '09:50 · Shaheen website' }
+    const line = describeActivity(entry('task.reminder_sent', 'task', TASK, { title: 'Send the invoice', notice }), NAMES)
+    expect(line).toMatchObject({ text: 'Send the invoice · in 10 min', details: '09:50 · Shaheen website', category: 'notifications', icon: 'notice' })
+    expect(line.notice?.kind).toBe('task_reminder')
+    expect(line.notice?.actions.map((a) => a.title)).toEqual(['Done', 'Tomorrow'])
+    expect(line.notice?.taskIds).toEqual([TASK])
+    const done = describeActivity(entry('task.reminder_sent', 'task', TASK, { notice }), { ...NAMES, task: () => ({ title: 'Send the invoice', project_id: null, status: 'done' }) })
+    expect(done.notice?.actions).toEqual([])
+  })
+
+  it('an older reminder row (title only) still says what it was', () => {
+    expect(describeActivity(entry('task.reminder_sent', 'task', TASK, { title: 'Send the invoice' }), NAMES).text).toBe('A reminder about "Send the invoice"')
+  })
+
+  it('the digest and the nudge, with Plan my day · Open and Shut down', () => {
+    const digest = describeActivity(entry('notify.morning_digest', 'notification', RANDOM, { title: 'Good morning — 3 to tend today', body: '✶ GCI homework 1 — NumPy.' }))
+    expect(digest).toMatchObject({ text: 'Good morning — 3 to tend today', category: 'notifications', notice: { kind: 'morning_digest' } })
+    expect(digest.notice?.actions.map((a) => a.title)).toEqual(['Plan my day', 'Open'])
+    const nudge = describeActivity(entry('notify.evening_nudge', 'notification', RANDOM, { title: 'The garden’s ready to close', body: '4 done · 2 left' }))
+    expect(nudge).toMatchObject({ details: '4 done · 2 left', notice: { kind: 'evening_nudge' } })
+    expect(nudge.notice?.actions.map((a) => a.title)).toEqual(['Shut down'])
+  })
+})

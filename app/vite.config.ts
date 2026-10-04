@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -76,6 +76,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Web Push: shows the payload notify sends (supabase/functions/notify/copy.ts) and runs its
+        // buttons (public/sw-push.js). A plain script beside the generated worker.
+        importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // 3.8k self-hosted emoji glyphs (public/emoji/) — too many to bulk-precache
         // for a niche icon a user may see a handful of. Cached on first use instead
@@ -94,4 +97,7 @@ export default defineConfig({
       },
     }),
   ],
+  // The notification copy is one module shared with the notify edge function
+  // (supabase/functions/notify/copy.ts); the dev server may read that one folder outside app/.
+  server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), '../supabase/functions/notify'] } },
 })

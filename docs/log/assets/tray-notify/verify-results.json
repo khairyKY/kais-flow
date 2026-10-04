@@ -1,0 +1,287 @@
+[
+  {
+    "name": "12b date + Day N",
+    "ok": true,
+    "detail": "Saturday, 3 October | DAY 84"
+  },
+  {
+    "name": "12b Next · 09:00 Judge test Kai’s Flow, with a check",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b Top 3 as three rows, goal first",
+    "ok": true,
+    "detail": "[\"GCI homework 1 — NumPy\",\"Do GCI lecture 2’s survey\",\"Skim OS lectures 1 + 2\"]"
+  },
+  {
+    "name": "12b capture field + Start focus · 25:00 + footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b fits 340 × 460 (no scroll)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b quick capture writes an Inbox item",
+    "ok": true,
+    "detail": "[{\"id\":\"b61df839-a1d4-4f2b-9f91-162408909ee4\",\"kind\":\"text\",\"raw_text\":\"buy milk\",\"transcript\":null,\"ai_parse\":null,\"con"
+  },
+  {
+    "name": "12b ticking a Top 3 row completes it (outbox write)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000003\",\"title\":\"Skim OS lectures 1 + 2\",\"u"
+  },
+  {
+    "name": "12b Esc → tray_hide; Open → tray_open; Settings → tray_open /settings",
+    "ok": true,
+    "detail": "[\"tray_hide\",\"tray_open {\\\"route\\\":null}\",\"tray_open {\\\"route\\\":\\\"/settings\\\"}\"]"
+  },
+  {
+    "name": "12b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12c Start focus in the flyout starts the main window’s timer, on the goal",
+    "ok": true,
+    "detail": "FOCUS · 18:42 LEFT GCI homework 1 — NumPy"
+  },
+  {
+    "name": "12c the button becomes Pause · Stop",
+    "ok": true,
+    "detail": "[\"Pause\",\"Stop\"]"
+  },
+  {
+    "name": "12c night theme",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12c fits 340 × 460",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12a the tray K shows the filling focus dot + the menu rows follow",
+    "ok": true,
+    "detail": "{\"state\":\"focus2\",\"dark\":false,\"focusLabel\":\"Stop focus · 19 min left\",\"pauseLabel\":\"Pause notifications for 1 hour\"}"
+  },
+  {
+    "name": "12a the main window told the tray to show (tray_shown)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12c Pause pauses the main timer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12c Stop ends the round; Start focus is back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12e focus done → \"25 minutes tended ✿\" · Break 5 min · Keep going",
+    "ok": true,
+    "detail": "{\"title\":\"25 minutes tended ✿\",\"body\":\"A focus timer\",\"actions\":[[\"break\",\"Break 5 min\"],[\"keep\",\"Keep going\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"focus_done\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/focus\\\"}\"}"
+  },
+  {
+    "name": "12e Keep going starts a new round",
+    "ok": true,
+    "detail": "FOCUS · 25:00 LEFT\nGCI homework 1 — NumPy"
+  },
+  {
+    "name": "12c no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12e a reminder due while the app runs → its toast, Done · Tomorrow",
+    "ok": true,
+    "detail": "{\"title\":\"Call the tyre supplier · in 9 min\",\"body\":\"08:50\",\"actions\":[[\"done\",\"Done\"],[\"tomorrow\",\"Tomorrow\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"task_reminder\\\",\\\"taskIds\\\":[\\\"10000000-0000-4000-8000-000000000005\\\"],\\\"url\\\":\\\"/tasks?focus=10000000-0000-4000-8000-000000000005\\\"}\"}"
+  },
+  {
+    "name": "12a … and the K gets the needs-you dot",
+    "ok": true,
+    "detail": "{\"state\":\"needs\",\"dark\":false,\"focusLabel\":\"Start focus · 25:00\",\"pauseLabel\":\"Pause notifications for 1 hour\"}"
+  },
+  {
+    "name": "12e Tomorrow (from the toast) = tomorrow 09:00 Cairo",
+    "ok": true,
+    "detail": "\"2026-10-04T06:00:00.000Z\""
+  },
+  {
+    "name": "12a opening the flyout clears the dot",
+    "ok": true,
+    "detail": "{\"state\":\"normal\",\"dark\":false,\"focusLabel\":\"Start focus · 25:00\",\"pauseLabel\":\"Pause notifications for 1 hour\"}"
+  },
+  {
+    "name": "12d Pause notifications for 1 hour → notify_paused_until = now + 1h",
+    "ok": true,
+    "detail": "2026-10-03T06:41:40.006Z"
+  },
+  {
+    "name": "12d Quick capture… opens the command bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12d tray_open(route) lands the main window on it",
+    "ok": true,
+    "detail": "http://localhost:5253/activity"
+  },
+  {
+    "name": "no page errors (main)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day every kind has a switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Task reminder off → task_reminder_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Quiet hours off → quiet_hours_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day lock-screen names on → lock_screen_names true",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day quiet hours from–to read 22:30 to 07:00 (the time field's 12-hour face)",
+    "ok": true,
+    "detail": "10:30 PM → 7:00 AM"
+  },
+  {
+    "name": "12i desktop-day test (Windows) → a local toast",
+    "ok": true,
+    "detail": "{\"title\":\"Kai’s Flow\",\"body\":\"Test notification — push is wired up correctly.\",\"actions\":[],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"test\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/settings\\\"}\"}"
+  },
+  {
+    "name": "12i desktop-day Windows rows: tray + start with Windows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Start with Windows → autostart_set; tray off → tray_shown false",
+    "ok": true,
+    "detail": "[\"tray_shown {\\\"shown\\\":true}\",\"tray_shown {\\\"shown\\\":true}\",\"autostart_set {\\\"on\\\":true}\",\"tray_shown {\\\"shown\\\":false}\"]"
+  },
+  {
+    "name": "12i desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night every kind has a switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Task reminder off → task_reminder_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Quiet hours off → quiet_hours_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night lock-screen names on → lock_screen_names true",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night quiet hours from–to read 22:30 to 07:00 (the time field's 12-hour face)",
+    "ok": true,
+    "detail": "10:30 PM → 7:00 AM"
+  },
+  {
+    "name": "12i phone-night test (web) → notify {kind:'test'}",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night no Windows rows on the web",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j desktop-day the Notifications filter lists the three sent notices",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier · in 10 min\\n08:40\\nNOTIFICATIONS\\n08:50\\nDone\\nTomorrow\",\"Good morning — 3 to tend today\\n07:30\\nNOTIFICATIONS\\n✶ GCI homework 1 — NumPy, then Do GCI lecture 2’s survey and S"
+  },
+  {
+    "name": "12j desktop-day each with its glyph + buttons (Done · Tomorrow / Plan my day · Open / Shut down)",
+    "ok": true,
+    "detail": "[\"Done\\nTomorrow\",\"Plan my day\\nOpen\",\"Shut down\"]"
+  },
+  {
+    "name": "12j desktop-day Done from the history completes the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j desktop-day Plan my day opens the ritual on Today (and the address is clean)",
+    "ok": true,
+    "detail": "http://localhost:5253/today"
+  },
+  {
+    "name": "12j desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j phone-night the Notifications filter lists the three sent notices",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier · in 10 min\\nNOTIFICATIONS\\n08:40 · 08:50\\nDone\\nTomorrow\",\"Good morning — 3 to tend today\\nNOTIFICATIONS\\n07:30 · ✶ GCI homework 1 — NumPy, then Do GCI lecture 2’s survey and"
+  },
+  {
+    "name": "12j phone-night each with its glyph + buttons (Done · Tomorrow / Plan my day · Open / Shut down)",
+    "ok": true,
+    "detail": "[\"Done\\nTomorrow\",\"Plan my day\\nOpen\",\"Shut down\"]"
+  },
+  {
+    "name": "12j phone-night Done from the history completes the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j phone-night Plan my day opens the ritual on Today (and the address is clean)",
+    "ok": true,
+    "detail": "http://localhost:5253/today"
+  },
+  {
+    "name": "12j phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sw → app: ?kfAction=done completes the task, and the address drops the action",
+    "ok": true,
+    "detail": "http://localhost:5253/today"
+  },
+  {
+    "name": "sw → app: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
