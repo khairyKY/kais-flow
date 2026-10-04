@@ -61,7 +61,7 @@ const compare = {
   <div>${head2({ eyebrow: 'Where it’s different', title: 'What you get here' })}<ul class="ticks">
     <li>${icon('check', 20)}Free, with no plan waiting behind it.</li>
     <li>${icon('check', 20)}Calm on purpose: paper, plants, one terra button.</li>
-    <li>${icon('check', 20)}A paper loop — copy your day out, photograph it back (coming soon).</li>
+    <li>${icon('check', 20)}Paper capture: photograph your notes and they come back as tasks (the Notebook page and its ticks loop are next).</li>
     <li>${icon('check', 20)}Your own calendar, not a view of someone else’s.</li></ul></div>
   <div>${head2({ eyebrow: 'Not yet', title: 'What it doesn’t do' })}<ul class="ticks no">
     <li>No iPhone app. The web app works in Safari.</li>

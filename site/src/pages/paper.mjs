@@ -37,7 +37,7 @@ ${step(1, 'Notebook page', 'Your day, the way you write it', 'Habits and data on
 ${step(2, 'Paper capture', 'A photo of your notes becomes tasks', 'Write in a lecture or a meeting. Later, take a photo. Kai’s Flow reads your handwriting and suggests tasks, events and notes — showing the line it read beside anything it isn’t sure of.', lecture + review)}
 ${step(3, 'The ticks loop', 'Tick it on paper, it’s done in the app', 'At night, photograph the page you ticked. The app finds each box by its line and asks once: mark these done?', linedPage('sm') + ticked)}
 <section class="sec"><div class="wrap narrow" style="text-align:center">
-  <p class="lead" style="margin-inline:auto">Paper capture is being built now; the Notebook page and the ticks loop come after it. Field notes will say the day each one lands.</p>
+  <p class="lead" style="margin-inline:auto">Paper capture is here (v1.0.20); the Notebook page and the ticks loop come next. Field notes will say the day each one lands.</p>
   <div class="btns" style="justify-content:center;margin-top:22px">${btn('Follow Field notes', '/field-notes/feed.xml', { kind: 'secondary', ic: 'rss' })}${btn('What’s growing', '/growing/', { kind: 'secondary' })}</div>
 </div></section>`,
 }

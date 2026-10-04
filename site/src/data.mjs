@@ -8,12 +8,22 @@ export const CONTACT_EMAIL = ''
 
 // The newest release at build time. The pages ask GitHub for the current one when they load
 // (site.js) and fall back to this if GitHub doesn't answer.
-export const LATEST = { tag: 'v1.0.17', date: '2026-10-04', apkMB: 34, exeMB: 32 }
+export const LATEST = { tag: 'v1.0.20', date: '2026-10-04', apkMB: 34, exeMB: 32 }
 export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}.apk`
 export const exeUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}-windows-setup.exe`
 
 // Field notes — the real release history, newest first (dates are Cairo days).
 export const RELEASES = [
+  { v: 'v1.0.20', date: '2026-10-04', art: 'cherry-bloom', title: 'A tray icon, and paper that becomes tasks', lines: [
+    'A tray icon on Windows, with a little flyout: now, next, your Top 3, quick capture and focus',
+    'Notifications with buttons — Done and Tomorrow right from a reminder',
+    'Quiet hours, and task names hidden on the lock screen until you choose',
+    'Paper capture: photograph your handwritten notes and they come back as tasks, events and notes (Arabic too)'] },
+  { v: 'v1.0.19', date: '2026-10-04', art: 'fern-coil', lines: ['Signing up works straight away while email is being set up'] },
+  { v: 'v1.0.18', date: '2026-10-04', art: 'hydrangea-light', lines: [
+    'Sign-up and reset emails lead back to the app',
+    'The chat answers from your day and knows how the app works — in your language',
+    'GitHub in Settings leads straight to your issues'] },
   { v: 'v1.0.17', date: '2026-10-04', art: 'daisy-evening', title: 'Settings that tell the truth, and the share sheet', lines: [
     'Settings tells the truth: real reminder times, the real GitHub state, and Google Calendar marked as coming',
     'Kai’s Flow is in the Android share sheet',
@@ -43,9 +53,9 @@ export const RELEASES = [
 
 // What's growing — Now / Next / Later. Now = what builders are working on this month.
 export const ROADMAP = {
-  now: ['Paper capture: a photo of your notes becomes tasks', 'A tray icon and notifications on Windows', 'This website'],
-  next: ['The Notebook page', 'The ticks loop', 'Smart lists', 'A time zone of your own', 'Google Calendar sync', 'Email → Inbox'],
-  later: ['A Telegram bot', 'An MCP server for AI assistants', 'Notifications in the Android app', 'An iPhone app <i>(if it ever stops costing money)</i>'],
+  now: ['A time zone of your own', 'An MCP server for AI assistants', 'This website'],
+  next: ['The Notebook page', 'The ticks loop', 'A short tour and a guide inside the app', 'More themes', 'Google Calendar sync', 'Email → Inbox'],
+  later: ['A Telegram bot', 'Notifications in the Android app', 'Smart lists', 'An iPhone app <i>(if it ever stops costing money)</i>'],
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

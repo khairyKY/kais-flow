@@ -131,7 +131,7 @@ const pillars = [
     ],
     after: `<section class="sec"><div class="wrap duo-callouts">
   <div class="card callout"><span class="dot">${icon('mail')}</span><div><h3>Email → Inbox${soon()}</h3><p>Forward an email to your own address and it becomes a task.</p></div></div>
-  <div class="card callout"><span class="dot">${icon('camera')}</span><div><h3>Paper capture${soon()}</h3><p>A photo of your handwritten notes becomes tasks. <a href="/paper/">For paper people →</a></p></div></div>
+  <div class="card callout"><span class="dot">${icon('camera')}</span><div><h3>Paper capture</h3><p>A photo of your handwritten notes becomes tasks, events and notes — Arabic too. <a href="/paper/">For paper people →</a></p></div></div>
 </div></section>`,
   }),
   pillarPage({
@@ -178,7 +178,7 @@ const pillars = [
       { eyebrow: 'Windows', title: 'On your desk', text: 'A small installer that installs just for you, no admin password. It opens in its own window, with the same right-click menu and keyboard shortcuts as the web.', steps: ['<a href="/guides/install-windows/">Install on Windows</a>.', '<a href="/guides/keyboard-shortcuts/">The keyboard shortcuts</a>.'], art: `<div class="mini"><div class="mini-d dark"><span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div></div></div>` },
       { eyebrow: 'Offline', title: 'Works without a signal', text: 'Changes you make offline wait in a queue on your device and sync when you’re back. Your journal and notes about people aren’t kept on the device.', art: img('fern-unfurl1', 'A fern frond unfurling', { w: 120 }), flip: true },
     ],
-    after: callout({ ic: 'windows', title: 'A tray icon and notifications on Windows', text: 'Being built now: the K by the clock, and notifications from the desktop app.', href: '/growing/', more: 'What’s growing' }),
+    after: callout({ ic: 'windows', title: 'A tray icon and notifications on Windows', text: 'Since v1.0.20: the K by the clock opens a little flyout — now, next, your Top 3, quick capture and focus — and reminders arrive with Done and Tomorrow buttons.', href: '/field-notes/', more: 'Field notes' }),
   }),
 ]
 
