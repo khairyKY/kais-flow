@@ -152,7 +152,7 @@ const pillars = [
     shot: `<div class="shot pics shelf">${tape('gold', -3)}${specimen('hydrangea-medium', 'GCI course', 'pressed 3 Oct · 14 tasks', -2)}${specimen('cherry-bloom', 'Spring reading list', 'pressed 12 Sep · 9 books', 1.5)}${specimen('fern-unfurl1', 'Kai’s Flow v1', 'pressed 26 Sep · 61 tasks', -1)}</div>`,
     sections: [
       { eyebrow: 'Journal', title: 'A line, or a page', text: 'Write as much or as little as the day deserves. A day can hold more than one entry, so the morning and the evening each get their own.', art: journalCard },
-      { eyebrow: 'Herbarium', title: 'Pressed when it’s done', text: 'Finish a project and it’s pressed into the herbarium, like a flower in a book, with how long it took and what went into it. The pressing ceremony waits until you’re there to watch.', art: herb, flip: true },
+      { eyebrow: 'Herbarium', title: 'Pressed when it’s done', text: 'Finish a project and it’s pressed into the herbarium, like a flower in a book. The pressing ceremony waits until you’re there to watch.', art: herb, flip: true },
       { eyebrow: 'Library', title: 'What you read, and what stayed with you', text: 'Books, quotes and notes live in the Library. Bring your Kindle highlights and your Goodreads shelves with you.', steps: ['<a href="/guides/import/">Import Kindle highlights or Goodreads</a>.'], art: bookCard },
     ],
   }),

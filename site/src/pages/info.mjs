@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 // ── download ──
 const mini = (aria, inner, dark = false) => `<div class="mini" role="img" aria-label="${aria}"><div class="mini-d${dark ? ' dark' : ''}">${inner}</div></div>`
-const istep = (n, title, text, picture) => `<div class="istep">${picture}<h3><span>${n}</span>${title}</h3><p>${text}</p></div>`
+const istep = (n, title, text, picture) => `<div class="istep">${picture}<h3><span aria-hidden="true">${n}</span>${title}</h3><p>${text}</p></div>`
 const download = {
   path: '/download/',
   title: 'Download',

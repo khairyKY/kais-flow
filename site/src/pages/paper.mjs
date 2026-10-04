@@ -17,7 +17,7 @@ const ticked = `<div class="card review" role="img" aria-label="Five boxes ticke
   <span class="btn primary" aria-hidden="true">Mark 5 done</span></div>`
 
 const step = (n, eyebrow, title, text, art) => `<section class="sec"><div class="wrap paperstep">
-  <div><div class="numrow"><span class="num">${n}</span>${soon()}</div>${head2({ eyebrow, title, lead: text })}</div>
+  <div><div class="numrow"><span class="num" aria-hidden="true">${n}</span>${soon()}</div>${head2({ eyebrow, title, lead: text })}</div>
   <div class="pair">${art}</div>
 </div></section>`
 

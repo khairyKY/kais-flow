@@ -44,7 +44,7 @@ export const ar = {
 <section class="sec" id="how-it-works"><div class="wrap">
   ${head2({ eyebrow: 'كيف يعمل', title: 'يومٌ من أوّله إلى آخره', lead: 'بُني Kai’s Flow حول ثلاث لحظات صغيرة، وكل ما عداها يبقى بعيدًا عن طريقك.' })}
   <div class="day3">${DAY.map(([s, n, when, title, line, tone, label]) => `<div><div style="position:relative"><span class="tape ${tone}" style="--r:-3deg" aria-hidden="true"></span><div class="frame">${screen(s, label)}</div></div>
-    <div class="day3-t"><span class="num">${n}</span><div><span class="eyebrow faint">${when}</span><h3>${title}</h3></div></div><p>${line}</p></div>`).join('')}</div>
+    <div class="day3-t"><span class="num" aria-hidden="true">${n}</span><div><span class="eyebrow faint">${when}</span><h3>${title}</h3></div></div><p>${line}</p></div>`).join('')}</div>
 </div></section>
 <section class="sec" id="features"><div class="wrap">
   ${head2({ eyebrow: 'ما في الداخل', title: 'كل ما يحتاجه اليوم، ولا شيء غيره' })}
