@@ -48,6 +48,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-10-04** — **v1.0.18:** sign-up/confirmation emails lead back to the app (the hosted Site URL + redirects are set by every release; branded templates sent), the chat answers from today's data and a guide to the app in the user's language, and GitHub in Settings leads to the issues. From a friend's first test.
 - **2026-10-04** — **v1.0.17 (Wave Q):** Settings now tells the truth (no fake Google sync, real reminder times, real GitHub state); the Android app joins the share sheet and the phone can make capture keys; labels show on task rows; routine streak goals; retainers roll their open tasks into the new month.
 - **2026-10-03** — **Cleanup (builder X):** Settings tells the truth (no fake Google Calendar sync, no Pushover, GitHub row shows token-expired / last sync), ritual reminder on/off + times stored per user and read by notify's 15-minute cron (0045), GitHub Inbox rows gain glyph/repo/labels/age and a filed issue keeps "View issue"; this table, DATA_MODEL and README brought up to date. Handoff: `docs/log/2026-10-03-1330-cleanup-handoff.md`.
 - **2026-10-03** — **v1.0.16:** Kai's desktop screenshots fixed (Settings scroll, our right-click menu, area delete, Focus search, quick-create at 150%, time list, sidebar rail, 15-minute snapping, main width); a synced default calendar view; a Check for updates button; and a Windows installer that looks like the app.
