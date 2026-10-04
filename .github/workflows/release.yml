@@ -182,6 +182,11 @@ jobs:
               "site_url": app,
               "uri_allow_list": ",".join([f"{app}/**", "https://localhost/**", "http://tauri.localhost/**", "tauri://localhost/**"]),
           }
+          if os.environ["HAS_SMTP"] == "no":
+              # Supabase's built-in sender only reaches the project's own members (~2/hour), so a
+              # required confirmation would lock every new user out. No sender → no confirmation;
+              # it switches back on (config.toml enable_confirmations) the release the secrets land.
+              body["mailer_autoconfirm"] = True
           if os.environ["HAS_SMTP"] == "yes":
               body.update({
                   "smtp_host": smtp["host"], "smtp_port": str(smtp["port"]),
@@ -208,7 +213,7 @@ jobs:
           if [ "${code:0:1}" != 2 ] && [ "$HAS_SMTP" = no ]; then
             # Without custom SMTP Supabase may refuse template edits; the links are what must land.
             echo "::warning::Supabase refused the branded templates without custom SMTP ($code): $(why). Setting the links only."
-            jq '{site_url, uri_allow_list}' "$body" > "$body.links" && mv "$body.links" "$body"
+            jq '{site_url, uri_allow_list, mailer_autoconfirm}' "$body" > "$body.links" && mv "$body.links" "$body"
             code="$(patch "$body")"
           fi
           rm -f "$body"
@@ -222,7 +227,7 @@ jobs:
             confirm="$(python3 -c 'import tomllib; print("on" if tomllib.load(open("supabase/config.toml","rb"))["auth"]["email"]["enable_confirmations"] else "off")')"
             echo "- Auth: links → $APP_URL ✓, Gmail SMTP + branded templates ✓, Confirm email $confirm" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- Auth: links → $APP_URL ✓, branded templates sent; Supabase's built-in sender until SMTP_USER / SMTP_PASS exist (docs/EMAIL.md)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Auth: links → $APP_URL ✓, branded templates sent; no sender yet, so Confirm email is OFF until SMTP_USER / SMTP_PASS exist (docs/EMAIL.md)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # A GitHub Release per version (tag at the live master commit, generated notes), then the Android
