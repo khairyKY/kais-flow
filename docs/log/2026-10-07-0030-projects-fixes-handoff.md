@@ -7,7 +7,7 @@ related: docs/DATA_MODEL.md (0050, 0051, 0052 + the type-change and status-updat
 
 # Projects & organizing: moves land, names edit in place, domains are first-class, search opens the thing
 
-Branch `claude/projects-fixes`, cut from `origin/claude/wave-r` (145ed48). One commit per item; not merged, not deployed. Three migrations (**0050–0052**, numbered after 0049 — renumber at merge if builder TZ or M also took 0050+).
+Branch `claude/projects-fixes`, cut from `origin/claude/wave-r` (145ed48). One commit per item. Merged by the conductor into `claude/wave-s`; not deployed. Three migrations here (**0050–0052**), which are 0052–0054 on wave-s.
 
 Kai's words (2026-10-06) and what each turned out to be:
 
@@ -57,7 +57,7 @@ The result → page mapping sent hits to pages that couldn't show them:
 | event | `/calendar` | opens this week | `/calendar?event=` jumps to its day and opens its details (desktop grid `gotoDate`, phone sheet) |
 | inbox item | `/inbox?focus=` | filed / dismissed / snoozed captures weren't drawn at Inbox zero | always shown (ringed, with its state and "open task →") |
 | project in Trash | `/projects/:id` | "Entity not found" — search still returned trashed projects (0044 came after 0037) | **0052** skips them |
-| area | — | not searchable at all | **0052** adds areas (FKS + lexical) → `/projects/:id` |
+| area | — | not searchable at all | **0052** adds areas (FTS + lexical) → `/projects/:id` |
 | person | `/people/:id` | (worked) | same |
 
 - One `searchDestination()` (`search/api.ts`, with the test table `searchDestination.test.ts`) now serves the ⌘/ overlay, /search and **chat citations**. Citations sent people, projects, journal entries and events to the Inbox.
@@ -120,18 +120,21 @@ The result → page mapping sent hits to pages that couldn't show them:
 - vitest ×4 time zones (PowerShell `$env:TZ`, offsets checked): UTC / Africa/Cairo / America/Los_Angeles / Asia/Tokyo — **100 files, 1182 tests** each. No `app/.env.local` exists in this worktree, so nothing needed moving aside.
 - `npm run build` → ok.
 - Browser (mocked backend, `npm run dev -- --port 5257 --strictPort --mode mock`):
-  - `docs/log/assets/projects-fixes/verify.mjs` → **RESULT_PF**.
+  - `docs/log/assets/projects-fixes/verify.mjs` → **222/222** (full run, on head). An earlier full run failed one check: the item-3 domains-menu expectation was stale after item 7 grew the menu. It now expects the item-7 menu (Rename · Colour · Move up / down · Merge into… · Make it an area… · Delete).
   - Coverage:
     - desktop 1280 at 100% and 150% interface size, plus phone 390, day and night;
     - items 1–7, including a real-hand diagonal pointer path into the "Move to project…" submenu;
     - every search entity type on desktop and phone;
     - type changes and their Undo.
   - Screenshots and `verify-results.json` are beside it.
-- `docs/log/assets/desktop-polish/verify.mjs` → **RESULT_DP**. Its two Projects-menu expectations now include "Change type…" (item 7 added that row on purpose); nothing else in it changed.
+- `docs/log/assets/desktop-polish/verify.mjs` → **100 PASS, 0 FAIL** before a page-load timeout in its last section (the Windows updates card). A second run reached 60 / 0 and a third 65 / 0, each cut short by the same kind of timeout on a different page. Every check that ran passed, including the Projects-menu and area-delete ones.
+  - Its two Projects-menu expectations now include "Change type…" (item 7 added that row on purpose); nothing else in it changed.
+  - Cause of the timeouts: every page fetches the topbar weather from the real `api.open-meteo.com`, which the harnesses don't mock. A slow answer holds `waitUntil: 'networkidle'` past 30 s.
+  - The conductor fixed it once for every harness in `claude/wave-s` (f0594db: the weather query is off in `--mode mock`) and re-runs everything on the merged tree.
 
 ## Risks / for the conductor
 
-- **Migration numbers** 0050 / 0051 / 0052 may collide with builder TZ / M. 0051 and 0052 each restate a whole function or view, so merge order matters:
+- **Migration numbers:** this branch keeps 0050 / 0051 / 0052. The conductor renumbered them to **0052 / 0053 / 0054** when merging into `claude/wave-s`; in what follows, 0051 = wave-s 0053 and 0052 = wave-s 0054. They each restate a whole function or view, so merge order matters:
   - 0051 restates `compost_expired()` and `slipping`, from 0044's bodies.
   - 0052 restates `search_hybrid`, from 0037's body.
   - If another branch redefines the same function, re-apply both changes on top.

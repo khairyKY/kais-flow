@@ -1,0 +1,1112 @@
+[
+  {
+    "name": "move-day @100% the project list survives the diagonal trip across Priority / Repeat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day @100% → writes the new project, logs task.moved",
+    "ok": true,
+    "detail": "[\"20000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "move-day @100% the row leaves this project's list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day @100% a task in a project AND an area → project only (area_id cleared)",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Book the physio\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000002\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-06T21:29:52.926Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day @100% no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day @150% the project list survives the diagonal trip across Priority / Repeat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day @150% → writes the new project, logs task.moved",
+    "ok": true,
+    "detail": "[\"20000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "move-day @150% the row leaves this project's list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day @150% a task in a project AND an area → project only (area_id cleared)",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Book the physio\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000002\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-06T21:29:52.926Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day @150% no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day phone ⋯ → Move to project… → Retainer Co writes it",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000001\",\"title\":\"Call the tyre supplier\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000002\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-06T21:29:52.926Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project desktop: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project desktop: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project desktop: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Shaheen Website 2\"]"
+  },
+  {
+    "name": "rename-day project desktop: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project phone: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project phone: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project phone: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Shaheen Website 2\"]"
+  },
+  {
+    "name": "rename-day project phone: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day project phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer desktop: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer desktop: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer desktop: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Retainer Co 2\"]"
+  },
+  {
+    "name": "rename-day retainer desktop: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer phone: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer phone: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer phone: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Retainer Co 2\"]"
+  },
+  {
+    "name": "rename-day retainer phone: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day retainer phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area desktop: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area desktop: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area desktop: leaving the field saves through the outbox + area.renamed",
+    "ok": true,
+    "detail": "[\"Health 2\"]"
+  },
+  {
+    "name": "rename-day area desktop: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area phone: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area phone: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area phone: leaving the field saves through the outbox + area.renamed",
+    "ok": true,
+    "detail": "[\"Health 2\"]"
+  },
+  {
+    "name": "rename-day area phone: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-day area phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Settings has an Organize card listing every domain with what's in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Settings → Add creates a domain (outbox + domain.created)",
+    "ok": true,
+    "detail": "[{\"id\":\"408bd52f-1725-4d75-9f52-8c484bb2bb59\",\"name\":\"Studio\",\"color\":null,\"sort_order\":2,\"created_at\":\"2026-10-06T21:30:56.931Z\",\"updated_at\":\"2026-10-06T21:30:56.931Z\"}]"
+  },
+  {
+    "name": "domains-day click a name → rename in place (domain.renamed)",
+    "ok": true,
+    "detail": "[{\"id\":\"40000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Day job\",\"color\":\"var(--acc-terra)\",\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "domains-day ⋯ → Rename · Colour · Move down · Merge into… · Make it an area… · Delete",
+    "ok": true,
+    "detail": "Rename · Colour · Move down · Merge into… · Make it an area… · Delete"
+  },
+  {
+    "name": "domains-day Colour ▸ Gold recolours it (domain.recolored)",
+    "ok": true,
+    "detail": "[{\"id\":\"40000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Day job\",\"color\":\"var(--acc-gold)\",\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "domains-day Merge Home → Day job moves its area there and trashes Home (domain.merged)",
+    "ok": true,
+    "detail": "{\"movedAreas\":[{\"id\":\"30000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"name\":\"Health\",\"description\":null,\"color\":null,\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}],\"trashedHome\":[{\"id\":\"40000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Home\",\"color\":\"var(--acc-moss)\",\"sort_order\":1,\"deleted_at\":\"2026-10-06T21:31:00.545Z\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-06T21:31:00.545Z\"}]}"
+  },
+  {
+    "name": "domains-day … \"Merged into Day job · Undo\", Home leaves the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Undo puts the area back in Home and restores Home",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Delete → Trash, no confirm, nothing else rewritten (domain.deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day \"Moved to Trash · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day settings no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Tasks → Organize: right-click a domain → the same menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Tasks → Organize: Rename writes the domain",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day Tasks no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day phone ⋯ → Colour → Lavender",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-day phone no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash lists a trashed domain",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash → Restore brings the domain back (deleted_at null, domain.restored)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: task (done, in a project) → opens it (/tasks/10000000-0000-4000-8000-000000000005)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: task (done, in a project) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: project → opens it (/projects/20000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: project no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: area → opens it (/projects/30000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: area no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: person → opens it (/people/70000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: person no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: inbox item (filed, Inbox at zero) → opens it (/inbox?focus=80000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: inbox item (filed, Inbox at zero) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: journal entry (an older day) → opens it (/journal?focus=a0000000-0000-4000-8000-000000000009)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: journal entry (an older day) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: calendar event (two weeks out) → opens it (/calendar?event=b0000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day desktop: calendar event (two weeks out) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: task (done, in a project) → opens it (/today?task=10000000-0000-4000-8000-000000000005)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: task (done, in a project) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: project → opens it (/projects/20000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: project no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: area → opens it (/projects/30000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: area no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: person → opens it (/people/70000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: person no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: inbox item (filed, Inbox at zero) → opens it (/inbox?focus=80000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: inbox item (filed, Inbox at zero) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: journal entry (an older day) → opens it (/journal?focus=a0000000-0000-4000-8000-000000000009)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: journal entry (an older day) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: calendar event (two weeks out) → opens it (/calendar?event=b0000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-day phone: calendar event (two weeks out) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: edit an update in place → project.update_edited {update_id, note}",
+    "ok": true,
+    "detail": "[{\"id\":\"c651f385-406a-4f3b-bf39-9e13a9fbbdfc\",\"event_type\":\"project.update_edited\",\"entity_type\":\"project\",\"entity_id\":\"20000000-0000-4000-8000-000000000001\",\"payload\":{\"update_id\":\"50000000-0000-4000-8000-000000000001\",\"note\":\"Homepage copy approved by Priya\"}}]"
+  },
+  {
+    "name": "updates-day desktop: the feed shows the new note",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: ✕ deletes it (project.update_deleted), no confirm, \"Update deleted · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: Undo brings it back with its edit (project.update_restored)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: a work entry's note edits the time entry (+ project.work_edited)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: ✕ on a work entry deletes it (+ project.work_deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: Undo writes it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day desktop: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: edit an update in place → project.update_edited {update_id, note}",
+    "ok": true,
+    "detail": "[{\"id\":\"08711491-7210-40e5-a4db-6630a31366ec\",\"event_type\":\"project.update_edited\",\"entity_type\":\"project\",\"entity_id\":\"20000000-0000-4000-8000-000000000001\",\"payload\":{\"update_id\":\"50000000-0000-4000-8000-000000000001\",\"note\":\"Homepage copy approved by Priya\"}}]"
+  },
+  {
+    "name": "updates-day phone: the feed shows the new note",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: ✕ deletes it (project.update_deleted), no confirm, \"Update deleted · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: Undo brings it back with its edit (project.update_restored)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: a work entry's note edits the time entry (+ project.work_edited)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: ✕ on a work entry deletes it (+ project.work_deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: Undo writes it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-day phone: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day desktop: weight — click, type 5 → \"5\" (was \"15\")",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-day desktop: the field may be empty while typing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day desktop: left empty, blur keeps the last good value",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-day desktop: out of range → clamped on blur (max 100)",
+    "ok": true,
+    "detail": "100"
+  },
+  {
+    "name": "number-day desktop: − steps down",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day desktop: + steps up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day desktop: Add writes the milestone with weight 99, the field resets to 1",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000001\",\"title\":\"Launch\",\"weight\":2,\"completed\":false},{\"id\":\"20b58cef-33ab-4915-a07c-b517fa8b19fa\",\"title\":\"Beta\",\"weight\":99,\"completed\":false}]"
+  },
+  {
+    "name": "number-day desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day phone: weight — click, type 5 → \"5\" (was \"15\")",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-day phone: the field may be empty while typing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day phone: left empty, blur keeps the last good value",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-day phone: out of range → clamped on blur (max 100)",
+    "ok": true,
+    "detail": "100"
+  },
+  {
+    "name": "number-day phone: − steps down",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day phone: + steps up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-day phone: Add writes the milestone with weight 99, the field resets to 1",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000001\",\"title\":\"Launch\",\"weight\":2,\"completed\":false},{\"id\":\"950dde00-c81c-4915-ba48-31f6eb8e31c4\",\"title\":\"Beta\",\"weight\":99,\"completed\":false}]"
+  },
+  {
+    "name": "number-day phone: the milestone row fits the card (−/+ in reach, nothing scrolled sideways)",
+    "ok": true,
+    "detail": "{\"plus\":{\"x\":260.71875,\"y\":611.15625,\"width\":22,\"height\":22},\"shifted\":false}"
+  },
+  {
+    "name": "number-day phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus: custom minutes — click, type 40, Enter → 40 (typing replaces)",
+    "ok": true,
+    "detail": "40"
+  },
+  {
+    "name": "focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines: challenge days — click, type 21 → 21 (was 3021)",
+    "ok": true,
+    "detail": "21"
+  },
+  {
+    "name": "routines: + → 22",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-day a project can become a retainer or an area",
+    "ok": true,
+    "detail": "Make it a retainer · Make it an area"
+  },
+  {
+    "name": "type-day the confirmation says exactly what happens",
+    "ok": true,
+    "detail": "Make “Shaheen Website” an area? / 2 open tasks and 1 done move to the new area · its milestones, logged hours, updates stay with the project in Trash (30 days). / Keep / Make it an area"
+  },
+  {
+    "name": "type-day project → area: a new area with its name + domain, its 3 tasks moved, the project to Trash, logged",
+    "ok": true,
+    "detail": "{\"newArea\":1,\"moved\":3,\"trashed\":1}"
+  },
+  {
+    "name": "type-day \"“Shaheen Website” is now an area · Undo\"; the row now sits with the areas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-day one Undo: project back, tasks back in it, the new area removed",
+    "ok": true,
+    "detail": "[\"POST projects\",\"POST tasks\",\"POST tasks\",\"POST tasks\",\"DELETE areas\",\"POST activity_log\"]"
+  },
+  {
+    "name": "type-day retainer → project flips the type only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-day projects page no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-day desktop area page → Make it a domain: \"2 open tasks move to the new domain · the area goes to Trash.\"",
+    "ok": true,
+    "detail": "Make “Health” a domain? / 2 open tasks move to the new domain · the area goes to Trash. / Keep / Make it a domain"
+  },
+  {
+    "name": "type-day area → domain: a domain named Health, its tasks carry it, the area to Trash, off to Projects",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-day area page no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain menu: Rename · Colour · Move up · Merge into… · Make it an area… · Delete (the last domain has no Move down)",
+    "ok": true,
+    "detail": "Rename · Colour · Move up · Merge into… · Make it an area… · Delete"
+  },
+  {
+    "name": "Move up rewrites the order (sort_order)",
+    "ok": true,
+    "detail": "[[\"Home\",0],[\"Work\",1]]"
+  },
+  {
+    "name": "domain → area: \"No tasks to move · its 1 area keep going with no domain · the domain goes to Trash.\"",
+    "ok": true,
+    "detail": "Make “Home” an area? / No tasks to move · its 1 area keep going with no domain · the domain goes to Trash. / Keep / Make it an area"
+  },
+  {
+    "name": "domain → area: a new area \"Home\", Health leaves the domain, Home to Trash",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings (type) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Tasks (phone): long-press / right-click a domain chip opens the domain sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Tasks: chip → Rename edits the chip in place",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks (chips) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night @150% the project list survives the diagonal trip across Priority / Repeat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night @150% → writes the new project, logs task.moved",
+    "ok": true,
+    "detail": "[\"20000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "move-night @150% the row leaves this project's list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night @150% a task in a project AND an area → project only (area_id cleared)",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Book the physio\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000002\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-06T21:29:52.926Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-night @150% no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night phone ⋯ → Move to project… → Retainer Co writes it",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000001\",\"title\":\"Call the tyre supplier\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000002\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-06T21:29:52.926Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-night phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night project desktop: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night project desktop: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night project desktop: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Shaheen Website 2\"]"
+  },
+  {
+    "name": "rename-night project desktop: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night project desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night retainer phone: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night retainer phone: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night retainer phone: Enter saves through the outbox + project.renamed",
+    "ok": true,
+    "detail": "[\"Retainer Co 2\"]"
+  },
+  {
+    "name": "rename-night retainer phone: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night retainer phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night area phone: tapping the title opens it for editing, text selected",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night area phone: Esc keeps the old name, writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night area phone: leaving the field saves through the outbox + area.renamed",
+    "ok": true,
+    "detail": "[\"Health 2\"]"
+  },
+  {
+    "name": "rename-night area phone: the page shows the new name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "rename-night area phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night Settings has an Organize card listing every domain with what's in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night Settings → Add creates a domain (outbox + domain.created)",
+    "ok": true,
+    "detail": "[{\"id\":\"94cb12c0-1626-4037-8b44-b3442bb1eba3\",\"name\":\"Studio\",\"color\":null,\"sort_order\":2,\"created_at\":\"2026-10-06T21:35:42.082Z\",\"updated_at\":\"2026-10-06T21:35:42.082Z\"}]"
+  },
+  {
+    "name": "domains-night click a name → rename in place (domain.renamed)",
+    "ok": true,
+    "detail": "[{\"id\":\"40000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Day job\",\"color\":\"var(--acc-terra)\",\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "domains-night ⋯ → Rename · Colour · Move down · Merge into… · Make it an area… · Delete",
+    "ok": true,
+    "detail": "Rename · Colour · Move down · Merge into… · Make it an area… · Delete"
+  },
+  {
+    "name": "domains-night Colour ▸ Gold recolours it (domain.recolored)",
+    "ok": true,
+    "detail": "[{\"id\":\"40000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Day job\",\"color\":\"var(--acc-gold)\",\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "domains-night Merge Home → Day job moves its area there and trashes Home (domain.merged)",
+    "ok": true,
+    "detail": "{\"movedAreas\":[{\"id\":\"30000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"name\":\"Health\",\"description\":null,\"color\":null,\"sort_order\":0,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}],\"trashedHome\":[{\"id\":\"40000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Home\",\"color\":\"var(--acc-moss)\",\"sort_order\":1,\"deleted_at\":\"2026-10-06T21:35:45.271Z\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-06T21:35:45.271Z\"}]}"
+  },
+  {
+    "name": "domains-night … \"Merged into Day job · Undo\", Home leaves the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night Undo puts the area back in Home and restores Home",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night Delete → Trash, no confirm, nothing else rewritten (domain.deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night \"Moved to Trash · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night settings no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night phone ⋯ → Colour → Lavender",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domains-night phone no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: task (done, in a project) → opens it (/tasks/10000000-0000-4000-8000-000000000005)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: task (done, in a project) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: project → opens it (/projects/20000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: project no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: area → opens it (/projects/30000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: area no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: person → opens it (/people/70000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: person no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: inbox item (filed, Inbox at zero) → opens it (/inbox?focus=80000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: inbox item (filed, Inbox at zero) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: journal entry (an older day) → opens it (/journal?focus=a0000000-0000-4000-8000-000000000009)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: journal entry (an older day) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: calendar event (two weeks out) → opens it (/calendar?event=b0000000-0000-4000-8000-000000000001)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search-night desktop: calendar event (two weeks out) no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: edit an update in place → project.update_edited {update_id, note}",
+    "ok": true,
+    "detail": "[{\"id\":\"d7a72225-0413-4e1b-a9f5-4443e171009c\",\"event_type\":\"project.update_edited\",\"entity_type\":\"project\",\"entity_id\":\"20000000-0000-4000-8000-000000000001\",\"payload\":{\"update_id\":\"50000000-0000-4000-8000-000000000001\",\"note\":\"Homepage copy approved by Priya\"}}]"
+  },
+  {
+    "name": "updates-night desktop: the feed shows the new note",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: ✕ deletes it (project.update_deleted), no confirm, \"Update deleted · Undo\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: Undo brings it back with its edit (project.update_restored)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: a work entry's note edits the time entry (+ project.work_edited)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: ✕ on a work entry deletes it (+ project.work_deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: Undo writes it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "updates-night desktop: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-night desktop: weight — click, type 5 → \"5\" (was \"15\")",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-night desktop: the field may be empty while typing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-night desktop: left empty, blur keeps the last good value",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "number-night desktop: out of range → clamped on blur (max 100)",
+    "ok": true,
+    "detail": "100"
+  },
+  {
+    "name": "number-night desktop: − steps down",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-night desktop: + steps up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "number-night desktop: Add writes the milestone with weight 99, the field resets to 1",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000001\",\"title\":\"Launch\",\"weight\":2,\"completed\":false},{\"id\":\"2cbf37ac-f273-4593-a313-71adc00f6583\",\"title\":\"Beta\",\"weight\":99,\"completed\":false}]"
+  },
+  {
+    "name": "number-night desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night a project can become a retainer or an area",
+    "ok": true,
+    "detail": "Make it a retainer · Make it an area"
+  },
+  {
+    "name": "type-night the confirmation says exactly what happens",
+    "ok": true,
+    "detail": "Make “Shaheen Website” an area? / 2 open tasks and 1 done move to the new area · its milestones, logged hours, updates stay with the project in Trash (30 days). / Keep / Make it an area"
+  },
+  {
+    "name": "type-night project → area: a new area with its name + domain, its 3 tasks moved, the project to Trash, logged",
+    "ok": true,
+    "detail": "{\"newArea\":1,\"moved\":3,\"trashed\":1}"
+  },
+  {
+    "name": "type-night \"“Shaheen Website” is now an area · Undo\"; the row now sits with the areas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night one Undo: project back, tasks back in it, the new area removed",
+    "ok": true,
+    "detail": "[\"POST projects\",\"POST tasks\",\"POST tasks\",\"POST tasks\",\"DELETE areas\",\"POST activity_log\"]"
+  },
+  {
+    "name": "type-night retainer → project flips the type only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night projects page no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night phone area page → Make it a domain: \"2 open tasks move to the new domain · the area goes to Trash.\"",
+    "ok": true,
+    "detail": "Make “Health” a domain? / 2 open tasks move to the new domain · the area goes to Trash. / Keep / Make it a domain"
+  },
+  {
+    "name": "type-night area → domain: a domain named Health, its tasks carry it, the area to Trash, off to Projects",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night area page no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night phone ⋯ → Change type… → Make it a project",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "type-night phone no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
