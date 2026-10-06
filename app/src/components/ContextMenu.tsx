@@ -1,5 +1,5 @@
 import { uiZoom } from '../lib/uiScale'
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { Float } from './Float'
 import { KeyCombo } from './kit'
@@ -29,6 +29,11 @@ interface ContextMenuProps {
 }
 
 const SUBMENU_OPEN_DELAY = 150
+// Kai 2026-10-06 ("I can't move it to a project"): heading diagonally from "Move to project…"
+// into its list, the pointer crosses Priority / Repeat, and switching on the first touch swapped
+// the project list for Repeat's under the cursor. With a submenu open, a sibling only takes over
+// once the pointer rests on it; reaching the submenu first cancels the switch.
+const SUBMENU_SWITCH_DELAY = 300
 const SUBMENU_WIDTH = 220
 
 export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
@@ -73,9 +78,12 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
 
   function handleItemHover(i: number, hasSubmenu: boolean) {
     clearOpenTimer()
-    if (openIndex !== null && openIndex !== i) setOpenIndex(null)
-    if (!hasSubmenu || openIndex === i) return
-    openTimer.current = window.setTimeout(() => setOpenIndex(i), SUBMENU_OPEN_DELAY)
+    if (openIndex === i) return
+    if (openIndex !== null) {
+      openTimer.current = window.setTimeout(() => setOpenIndex(hasSubmenu ? i : null), SUBMENU_SWITCH_DELAY)
+      return
+    }
+    if (hasSubmenu) openTimer.current = window.setTimeout(() => setOpenIndex(i), SUBMENU_OPEN_DELAY)
   }
 
   // Pointer coords and rects are VISUAL px; fixed left/top are LAYOUT px (see uiZoom). Divide
@@ -184,13 +192,15 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
       </div>
       {openItem?.submenu && (
         // Keyed so hopping Repeat → Remind remounts the child menu and it re-measures its clamp.
-        <Fragment key={openIndex}>
+        // The pointer arriving anywhere in it cancels a pending switch to a sibling (React's
+        // mouseenter fires for the fixed-position popover inside this box).
+        <div key={openIndex} onMouseEnter={clearOpenTimer}>
           {openItem.submenu({
             position: submenuPosition(openIndex as number),
             onClose: () => setOpenIndex(null),
             closeAll,
           })}
-        </Fragment>
+        </div>
       )}
     </div>
     </Float>

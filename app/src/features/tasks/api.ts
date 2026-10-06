@@ -271,8 +271,13 @@ export function setSomeday(task: Task, someday: boolean): void {
   logActivity('task.someday_set', 'task', task.id, { someday })
 }
 
+/** Every move (⋯ / right-click "Move to project…", the swipe, the `p` key, the task sheet, bulk).
+ * A task lives in a project or an area, not both (Kai 2026-10-06): kept, the old area_id won the
+ * row's tag and the area page kept listing it, so a move never looked like it happened. A
+ * milestone belongs to its own project, so it stays behind. */
 export function setProject(task: Task, projectId: string | null, domainId: string | null): void {
-  writeRow('tasks', { ...task, project_id: projectId, domain_id: domainId })
+  const leaving = projectId !== task.project_id && !!task.milestone_id
+  writeRow('tasks', { ...task, project_id: projectId, domain_id: domainId, area_id: projectId ? null : task.area_id, ...(leaving ? { milestone_id: null } : null) })
   logActivity('task.moved', 'task', task.id, { project_id: projectId })
 }
 
