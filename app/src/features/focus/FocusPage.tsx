@@ -16,6 +16,7 @@ import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
+import { NumberField } from '../../components/NumberField'
 import './FocusPage.css'
 
 // R4-18 (2026-07-20 audit): the duration rows offered fixed presets only — Kai: "where are the
@@ -24,23 +25,18 @@ function CustomMin({ value, presets, onChange }: { value: number; presets: numbe
   const isCustom = !presets.includes(value)
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-      <input
-        type="number"
+      {/* Kai 2026-10-06: the shared NumberField — select-on-focus, clearable while typing, −/+. */}
+      <NumberField
+        value={value}
+        onChange={onChange}
         min={1}
         max={180}
-        value={value}
-        onChange={(e) => {
-          const n = Number(e.target.value)
-          if (Number.isFinite(n) && n >= 1 && n <= 180) onChange(n)
-        }}
-        aria-label="Custom minutes"
-        style={{
-          width: 46,
+        ariaLabel="Custom minutes"
+        inputStyle={{
           fontFamily: 'var(--font-mono)',
           fontSize: 'var(--fs-meta)',
           padding: '4px 6px',
           borderRadius: 999,
-          textAlign: 'center',
           color: isCustom ? 'var(--acc-terra)' : 'var(--ink-muted)',
           background: isCustom ? 'color-mix(in srgb, var(--acc-terra) 16%, transparent)' : 'none',
           border: `1px solid ${isCustom ? 'color-mix(in srgb, var(--acc-terra) 30%, transparent)' : 'var(--line-solid)'}`,

@@ -415,6 +415,81 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
   }
 
+  // ── 6 · Number fields: focus selects, typing replaces, empty allowed while typing, −/+ ──
+  if (want('6')) for (const view of DAY ? [undefined, PHONE] : [undefined]) {
+    const v = view ? 'phone' : 'desktop'
+    const { ctx, page, errors, state } = await open(`/projects/${SITE.id}`, { theme, view, scale: view ? 1 : 1.5 })
+    const weight = page.getByRole('textbox', { name: 'Milestone weight' })
+    await weight.scrollIntoViewIfNeeded()
+    await weight.click()
+    await sleep(150)
+    await page.keyboard.type('5')
+    check(`${N('number')} ${v}: weight — click, type 5 → "5" (was "15")`, (await weight.inputValue()) === '5', await weight.inputValue())
+    await page.keyboard.press('Backspace')
+    check(`${N('number')} ${v}: the field may be empty while typing`, (await weight.inputValue()) === '')
+    await page.getByPlaceholder('Add milestone…').click()
+    await sleep(150)
+    check(`${N('number')} ${v}: left empty, blur keeps the last good value`, (await weight.inputValue()) === '5', await weight.inputValue())
+    await weight.click()
+    await page.keyboard.type('250')
+    await page.getByPlaceholder('Add milestone…').click()
+    await sleep(150)
+    check(`${N('number')} ${v}: out of range → clamped on blur (max 100)`, (await weight.inputValue()) === '100', await weight.inputValue())
+    await page.getByRole('button', { name: 'Less Milestone weight' }).click()
+    await page.getByRole('button', { name: 'Less Milestone weight' }).click()
+    check(`${N('number')} ${v}: − steps down`, (await weight.inputValue()) === '98')
+    await page.getByRole('button', { name: 'More Milestone weight' }).click()
+    check(`${N('number')} ${v}: + steps up`, (await weight.inputValue()) === '99')
+    if (!view) await shot(page, N('6-weight-150'))
+    await page.getByPlaceholder('Add milestone…').fill('Beta')
+    const from = state.writes.length
+    await page.getByRole('button', { name: 'Add', exact: true }).first().click()
+    await sleep(500)
+    const ms = writesTo(state, 'projects', from).at(-1)?.milestones ?? []
+    check(`${N('number')} ${v}: Add writes the milestone with weight 99, the field resets to 1`, ms.some((m) => m.title === 'Beta' && m.weight === 99) && (await weight.inputValue()) === '1', JSON.stringify(ms))
+    if (view) {
+      await shot(page, N('6-weight-phone'))
+      const plus = await page.getByRole('button', { name: 'More Milestone weight' }).boundingBox()
+      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].some((el) => el.scrollLeft > 0))
+      check(`${N('number')} phone: the milestone row fits the card (−/+ in reach, nothing scrolled sideways)`, plus && plus.x + plus.width <= 390 && !shifted, JSON.stringify({ plus, shifted }))
+    }
+    check(`${N('number')} ${v}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  if (want('6') && DAY) {
+    // The other number fields share it: Focus's custom minutes, a challenge's days, the new-project milestone weight
+    {
+      const { ctx, page, errors } = await open('/focus', { theme })
+      await page.getByTitle('pomodoro settings').click()
+      await sleep(400)
+      const mins = page.getByRole('textbox', { name: 'Custom minutes' }).first()
+      await mins.click()
+      await page.keyboard.type('40')
+      await page.keyboard.press('Enter')
+      await sleep(200)
+      check('focus: custom minutes — click, type 40, Enter → 40 (typing replaces)', (await mins.inputValue()) === '40', await mins.inputValue())
+      await shot(page, '6-focus-minutes-day')
+      check('focus: no page errors', errors.length === 0, errors.join(' | '))
+      await ctx.close()
+    }
+    {
+      const { ctx, page, errors } = await open('/routines', { theme })
+      await page.getByText('＋ New routine').first().click()
+      await sleep(400)
+      await page.getByText('Challenge (optional)').click()
+      await sleep(200)
+      const days = page.getByRole('textbox', { name: 'Challenge days' })
+      await days.click()
+      await page.keyboard.type('21')
+      check('routines: challenge days — click, type 21 → 21 (was 3021)', (await days.inputValue()) === '21', await days.inputValue())
+      await page.getByRole('button', { name: 'More Challenge days' }).click()
+      check('routines: + → 22', (await days.inputValue()) === '22')
+      await shot(page, '6-challenge-days-day')
+      check('routines: no page errors', errors.length === 0, errors.join(' | '))
+      await ctx.close()
+    }
+  }
+
   // ── 7 · Change a thing's type: project ↔ retainer, project → area, area → domain, domain → area ──
   if (want('7')) {
     const { ctx, page, errors, state } = await open('/projects', { theme, scale: 1.5 })

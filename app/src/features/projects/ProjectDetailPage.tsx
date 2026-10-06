@@ -28,6 +28,8 @@ import {
 } from './api'
 import { useAreas, renameArea } from '../areas/api'
 import { RenameField } from '../../components/RenameField'
+import { NumberField } from '../../components/NumberField'
+import { useIsMobile } from '../../components/BottomSheet'
 import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { KIND_LABEL, kindOf } from './convert'
 import { resolveUpdates, UPDATE_EVENTS } from './statusLog'
@@ -84,6 +86,7 @@ export function ProjectDetailPage() {
     document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focusTaskId])
   const motion = useMotionEnabled()
+  const isMobile = useIsMobile()
 
   // Queries
   const { data: domains = [] } = useDomains()
@@ -619,7 +622,9 @@ export function ProjectDetailPage() {
             />
 
             {/* Hours + Milestones */}
-            <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 26, marginTop: 24 }}>
+            {/* On a phone the two stack: side by side, the milestones column ran off the card (its
+                add row and the weight's −/+ were clipped out of reach). */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '150px minmax(0, 1fr)', gap: 26, marginTop: 24 }}>
               <div>
                 <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>
@@ -668,16 +673,9 @@ export function ProjectDetailPage() {
                     value={newMilestoneTitle}
                     onChange={(e) => setNewMilestoneTitle(e.target.value)}
                     placeholder="Add milestone…"
-                    style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                   />
-                  <input
-                    type="number"
-                    value={newMilestoneWeight}
-                    onChange={(e) => setNewMilestoneWeight(parseInt(e.target.value) || 1)}
-                    min="1"
-                    className="kf-num"
-                    style={{ width: 45, font: 'inherit', fontSize: 12.5, background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', textAlign: 'center', outline: 'none', color: 'var(--ink-body)' }}
-                  />
+                  <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
                     onClick={handleAddMilestoneClick}
                     style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}
@@ -744,7 +742,7 @@ export function ProjectDetailPage() {
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
                   placeholder="Add a checklist item — sub-steps too small for a task…"
-                  style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                  style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                 />
                 <Select
                   value={newChecklistType}
@@ -808,12 +806,13 @@ export function ProjectDetailPage() {
             </SectionLabel>
 
             {/* Log form */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 0 12px' }}>
+            {/* Wraps on a phone: one unbreakable row pushed the whole card's content sideways. */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 9, padding: '2px 0 12px' }}>
               <input
                 value={workNote}
                 onChange={(e) => setWorkNote(e.target.value)}
                 placeholder={logMode === 'work' ? "What did you work on?" : "Post a status update note…"}
-                style={{ flex: 1, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
+                style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
               />
               {logMode === 'work' && (
                 <>
