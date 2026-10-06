@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 // Shared season/weather logic — Seasons.dc.html. Season is real (derived from the clock);
 // weather is a live, no-key fetch (Open-Meteo, $0, no secrets) for Cairo's fixed coordinates —
-// the app is Cairo-only per docs/DATA_MODEL.md's timezone convention.
+// shown only to users whose zone is Africa/Cairo (a zone has no coordinates; TopbarEcho).
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
 
@@ -69,8 +69,9 @@ export interface CairoWeather {
 // ponytail: no weather provider exists elsewhere in the app — Open-Meteo needs no key/secret,
 // so this stays a plain client fetch (not a new edge-function integration). Fails soft: the
 // topbar echo just omits the weather half and shows the season on its own.
-export function useCairoWeather() {
+export function useCairoWeather(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['cairo-weather'],
     queryFn: async (): Promise<CairoWeather> => {
       const res = await fetch(

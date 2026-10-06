@@ -13,7 +13,6 @@ import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
-import { Select } from '../../components/Select'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { PaperSettingsCard } from '../paper/PaperSettings'
@@ -27,6 +26,7 @@ import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
+import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
 // Card shell mirrors the contract's `.scard` class (tape-topped, radius 3, shadow-card).
@@ -234,8 +234,6 @@ const SOUND_CATALOG = [
 
 // (the old local sound store lived here — superseded by lib/sounds.ts)
 
-const COMMON_TIMEZONES = ['Africa/Cairo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai']
-
 function AppearanceCard() {
   const { mode, setMode } = useThemeMode()
   const scale = useUiScale((s) => s.scale)
@@ -359,7 +357,7 @@ function AppUpdateCard() {
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
-  const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo' }) : null
+  const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: appZone() }) : null
   const current = platform === 'web' ? (stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build') : installed ? `v${installed.replace(/^v/, '')}` : 'version unknown'
   const r = typeof state === 'object' ? state : null
   const file = platform === 'android' ? 'APK' : 'installer'
@@ -394,15 +392,25 @@ function AppUpdateCard() {
   )
 }
 
+// User time zones (2026-10-04): the zone every "what day is it" reads (lib/appZone.ts) — Today,
+// "Tomorrow 09:00", due dates, routines, the morning digest and evening nudge, chat. Any IANA zone
+// Intl knows, searched; this device's own zone offered first.
+const zoneOffset = (z: string) => new Date().toLocaleTimeString('en-GB', { timeZone: z, timeZoneName: 'shortOffset' }).split(' ').pop()
+
 function TimezoneCard() {
   const { data: settings } = useAppSettings()
-  const [custom, setCustom] = useState('')
+  const [q, setQ] = useState('')
   if (!settings) return null
   const tz = settings.timezone
+  const device = deviceZone()
+  const matches = searchZones(q)
+  const field: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontFamily: 'inherit' }
+  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px dashed var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }
 
   function apply(next: string) {
-    if (!next) return
+    if (!isZone(next)) return
     updateAppSetting('timezone', next)
+    setQ('')
   }
 
   return (
@@ -412,27 +420,26 @@ function TimezoneCard() {
         <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' }}>saved ✓</span>
       </div>
       <p style={{ margin: '6px 0 14px', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
-        Used everywhere the app needs to know "what day is it" — due dates, routine checks, the daily summary. Stored in UTC, converted at the edges.
+        Your day runs on this clock on every device — what "today" and "tomorrow 09:00" mean, due dates, routines, the morning digest and evening nudge. Stored in UTC, converted at the edges.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div>
-          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Common timezones</div>
-          <Select value={tz} onChange={apply} ariaLabel="Common timezones" options={COMMON_TIMEZONES.map((z) => ({ value: z, label: z }))} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)' }} />
+      {device !== tz && isZone(device) && (
+        <button type="button" onClick={() => apply(device)} style={{ ...option, borderBottom: 'none', padding: '0 0 12px', color: 'var(--acc-sage-text)' }}>
+          Use this device’s zone ({device})
+        </button>
+      )}
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search time zones" placeholder="Search a city or region — e.g. London" style={field} />
+      {matches.length > 0 && (
+        <div role="listbox" aria-label="Time zones" style={{ marginTop: 6 }}>
+          {matches.map((z) => (
+            <button key={z} type="button" role="option" aria-selected={z === tz} onClick={() => apply(z)} style={option}>
+              <span>{z.replace(/_/g, ' ')}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{zoneOffset(z)}</span>
+            </button>
+          ))}
         </div>
-        <div>
-          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Or custom IANA name</div>
-          <input
-            value={custom}
-            onChange={(e) => setCustom(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { apply(custom.trim()); setCustom('') }
-            }}
-            placeholder="e.g. Europe/Berlin"
-            style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontStyle: custom ? 'normal' : 'italic', fontFamily: 'inherit' }}
-          />
-        </div>
-      </div>
-      <div style={fhelp}>current · {tz} · {new Date().toLocaleTimeString('en-GB', { timeZone: tz, timeZoneName: 'shortOffset' }).split(' ').pop()}</div>
+      )}
+      {q.trim() && matches.length === 0 && <div style={fhelp}>no zone matches “{q.trim()}”</div>}
+      <div style={fhelp}>current · {tz} · {zoneOffset(tz)}</div>
     </SCard>
   )
 }
@@ -477,7 +484,7 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
 // Settings → Notifications (Tray and Notifications.dc.html 12i), synced per account (app_settings
 // 0045 + 0048): notify reads every switch here (supabase/functions/notify/copy.ts `deliver`), and
 // the app's own notices (focus done; reminders in the Windows app) follow the same rules. Times are
-// Cairo wall-clock until per-user timezones. The Windows rows are this device's own.
+// wall-clock in the user's zone (Settings → Timezone). The Windows rows are this device's own.
 const RITUAL_AT = { morning_digest: '08:00', evening_nudge: '21:00' } as const
 
 function NotificationRow({ glyph, label, help, children }: { glyph: ReactNode; label: string; help?: ReactNode; children: ReactNode }) {
@@ -642,7 +649,7 @@ function NotificationsCard() {
         </>
       )}
       {message && <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '10px 0 0' }}>{message}</p>}
-      <div style={fhelp}>Cairo time · a nudge, never a lock</div>
+      <div style={fhelp}>{zoneCity(appZone())} time · a nudge, never a lock</div>
     </SCard>
   )
 }
@@ -784,7 +791,7 @@ function CaptureKeyCard() {
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' })
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
     setErr(null)
@@ -1171,7 +1178,6 @@ function DesktopSettings() {
 
 function MobileSettings() {
   const { data: integrations = [] } = useIntegrations()
-  const { data: settings } = useAppSettings()
   const { data: subs = [] } = useMyPushSubscriptions()
   const { data: deletedItems = [] } = useDeletedItems()
   const { data: captureKey } = useCaptureKey()
@@ -1184,7 +1190,6 @@ function MobileSettings() {
   const grain = useGrain()
 
   const rows: { label: string; value: ReactNode; to?: string }[] = [
-    { label: 'Timezone', value: settings?.timezone ?? '—' },
     { label: 'Google Calendar', value: 'Coming soon' },
     { label: 'GitHub', value: githubState(github).text },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
@@ -1220,6 +1225,10 @@ function MobileSettings() {
           <CalendarViewSeg platformDefault="day" />
         </div>
       </SCard>
+
+      <div style={{ marginTop: 12 }}>
+        <TimezoneCard />
+      </div>
 
       <div style={{ marginTop: 12 }}>
         <AppUpdateCard />

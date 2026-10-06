@@ -15,7 +15,9 @@ import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useMotionEnabled } from '../lib/motion'
-import { useOwner } from '../lib/settings'
+import { useOfferDeviceZone, useOwner } from '../lib/settings'
+import { useAppZone, zoneCity } from '../lib/appZone'
+import { useAuth } from '../features/auth/AuthProvider'
 import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
@@ -425,6 +427,7 @@ function TopBar() {
   const owner = useOwner()
   const motionOn = useMotionEnabled()
   const { queue, waiting: n } = useOutboxQueue()
+  const zone = useAppZone()
   const rows = useMemo(() => syncRows(queue), [queue])
   const [popOpen, setPopOpen] = useState(false)
   const popRef = useRef<HTMLDivElement>(null)
@@ -451,9 +454,11 @@ function TopBar() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [popOpen])
 
-  // F5b: design format is `Fri 10 Jul` — weekday, day (no zero-pad), month, no commas.
+  // F5b: design format is `Fri 10 Jul` — weekday, day (no zero-pad), month, no commas. On the
+  // user's clock (it read the device's, a day off from every page below it on a device abroad).
   const now = new Date()
-  const dateLabel = `${now.toLocaleDateString('en-GB', { weekday: 'short' })} ${now.getDate()} ${now.toLocaleDateString('en-GB', { month: 'short' })}`
+  const part = (o: Intl.DateTimeFormatOptions) => now.toLocaleDateString('en-GB', { ...o, timeZone: zone })
+  const dateLabel = `${part({ weekday: 'short' })} ${part({ day: 'numeric' })} ${part({ month: 'short' })}`
   // The ◌ glyph lives in the status STRING for offline (design position: `Offline ◌ — N saved here`);
   // the trailing sage ● renders only when truly synced — States 2a: Syncing shows no dot.
   const status = !online ? (n > 0 ? `Offline ◌ — ${n} saved here` : 'Offline ◌') : n > 0 ? `Syncing ↻ ${n}` : 'Synced'
@@ -464,8 +469,8 @@ function TopBar() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
         {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
-            (lib/owner.ts). The zone on the right stays Africa/Cairo on purpose — the app's day
-            boundary is Cairo for every account (B2), so that's the clock it's really keeping. */}
+            (lib/owner.ts). The zone on the right is the user's own (Settings → Timezone): the
+            app's day boundary (B2), so that's the clock it's really keeping. */}
         <span className="app-topbar-where">
           <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
         </span>
@@ -484,7 +489,7 @@ function TopBar() {
           <SeasonTopbarEcho />
         </span>
       </div>
-      <div className="app-topbar-zone" style={{ flex: 'none' }}>Africa/Cairo</div>
+      <div className="app-topbar-zone" style={{ flex: 'none' }}>{zone}</div>
 
       {popOpen && (
         <div
@@ -553,6 +558,10 @@ export function AppLayout() {
   }, [collapsed])
 
   const owner = useOwner()
+  // User time zones: every date below reads the user's zone; a new zone remounts the page (key
+  // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
+  const zone = useAppZone()
+  useOfferDeviceZone(useAuth().session?.user.id)
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
@@ -773,12 +782,12 @@ export function AppLayout() {
         <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
 
         {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
-            answers keep the old "Kai's Flow / Personal · Cairo". "Cairo" stays: the app's day
-            boundary is Cairo for everyone (B2), and the timezone setting isn't read yet. Names
-            are user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
+            answers keep the old "Kai's Flow / Personal · Cairo". The city is the user's zone's
+            (Settings → Timezone; Cairo by default) — the app's day boundary (B2). Names are
+            user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
         <div className="app-sidebar-header" style={{ padding: '0 22px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
           <div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
-          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · Cairo</div>
+          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</div>
           <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
@@ -825,7 +834,7 @@ export function AppLayout() {
         <TopBar />
         <div className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={pathname} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
+            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
               <Outlet />
             </div>
           </Suspense>

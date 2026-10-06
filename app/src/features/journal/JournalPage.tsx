@@ -8,6 +8,7 @@ import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { Button } from '../../components/kit'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import type { JournalEntry } from '../../lib/types'
@@ -132,15 +133,9 @@ export function JournalPage() {
     commonplaceQuote?.id || ''
   )
 
-  // Selected date state (defaults to today in Cairo local time yyyy-mm-dd)
-  const todayStr = useMemo(() => {
-    const d = new Date()
-    // format as yyyy-mm-dd local
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    return `${yyyy}-${mm}-${dd}`
-  }, [])
+  // Selected date state (defaults to today, yyyy-mm-dd, on the user's clock — Paper's journal lines
+  // and every other day key use the same; it read the device's)
+  const todayStr = useMemo(() => cairoDateKey(new Date()), [])
 
   const [selectedDate, setSelectedDate] = useState(todayStr)
   const [promptIndex, setPromptIndex] = useState(0)
@@ -364,13 +359,9 @@ export function JournalPage() {
   const weekEntries = useMemo(() => {
     // Calculate last 7 dates from today back
     const result = []
-    const base = new Date(todayStr)
+    const base = new Date(todayStr) // UTC midnight: read back in UTC, so no device zone shifts the day
     for (let i = 0; i < 7; i++) {
-      const d = new Date(base.getTime() - i * 24 * 60 * 60 * 1000)
-      const yyyy = d.getFullYear()
-      const mm = String(d.getMonth() + 1).padStart(2, '0')
-      const dd = String(d.getDate()).padStart(2, '0')
-      result.push(`${yyyy}-${mm}-${dd}`)
+      result.push(new Date(base.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
     }
     return result
   }, [todayStr])
