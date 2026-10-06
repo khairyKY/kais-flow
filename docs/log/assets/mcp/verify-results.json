@@ -1,0 +1,177 @@
+[
+  {
+    "name": "desktop: \"AI assistants\" section on Integrations",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: card says not set up yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: card shows the server address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Copy server address copies it",
+    "ok": true,
+    "detail": "http://127.0.0.1:9/functions/v1/mcp"
+  },
+  {
+    "name": "desktop: Read only says what it means",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Create key shows a kf_ai_ key once",
+    "ok": true,
+    "detail": "kf_ai_H-D…"
+  },
+  {
+    "name": "desktop: only the key's SHA-256 and the scope are saved",
+    "ok": true,
+    "detail": "{\"key_hash\":\"873e28161b88f4087014d6f982c10e21cdfc376585d86eab81c8bba2e332338d\",\"scope\":\"read\"}"
+  },
+  {
+    "name": "desktop: saved as an upsert on user_id (a new key replaces the old)",
+    "ok": true,
+    "detail": "?on_conflict=user_id | resolution=merge-duplicates"
+  },
+  {
+    "name": "desktop: the key never appears in any request address",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Copy key copies the key",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Copy key confirms with a toast",
+    "ok": true,
+    "detail": "Server address copied | Key copied"
+  },
+  {
+    "name": "desktop: three setups (Claude Code, Claude Desktop, other)",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "desktop: Claude Code command carries the key in a header",
+    "ok": true,
+    "detail": "claude mcp add --transport http kais-flow http://127.0.0.1:9/functions/v1/mcp --header \"Authorization: Bearer kf_ai_H-D7zDoFyiR3qpz0g0zkm4m6PKI0bgUe8qCNmbGI1yU\""
+  },
+  {
+    "name": "desktop: Claude Desktop config is valid JSON for mcp-remote",
+    "ok": true,
+    "detail": "{\n  \"mcpServers\": {\n    \"kais-flow\": {\n      \"command\": \"npx\",\n      \"args\": [\n "
+  },
+  {
+    "name": "desktop: generic config has the url and the header",
+    "ok": true,
+    "detail": "{\n  \"mcpServers\": {\n    \"kais-flow\": {\n      \"type\": \"http\",\n      \"url\": \"http:"
+  },
+  {
+    "name": "desktop: Copy for Claude Code copies the filled command",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Copy for Claude Desktop copies the filled config",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Turn off deletes the key row",
+    "ok": true,
+    "detail": "?id=eq.c0000000-0000-4000-8000-0000000000a1"
+  },
+  {
+    "name": "desktop: back to not set up, snippets back to the placeholder",
+    "ok": true,
+    "detail": "AI assistants (MCP) / Let Claude or another AI assistant read your tasks, projects and calendar — and, if you allow it, add tasks and tick them off for you. / not set up yet / Read & write"
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "existing key: made / scope / last used, dates on the Tokyo clock",
+    "ok": true,
+    "detail": "key made 4 Oct · read & write · last used 6 Oct"
+  },
+  {
+    "name": "existing key: New key and Turn off offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "existing key: no key text on screen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "existing key: setups say to make a key first, with placeholders",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "existing key: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: card is on the Settings page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no horizontal scroll at 390 with a key and the setups open",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone day: card fits the screen",
+    "ok": true,
+    "detail": "20–370"
+  },
+  {
+    "name": "phone day: no text under 11px",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: card is on the Settings page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: no horizontal scroll at 390 with a key and the setups open",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone night: card fits the screen",
+    "ok": true,
+    "detail": "20–370"
+  },
+  {
+    "name": "phone night: no text under 11px",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

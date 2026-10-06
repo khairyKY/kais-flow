@@ -26,15 +26,16 @@ export function useCaptureKey() {
   })
 }
 
-async function sha256Hex(s: string): Promise<string> {
+export async function sha256Hex(s: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-/** `kf_` + 32 random bytes as base64url (43 chars) — the shape the function accepts. */
-export function newCaptureKey(): string {
+/** `kf_` + 32 random bytes as base64url (43 chars) — the shape the function accepts. The AI access
+ * key (./mcpKey) is the same with `kf_ai_`. */
+export function newCaptureKey(prefix = 'kf_'): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32))
-  return 'kf_' + btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  return prefix + btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 /** Makes (or replaces) this user's key; resolves to the key, which is never readable again. */
