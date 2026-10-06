@@ -1,0 +1,877 @@
+[
+  {
+    "name": "7a-day title \"Sunday, Sep 27\" (Source Serif 26) + chevron",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day the shell's mono top bar steps aside; the header is 56 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day week strip: 7 × 76px targets, Sun 27 shown, today ringed",
+    "ok": true,
+    "detail": "[\"S 27\",\"M 28\",\"T 29\",\"W 30\",\"T 1\",\"F 2\",\"S 3\"]"
+  },
+  {
+    "name": "7a-day unscheduled strip: \"Unscheduled · 2\", paper cards 40 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day hours are 64px",
+    "ok": true,
+    "detail": "64"
+  },
+  {
+    "name": "7a-day four blocks today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day Lunch reads \"Now · 20m left\", in blossom",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day the tyre block: 15:00–15:30, 32px, the project hue, an 18px checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day Gym (a time block) lavender, no checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day past block at 55% / saturate .6",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day now tag 13:40 on the line",
+    "ok": true,
+    "detail": "[\"13:40\",485]"
+  },
+  {
+    "name": "7a-day a block half scrolled off keeps its title in view (sticky)",
+    "ok": true,
+    "detail": "189 vs 189"
+  },
+  {
+    "name": "7a-day the grid ends at the tab bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7a-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7a-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day tap a task block → the Task sheet straight away, over /calendar (?task=)",
+    "ok": true,
+    "detail": "http://localhost:5255/calendar?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "7d-day its block card: On your calendar · Sun 27 · 15:00–15:30 · 30m, Change time · Unschedule",
+    "ok": true,
+    "detail": "On your calendar\nSUN 27 · 15:00–15:30 · 30M\nChange time\nUnschedule"
+  },
+  {
+    "name": "7d-day Change time → the Time sheet, meta the task",
+    "ok": true,
+    "detail": "CALL THE TYRE SUPPLIER · TODAY"
+  },
+  {
+    "name": "7d-day …Done → one move write 16:15–16:45 (+ the task's schedule), \"Moved to 16:15 · Undo\"",
+    "ok": true,
+    "detail": "[\"2026-09-27T13:15:00.000Z\"]"
+  },
+  {
+    "name": "7d-day …the sheet stays, its card reads 16:15–16:45, \"Saved\"",
+    "ok": true,
+    "detail": "SUN 27 · 16:15–16:45 · 30M / SAVED"
+  },
+  {
+    "name": "7d-day …Undo → back to 15:00–15:30",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day Unschedule → block deleted, task unscheduled (not deleted), \"Unscheduled · …\" + Undo; the sheet stays, the card goes",
+    "ok": true,
+    "detail": "[true,true,true,1,0,0]"
+  },
+  {
+    "name": "7d-day …Undo → the block and the card come back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day closing it leaves /calendar as it was",
+    "ok": true,
+    "detail": "http://localhost:5255/calendar"
+  },
+  {
+    "name": "7d-day a plain event → the event sheet: \"Event · 1h\", Time only, Delete (no Unschedule, no checkbox)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day …the event stays in view above its sheet, drawn over the scrim",
+    "ok": true,
+    "detail": "{\"x\":64,\"y\":269,\"width\":310,\"height\":64}"
+  },
+  {
+    "name": "7d-day …its title sits on the sheet's gutter",
+    "ok": true,
+    "detail": "20"
+  },
+  {
+    "name": "7d-day …Time → 14:30 → one write + \"Moved to 14:30\", \"✓ Saved\"",
+    "ok": true,
+    "detail": "[\"2026-09-27T11:30:00.000Z\"]"
+  },
+  {
+    "name": "7d-day …Delete → the block goes, \"Deleted · Lunch with Omar\" + Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7d-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7d-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day mid-swipe the columns follow the finger (−150)",
+    "ok": true,
+    "detail": "-150"
+  },
+  {
+    "name": "7b-day …the next day slides in beside it (Standup visible)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day …the hour labels stay put",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day …and the columns slide under a clip at the gutter, not over the hour labels",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day …the title changes only after the commit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day release past 40% → Monday, Sep 28; the strip follows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day a slow swipe short of 40% springs back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day a fling short of 40% commits (back to Sunday)",
+    "ok": true,
+    "detail": "[[\"pointerdown\",5536,300],[\"pointermove\",5554,333],[\"pointermove\",5595,367],[\"pointermove\",5620,400],[\"pointerup\",5641,400]]"
+  },
+  {
+    "name": "7b-day a vertical drag scrolls the hours, no day change",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7b-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7b-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7n-day View: Day (current, checked) · 3 days SUN–TUE · Week SEP 27 – OCT 3",
+    "ok": true,
+    "detail": "[[\"Day\",\"true\"],[\"3 days SUN–TUE\",null],[\"Week SEP 27 – OCT 3\",null]]"
+  },
+  {
+    "name": "7n-day the chevron turns up while it's open",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day title \"Sep 27 – 29\", three columns SUN 27 · MON 28 · TUE 29",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day the strip washes 27–29",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day blocks from all three days; short ones title only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day the day header row is 32px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day a lifted block dragged one column right → Mon 28, same time (\"Moved to Mon 28 15:00\")",
+    "ok": true,
+    "detail": "[\"2026-09-28T12:00:00.000Z\"]"
+  },
+  {
+    "name": "7h-day a block checkbox right after a gesture still completes the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7h-day a swipe pages three days (Sep 30 – Oct 2)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "week: \"Sep 27 – Oct 3\", seven narrow columns",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Today → Sunday, and the now line re-centred",
+    "ok": true,
+    "detail": "485 vs 485"
+  },
+  {
+    "name": "7n-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7n-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7n-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day the sheet: Task (chosen) | Event, Save disabled, the title focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day the date chip \"SUN 27 · 16:00\"; 30M chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day keyboard up → the sheet sits on it",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":326,\"width\":390,\"height\":218}"
+  },
+  {
+    "name": "7c-day the slot 16:00–16:30, over the scrim and above the sheet, with the live title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day 45M → the slot grows to 16:00–16:45",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day Save → a task + its block 16:00–16:45",
+    "ok": true,
+    "detail": "{\"id\":\"0151c7eb-8b31-425a-9dea-349d20bd984b\",\"title\":\"Pick up the new tyres\",\"starts_at\":\"2026-09-27T13:00:00.000Z\",\"ends_at\":\"2026-09-27T13:45:00.000Z\",\"all_day\":false,\"task_id\":\"0a5dfdd0-b828-44e7-a4d7-5a97a57aa5b0\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":null,\"created_at\":\"2026-09-27T10:40:04.772Z\",\"updated_at\":\"2026-09-27T10:40:04.772Z\"}"
+  },
+  {
+    "name": "7c-day Event + Enter → a plain event 17:00–17:30, no task",
+    "ok": true,
+    "detail": "[{\"id\":\"18887d6e-765d-4a91-a087-b16d51efe89c\",\"title\":\"Coffee with Hana\",\"starts_at\":\"2026-09-27T14:00:00.000Z\",\"ends_at\":\"2026-09-27T14:30:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-09-27T10:40:06.750Z\",\"updated_at\":\"2026-09-27T10:40:06.750Z\"}]"
+  },
+  {
+    "name": "7c-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7c-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7c-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day Schedule · REVIEW KAI · 30M · Next free today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day the next 3 free slots: 14:00–14:30 · 14:30–15:00 · 15:30–16:00",
+    "ok": true,
+    "detail": "14:00–14:30,14:30–15:00,15:30–16:00"
+  },
+  {
+    "name": "7g-day the tapped chip is marked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day one tap → the block 14:30–15:00, \"Scheduled\" + Undo, the chip leaves",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day Undo → the block goes and the chip comes back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7g-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g2-day too long for today: \"Next free\", the next days, \"No 3h30 gap left today\"",
+    "ok": true,
+    "detail": "Tomorrow 16:30,Tue 29 11:00,Wed 30 13:00"
+  },
+  {
+    "name": "7g2-day Tue 29 11:00 → placed 11:00–14:30, and the grid goes to Tuesday",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g2-day Pick a time… → 19:00 → placed today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g2-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7g2-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7g2-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7e-day moving before 400ms scrolls; nothing lifts",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7e-day held 400ms → lifted (scale + tilt + shadow)",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000003\",true,true]"
+  },
+  {
+    "name": "7e-day the time bubble in the gutter follows: 16:15, inverted toast colours",
+    "ok": true,
+    "detail": "16:00 → 16:15"
+  },
+  {
+    "name": "7e-day its old place stays as a dashed outline",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7e-day the page did not scroll under the drag",
+    "ok": true,
+    "detail": "579 → 579"
+  },
+  {
+    "name": "7e-day nothing written mid-drag",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7m-day drop → one write 16:15–16:45 (+ the task's schedule)",
+    "ok": true,
+    "detail": "[\"2026-09-27T13:15:00.000Z\"]"
+  },
+  {
+    "name": "7m-day toast \"Moved to 16:15 · Undo\"; the lift ends",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7m-day Undo → back to 15:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "lift: released without moving, it stays lifted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "lift: a tap elsewhere puts it down — and only that (no sheet, no write)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "lift: Back (Esc) puts it down first",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7e-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7e-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7f-day handles sit outside the top and bottom edges, 48px targets",
+    "ok": true,
+    "detail": "[[518,52],[566,40],[602,52]]"
+  },
+  {
+    "name": "7f-day dragging the bottom handle: bubble \"16:15 · 1H15\"",
+    "ok": true,
+    "detail": "16:15 · 1H15"
+  },
+  {
+    "name": "7f-day release → 15:00–16:15, the task's estimate 75 min, \"Resized to 15:00–16:15\"",
+    "ok": true,
+    "detail": "[{\"id\":\"e0000000-0000-4000-8000-000000000003\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"title\":\"Call the tyre supplier\",\"starts_at\":\"2026-09-27T12:00:00.000Z\",\"ends_at\":\"2026-09-27T13:15:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000001\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":null,\"created_at\":\"2026-09-21T06:00:00.000Z\",\"updated_at\":\"2026-09-21T06:00:00.000Z\"}]"
+  },
+  {
+    "name": "7f-day the top handle up 32px → starts 14:30, end kept",
+    "ok": true,
+    "detail": "[{\"id\":\"e0000000-0000-4000-8000-000000000003\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"title\":\"Call the tyre supplier\",\"starts_at\":\"2026-09-27T11:30:00.000Z\",\"ends_at\":\"2026-09-27T13:15:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000001\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":null,\"created_at\":\"2026-09-21T06:00:00.000Z\",\"updated_at\":\"2026-09-21T06:00:00.000Z\"}]"
+  },
+  {
+    "name": "7f-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7f-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7f-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "more-day 4 at once → 3 drawn (Design review · Budget · Call Omar), the 4th (Review Kai) not",
+    "ok": true,
+    "detail": "1,1,1,0"
+  },
+  {
+    "name": "more-day one \"+1\" kit chip (24 tall) at the stack's top-right — Call Omar's corner",
+    "ok": true,
+    "detail": "[{\"x\":338.15625,\"y\":255,\"width\":33.84375,\"height\":24},{\"x\":200.390625,\"y\":253,\"width\":173.59375,\"height\":64}]"
+  },
+  {
+    "name": "more-day tap \"+1\" → its list: \"1 more\", Review Kai 11:45–12:45 (and no quick create, no write)",
+    "ok": true,
+    "detail": "[\"Review Kai 11:45–12:45\"]"
+  },
+  {
+    "name": "more-day …a row opens it like a tap: the Task sheet over /calendar, the list gone",
+    "ok": true,
+    "detail": "http://localhost:5255/calendar?task=10000000-0000-4000-8000-000000000003"
+  },
+  {
+    "name": "more-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "more-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "more-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edge-day a lifted block held 12px from the bottom edge scrolls the grid down",
+    "ok": true,
+    "detail": "579 → 924"
+  },
+  {
+    "name": "edge-day …out of the zone, it stops",
+    "ok": true,
+    "detail": "945 → 945"
+  },
+  {
+    "name": "edge-day …the block stays under the finger through the scroll: bubble 19:15, the block's start within a snap of the finger",
+    "ok": true,
+    "detail": "19:15 · 7px"
+  },
+  {
+    "name": "edge-day …drop → one write at 19:15 (30 min kept), \"Moved to 19:15\"",
+    "ok": true,
+    "detail": "[\"2026-09-27T16:15:00.000Z\"]"
+  },
+  {
+    "name": "edge-day near the top edge it scrolls up, and the drop lands earlier, on the 15-min grid",
+    "ok": true,
+    "detail": "945 → 662 · 2026-09-27T07:15:00.000Z"
+  },
+  {
+    "name": "edge-day past the edge: full speed to the end of the day, where it stops (24:00 on the bottom edge); the block can't leave the day (23:30)",
+    "ok": true,
+    "detail": "945 / 945 · 23:30"
+  },
+  {
+    "name": "edge-day …dropped there: 23:30–24:00",
+    "ok": true,
+    "detail": "[[\"2026-09-27T20:30:00.000Z\",\"2026-09-27T21:00:00.000Z\"]]"
+  },
+  {
+    "name": "edge-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "edge-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edge-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edge-resize-day the bottom handle in the zone scrolls the grid; the bubble reads the new end 18:15",
+    "ok": true,
+    "detail": "579 → 862 · 18:15 · 3H15"
+  },
+  {
+    "name": "edge-resize-day …release → 15:00–18:15, \"Resized to 15:00–18:15\"",
+    "ok": true,
+    "detail": "[[\"2026-09-27T12:00:00.000Z\",\"2026-09-27T15:15:00.000Z\"]]"
+  },
+  {
+    "name": "edge-resize-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "edge-resize-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edge-resize-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day Thursday, Oct 1: daisy/future.png + \"A clear day — tap any time to plan\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day the strip: 1 selected, 27 ringed as today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day the hours around it stay tappable (quick create)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "all-day: Fri Oct 2 shows \"Company offsite\" in a chip row over the hours (not a clear day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "all-day: tap → its sheet, \"Event · All day\", no Time row (it stays a date)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "all-day: not on the day before",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day Plan my day → the ritual sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7i-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7i-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7j-day skeleton blocks + chips, the now line, no real blocks yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7j-day …then the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7j-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7k-day \"Offline — changes will sync\" under the title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7k-day the move is queued (nothing sent) and the block moved to 16:00–16:30",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7k-day …with its pending ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7k-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7k-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7k-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night title \"Sunday, Sep 27\" (Source Serif 26) + chevron",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night the shell's mono top bar steps aside; the header is 56 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night week strip: 7 × 76px targets, Sun 27 shown, today ringed",
+    "ok": true,
+    "detail": "[\"S 27\",\"M 28\",\"T 29\",\"W 30\",\"T 1\",\"F 2\",\"S 3\"]"
+  },
+  {
+    "name": "7l-a-night unscheduled strip: \"Unscheduled · 2\", paper cards 40 tall",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night hours are 64px",
+    "ok": true,
+    "detail": "64"
+  },
+  {
+    "name": "7l-a-night four blocks today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night Lunch reads \"Now · 20m left\", in blossom",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night the tyre block: 15:00–15:30, 32px, the project hue, an 18px checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night Gym (a time block) lavender, no checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night past block at 55% / saturate .6",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night now tag 13:40 on the line",
+    "ok": true,
+    "detail": "[\"13:40\",485]"
+  },
+  {
+    "name": "7l-a-night a block half scrolled off keeps its title in view (sticky)",
+    "ok": true,
+    "detail": "189 vs 189"
+  },
+  {
+    "name": "7l-a-night the grid ends at the tab bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7l-a-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-a-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-d-night tap a task block → the Task sheet straight away, over /calendar (?task=)",
+    "ok": true,
+    "detail": "http://localhost:5255/calendar?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "7l-d-night its block card: On your calendar · Sun 27 · 15:00–15:30 · 30m, Change time · Unschedule",
+    "ok": true,
+    "detail": "On your calendar\nSUN 27 · 15:00–15:30 · 30M\nChange time\nUnschedule"
+  },
+  {
+    "name": "7l-d-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "7l-d-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7l-d-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day FullCalendar week + the rail, no phone grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day the shell's top bar is still there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day a block click still opens the details panel",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day right-click → Unschedule still writes the delete + \"Unscheduled\" toast (shared deleteEventWithUndo)",
+    "ok": true,
+    "detail": "[\"Unscheduled · Call the tyre supplier\"]"
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night FullCalendar week + the rail, no phone grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night the shell's top bar is still there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

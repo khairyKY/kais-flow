@@ -1,0 +1,772 @@
+[
+  {
+    "name": "1-library-15-list-day no sideways scroll (1280×720 at 150%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-15-list-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-list-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-note-day no sideways scroll (1280×720 at 150%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-15-note-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-note-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-quote-day no sideways scroll (1280×720 at 150%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-15-quote-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-quote-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-book-day no sideways scroll (1280×720 at 150%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-15-book-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-book-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-list-day no sideways scroll (1280×720 at 125%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-125-list-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-list-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-note-day no sideways scroll (1280×720 at 125%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-125-note-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-note-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-quote-day no sideways scroll (1280×720 at 125%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-125-quote-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-quote-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-book-day no sideways scroll (1280×720 at 125%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-125-book-day the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-book-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-list-day no sideways scroll (1280×720 at 100%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-1-list-day three panes at 100%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-list-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-note-day no sideways scroll (1280×720 at 100%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-1-note-day three panes at 100%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-note-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-quote-day no sideways scroll (1280×720 at 100%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-1-quote-day three panes at 100%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-quote-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-book-day no sideways scroll (1280×720 at 100%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-1-book-day three panes at 100%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-book-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-note-night no sideways scroll (1280×720 at 150%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-15-note-night the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-15-note-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-note-night no sideways scroll (1280×720 at 125%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-125-note-night the single column when the page is under 880",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-125-note-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-note-night no sideways scroll (1280×720 at 100%)",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-1-note-night three panes at 100%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-1-note-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1-library-live-scale 100% → 150% live: three panes → single column, no sideways scroll",
+    "ok": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  },
+  {
+    "name": "1-library-live-scale no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-phone-day the dated line shows its chip, as a button",
+    "ok": true,
+    "detail": "Tomorrow · 15:00"
+  },
+  {
+    "name": "2-onboarding-phone-day chip tap → the date picker (Due date, the line's title, tomorrow selected)",
+    "ok": true,
+    "detail": "1 Due date CALL THE TYRE SUPPLIER Today SUN 27 Tomorrow MON 28 2026-09-28"
+  },
+  {
+    "name": "2-onboarding-phone-day Done → the chip reads the picked day (Thu 1 Oct · 09:00), picker closed",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-phone-day more title words keep the pick",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-phone-day Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier about the invoice\",\"2026-10-01T06:00:00.000Z\",true],[\"Gym\",null,true]]"
+  },
+  {
+    "name": "2-onboarding-phone-day the undated line has no date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-phone-night the dated line shows its chip, as a button",
+    "ok": true,
+    "detail": "Tomorrow · 15:00"
+  },
+  {
+    "name": "2-onboarding-phone-night chip tap → the date picker (Due date, the line's title, tomorrow selected)",
+    "ok": true,
+    "detail": "1 Due date CALL THE TYRE SUPPLIER Today SUN 27 Tomorrow MON 28 2026-09-28"
+  },
+  {
+    "name": "2-onboarding-phone-night Done → the chip reads the picked day (Thu 1 Oct · 09:00), picker closed",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-phone-night more title words keep the pick",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-phone-night Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier about the invoice\",\"2026-10-01T06:00:00.000Z\",true],[\"Gym\",null,true]]"
+  },
+  {
+    "name": "2-onboarding-phone-night the undated line has no date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-desktop-day the dated line shows its chip, as a button",
+    "ok": true,
+    "detail": "Tomorrow · 15:00"
+  },
+  {
+    "name": "2-onboarding-desktop-day chip tap → the date picker (Due date, the line's title, tomorrow selected)",
+    "ok": true,
+    "detail": "1 Due date CALL THE TYRE SUPPLIER Today SUN 27 Tomorrow MON 28 2026-09-28"
+  },
+  {
+    "name": "2-onboarding-desktop-day Done → the chip reads the picked day (Thu 1 Oct · 09:00), picker closed",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-desktop-day more title words keep the pick",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-desktop-day Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier about the invoice\",\"2026-10-01T06:00:00.000Z\",true],[\"Gym\",null,true]]"
+  },
+  {
+    "name": "2-onboarding-desktop-day the undated line has no date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-desktop-night the dated line shows its chip, as a button",
+    "ok": true,
+    "detail": "Tomorrow · 15:00"
+  },
+  {
+    "name": "2-onboarding-desktop-night chip tap → the date picker (Due date, the line's title, tomorrow selected)",
+    "ok": true,
+    "detail": "1 Due date CALL THE TYRE SUPPLIER Today SUN 27 Tomorrow MON 28 2026-09-28"
+  },
+  {
+    "name": "2-onboarding-desktop-night Done → the chip reads the picked day (Thu 1 Oct · 09:00), picker closed",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-desktop-night more title words keep the pick",
+    "ok": true,
+    "detail": "Thu, Oct 1 · 09:00"
+  },
+  {
+    "name": "2-onboarding-desktop-night Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3",
+    "ok": true,
+    "detail": "[[\"Call the tyre supplier about the invoice\",\"2026-10-01T06:00:00.000Z\",true],[\"Gym\",null,true]]"
+  },
+  {
+    "name": "2-onboarding-desktop-night the undated line has no date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-no-date No date → the chip goes, the title stays cleaned",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2-onboarding-no-date Start → no due date",
+    "ok": true,
+    "detail": "{\"id\":\"d67f1d73-f33b-4be1-af4d-f6cbe54af75d\",\"project_id\":null,\"domain_id\":null,\"title\":\"Call the tyre supplier\",\"notes\":null,\"status\":\"todo\",\"due_at\":null,\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":true,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-09-27T04:40:03.219Z\",\"updated_at\":\"2026-09-27T04:40:03.219Z\"}"
+  },
+  {
+    "name": "2-onboarding-no-date no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-day Start → Today, the flag left for this account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-day the hint, the drawing's copy, in Caveat",
+    "ok": true,
+    "detail": "↑ this card always shows your next move"
+  },
+  {
+    "name": "3-first-today-phone-day it sits under the next-move card (the Plan my day ritual card)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-day the first tap anywhere → gone, flag cleared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-day after a reload it stays gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-night Start → Today, the flag left for this account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-night the hint, the drawing's copy, in Caveat",
+    "ok": true,
+    "detail": "↑ this card always shows your next move"
+  },
+  {
+    "name": "3-first-today-phone-night it sits under the next-move card (the Plan my day ritual card)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-night the first tap anywhere → gone, flag cleared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-night after a reload it stays gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-slip under the NOW slip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-slip no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-nocard no card → no hint, and a tap doesn't spend it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-nocard no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-existing no flag → no hint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-phone-existing no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-day the hint under the Day card, in Caveat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-day a click anywhere → gone, flag cleared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-night the hint under the Day card, in Caveat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-night a click anywhere → gone, flag cleared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3-first-today-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-day a row shows its first two labels as kit chips, then +1",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\"]"
+  },
+  {
+    "name": "4-labels-tasks-desktop-day one label → one chip; none → none",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-day the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type)",
+    "ok": true,
+    "detail": "{\"h\":18.6,\"fs\":\"10px\",\"line\":\"10px\",\"border\":\"solid\"}"
+  },
+  {
+    "name": "4-labels-tasks-desktop-day Tasks' tools carry \"Label · All ▾\" beside Sort",
+    "ok": true,
+    "detail": "Label · All ▾"
+  },
+  {
+    "name": "4-labels-tasks-desktop-day the filter lists every label once, A–Z, after All labels",
+    "ok": true,
+    "detail": "[\"All labels\",\"admin\",\"calls\",\"home\",\"q3\"]"
+  },
+  {
+    "name": "4-labels-tasks-desktop-day Label · home → only that label's rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-day All labels → every row back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-day Tasks quick add \"Book the dentist *health *calls\" → labels [health, calls], clean title",
+    "ok": true,
+    "detail": "{\"id\":\"db2f3d1c-9140-4d0c-b853-3bdc5a4ddee4\",\"project_id\":null,\"domain_id\":null,\"title\":\"Book the dentist\",\"notes\":null,\"status\":\"todo\",\"due_at\":null,\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[\"health\",\"calls\"],\"priority\":null,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-09-27T09:50:04.687Z\",\"updated_at\":\"2026-09-27T09:50:04.687Z\"}"
+  },
+  {
+    "name": "4-labels-tasks-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-night a row shows its first two labels as kit chips, then +1",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\"]"
+  },
+  {
+    "name": "4-labels-tasks-desktop-night one label → one chip; none → none",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-desktop-night the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type)",
+    "ok": true,
+    "detail": "{\"h\":18.6,\"fs\":\"10px\",\"line\":\"10px\",\"border\":\"solid\"}"
+  },
+  {
+    "name": "4-labels-tasks-desktop-night Tasks' tools carry \"Label · All ▾\" beside Sort",
+    "ok": true,
+    "detail": "Label · All ▾"
+  },
+  {
+    "name": "4-labels-tasks-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-day a row shows its first two labels as kit chips, then +1",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\"]"
+  },
+  {
+    "name": "4-labels-tasks-phone-day one label → one chip; none → none",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-day the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type, ≥12px)",
+    "ok": true,
+    "detail": "{\"h\":22,\"fs\":\"12px\",\"line\":\"12px\",\"border\":\"solid\"}"
+  },
+  {
+    "name": "4-labels-tasks-phone-day Tasks' tools carry \"Label · All ▾\" beside Sort",
+    "ok": true,
+    "detail": "Label · All ▾"
+  },
+  {
+    "name": "4-labels-tasks-phone-day the filter lists every label once, A–Z, after All labels",
+    "ok": true,
+    "detail": "[\"All labels\",\"admin\",\"calls\",\"home\",\"q3\"]"
+  },
+  {
+    "name": "4-labels-tasks-phone-day Label · home → only that label's rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-day All labels → every row back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-night a row shows its first two labels as kit chips, then +1",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\"]"
+  },
+  {
+    "name": "4-labels-tasks-phone-night one label → one chip; none → none",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-tasks-phone-night the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type, ≥12px)",
+    "ok": true,
+    "detail": "{\"h\":22,\"fs\":\"12px\",\"line\":\"12px\",\"border\":\"solid\"}"
+  },
+  {
+    "name": "4-labels-tasks-phone-night Tasks' tools carry \"Label · All ▾\" beside Sort",
+    "ok": true,
+    "detail": "Label · All ▾"
+  },
+  {
+    "name": "4-labels-tasks-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-command-bar the preview shows *calls and *q3 chips",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-command-bar Enter → a task \"call Omar\", labels [calls, q3], due tomorrow 15:00 Cairo",
+    "ok": true,
+    "detail": "{\"id\":\"2e9e8e6d-c370-4958-a6f1-43fc900c1048\",\"project_id\":null,\"domain_id\":null,\"title\":\"call Omar\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-09-28T12:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[\"calls\",\"q3\"],\"priority\":null,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-09-27T09:50:03.893Z\",\"updated_at\":\"2026-09-27T09:50:03.893Z\"}"
+  },
+  {
+    "name": "4-labels-command-bar a label alone is a task, not an Inbox capture",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-command-bar no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-today-phone Today's rows show labels (two, then +1)",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\",\"home\"]"
+  },
+  {
+    "name": "4-labels-today-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4-labels-today-desktop Today's rows show labels (two, then +1)",
+    "ok": true,
+    "detail": "[\"calls\",\"admin\",\"home\"]"
+  },
+  {
+    "name": "4-labels-today-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-desktop-day a routine with a goal reads its streak as \"12 / 30\"",
+    "ok": true,
+    "detail": "✓Cold showers12 / 30archive"
+  },
+  {
+    "name": "5-routines-desktop-day one without a goal keeps the bare count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-desktop-day the trellis heads it \"12 / 30 days\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-desktop-day Plant (Challenge · 30 day streak) → goal_days 30 with a 30-day window",
+    "ok": true,
+    "detail": "{\"goal_days\":30,\"start\":\"2026-09-27\",\"end\":\"2026-10-26\"}"
+  },
+  {
+    "name": "5-routines-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-desktop-night a routine with a goal reads its streak as \"12 / 30\"",
+    "ok": true,
+    "detail": "✓Cold showers12 / 30archive"
+  },
+  {
+    "name": "5-routines-desktop-night one without a goal keeps the bare count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-phone-day a routine with a goal reads its streak as \"12 / 30\"",
+    "ok": true,
+    "detail": "✓Cold showers12 / 30archive"
+  },
+  {
+    "name": "5-routines-phone-day one without a goal keeps the bare count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-phone-day the trellis heads it \"12 / 30 days\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-phone-night a routine with a goal reads its streak as \"12 / 30\"",
+    "ok": true,
+    "detail": "✓Cold showers12 / 30archive"
+  },
+  {
+    "name": "5-routines-phone-night one without a goal keeps the bare count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-pre-0046-challenge a challenge from before 0046 reads its window (6 / 14 days) on the Challenge card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5-routines-pre-0046-challenge no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
