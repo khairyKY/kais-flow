@@ -33,12 +33,15 @@ export function activityRow(
   }
 }
 
-/** Appends one row to `activity_log`. Slipping, streaks, digests, and resurfacing (later phases) only ever read this log. */
+/** Appends one row to `activity_log`. Slipping, streaks, digests, and resurfacing (later phases) only ever read this log.
+ * Returns the row, for a page that shows it before the next fetch (a project's status updates). */
 export function logActivity(
   eventType: string,
   entityType: string,
   entityId: string,
   payload?: Record<string, unknown>,
-): void {
-  writeRow('activity_log', activityRow(eventType, entityType, entityId, payload))
+): ActivityRow {
+  const row = activityRow(eventType, entityType, entityId, payload)
+  writeRow('activity_log', row)
+  return row
 }

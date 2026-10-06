@@ -30,6 +30,7 @@ import { useAreas, renameArea } from '../areas/api'
 import { RenameField } from '../../components/RenameField'
 import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { KIND_LABEL, kindOf } from './convert'
+import { resolveUpdates, UPDATE_EVENTS } from './statusLog'
 import {
   useTasks,
   completeTask,
@@ -104,6 +105,8 @@ export function ProjectDetailPage() {
   const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
   // Kai 2026-10-06: "we can't edit the name of an area, project or a retainer from inside the item".
   const [renamingTitle, setRenamingTitle] = useState(false)
+  // The status-update / work log row whose note is being edited in place.
+  const [editingLog, setEditingLog] = useState<string | null>(null)
   // Kai 2026-10-06: change its type from inside the page — the new thing's page opens; Undo comes back.
   const [typeMenuAt, setTypeMenuAt] = useState<{ x: number; y: number } | null>(null)
   const changeType = useChangeType({
@@ -150,15 +153,9 @@ export function ProjectDetailPage() {
       })
     }
 
-    // 2. Activity logs (updates)
-    const updateLogs = activityLogs.filter((log) => log.event_type === 'project.update_logged')
-    for (const log of updateLogs) {
-      logs.push({
-        id: log.id,
-        date: log.created_at,
-        type: 'update',
-        note: (log.payload?.note as string) || '',
-      })
+    // 2. Status updates — the log's edits and deletes applied (./statusLog.ts)
+    for (const u of resolveUpdates(activityLogs)) {
+      logs.push({ id: u.id, date: u.created_at, type: 'update', note: u.note })
     }
 
     // Sort by date descending
@@ -467,20 +464,43 @@ export function ProjectDetailPage() {
         return [newLog, ...(old ?? [])]
       })
     } else {
-      logActivity('project.update_logged', 'project', project?.id || id || '', { note: workNote.trim() })
-      queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
-        const newLog = {
-          id: crypto.randomUUID(),
-          event_type: 'project.update_logged',
-          entity_type: 'project',
-          entity_id: project?.id || id || '',
-          payload: { note: workNote.trim() },
-          created_at: startedAt,
-        }
-        return [newLog, ...(old ?? [])]
-      })
+      // The feed shows the very row that was logged (it used to draw a copy under another id, so a
+      // fresh update couldn't be edited or deleted until the next fetch).
+      logUpdateEvent(UPDATE_EVENTS.logged, { note: workNote.trim() })
     }
     setWorkNote('')
+  }
+
+  // Kai 2026-10-06: status updates are edited in place and deleted with Undo. The log is append-only,
+  // so both are events of their own (./statusLog.ts), shown at once through this page's cache.
+  const logUpdateEvent = (event: string, payload: Record<string, unknown>) => {
+    const row = logActivity(event, 'project', project?.id || id || '', payload)
+    queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => [{ ...row, created_at: new Date().toISOString() }, ...(old ?? [])])
+  }
+  const editLog = (log: { id: string; type: 'work' | 'update'; note: string }, note: string) => {
+    if (log.type === 'update') {
+      logUpdateEvent(UPDATE_EVENTS.edited, { update_id: log.id, note })
+      return
+    }
+    const entry = pTimeEntries.find((e) => e.id === log.id)
+    if (!entry) return
+    writeRow('time_entries', { ...entry, note })
+    logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, note })
+  }
+  const deleteLog = (log: { id: string; type: 'work' | 'update' }) => {
+    if (log.type === 'update') {
+      logUpdateEvent(UPDATE_EVENTS.deleted, { update_id: log.id })
+      toastUndo('Update deleted', () => logUpdateEvent(UPDATE_EVENTS.restored, { update_id: log.id }))
+      return
+    }
+    const entry = pTimeEntries.find((e) => e.id === log.id)
+    if (!entry) return
+    writeRow('time_entries', entry, 'delete')
+    logActivity('project.work_deleted', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, duration_min: entry.duration_min })
+    toastUndo('Work entry deleted', () => {
+      writeRow('time_entries', entry)
+      logActivity('project.work_restored', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id })
+    })
   }
 
   const colorPalette = [
@@ -835,7 +855,22 @@ export function ProjectDetailPage() {
                           update
                         </span>
                       )}
-                      {log.note}
+                      {/* Click the note to edit it in place; ✕ deletes with Undo (Kai 2026-10-06). */}
+                      {editingLog === log.id ? (
+                        <RenameField
+                          value={log.note}
+                          ariaLabel={log.type === 'update' ? 'Edit update' : 'Edit work note'}
+                          style={{ width: 'calc(100% - 60px)', margin: '-3px 0' }}
+                          onDone={(next) => {
+                            setEditingLog(null)
+                            if (next && next !== log.note) editLog(log, next)
+                          }}
+                        />
+                      ) : (
+                        <span role="button" tabIndex={0} title="Edit" aria-label={`Edit ${log.type}: ${log.note}`} onClick={() => setEditingLog(log.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingLog(log.id) } }} style={{ cursor: 'text' }}>
+                          {log.note}
+                        </span>
+                      )}
                     </span>
                     {log.type === 'work' && log.duration && (
                       <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
@@ -844,6 +879,7 @@ export function ProjectDetailPage() {
                       </span>
                     )}
                     {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
+                    <button type="button" className="kf-hit" onClick={() => deleteLog(log)} title="Delete" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8, flex: 'none' }}>✕</button>
                   </div>
                 )
               })}

@@ -369,6 +369,52 @@ for (const theme of ['day', 'night']) {
     }
   }
 
+  // ── 5 · Project status updates (and work entries): edit in place, delete with Undo ──
+  if (want('5')) for (const view of DAY ? [undefined, PHONE] : [undefined]) {
+    const v = view ? 'phone' : 'desktop'
+    const { ctx, page, errors, state } = await open(`/projects/${SITE.id}`, { theme, view, scale: view ? 1 : 1.5 })
+    const upd = page.getByRole('button', { name: 'Edit update: Homepage copy approved' })
+    await upd.scrollIntoViewIfNeeded()
+    await upd.click()
+    await sleep(250)
+    await page.keyboard.press('Control+a')
+    await page.keyboard.type('Homepage copy approved by Priya')
+    let from = state.writes.length
+    await page.keyboard.press('Enter')
+    await sleep(500)
+    let w = writesTo(state, 'activity_log', from)
+    check(`${N('updates')} ${v}: edit an update in place → project.update_edited {update_id, note}`, w.length === 1 && w[0].event_type === 'project.update_edited' && w[0].payload.update_id === UPDATE.id && w[0].payload.note === 'Homepage copy approved by Priya', JSON.stringify(w))
+    check(`${N('updates')} ${v}: the feed shows the new note`, (await page.getByRole('button', { name: 'Edit update: Homepage copy approved by Priya' }).count()) === 1)
+    if (!view) await shot(page, N('5-updates-edited-150'))
+    from = state.writes.length
+    await page.getByRole('button', { name: 'Delete update: Homepage copy approved by Priya' }).click()
+    await sleep(500)
+    w = writesTo(state, 'activity_log', from)
+    check(`${N('updates')} ${v}: ✕ deletes it (project.update_deleted), no confirm, "Update deleted · Undo"`, w.some((x) => x.event_type === 'project.update_deleted' && x.payload.update_id === UPDATE.id) && (await page.getByRole('button', { name: /Edit update/ }).count()) === 0 && (await page.locator('.kf-toast-msg').allInnerTexts()).includes('Update deleted'))
+    if (view) await shot(page, N('5-updates-deleted-phone'))
+    from = state.writes.length
+    await toastUndo(page)
+    check(`${N('updates')} ${v}: Undo brings it back with its edit (project.update_restored)`, writesTo(state, 'activity_log', from).some((x) => x.event_type === 'project.update_restored') && (await page.getByRole('button', { name: 'Edit update: Homepage copy approved by Priya' }).count()) === 1)
+    // a work entry
+    await page.getByRole('button', { name: 'Edit work: Wireframes' }).click()
+    await sleep(200)
+    await page.keyboard.press('Control+a')
+    await page.keyboard.type('Wireframes v2')
+    from = state.writes.length
+    await page.keyboard.press('Enter')
+    await sleep(500)
+    check(`${N('updates')} ${v}: a work entry's note edits the time entry (+ project.work_edited)`, writesTo(state, 'time_entries', from).some((x) => x.id === WORKLOG.id && x.note === 'Wireframes v2') && logged(state, from).includes('project.work_edited'))
+    from = state.writes.length
+    await page.getByRole('button', { name: 'Delete work: Wireframes v2' }).click()
+    await sleep(500)
+    check(`${N('updates')} ${v}: ✕ on a work entry deletes it (+ project.work_deleted)`, state.writes.slice(from).some((x) => x.table === 'time_entries' && x.method === 'DELETE') && logged(state, from).includes('project.work_deleted'))
+    from = state.writes.length
+    await toastUndo(page)
+    check(`${N('updates')} ${v}: Undo writes it back`, writesTo(state, 'time_entries', from).some((x) => x.id === WORKLOG.id))
+    check(`${N('updates')} ${v}: no sideways scroll, no page errors`, (await noHScroll(page)) && errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+
   // ── 7 · Change a thing's type: project ↔ retainer, project → area, area → domain, domain → area ──
   if (want('7')) {
     const { ctx, page, errors, state } = await open('/projects', { theme, scale: 1.5 })
