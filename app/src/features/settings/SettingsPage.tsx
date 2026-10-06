@@ -16,6 +16,7 @@ import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuiet
 import { Select } from '../../components/Select'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
+import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
 import { PaperSettingsCard } from '../paper/PaperSettings'
 import { useToastStore } from '../../lib/toastStore'
 import { Button } from '../../components/kit'
@@ -853,6 +854,95 @@ function CaptureKeyCard() {
   )
 }
 
+// AI assistants over MCP (features/settings/mcpKey.ts, function `mcp`, docs/MCP.md): the AI access
+// key — the capture key's sibling, so the same shown-once flow — plus the server address and a
+// ready-to-paste config per client.
+function McpCard() {
+  const { data: row } = useMcpKey()
+  const { data: settings } = useAppSettings()
+  const [scope, setScope] = useState<McpScope>('read_write')
+  const [shown, setShown] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: settings?.timezone ?? 'Africa/Cairo' })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const copy = (text: string, what: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: `${what} copied` }),
+      () => setErr('Couldn’t reach the clipboard — select the text and copy it by hand.'),
+    )
+  const mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.6, color: 'var(--ink-muted)', wordBreak: 'break-all' }
+  const box: CSSProperties = { marginTop: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '9px 12px' }
+  // The real key goes into the snippets only while it's on screen; otherwise a placeholder.
+  const key = shown ?? undefined
+  const clients = [
+    { name: 'Claude Code', how: 'Run it in a terminal.', text: claudeCodeCommand(key) },
+    { name: 'Claude Desktop', how: 'Settings → Developer → Edit Config, paste into claude_desktop_config.json, restart Claude. Needs Node.js.', text: claudeDesktopConfig(key) },
+    { name: 'Other MCP clients', how: 'The address and the header, in the usual mcpServers shape.', text: genericConfig(key) },
+  ]
+  return (
+    <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>AI assistants (MCP)</div>
+      <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.5 }}>
+        Let Claude or another AI assistant read your tasks, projects and calendar — and, if you allow it, add tasks and tick them off for you.
+      </div>
+      {!row && !shown && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</div>}
+      {row && !shown && (
+        <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)' }}>
+          key made {day(row.updated_at)} · {row.scope === 'read' ? 'read only' : 'read & write'} · {row.last_used_at ? `last used ${day(row.last_used_at)}` : 'not used yet'}
+        </div>
+      )}
+      {shown && (
+        <>
+          <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-body)' }}>Your AI access key — copy it now, it won’t be shown again:</div>
+          <div style={{ ...box, ...mono, color: 'var(--ink-body)' }}>{shown}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            <Button variant="secondary" onClick={() => copy(shown, 'Key')}>Copy key</Button>
+          </div>
+        </>
+      )}
+      <div style={{ marginTop: 12 }}>
+        <Seg<McpScope> value={scope} onChange={setScope} options={[{ value: 'read_write', label: 'Read & write' }, { value: 'read', label: 'Read only' }]} />
+      </div>
+      <div style={fhelp}>{scope === 'read' ? 'the assistant can look but never change anything' : 'the assistant can also add tasks, tick them off, move them to tomorrow and add to your inbox'}</div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <Button variant="secondary" disabled={busy} onClick={() => void run(async () => setShown(await createMcpKey(scope)))}>
+          {row || shown ? 'New key' : 'Create key'}
+        </Button>
+        {row && (
+          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteMcpKey(row.id); setShown(null) })}>
+            Turn off
+          </Button>
+        )}
+      </div>
+      {err && <div style={{ ...fhelp, color: 'var(--acc-terra)' }}>{err}</div>}
+      <div style={fhelp}>a new key stops the old one · your journal and people are never shared · 500 tool calls a day</div>
+      <div style={{ ...box, ...mono }}>{MCP_URL}</div>
+      <div style={{ marginTop: 8 }}>
+        <Button variant="secondary" onClick={() => copy(MCP_URL, 'Server address')}>Copy server address</Button>
+      </div>
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', cursor: 'pointer', minHeight: 24 }}>Connect an assistant</summary>
+        {!shown && <p style={{ margin: '8px 0 0', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>Make a key first — right after you do, these come with it filled in.</p>}
+        {clients.map((c) => (
+          <div key={c.name} style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{c.name}</div>
+            <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 2 }}>{c.how}</div>
+            <pre style={{ ...box, ...mono, margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{c.text}</pre>
+            <div style={{ marginTop: 6 }}>
+              <Button variant="secondary" onClick={() => copy(c.text, c.name)}>Copy for {c.name}</Button>
+            </div>
+          </div>
+        ))}
+      </details>
+    </SCard>
+  )
+}
+
 const fieldInput: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontFamily: 'inherit' }
 
 // P6 step 1: GitHub issues → inbox. The PAT lives only in this input until it is posted to the
@@ -1001,6 +1091,12 @@ function IntegrationsPage() {
       </div>
       {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
       <PaperSettingsCard />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+        <span style={flabel}>AI assistants</span>
+        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      </div>
+      <McpCard />
     </div>
   )
 }
@@ -1257,6 +1353,9 @@ function MobileSettings() {
       </div>
       <div style={{ marginTop: 12 }}>
         <PaperSettingsCard />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <McpCard />
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>
