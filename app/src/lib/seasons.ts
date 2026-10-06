@@ -71,7 +71,9 @@ export interface CairoWeather {
 // topbar echo just omits the weather half and shows the season on its own.
 export function useCairoWeather(enabled = true) {
   return useQuery({
-    enabled,
+    // The browser harnesses (`--mode mock`, docs/log/assets/*/verify.mjs) are offline by design; this
+    // was their one real network call, and a slow answer timed out their "network idle" waits.
+    enabled: enabled && import.meta.env.MODE !== 'mock',
     queryKey: ['cairo-weather'],
     queryFn: async (): Promise<CairoWeather> => {
       const res = await fetch(
