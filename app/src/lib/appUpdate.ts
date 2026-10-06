@@ -13,9 +13,9 @@ export type AppPlatform = 'web' | 'android' | 'windows'
 export const RELEASES_LATEST = 'https://api.github.com/repos/khairyKY/kais-flow/releases/latest'
 
 export type UpdateResult =
-  | { kind: 'reload' } // web: a newer deploy is live
-  | { kind: 'download'; version: string; url: string } // native: a newer release, its installer
-  | { kind: 'pending'; version: string } // native: a newer release without this platform's file (yet)
+  | { kind: 'reload'; version?: string } // web: a newer deploy is live (its release, when version.json says)
+  | { kind: 'download'; version: string; url: string; body?: string | null } // native: a newer release, its installer (+ its notes)
+  | { kind: 'pending'; version: string; body?: string | null } // native: a newer release without this platform's file (yet)
   | { kind: 'current'; version: string | null }
   | { kind: 'dev' } // a dev server: nothing was deployed from it
   | { kind: 'offline' }
@@ -45,6 +45,8 @@ export function releaseAssetName(tag: string, platform: 'android' | 'windows'): 
 
 interface Release {
   tag_name: string
+  /** The release's notes (release.yml writes them from site/src/releases.json; lib/whatsNew reads them). */
+  body?: string | null
   assets?: { name: string; browser_download_url: string }[]
 }
 
@@ -53,7 +55,7 @@ export function nativeVerdict(release: Release, version: string, platform: 'andr
   const tag = release.tag_name
   if (compareVersions(tag, version) <= 0) return { kind: 'current', version: `v${version.replace(/^v/i, '')}` }
   const asset = release.assets?.find((a) => a.name === releaseAssetName(tag, platform))
-  return asset ? { kind: 'download', version: tag, url: asset.browser_download_url } : { kind: 'pending', version: tag }
+  return asset ? { kind: 'download', version: tag, url: asset.browser_download_url, body: release.body } : { kind: 'pending', version: tag, body: release.body }
 }
 
 export function appPlatform(w: Window = window): AppPlatform {
@@ -91,14 +93,14 @@ export async function checkForUpdate(platform: AppPlatform = appPlatform()): Pro
       if (!mine) return { kind: 'dev' }
       const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) return { kind: 'offline' }
-      const live = (await res.json()) as { commit?: string }
-      return live.commit && live.commit !== 'unknown' && live.commit !== mine.commit ? { kind: 'reload' } : { kind: 'current', version: null }
+      const live = (await res.json()) as { commit?: string; version?: string }
+      return live.commit && live.commit !== 'unknown' && live.commit !== mine.commit ? { kind: 'reload', version: live.version } : { kind: 'current', version: null }
     }
     const version = await installedVersion(platform)
     const res = await fetch(RELEASES_LATEST, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' })
     if (!res.ok) return { kind: 'offline' }
     const release = (await res.json()) as Release
-    if (!version) return { kind: 'pending', version: release.tag_name }
+    if (!version) return { kind: 'pending', version: release.tag_name, body: release.body }
     return nativeVerdict(release, version, platform)
   } catch {
     return { kind: 'offline' }

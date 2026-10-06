@@ -34,6 +34,7 @@ const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
+import { WhatsNewHost } from '../features/whats-new/WhatsNew'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -561,7 +562,8 @@ export function AppLayout() {
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
   const zone = useAppZone()
-  useOfferDeviceZone(useAuth().session?.user.id)
+  const user = useAuth().session?.user
+  useOfferDeviceZone(user?.id)
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
@@ -859,6 +861,8 @@ export function AppLayout() {
         <TrayBridge />
       </Suspense>
       <PaperHost />
+      {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}
+      <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
       <ToastHost />
       {signOutFlow.prompt}
     </div>
