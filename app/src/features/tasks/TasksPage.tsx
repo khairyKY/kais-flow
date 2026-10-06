@@ -5,6 +5,7 @@ import { Select } from '../../components/Select'
 import { Link, useSearchParams } from 'react-router'
 import { useOpenTask } from './openTask'
 import { useDomains, createDomain } from '../domains/api'
+import { DomainList } from '../domains/DomainList'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
@@ -279,16 +280,9 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
+        {/* Kai 2026-10-06: each domain renames in place, ⋯ / right-click → Rename · Colour · Merge · Delete. */}
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
-          {domains.map((d) => (
-            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
-              {d.name}
-              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                {open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length}
-              </span>
-            </div>
-          ))}
+          <DomainList domains={domains} meta={(d) => open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length} />
         </div>
         <InlineAdd label="Add domain" placeholder="New domain…" color="var(--acc-terra)" onSubmit={(name) => createDomain(name)} />
       </TapeCard>

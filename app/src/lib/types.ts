@@ -3,6 +3,8 @@ export interface Domain {
   name: string
   color: string | null
   sort_order: number
+  /** In Trash (0051): set = hidden everywhere; what's in it keeps its domain_id until compost. */
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }

@@ -3,7 +3,9 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import type { Domain, Project, Task } from '../../lib/types'
+import { toastUndo } from '../../lib/undo'
+import type { Domain } from '../../lib/types'
+import { DOMAIN_TABLES, liveDomains, planDomainMerge, type DomainRef } from './organize'
 
 export function useDomains() {
   return useQuery({
@@ -13,6 +15,8 @@ export function useDomains() {
       if (error) throw error
       return data as Domain[]
     },
+    // Trashed domains (0051) stay in the cache for Undo; no list shows them (Trash reads its own).
+    select: liveDomains,
   })
 }
 
@@ -42,6 +46,7 @@ export function renameDomain(domain: Domain, name: string): void {
 
 export function recolorDomain(domain: Domain, color: string): void {
   writeRow('domains', { ...domain, color })
+  logActivity('domain.recolored', 'domain', domain.id, { color })
 }
 
 export function reorderDomains(ordered: Domain[]): void {
@@ -50,20 +55,38 @@ export function reorderDomains(ordered: Domain[]): void {
   })
 }
 
-/** Re-points every project/task under `fromId` to `intoId`, then deletes the now-empty domain. */
+/** Delete = Trash + "Moved to Trash · Undo", no confirm (Flow Audit §4). What's in it is not
+ * touched — it keeps living without a domain until Undo / Restore (rules: ./organize.ts). */
+export function deleteDomainWithUndo(domain: Domain): void {
+  writeRow('domains', { ...domain, deleted_at: nowIso(), updated_at: nowIso() })
+  logActivity('domain.deleted', 'domain', domain.id, { name: domain.name })
+  toastUndo('Moved to Trash', () => restoreTrashedDomain(domain))
+}
+
+export function restoreTrashedDomain(domain: Domain): void {
+  writeRow('domains', { ...domain, deleted_at: null, updated_at: nowIso() })
+  logActivity('domain.restored', 'domain', domain.id, {})
+}
+
+/** Moves every project / area / task / person / routine / note under `fromId` into `intoId`, then
+ * trashes the emptied domain; Undo moves them all back and restores it. Reads the caches — the two
+ * places that offer Merge (Settings → Organize, the Tasks Organize card) load projects, areas and
+ * tasks first. ponytail: a people / routines / notes cache that never loaded this session isn't
+ * moved — those rows stay on the trashed domain and read as "no domain" (Undo still restores them);
+ * a server-side merge RPC through the outbox is the upgrade if that ever matters. */
 export function mergeDomain(fromId: string, intoId: string): void {
-  const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
-  for (const p of projects) {
-    if (p.domain_id === fromId) writeRow('projects', { ...p, domain_id: intoId })
-  }
-  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-  for (const t of tasks) {
-    if (t.domain_id === fromId) writeRow('tasks', { ...t, domain_id: intoId })
-  }
   const domains = queryClient.getQueryData<Domain[]>(['domains']) ?? []
-  const fromDomain = domains.find((d) => d.id === fromId)
-  if (fromDomain) {
-    writeRow('domains', fromDomain, 'delete')
-    logActivity('domain.merged', 'domain', fromId, { into: intoId })
-  }
+  const from = domains.find((d) => d.id === fromId)
+  const into = domains.find((d) => d.id === intoId)
+  if (!from || !into || fromId === intoId) return
+  const rows = Object.fromEntries(DOMAIN_TABLES.map((t) => [t, queryClient.getQueryData<DomainRef[]>([t]) ?? []]))
+  const moves = planDomainMerge(fromId, intoId, rows)
+  for (const m of moves) writeRow(m.table, m.after)
+  const trashed = { ...from, deleted_at: nowIso(), updated_at: nowIso() }
+  writeRow('domains', trashed)
+  logActivity('domain.merged', 'domain', fromId, { into: intoId, name: from.name, moved: moves.length })
+  toastUndo(`Merged into ${into.name}`, () => {
+    for (const m of moves) writeRow(m.table, m.before)
+    restoreTrashedDomain(from)
+  })
 }

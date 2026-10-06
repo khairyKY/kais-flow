@@ -27,6 +27,7 @@ import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
+import { DomainsSettings } from '../domains/DomainList'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
 // Card shell mirrors the contract's `.scard` class (tape-topped, radius 3, shadow-card).
@@ -727,7 +728,7 @@ function TrashCard() {
         <span style={{ flex: 1 }} />
         <Link to="/trash" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, textDecoration: 'none' }}>Open trash</Link>
       </div>
-      <div style={fhelp}>deleted tasks, inbox items, events, journal entries, projects and areas · composts after 30 days</div>
+      <div style={fhelp}>deleted tasks, inbox items, events, journal entries, projects, areas and domains · composts after 30 days</div>
     </SCard>
   )
 }
@@ -1094,7 +1095,18 @@ export function SoundCatalogCard() {
 // The capture endpoint's key card lives on the Integrations page, so it has no row of its own.
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card
 // (punch 21); 'Trash' is punch 50's entry point.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile', 'App'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Organize', 'Trash', 'Profile', 'App'] as const
+
+/** Kai 2026-10-06: domains are made, renamed, recoloured, merged and deleted here (and on the Tasks
+ * page's Organize card) — no longer only from Tasks, create-only. */
+function OrganizeCard() {
+  return (
+    <SCard>
+      <div style={{ ...flabel, marginBottom: 12 }}>Organize · domains</div>
+      <DomainsSettings />
+    </SCard>
+  )
+}
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -1156,6 +1168,7 @@ function DesktopSettings() {
             <div id="settings-Notifications"><NotificationsCard /></div>
             <div id="settings-Resurfacing"><ResurfacingCard /></div>
             <ImportCard />
+            <div id="settings-Organize"><OrganizeCard /></div>
             <div id="settings-Trash"><TrashCard /></div>
             <div id="settings-Profile"><ProfileCard /></div>
             <div id="settings-App"><AppUpdateCard /></div>
@@ -1223,6 +1236,11 @@ function MobileSettings() {
 
       <div style={{ marginTop: 12 }}>
         <AppUpdateCard />
+      </div>
+
+      {/* The phone has no Organize rail — its domains live here. */}
+      <div id="settings-Organize" style={{ marginTop: 12 }}>
+        <OrganizeCard />
       </div>
 
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', marginTop: 12, overflow: 'hidden' }}>
