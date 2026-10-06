@@ -4,7 +4,8 @@
 // "try again" line. This file is its one detector and its one wording, shared by capture (voice +
 // text parse) and chat.
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { cairoDateKey } from '../../lib/dateShortcuts'
+import { zoneDateKey } from '../../lib/dateShortcuts'
+import { DEFAULT_ZONE } from '../../lib/appZone'
 
 export const AI_ALLOWANCE_USED_UP = "Today's AI allowance is used up — it refills tomorrow."
 
@@ -47,12 +48,14 @@ export async function isDailyLimitError(error: unknown): Promise<boolean> {
 // ── Polish E: a voice daily_limit is remembered for the rest of that Cairo day, on this device ──
 // The next tap on voice then says so up front and offers typing, instead of letting you record
 // something that can't be transcribed today. Tagged with the account, so another account on this
-// browser isn't told its allowance is gone. Cairo's day, because that's the day the server counts.
+// browser isn't told its allowance is gone. Cairo's day, because that's the day the server counts
+// (ai_usage is one shared Groq budget, so its day is Cairo's for every user, whatever their zone).
+const QUOTA_ZONE = DEFAULT_ZONE
 const VOICE_LIMIT_KEY = 'kf-voice-limit-day'
 
 export function rememberVoiceLimitReached(uid: string | undefined, now: Date = new Date()): void {
   try {
-    localStorage.setItem(VOICE_LIMIT_KEY, JSON.stringify({ day: cairoDateKey(now), uid: uid ?? null }))
+    localStorage.setItem(VOICE_LIMIT_KEY, JSON.stringify({ day: zoneDateKey(now, QUOTA_ZONE), uid: uid ?? null }))
   } catch {
     // Storage blocked (private window) — the next tap just records and finds out again.
   }
@@ -63,7 +66,7 @@ export function voiceLimitReachedToday(uid: string | undefined, now: Date = new 
     const raw = localStorage.getItem(VOICE_LIMIT_KEY)
     if (!raw) return false
     const saved = JSON.parse(raw) as { day?: unknown; uid?: unknown } | null
-    return saved?.day === cairoDateKey(now) && saved.uid === (uid ?? null)
+    return saved?.day === zoneDateKey(now, QUOTA_ZONE) && saved.uid === (uid ?? null)
   } catch {
     return false
   }

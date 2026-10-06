@@ -1,4 +1,5 @@
 import { clock } from '../../../../supabase/functions/notify/copy.ts'
+import { appZone } from '../../lib/appZone'
 
 // The tray's look and menu from the app's state (Tray and Notifications.dc.html 12a, 12d). Pure:
 // useTrayBridge feeds it, tray.rs draws it.
@@ -48,7 +49,7 @@ export function focusMenuLabel(f: TrayFocus): string {
 /** The menu's pause row: "Pause notifications for 1 hour", or "Resume notifications · paused until 10:41". */
 export function pauseMenuLabel(pausedUntil: string | null | undefined, now: Date): string {
   return pausedUntil && new Date(pausedUntil).getTime() > now.getTime()
-    ? `Resume notifications · paused until ${clock(pausedUntil)}`
+    ? `Resume notifications · paused until ${clock(pausedUntil, appZone())}`
     : 'Pause notifications for 1 hour'
 }
 

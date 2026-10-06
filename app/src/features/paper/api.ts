@@ -10,7 +10,8 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
-import { cairoDateKey } from '../../lib/dateShortcuts'
+import { cairoDateKey, zoneDateKey } from '../../lib/dateShortcuts'
+import { DEFAULT_ZONE } from '../../lib/appZone'
 import { createTask } from '../tasks/api'
 import { createEvent } from '../calendar/api'
 import { upsertJournalEntry } from '../journal/api'
@@ -68,9 +69,9 @@ export function usePageUrls(capture: CaptureRow | null | undefined): string[] {
   return local ?? signed.data ?? []
 }
 
-/** Pages read today (Cairo) — the server's own count (ai_usage, kind 'vision'). */
+/** Pages read today (Cairo, the shared quota's day for every user) — the server's own count (ai_usage, kind 'vision'). */
 export function useScansToday(): number {
-  const day = cairoDateKey(new Date())
+  const day = zoneDateKey(new Date(), DEFAULT_ZONE)
   const { data } = useQuery({
     queryKey: ['ai_usage', 'vision', day],
     queryFn: async () => {

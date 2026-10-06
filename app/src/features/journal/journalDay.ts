@@ -2,8 +2,7 @@
 // Colocated + unit-tested, same convention as inbox/inboxDisplay.ts and tasks/taskDisplay.ts.
 // TZ Africa/Cairo per house convention (store UTC, render Cairo).
 import type { JournalEntry } from '../../lib/types'
-
-const TZ = 'Africa/Cairo'
+import { appZone } from '../../lib/appZone'
 
 /** An empty row is a "+ New entry" the user never typed into. It must not count as a day
  * written, or the streak / Day-N / "kept" markers would lie (punch item 10). */
@@ -111,5 +110,5 @@ export function daysLabel(n: number): string {
 
 /** Timestamp shown above each entry inside the notebook card. */
 export function entryTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
 }

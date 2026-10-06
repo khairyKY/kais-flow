@@ -5,8 +5,7 @@
 // today — a 10:00 meeting at 08:38, or a walk that ended at 07:30. Now it follows the clock.
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
-
-const TZ = 'Africa/Cairo'
+import { appZone } from '../../lib/appZone'
 
 export type UpNextTone = 'now' | 'time'
 
@@ -23,7 +22,7 @@ export function isInProgress(startsAt: string, endsAt: string, now: Date): boole
 
 /** The clock the row prints, in Cairo whatever the device zone (same format as the row's range). */
 export function upNextClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
 }
 
 /** "Now" while the event is in progress, otherwise its start time. */

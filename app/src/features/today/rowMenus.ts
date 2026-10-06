@@ -8,6 +8,7 @@ import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, cairoToIso } from '../calendar/eventTime'
 import { deleteEvent, moveOrResizeEvent, restoreEvent } from '../calendar/api'
 import type { CalendarEvent } from '../../lib/types'
+import { appZone } from '../../lib/appZone'
 
 /** The same Cairo wall-clock slot one Cairo day later, same length. DST-safe: the new start is
  * read from the tz database for its own date, not "+24h" (Egypt shifts its clock twice a year). */
@@ -48,7 +49,7 @@ export function moveBlockToTomorrow(event: CalendarEvent): void {
  * keeps the time it was given — only undated "Tomorrow" means 09:00 (lib/dateShortcuts). */
 export function blockTomorrowHint(event: CalendarEvent): string {
   const next = new Date(sameTimeTomorrow(event.starts_at, event.ends_at).starts_at)
-  return `${next.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Africa/Cairo' })} ${cairoTimeKey(next)}`
+  return `${next.toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })} ${cairoTimeKey(next)}`
 }
 
 /** The menu on an Up next row with no task behind it: it only opens or goes. (A task-backed row

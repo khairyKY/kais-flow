@@ -82,14 +82,14 @@ export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 
 export interface ParseCommandOptions {
   /** Reference instant for "tomorrow"/"friday"/"10am" (tests pin it). Defaults to now. */
   now?: Date
-  /** Whose wall clock a typed time is read on. The command bar reads Cairo's (T-4: the app's one
-   * day boundary and render zone). `device` keeps the old reading for callers whose own form is
-   * device-local — the calendar's QuickCreate. */
+  /** Whose wall clock a typed time is read on. `'cairo'` (a historical name) is the user's own zone,
+   * app_settings.timezone (T-4: the app's one day boundary and render zone) — what the command bar
+   * reads. `device` keeps the old reading for callers whose own form is device-local. */
   zone?: 'cairo' | 'device'
 }
 
-/** T-4: chrono read the text against Cairo's clock (see the reference in `parseCommand`), so its
- * components are Cairo wall-clock: turn them into the instant with the tz database, which gets
+/** T-4: chrono read the text against the user's clock (see the reference in `parseCommand`), so its
+ * components are that wall-clock: turn them into the instant with the tz database, which gets
  * a date across a DST switch right. An explicit zone in the text ("3pm UTC") or a relative time
  * ("in 2 hours") is already an exact instant, so chrono's own answer stands. */
 function cairoInstant(start: chrono.ParsedComponents): string {

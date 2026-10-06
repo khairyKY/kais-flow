@@ -1,7 +1,8 @@
 // Paper capture — the pure half: resize maths, box → crop, confidence buckets, the daily cap, which
 // captures to read again, and the results sheet → the writes "Add all" makes. Tested in paperMath.test.ts.
 import { parseCommand } from '../command-bar/parseCommand'
-import { cairoDateKey } from '../../lib/dateShortcuts'
+import { cairoDateKey, zoneDateKey } from '../../lib/dateShortcuts'
+import { DEFAULT_ZONE } from '../../lib/appZone'
 import type { Project } from '../../lib/types'
 
 /** What the `capture-image` function stores per line (supabase/functions/capture-image/read.ts). */
@@ -87,10 +88,10 @@ export function scansLeft(used: number, limit = DAILY_PAGES): number {
 }
 
 /** Read a queued/half-read capture again? Never one already reviewed; a daily-limit one only on a
- * later Cairo day; a "reading" one only once it has sat still 2 minutes (another device may be on it). */
+ * later Cairo day (the server's quota day, whatever the user's zone); a "reading" one only once it has sat still 2 minutes (another device may be on it). */
 export function shouldResume(row: Pick<CaptureRow, 'status' | 'error' | 'reviewed_at' | 'updated_at' | 'pages_read' | 'pages' | 'storage_paths'>, now: Date): boolean {
   if (row.reviewed_at || row.pages_read >= row.pages || row.storage_paths.length === 0) return false
-  if (row.status === 'queued') return row.error !== 'daily_limit' || cairoDateKey(new Date(row.updated_at)) !== cairoDateKey(now)
+  if (row.status === 'queued') return row.error !== 'daily_limit' || zoneDateKey(new Date(row.updated_at), DEFAULT_ZONE) !== zoneDateKey(now, DEFAULT_ZONE)
   if (row.status === 'reading') return now.getTime() - new Date(row.updated_at).getTime() > 2 * 60_000
   return false
 }

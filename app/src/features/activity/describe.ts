@@ -1,5 +1,6 @@
 import type { ActivityLogEntry } from '../../lib/types'
 import { digestNotice, nudgeNotice, reminderNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import { appZone } from '../../lib/appZone'
 import type { KindId } from '../notifications/kinds'
 
 // What each activity_log row says on the Activity page (Activity.dc.html 1a/1b voice: a verb, the
@@ -177,7 +178,7 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
         ...line(said?.title || named(name, (q) => `A reminder about ${q}`, 'A reminder'), said?.body ?? ''),
         category: 'notifications',
         icon: 'notice',
-        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date()).actions : [], taskIds: [id] },
+        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date(), appZone()).actions : [], taskIds: [id] },
       }
     }
     case 'task.skipped':

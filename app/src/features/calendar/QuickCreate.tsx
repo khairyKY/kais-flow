@@ -16,6 +16,7 @@ import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { writeRow } from '../../lib/outbox'
+import { appZone } from '../../lib/appZone'
 
 // ── Editor.dc.html 2a/2b (compact popover) · 1b/1c/1d field
 // content (expanded, via "More options ↗"). One component: the kind switcher
@@ -290,7 +291,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)' }}>
           {(parsed?.dueAt || eventDate) && (
             <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
-              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Cairo' })}
+              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
             </span>
           )}
           {parsed?.projectMatch && <span style={chipStyle('color-mix(in srgb, var(--acc-moss) 20%, transparent)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}
