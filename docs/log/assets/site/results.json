@@ -1,0 +1,246 @@
+{
+ "pass": 48,
+ "total": 48,
+ "results": [
+  {
+   "name": "sitemap lists the pages",
+   "ok": true,
+   "detail": "29 urls"
+  },
+  {
+   "name": "robots.txt points at the sitemap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "field-notes RSS is valid-looking XML",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "every internal link, image and OG card resolves",
+   "ok": true,
+   "detail": "82 checked"
+  },
+  {
+   "name": "external links answer (app, GitHub release assets, repo)",
+   "ok": true,
+   "detail": "22 checked"
+  },
+  {
+   "name": "an unknown address gets the botanical 404",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: 30 pages load with no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: no sideways scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: every image loads",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: every image has alt (empty for decoration)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: exactly one h1 per page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: title, description, OG image and lang on every page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: text contrast AA (1832 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: 30 pages load with no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: no sideways scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: every image loads",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: every image has alt (empty for decoration)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: exactly one h1 per page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: title, description, OG image and lang on every page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: text contrast AA (1832 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: 30 pages load with no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: no sideways scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: every image loads",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: every image has alt (empty for decoration)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: exactly one h1 per page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: title, description, OG image and lang on every page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: text contrast AA (1622 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: 30 pages load with no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: no sideways scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: every image loads",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: every image has alt (empty for decoration)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: exactly one h1 per page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: title, description, OG image and lang on every page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: text contrast AA (1622 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "motion: the story pins (sticky stage, 5 screens of scroll)",
+   "ok": true,
+   "detail": "sticky, 3600px"
+  },
+  {
+   "name": "motion: each screen of scroll shows the next beat, one at a time",
+   "ok": true,
+   "detail": "0,1,2,3,4"
+  },
+  {
+   "name": "motion: the fifth beat turns the stage to night",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "motion: beats animate transform/opacity only",
+   "ok": true,
+   "detail": "opacity, transform"
+  },
+  {
+   "name": "reduced motion 1440: no pinning, the five beats stack, loops paused",
+   "ok": true,
+   "detail": "relative, 5 beats, 3521px, anim none"
+  },
+  {
+   "name": "reduced motion 390: no pinning, the five beats stack, loops paused",
+   "ok": true,
+   "detail": "relative, 5 beats, 3932px, anim none"
+  },
+  {
+   "name": "sun/moon toggle flips the theme and remembers it",
+   "ok": true,
+   "detail": "day → night (rgb(33, 29, 48)), after reload night"
+  },
+  {
+   "name": "keyboard: “Skip to content” comes first, focus shows the ring",
+   "ok": true,
+   "detail": "skip, ring rgb(251, 246, 233) 0px 0px 0px 2px, rgb(77, 106, 117) 0px 0p"
+  },
+  {
+   "name": "the version shown comes from GitHub’s latest release",
+   "ok": true,
+   "detail": "v1.0.17,v1.0.17,v1.0.17"
+  },
+  {
+   "name": "the header condenses after scrolling",
+   "ok": true,
+   "detail": "64px"
+  },
+  {
+   "name": "phone menu opens with the links, Esc closes it",
+   "ok": true,
+   "detail": "6 links"
+  },
+  {
+   "name": "/ar/ is Arabic and right-to-left, Naskh headings, ع is current, app screens stay LTR",
+   "ok": true,
+   "detail": "ar · rtl · \"Noto Naskh Arabic\", \"Source Serif 4\", \"Source Serif Pro\", Georgia, serif · ع · ltr"
+  },
+  {
+   "name": "guides search filters as you type",
+   "ok": true,
+   "detail": "Install on Windows"
+  },
+  {
+   "name": "every page transfers under 1 MB (desktop, cold cache, all lazy images loaded)",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}
