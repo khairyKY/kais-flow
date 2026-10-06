@@ -5,7 +5,7 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 export interface SearchHit {
   // Migration 0031 widened search_hybrid past tasks/inbox to people, events, projects, journal.
-  entity_type: 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'journal_entry'
+  entity_type: 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry'
   entity_id: string
   title: string
   snippet: string | null

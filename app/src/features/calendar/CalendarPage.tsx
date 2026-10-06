@@ -23,6 +23,7 @@ import { toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
 import { slotFields } from './eventTime'
 import { EventDetailsPanel } from './EventDetailsPanel'
+import { useLinkedEvent } from './linkedEvent'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
@@ -137,6 +138,14 @@ function DesktopCalendar() {
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  // Kai 2026-10-06: a search hit for an event opened this week, wherever the event was.
+  // /calendar?event=<id> turns the grid to its day and opens its details (once it's loaded).
+  const linked = useLinkedEvent(events)
+  if (linked.open) setSelectedEvent(linked.open)
+  const linkedStart = linked.event?.starts_at
+  useEffect(() => {
+    if (linkedStart) gridRef.current?.gotoDate(new Date(linkedStart))
+  }, [linkedStart])
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'today' })

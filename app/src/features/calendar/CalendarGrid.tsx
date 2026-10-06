@@ -39,6 +39,8 @@ export interface CalendarGridHandle {
   prev(): void
   next(): void
   today(): void
+  /** Shows the range holding `date` (a search hit for an event — Kai 2026-10-06). */
+  gotoDate(date: Date): void
   /** Drops the slot highlight (quick-create closed) — FullCalendar keeps it, and a click on a
    * still-selected slot never selects again, so the same slot couldn't be reopened. */
   unselect(): void
@@ -266,6 +268,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     unselect: () => fcRef.current?.getApi().unselect(),
     prev: () => fcRef.current?.getApi().prev(),
     next: () => fcRef.current?.getApi().next(),
+    gotoDate: (date) => {
+      const api = fcRef.current?.getApi()
+      if (!api) return
+      api.gotoDate(date)
+      api.scrollToTime(scrollTimeNear(date, scrollLeadMinutes))
+    },
     // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
     // which would scroll every ancestor too).
     today: () => {

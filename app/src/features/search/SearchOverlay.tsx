@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { searchHitHref, SEARCH_GROUPS } from './api'
+import { SEARCH_GROUPS, useOpenSearchHit } from './api'
 import { useSearch } from './useSearch'
 import { SEARCH_RESTING } from './searchState'
-import { useTasks } from '../tasks/api'
-import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { KeyChip } from '../../components/kit'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import type { SearchHit } from '../../lib/types'
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { data: allTasks = [] } = useTasks()
   const [query, setQuery] = useState('')
   const search = useSearch(query)
   const { results, status } = search
@@ -19,7 +16,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const openTask = useOpenTask()
+  const openHit = useOpenSearchHit()
 
   useEscapeStack(open, onClose)
   useBodyScrollLock(open)
@@ -36,9 +33,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   function goTo(hit: SearchHit) {
     onClose()
-    // Wave N: a task opens as the task sheet on a phone; desktop keeps the jump to its row.
-    if (hit.entity_type === 'task') openTask(hit.entity_id, searchHitHref(hit, allTasks))
-    else navigate(searchHitHref(hit, allTasks))
+    openHit(hit) // the thing itself — a task as the sheet / editor (./api.ts searchDestination)
   }
 
   function viewAll() {

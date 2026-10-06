@@ -318,6 +318,57 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
   }
 
+  // ── 4 · A search result opens the thing itself — every entity type search_hybrid returns ──
+  if (want('4')) {
+    const PERSON = { id: id('7', 1), user_id: UID, name: 'Remy Manage', facts: [], domain_id: null, created_at: T, updated_at: T }
+    const FILED = { id: id('8', 1), user_id: UID, kind: 'text', raw_text: 'remanage the vendor contract', transcript: null, ai_parse: null, confidence: null, status: 'filed', filed_task_id: id('1', 2), payload: null, snoozed_until: null, deleted_at: null, created_at: T, updated_at: T }
+    const ENTRY = { id: id('a', 9), user_id: UID, body: 'Remanaged the garden beds today', entry_date: '2026-09-14', mood: null, transcript: null, media_paths: [], gratitude: [], deleted_at: null, created_at: '2026-09-14T07:00:00Z', updated_at: '2026-09-14T07:00:00Z' }
+    const later = new Date(Date.now() + 16 * 86400000)
+    later.setUTCHours(8, 0, 0, 0)
+    const EVENT = { id: id('b', 1), user_id: UID, title: 'Remanage review', starts_at: later.toISOString(), ends_at: new Date(later.getTime() + 3600000).toISOString(), all_day: false, task_id: null, source: 'local', gcal_id: null, gcal_etag: null, busy: true, type: 'event', color: null, deleted_at: null, created_at: T, updated_at: T }
+    const hit = (entity_type, entity_id, title) => ({ entity_type, entity_id, title, snippet: null, score: 1 })
+    const hits = [
+      hit('task', id('1', 5), 'Remanage the hosting plan'), // done, inside a project
+      hit('project', SITE.id, 'Shaheen Website'),
+      hit('area', AREA.id, 'Health'),
+      hit('person', PERSON.id, 'Remy Manage'),
+      hit('inbox_item', FILED.id, 'remanage the vendor contract'), // filed — the Inbox is at zero
+      hit('journal_entry', ENTRY.id, 'Remanaged the garden beds today'), // three weeks ago
+      hit('calendar_event', EVENT.id, 'Remanage review'), // two weeks out
+    ]
+    const rows = { people: [PERSON], inbox_items: [FILED], journal_entries: [ENTRY], calendar_events: [EVENT] }
+    const cases = [
+      ['remanage the hosting', 'Tasks', 'task (done, in a project)', async (page) => (await page.locator('textarea, input').evaluateAll((els) => els.some((e) => e.value === 'Remanage the hosting plan')))],
+      ['shaheen', 'Projects', 'project', async (page) => (await page.getByRole('heading', { level: 1 }).innerText()).includes('Shaheen Website')],
+      ['health', 'Areas', 'area', async (page) => (await page.getByRole('heading', { level: 1 }).innerText()).includes('Health')],
+      ['remy', 'People', 'person', async (page) => (await page.locator('.app-main-content').innerText()).includes('Remy Manage')],
+      ['vendor', 'Inbox', 'inbox item (filed, Inbox at zero)', async (page) => (await page.locator(`[id="inbox-${FILED.id}"]`).count()) === 1 && /already filed/i.test(await page.locator(`[id="inbox-${FILED.id}"]`).innerText())],
+      ['garden beds', 'Journal', 'journal entry (an older day)', async (page) => (await page.locator(`[id="journal-${ENTRY.id}"]`).count()) === 1 && (await page.locator(`[id="journal-${ENTRY.id}"]`).isVisible())],
+      ['review', 'Events', 'calendar event (two weeks out)', async (page) => (await page.locator('input').evaluateAll((els) => els.some((e) => e.value === 'Remanage review'))) || ((await page.getByRole('dialog').count()) > 0 && (await page.getByRole('dialog').last().innerText()).includes('Remanage review'))],
+    ]
+    for (const view of DAY ? [undefined, PHONE] : [undefined]) {
+      const v = view ? 'phone' : 'desktop'
+      for (const [q, group, label, landed] of cases) {
+        const { ctx, page, errors } = await open('/today', { theme, view, rows, hits, scale: view ? 1 : 1.5 })
+        await page.keyboard.press('Control+/')
+        await sleep(300)
+        await page.keyboard.type(q)
+        await sleep(900)
+        const groupLabel = page.getByText(group, { exact: true }).first()
+        const row = page.locator('button', { hasText: hits.find((h) => h.title.toLowerCase().includes(q))?.title }).first()
+        if (q === 'remanage the hosting' && DAY && !view) await shot(page, N('4-search-overlay-150'))
+        const found = (await groupLabel.count()) > 0 && (await row.count()) > 0
+        await row.click()
+        await sleep(1300)
+        const ok = found && (await landed(page))
+        check(`${N('search')} ${v}: ${label} → opens it (${new URL(page.url()).pathname}${new URL(page.url()).search})`, ok)
+        if (q === 'garden beds' || q === 'review' || q === 'vendor' || (q === 'remanage the hosting' && view)) await shot(page, N(`4-search-${label.split(' ')[0]}-${v}`))
+        check(`${N('search')} ${v}: ${label} no page errors`, errors.length === 0, errors.join(' | '))
+        await ctx.close()
+      }
+    }
+  }
+
   // ── 7 · Change a thing's type: project ↔ retainer, project → area, area → domain, domain → area ──
   if (want('7')) {
     const { ctx, page, errors, state } = await open('/projects', { theme, scale: 1.5 })
