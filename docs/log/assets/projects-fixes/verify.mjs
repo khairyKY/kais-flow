@@ -117,6 +117,9 @@ const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png
 const writesTo = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').map((w) => (Array.isArray(w.body) ? w.body[0] : w.body))
 const logged = (state, from = 0) => writesTo(state, 'activity_log', from).map((a) => a.event_type)
 const noHScroll = (page) => page.evaluate(() => { const m = document.querySelector('.app-main-content'); return (!m || m.scrollWidth <= m.clientWidth + 1) && document.documentElement.scrollWidth <= innerWidth + 1 })
+// Scroll first and let it settle: our menus close on a page scroll (they'd detach from their row),
+// and Playwright's scroll-into-view lands its scroll event just after the menu opens.
+const rightClick = async (loc) => { await loc.scrollIntoViewIfNeeded(); await sleep(400); await loc.click({ button: 'right' }) }
 const toastUndo = async (page) => { await page.locator('.kf-toast').last().getByRole('button', { name: /undo/i }).click(); await sleep(600) }
 
 for (const theme of ['day', 'night']) {
@@ -127,7 +130,7 @@ for (const theme of ['day', 'night']) {
   if (want('1')) for (const scale of DAY ? [1, 1.5] : [1.5]) {
     const { ctx, page, errors, state } = await open(`/projects/${SITE.id}`, { theme, scale })
     const row = page.locator(`[id="task-${id('1', 1)}"]`)
-    await row.click({ button: 'right' })
+    await rightClick(row)
     await sleep(400)
     // A real hand: rest on "Move to project…", then head diagonally down-right into the list —
     // across Priority / Repeat, which used to swap the list for theirs.
@@ -148,7 +151,7 @@ for (const theme of ['day', 'night']) {
     check(`${N('move')} @${scale * 100}% the row leaves this project's list`, (await row.count()) === 0)
     // The task written both ways: it leaves the area too.
     const both = page.locator(`[id="task-${id('1', 4)}"]`)
-    await both.click({ button: 'right' })
+    await rightClick(both)
     await sleep(300)
     await page.getByRole('menuitem', { name: /Move to project/ }).click()
     await sleep(400)
@@ -274,7 +277,7 @@ for (const theme of ['day', 'night']) {
     // Tasks → Organize: the same rows and menu
     const { ctx, page, errors, state } = await open('/tasks', { theme, view: { width: 1440, height: 900 } })
     const rail = page.locator('.kf-domain-row', { hasText: 'Work' })
-    await rail.click({ button: 'right' })
+    await rightClick(rail)
     await sleep(300)
     check(`${N('domains')} Tasks → Organize: right-click a domain → the same menu`, (await page.getByRole('menu').first().innerText()).startsWith('Rename'))
     await page.getByRole('menuitem', { name: 'Rename' }).click()
@@ -493,7 +496,7 @@ for (const theme of ['day', 'night']) {
   // ── 7 · Change a thing's type: project ↔ retainer, project → area, area → domain, domain → area ──
   if (want('7')) {
     const { ctx, page, errors, state } = await open('/projects', { theme, scale: 1.5 })
-    await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
+    await rightClick(page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first())
     await sleep(300)
     await page.getByRole('menuitem', { name: 'Change type…' }).click()
     await sleep(300)
@@ -517,7 +520,7 @@ for (const theme of ['day', 'night']) {
     const un = state.writes.slice(from)
     check(`${N('type')} one Undo: project back, tasks back in it, the new area removed`, writesTo(state, 'projects', from).some((p) => p.id === SITE.id && p.deleted_at === null) && writesTo(state, 'tasks', from).length === 3 && writesTo(state, 'tasks', from).every((t) => t.project_id === SITE.id) && un.some((w) => w.table === 'areas' && w.method === 'DELETE'), JSON.stringify(un.map((w) => `${w.method} ${w.table}`)))
     // retainer → project
-    await page.locator('.kf-lift', { hasText: 'Retainer Co' }).first().click({ button: 'right' })
+    await rightClick(page.locator('.kf-lift', { hasText: 'Retainer Co' }).first())
     await sleep(300)
     await page.getByRole('menuitem', { name: 'Change type…' }).click()
     await sleep(300)
@@ -582,7 +585,7 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
     // The domain chips are the phone's (Tasks.dc.html 1b); a long-press is the phone's right-click.
     const t = await open('/tasks', { theme, view: PHONE })
-    await t.page.locator('span', { hasText: /^Work$/ }).first().click({ button: 'right' })
+    await rightClick(t.page.locator('span', { hasText: /^Work$/ }).first())
     await sleep(300)
     check('Tasks (phone): long-press / right-click a domain chip opens the domain sheet', (await t.page.getByRole('button', { name: /Make it an area/ }).count()) === 1)
     await t.page.getByRole('button', { name: /^Rename/ }).click()
