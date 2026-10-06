@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
@@ -138,6 +138,18 @@ export function JournalPage() {
   const todayStr = useMemo(() => cairoDateKey(new Date()), [])
 
   const [selectedDate, setSelectedDate] = useState(todayStr)
+  // Kai 2026-10-06: a search hit for an entry opened today's page, not the entry. /journal?focus=<id>
+  // now turns to its day (once, when the entry is known) and brings it into view.
+  const focusId = useSearchParams()[0].get('focus')
+  const focusEntry = focusId ? entries.find((e) => e.id === focusId) : undefined
+  const [turnedTo, setTurnedTo] = useState<string | null>(null)
+  if (focusEntry && turnedTo !== focusEntry.id) {
+    setTurnedTo(focusEntry.id)
+    setSelectedDate(focusEntry.entry_date)
+  }
+  useEffect(() => {
+    if (turnedTo) document.getElementById(`journal-${turnedTo}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [turnedTo, selectedDate])
   const [promptIndex, setPromptIndex] = useState(0)
   const [newCommentaryText, setNewCommentaryText] = useState('')
   const [showAddCommentary, setShowAddCommentary] = useState(false)

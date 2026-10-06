@@ -6,12 +6,13 @@ import { restoreInboxItem } from '../inbox/api'
 import { restoreJournalEntry } from '../journal/api'
 import { restoreTrashedProject } from '../projects/api'
 import { restoreTrashedArea } from '../areas/api'
+import { restoreTrashedDomain } from '../domains/api'
 import { INBOX_COLUMNS, TASK_COLUMNS } from '../../lib/columns'
-import type { Task, InboxItem, JournalEntry, Project, Area } from '../../lib/types'
+import type { Task, InboxItem, JournalEntry, Project, Area, Domain } from '../../lib/types'
 
 export interface DeletedItem {
   id: string
-  type: 'Task' | 'Inbox' | 'Event' | 'Journal' | 'Project' | 'Area'
+  type: 'Task' | 'Inbox' | 'Event' | 'Journal' | 'Project' | 'Area' | 'Domain'
   title: string
   deleted_at: string
   rawRow: any
@@ -25,19 +26,21 @@ export const TRASH_TABLE: Record<DeletedItem['type'], string> = {
   Journal: 'journal_entries',
   Project: 'projects',
   Area: 'areas',
+  Domain: 'domains',
 }
 
 export function useDeletedItems() {
   return useQuery({
     queryKey: ['deleted_items'],
     queryFn: async () => {
-      const [tasksRes, inboxRes, calendarRes, journalRes, projectsRes, areasRes] = await Promise.all([
+      const [tasksRes, inboxRes, calendarRes, journalRes, projectsRes, areasRes, domainsRes] = await Promise.all([
         supabase.from('tasks').select(TASK_COLUMNS).not('deleted_at', 'is', null),
         supabase.from('inbox_items').select(INBOX_COLUMNS).not('deleted_at', 'is', null),
         supabase.from('calendar_events').select('*').not('deleted_at', 'is', null),
         supabase.from('journal_entries').select('*').not('deleted_at', 'is', null),
         supabase.from('projects').select('*').not('deleted_at', 'is', null),
         supabase.from('areas').select('*').not('deleted_at', 'is', null),
+        supabase.from('domains').select('*').not('deleted_at', 'is', null),
       ])
       if (tasksRes.error) throw tasksRes.error
       if (inboxRes.error) throw inboxRes.error
@@ -64,6 +67,10 @@ export function useDeletedItems() {
       for (const a of ((areasRes.error ? [] : areasRes.data) as Area[])) {
         list.push({ id: a.id, type: 'Area', title: a.name, deleted_at: a.deleted_at!, rawRow: a })
       }
+      // Before 0051 domains have no deleted_at either — same fallback.
+      for (const d of ((domainsRes.error ? [] : domainsRes.data) as Domain[])) {
+        list.push({ id: d.id, type: 'Domain', title: d.name, deleted_at: d.deleted_at!, rawRow: d })
+      }
       return list.sort((a, b) => b.deleted_at.localeCompare(a.deleted_at))
     }
   })
@@ -76,10 +83,11 @@ export function restoreItem(item: DeletedItem): void {
   else if (item.type === 'Event') writeRow('calendar_events', { ...row, deleted_at: null })
   else if (item.type === 'Journal') restoreJournalEntry(row as JournalEntry)
   else if (item.type === 'Project') restoreTrashedProject(row as Project)
+  else if (item.type === 'Domain') restoreTrashedDomain(row as Domain)
   else restoreTrashedArea(row as Area)
 }
 
-/** Gone for good. A project's or area's tasks stay — the FKs set them to no project / no area. */
+/** Gone for good. A project's, area's or domain's contents stay — the FKs set them to no project / no area. */
 export function deleteItemForever(item: DeletedItem): void {
   writeRow(TRASH_TABLE[item.type], item.rawRow, 'delete')
 }

@@ -3,6 +3,8 @@ export interface Domain {
   name: string
   color: string | null
   sort_order: number
+  /** In Trash (0053): set = hidden everywhere; what's in it keeps its domain_id until compost. */
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -217,7 +219,7 @@ export interface SlippingRow {
 
 // Widened by migration 0031 (punch 49). Additive: the first two are what search_hybrid returned
 // before, and still all it returns until `supabase db push` runs.
-export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'journal_entry'
+export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry'
 
 export interface SearchHit {
   entity_type: SearchEntityType

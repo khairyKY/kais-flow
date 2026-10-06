@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { streamChat } from './api'
+import { useOpenSearchHit } from '../search/api'
 import { AI_ALLOWANCE_USED_UP } from '../capture/aiAllowance'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
@@ -16,7 +16,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  const navigate = useNavigate()
+  const openHit = useOpenSearchHit()
   useBodyScrollLock(open)
   useEscapeStack(open, onClose) // F3 (punch 12): Esc closes the ⌘J drawer like every other overlay
 
@@ -70,7 +70,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
 
   function goToCitation(c: Citation) {
     onClose()
-    navigate(c.entity_type === 'task' ? `/tasks?focus=${c.entity_id}` : `/inbox?focus=${c.entity_id}`)
+    openHit(c) // a citation is a search hit: the same destination (search/api.ts)
   }
 
   return (

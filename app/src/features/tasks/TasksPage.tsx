@@ -4,7 +4,9 @@ import { SortIcon } from '../../components/controlIcons'
 import { Select } from '../../components/Select'
 import { Link, useSearchParams } from 'react-router'
 import { useOpenTask } from './openTask'
-import { useDomains, createDomain } from '../domains/api'
+import { useDomains, createDomain, renameDomain } from '../domains/api'
+import { DomainList, useDomainMenu } from '../domains/DomainList'
+import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
@@ -279,16 +281,9 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
       <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
         <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
+        {/* Kai 2026-10-06: each domain renames in place, ⋯ / right-click → Rename · Colour · Merge · Delete. */}
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
-          {domains.map((d) => (
-            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
-              {d.name}
-              <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                {open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length}
-              </span>
-            </div>
-          ))}
+          <DomainList domains={domains} meta={(d) => open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length} />
         </div>
         <InlineAdd label="Add domain" placeholder="New domain…" color="var(--acc-terra)" onSubmit={(name) => createDomain(name)} />
       </TapeCard>
@@ -543,6 +538,9 @@ export function TasksPage() {
   )
 
   const [domainChip, setDomainChip] = useState<string | null>(null)
+  // Kai 2026-10-06: a domain chip's right-click is the domain's own menu (rename in place, colour, …).
+  const [renamingChip, setRenamingChip] = useState<string | null>(null)
+  const chipMenu = useDomainMenu(domains, setRenamingChip)
 
   const filteredBase = filterByList(displayTasks, list, now)
   const [labelFilter, setLabelFilter] = useState<string | null>(null)
@@ -765,11 +763,18 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  chipMenu.open(d.id, { x: e.clientX, y: e.clientY })
+                }}
                 style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
-                {d.name}
+                {renamingChip === d.id ? (
+                  <RenameField value={d.name} ariaLabel="Domain name" style={{ width: 120, margin: '-2px -4px', textTransform: 'none' }} onDone={(next) => { setRenamingChip(null); if (next && next !== d.name) renameDomain(d, next) }} />
+                ) : d.name}
               </span>
             ))}
+            {chipMenu.node}
           </div>
         )}
 

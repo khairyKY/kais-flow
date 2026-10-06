@@ -6,6 +6,7 @@ import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { DateField } from '../../components/DatePicker'
+import { NumberField } from '../../components/NumberField'
 import './xfx.css'
 
 // Extracted from ProjectsPage (2026-07-18 audit) so the Tasks rail can open the same
@@ -230,13 +231,7 @@ export function NewProjectModal({
                     placeholder="Milestone title…"
                     style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                   />
-                  <input
-                    type="number"
-                    value={newMilestoneWeight}
-                    onChange={(e) => setNewMilestoneWeight(parseInt(e.target.value) || 1)}
-                    min="1"
-                    style={{ width: 45, font: 'inherit', fontSize: 12.5, background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', textAlign: 'center', outline: 'none', color: 'var(--ink-body)' }}
-                  />
+                  <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
                     type="button"
                     onClick={handleAddMilestone}

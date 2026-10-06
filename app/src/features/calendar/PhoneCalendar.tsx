@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
 import { Button } from '../../components/kit'
@@ -20,6 +20,7 @@ import { allDayOn, dayBlocks, eventSpan, rangeText, tapStart, viewStep, viewTitl
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
+import { useLinkedEvent } from './linkedEvent'
 import { useCalendarDefaultView } from '../../lib/settings'
 
 const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => ({ default: m.MorningRitual })))
@@ -63,6 +64,16 @@ export function PhoneCalendar() {
   const [anchor, setAnchor] = useState(today)
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)
+  // /calendar?event=<id> (a search hit, Kai 2026-10-06): its day, its sheet, the block in view.
+  const linked = useLinkedEvent(events)
+  if (linked.open) {
+    setAnchor(cairoDateKey(new Date(linked.open.starts_at)))
+    setSheet({ k: 'block', id: linked.open.id })
+  }
+  const linkedMin = linked.event && !linked.event.all_day ? eventSpan(linked.event).start : null
+  useEffect(() => {
+    if (linkedMin != null) gridRef.current?.scrollToMinute(linkedMin, 80)
+  }, [linkedMin])
   const openTask = useOpenTask()
 
   // A page left open past midnight: if it was showing today, it follows the new day.
