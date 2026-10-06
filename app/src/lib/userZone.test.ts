@@ -120,7 +120,7 @@ describe('a New York user (EDT, UTC-4) late on Wed 8 Jul — already Thursday in
   })
   it('a page that hit the shared daily vision limit waits for Cairo’s new day, whatever the user’s zone', () => {
     setAppZone(NY)
-    const row = { status: 'queued' as const, error: 'daily_limit', reviewed_at: null, updated_at: '2026-07-08T20:30:00Z', pages_read: 0, pages: 1, storage_paths: ['p'] }
+    const row = { status: 'queued' as const, error: 'daily_limit' as const, reviewed_at: null, updated_at: '2026-07-08T20:30:00Z', pages_read: 0, pages: 1, storage_paths: ['p'] }
     // 16:30 → 17:30 in New York (same day) but 23:30 → 00:30 in Cairo: the quota refilled
     expect(shouldResume(row, new Date('2026-07-08T21:30:00Z'))).toBe(true)
     expect(shouldResume(row, new Date('2026-07-08T20:45:00Z'))).toBe(false)
