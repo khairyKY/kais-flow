@@ -4,6 +4,7 @@
 //
 // pg_cron calls notify every TICK_MIN minutes with `scheduled: true` (migration 0045); a user's
 // reminder is due on the first tick at or after their time, i.e. when it falls in (tick - 15, tick].
+import { DEFAULT_ZONE } from '../_shared/zone.ts'
 
 export type RitualKind = 'morning_digest' | 'evening_nudge'
 
@@ -14,14 +15,24 @@ export interface RitualSettings {
   morning_digest_at?: string | null
   evening_nudge_on?: boolean | null
   evening_nudge_at?: string | null
+  /** The user's IANA zone (app_settings.timezone): every time here is wall-clock on it. */
+  timezone?: string | null
 }
 
 export const TICK_MIN = 15
 const DEFAULT_AT: Record<RitualKind, number> = { morning_digest: 8 * 60, evening_nudge: 21 * 60 } // 08:00 / 21:00, the 0045 column defaults
 
-// ponytail: one zone for everyone — times are Cairo wall-clock. The per-user-timezone pass passes
-// app_settings.timezone as `zone`; nothing else here changes.
-export const RITUAL_ZONE = 'Africa/Cairo'
+/** The default zone (no settings row, or a zone Intl doesn't know). notify passes each user's own
+ * — `userZone(s.timezone)` — to everything below and to copy.ts. */
+export const RITUAL_ZONE = DEFAULT_ZONE
+
+/** Today on `zone`'s wall clock, as UTC instants [start, end) — the evening nudge's "today".
+ * ponytail: midnight = now minus the wall-clock time of day; on a DST-change day it's an hour off. */
+export function dayBounds(now: Date, zone: string = RITUAL_ZONE): { start: string; end: string } {
+  const t = now.getTime()
+  const start = t - wallMinutes(now, zone) * 60_000 - (t % 60_000)
+  return { start: new Date(start).toISOString(), end: new Date(start + 86_400_000).toISOString() }
+}
 
 /** Minutes since midnight on `zone`'s wall clock. Intl knows DST, so 08:00 stays 08:00 all year
  * (on a DST-change night the skipped/doubled hour can skip or repeat one reminder). */

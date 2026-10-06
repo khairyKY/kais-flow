@@ -3,6 +3,7 @@ import { z } from 'npm:zod@^4'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
+import { userZone, wallClock } from '../_shared/zone.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 // SCALE: a small model is plenty for turning one capture into JSON, and on Groq's free plan each
@@ -17,8 +18,8 @@ const RequestSchema = z.object({
     projects: z.array(
       z.object({ id: z.string(), name: z.string(), domain_id: z.string().nullable() }),
     ),
-    today: z.string(),
-    timezone: z.string(),
+    today: z.string(), // when the words were said (an ISO instant; a queued capture parses later)
+    timezone: z.string(), // the user's app_settings.timezone, sent by the app
   }),
 })
 
@@ -37,6 +38,13 @@ export const ParseResultSchema = z.object({
 
 type Context = z.infer<typeof RequestSchema>['context']
 
+/** The user's "now" on their own clock, so "tomorrow 3pm" is their tomorrow at 15:00 there. */
+function nowLine(ctx: Context): string {
+  const said = new Date(ctx.today)
+  const at = Number.isNaN(said.getTime()) ? new Date() : said
+  return `Now, on the user's clock: ${wallClock(at, ctx.timezone)}. Read every date and time in the capture on that clock (in ${userZone(ctx.timezone)}), then give due_at in UTC.`
+}
+
 function buildSystemPrompt(ctx: Context): string {
   const domainList = ctx.domains.map((d) => `- ${d.id}: ${d.name}`).join('\n') || '(none yet)'
   const projectList =
@@ -46,7 +54,7 @@ function buildSystemPrompt(ctx: Context): string {
 
   return `You parse a short capture (voice or text) from a personal task/life-management app into structured JSON.
 
-Today's date: ${ctx.today}. Timezone: ${ctx.timezone}.
+${nowLine(ctx)}
 
 Known domains:
 ${domainList}

@@ -20,7 +20,8 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
-import { ritualDue, ritualOn, wallMinutes, type RitualSettings } from './ritual.ts'
+import { dayBounds, ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
+import { userZone } from '../_shared/zone.ts'
 import { deliver, digestNotice, nudgeNotice, overdueNotice, reminderNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -52,26 +53,20 @@ interface SendResult {
 }
 
 // Everything time-relative is computed once per invocation so every user in a cron run is judged
-// against the same clock (as the old single-payload version was).
+// against the same clock (as the old single-payload version was). "Today" and every wall-clock
+// time are each user's own: their app_settings.timezone (user time zones, 2026-10-04).
 interface RunClock {
   now: Date
   nowIso: string
   reminderWindowStart: string
-  /** Today on the Cairo wall clock (ritual.ts's zone), as UTC instants: [start, end). */
-  dayStart: string
-  dayEnd: string
 }
 
 function runClock(): RunClock {
   const now = Date.now()
-  // ponytail: Cairo midnight = now minus the wall-clock time of day; a DST-change day is an hour off.
-  const start = now - wallMinutes(new Date(now)) * 60_000 - (now % 60_000)
   return {
     now: new Date(now),
     nowIso: new Date(now).toISOString(),
     reminderWindowStart: new Date(now - 10 * 60 * 1000).toISOString(),
-    dayStart: new Date(start).toISOString(),
-    dayEnd: new Date(start + 86_400_000).toISOString(),
   }
 }
 
@@ -95,9 +90,10 @@ async function buildPayload(
   kind: NotifyKind,
   userId: string,
   clock: RunClock,
-  prefs: NoticePrefs | undefined,
+  prefs: UserPrefs | undefined,
 ): Promise<Notice | null> {
   if (kind === 'test') return testNotice()
+  const zone = userZone(prefs?.timezone)
 
   if (kind === 'morning_digest') {
     const { data: tasks } = await supabase
@@ -110,20 +106,21 @@ async function buildPayload(
       .order('created_at')
     const top3 = (tasks ?? []).map((t) => t.title as string)
     const n = digestNotice(top3, prefs)
-    if (deliver(n, prefs, clock.now)) await logNotice(supabase, userId, digestNotice(top3, NAMES))
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, digestNotice(top3, NAMES))
     return n
   }
 
   if (kind === 'evening_nudge') {
-    // "4 done · 2 left": finished today, and still open for today (due today or before).
+    // "4 done · 2 left": finished today, and still open for today (due today or before) — the user's today.
+    const day = dayBounds(clock.now, zone)
     const [done, left] = await Promise.all([
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', clock.dayStart).lt('completed_at', clock.dayEnd),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').is('deleted_at', null).lt('due_at', clock.dayEnd),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', day.start).lt('completed_at', day.end),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').is('deleted_at', null).lt('due_at', day.end),
     ])
     if (done.error || left.error) throw done.error ?? left.error
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
     const n = nudgeNotice(done.count ?? 0, left.count ?? 0)
-    if (deliver(n, prefs, clock.now)) await logNotice(supabase, userId, n)
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, n)
     return n
   }
 
@@ -142,7 +139,7 @@ async function buildPayload(
       return { id: t.id as string, title: t.title as string, due_at: t.due_at as string | null, project: (Array.isArray(project) ? project[0] : project)?.name ?? null }
     })
     for (const task of tasks) {
-      const said = reminderNotice([task], NAMES, clock.now)
+      const said = reminderNotice([task], NAMES, clock.now, zone)
       await supabase.from('tasks').update({ reminder_sent: true }).eq('id', task.id).eq('user_id', userId)
       await supabase.from('activity_log').insert({
         id: crypto.randomUUID(),
@@ -153,7 +150,7 @@ async function buildPayload(
         payload: { title: task.title, notice: { title: said.title, body: said.body } },
       })
     }
-    return reminderNotice(tasks, prefs, clock.now)
+    return reminderNotice(tasks, prefs, clock.now, zone)
   }
 
   // overdue
@@ -272,7 +269,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
   if (kind === 'morning_digest' || kind === 'evening_nudge') {
     for (const id of userIds) {
       const s = prefsByUser.get(id)
-      if (!(scheduled ? ritualDue(kind, s, clock.now) : ritualOn(kind, s))) userIds.delete(id)
+      if (!(scheduled ? ritualDue(kind, s, clock.now, userZone(s?.timezone)) : ritualOn(kind, s))) userIds.delete(id)
     }
   }
 
@@ -285,7 +282,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     try {
       const prefs = prefsByUser.get(userId)
       const built = await buildPayload(supabase, kind, userId, clock, prefs)
-      const payload = built && deliver(built, prefs, clock.now)
+      const payload = built && deliver(built, prefs, clock.now, userZone(prefs?.timezone))
       const subs = subsByUser.get(userId) ?? []
       if (!payload || subs.length === 0) {
         users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 })
