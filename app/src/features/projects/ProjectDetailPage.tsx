@@ -25,8 +25,10 @@ import {
   useTimeEntries,
   createProject,
   isThisMonth,
+  renameProject,
 } from './api'
-import { useAreas } from '../areas/api'
+import { useAreas, renameArea } from '../areas/api'
+import { RenameField } from '../../components/RenameField'
 import {
   useTasks,
   completeTask,
@@ -99,6 +101,8 @@ export function ProjectDetailPage() {
   // punch 40: the `edit` chip used to call removeProjectMilestone — it deleted. It now opens
   // this inline rename; deletion moved to its own ✕, guarded by ConfirmCard + undo.
   const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
+  // Kai 2026-10-06: "we can't edit the name of an area, project or a retainer from inside the item".
+  const [renamingTitle, setRenamingTitle] = useState(false)
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
@@ -258,6 +262,34 @@ export function ProjectDetailPage() {
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )
+
+  /** The page's name (project, retainer or area): click / tap / Enter to rename in place; Enter or
+   * leaving the field saves through the outbox (+ logActivity), Esc keeps the old name. */
+  const titleNode = (name: string, rename: (next: string) => void) =>
+    renamingTitle ? (
+      <RenameField
+        value={name}
+        ariaLabel="Name"
+        onDone={(next) => {
+          setRenamingTitle(false)
+          if (next && next !== name) rename(next)
+        }}
+      />
+    ) : (
+      <span
+        role="button"
+        tabIndex={0}
+        title="Rename"
+        aria-label={`Rename ${name}`}
+        onClick={() => setRenamingTitle(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingTitle(true) }
+        }}
+        style={{ cursor: 'text' }}
+      >
+        <EmojiText text={name} />
+      </span>
+    )
 
   if (!project && !area) {
     return (
@@ -534,7 +566,7 @@ export function ProjectDetailPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={project.name} /></h1>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
               <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
                 target<br />
                 <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
@@ -895,7 +927,7 @@ export function ProjectDetailPage() {
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
-              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}><EmojiText text={area.name} /></h1>
+              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}</h1>
             </div>
             <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3 }}>
               area, not a project

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects, useTimeEntries, restoreProject, isThisMonth, renameProject, deleteProjectWithUndo } from './api'
@@ -13,6 +13,7 @@ import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
 import { BackLink, SectionLabel } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
+import { RenameField } from '../../components/RenameField'
 import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
@@ -54,36 +55,6 @@ const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
   return `/ds/assets/wisteria/${wisteriaStage(pct)}.png`
-}
-
-/** A row's name, edited in place (the row menu's Rename): Enter or leaving it saves, Esc keeps the old name. */
-function RenameField({ value, onDone, style }: { value: string; onDone: (next: string | null) => void; style?: React.CSSProperties }) {
-  const [text, setText] = useState(value)
-  const done = useRef(false)
-  const finish = (next: string | null) => {
-    if (done.current) return
-    done.current = true
-    onDone(next)
-  }
-  return (
-    <input
-      autoFocus
-      aria-label="Name"
-      value={text}
-      onFocus={(e) => e.currentTarget.select()}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => setText(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') finish(text.trim() || null)
-        if (e.key === 'Escape') {
-          e.stopPropagation()
-          finish(null)
-        }
-      }}
-      onBlur={() => finish(text.trim() || null)}
-      style={{ font: 'inherit', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5, padding: '2px 6px', margin: '-3px -7px', minWidth: 0, width: '100%', ...style }}
-    />
-  )
 }
 
 export function ProjectsPage() {
