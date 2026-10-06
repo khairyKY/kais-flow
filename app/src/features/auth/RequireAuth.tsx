@@ -1,6 +1,13 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from './AuthProvider'
+import { useAppZoneFromSettings } from '../../lib/settings'
+
+// Signed in, every surface (the shell, the tray flyout, onboarding) keeps the user's own zone.
+function AppZoneSync() {
+  useAppZoneFromSettings()
+  return null
+}
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -8,5 +15,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (loading) return null
   if (!session) return <Navigate to="/sign-in" replace />
 
-  return <>{children}</>
+  return (
+    <>
+      <AppZoneSync />
+      {children}
+    </>
+  )
 }

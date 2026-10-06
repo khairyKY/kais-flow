@@ -6,6 +6,7 @@ import { DateField, DatePicker } from './DatePicker'
 import { Button, SectionLabel } from './kit'
 import { addDays, atDay } from './pickerMath'
 import { TimePicker } from './TimePicker'
+import { appZone } from '../lib/appZone'
 
 // Pickers (Wave M) on /design-system (dev only): the real DatePicker / TimePicker / DateField /
 // TimeField over MK's sample day — every value stays in this component's state.
@@ -38,7 +39,7 @@ export function KitPickersDemo() {
   const [day, setDay] = useState(tomorrow)
   const [time, setTime] = useState('09:00')
 
-  const shown = someday ? 'Someday' : due ? new Date(due).toLocaleString('en-GB', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'No date'
+  const shown = someday ? 'Someday' : due ? new Date(due).toLocaleString('en-GB', { timeZone: appZone(), weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'No date'
   return (
     <section>
       <SectionLabel>Pickers — date &amp; time</SectionLabel>

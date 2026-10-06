@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
+import { appZone } from '../../lib/appZone'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
@@ -18,8 +19,9 @@ function nowIso(): string {
 
 // `today` is when the words were said: a queued capture parsed hours later still reads "tomorrow" from then.
 async function callParseCapture(rawText: string, today = nowIso()): Promise<ParseResult> {
-  const domains = queryClient.getQueryData<Domain[]>(['domains']) ?? []
-  const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
+  // The raw caches still hold trashed rows (kept for Undo) — never offer the AI one of those.
+  const domains = (queryClient.getQueryData<Domain[]>(['domains']) ?? []).filter((d) => !d.deleted_at)
+  const projects = (queryClient.getQueryData<Project[]>(['projects']) ?? []).filter((p) => !p.deleted_at)
 
   const { data, error } = await supabase.functions.invoke('parse-capture', {
     body: {
@@ -28,7 +30,7 @@ async function callParseCapture(rawText: string, today = nowIso()): Promise<Pars
         domains: domains.map((d) => ({ id: d.id, name: d.name })),
         projects: projects.map((p) => ({ id: p.id, name: p.name, domain_id: p.domain_id })),
         today,
-        timezone: 'Africa/Cairo',
+        timezone: appZone(), // the user's own: "tomorrow 3pm" is their tomorrow
       },
     },
   })

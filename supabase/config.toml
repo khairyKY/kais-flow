@@ -474,3 +474,8 @@ enabled = true
 [functions.capture]
 # P6: authenticated by the personal capture key (migration 0041), not a JWT — see the function.
 verify_jwt = false
+
+[functions.mcp]
+# AI assistants over MCP: authenticated by the personal AI access key (migration 0051), not a JWT —
+# see the function. Queries still run as the key's owner (role authenticated + RLS).
+verify_jwt = false

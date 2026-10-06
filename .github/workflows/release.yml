@@ -27,7 +27,7 @@ permissions:
 env:
   PROJECT_REF: eqbbkitofgyxxrfggpbu
   APP_URL: https://kais-flow.kaidagoat.workers.dev
-  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync capture-image
+  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync capture-image mcp
 
 jobs:
   gate:
@@ -118,6 +118,16 @@ jobs:
           curl -sS --fail-with-body "${auth[@]}" -H 'Content-Type: application/gzip' -X POST \
             --data-binary @"$RUNNER_TEMP/$name" "$storage/object/backups/$name" > /dev/null
           echo "- Backup: Storage → \`backups/$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+          # Keep the newest 14 (the site's privacy page states it). Names start with the UTC timestamp, so a
+          # descending name sort is newest-first. Before 2026-10-04 nothing pruned, so free Storage (1 GB) filled.
+          keep=14
+          curl -fsS "${auth[@]}" -H 'Content-Type: application/json' -X POST "$storage/object/list/backups"             -d '{"prefix":"","limit":1000,"sortBy":{"column":"name","order":"desc"}}' > "$RUNNER_TEMP/backups.json"
+          old="$(jq -c --argjson keep "$keep" '[.[] | select(.name | startswith("kais-flow-")) | .name] | .[$keep:]' "$RUNNER_TEMP/backups.json")"
+          if [ "$(jq 'length' <<<"$old")" -gt 0 ]; then
+            curl -fsS "${auth[@]}" -H 'Content-Type: application/json' -X DELETE "$storage/object/backups"               -d "{\"prefixes\":$old}" > /dev/null
+          fi
+          echo "- Backups kept: newest $keep (removed $(jq 'length' <<<"$old"))" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Database migrations
         run: |

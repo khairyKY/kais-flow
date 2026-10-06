@@ -1,0 +1,167 @@
+[
+  {
+    "name": "today-ny header is New York's date (Saturday, Oct 3 — Cairo is already Sunday)",
+    "ok": true,
+    "detail": "Saturday, Oct 3"
+  },
+  {
+    "name": "today-ny Top 3 holds tonight's rent (due 22:00 NY)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-ny no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-ny the shell's date is Sat 3 Oct",
+    "ok": true,
+    "detail": "DEMO'S FLOW · SAT 3 OCT ·\nSYNCED\n●\nTASKS"
+  },
+  {
+    "name": "tasks-ny TODAY · 2 (rent 22:00, landlord 23:00) · TOMORROW · 1 (Sunday brunch)",
+    "ok": true,
+    "detail": "TODAY · 2 TOMORROW · 1"
+  },
+  {
+    "name": "tasks-ny no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tomorrow-ny quick picks: Today · Tomorrow · Next week (no \"This weekend\" on a Saturday)",
+    "ok": true,
+    "detail": "[\"Today SAT 3\",\"Tomorrow SUN 4 · 09:00\",\"Next week MON 5\",\"Someday\",\"No date\"]"
+  },
+  {
+    "name": "tomorrow-ny Tomorrow → due Sun 4 Oct 09:00 New York (2026-10-04T13:00Z)",
+    "ok": true,
+    "detail": "[\"2026-10-04T13:00:00.000Z\"]"
+  },
+  {
+    "name": "tomorrow-ny the chip reads Tomorrow · 09:00",
+    "ok": true,
+    "detail": "TOMORROW · 09:00"
+  },
+  {
+    "name": "tomorrow-ny no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-ny now tag reads 21:30 (New York), not 04:30 (Cairo)",
+    "ok": true,
+    "detail": "21:30"
+  },
+  {
+    "name": "calendar-ny tonight's events are drawn on today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-ny Sunday's market is not on today's column",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "calendar-ny no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-ny topbar zone is America/New_York",
+    "ok": true,
+    "detail": "America/New_York"
+  },
+  {
+    "name": "settings-ny sidebar reads \"Personal · New York\"",
+    "ok": true,
+    "detail": "Demo's Flow\nPERSONAL · NEW YORK\na field journal of days ✿"
+  },
+  {
+    "name": "settings-ny current · America/New_York · GMT-4",
+    "ok": true,
+    "detail": "TIMEZONE\nSAVED ✓\n\nYour day runs on this clock on every device — what \"today\" and \"tomorrow 09:00\" mean, due dates, routines, the morning digest and evening nudge. Stored in UTC, converted at the edges.\n\ncurrent · America/New_York · GMT-4"
+  },
+  {
+    "name": "settings-ny no \"Use this device's zone\" when the device is already there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-ny picking Asia/Tokyo writes app_settings.timezone",
+    "ok": true,
+    "detail": "[\"Asia/Tokyo\"]"
+  },
+  {
+    "name": "settings-ny the shell follows at once (topbar Asia/Tokyo)",
+    "ok": true,
+    "detail": "Asia/Tokyo"
+  },
+  {
+    "name": "settings-ny no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offer-ny-device toast: \"Your device is in America/New_York — use it?\"",
+    "ok": true,
+    "detail": "[\"Your device is in America/New_York — use it?\"]"
+  },
+  {
+    "name": "offer-ny-device nothing written until asked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offer-ny-device the topbar still says Africa/Cairo",
+    "ok": true,
+    "detail": "Africa/Cairo"
+  },
+  {
+    "name": "offer-ny-device Use it → timezone America/New_York written",
+    "ok": true,
+    "detail": "[\"America/New_York\"]"
+  },
+  {
+    "name": "offer-ny-device …and the shell follows",
+    "ok": true,
+    "detail": "America/New_York"
+  },
+  {
+    "name": "offer-ny-device asked once per device — no toast on the next visit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offer-ny-device no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offer-ny-device Settings offers \"Use this device’s zone (America/New_York)\" first",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offer-ny-device …which writes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone the Timezone card with its search is on the phone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "settings-phone no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

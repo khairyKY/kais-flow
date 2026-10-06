@@ -9,7 +9,7 @@
 //   Kind NOTE                 → a note (notes table), not a task
 //   Tags                      → labels
 //   Start Date / Due Date     → due_at; a timed task with start < due → scheduled_start/_end + duration;
-//                               "Is All Day" → that calendar day's Cairo midnight
+//                               "Is All Day" → that calendar day's midnight (user's zone)
 //   Repeat "RRULE:FREQ=…"     → recurrence_rule
 //   Priority 5/3/1/0          → 1/2/3/null (high/medium/low/none)
 //   Status 1|2, Completed Time → done + completed_at (2 = completed and archived)
@@ -31,7 +31,7 @@ function instant(v: string): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-/** The calendar day an instant falls on in `tz`, as that day's Cairo midnight. */
+/** The calendar day an instant falls on in `tz`, as that day's midnight on the user's clock. */
 function dayOf(iso: string, tz: string): string {
   return naiveLocalToUtc(dayIn(tz, new Date(iso)))
 }

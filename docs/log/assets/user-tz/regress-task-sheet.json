@@ -1,0 +1,737 @@
+[
+  {
+    "name": "4a-day tap a Tasks row → the sheet, over Tasks (?task=)",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "4a-day medium detent = 60% (506 of 844)",
+    "ok": true,
+    "detail": "506.390625"
+  },
+  {
+    "name": "4a-day one chip per field, unset dashed (Repeat)",
+    "ok": true,
+    "detail": "[\"TODAY · 15:00\",\"30M\",\"SHAHEEN TASKS\",\"P2\",\"REPEAT\",\"10M BEFORE\",\"CALLS\"]"
+  },
+  {
+    "name": "4a-day Repeat is a dashed pill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day notes, subtasks 0/2, the block card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day title row: check · serif title · star · ⋯ (48 targets)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day footer: Created 21 Sep · Mark complete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day star → one tasks write, top3 true",
+    "ok": true,
+    "detail": "[true]"
+  },
+  {
+    "name": "4a-day \"✓ Saved\" flickers in the footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day …then \"Edited 12:50\"",
+    "ok": true,
+    "detail": "EDITED 12:50"
+  },
+  {
+    "name": "4a-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4a-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4a-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4b-day handle tap → full height (796)",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "4b-day ✕ sits in the 48px handle row",
+    "ok": true,
+    "detail": "{\"x\":4,\"y\":48,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "4b-day subtasks 1/3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4b-day block card: On your calendar · Sun 27 · 15:00–15:30 · 30m · Change time · Unschedule",
+    "ok": true,
+    "detail": "On your calendar\nSUN 27 · 15:00–15:30 · 30M\nChange time\nUnschedule"
+  },
+  {
+    "name": "4b-day Focus pill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4b-day subtask check → done write + \"Done\" toast",
+    "ok": true,
+    "detail": "[\"Done\"]"
+  },
+  {
+    "name": "4b-day Add a subtask → a child row",
+    "ok": true,
+    "detail": "[\"Ask for the delivery note\"]"
+  },
+  {
+    "name": "4b-day Focus → /focus on this task",
+    "ok": true,
+    "detail": "http://localhost:5255/focus"
+  },
+  {
+    "name": "4b-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4b-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4b-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4c-day keyboard up → full, sheet bottom on the keyboard",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":48,\"width\":390,\"height\":496}"
+  },
+  {
+    "name": "4c-day the footer hides while typing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4c-day the title is a field with the focus ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4c-day Enter (the keyboard's Done) saves the title",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier about the invoice and the credit note\"]"
+  },
+  {
+    "name": "4c-day keyboard down → footer back, Saved",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4c-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4c-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4c-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4n-day notes save on blur",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "4n-day mid-drag the sheet follows the finger (~42%)",
+    "ok": true,
+    "detail": "213"
+  },
+  {
+    "name": "4n-day release past 30% closes; ?task popped (Back won't reopen it)",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks"
+  },
+  {
+    "name": "4n-day the edit made before the swipe stays written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4n-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4n-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4n-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4m-day three slots: Today 13:00 · 14:00 · 14:30 (the first pre-selected)",
+    "ok": true,
+    "detail": "[\"Today 13:00\",\"14:00\",\"14:30\"]"
+  },
+  {
+    "name": "4m-day \"Free before 15:00 · tap one to place it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4m-day empty notes read \"Add notes\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4m-day one tap places the block 14:00–14:30",
+    "ok": true,
+    "detail": "[{\"id\":\"750039c2-e869-4b77-85ae-8ed6e6a7c078\",\"title\":\"Call the tyre supplier about the invoice\",\"starts_at\":\"2026-09-27T11:00:00.000Z\",\"ends_at\":\"2026-09-27T11:30:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000001\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":null,\"created_at\":\"2026-09-27T09:50:05.669Z\",\"updated_at\":\"2026-09-27T09:50:05.669Z\"}]"
+  },
+  {
+    "name": "4m-day …and the section becomes the block card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4m-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4m-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4m-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4d-day picker: projects with their domain, the current one checked, No project last",
+    "ok": true,
+    "detail": "[\"Shaheen Tasks SHAHEEN\",\"Shaheen Website SHAHEEN\",\"Forecasting app WORK\",\"Home PERSONAL\",\"Finance WORK\",\"No project INBOX\"]"
+  },
+  {
+    "name": "4d-day a second scrim over the task sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4d-day tap → applies (project + domain) and closes",
+    "ok": true,
+    "detail": "[\"p0000000-0000-4000-8000-000000000003\"]"
+  },
+  {
+    "name": "4d-day Saved in the task sheet, chip reads the new project",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4d-day search → \"Create “Tyres”\" makes the project and moves the task",
+    "ok": true,
+    "detail": "[{\"id\":\"4d63d868-d8cb-4508-9f04-ff3d8b0df9cb\",\"domain_id\":null,\"name\":\"Tyres\",\"type\":\"standard\",\"status\":\"active\",\"color\":null,\"target_date\":null,\"milestones\":[],\"checklist\":[],\"engagement_model\":null,\"created_at\":\"2026-09-27T09:50:07.495Z\",\"updated_at\":\"2026-09-27T09:50:07.495Z\"}]"
+  },
+  {
+    "name": "4d-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4d-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4d-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day date chip → MK Date Picker; Tomorrow = tomorrow 09:00 Cairo",
+    "ok": true,
+    "detail": "[\"2026-09-28T06:00:00.000Z\"]"
+  },
+  {
+    "name": "chips-day date chip reads Tomorrow · 09:00",
+    "ok": true,
+    "detail": "TOMORROW · 09:00"
+  },
+  {
+    "name": "chips-day duration chip → 1h",
+    "ok": true,
+    "detail": "[60]"
+  },
+  {
+    "name": "chips-day priority chip → Critical (P1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day repeat chip → Weekly (lavender chip now)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day a repeating task: next dates + \"Done for today\"",
+    "ok": true,
+    "detail": "NEXT · MON 5 OCT 09:00 · THEN MON 12"
+  },
+  {
+    "name": "chips-day remind chip → 30 min before the (new) due",
+    "ok": true,
+    "detail": "[\"2026-09-28T05:30:00.000Z\"]"
+  },
+  {
+    "name": "chips-day + Label adds one",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day a label chip → Remove label",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "chips-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "chips-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4e-day ⋯ = Duplicate · Copy link · Delete (last, terra, Undo 6s)",
+    "ok": true,
+    "detail": "[\"Duplicate\",\"Copy link\",\"Delete UNDO 6S\"]"
+  },
+  {
+    "name": "4e-day header: title + project · 30m · due",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4e-day Duplicate → a new open copy + \"Duplicated · Undo\"",
+    "ok": true,
+    "detail": "[\"Duplicated\"]"
+  },
+  {
+    "name": "4e-day Copy link → /tasks/<id> on the clipboard + toast",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "4e-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4e-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4f-day Delete → sheet gone, row to Trash (deleted_at), block too",
+    "ok": true,
+    "detail": "[\"2026-09-27T09:50:05.140Z\"]"
+  },
+  {
+    "name": "4f-day toast \"Moved to Trash\" with Undo, no confirm",
+    "ok": true,
+    "detail": "[\"Moved to Trash\"]"
+  },
+  {
+    "name": "4f-day the row left the list behind",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4g-day Repeat chip: Every weekday",
+    "ok": true,
+    "detail": "[\"TODAY · 15:00\",\"30M\",\"SHAHEEN TASKS\",\"P2\",\"EVERY WEEKDAY\",\"10M BEFORE\",\"CALLS\"]"
+  },
+  {
+    "name": "4g-day Next · Mon 28 Sep 15:00 · then Tue 29",
+    "ok": true,
+    "detail": "NEXT · MON 28 SEP 15:00 · THEN TUE 29"
+  },
+  {
+    "name": "4g-day Done for today → this one done, the next spawned for Mon 28 15:00, Undo",
+    "ok": true,
+    "detail": "[[\"done\",\"2026-09-27T12:00:00.000Z\"],[\"todo\",\"2026-09-28T12:00:00.000Z\"]]"
+  },
+  {
+    "name": "4g-day the sheet closed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4g-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4g-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4g-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day title struck, \"Done · Sun 27 · 11:24\" under it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day footer: Done 11:24 · Reopen (secondary), no Mark complete",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day chips keep full contrast (not dimmed)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day Reopen → open again, \"Reopened · Undo\", the sheet stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4h-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4h-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4i-day cold /tasks/:id → /tasks?task=<id> (the link still works)",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "4i-day skeleton inside the sheet + a disabled Mark complete",
+    "ok": true,
+    "detail": "Mark complete"
+  },
+  {
+    "name": "4i-day …and the task fills it in when it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4j-day fallen cherry + \"This task was deleted on another device.\" + Close",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4j-day Close → gone, over the page it came from",
+    "ok": true,
+    "detail": "http://localhost:5255/today"
+  },
+  {
+    "name": "4j-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4j-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4j-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4k-day offline chip under the title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4k-day footer: ○ Pending sync",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4k-day the changed chip (date → Tomorrow 09:00) keeps its selected ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4k-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4k-day no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4k-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "back-day history Back → sheet gone, /tasks",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks"
+  },
+  {
+    "name": "back-day Forward → it opens again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "back-day Esc / Android Back (overlay stack) → closes and pops ?task",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks"
+  },
+  {
+    "name": "back-day cold /tasks/:id → Tasks behind + the sheet",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "back-day scrim tap on a cold link → /tasks (param dropped, no Back needed)",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks"
+  },
+  {
+    "name": "back-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-today a Top 3 row → the sheet over Today",
+    "ok": true,
+    "detail": "http://localhost:5255/today?task=10000000-0000-4000-8000-000000000005"
+  },
+  {
+    "name": "from-today closes back to /today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-today no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "from-today no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-today no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-inbox a filed capture's \"open task →\" → its task's sheet over the Inbox",
+    "ok": true,
+    "detail": "http://localhost:5255/inbox?focus=i0000000-0000-4000-8000-000000000001&task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "from-inbox no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "from-inbox no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-inbox no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-calendar a task block → the sheet over the calendar, in one tap",
+    "ok": true,
+    "detail": "http://localhost:5255/calendar?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "from-calendar no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "from-calendar no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-calendar no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-search a task hit → the sheet over the page (not a jump to Tasks)",
+    "ok": true,
+    "detail": "http://localhost:5255/today?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "from-search no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "from-search no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "from-search no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-a-night tap a Tasks row → the sheet, over Tasks (?task=)",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks?task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "4l-a-night medium detent = 60% (506 of 844)",
+    "ok": true,
+    "detail": "506.390625"
+  },
+  {
+    "name": "4l-a-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4l-a-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-a-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-b-night handle tap → full height (796)",
+    "ok": true,
+    "detail": "796"
+  },
+  {
+    "name": "4l-b-night ✕ sits in the 48px handle row",
+    "ok": true,
+    "detail": "{\"x\":4,\"y\":48,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "4l-b-night subtasks 1/3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-b-night block card: On your calendar · Sun 27 · 15:00–15:30 · 30m · Change time · Unschedule",
+    "ok": true,
+    "detail": "On your calendar\nSUN 27 · 15:00–15:30 · 30M\nChange time\nUnschedule"
+  },
+  {
+    "name": "4l-b-night Focus pill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-b-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "4l-b-night no text under 12px in the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4l-b-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day row click → /tasks/:id editor page, no sheet",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "desktop-day the editor's title still saves on blur",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day an untouched notes blur writes nothing (the shared draft only writes real changes)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night row click → /tasks/:id editor page, no sheet",
+    "ok": true,
+    "detail": "http://localhost:5255/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

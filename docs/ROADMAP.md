@@ -48,6 +48,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-10-07** — **v1.0.21:** every user gets their own time zone (Cairo stays the default); AI assistants can connect over MCP with a personal key; projects stay simple but get easier (rename from inside, change a thing's type, domains editable everywhere, moving tasks works, search results open, status updates editable). The explainer site joins master.
 - **2026-10-04** — **v1.0.20:** Kai's tray & notifications design (Windows tray + flyout, notifications that say the same thing everywhere with Done/Tomorrow buttons, quiet hours, lock-screen privacy) and **Paper capture v1** — photograph handwritten notes and they come back as tasks, events and notes (Groq vision, Arabic too, 15 pages a day).
 - **2026-10-04** — **v1.0.18:** sign-up/confirmation emails lead back to the app (the hosted Site URL + redirects are set by every release; branded templates sent), the chat answers from today's data and a guide to the app in the user's language, and GitHub in Settings leads to the issues. From a friend's first test.
 - **2026-10-04** — **v1.0.17 (Wave Q):** Settings now tells the truth (no fake Google sync, real reminder times, real GitHub state); the Android app joins the share sheet and the phone can make capture keys; labels show on task rows; routine streak goals; retainers roll their open tasks into the new month.

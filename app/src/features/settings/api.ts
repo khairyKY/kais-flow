@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
+import { appZone } from '../../lib/appZone'
 
 // integrations.data holds provider tokens server-side only (docs/DATA_MODEL.md) — the client
 // never selects `data` itself, only connection status plus the named non-secret fields below
@@ -23,7 +24,7 @@ export function githubState(github?: Pick<IntegrationStatus, 'status' | 'synced_
   if (!github) return { text: 'Not connected', tone: 'off' }
   if (github.status === 'failing') return { text: 'Token expired — reconnect', tone: 'bad' }
   if (!github.synced_at) return { text: 'Connected · not synced yet', tone: 'ok' }
-  const at = new Date(github.synced_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo' })
+  const at = new Date(github.synced_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: appZone() })
   return { text: `Connected · synced ${at}`, tone: 'ok' }
 }
 

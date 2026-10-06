@@ -333,6 +333,11 @@ export function InboxPage() {
       {tabsRow}
       {tab === 'waiting' && <ReadyScans />}
 
+      {/* Kai 2026-10-06: a search / activity link to a capture that isn't in the waiting list —
+          filed, dismissed, snoozed — landed on a page without it (or on the empty Inbox). It now
+          always shows, above whatever the list holds. */}
+      {tab === 'waiting' && focusedItem && !orderedItems.some((i) => i.id === focusedItem.id) && <ResolvedCard item={focusedItem} />}
+
       {tab === 'waiting' ? (
         itemsPending ? (
           <Skeleton />
@@ -349,8 +354,6 @@ export function InboxPage() {
                 <span onClick={() => setBannerDismissed(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer' }}>✕</span>
               </div>
             )}
-
-            {focusedItem && focusedItem.status !== 'pending' && <ResolvedCard item={focusedItem} />}
 
             <div className='kf-dim' style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 12, marginTop: 18 }}>
               {aiItems.map((item, i) => (
@@ -509,14 +512,16 @@ function EmptyInboxCard() {
 function ResolvedCard({ item }: { item: InboxItem }) {
   const filed = item.status === 'filed'
   const openTask = useOpenTask()
+  // A pending capture outside the waiting list is a snoozed one.
+  const state = filed ? 'already filed as a task' : item.status === 'dismissed' ? 'dismissed' : item.snoozed_until ? `snoozed · back ${new Date(item.snoozed_until).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}` : 'waiting'
   return (
-    <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '13px 19px', marginTop: 18, opacity: 0.85, display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div id={`inbox-${item.id}`} style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, padding: '13px 19px', marginTop: 18, opacity: 0.85, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 0 0 3px color-mix(in srgb, var(--acc-hydrangea) 30%, transparent)' }}>
       <span style={{ width: 15, height: 15, borderRadius: 4, background: filed ? 'var(--sig-done)' : 'var(--ink-hairline)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
         <span style={{ color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)' }}>✓</span>
       </span>
       <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>
       <Chip tone="sage" style={filed ? undefined : { background: 'rgba(107,100,85,0.14)', color: 'var(--ink-faint)' }}>
-        {filed ? 'already filed as a task' : 'dismissed'}
+        {state}
       </Chip>
       {/* Wave N: the task it became (the sheet on a phone); a plain href reloaded the whole app. */}
       {filed && item.filed_task_id && (

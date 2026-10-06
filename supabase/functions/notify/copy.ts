@@ -64,7 +64,8 @@ export function isPaused(p: NoticePrefs | null | undefined, now: Date): boolean 
   return !!p?.notify_paused_until && new Date(p.notify_paused_until).getTime() > now.getTime()
 }
 
-/** Inside quiet hours (on by default, 22:30–07:00 Cairo wall clock; the window may cross midnight). */
+/** Inside quiet hours (on by default, 22:30–07:00 on the user's wall clock — `zone`, their
+ * app_settings.timezone; the window may cross midnight). */
 export function inQuietHours(p: NoticePrefs | null | undefined, now: Date, zone: string = RITUAL_ZONE): boolean {
   if (p?.quiet_hours_on === false) return false
   const from = minutesOf(p?.quiet_from) ?? minutesOf(QUIET_FROM)!

@@ -65,6 +65,7 @@ import { flushOutbox, useOutboxMarks } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import './today.css'
+import { appZone } from '../../lib/appZone'
 
 // ── Today — pixel contract: Today.dc.html 1a (desktop, design lines 107-221) + States.dc.html
 // 1a/1b (empty/done), and on a phone (< 768px) Today Phone.dc.html 2a–2n with the 2026-09-28
@@ -73,7 +74,6 @@ import './today.css'
 // the header line — is ./todayLayout, shared by both layouts: each item shows once. ──
 
 const A = '/ds/assets'
-const TZ = 'Africa/Cairo'
 const PROJECT_DOTS = ['--acc-moss', '--acc-blossom', '--acc-lavender', '--acc-hydrangea', '--acc-buttercream', '--acc-sage']
 // Punch 17: Today is a glance surface — "All open" stops here; the full list lives on /tasks.
 const ALL_OPEN_CAP = 50
@@ -394,8 +394,8 @@ export function TodayPage() {
     })
   }
 
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ })
-  const dateLabelShort = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: TZ })
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: appZone() })
+  const dateLabelShort = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: appZone() })
   const hyd = pendingInbox.length === 0 ? 'zero' : pendingInbox.length < 5 ? 'light' : pendingInbox.length < 20 ? 'medium' : 'heavy'
   const vine = streak >= 30 ? 'lush' : streak >= 7 ? 'flowering' : streak >= 1 ? 'sprouting' : 'bare'
 

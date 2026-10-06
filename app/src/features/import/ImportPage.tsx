@@ -17,6 +17,7 @@ import {
   type ExistingRefs, type ImportSummary, type Kind, type Counts,
 } from './api'
 import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
+import { appZone } from '../../lib/appZone'
 
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
@@ -82,7 +83,7 @@ function rememberMapping(name: string, mapping: CsvMapping) {
 
 function fmtDate(iso: string | null) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' })
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
 }
 
 // ── Punch 28: recurring-import dedupe assistant ──────────────────────────────

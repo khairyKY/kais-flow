@@ -1,4 +1,5 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
+import { perZone } from '../../lib/appZone'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 // ── Loop B (docs/DAILY-CYCLE.md): the pure half of "shutdown feeds the next Plan" and of
@@ -19,7 +20,8 @@ export const SEED_EVENT = 'ritual.seeded'
 export const UNSEED_EVENT = 'ritual.unseeded'
 export const FINISHED_EVENT = 'ritual.finished'
 
-const cairoHour = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', hourCycle: 'h23', hour: 'numeric' })
+// The user's zone (lib/appZone.ts; the `cairo*` names are historical).
+const cairoHour = perZone((timeZone) => new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', hour: 'numeric' }))
 
 /** "YYYY-MM-DD" moved by `days` calendar days. Pure date math, read in UTC so no zone can shift it. */
 export function addDaysToKey(key: string, days: number): string {
@@ -32,7 +34,7 @@ export function addDaysToKey(key: string, days: number): string {
  * the spring-forward night, which has no 00:00–01:00, still turns over at 04:00. */
 export function loopDayKey(now: Date): string {
   const day = cairoDateKey(now)
-  return Number(cairoHour.format(now)) % 24 < LOOP_DAY_ROLLOVER_HOUR ? addDaysToKey(day, -1) : day
+  return Number(cairoHour().format(now)) % 24 < LOOP_DAY_ROLLOVER_HOUR ? addDaysToKey(day, -1) : day
 }
 
 /** The morning an evening shutdown at `now` seeds: the loop day after this one.

@@ -23,10 +23,16 @@ import {
   removeProjectChecklistItem,
   logTimeEntry,
   useTimeEntries,
-  createProject,
   isThisMonth,
+  renameProject,
 } from './api'
-import { useAreas } from '../areas/api'
+import { useAreas, renameArea } from '../areas/api'
+import { RenameField } from '../../components/RenameField'
+import { NumberField } from '../../components/NumberField'
+import { useIsMobile } from '../../components/BottomSheet'
+import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
+import { KIND_LABEL, kindOf } from './convert'
+import { resolveUpdates, UPDATE_EVENTS } from './statusLog'
 import {
   useTasks,
   completeTask,
@@ -80,6 +86,7 @@ export function ProjectDetailPage() {
     document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focusTaskId])
   const motion = useMotionEnabled()
+  const isMobile = useIsMobile()
 
   // Queries
   const { data: domains = [] } = useDomains()
@@ -99,6 +106,19 @@ export function ProjectDetailPage() {
   // punch 40: the `edit` chip used to call removeProjectMilestone — it deleted. It now opens
   // this inline rename; deletion moved to its own ✕, guarded by ConfirmCard + undo.
   const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
+  // Kai 2026-10-06: "we can't edit the name of an area, project or a retainer from inside the item".
+  const [renamingTitle, setRenamingTitle] = useState(false)
+  // The status-update / work log row whose note is being edited in place.
+  const [editingLog, setEditingLog] = useState<string | null>(null)
+  // Kai 2026-10-06: change its type from inside the page — the new thing's page opens; Undo comes back.
+  const [typeMenuAt, setTypeMenuAt] = useState<{ x: number; y: number } | null>(null)
+  const changeType = useChangeType({
+    after: (created) => {
+      if (created?.kind === 'area' || created?.kind === 'project') navigate(`/projects/${created.id}`)
+      else if (created?.kind === 'domain') navigate('/projects')
+    },
+    onUndone: (thing) => navigate(`/projects/${thing.row.id}`),
+  })
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
@@ -136,15 +156,9 @@ export function ProjectDetailPage() {
       })
     }
 
-    // 2. Activity logs (updates)
-    const updateLogs = activityLogs.filter((log) => log.event_type === 'project.update_logged')
-    for (const log of updateLogs) {
-      logs.push({
-        id: log.id,
-        date: log.created_at,
-        type: 'update',
-        note: (log.payload?.note as string) || '',
-      })
+    // 2. Status updates — the log's edits and deletes applied (./statusLog.ts)
+    for (const u of resolveUpdates(activityLogs)) {
+      logs.push({ id: u.id, date: u.created_at, type: 'update', note: u.note })
     }
 
     // Sort by date descending
@@ -259,6 +273,57 @@ export function ProjectDetailPage() {
     </>
   )
 
+  /** The page's name (project, retainer or area): click / tap / Enter to rename in place; Enter or
+   * leaving the field saves through the outbox (+ logActivity), Esc keeps the old name. */
+  const titleNode = (name: string, rename: (next: string) => void) =>
+    renamingTitle ? (
+      <RenameField
+        value={name}
+        ariaLabel="Name"
+        onDone={(next) => {
+          setRenamingTitle(false)
+          if (next && next !== name) rename(next)
+        }}
+      />
+    ) : (
+      <span
+        role="button"
+        tabIndex={0}
+        title="Rename"
+        aria-label={`Rename ${name}`}
+        onClick={() => setRenamingTitle(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingTitle(true) }
+        }}
+        style={{ cursor: 'text' }}
+      >
+        <EmojiText text={name} />
+      </span>
+    )
+
+  const thing: Convertible | null = project ? { table: 'projects', row: project } : area ? { table: 'areas', row: area } : null
+  // The footer's "Change type…" (project ↔ retainer ↔ area, area → project / domain) + its layers.
+  const typeLink = thing && (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        aria-haspopup="menu"
+        onClick={(e) => setTypeMenuAt({ x: e.clientX, y: e.clientY })}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter') return
+          const r = e.currentTarget.getBoundingClientRect()
+          setTypeMenuAt({ x: r.left, y: r.bottom })
+        }}
+        style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+      >
+        Change type… <span style={{ color: 'var(--ink-faint)' }}>· {KIND_LABEL[kindOf(thing.row, thing.table)]}</span>
+      </span>
+      {typeMenuAt && <TypeMenu thing={thing} at={typeMenuAt} onPick={(to) => changeType.ask(thing, to)} onClose={() => setTypeMenuAt(null)} />}
+      {changeType.node}
+    </>
+  )
+
   if (!project && !area) {
     return (
       <div style={{ padding: 40, color: 'var(--ink-muted)' }}>
@@ -280,46 +345,6 @@ export function ProjectDetailPage() {
       if (!isNaN(plainNum)) total = plainNum
     }
     return total || 60 // Default to 60m if parsing fails
-  }
-
-  // Convert area to project helper — E2: in-app ConfirmCard instead of window.confirm
-  const handleConvertAreaToProject = () => {
-    if (!area) return
-    setConfirm({
-      title: `Convert "${area.name}" to a project?`,
-      body: 'All open tasks in this area will be moved to the new project.',
-      confirmLabel: 'Convert',
-      onConfirm: () => {
-        setConfirm(null)
-        doConvertAreaToProject()
-      },
-    })
-  }
-
-  const doConvertAreaToProject = () => {
-    if (!area) return
-    // 1. Create a project
-    const newProj = createProject(
-      area.name,
-      area.domain_id,
-      'standard',
-      'Personal',
-      null,
-      area.color || 'var(--acc-terra)'
-    )
-
-    // 2. Reparent open tasks from area to new project
-    const areaTasks = tasks.filter((t) => t.area_id === area.id)
-    for (const t of areaTasks) {
-      writeRow('tasks', { ...t, area_id: null, project_id: newProj.id })
-    }
-
-    // 3. Delete the area
-    writeRow('areas', area, 'delete')
-    logActivity('area.converted', 'area', area.id, { new_project_id: newProj.id, name: area.name })
-
-    // 4. Redirect
-    navigate(`/projects/${newProj.id}`)
   }
 
   const handleToggleMilestone = (milestoneId: string) => {
@@ -442,20 +467,43 @@ export function ProjectDetailPage() {
         return [newLog, ...(old ?? [])]
       })
     } else {
-      logActivity('project.update_logged', 'project', project?.id || id || '', { note: workNote.trim() })
-      queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
-        const newLog = {
-          id: crypto.randomUUID(),
-          event_type: 'project.update_logged',
-          entity_type: 'project',
-          entity_id: project?.id || id || '',
-          payload: { note: workNote.trim() },
-          created_at: startedAt,
-        }
-        return [newLog, ...(old ?? [])]
-      })
+      // The feed shows the very row that was logged (it used to draw a copy under another id, so a
+      // fresh update couldn't be edited or deleted until the next fetch).
+      logUpdateEvent(UPDATE_EVENTS.logged, { note: workNote.trim() })
     }
     setWorkNote('')
+  }
+
+  // Kai 2026-10-06: status updates are edited in place and deleted with Undo. The log is append-only,
+  // so both are events of their own (./statusLog.ts), shown at once through this page's cache.
+  const logUpdateEvent = (event: string, payload: Record<string, unknown>) => {
+    const row = logActivity(event, 'project', project?.id || id || '', payload)
+    queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => [{ ...row, created_at: new Date().toISOString() }, ...(old ?? [])])
+  }
+  const editLog = (log: { id: string; type: 'work' | 'update'; note: string }, note: string) => {
+    if (log.type === 'update') {
+      logUpdateEvent(UPDATE_EVENTS.edited, { update_id: log.id, note })
+      return
+    }
+    const entry = pTimeEntries.find((e) => e.id === log.id)
+    if (!entry) return
+    writeRow('time_entries', { ...entry, note })
+    logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, note })
+  }
+  const deleteLog = (log: { id: string; type: 'work' | 'update' }) => {
+    if (log.type === 'update') {
+      logUpdateEvent(UPDATE_EVENTS.deleted, { update_id: log.id })
+      toastUndo('Update deleted', () => logUpdateEvent(UPDATE_EVENTS.restored, { update_id: log.id }))
+      return
+    }
+    const entry = pTimeEntries.find((e) => e.id === log.id)
+    if (!entry) return
+    writeRow('time_entries', entry, 'delete')
+    logActivity('project.work_deleted', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, duration_min: entry.duration_min })
+    toastUndo('Work entry deleted', () => {
+      writeRow('time_entries', entry)
+      logActivity('project.work_restored', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id })
+    })
   }
 
   const colorPalette = [
@@ -534,7 +582,7 @@ export function ProjectDetailPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={project.name} /></h1>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
               <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
                 target<br />
                 <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
@@ -574,7 +622,9 @@ export function ProjectDetailPage() {
             />
 
             {/* Hours + Milestones */}
-            <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 26, marginTop: 24 }}>
+            {/* On a phone the two stack: side by side, the milestones column ran off the card (its
+                add row and the weight's −/+ were clipped out of reach). */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '150px minmax(0, 1fr)', gap: 26, marginTop: 24 }}>
               <div>
                 <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>
@@ -623,16 +673,9 @@ export function ProjectDetailPage() {
                     value={newMilestoneTitle}
                     onChange={(e) => setNewMilestoneTitle(e.target.value)}
                     placeholder="Add milestone…"
-                    style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                   />
-                  <input
-                    type="number"
-                    value={newMilestoneWeight}
-                    onChange={(e) => setNewMilestoneWeight(parseInt(e.target.value) || 1)}
-                    min="1"
-                    className="kf-num"
-                    style={{ width: 45, font: 'inherit', fontSize: 12.5, background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', textAlign: 'center', outline: 'none', color: 'var(--ink-body)' }}
-                  />
+                  <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
                     onClick={handleAddMilestoneClick}
                     style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}
@@ -699,7 +742,7 @@ export function ProjectDetailPage() {
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
                   placeholder="Add a checklist item — sub-steps too small for a task…"
-                  style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                  style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                 />
                 <Select
                   value={newChecklistType}
@@ -763,12 +806,13 @@ export function ProjectDetailPage() {
             </SectionLabel>
 
             {/* Log form */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 0 12px' }}>
+            {/* Wraps on a phone: one unbreakable row pushed the whole card's content sideways. */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 9, padding: '2px 0 12px' }}>
               <input
                 value={workNote}
                 onChange={(e) => setWorkNote(e.target.value)}
                 placeholder={logMode === 'work' ? "What did you work on?" : "Post a status update note…"}
-                style={{ flex: 1, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
+                style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
               />
               {logMode === 'work' && (
                 <>
@@ -810,7 +854,22 @@ export function ProjectDetailPage() {
                           update
                         </span>
                       )}
-                      {log.note}
+                      {/* Click the note to edit it in place; ✕ deletes with Undo (Kai 2026-10-06). */}
+                      {editingLog === log.id ? (
+                        <RenameField
+                          value={log.note}
+                          ariaLabel={log.type === 'update' ? 'Edit update' : 'Edit work note'}
+                          style={{ width: 'calc(100% - 60px)', margin: '-3px 0' }}
+                          onDone={(next) => {
+                            setEditingLog(null)
+                            if (next && next !== log.note) editLog(log, next)
+                          }}
+                        />
+                      ) : (
+                        <span role="button" tabIndex={0} title="Edit" aria-label={`Edit ${log.type}: ${log.note}`} onClick={() => setEditingLog(log.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingLog(log.id) } }} style={{ cursor: 'text' }}>
+                          {log.note}
+                        </span>
+                      )}
                     </span>
                     {log.type === 'work' && log.duration && (
                       <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
@@ -819,13 +878,14 @@ export function ProjectDetailPage() {
                       </span>
                     )}
                     {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
+                    <button type="button" className="kf-hit" onClick={() => deleteLog(log)} title="Delete" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8, flex: 'none' }}>✕</button>
                   </div>
                 )
               })}
             </div>
 
-            {/* Archive / Convert action footer */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
+            {/* Archive / Change type action footer */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
               <span
                 onClick={() =>
                   // E2: in-app ConfirmCard instead of window.confirm
@@ -845,6 +905,8 @@ export function ProjectDetailPage() {
               >
                 Archive project…
               </span>
+              {typeLink}
+              <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
                 100% milestones → the wisteria's full cascade ✿
               </span>
@@ -895,7 +957,7 @@ export function ProjectDetailPage() {
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
-              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}><EmojiText text={area.name} /></h1>
+              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}</h1>
             </div>
             <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3 }}>
               area, not a project
@@ -1040,12 +1102,7 @@ export function ProjectDetailPage() {
 
           {/* Actions footer */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-            <span
-              onClick={handleConvertAreaToProject}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
-            >
-              Convert to project…
-            </span>
+            {typeLink}
             <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
               an area is a garden bed — never done, just kept ✿
             </span>

@@ -3,6 +3,7 @@ import { getSeason, SEASON_META, type Season } from '../../lib/seasons'
 import { useMotionEnabled, setEffectsEnabled } from '../../lib/motion'
 import { SectionLabel } from '../../components/kit'
 import { SeasonTopbarEcho } from './TopbarEcho'
+import { appZone } from '../../lib/appZone'
 
 // ── Pixel contract: design-export/Seasons.dc.html — 1a (seasons row), 1b (three season ×
 // weather composites), 1c (topbar echo + effects toggle). Living reference for the season
@@ -127,7 +128,7 @@ function EffectsToggleDemo() {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Synced<span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc-sage)' }} /></span>
           <SeasonTopbarEcho />
         </div>
-        <div>Africa/Cairo</div>
+        <div>{appZone()}</div>
       </div>
       <div style={{ padding: '16px 26px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
         <button

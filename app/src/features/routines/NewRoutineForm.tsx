@@ -8,6 +8,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { TimeField } from '../calendar/TimeField'
+import { NumberField } from '../../components/NumberField'
 import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeMode } from './newRoutine'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
@@ -65,7 +66,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   const [reminderOn, setReminderOn] = useState(NEW_ROUTINE_DEFAULTS.reminderOn)
   const [reminderTime, setReminderTime] = useState(NEW_ROUTINE_DEFAULTS.reminderTime)
   const [isChallenge, setIsChallenge] = useState(initialChallenge)
-  const [challengeDays, setChallengeDays] = useState('30')
+  const [challengeDays, setChallengeDays] = useState(30)
 
   function toggleWeekday(day: number) {
     setCustomWeekdays((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day].sort()))
@@ -76,7 +77,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
     if (!fields) return
     seedPlant(from, motion) // Motion 5f — the seed drops out of the plant button
     const { name: trimmed, timeOfDay, cadence, clockTime } = fields
-    const days = Math.max(1, Number(challengeDays) || 0)
+    const days = challengeDays
     const stepList = steps.map((s) => s.trim()).filter(Boolean)
     const domain = domainId || null
 
@@ -260,14 +261,9 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
             <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
           </div>
           {isChallenge && (
-            <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 160 }}>
-              <input
-                type="number"
-                min={1}
-                value={challengeDays}
-                onChange={(e) => setChallengeDays(e.target.value)}
-                style={{ width: 36, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 210 }}>
+              {/* Kai 2026-10-06: the shared NumberField; 1–3650 is goal_days' own check (0046). */}
+              <NumberField value={challengeDays} onChange={setChallengeDays} min={1} max={3650} ariaLabel="Challenge days" style={{ fontSize: 14 }} inputStyle={{ border: 'none' }} />
               <span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>
             </div>
           )}

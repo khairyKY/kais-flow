@@ -8,6 +8,7 @@ import { SwipeRow } from '../tasks/SwipeRow'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { toastUndo } from '../../lib/undo'
 import { cairoDateKey } from '../../lib/dateShortcuts'
+import { perZone } from '../../lib/appZone'
 import { useProjects } from '../projects/api'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { applyResults, markReviewed, retryCapture, startReading, useCapture, usePageUrls } from './api'
@@ -183,12 +184,13 @@ function Reading({ stage }: { stage: Extract<Stage, { kind: 'reading' }> }) {
 
 // ── 11e–11h · the results ──
 
-const cairoDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric', month: 'short' })
-const cairoTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+// The user's zone (lib/appZone.ts).
+const cairoDay = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short', day: 'numeric', month: 'short' }))
+const cairoTime = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
 function dateChip(iso: string, timed: boolean): string {
   const d = new Date(iso)
-  const day = cairoDateKey(d) === cairoDateKey(new Date()) ? 'Today' : cairoDay.format(d).replace(',', '')
-  return timed ? `${day} · ${cairoTime.format(d)}` : day
+  const day = cairoDateKey(d) === cairoDateKey(new Date()) ? 'Today' : cairoDay().format(d).replace(',', '')
+  return timed ? `${day} · ${cairoTime().format(d)}` : day
 }
 
 type Edit = { text?: string; type?: LineType; dropped?: boolean }
@@ -214,7 +216,7 @@ function useLines(capture: CaptureRow | null) {
 function metaLine(c: CaptureRow): string {
   const pages = `${c.pages} ${c.pages === 1 ? 'page' : 'pages'}`
   const arabic = c.items.some((i) => /[؀-ۿ]/.test(i.text)) ? ' · Arabic' : ''
-  return [c.title, `${pages}${arabic}`, `read ${cairoTime.format(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
+  return [c.title, `${pages}${arabic}`, `read ${cairoTime().format(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
 }
 
 function Crop({ url, box, height = 40, maxWidth = 290 }: { url?: string; box: EditLine['box']; height?: number; maxWidth?: number }) {

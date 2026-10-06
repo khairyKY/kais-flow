@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { create } from 'zustand'
 import { deliver, focusDoneNotice, inQuietHours, isPaused, reminderNotice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
+import { appZone } from '../../lib/appZone'
 import { unsyncedChanges } from '../../lib/outbox'
 import { useOnline } from '../../lib/useOnline'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
@@ -52,7 +53,7 @@ function sweepReminders(from: Date, now: Date): boolean {
   useNeedsYou.setState({ on: true })
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
   const rows = due.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
-  const notice = deliver(reminderNotice(rows, prefs(), now), prefs(), now)
+  const notice = deliver(reminderNotice(rows, prefs(), now, appZone()), prefs(), now, appZone())
   if (notice) void showLocal(notice)
   return true
 }
@@ -65,7 +66,7 @@ function watchFocusDone(): () => void {
     const task = prev.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === prev.activeTask!.id)?.title ?? null : null
     const breakMin = s.breakType === 'long' ? s.settings.longBreakMin : s.settings.shortBreakMin
     const now = new Date()
-    const notice = deliver(focusDoneNotice(prev.settings.focusRoundMin, task, breakMin, prefs()), prefs(), now)
+    const notice = deliver(focusDoneNotice(prev.settings.focusRoundMin, task, breakMin, prefs()), prefs(), now, appZone())
     if (notice) void showLocal(notice)
   })
 }
@@ -157,7 +158,7 @@ export function TrayBridge(): null {
     needsYou: useNeedsYou((s) => s.on),
     offline: !useOnline(),
     waiting: useWaiting(),
-    quiet: inQuietHours(settings, now) || isPaused(settings, now),
+    quiet: inQuietHours(settings, now, appZone()) || isPaused(settings, now),
   })
   const dark = useSystemDark()
   const focusLabel = focusMenuLabel(focus)

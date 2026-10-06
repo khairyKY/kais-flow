@@ -13,9 +13,9 @@ import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
-import { Select } from '../../components/Select'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
+import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
 import { PaperSettingsCard } from '../paper/PaperSettings'
 import { useToastStore } from '../../lib/toastStore'
 import { Button } from '../../components/kit'
@@ -27,6 +27,8 @@ import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
+import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
+import { DomainsSettings } from '../domains/DomainList'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
 // Card shell mirrors the contract's `.scard` class (tape-topped, radius 3, shadow-card).
@@ -234,8 +236,6 @@ const SOUND_CATALOG = [
 
 // (the old local sound store lived here — superseded by lib/sounds.ts)
 
-const COMMON_TIMEZONES = ['Africa/Cairo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai']
-
 function AppearanceCard() {
   const { mode, setMode } = useThemeMode()
   const scale = useUiScale((s) => s.scale)
@@ -359,7 +359,7 @@ function AppUpdateCard() {
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
-  const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo' }) : null
+  const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: appZone() }) : null
   const current = platform === 'web' ? (stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build') : installed ? `v${installed.replace(/^v/, '')}` : 'version unknown'
   const r = typeof state === 'object' ? state : null
   const file = platform === 'android' ? 'APK' : 'installer'
@@ -394,15 +394,25 @@ function AppUpdateCard() {
   )
 }
 
+// User time zones (2026-10-04): the zone every "what day is it" reads (lib/appZone.ts) — Today,
+// "Tomorrow 09:00", due dates, routines, the morning digest and evening nudge, chat. Any IANA zone
+// Intl knows, searched; this device's own zone offered first.
+const zoneOffset = (z: string) => new Date().toLocaleTimeString('en-GB', { timeZone: z, timeZoneName: 'shortOffset' }).split(' ').pop()
+
 function TimezoneCard() {
   const { data: settings } = useAppSettings()
-  const [custom, setCustom] = useState('')
+  const [q, setQ] = useState('')
   if (!settings) return null
   const tz = settings.timezone
+  const device = deviceZone()
+  const matches = searchZones(q)
+  const field: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontFamily: 'inherit' }
+  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px dashed var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }
 
   function apply(next: string) {
-    if (!next) return
+    if (!isZone(next)) return
     updateAppSetting('timezone', next)
+    setQ('')
   }
 
   return (
@@ -412,27 +422,26 @@ function TimezoneCard() {
         <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-sage) 18%, transparent)', color: 'var(--acc-sage-text)' }}>saved ✓</span>
       </div>
       <p style={{ margin: '6px 0 14px', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
-        Used everywhere the app needs to know "what day is it" — due dates, routine checks, the daily summary. Stored in UTC, converted at the edges.
+        Your day runs on this clock on every device — what "today" and "tomorrow 09:00" mean, due dates, routines, the morning digest and evening nudge. Stored in UTC, converted at the edges.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div>
-          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Common timezones</div>
-          <Select value={tz} onChange={apply} ariaLabel="Common timezones" options={COMMON_TIMEZONES.map((z) => ({ value: z, label: z }))} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)' }} />
+      {device !== tz && isZone(device) && (
+        <button type="button" onClick={() => apply(device)} style={{ ...option, borderBottom: 'none', padding: '0 0 12px', color: 'var(--acc-sage-text)' }}>
+          Use this device’s zone ({device})
+        </button>
+      )}
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search time zones" placeholder="Search a city or region — e.g. London" style={field} />
+      {matches.length > 0 && (
+        <div role="listbox" aria-label="Time zones" style={{ marginTop: 6 }}>
+          {matches.map((z) => (
+            <button key={z} type="button" role="option" aria-selected={z === tz} onClick={() => apply(z)} style={option}>
+              <span>{z.replace(/_/g, ' ')}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{zoneOffset(z)}</span>
+            </button>
+          ))}
         </div>
-        <div>
-          <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginBottom: 6, color: 'var(--ink-hairline)' }}>Or custom IANA name</div>
-          <input
-            value={custom}
-            onChange={(e) => setCustom(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { apply(custom.trim()); setCustom('') }
-            }}
-            placeholder="e.g. Europe/Berlin"
-            style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', fontStyle: custom ? 'normal' : 'italic', fontFamily: 'inherit' }}
-          />
-        </div>
-      </div>
-      <div style={fhelp}>current · {tz} · {new Date().toLocaleTimeString('en-GB', { timeZone: tz, timeZoneName: 'shortOffset' }).split(' ').pop()}</div>
+      )}
+      {q.trim() && matches.length === 0 && <div style={fhelp}>no zone matches “{q.trim()}”</div>}
+      <div style={fhelp}>current · {tz} · {zoneOffset(tz)}</div>
     </SCard>
   )
 }
@@ -477,7 +486,7 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
 // Settings → Notifications (Tray and Notifications.dc.html 12i), synced per account (app_settings
 // 0045 + 0048): notify reads every switch here (supabase/functions/notify/copy.ts `deliver`), and
 // the app's own notices (focus done; reminders in the Windows app) follow the same rules. Times are
-// Cairo wall-clock until per-user timezones. The Windows rows are this device's own.
+// wall-clock in the user's zone (Settings → Timezone). The Windows rows are this device's own.
 const RITUAL_AT = { morning_digest: '08:00', evening_nudge: '21:00' } as const
 
 function NotificationRow({ glyph, label, help, children }: { glyph: ReactNode; label: string; help?: ReactNode; children: ReactNode }) {
@@ -642,7 +651,7 @@ function NotificationsCard() {
         </>
       )}
       {message && <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '10px 0 0' }}>{message}</p>}
-      <div style={fhelp}>Cairo time · a nudge, never a lock</div>
+      <div style={fhelp}>{zoneCity(appZone())} time · a nudge, never a lock</div>
     </SCard>
   )
 }
@@ -727,7 +736,7 @@ function TrashCard() {
         <span style={{ flex: 1 }} />
         <Link to="/trash" style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, textDecoration: 'none' }}>Open trash</Link>
       </div>
-      <div style={fhelp}>deleted tasks, inbox items, events, journal entries, projects and areas · composts after 30 days</div>
+      <div style={fhelp}>deleted tasks, inbox items, events, journal entries, projects, areas and domains · composts after 30 days</div>
     </SCard>
   )
 }
@@ -784,7 +793,7 @@ function CaptureKeyCard() {
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' })
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
     setErr(null)
@@ -848,6 +857,95 @@ function CaptureKeyCard() {
         <p style={how}><b>Computer</b> — the bookmarklet (Copy bookmarklet, right after making a key), or curl:</p>
         <div style={{ ...box, ...mono, marginTop: 6 }}>{curlRecipe()}</div>
         <p style={how}><b>Let the AI file it</b> — add <span style={{ fontFamily: 'var(--font-mono)' }}>?file=1</span> to the address: a line like “dentist friday 3pm” becomes a task with its date when the app next opens (uses today’s AI allowance).</p>
+      </details>
+    </SCard>
+  )
+}
+
+// AI assistants over MCP (features/settings/mcpKey.ts, function `mcp`, docs/MCP.md): the AI access
+// key — the capture key's sibling, so the same shown-once flow — plus the server address and a
+// ready-to-paste config per client.
+function McpCard() {
+  const { data: row } = useMcpKey()
+  const { data: settings } = useAppSettings()
+  const [scope, setScope] = useState<McpScope>('read_write')
+  const [shown, setShown] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: settings?.timezone ?? 'Africa/Cairo' })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const copy = (text: string, what: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: `${what} copied` }),
+      () => setErr('Couldn’t reach the clipboard — select the text and copy it by hand.'),
+    )
+  const mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.6, color: 'var(--ink-muted)', wordBreak: 'break-all' }
+  const box: CSSProperties = { marginTop: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '9px 12px' }
+  // The real key goes into the snippets only while it's on screen; otherwise a placeholder.
+  const key = shown ?? undefined
+  const clients = [
+    { name: 'Claude Code', how: 'Run it in a terminal.', text: claudeCodeCommand(key) },
+    { name: 'Claude Desktop', how: 'Settings → Developer → Edit Config, paste into claude_desktop_config.json, restart Claude. Needs Node.js.', text: claudeDesktopConfig(key) },
+    { name: 'Other MCP clients', how: 'The address and the header, in the usual mcpServers shape.', text: genericConfig(key) },
+  ]
+  return (
+    <SCard style={{ boxShadow: 'var(--shadow-crisp)' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>AI assistants (MCP)</div>
+      <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.5 }}>
+        Let Claude or another AI assistant read your tasks, projects and calendar — and, if you allow it, add tasks and tick them off for you.
+      </div>
+      {!row && !shown && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>not set up yet</div>}
+      {row && !shown && (
+        <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)' }}>
+          key made {day(row.updated_at)} · {row.scope === 'read' ? 'read only' : 'read & write'} · {row.last_used_at ? `last used ${day(row.last_used_at)}` : 'not used yet'}
+        </div>
+      )}
+      {shown && (
+        <>
+          <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-body)' }}>Your AI access key — copy it now, it won’t be shown again:</div>
+          <div style={{ ...box, ...mono, color: 'var(--ink-body)' }}>{shown}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            <Button variant="secondary" onClick={() => copy(shown, 'Key')}>Copy key</Button>
+          </div>
+        </>
+      )}
+      <div style={{ marginTop: 12 }}>
+        <Seg<McpScope> value={scope} onChange={setScope} options={[{ value: 'read_write', label: 'Read & write' }, { value: 'read', label: 'Read only' }]} />
+      </div>
+      <div style={fhelp}>{scope === 'read' ? 'the assistant can look but never change anything' : 'the assistant can also add tasks, tick them off, move them to tomorrow and add to your inbox'}</div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <Button variant="secondary" disabled={busy} onClick={() => void run(async () => setShown(await createMcpKey(scope)))}>
+          {row || shown ? 'New key' : 'Create key'}
+        </Button>
+        {row && (
+          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteMcpKey(row.id); setShown(null) })}>
+            Turn off
+          </Button>
+        )}
+      </div>
+      {err && <div style={{ ...fhelp, color: 'var(--acc-terra)' }}>{err}</div>}
+      <div style={fhelp}>a new key stops the old one · your journal and people are never shared · 500 tool calls a day</div>
+      <div style={{ ...box, ...mono }}>{MCP_URL}</div>
+      <div style={{ marginTop: 8 }}>
+        <Button variant="secondary" onClick={() => copy(MCP_URL, 'Server address')}>Copy server address</Button>
+      </div>
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', cursor: 'pointer', minHeight: 24 }}>Connect an assistant</summary>
+        {!shown && <p style={{ margin: '8px 0 0', fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>Make a key first — right after you do, these come with it filled in.</p>}
+        {clients.map((c) => (
+          <div key={c.name} style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{c.name}</div>
+            <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 2 }}>{c.how}</div>
+            <pre style={{ ...box, ...mono, margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{c.text}</pre>
+            <div style={{ marginTop: 6 }}>
+              <Button variant="secondary" onClick={() => copy(c.text, c.name)}>Copy for {c.name}</Button>
+            </div>
+          </div>
+        ))}
       </details>
     </SCard>
   )
@@ -1001,6 +1099,12 @@ function IntegrationsPage() {
       </div>
       {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
       <PaperSettingsCard />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+        <span style={flabel}>AI assistants</span>
+        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      </div>
+      <McpCard />
     </div>
   )
 }
@@ -1094,7 +1198,18 @@ export function SoundCatalogCard() {
 // The capture endpoint's key card lives on the Integrations page, so it has no row of its own.
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card
 // (punch 21); 'Trash' is punch 50's entry point.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Trash', 'Profile', 'App'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Resurfacing', 'Timezone', 'Integrations', 'Notifications', 'Organize', 'Trash', 'Profile', 'App'] as const
+
+/** Kai 2026-10-06: domains are made, renamed, recoloured, merged and deleted here (and on the Tasks
+ * page's Organize card) — no longer only from Tasks, create-only. */
+function OrganizeCard() {
+  return (
+    <SCard>
+      <div style={{ ...flabel, marginBottom: 12 }}>Organize · domains</div>
+      <DomainsSettings />
+    </SCard>
+  )
+}
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 
 function DesktopSettings() {
@@ -1156,6 +1271,7 @@ function DesktopSettings() {
             <div id="settings-Notifications"><NotificationsCard /></div>
             <div id="settings-Resurfacing"><ResurfacingCard /></div>
             <ImportCard />
+            <div id="settings-Organize"><OrganizeCard /></div>
             <div id="settings-Trash"><TrashCard /></div>
             <div id="settings-Profile"><ProfileCard /></div>
             <div id="settings-App"><AppUpdateCard /></div>
@@ -1171,7 +1287,6 @@ function DesktopSettings() {
 
 function MobileSettings() {
   const { data: integrations = [] } = useIntegrations()
-  const { data: settings } = useAppSettings()
   const { data: subs = [] } = useMyPushSubscriptions()
   const { data: deletedItems = [] } = useDeletedItems()
   const { data: captureKey } = useCaptureKey()
@@ -1184,7 +1299,6 @@ function MobileSettings() {
   const grain = useGrain()
 
   const rows: { label: string; value: ReactNode; to?: string }[] = [
-    { label: 'Timezone', value: settings?.timezone ?? '—' },
     { label: 'Google Calendar', value: 'Coming soon' },
     { label: 'GitHub', value: githubState(github).text },
     { label: 'Notifications', value: `${subs.length} device${subs.length === 1 ? '' : 's'}` },
@@ -1222,7 +1336,16 @@ function MobileSettings() {
       </SCard>
 
       <div style={{ marginTop: 12 }}>
+        <TimezoneCard />
+      </div>
+
+      <div style={{ marginTop: 12 }}>
         <AppUpdateCard />
+      </div>
+
+      {/* The phone has no Organize rail — its domains live here. */}
+      <div id="settings-Organize" style={{ marginTop: 12 }}>
+        <OrganizeCard />
       </div>
 
       <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', marginTop: 12, overflow: 'hidden' }}>
@@ -1257,6 +1380,9 @@ function MobileSettings() {
       </div>
       <div style={{ marginTop: 12 }}>
         <PaperSettingsCard />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <McpCard />
       </div>
 
       <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>everything saves as you touch it ✿</div>

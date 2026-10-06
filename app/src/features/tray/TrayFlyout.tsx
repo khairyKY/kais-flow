@@ -20,6 +20,7 @@ import { useFocusMirror } from './focusChannel'
 import { focusTarget } from './trayState'
 import { native } from './native'
 import './tray.css'
+import { appZone, useAppZone } from '../../lib/appZone'
 
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
@@ -28,8 +29,6 @@ const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then
 // app. The same reads as Today — the date and Day N, Now/Next, the Top 3 — a capture field, and
 // the focus timer, which lives in the main window and is mirrored here (./focusChannel).
 
-const TZ = 'Africa/Cairo'
-
 function mmss(seconds: number): string {
   const s = Math.max(0, Math.round(seconds))
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -37,6 +36,7 @@ function mmss(seconds: number): string {
 
 export function TrayFlyout() {
   const now = useMinuteNow()
+  useAppZone() // re-render on the user's zone (it arrives with their settings)
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
@@ -100,7 +100,7 @@ export function TrayFlyout() {
   return (
     <div className="kf-tray">
       <header className="kf-tray-head">
-        <span className="kf-tray-date">{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ }).replace(/^(\w+)/, '$1,')}</span>
+        <span className="kf-tray-date">{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: appZone() }).replace(/^(\w+)/, '$1,')}</span>
         <span className="kf-tray-meta">Day {day}</span>
       </header>
 

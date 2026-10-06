@@ -2,8 +2,7 @@
 // tasks/taskDisplay.ts. TZ Africa/Cairo per house convention (store UTC, render Cairo).
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
-
-const TZ = 'Africa/Cairo'
+import { appZone } from '../../lib/appZone'
 
 const NUMBER_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 
@@ -25,12 +24,12 @@ export function formatCaptured(iso: string): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: false,
-    timeZone: TZ,
+    timeZone: appZone(),
   })
 }
 
 export function formatDue(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ })
+  return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })
 }
 
 /** Day-only label for the filing toast (punch 7): "Today" / "Tomorrow" / "Wed, Aug 5".
@@ -39,15 +38,15 @@ export function dayWord(iso: string, now: Date = new Date()): string {
   const day = cairoDateKey(new Date(iso))
   if (day === cairoDateKey(now)) return 'Today'
   if (day === cairoDateKey(new Date(now.getTime() + 86_400_000))) return 'Tomorrow'
-  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ })
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })
 }
 
 /** "dismissed 2h ago" while recent, then just the weekday, then a bare date — matches 2a/2b copy. */
 export function dismissedAgo(iso: string): string {
   const hours = (Date.now() - new Date(iso).getTime()) / 3_600_000
   if (hours < 24) return `${Math.max(1, Math.round(hours))}h ago`
-  if (hours < 24 * 7) return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: TZ })
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: TZ })
+  if (hours < 24 * 7) return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: appZone() })
 }
 
 export function daysAgo(iso: string): number {

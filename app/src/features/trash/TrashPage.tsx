@@ -42,6 +42,7 @@ export function TrashPage() {
     Journal: { label: 'Journal', to: '/journal' },
     Project: { label: 'Projects', to: '/projects' },
     Area: { label: 'Projects', to: '/projects' },
+    Domain: { label: 'Settings', to: '/settings' },
   }
 
   // writeRow only patches the base-table cache, never ['deleted_items'] — remove optimistically

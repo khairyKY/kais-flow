@@ -5,6 +5,7 @@ import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch } from '../_shared/retrieval.ts'
+import { userZone } from '../_shared/zone.ts'
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -55,15 +56,18 @@ Deno.serve(async (req) => {
     const hits = await hybridSearch(supabase, lastUser.content, 20)
     const { data: top3 } = await supabase.from('tasks').select('title').eq('top3', true).eq('status', 'todo')
     const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
-    // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit.
+    // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit —
+    // the user's today, on their own clock (app_settings.timezone; RLS returns only their row).
+    const { data: settings } = await supabase.from('app_settings').select('timezone').maybeSingle()
+    const tz = userZone((settings as { timezone?: string | null } | null)?.timezone)
     const now = new Date()
-    const until = dayStart(now, 'Africa/Cairo', 2).toISOString()
+    const until = dayStart(now, tz, 2).toISOString()
     const [{ data: openTasks }, { data: events }, { count: inboxPending }] = await Promise.all([
       supabase.from('tasks').select('title, due_at, scheduled_start, top3')
         .eq('status', 'todo').is('deleted_at', null)
         .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
       supabase.from('calendar_events').select('title, starts_at, ends_at, all_day')
-        .is('deleted_at', null).gte('starts_at', dayStart(now).toISOString()).lt('starts_at', until).order('starts_at').limit(40),
+        .is('deleted_at', null).gte('starts_at', dayStart(now, tz).toISOString()).lt('starts_at', until).order('starts_at').limit(40),
       supabase.from('inbox_items').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     ])
 
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
       hits,
       top3: top3 ?? [],
       slipping: slipping ?? [],
-      snapshot: snapshotText(now, openTasks ?? [], events ?? [], inboxPending ?? 0),
+      snapshot: snapshotText(now, openTasks ?? [], events ?? [], inboxPending ?? 0, tz),
     })
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

@@ -19,8 +19,8 @@ function parts(d: Date, tz: string) {
   return { y: +p.year, m: +p.month, d: +p.day, h: +p.hour, mi: +p.minute }
 }
 
-/** The instant `tz`'s calendar day containing `now` (+ `addDays`) starts. One place to swap the zone
- * when per-user time zones land. */
+/** The instant `tz`'s calendar day containing `now` (+ `addDays`) starts. chat passes the user's
+ * own zone (app_settings.timezone); Cairo is only the default. */
 export function dayStart(now: Date, tz = 'Africa/Cairo', addDays = 0): Date {
   const { y, m, d } = parts(now, tz)
   const guess = Date.UTC(y, m - 1, d + addDays)

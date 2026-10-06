@@ -14,6 +14,7 @@ import { useRowGrammar } from '../features/tasks/useRowGrammar'
 import type { TaskMenuActions } from '../features/tasks/TaskMenu'
 import type { Project, Task } from '../lib/types'
 import '../features/projects/xfx.css' // .kf-lift, as the app shell loads it: the rows here press like TaskRow's
+import { appZone } from '../lib/appZone'
 
 // The one task-row grammar on /design-system (dev only, signed out): the real SwipeRow, ⋯ menu
 // (useRowGrammar → TaskMenu) and selection bars, over local sample rows (Claude Design prompt 01).
@@ -43,8 +44,8 @@ const metaStyle = { marginTop: 4, display: 'flex', flexWrap: 'wrap', columnGap: 
 
 function dueWord(iso: string): string {
   const key = cairoDateKey(new Date(iso))
-  const day = key === cairoDateKey(new Date()) ? 'Today' : key === cairoDateKey(new Date(Date.now() + DAY)) ? 'Tomorrow' : new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Africa/Cairo' })
-  return `${day} ${new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo' })}`
+  const day = key === cairoDateKey(new Date()) ? 'Today' : key === cairoDateKey(new Date(Date.now() + DAY)) ? 'Tomorrow' : new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })
+  return `${day} ${new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: appZone() })}`
 }
 
 function DemoRow({ t, selected, selecting, onToggleSelect, actions, onComplete }: { t: Task; selected: boolean; selecting: boolean; onToggleSelect: () => void; actions: Partial<TaskMenuActions>; onComplete: () => void }) {

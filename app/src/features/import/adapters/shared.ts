@@ -1,4 +1,5 @@
 // Shared plumbing for import adapters — pure, no app imports, unit-testable.
+import { appZone, isZone } from '../../../lib/appZone'
 import * as chrono from 'chrono-node'
 
 export interface ExternalRef {
@@ -101,21 +102,14 @@ export function mergeBatches(batches: ImportBatch[]): ImportBatch {
   return out
 }
 
-// ── Timezone — the phase-file pitfall. Akiflow datetimes are naive Cairo wall-clock
-// ("2026-07-17T17:15:00", no offset); the app stores UTC and renders Africa/Cairo.
+// ── Timezone — the phase-file pitfall. Akiflow datetimes are naive wall-clock ("2026-07-17T17:15:00",
+// no offset); the app stores UTC and renders the user's zone (app_settings.timezone, lib/appZone.ts —
+// Africa/Cairo by default), so a source with no zone of its own is read on the user's clock.
 // Convert explicitly via Intl (no tz library installed; Egypt has DST again since 2023). ──
 
-const TZ = 'Africa/Cairo'
-
-/** A source's own zone column ("US/Eastern", "Africa/Cairo") when Intl knows it, else Cairo. */
+/** A source's own zone column ("US/Eastern", "Africa/Cairo") when Intl knows it, else the user's. */
 export function zoneOr(tz: string | null | undefined): string {
-  if (!tz?.trim()) return TZ
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: tz.trim() })
-    return tz.trim()
-  } catch {
-    return TZ
-  }
+  return isZone(tz?.trim()) ? tz!.trim() : appZone()
 }
 
 // Building an Intl.DateTimeFormat costs far more than using one — a 40k-task vault spent most of
@@ -157,7 +151,7 @@ function tzOffsetMs(tz: string, date: Date): number {
 
 /** Naive local wall-clock ("YYYY-MM-DDTHH:mm:ss" or date-only "YYYY-MM-DD", meaning midnight)
  *  in `tz` → UTC ISO string. Two-pass so a DST boundary between guess and answer still lands. */
-export function naiveLocalToUtc(naive: string, tz: string = TZ): string {
+export function naiveLocalToUtc(naive: string, tz: string = appZone()): string {
   const wall = naive.includes('T') ? naive : `${naive}T00:00:00`
   const guess = new Date(`${wall}Z`)
   const offset = tzOffsetMs(tz, guess)
@@ -198,7 +192,7 @@ const looseCache = new Map<string, string | null>()
  *  No time given → that day's midnight, like every other date-only import. `forward` reads
  *  "monday"/"Sep 1" as the next one (recurrences); off, an overdue "Sep 1" stays this year's.
  *  An explicit zone ("9:00 AM (GMT+3)") is already an instant and stands. */
-export function parseLooseDate(text: string, now: Date = new Date(), tz: string = TZ, forward = false): string | null {
+export function parseLooseDate(text: string, now: Date = new Date(), tz: string = appZone(), forward = false): string | null {
   const v = text.trim()
   if (!v) return null
   if (ISO_LOCAL.test(v)) return naiveLocalToUtc(v.replace(' ', 'T'), tz)
@@ -221,7 +215,7 @@ export function parseLooseDate(text: string, now: Date = new Date(), tz: string 
 }
 
 /** Today's midnight on `tz`'s wall clock, as UTC — the due date of a repeat with no start. */
-export function todayMidnight(now: Date = new Date(), tz: string = TZ): string {
+export function todayMidnight(now: Date = new Date(), tz: string = appZone()): string {
   return naiveLocalToUtc(dayIn(tz, now), tz)
 }
 

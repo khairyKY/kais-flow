@@ -1,8 +1,6 @@
-import { useTasks } from '../tasks/api'
-import { useOpenTask } from '../tasks/openTask'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import { searchHitHref, SEARCH_GROUPS } from './api'
+import { useSearchParams } from 'react-router'
+import { SEARCH_GROUPS, useOpenSearchHit } from './api'
 import { useSearch } from './useSearch'
 import { resultCountLine, SEARCH_RESTING } from './searchState'
 import type { SearchHit, SearchEntityType } from '../../lib/types'
@@ -124,9 +122,7 @@ function RestingResult({ onRetry }: { onRetry: () => void }) {
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
-  const openTask = useOpenTask()
-  const { data: allTasks = [] } = useTasks()
+  const openHit = useOpenSearchHit()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
   const search = useSearch(query)
@@ -155,8 +151,7 @@ export function SearchPage() {
   }, [results])
 
   function goTo(hit: SearchHit) {
-    if (hit.entity_type === 'task') openTask(hit.entity_id, searchHitHref(hit, allTasks)) // the sheet on a phone
-    else navigate(searchHitHref(hit, allTasks))
+    openHit(hit) // the thing itself — a task as the sheet on a phone, the editor on a computer
   }
 
   // Counts are over everything found; the rendered groups honour the chip.

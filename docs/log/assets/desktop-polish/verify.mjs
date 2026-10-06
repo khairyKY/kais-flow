@@ -255,13 +255,14 @@ for (const theme of ['day', 'night']) {
     const areaRow = page.locator('.kf-lift', { hasText: 'Health' }).first()
     await areaRow.click({ button: 'right' })
     await sleep(300)
-    check(`${N('projects')} right-click an area → Open · Rename · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Delete')
+    // projects-fixes (Kai 2026-10-06) added "Change type…" to both menus (docs/log/assets/projects-fixes).
+    check(`${N('projects')} right-click an area → Open · Rename · Change type… · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Change type… · Delete')
     await shot(page, N('projects-area-menu'))
     await page.keyboard.press('Escape')
     await sleep(200)
     await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
     await sleep(300)
-    check(`${N('projects')} right-click a project → Open · Rename · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Finish & press · Delete')
+    check(`${N('projects')} right-click a project → Open · Rename · Change type… · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Change type… · Finish & press · Delete')
     await page.keyboard.press('Escape')
     await sleep(200)
     const prevented = await page.evaluate(() => {

@@ -18,12 +18,13 @@
 //   unfinished Top 3 (you can work it right now); otherwise the next event, however far off.
 //
 // Earlier rows win: a closed day stays closed; an evening is for shutting down even if the
-// morning was never planned. All clock rules read Cairo's wall clock, whatever
-// the device zone — the app's one day boundary (B2).
+// morning was never planned. All clock rules read the user's wall clock (app_settings.timezone,
+// lib/appZone.ts), whatever the device zone — the app's one day boundary (B2).
 //
 // Kai's R4-5a pins still mean what they said ("should be able to choose whether they stay pinned"
 // to Today): an unpinned ritual is never *prompted* by the card — its Plan / Shut down state falls
 // through to Now. It stays one tap away in the card's ritual links and on Routines.
+import { perZone } from '../../lib/appZone'
 
 export type DayPhase = 'plan' | 'now' | 'shutdown' | 'closed'
 
@@ -66,13 +67,13 @@ export const SHUTDOWN_FROM = 17 * 60
 /** An event this close (minutes) outranks the Top 3 as Now's item. */
 export const NOW_SOON_MIN = 30
 
-const cairoClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+const cairoClock = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
 
-/** Minutes since midnight on Cairo's wall clock. */
+/** Minutes since midnight on the user's wall clock (lib/appZone.ts; the name is historical). */
 export function cairoMinutes(now: Date): number {
   let h = 0
   let m = 0
-  for (const p of cairoClock.formatToParts(now)) {
+  for (const p of cairoClock().formatToParts(now)) {
     if (p.type === 'hour') h = Number(p.value) % 24
     else if (p.type === 'minute') m = Number(p.value)
   }
