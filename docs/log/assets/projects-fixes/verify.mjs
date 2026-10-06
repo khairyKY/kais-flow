@@ -237,7 +237,8 @@ for (const theme of ['day', 'night']) {
     await card.getByRole('button', { name: 'More for Day job' }).click()
     await sleep(300)
     const items = (await page.getByRole('menuitem').allInnerTexts()).map((t) => t.replace(/[▸\n]/g, '').trim()).join(' · ')
-    check(`${N('domains')} ⋯ → Rename · Colour · Merge into… · Delete`, items === 'Rename · Colour · Merge into… · Delete', items)
+    // The first domain: no Move up. Item 7 added Move up / down and Make it an area….
+    check(`${N('domains')} ⋯ → Rename · Colour · Move down · Merge into… · Make it an area… · Delete`, items === 'Rename · Colour · Move down · Merge into… · Make it an area… · Delete', items)
     await page.getByRole('menuitem', { name: 'Colour' }).click()
     await sleep(300)
     await shot(page, N('3-domain-colour-menu'))
