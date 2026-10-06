@@ -41,7 +41,7 @@ const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() 
 // A task row as JSON (timestamps come back as ISO strings), minus the search columns and the import
 // key, plus its project's name.
 function store(tx: Tx): Store {
-  const tasks = (rows: readonly { r: TaskRow }[]) => rows.map((x) => x.r)
+  const tasks = (rows: readonly Record<string, unknown>[]) => rows.map((x) => x.r as TaskRow)
   return {
     async timezone() {
       const [row] = await tx`select timezone from app_settings limit 1`
