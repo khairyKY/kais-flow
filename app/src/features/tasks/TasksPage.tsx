@@ -4,8 +4,9 @@ import { SortIcon } from '../../components/controlIcons'
 import { Select } from '../../components/Select'
 import { Link, useSearchParams } from 'react-router'
 import { useOpenTask } from './openTask'
-import { useDomains, createDomain } from '../domains/api'
-import { DomainList } from '../domains/DomainList'
+import { useDomains, createDomain, renameDomain } from '../domains/api'
+import { DomainList, useDomainMenu } from '../domains/DomainList'
+import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
@@ -537,6 +538,9 @@ export function TasksPage() {
   )
 
   const [domainChip, setDomainChip] = useState<string | null>(null)
+  // Kai 2026-10-06: a domain chip's right-click is the domain's own menu (rename in place, colour, …).
+  const [renamingChip, setRenamingChip] = useState<string | null>(null)
+  const chipMenu = useDomainMenu(domains, setRenamingChip)
 
   const filteredBase = filterByList(displayTasks, list, now)
   const [labelFilter, setLabelFilter] = useState<string | null>(null)
@@ -759,11 +763,18 @@ export function TasksPage() {
               <span
                 key={d.id}
                 onClick={() => setDomainChip(d.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  chipMenu.open(d.id, { x: e.clientX, y: e.clientY })
+                }}
                 style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
-                {d.name}
+                {renamingChip === d.id ? (
+                  <RenameField value={d.name} ariaLabel="Domain name" style={{ width: 120, margin: '-2px -4px', textTransform: 'none' }} onDone={(next) => { setRenamingChip(null); if (next && next !== d.name) renameDomain(d, next) }} />
+                ) : d.name}
               </span>
             ))}
+            {chipMenu.node}
           </div>
         )}
 

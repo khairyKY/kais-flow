@@ -8,6 +8,7 @@ import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { NewProjectModal } from './NewProjectModal'
+import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
 import { queryClient } from '../../lib/queryClient'
@@ -234,11 +235,21 @@ export function ProjectsPage() {
     return [
       { label: 'Open', icon: 'chevright', run: () => navigate(`/projects/${m.id}`) },
       { label: 'Rename', icon: 'label', run: () => setRenaming(m.id) },
+      // Kai 2026-10-06: project ↔ retainer, project / retainer ↔ area (./ChangeType.tsx).
+      ...(project || area ? [{ label: 'Change type…', icon: 'rotate' as IconName, run: () => setTypeMenu({ thing: project ? { table: 'projects' as const, row: project } : { table: 'areas' as const, row: area! }, at: { x: m.x, y: m.y } }) }] : []),
       // The press ceremony archives it when it closes (punch 51), with its own Undo.
       ...(project ? [{ label: 'Finish & press', icon: 'check' as IconName, run: () => navigate(`/herbarium?press=${project.id}`) }] : []),
       { label: 'Delete', icon: 'delete', danger: true, run: () => (project ? deleteProjectWithUndo(project) : area && deleteAreaWithUndo(area)) },
     ]
   }
+  const [typeMenu, setTypeMenu] = useState<{ thing: Convertible; at: { x: number; y: number } } | null>(null)
+  const changeType = useChangeType()
+  const typeLayer = (
+    <>
+      {typeMenu && <TypeMenu thing={typeMenu.thing} at={typeMenu.at} onPick={(to) => changeType.ask(typeMenu.thing, to)} onClose={() => setTypeMenu(null)} />}
+      {changeType.node}
+    </>
+  )
   const menuLayer = menu && (isMobile ? (
     <ActionSheet
       title={menu.name}
@@ -414,6 +425,7 @@ export function ProjectsPage() {
         </div>
         {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
         {menuLayer}
+        {typeLayer}
       </div>
     )
   }
@@ -842,6 +854,7 @@ export function ProjectsPage() {
       {/* NEW PROJECT MODAL */}
       {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
       {menuLayer}
+        {typeLayer}
     </div>
   )
 }

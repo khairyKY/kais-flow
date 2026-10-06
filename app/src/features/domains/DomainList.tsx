@@ -7,7 +7,8 @@ import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { RenameField } from '../../components/RenameField'
 import type { Domain } from '../../lib/types'
-import { createDomain, deleteDomainWithUndo, mergeDomain, recolorDomain, renameDomain, useDomains } from './api'
+import { createDomain, deleteDomainWithUndo, mergeDomain, recolorDomain, renameDomain, reorderDomains, useDomains } from './api'
+import { useChangeType } from '../projects/ChangeType'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
@@ -26,21 +27,37 @@ const dot = (color: string, size = 8) => <span aria-hidden style={{ width: size,
 type Sub = 'color' | 'merge'
 interface MenuState { id: string; at: { x: number; y: number }; sub?: Sub }
 
-export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; meta?: (d: Domain) => ReactNode; rowStyle?: CSSProperties }) {
+/** One domain's menu, wherever a domain shows (these rows, the Tasks page's domain chips): Rename ·
+ * Colour ▸ · Move up / down (its place in every list — sort_order) · Merge into ▸ · Make it an
+ * area… · Delete. `onRename` puts the caller's name into edit mode. */
+export function useDomainMenu(domains: Domain[], onRename: (id: string) => void) {
   const isMobile = useIsMobile()
-  const [renaming, setRenaming] = useState<string | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
+  const changeType = useChangeType()
   const current = menu && domains.find((d) => d.id === menu.id)
   const close = () => setMenu(null)
+  const move = (d: Domain, by: -1 | 1) => {
+    const order = [...domains]
+    const i = order.findIndex((x) => x.id === d.id)
+    order.splice(i, 1)
+    order.splice(i + by, 0, d)
+    reorderDomains(order)
+  }
 
   const colorOptions = (d: Domain) => DOMAIN_COLORS.map((c) => ({ label: c.label, icon: dot(c.value, 10), selected: d.color === c.value, run: () => recolorDomain(d, c.value) }))
   const mergeOptions = (d: Domain) => domains.filter((o) => o.id !== d.id).map((o) => ({ label: o.name, icon: dot(o.color ?? DEFAULT_DOT, 10), selected: false, run: () => mergeDomain(d.id, o.id) }))
-  const actions = (d: Domain): { key: string; label: string; icon: IconName; hint?: string; danger?: boolean; sub?: Sub; run?: () => void }[] => [
-    { key: 'rename', label: 'Rename', icon: 'label', run: () => setRenaming(d.id) },
-    { key: 'color', label: 'Colour', icon: 'label', sub: 'color' },
-    ...(domains.length > 1 ? [{ key: 'merge', label: 'Merge into…', icon: 'projects' as IconName, sub: 'merge' as Sub }] : []),
-    { key: 'delete', label: 'Delete', icon: 'delete', hint: 'Undo 6s', danger: true, run: () => deleteDomainWithUndo(d) },
-  ]
+  const actions = (d: Domain): { key: string; label: string; icon: IconName; hint?: string; danger?: boolean; sub?: Sub; run?: () => void }[] => {
+    const i = domains.findIndex((x) => x.id === d.id)
+    return [
+      { key: 'rename', label: 'Rename', icon: 'label', run: () => onRename(d.id) },
+      { key: 'color', label: 'Colour', icon: 'label', sub: 'color' },
+      ...(i > 0 ? [{ key: 'up', label: 'Move up', icon: 'back' as IconName, run: () => move(d, -1) }] : []),
+      ...(i < domains.length - 1 ? [{ key: 'down', label: 'Move down', icon: 'chevdown' as IconName, run: () => move(d, 1) }] : []),
+      ...(domains.length > 1 ? [{ key: 'merge', label: 'Merge into…', icon: 'projects' as IconName, sub: 'merge' as Sub }] : []),
+      { key: 'type', label: 'Make it an area…', icon: 'rotate', run: () => changeType.ask({ table: 'domains', row: d }, 'area') },
+      { key: 'delete', label: 'Delete', icon: 'delete', hint: 'Undo 6s', danger: true, run: () => deleteDomainWithUndo(d) },
+    ]
+  }
 
   let layer: ReactNode = null
   if (current && menu) {
@@ -83,7 +100,21 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
       )
     }
   }
+  return {
+    activeId: menu?.id ?? null,
+    open: (id: string, at: { x: number; y: number }) => setMenu({ id, at }),
+    node: (
+      <>
+        {layer}
+        {changeType.node}
+      </>
+    ),
+  }
+}
 
+export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; meta?: (d: Domain) => ReactNode; rowStyle?: CSSProperties }) {
+  const [renaming, setRenaming] = useState<string | null>(null)
+  const menu = useDomainMenu(domains, setRenaming)
   return (
     <>
       {/* The ⋯ shows on hover (always on touch) — the Projects rows' .pj-more (xfx.css). */}
@@ -94,9 +125,9 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
           className="kf-domain-row"
           onContextMenu={(e) => {
             e.preventDefault()
-            setMenu({ id: d.id, at: { x: e.clientX, y: e.clientY } })
+            menu.open(d.id, { x: e.clientX, y: e.clientY })
           }}
-          style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)', background: menu?.id === d.id ? 'var(--select-bg)' : undefined, borderRadius: 4, ...rowStyle }}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)', background: menu.activeId === d.id ? 'var(--select-bg)' : undefined, borderRadius: 4, ...rowStyle }}
         >
           {dot(d.color ?? DEFAULT_DOT, 7)}
           <span style={{ flex: 1, minWidth: 0 }}>
@@ -123,7 +154,7 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
             aria-haspopup="menu"
             onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect()
-              setMenu({ id: d.id, at: { x: r.left, y: r.bottom } })
+              menu.open(d.id, { x: r.left, y: r.bottom })
             }}
             style={{ margin: '-4px -6px -4px 0' }}
           >
@@ -131,7 +162,7 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
           </button>
         </div>
       ))}
-      {layer}
+      {menu.node}
     </>
   )
 }

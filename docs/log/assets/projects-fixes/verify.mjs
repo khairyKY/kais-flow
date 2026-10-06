@@ -317,6 +317,130 @@ for (const theme of ['day', 'night']) {
     check('trash no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
+
+  // ── 7 · Change a thing's type: project ↔ retainer, project → area, area → domain, domain → area ──
+  if (want('7')) {
+    const { ctx, page, errors, state } = await open('/projects', { theme, scale: 1.5 })
+    await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
+    await sleep(300)
+    await page.getByRole('menuitem', { name: 'Change type…' }).click()
+    await sleep(300)
+    const opts = (await page.getByRole('menuitem').allInnerTexts()).map((t) => t.trim()).join(' · ')
+    check(`${N('type')} a project can become a retainer or an area`, opts === 'Make it a retainer · Make it an area', opts)
+    await page.getByRole('menuitem', { name: 'Make it an area' }).click()
+    await sleep(400)
+    const body = await page.locator('.kf-overlay-card').innerText()
+    check(`${N('type')} the confirmation says exactly what happens`, body.includes('Make “Shaheen Website” an area?') && body.includes('2 open tasks and 1 done move to the new area · its milestones, logged hours, updates stay with the project in Trash (30 days).'), body.replace(/\n/g, ' / '))
+    await shot(page, N('7-type-confirm-150'))
+    let from = state.writes.length
+    await page.getByRole('button', { name: 'Make it an area' }).click()
+    await sleep(700)
+    const newArea = writesTo(state, 'areas', from)
+    const moved = writesTo(state, 'tasks', from)
+    const trashed = writesTo(state, 'projects', from)
+    check(`${N('type')} project → area: a new area with its name + domain, its 3 tasks moved, the project to Trash, logged`, newArea.length === 1 && newArea[0].name === 'Shaheen Website' && newArea[0].domain_id === WORK.id && moved.length === 3 && moved.every((t) => t.area_id === newArea[0].id && t.project_id === null) && trashed.length === 1 && !!trashed[0].deleted_at && logged(state, from).includes('project.type_changed'), JSON.stringify({ newArea: newArea.length, moved: moved.length, trashed: trashed.length }))
+    check(`${N('type')} "“Shaheen Website” is now an area · Undo"; the row now sits with the areas`, (await page.locator('.kf-toast-msg').allInnerTexts()).some((t) => t.includes('is now an area')))
+    from = state.writes.length
+    await toastUndo(page)
+    const un = state.writes.slice(from)
+    check(`${N('type')} one Undo: project back, tasks back in it, the new area removed`, writesTo(state, 'projects', from).some((p) => p.id === SITE.id && p.deleted_at === null) && writesTo(state, 'tasks', from).length === 3 && writesTo(state, 'tasks', from).every((t) => t.project_id === SITE.id) && un.some((w) => w.table === 'areas' && w.method === 'DELETE'), JSON.stringify(un.map((w) => `${w.method} ${w.table}`)))
+    // retainer → project
+    await page.locator('.kf-lift', { hasText: 'Retainer Co' }).first().click({ button: 'right' })
+    await sleep(300)
+    await page.getByRole('menuitem', { name: 'Change type…' }).click()
+    await sleep(300)
+    await page.getByRole('menuitem', { name: 'Make it a project' }).click()
+    await sleep(300)
+    from = state.writes.length
+    await page.getByRole('button', { name: 'Make it a project' }).click()
+    await sleep(500)
+    const flip = writesTo(state, 'projects', from)
+    check(`${N('type')} retainer → project flips the type only`, flip.length === 1 && flip[0].type === 'standard' && flip[0].id === RETAINER.id)
+    check(`${N('type')} projects page no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  if (want('7')) {
+    // area page → Change type… → Make it a domain; lands on Projects
+    const { ctx, page, errors, state } = await open(`/projects/${AREA.id}`, { theme, view: DAY ? undefined : PHONE })
+    // Scroll first and let it settle: a menu closes on a page scroll (it would detach from its anchor).
+    await page.getByRole('button', { name: /Change type/ }).scrollIntoViewIfNeeded()
+    await sleep(500)
+    await page.getByRole('button', { name: /Change type/ }).click()
+    await sleep(400)
+    await page.getByRole(DAY ? 'menuitem' : 'button', { name: 'Make it a domain' }).click()
+    await sleep(500)
+    const body = await page.locator('.kf-overlay-card').innerText()
+    check(`${N('type')} ${DAY ? 'desktop' : 'phone'} area page → Make it a domain: "2 open tasks move to the new domain · the area goes to Trash."`, body.includes('2 open tasks move to the new domain · the area goes to Trash.'), body.replace(/\n/g, ' / '))
+    if (!DAY) await shot(page, N('7-type-area-phone'))
+    const from = state.writes.length
+    await page.locator('.kf-overlay-card').getByRole('button', { name: 'Make it a domain' }).click()
+    await sleep(700)
+    const d = writesTo(state, 'domains', from)
+    check(`${N('type')} area → domain: a domain named Health, its tasks carry it, the area to Trash, off to Projects`, d.length === 1 && d[0].name === 'Health' && writesTo(state, 'tasks', from).every((t) => t.domain_id === d[0].id && t.area_id === null) && writesTo(state, 'areas', from).some((a) => a.id === AREA.id && a.deleted_at) && new URL(page.url()).pathname === '/projects')
+    check(`${N('type')} area page no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  if (want('7') && DAY) {
+    // domain → area from Settings → Organize; and a domain chip's right-click on Tasks
+    const { ctx, page, errors, state } = await open('/settings', { theme })
+    const card = page.locator('#settings-Organize')
+    await card.scrollIntoViewIfNeeded()
+    await card.getByRole('button', { name: 'More for Home' }).click()
+    await sleep(300)
+    const items = (await page.getByRole('menuitem').allInnerTexts()).map((t) => t.replace(/[▸\n]/g, '').trim()).join(' · ')
+    check('domain menu: Rename · Colour · Move up · Merge into… · Make it an area… · Delete (the last domain has no Move down)', items === 'Rename · Colour · Move up · Merge into… · Make it an area… · Delete', items)
+    let from = state.writes.length
+    await page.getByRole('menuitem', { name: 'Move up' }).click()
+    await sleep(400)
+    const order = writesTo(state, 'domains', from)
+    check('Move up rewrites the order (sort_order)', order.some((x) => x.id === HOME.id && x.sort_order === 0) && order.some((x) => x.id === WORK.id && x.sort_order === 1), JSON.stringify(order.map((x) => [x.name, x.sort_order])))
+    await card.getByRole('button', { name: 'More for Home' }).click()
+    await sleep(300)
+    await page.getByRole('menuitem', { name: 'Make it an area…' }).click()
+    await sleep(400)
+    const body = await page.locator('.kf-overlay-card').innerText()
+    check('domain → area: "No tasks to move · its 1 area keep going with no domain · the domain goes to Trash."', body.includes('its 1 area keep going with no domain · the domain goes to Trash.'), body.replace(/\n/g, ' / '))
+    from = state.writes.length
+    await page.locator('.kf-overlay-card').getByRole('button', { name: 'Make it an area' }).click()
+    await sleep(600)
+    const areas = writesTo(state, 'areas', from)
+    check('domain → area: a new area "Home", Health leaves the domain, Home to Trash', areas.some((a) => a.name === 'Home' && a.domain_id === null) && areas.some((a) => a.id === AREA.id && a.domain_id === null) && writesTo(state, 'domains', from).some((x) => x.id === HOME.id && x.deleted_at))
+    await shot(page, 'type-domain-to-area-day')
+    check('settings (type) no page errors', errors.length === 0, errors.join(' | '))
+    await ctx.close()
+    // The domain chips are the phone's (Tasks.dc.html 1b); a long-press is the phone's right-click.
+    const t = await open('/tasks', { theme, view: PHONE })
+    await t.page.locator('span', { hasText: /^Work$/ }).first().click({ button: 'right' })
+    await sleep(300)
+    check('Tasks (phone): long-press / right-click a domain chip opens the domain sheet', (await t.page.getByRole('button', { name: /Make it an area/ }).count()) === 1)
+    await t.page.getByRole('button', { name: /^Rename/ }).click()
+    await sleep(200)
+    from = t.state.writes.length
+    await t.page.keyboard.type('Clients')
+    await t.page.keyboard.press('Enter')
+    await sleep(400)
+    check('Tasks: chip → Rename edits the chip in place', writesTo(t.state, 'domains', from).some((x) => x.name === 'Clients'))
+    await shot(t.page, 'type-domain-chip-day')
+    check('tasks (chips) no page errors', t.errors.length === 0, t.errors.join(' | '))
+    await t.ctx.close()
+  }
+  if (want('7') && !DAY) {
+    // phone: Projects ⋯ → Change type… → the sheet
+    const { ctx, page, errors, state } = await open('/projects', { theme, view: PHONE })
+    await page.getByRole('button', { name: 'More for Retainer Co' }).click()
+    await sleep(500)
+    await page.getByRole('button', { name: /Change type/ }).click()
+    await sleep(600)
+    await shot(page, N('7-type-sheet-phone'))
+    await page.getByRole('button', { name: 'Make it a project' }).click()
+    await sleep(500)
+    const from = state.writes.length
+    await page.locator('.kf-overlay-card').getByRole('button', { name: 'Make it a project' }).click()
+    await sleep(500)
+    check(`${N('type')} phone ⋯ → Change type… → Make it a project`, writesTo(state, 'projects', from).some((p) => p.id === RETAINER.id && p.type === 'standard'))
+    check(`${N('type')} phone no sideways scroll, no page errors`, (await noHScroll(page)) && errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
 }
 
 await browser.close()

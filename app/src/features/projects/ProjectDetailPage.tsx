@@ -23,12 +23,13 @@ import {
   removeProjectChecklistItem,
   logTimeEntry,
   useTimeEntries,
-  createProject,
   isThisMonth,
   renameProject,
 } from './api'
 import { useAreas, renameArea } from '../areas/api'
 import { RenameField } from '../../components/RenameField'
+import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
+import { KIND_LABEL, kindOf } from './convert'
 import {
   useTasks,
   completeTask,
@@ -103,6 +104,15 @@ export function ProjectDetailPage() {
   const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
   // Kai 2026-10-06: "we can't edit the name of an area, project or a retainer from inside the item".
   const [renamingTitle, setRenamingTitle] = useState(false)
+  // Kai 2026-10-06: change its type from inside the page — the new thing's page opens; Undo comes back.
+  const [typeMenuAt, setTypeMenuAt] = useState<{ x: number; y: number } | null>(null)
+  const changeType = useChangeType({
+    after: (created) => {
+      if (created?.kind === 'area' || created?.kind === 'project') navigate(`/projects/${created.id}`)
+      else if (created?.kind === 'domain') navigate('/projects')
+    },
+    onUndone: (thing) => navigate(`/projects/${thing.row.id}`),
+  })
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
@@ -291,6 +301,29 @@ export function ProjectDetailPage() {
       </span>
     )
 
+  const thing: Convertible | null = project ? { table: 'projects', row: project } : area ? { table: 'areas', row: area } : null
+  // The footer's "Change type…" (project ↔ retainer ↔ area, area → project / domain) + its layers.
+  const typeLink = thing && (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        aria-haspopup="menu"
+        onClick={(e) => setTypeMenuAt({ x: e.clientX, y: e.clientY })}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter') return
+          const r = e.currentTarget.getBoundingClientRect()
+          setTypeMenuAt({ x: r.left, y: r.bottom })
+        }}
+        style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+      >
+        Change type… <span style={{ color: 'var(--ink-faint)' }}>· {KIND_LABEL[kindOf(thing.row, thing.table)]}</span>
+      </span>
+      {typeMenuAt && <TypeMenu thing={thing} at={typeMenuAt} onPick={(to) => changeType.ask(thing, to)} onClose={() => setTypeMenuAt(null)} />}
+      {changeType.node}
+    </>
+  )
+
   if (!project && !area) {
     return (
       <div style={{ padding: 40, color: 'var(--ink-muted)' }}>
@@ -312,46 +345,6 @@ export function ProjectDetailPage() {
       if (!isNaN(plainNum)) total = plainNum
     }
     return total || 60 // Default to 60m if parsing fails
-  }
-
-  // Convert area to project helper — E2: in-app ConfirmCard instead of window.confirm
-  const handleConvertAreaToProject = () => {
-    if (!area) return
-    setConfirm({
-      title: `Convert "${area.name}" to a project?`,
-      body: 'All open tasks in this area will be moved to the new project.',
-      confirmLabel: 'Convert',
-      onConfirm: () => {
-        setConfirm(null)
-        doConvertAreaToProject()
-      },
-    })
-  }
-
-  const doConvertAreaToProject = () => {
-    if (!area) return
-    // 1. Create a project
-    const newProj = createProject(
-      area.name,
-      area.domain_id,
-      'standard',
-      'Personal',
-      null,
-      area.color || 'var(--acc-terra)'
-    )
-
-    // 2. Reparent open tasks from area to new project
-    const areaTasks = tasks.filter((t) => t.area_id === area.id)
-    for (const t of areaTasks) {
-      writeRow('tasks', { ...t, area_id: null, project_id: newProj.id })
-    }
-
-    // 3. Delete the area
-    writeRow('areas', area, 'delete')
-    logActivity('area.converted', 'area', area.id, { new_project_id: newProj.id, name: area.name })
-
-    // 4. Redirect
-    navigate(`/projects/${newProj.id}`)
   }
 
   const handleToggleMilestone = (milestoneId: string) => {
@@ -856,8 +849,8 @@ export function ProjectDetailPage() {
               })}
             </div>
 
-            {/* Archive / Convert action footer */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
+            {/* Archive / Change type action footer */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
               <span
                 onClick={() =>
                   // E2: in-app ConfirmCard instead of window.confirm
@@ -877,6 +870,8 @@ export function ProjectDetailPage() {
               >
                 Archive project…
               </span>
+              {typeLink}
+              <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
                 100% milestones → the wisteria's full cascade ✿
               </span>
@@ -1072,12 +1067,7 @@ export function ProjectDetailPage() {
 
           {/* Actions footer */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-            <span
-              onClick={handleConvertAreaToProject}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
-            >
-              Convert to project…
-            </span>
+            {typeLink}
             <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
               an area is a garden bed — never done, just kept ✿
             </span>
