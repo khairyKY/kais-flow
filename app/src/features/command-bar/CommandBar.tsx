@@ -63,8 +63,8 @@ function matchJumpView(input: string): (typeof JUMP_VIEWS)[number] | null {
   return hits.length === 1 ? hits[0] : null
 }
 
-/** The centre button draws the kit's mic (MK Capture), so the phone sheet's first three opens say
- * what it does: tap to type · hold to talk. Counted per device. */
+/** The centre button is a plus that also records while held, so the phone sheet's first three opens
+ * say what it does: tap to type · hold to talk. Counted per device. */
 function takeCaptureHint(): boolean {
   try {
     const seen = Number(localStorage.getItem('kf.captureHint')) || 0

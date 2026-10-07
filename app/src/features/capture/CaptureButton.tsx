@@ -15,9 +15,10 @@ import { usePaperStore } from '../paper/paperStore'
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
 // MK Capture.dc.html: the tab bar's centre button. Tap = the capture (text) sheet with the keyboard
-// up (Paper Capture 11a; its mic switches to talking) — it never opens the mic itself. The glyph
-// stays the kit's mic (MK Capture + 11a draw it), so the label and the sheet's first-run hint say
-// "tap to type · hold to talk". Hold ≥ --dur-longpress = record while held; release sends; slide up onto the lock =
+// up (Paper Capture 11a; its mic switches to talking) — it never opens the mic itself. Kai's phone
+// review (2026-10-07): a mic at rest still said "voice only", so it draws the kit's plus — the
+// desktop Capture button's (CaptureCta) — and the mic only while a take records; the label and the
+// sheet's first-run hint say "tap to type · hold to talk". Hold ≥ --dur-longpress = record while held; release sends; slide up onto the lock =
 // hands-free [Cancel · timer · waveform · Send]; slide left = discard, with Undo.
 // Sending hands the take to VoiceCaptureSheet, which transcribes + files it and keeps it (Try
 // again / Save to Inbox) if that fails — the same "never lose a recording" path as the sheet's mic.
@@ -219,7 +220,7 @@ export function CaptureButton() {
           if (clickIsTap(e.detail, held.current)) openCapture()
         }}
       >
-        <Icon name="mic" size={24} />
+        <Icon name={recording ? 'mic' : 'plus'} size={24} />
         {waiting > 0 && <span className="pp-capture-dot" aria-hidden="true" />}
       </button>
 
