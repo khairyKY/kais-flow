@@ -281,11 +281,12 @@ export function LibraryPage() {
         `}</style>
         <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
 
-        <div style={{ flex: 1, padding: '16px 20px 80px', position: 'relative', zIndex: 15 }}>
+        {/* Kai's phone review: the shell's 16px gutter is the page's, not 16 + 20 of its own. */}
+        <div style={{ flex: 1, padding: '0 0 80px', position: 'relative', zIndex: 15 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 24, filter: 'var(--shadow-drop-sm)' }} />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</span>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</h1>
           </div>
 
           {/* Segmented Tab */}

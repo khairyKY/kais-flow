@@ -143,8 +143,8 @@ export function TrashPage() {
       <div key={item.id} id={`trash-${item.id}`} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(i) : {}) }}>
         <div className="trow">
           <span className="tbadge">{item.type}</span>
-          <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{getDeletionMeta(item.deleted_at)}</span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <div style={{ position: 'relative' }}>
               <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>
@@ -223,8 +223,9 @@ export function TrashPage() {
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Settings · Trash" strip — that was
           Trash.dc.html's mock of the shell topbar, which the real shell already draws. */}
       {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
-      <div style={{ flex: 1, padding: '28px 0 44px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
-        <div style={{ width: 760, maxWidth: '100%', padding: '0 34px', display: 'flex', flexDirection: 'column' }}>
+      {/* Kai's phone review: on a phone the shell's 16px gutter is the page's. */}
+      <div style={{ flex: 1, padding: isMobile ? '0 0 24px' : '28px 0 44px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
+        <div style={{ width: 760, maxWidth: '100%', padding: isMobile ? 0 : '0 34px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <svg width="42" height="40" viewBox="0 0 48 46"><path d="M8 30c0-4 4-9 10-10-2-4 1-9 6-9s8 5 6 9c6 1 10 6 10 10Z" fill="var(--ink-hairline)" opacity="0.5"/><path d="M4 30h40l-3 12H7L4 30Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round"/><path d="M24 20v-6" stroke="var(--acc-moss)" strokeWidth="2" strokeLinecap="round"/><path d="M24 15c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="var(--acc-moss)"/></svg>

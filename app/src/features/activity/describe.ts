@@ -249,6 +249,8 @@ function describeRoutine(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(name, (q) => `Unchecked ${q}`, 'Unchecked a routine'))
     case 'routine.archived':
       return line(named(name, (q) => `Archived the routine ${q}`, 'Archived a routine'))
+    case 'routine.restored':
+      return line(named(name, (q) => `Brought back the routine ${q}`, 'Brought back a routine'))
     default:
       return line(named(name, (q) => `Updated the routine ${q}`, 'Updated a routine'))
   }

@@ -9,6 +9,9 @@ import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { useRitualPins, toggleRitualPin } from '../rituals/ritualPins'
 import { PinIcon } from '../rituals/PinIcon'
+import { ActionSheet } from '../../components/ActionSheet'
+import { ContextMenu } from '../../components/ContextMenu'
+import { Icon } from '../../components/Icon'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Routines — pixel contract Routines.dc.html #1a (desktop, lines 379-586) and #1b (iPhone,
@@ -23,6 +26,7 @@ const STAGE_LABEL: Record<string, string> = { bare: 'Bare', sprouting: 'Sproutin
 // are the export's (#1a Meditate); "no streak yet" is the export's own caption for the bare
 // vine (Design System.dc.html, Vine · bare) — a routine that was never tended has lost nothing.
 const ZERO_ROW_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'no streak yet', lost: 'streak lost' }
+const oneLine = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as const
 const ZERO_CARD_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'Bare · no streak yet', lost: 'Bare · start again' }
 
 function useIsMobile(): boolean {
@@ -64,7 +68,10 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
   )
 }
 
-function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void }) {
+// Phone rows (Kai 2026-10-07 review): the name gets the full width, its meta (clock · streak ·
+// last 7 days) a line under it — side by side at 360 the name wrapped one word per line. The check
+// and the ⋯ are 48px targets; the ⋯ replaced a bare 11px "archive" link (same grammar as task rows).
+function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void; onMenu: (at: { x: number; y: number }) => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
 
@@ -73,16 +80,20 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }
     toggleCompletion(routine)
   }
 
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+  const check = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`${routine.name} done today`}
+      aria-pressed={doneToday}
+      // phone: a 48px hit around the 19px box, laid out at the box's own size
+      style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, border: 'none', background: 'none', cursor: 'pointer', ...(isMobile ? { width: 48, height: 48, margin: -14.5 } : null) }}
+    >
       <span
-        onClick={toggle}
         style={{
           width: 19,
           height: 19,
           borderRadius: 6,
-          flex: 'none',
-          cursor: 'pointer',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -94,13 +105,14 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }
       >
         {doneToday ? '✓' : ''}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>{routine.name}</span>
-      </div>
+    </button>
+  )
+  const name = <span style={{ fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>{routine.name}</span>
+  const meta = (
+    <>
       {routine.clock_time && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{routine.clock_time}</span>}
       {status !== 'growing' ? (
-        // Phone rows follow #1b, whose zero-streak row (Meditate) carries no label: in the ~300px
-        // phone row it could only wrap over the routine's name.
+        // Phone rows follow #1b, whose zero-streak row (Meditate) carries no label.
         !isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{ZERO_ROW_LABEL[status]}</span>
       ) : (
         <span aria-label={routine.goal_days ? `${current} of ${routine.goal_days} days` : `${current} day streak`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--sig-streak)' }}>
@@ -109,9 +121,42 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis }
         </span>
       )}
       <DayDots routine={routine} completions={completions} onOpen={onOpenTrellis} />
-      <button type="button" onClick={() => archiveRoutine(routine)} style={{ border: 'none', background: 'none', color: 'var(--ink-hairline)', font: 'inherit', fontSize: 11, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
-        archive
-      </button>
+    </>
+  )
+  const more = (
+    <button
+      type="button"
+      className="kf-hit"
+      aria-label={`More for ${routine.name}`}
+      aria-haspopup="menu"
+      onClick={(e) => {
+        const r = e.currentTarget.getBoundingClientRect()
+        onMenu({ x: r.left, y: r.bottom })
+      }}
+      style={{ flex: 'none', width: isMobile ? 48 : 28, height: isMobile ? 48 : 28, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+    >
+      <Icon name="dots" size={20} />
+    </button>
+  )
+
+  if (isMobile) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        {check}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>{meta}</div>
+        </div>
+        {more}
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+      {check}
+      <div style={{ flex: 1, minWidth: 0 }}>{name}</div>
+      {meta}
+      {more}
     </div>
   )
 }
@@ -143,6 +188,7 @@ export function RoutinesPage() {
   const isMobile = useIsMobile()
   const [formOpen, setFormOpen] = useState<null | { challenge: boolean }>(null)
   const [trellisRoutine, setTrellisRoutine] = useState<Routine | null>(null)
+  const [menu, setMenu] = useState<{ routine: Routine; x: number; y: number } | null>(null)
 
   const active = routines.filter((r) => r.active)
   const todayKey = localDateKey(new Date())
@@ -189,7 +235,8 @@ export function RoutinesPage() {
 
   return (
     <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 320px', minHeight: '100%' }}>
-      <div style={{ minWidth: 0, padding: isMobile ? '20px 20px 40px' : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
+      {/* Phone: the shell's 16px gutter is the page's (Today's), not 16 + 20 of its own. */}
+      <div style={{ minWidth: 0, padding: isMobile ? 0 : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
         <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 0 : 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
             <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--shadow-drop-sm)' }} />
@@ -205,20 +252,23 @@ export function RoutinesPage() {
           )}
         </div>
 
-        {/* R4-5b: the two guided rituals, always reachable from Routines */}
-        <div style={{ display: 'flex', gap: isMobile ? 9 : 12, marginTop: isMobile ? 14 : 18 }}>
+        {/* R4-5b: the two guided rituals, always reachable from Routines. Phone (Kai 2026-10-07):
+            side by side at 390 the "📌 PINNED" label left each title ~70px and the subtitles wrapped
+            a word per line, so the cards stack and the pin is its icon alone (a 48px target). */}
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 12, marginTop: isMobile ? 14 : 18 }}>
           {(['morning', 'evening'] as const).map((kind) => (
             <div
               key={kind}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '10px 12px' }}
+              data-ritual={kind}
+              style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: isMobile ? '0 0 0 12px' : '10px 12px' }}
             >
               <button
                 type="button"
                 onClick={() => setOpenRitual(kind)}
-                style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}
+                style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: isMobile ? '8px 0' : 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}
               >
-                {kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}
-                <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 3 }}>
+                <span data-ritual-title style={{ display: 'block', ...(isMobile ? oneLine : null) }}>{kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}</span>
+                <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 3 }}>
                   {kind === 'morning' ? 'plan the day' : 'close its loops'}
                 </span>
               </button>
@@ -229,10 +279,10 @@ export function RoutinesPage() {
                 aria-label={ritualPins[kind] ? 'Unpin this ritual from Today' : 'Pin this ritual to Today'}
                 aria-pressed={ritualPins[kind]}
                 className="kf-hit"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: '4px 2px', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
+                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
               >
-                <PinIcon size={10} filled={ritualPins[kind]} />
-                {ritualPins[kind] ? 'pinned' : 'pin'}
+                <PinIcon size={isMobile ? 16 : 10} filled={ritualPins[kind]} />
+                {!isMobile && (ritualPins[kind] ? 'pinned' : 'pin')}
               </button>
             </div>
           ))}
@@ -265,7 +315,7 @@ export function RoutinesPage() {
         </div>
 
         {isMobile && (
-          <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', marginTop: 14, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13.5, padding: '11px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
+          <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', minHeight: 48, marginTop: 14, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13.5, padding: '11px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
             ＋ New routine
           </button>
         )}
@@ -290,7 +340,7 @@ export function RoutinesPage() {
               {!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}
             </div>
             {g.items.map((r) => (
-              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} />
+              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onMenu={(at) => setMenu({ routine: r, ...at })} />
             ))}
           </div>
         ))}
@@ -322,6 +372,29 @@ export function RoutinesPage() {
       {openRitual === 'morning' && <MorningRitual onClose={() => setOpenRitual(null)} />}
       {openRitual === 'evening' && <EveningRitual onClose={() => setOpenRitual(null)} />}
       {trellisRoutine && <StreakTrellis routine={trellisRoutine} completions={completions} onClose={() => setTrellisRoutine(null)} />}
+      {/* A routine row's ⋯: the kit action sheet on a phone, the context menu on a computer. No
+          edit form exists for a routine yet, so it's the trellis and Archive (Undo in the toast). */}
+      {menu &&
+        (isMobile ? (
+          <ActionSheet
+            title={menu.routine.name}
+            meta="Routine"
+            onClose={() => setMenu(null)}
+            items={[
+              { label: 'Streak trellis', onSelect: () => setTrellisRoutine(menu.routine) },
+              { label: 'Archive', onSelect: () => archiveRoutine(menu.routine) },
+            ]}
+          />
+        ) : (
+          <ContextMenu
+            position={{ x: menu.x, y: menu.y }}
+            onClose={() => setMenu(null)}
+            items={[
+              { label: 'Streak trellis', onClick: () => setTrellisRoutine(menu.routine) },
+              { label: 'Archive', onClick: () => archiveRoutine(menu.routine) },
+            ]}
+          />
+        ))}
     </div>
   )
 }

@@ -326,10 +326,11 @@ function AppearanceCard() {
 
 // Kai 2026-10-03: the view the calendar opens on, synced (app_settings.calendar_default_view) so
 // the computer and the phone agree. Until one is picked the row shows this device's own default.
-function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefaultView }) {
+function CalendarViewSeg({ platformDefault, fill }: { platformDefault: CalendarDefaultView; fill?: boolean }) {
   const view = useCalendarDefaultView(platformDefault)
   return (
     <Seg<CalendarDefaultView>
+      fill={fill}
       value={view ?? platformDefault}
       onChange={(v) => updateAppSetting('calendar_default_view', v)}
       options={[
@@ -350,7 +351,8 @@ function CalendarCard({ phone = false }: { phone?: boolean }) {
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Opens on</div>
           <div style={fhelp}>on every device · the toolbar still switches it any time</div>
         </div>
-        <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} />
+        {/* phone-polish: beside its label the three views ran past the card at 360 — fill wraps it to its own line. */}
+        <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} fill={phone} />
       </div>
       <WeekendSetting phone={phone} />
       <PlanGlossary />
@@ -1430,10 +1432,11 @@ function MobileSettings() {
   ]
 
   return (
-    <div style={{ padding: '8px 4px 0' }}>
+    // Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 4 of its own.
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--shadow-drop-sm)' }} />
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</div>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</h1>
       </div>
 
       <SCard style={{ marginTop: 16, boxShadow: 'var(--shadow-crisp)' }}>

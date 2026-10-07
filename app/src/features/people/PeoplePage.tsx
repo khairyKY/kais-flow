@@ -168,18 +168,21 @@ export function PeoplePage() {
   /* ───────── MOBILE LAYOUT (1c) ───────── */
   if (isMobile) {
     return (
-      <div style={{ padding: '8px 18px 0' }}>
+      // Kai's phone review: the shell's 16px gutter is the page's, not 16 + 18 of its own.
+      <div>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>People</div>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>People</h1>
           </div>
-          <span
+          <button
+            type="button"
+            aria-label="New person"
             onClick={() => setShowNewForm(true)}
             className="kf-lift"
-            style={{ width: 44, height: 44, borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
-          >+</span>
+            style={{ width: 48, height: 48, border: 'none', font: 'inherit', borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
+          >+</button>
         </div>
 
         {people.length === 0 && (

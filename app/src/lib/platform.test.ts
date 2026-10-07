@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Capacitor } from '@capacitor/core'
-import { authLinkOrigin, isCapacitorShell, isNativeShell, rgbToHex, syncShellChrome } from './platform'
+import { authLinkOrigin, holdShellChrome, isCapacitorShell, isNativeShell, rgbToHex, syncShellChrome } from './platform'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -51,6 +51,31 @@ describe('syncShellChrome', () => {
   it('does nothing outside the shell', () => {
     expect(() => syncShellChrome('day', fakeWindow(undefined))).not.toThrow()
     expect(() => syncShellChrome('day', undefined)).not.toThrow()
+  })
+})
+
+describe('holdShellChrome', () => {
+  const sheet = {} as Element
+  function fakeWindow(calls: [string, boolean][]) {
+    return {
+      KaisFlowShell: { setChrome: (c: string, l: boolean) => calls.push([c, l]) },
+      document: { body: {}, documentElement: { dataset: { theme: 'day' } } },
+      getComputedStyle: (el: unknown) => ({ backgroundColor: el === sheet ? 'rgb(251, 246, 233)' : 'rgb(239, 233, 219)' }),
+    } as unknown as Window
+  }
+  it('paints the strips the sheet colour while sheets are up, the page colour after the last', () => {
+    const calls: [string, boolean][] = []
+    const w = fakeWindow(calls)
+    const first = holdShellChrome(sheet, w)
+    const second = holdShellChrome(sheet, w) // a sheet opened from a sheet
+    second()
+    expect(calls).toEqual([['#fbf6e9', true], ['#fbf6e9', true]]) // still up: no hand-back yet
+    first()
+    expect(calls.at(-1)).toEqual(['#efe9db', true])
+  })
+  it('does nothing outside the shell', () => {
+    expect(() => holdShellChrome(sheet, {} as Window)()).not.toThrow()
+    expect(() => holdShellChrome(sheet, undefined)()).not.toThrow()
   })
 })
 

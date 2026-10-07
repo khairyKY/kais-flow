@@ -319,20 +319,22 @@ export function ProjectsPage() {
     return (
       <div style={{ width: '100%', maxWidth: 398, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
-        <div style={{ flex: 1, padding: '16px 18px 24px', position: 'relative', zIndex: 10 }}>
+        {/* Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 18 of its own. */}
+        <div style={{ flex: 1, padding: '0 0 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
               <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</div>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</h1>
             </div>
-            {/* X4: 44px touch target */}
+            {/* 48px touch target (the kit's --touch-min) */}
             <button
               onClick={() => {
                 setNewType('standard')
                 setShowNewModal(true)
               }}
+              aria-label="New project"
               className="kf-lift"
-              style={{ width: 44, height: 44, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
+              style={{ width: 48, height: 48, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
             >
               +
             </button>
