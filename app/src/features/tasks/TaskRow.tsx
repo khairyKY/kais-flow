@@ -9,7 +9,6 @@ import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import { checkAction } from './completion'
 import { scheduleToday } from '../../lib/dateShortcuts'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { Checkbox, Chip } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
@@ -115,7 +114,6 @@ export function TaskRow({
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const openTask = useOpenTask()
-  const [schedulePos, setSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [checking, setChecking] = useState(false)
   const motionOn = useMotionEnabled()
 
@@ -231,12 +229,7 @@ export function TaskRow({
         style={{ ...rowStyle, margin: '0 -10px' }}
         contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 10px' }}
         {...grammar.swipeProps}
-        overlay={
-          <>
-            {grammar.menuNode}
-            {schedulePos && <ScheduleMenu position={schedulePos} title={task.title} onClose={() => setSchedulePos(null)} onSchedule={(iso, _min, timed) => rescheduleDue(task, iso, timed)} />}
-          </>
-        }
+        overlay={grammar.menuNode}
       >
         {grammar.selecting ? <SelectCircle on={!!selected} title={task.title} /> : <Checkbox checked={false} size={18} onChange={handleCheck} label={task.title} />}
         <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
@@ -257,10 +250,10 @@ export function TaskRow({
         </span>
         <span
           className="tr-someday-hover"
-          onClick={(e) => setSchedulePos({ x: e.clientX, y: e.clientY })}
+          onClick={(e) => grammar.openPlan({ x: e.clientX, y: e.clientY })}
           style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
-          Schedule ▾
+          Plan ▾
         </span>
         {more}
       </SwipeRow>

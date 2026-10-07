@@ -235,13 +235,14 @@ export function DatePicker(p: DatePickerProps) {
 }
 
 /** The desktop dialect: a kf-overlay-card popover at `position`, clamped to the viewport; outside
- * click and Esc close it; focus starts on the day cell and goes back where it came from. */
-function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, focusKey, children }: {
+ * click and Esc close it; focus starts on the day cell and goes back where it came from. The Plan
+ * menu (features/tasks/PlanMenu) draws its list in it too. */
+export function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, focusKey, children }: {
   title: ReactNode
   position?: { x: number; y: number }
   trigger?: RefObject<HTMLElement | null>
   onClose: () => void
-  footer: ReactNode
+  footer?: ReactNode
   focusKey: string | null
   children: ReactNode
 }) {
@@ -301,7 +302,7 @@ function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, f
       >
         <div id={titleId} className="kf-pk-pop-head">{title}</div>
         <div className="kf-pk-pop-body">{children}</div>
-        <div className="kf-pk-pop-foot">{footer}</div>
+        {footer != null && <div className="kf-pk-pop-foot">{footer}</div>}
       </div>
     </Float>
   )

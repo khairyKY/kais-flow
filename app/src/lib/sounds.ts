@@ -20,7 +20,8 @@
 
 import { queryClient } from './queryClient'
 import { appZone } from './appZone'
-import { useGoalStore } from '../features/today/goalStore'
+import { legacyGoalId } from '../features/today/goalStore'
+import { goalIdOf } from '../features/today/top3Order'
 import { inQuietHours, isPaused, type NoticePrefs } from '../../../supabase/functions/notify/copy.ts'
 import type { Task } from './types'
 
@@ -154,7 +155,10 @@ export function completionSound(task: Pick<Task, 'id' | 'top3'>, tasks: readonly
 
 /** tasks/api completeTask's one call: the right sound for this check. */
 export function playCompletion(task: Task): void {
-  playSound(completionSound(task, queryClient.getQueryData<Task[]>(['tasks']) ?? [], useGoalStore.getState().goalTaskId))
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  // The goal of the day, synced on the rows (plan-replan, today/top3Order). ponytail: no star log
+  // here (it would pull the network client into the sound module) — only an unranked Top 3 differs.
+  playSound(completionSound(task, tasks, goalIdOf(tasks, legacyGoalId())))
 }
 
 // ── Synthesis ────────────────────────────────────────────────────────────────

@@ -7,7 +7,9 @@ import { appZone } from '../../lib/appZone'
 import { useSyncStatus } from '../../components/syncQueue'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useFocusStore } from '../focus/focusStore'
-import { useGoalStore } from '../today/goalStore'
+import { legacyGoalId } from '../today/goalStore'
+import { goalIdOf } from '../today/top3Order'
+import { cachedStarEvents } from '../today/api'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { installNotificationActions } from '../notifications/actions'
@@ -74,7 +76,7 @@ function startOrStopFocus(): void {
   const f = useFocusStore.getState()
   if (f.isRunning || (f.mode === 'pomodoro' && f.secondsLeft < f.settings.focusRoundMin * 60)) return applyFocusCommand({ type: 'stop' })
   const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-  const target = focusTarget(tasks, f.activeTask?.id ?? null, useGoalStore.getState().goalTaskId)
+  const target = focusTarget(tasks, f.activeTask?.id ?? null, goalIdOf(tasks, legacyGoalId(), cachedStarEvents()))
   applyFocusCommand({ type: 'start', task: target && { id: target.id, project_id: target.project_id } })
 }
 

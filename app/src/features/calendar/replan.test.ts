@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { blockLastDay, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves, setTimeOf, tomorrowFirst } from './replan'
+import { blockLastDay, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves, tomorrowFirst } from './replan'
 
 // The user's zone is the default Africa/Cairo (UTC+3 until the last Thursday of October 2026), so
 // every instant below is a Cairo wall time — and the suite runs under 4 device zones in CI.
@@ -110,12 +110,6 @@ describe('replanMoves — THE RULE: a task given a time is on the calendar, a da
 })
 
 describe('the small rules beside it', () => {
-  it('setTimeOf: 09:00 on the user\'s clock is a date alone; any other time was set by hand', () => {
-    expect(setTimeOf(cairo('2026-10-07', '09:00'))).toBe(false)
-    expect(setTimeOf(cairo('2026-10-07', '04:00'))).toBe(true)
-    expect(setTimeOf(cairo('2026-10-07', '09:15'))).toBe(true)
-  })
-
   it('dueFollows: a missed due date follows a block placed today or later, never backwards', () => {
     expect(dueFollows(cairo('2026-10-05', '09:00'), cairo('2026-10-07', '04:00'), NOW)).toBe(true)
     expect(dueFollows(cairo('2026-10-05', '09:00'), cairo('2026-10-06', '10:00'), NOW)).toBe(false)

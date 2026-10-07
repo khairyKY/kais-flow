@@ -297,9 +297,13 @@ for (const theme of ['day', 'night']) {
     check(`${name} …and the grid scrolled to it: the 04:00 block is on screen`, !!bb && bb.y > 100 && bb.y < 780, JSON.stringify(bb))
     await shot(page, name)
     // Right-click Review Kai (Today) → Pick date… ▸ → Set time 04:00 → Done.
+    // plan-replan (2026-10-07): the task menu's date entry is the Plan list (Plan… ▸), whose Pick date &
+    // time… is the date picker — it passes the picked time through as `timed`.
     await card(page, 'today', 'Review Kai').click({ button: 'right' })
     await sleep(300)
-    await menuItem(page, 'Pick date').click()
+    await menuItem(page, 'Plan…').click()
+    await sleep(300)
+    await page.locator('.kf-pk-pop .kf-as-row', { hasText: 'Pick date & time…' }).click()
     await sleep(300)
     const w1 = state.writes.length
     await setTime(page, '04:00')
@@ -570,6 +574,9 @@ for (const theme of ['day', 'night']) {
     const { ctx, page, cdp, errors, state } = await open(`/calendar?task=${id(PAPERS)}`, { view: phone })
     const ts = page.locator('[role="dialog"]').filter({ has: page.locator('.ts-top') })
     await tap(cdp, ts.locator('.ts-chips .kf-chip').first())
+    await sleep(400)
+    // plan-replan (2026-10-07): the date chip opens the Plan list; Pick date & time… is the date picker.
+    await tap(cdp, page.locator('[role="dialog"]').last().locator('.kf-as-row', { hasText: 'Pick date & time…' }))
     await sleep(400)
     await tap(cdp, page.locator('.kf-pk-day[aria-current="date"]')) // today (the picker opens on this month)
     const w0 = state.writes.length

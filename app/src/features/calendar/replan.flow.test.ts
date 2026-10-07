@@ -22,7 +22,7 @@ vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void
 
 const { moveOrResizeEvent, scheduleTask, scheduleTaskWithUndo, updateEvent } = await import('./api')
 const { moveToTomorrowWithUndo, rescheduleDue } = await import('../tasks/api')
-const { railBuckets, setTimeOf } = await import('./replan')
+const { railBuckets } = await import('./replan')
 const { scrollTimeNear } = await import('./gridClock')
 
 const cairo = (day: string, hhmm: string) => {
@@ -72,8 +72,10 @@ describe('the 4am regression — an overdue task replanned to 04:00 today lands 
     expect(crypto().due_at).toBe(cairo(TODAY, '04:00'))
   })
 
-  it('the desktop ⋯ submenu, which drops the picker\'s flag: 04:00 is not the 09:00 a date alone lands on', () => {
-    rescheduleDue(crypto(), cairo(TODAY, '04:00'), setTimeOf(cairo(TODAY, '04:00')))
+  // plan-replan: the desktop ⋯ submenu (the Plan menu's Pick date & time…) now passes the picker's
+  // `timed` through, so the 09:00 fallback (setTimeOf) is gone; a picked 04:00 arrives timed.
+  it('the desktop ⋯ submenu passes the picker\'s time flag: 04:00 is on the calendar', () => {
+    rescheduleDue(crypto(), cairo(TODAY, '04:00'), true)
     expectOnTheCalendarAt4am()
   })
 

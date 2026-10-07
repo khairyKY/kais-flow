@@ -1,7 +1,6 @@
 import { addDays, busyOnDay, freeSlots } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { zoneTimeKey } from './eventTime'
 import { scheduleSlots, spanIso } from './phoneGridMath'
 
 // ── Kai 2026-10-07: the calendar's planning rail (Overdue · Today · Inbox, Akiflow's sidebar) and
@@ -107,15 +106,6 @@ export function replanMoves(blocks: readonly CalendarEvent[], dueAt: string | nu
 export function dueFollows(dueAt: string | null, startsAt: string, now: Date): boolean {
   const today = cairoDateKey(now)
   return !!dueAt && cairoDateKey(new Date(dueAt)) < today && cairoDateKey(new Date(startsAt)) >= today
-}
-
-/** Was this instant's time set by hand in the date picker? Every date-only pick lands at 09:00
- * (pickerMath.atDay, dateShortcuts' Today / Tomorrow / Next week), so any other time was.
- * ponytail: the fallback for the one menu path that drops the picker's own `timed` flag (the
- * desktop ⋯ submenu) — there an explicit 09:00 reads as date-only. Pass the flag from the shared
- * Plan/Replan menu and drop this. */
-export function setTimeOf(iso: string): boolean {
-  return zoneTimeKey(new Date(iso)) !== '09:00'
 }
 
 /** Plan ▸ Next free slot: the first `dur`-minute gap today from now, else the next days' (the phone

@@ -11,6 +11,8 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { PlanMenu } from './PlanMenu'
+import { todayFor } from './planMath'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
@@ -18,19 +20,20 @@ import { buildListBindings } from './listShortcuts'
 import { labelOptions } from './taskDisplay'
 import { stripLabels } from '../command-bar/parseCommand'
 import { useListKeys } from '../../components/useListKeys'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { MovePicker } from './MovePicker'
 import { placeKey, type MoveTarget } from './move'
 import { BulkBar } from '../../components/BulkBar'
 import { Skeleton } from '../../components/States'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { cairoDateKey, scheduleToday, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
-import { useGoalStore } from '../today/goalStore'
+import { legacyGoalId } from '../today/goalStore'
+import { goalIdOf } from '../today/top3Order'
+import { cachedStarEvents } from '../today/api'
 import { CaptureCta } from '../capture/CaptureCta'
 import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, Task } from '../../lib/types'
@@ -458,7 +461,7 @@ export function TasksPage() {
   const list = parseList(rawList)
   const activeTab = tabOf(rawList, list)
   const motion = useMotionEnabled()
-  const { goalTaskId } = useGoalStore()
+  const goalTaskId = useMemo(() => goalIdOf(tasks, legacyGoalId(), cachedStarEvents()), [tasks])
 
   const now = new Date()
 
@@ -628,7 +631,7 @@ export function TasksPage() {
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
     complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => openTask(t.id), // F3 punch 29: Enter opens detail
-    today: (t) => rescheduleDue(t, scheduleToday()),
+    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
@@ -718,8 +721,10 @@ export function TasksPage() {
           <button
             type="button"
             onClick={() => {
+              // The Plan menu's Today for each (its own time), past blocks off the calendar, with Undo.
               const stale = filterByList(displayTasks, 'overdue', now)
-              rescheduleTasksWithUndo(stale, now.toISOString(), { message: `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today` })
+              const undos = stale.map((t) => rescheduleDue(t, todayFor(t, now)))
+              toastUndo(`${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`, () => undos.forEach((undo) => undo()))
             }}
             style={{
               marginTop: 14,
@@ -900,7 +905,9 @@ export function TasksPage() {
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+      )}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>
   )

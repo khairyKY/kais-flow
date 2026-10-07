@@ -3,7 +3,7 @@ import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSe
 import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { PlanMenu } from '../tasks/PlanMenu'
 import { MovePicker } from '../tasks/MovePicker'
 import type { MoveTarget } from '../tasks/move'
 import { BulkBar } from '../../components/BulkBar'
@@ -253,6 +253,7 @@ export function PlanningBoard() {
     somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  // The bulk bar's Plan (plan-replan): a date with a time is timed — it puts the tasks on the calendar.
   function bulkSchedule(iso: string, timed?: boolean) {
     rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
@@ -344,13 +345,8 @@ export function PlanningBoard() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && (
-        <ScheduleMenu
-          position={bulkSchedulePos}
-          onClose={() => setBulkSchedulePos(null)}
-          onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)}
-          onSomeday={bulkSomeday}
-        />
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>

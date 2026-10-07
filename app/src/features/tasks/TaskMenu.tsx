@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -6,12 +6,14 @@ import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { DURATIONS, durationLabel } from '../../components/pickerMath'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import type { Task } from '../../lib/types'
 import { createProject } from '../projects/api'
+import { currentTop3 } from './api'
 import { MovePicker } from './MovePicker'
 import { placeKey, type MoveTarget } from './move'
 import { shortcutHint } from './listShortcuts'
+import { PlanMenu } from './PlanMenu'
+import { isOverdue } from './planMath'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
 import { useStartFocus } from '../today/startFocus'
@@ -23,7 +25,8 @@ import { useStartFocus } from '../today/startFocus'
 /** Every write the menu (and the swipe) can make for a row. */
 export interface TaskMenuActions {
   tomorrow: () => void
-  schedule: (iso: string) => void
+  /** `timed`: Pick date & time… set a time — that puts the task on the calendar (calendar/replan). */
+  schedule: (iso: string, timed?: boolean) => void
   someday: () => void
   /** "Move to…": a project, an area, a domain or none (./move.ts). */
   move: (to: MoveTarget) => void
@@ -31,6 +34,8 @@ export interface TaskMenuActions {
   repeat: (rule: string | null) => void
   remind: (iso: string | null) => void
   top3: () => void
+  /** Make goal of the day. */
+  goal: () => void
   reopen: () => void
   delete: () => void
   select?: () => void
@@ -39,6 +44,10 @@ export interface TaskMenuActions {
   clearDate?: () => void
   /** The task sheet's Duration chip. */
   duration?: (min: number | null) => void
+  /** Plan's Next free slot → Confirm (single task). */
+  slot?: (startsAt: string, endsAt: string) => void
+  /** A Top 3 row's Move up / Move down. */
+  reorder?: (delta: -1 | 1) => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -46,25 +55,27 @@ export interface TaskMenuActions {
 export interface BulkActions {
   count: number
   onTomorrow: () => void
-  onSchedule: (iso: string) => void
+  onSchedule: (iso: string, timed?: boolean) => void
   onSomeday: () => void
   onMove: (to: MoveTarget) => void
   onDelete: () => void
 }
 
+/** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */
 export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration'
 export interface MenuAnchor {
   at: { x: number; y: number }
-  /** Open straight on a picker (the swipe's Pick date / Project, the task sheet's chips). */
+  /** Open straight on a picker (the swipe's Plan / Project, the task sheet's chips). */
   sub?: MenuSub
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  tomorrow: 'tomorrow', date: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority',
-  repeat: 'repeat', remind: 'remind', top3: 'star', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
+  plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
+const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
-  tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), select: '⌃click', delete: shortcutHint('delete'),
+  project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
@@ -111,27 +122,44 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
       : [{ label: 'No reminder', run: () => actions.remind(null) }, { label: 'Pick a date first…', run: () => setSub('date') }],
   }
   const run: Record<TaskMenuKey, () => void> = {
-    tomorrow: actions.tomorrow,
-    date: () => setSub('date'),
+    plan: () => setSub('date'),
     unschedule: () => actions.unschedule?.(),
     project: () => setSub('project'),
     priority: () => setSub('priority'),
     repeat: () => setSub('repeat'),
     remind: () => setSub('remind'),
     top3: actions.top3,
+    goal: actions.goal,
+    up: () => actions.reorder?.(-1),
+    down: () => actions.reorder?.(1),
     focus: () => { onClose(); startFocus(task) },
     select: () => actions.select?.(),
     reopen: actions.reopen,
     delete: actions.delete,
   }
-  const spec = taskMenuSpec(task, ctx)
+  // Read when the menu opens: overdue → "Replan…"; the goal of the day gets no Make goal.
+  const spec = taskMenuSpec(task, { ...ctx, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
 
-  // One task: the picker shows its day and offers No date; a bulk pick starts blank.
-  const due = ctx.bulkCount ? null : task.due_at
-  const clearDate = due ? actions.clearDate : undefined
-  if (sub === 'date') {
-    return <ScheduleMenu position={at} title={ctx.bulkCount ? undefined : task.title} value={due} onClose={onClose} onSchedule={actions.schedule} onSomeday={actions.someday} onClear={clearDate} />
-  }
+  // One task: the Plan list offers No date when it has one, and Next free slot.
+  const bulk = !!ctx.bulkCount && ctx.bulkCount > 1
+  const clearDate = !bulk && task.due_at ? actions.clearDate : undefined
+  const plan = (done: (run: () => void) => void, position: { x: number; y: number }, close: () => void) => (
+    <PlanMenu
+      task={task}
+      bulkCount={ctx.bulkCount}
+      position={position}
+      blockTomorrow={ctx.canUnschedule ? { hint: ctx.tomorrowHint } : undefined}
+      onClose={close}
+      actions={{
+        schedule: (iso, timed) => done(() => actions.schedule(iso, timed)),
+        tomorrow: () => done(actions.tomorrow),
+        slot: bulk || !actions.slot ? undefined : (s, e) => done(() => actions.slot!(s, e)),
+        someday: () => done(actions.someday),
+        clearDate: clearDate && (() => done(clearDate)),
+      }}
+    />
+  )
+  if (sub === 'date') return plan((w) => w(), at, onClose)
   const here = ctx.bulkCount ? null : placeKey(task)
   if (sub === 'project') {
     return (
@@ -162,13 +190,13 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
         title={task.title}
         meta={meta || undefined}
         onClose={onClose}
-        items={spec.map((e) => ({ label: e.label, hint: e.hint, destructive: e.destructive, chevron: e.sub, icon: <Icon name={ICONS[e.key]} size={24} />, onSelect: run[e.key] }))}
+        items={spec.map((e) => ({ label: e.label, hint: e.hint, destructive: e.destructive, chevron: e.sub, icon: <Icon name={ICONS[e.key]} size={24} style={ICON_STYLE[e.key]} />, onSelect: run[e.key] }))}
       />
     )
   }
 
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
-    if (key === 'date') return ({ position, onClose: back, closeAll }) => <ScheduleMenu position={position} value={due} onClose={back} onSchedule={(iso) => { actions.schedule(iso); closeAll() }} onSomeday={() => { actions.someday(); closeAll() }} onClear={clearDate && (() => { clearDate(); closeAll() })} />
+    if (key === 'plan') return ({ position, onClose: back, closeAll }) => plan((w) => { w(); closeAll() }, position, back)
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
     if (key === 'priority' || key === 'repeat' || key === 'remind') {
       const list = options[key]
@@ -180,7 +208,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     <ContextMenu
       position={at}
       onClose={onClose}
-      items={spec.map((e) => ({ label: e.label, danger: e.destructive, icon: <Icon name={ICONS[e.key]} size={16} />, shortcut: KEYCAPS[e.key], onClick: run[e.key], submenu: submenu(e.key) }))}
+      items={spec.map((e) => ({ label: e.label, danger: e.destructive, icon: <Icon name={ICONS[e.key]} size={16} style={ICON_STYLE[e.key]} />, shortcut: KEYCAPS[e.key], onClick: run[e.key], submenu: submenu(e.key) }))}
     />
   )
 }

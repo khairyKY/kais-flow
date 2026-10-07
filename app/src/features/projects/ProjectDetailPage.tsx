@@ -46,8 +46,8 @@ import {
   moveToTomorrowWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
+import { PlanMenu } from '../tasks/PlanMenu'
 import { BulkBar } from '../../components/BulkBar'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { MovePicker } from '../tasks/MovePicker'
 import type { MoveTarget } from '../tasks/move'
 import { useSelectAllKey } from '../../components/useListKeys'
@@ -267,7 +267,9 @@ export function ProjectDetailPage() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+      )}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )

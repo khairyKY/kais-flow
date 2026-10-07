@@ -143,7 +143,9 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   await shot(page, `${name}-picks`)
   check(`${name} quick picks: Today · Tomorrow · Next week (no "This weekend" on a Saturday)`, rows.some((r) => r.startsWith('Today')) && rows.some((r) => r.startsWith('Tomorrow')) && rows.some((r) => r.startsWith('Next week')) && !rows.some((r) => r.startsWith('This weekend')), JSON.stringify(rows.slice(0, 5)))
   const w0 = state.writes.length
-  await tap(cdp, picker.locator('.kf-as-row', { hasText: 'Tomorrow' }).first())
+  // plan-replan (2026-10-07): the date chip opens the Plan list, where "Next free slot" can read
+  // "Tomorrow 08:00…" too — tap the Tomorrow row itself.
+  await tap(cdp, picker.locator('.kf-as-row', { hasText: 'Tomorrow, first thing' }).first())
   await sleep(500)
   const w = writesTo(state, 'tasks', w0)
   check(`${name} Tomorrow → due Sun 4 Oct 09:00 New York (2026-10-04T13:00Z)`, w.length === 1 && w[0].due_at === '2026-10-04T13:00:00.000Z', JSON.stringify(w.map((x) => x.due_at)))

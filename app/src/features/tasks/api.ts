@@ -5,13 +5,19 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
-import { toastUndo } from '../../lib/undo'
+import { toastAction, toastUndo } from '../../lib/undo'
 import { playCompletion } from '../../lib/sounds'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import { scheduleTomorrow } from '../../lib/dateShortcuts'
+import { legacyGoalId } from '../today/goalStore'
+import { dayTop3, moveInTop3, planMakeGoal, rankWrites } from '../today/top3Order'
+import { cachedStarEvents } from '../today/api'
+import { cairoToIso } from '../calendar/eventTime'
+import { fromMin } from '../../components/pickerMath'
+import type { SpreadPick } from './planMath'
 import { placeTask, planReparent, type MoveTarget } from './move'
 import type { Task } from '../../lib/types'
 
@@ -254,7 +260,7 @@ export function duplicateTaskWithUndo(task: Task): Task {
   const now = nowIso()
   // Like a spawned repeat (completion.ts): an imported row's idempotency key stays with the original.
   const { external_ref: _importKey, ...rest } = task as Task & { external_ref?: unknown }
-  const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, scheduled_start: null, scheduled_end: null, reminder_sent: false, created_at: now, updated_at: now }
+  const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null, reminder_sent: false, created_at: now, updated_at: now }
   writeRow('tasks', copy)
   logActivity('task.created', 'task', copy.id, { duplicate_of: task.id })
   toastUndo('Duplicated', () => writeRow('tasks', { id: copy.id }, 'delete'))
@@ -331,19 +337,96 @@ export function setDuration(task: Task, durationMin: number | null): void {
   writeRow('tasks', { ...task, duration_min: durationMin })
 }
 
-/** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. */
+/** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. A star
+ * joins the Top 3 last (no place yet); an unstar gives its place up. */
 export function toggleTop3(task: Task): void {
   if (!task.top3) {
     const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
     const currentTop3Count = tasks.filter((t) => t.top3 && t.id !== task.id).length
     if (currentTop3Count >= MAX_TOP3) return
   }
-  writeRow('tasks', { ...task, top3: !task.top3, someday: task.top3 ? task.someday : false })
+  writeRow('tasks', { ...task, top3: !task.top3, top3_rank: null, someday: task.top3 ? task.someday : false })
   logActivity(task.top3 ? 'task.unstarred' : 'task.starred', 'task', task.id, {})
+}
+
+const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
+const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
+
+/** Today's Top 3 as drawn, goal first (today/top3Order) — what Make goal and Move up/down act on. */
+export function currentTop3(): Task[] {
+  return dayTop3(cachedTasks(), legacyGoalId(), cachedStarEvents())
+}
+
+/** Writes a Top 3 order (tasks.top3_rank, 1 = the goal): only the rows whose place changed. */
+export function writeTop3Order(order: readonly Task[]): void {
+  for (const { row, rank } of rankWrites(order.map(cached))) writeRow('tasks', { ...row, top3_rank: rank })
+}
+
+/** Puts rows' Top 3 fields back as they were (an Undo). */
+function restoreTop3(before: readonly Task[]): void {
+  for (const b of before) {
+    const now = cached(b)
+    writeRow('tasks', { ...now, top3: b.top3, top3_rank: b.top3_rank ?? null, someday: b.someday })
+    if (now.top3 !== b.top3) logActivity(b.top3 ? 'task.starred' : 'task.unstarred', 'task', b.id, {})
+  }
+}
+
+/** Kai 2026-10-07: "Just give me a button for making something the goal of the day." The task leads
+ * Today's Top 3 on every device. Not in it yet, it joins — into a full Top 3 only through the swap
+ * toast (6l), which takes out the last open pick that isn't the goal. "Goal of the day · Undo". */
+export function makeGoalWithUndo(task: Task): void {
+  const display = currentTop3()
+  const plan = planMakeGoal(display, cached(task))
+  const run = () => {
+    const before = [...new Map([...plan.order, ...(plan.out ? [plan.out] : [])].map((t) => [t.id, cached(t)])).values()]
+    if (plan.out) {
+      writeRow('tasks', { ...cached(plan.out), top3: false, top3_rank: null })
+      logActivity('task.unstarred', 'task', plan.out.id, {})
+    }
+    const t = cached(task)
+    if (!t.top3) {
+      writeRow('tasks', { ...t, top3: true, someday: false, top3_rank: 1 })
+      logActivity('task.starred', 'task', t.id, {})
+    }
+    writeTop3Order(plan.order)
+    logActivity('task.goal_set', 'task', t.id, {})
+    toastUndo(plan.out ? `Goal of the day · ${plan.out.title} left the Top 3` : 'Goal of the day', () => restoreTop3(before))
+  }
+  if (plan.full) toastAction(`Top 3 is full — swap out “${plan.out!.title}”?`, 'Swap', run)
+  else run()
+}
+
+/** Move up / down, Alt+↑/↓, a drag: `task` to place `to` in Today's Top 3 (0 = the goal). */
+export function moveInTop3Order(task: Task, to: number): boolean {
+  const order = moveInTop3(currentTop3(), task.id, to)
+  if (!order) return false
+  if (to === 0) return makeGoal(order, task)
+  writeTop3Order(order)
+  logActivity('task.top3_moved', 'task', task.id, { rank: to + 1 })
+  return true
+}
+
+/** A move into the first place is a new goal: the same toast and Undo as Make goal. */
+function makeGoal(order: Task[], task: Task): boolean {
+  const before = order.map(cached)
+  writeTop3Order(order)
+  logActivity('task.goal_set', 'task', task.id, {})
+  toastUndo('Goal of the day', () => restoreTop3(before))
+  return true
 }
 
 export function renameTask(task: Task, title: string): void {
   writeRow('tasks', { ...task, title })
+}
+
+/** Replan all → Spread into free slots, once the preview is confirmed (planMath spreadPlan): a
+ * placed task gets its slot's time — a timed replan, so its block moves there (calendar/replan) —
+ * and the rest go to tomorrow, first thing. One Undo for all of it. */
+export function spreadWithUndo(picks: readonly SpreadPick[]): void {
+  const at = (day: string, min: number) => cairoToIso(day, fromMin(min))
+  const undos = picks.map(({ task, slot }) => (slot ? rescheduleDue(task, at(slot.day, slot.start), true) : rescheduleDue(task, scheduleTomorrow())))
+  const placed = picks.filter((p) => p.slot).length
+  toastUndo(`${picks.length} replanned · ${placed} today, ${picks.length - placed} tomorrow`, () => undos.forEach((undo) => undo()))
 }
 
 /** Setting a real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3 all clear it).

@@ -57,6 +57,7 @@ export function planCompletion(task: Task, existing: readonly Task[], now: strin
     scheduled_start: null,
     scheduled_end: null,
     top3: false,
+    top3_rank: null,
     created_at: now,
     updated_at: now,
   }

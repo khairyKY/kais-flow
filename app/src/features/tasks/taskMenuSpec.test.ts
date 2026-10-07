@@ -11,18 +11,23 @@ const task = (over: Partial<Task> = {}): Task => ({
 const labels = (t: Task, ctx: Parameters<typeof taskMenuSpec>[1]) => taskMenuSpec(t, ctx).map((e) => e.label)
 
 describe('taskMenuSpec — one ⋯ list for every task row', () => {
+  // Kai 2026-10-07: Tomorrow + Pick date… became the one Plan… list; Make goal of the day joined.
   it('is MK Action Sheet, in its order, Delete last', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 09:00', canSelect: true })).toEqual([
-      'Tomorrow', 'Pick date…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Start focus', 'Select', 'Delete',
+      'Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete',
     ])
   })
 
-  it('carries the hints: Tomorrow’s day and time, the current values, Undo on Delete', () => {
+  it('an overdue task says Replan… (Kai: "I didn\'t find one when I right-clicked something overdue")', () => {
+    expect(labels(task(), { tomorrowHint: 'x', overdue: true })[0]).toBe('Replan…')
+    expect(taskMenuSpec(task(), { tomorrowHint: 'x', overdue: true })[0]).toMatchObject({ key: 'plan', sub: true })
+  })
+
+  it('carries the hints: the current values, Undo on Delete', () => {
     const spec = taskMenuSpec(task({ priority: 2, recurrence_rule: 'FREQ=WEEKLY', reminder_at: '2026-09-28T05:45:00Z' }), {
       tomorrowHint: 'Mon 09:00', projectName: 'Personal', canSelect: true,
     })
     const hint = (key: string) => spec.find((e) => e.key === key)?.hint
-    expect(hint('tomorrow')).toBe('Mon 09:00')
     expect(hint('project')).toBe('Personal')
     expect(hint('priority')).toBe('High')
     expect(hint('repeat')).toBe('Weekly')
@@ -46,14 +51,27 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Select')
   })
 
-  it('bulk: the date, project and delete rows name how many they move', () => {
-    expect(labels(task(), { tomorrowHint: 'x', bulkCount: 3, selected: true, canSelect: true })).toEqual([
-      'Tomorrow (3)', 'Pick date… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Deselect', 'Delete (3)',
+  it('bulk: the plan, move and delete rows name how many they move; no goal, no focus', () => {
+    expect(labels(task(), { tomorrowHint: 'x', bulkCount: 3, selected: true, canSelect: true, overdue: true, place: { index: 1, last: 2 } })).toEqual([
+      'Plan… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Deselect', 'Delete (3)',
     ])
   })
 
-  it('an Up next block adds Unschedule after Pick date', () => {
-    expect(labels(task(), { tomorrowHint: 'Mon 18:00', canUnschedule: true }).slice(0, 3)).toEqual(['Tomorrow', 'Pick date…', 'Unschedule'])
+  it('an Up next block adds Unschedule after Plan', () => {
+    expect(labels(task(), { tomorrowHint: 'Mon 18:00', canUnschedule: true }).slice(0, 2)).toEqual(['Plan…', 'Unschedule'])
+  })
+
+  it('the goal of the day has no Make goal', () => {
+    expect(labels(task({ top3: true }), { tomorrowHint: 'x', goal: true })).not.toContain('Make goal of the day')
+  })
+
+  it('a Top 3 row on Today moves up / down within the open picks', () => {
+    const at = (index: number, last = 2) => labels(task({ top3: true }), { tomorrowHint: 'x', place: { index, last } }).filter((l) => l === 'Move up' || l === 'Move down')
+    expect(at(0)).toEqual(['Move down']) // the goal can only go down
+    expect(at(1)).toEqual(['Move up', 'Move down'])
+    expect(at(2)).toEqual(['Move up'])
+    expect(at(0, 0)).toEqual([]) // the only open pick
+    expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Move up') // not a Top 3 row
   })
 
   it('a done row only reopens or goes to Trash', () => {
