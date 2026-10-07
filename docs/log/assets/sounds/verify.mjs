@@ -231,7 +231,7 @@ if (want('render')) {
       .filter((r) => r.pack === pack)
       .map((r) => `      <tr><td>${LABEL[r.event]}<br><code>${r.event}</code></td><td><audio controls preload="none" src="${r.pack}/${r.event}.wav"></audio></td><td>${Math.round(r.seconds * 1000)} ms</td><td>${r.peakDb.toFixed(1)} dBFS</td></tr>`)
       .join('\n')
-  const blurb = { kalimba: 'Kalimba (the default): plucked tines, bright and round', felt: 'Felt: muted felt piano, warm and low', glass: 'Glass: soft glass bells, airy' }
+  const blurb = { kalimba: 'Kalimba: plucked tines, bright and round', felt: 'Felt (the default): muted felt piano, warm and low', glass: 'Glass: soft glass bells, airy' }
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -349,7 +349,7 @@ for (const [viewName, view] of want('settings') ? [['desktop', desktop], ['phone
     await card.screenshot({ path: path.join(OUT, `${name}.png`) })
     await page.setViewportSize(view.viewport)
     const radios = card.getByRole('radio')
-    check(`${name} three packs, Kalimba chosen`, (await radios.count()) === 3 && (await card.getByRole('radio', { name: /Kalimba/ }).getAttribute('aria-checked')) === 'true')
+    check(`${name} three packs, Felt chosen`, (await radios.count()) === 3 && (await card.getByRole('radio', { name: /Felt/ }).getAttribute('aria-checked')) === 'true')
     check(`${name} a ▶ per pack and per event, seven event rows`, (await card.getByRole('button', { name: /^Hear / }).count()) === 3 && (await card.locator('[data-sound-event]').count()) === 7 && (await card.getByRole('button', { name: /^Preview / }).count()) === 7)
     const b = await card.boundingBox()
     const overflow = await page.evaluate(() => document.scrollingElement.scrollWidth - innerWidth)

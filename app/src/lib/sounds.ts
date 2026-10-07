@@ -3,7 +3,7 @@
 // v1 was white noise through one filter (paper, pencil, rain) and two bare sine beeps: hiss and
 // beeps. v2 is a small instrument. Each EVENT (a task done, a capture, a focus round ending…) has a
 // short phrase in ONE key (C major pentatonic), so sounds that follow each other sound related, and
-// three PACKS voice every phrase with their own timbre: kalimba (plucked tines, the default), felt
+// three PACKS voice every phrase with their own timbre: kalimba (plucked tines), felt
 // (muted felt piano, an octave down) and glass (soft low-index FM bells).
 //
 // Still synthesised in Web Audio: zero asset bytes, $0, nothing on the network. The craft:
@@ -38,7 +38,7 @@ export const DEFAULT_EVENTS: Record<SoundEvent, boolean> = {
   ritual_done: true,
   undo: false, // optional by design — a step back doesn't need applause
 }
-export const DEFAULT_PACK: SoundPack = 'kalimba'
+export const DEFAULT_PACK: SoundPack = 'felt' // Kai 2026-10-07 picked Felt after hearing all three
 export const DEFAULT_VOLUME = 0.35 // "quiet" is still the first adjective
 
 /** How long each event may ring, in seconds to −60 dBFS at full volume (the brief's limits). */

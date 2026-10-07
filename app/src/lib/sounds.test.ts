@@ -35,9 +35,9 @@ describe('catalog', () => {
     for (const p of SOUND_PACKS) expect(typeof PACKS[p].strike).toBe('function')
   })
 
-  it('defaults: quiet volume, kalimba, everything on but undo', () => {
+  it('defaults: quiet volume, felt, everything on but undo', () => {
     expect(readVolume()).toBe(DEFAULT_VOLUME)
-    expect(readSoundPack()).toBe('kalimba')
+    expect(readSoundPack()).toBe('felt')
     expect(readSoundEvents()).toEqual({ ...DEFAULT_EVENTS })
     expect(DEFAULT_EVENTS.undo).toBe(false)
     expect(SOUND_EVENTS.filter((e) => e !== 'undo').every((e) => DEFAULT_EVENTS[e])).toBe(true)
@@ -77,9 +77,9 @@ describe('pack persistence', () => {
     }
   })
 
-  it('an unknown pack (v1 never had one, or a removed one) falls back to kalimba', () => {
+  it('an unknown pack (v1 never had one, or a removed one) falls back to felt', () => {
     localStorage.setItem('kf_sound_pack', 'tuba')
-    expect(readSoundPack()).toBe('kalimba')
+    expect(readSoundPack()).toBe('felt')
   })
 })
 
