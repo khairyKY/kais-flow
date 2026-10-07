@@ -60,7 +60,7 @@ export const ARTICLES: Article[] = [
       { name: 'On a computer', text: 'On a computer, press **⌘K / Ctrl+K**, or the **Capture** button at the top of Today.' },
       { name: 'Write it plainly', text: 'Write it plainly. The AI fills in the date, priority, length and notes.' },
       { name: 'Say it yourself', text: 'Or mark it yourself: **!** **!!** **!!!** for priority, **30m** for length, **#project**, ***label**.' },
-      { name: 'Where it lands', text: 'A line with any detail becomes a task; a plain one waits in the **Inbox**.' },
+      { name: 'Where it lands', text: 'A line with any detail becomes a task — with a time, a block on the calendar too; a plain one waits in the **Inbox**.' },
     ],
   },
   {
@@ -124,7 +124,7 @@ export const ARTICLES: Article[] = [
     min: 2,
     intro: 'Your day as a bed of blocks. Tasks become time when you put them somewhere.',
     steps: [
-      { name: 'Time or date', text: 'When you plan a task, a **time** puts it on the calendar; a **date** alone keeps it in that day’s list.' },
+      { name: 'Time or date', text: 'Give a task a **time** and it goes on the calendar; a **date** alone keeps it in that day’s list.' },
       { name: 'From the rail', text: 'The rail keeps **Overdue · Today · Inbox** ready. Drag a card onto a time to plant it.' },
       { name: 'Move and resize', text: '**Drag** a block to move it, or pull an edge to resize. It snaps every 15 minutes.' },
       { name: 'On the phone', text: 'On a phone, **hold** a block to lift it, then drag it or pull its handles.' },
