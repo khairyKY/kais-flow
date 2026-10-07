@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { queryClient } from '../../lib/queryClient'
+import { carryTasksToDomain } from '../tasks/api'
 import type { Project, TimeEntry } from '../../lib/types'
 
 export function useProjects() {
@@ -77,10 +79,20 @@ export function renameProject(project: Project, name: string): void {
   logActivity('project.renamed', 'project', project.id, { name })
 }
 
-export function reparentProject(project: Project, domainId: string | null): void {
-  const updated = { ...project, domain_id: domainId, updated_at: nowIso() }
-  writeRow('projects', updated)
+/** A project's domain (its page's Domain field, the Projects row menu). Kai 2026-10-07: its tasks
+ * now go with it — they kept the old domain_id, so they still read as the old domain — and one
+ * Undo takes it all back. */
+export function reparentProject(project: Project, domainId: string | null, domainName = ''): void {
+  if (project.domain_id === domainId) return
+  writeRow('projects', { ...project, domain_id: domainId, updated_at: nowIso() })
+  const undoTasks = carryTasksToDomain('project_id', project.id, domainId)
   logActivity('project.reparented', 'project', project.id, { domain_id: domainId })
+  toastUndo(domainId ? `Moved to ${domainName || 'another domain'}` : 'Out of its domain', () => {
+    const current = queryClient.getQueryData<Project[]>(['projects'])?.find((p) => p.id === project.id) ?? project
+    writeRow('projects', { ...current, domain_id: project.domain_id, updated_at: nowIso() })
+    undoTasks()
+    logActivity('project.reparented', 'project', project.id, { domain_id: project.domain_id })
+  })
 }
 
 export function archiveProject(project: Project): void {

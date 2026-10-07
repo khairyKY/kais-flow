@@ -17,7 +17,7 @@ const check = (name, ok, detail = '') => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 
-const SPEC = ['Tomorrow', 'Pick date…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
+const SPEC = ['Tomorrow', 'Pick date…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
 
 async function open(view, theme) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
@@ -110,7 +110,7 @@ for (const theme of ['day', 'night']) {
   check(`${id} pressed row: no scale(0.97) shrink (a bare .kf-lift does shrink)`, pressed === 'none' && /^matrix\(0\.97/.test(control), `row ${pressed}, control ${control}`)
   check(`${id} swipe right under 40% rests open at 196`, (await fgX(page, 3)) === 196, String(await fgX(page, 3)))
   const acts = row(page, 3).locator('.kf-swipe-act')
-  check(`${id} partial reveal = Tomorrow · Pick date · Project`, JSON.stringify(await acts.allInnerTexts()) === JSON.stringify(['Tomorrow', 'Pick date', 'Project']), JSON.stringify(await acts.allInnerTexts()))
+  check(`${id} partial reveal = Tomorrow · Pick date · Move`, JSON.stringify(await acts.allInnerTexts()) === JSON.stringify(['Tomorrow', 'Pick date', 'Move']), JSON.stringify(await acts.allInnerTexts()))
   const fs12 = await acts.first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))
   check(`${id} action labels ≥ 12px`, fs12 >= 12, `${fs12}px`)
   const bg = await row(page, 3).locator('.kf-swipe-bg').evaluate((e) => getComputedStyle(e).backgroundColor)
@@ -211,7 +211,7 @@ for (const theme of ['day', 'night']) {
   check(`${id} hold → "1 selected" app bar`, (await top.count()) === 1 && /1 selected/.test(await top.innerText()))
   check(`${id} hold gives a haptic tick`, (await page.evaluate(() => window.__buzz)) > buzz1)
   const bottom = page.locator('.kf-selbar-bottom')
-  check(`${id} bulk bar: Done · Tomorrow · Pick date · Project · Delete`, JSON.stringify((await bottom.locator('button').allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['Done', 'Tomorrow', 'Pick date', 'Project', 'Delete']))
+  check(`${id} bulk bar: Done · Tomorrow · Pick date · Move · Delete`, JSON.stringify((await bottom.locator('button').allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['Done', 'Tomorrow', 'Pick date', 'Move', 'Delete']))
   const covers = await page.evaluate(() => {
     const tab = document.querySelector('.app-tabbar')?.getBoundingClientRect()
     if (!tab) return 'no tab bar'

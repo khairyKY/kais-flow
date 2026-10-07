@@ -6,10 +6,11 @@ import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { DURATIONS, durationLabel } from '../../components/pickerMath'
-import { ProjectPicker } from '../../components/ProjectPicker'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import type { Domain, Project, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 import { createProject } from '../projects/api'
+import { MovePicker } from './MovePicker'
+import { placeKey, type MoveTarget } from './move'
 import { shortcutHint } from './listShortcuts'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
@@ -24,7 +25,8 @@ export interface TaskMenuActions {
   tomorrow: () => void
   schedule: (iso: string) => void
   someday: () => void
-  move: (projectId: string | null, domainId: string | null) => void
+  /** "Move to…": a project, an area, a domain or none (./move.ts). */
+  move: (to: MoveTarget) => void
   priority: (priority: number | null) => void
   repeat: (rule: string | null) => void
   remind: (iso: string | null) => void
@@ -46,7 +48,7 @@ export interface BulkActions {
   onTomorrow: () => void
   onSchedule: (iso: string) => void
   onSomeday: () => void
-  onMove: (projectId: string | null, domainId: string | null) => void
+  onMove: (to: MoveTarget) => void
   onDelete: () => void
 }
 
@@ -79,14 +81,12 @@ interface Option {
   color?: string
 }
 
-export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domains }: {
+export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   task: Task
   anchor: MenuAnchor
   onClose: () => void
   actions: TaskMenuActions
   ctx: TaskMenuContext
-  projects: Project[]
-  domains: Domain[]
 }) {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
@@ -132,17 +132,16 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
   if (sub === 'date') {
     return <ScheduleMenu position={at} title={ctx.bulkCount ? undefined : task.title} value={due} onClose={onClose} onSchedule={actions.schedule} onSomeday={actions.someday} onClear={clearDate} />
   }
+  const here = ctx.bulkCount ? null : placeKey(task)
   if (sub === 'project') {
     return (
-      <ProjectPicker
+      <MovePicker
         position={at}
-        projects={projects}
-        domains={domains}
-        currentProjectId={ctx.bulkCount ? null : task.project_id}
-        onSelect={actions.move}
+        current={here}
+        onPick={actions.move}
         onClose={onClose}
         meta={ctx.bulkCount ? undefined : task.title}
-        onCreate={(name) => actions.move(createProject(name, null).id, null)}
+        onCreate={(name) => actions.move({ kind: 'project', id: createProject(name, null).id, domainId: null, name })}
       />
     )
   }
@@ -170,7 +169,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
 
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
     if (key === 'date') return ({ position, onClose: back, closeAll }) => <ScheduleMenu position={position} value={due} onClose={back} onSchedule={(iso) => { actions.schedule(iso); closeAll() }} onSomeday={() => { actions.someday(); closeAll() }} onClear={clearDate && (() => { clearDate(); closeAll() })} />
-    if (key === 'project') return ({ position, onClose: back, closeAll }) => <ProjectPicker position={position} projects={projects} domains={domains} currentProjectId={ctx.bulkCount ? null : task.project_id} onSelect={(p, d) => { actions.move(p, d); closeAll() }} onClose={back} />
+    if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
     if (key === 'priority' || key === 'repeat' || key === 'remind') {
       const list = options[key]
       return ({ position, onClose: back, closeAll }) => <ContextMenu position={position} onClose={back} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: () => { o.run(); closeAll() } }))} />

@@ -12,6 +12,39 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 }
 
+type KeyLike = Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey' | 'target'>
+
+/** Ctrl/Cmd+A meant for a task list (Kai 2026-10-07: "Ctrl+A isn't working for tasks"):
+ * - a field with text in it keeps the browser's own select-all;
+ * - an EMPTY field on the page itself has nothing to select, so the list gets it — the quick add
+ *   keeps focus after Enter, which used to swallow every Ctrl+A on the Tasks page. A field in an
+ *   overlay (command bar, a picker's search) never hands it to the list behind;
+ * - layout-proof: on an Arabic (or any non-Latin) layout Ctrl+A arrives as key 'ش', code 'KeyA'. */
+export function isSelectAllKey(e: KeyLike): boolean {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return false
+  const isA = /^[a-z]$/i.test(e.key) ? e.key.toLowerCase() === 'a' : e.code === 'KeyA'
+  if (!isA || !isTypingTarget(e.target)) return isA
+  const el = e.target as HTMLInputElement
+  if (el.closest?.('.kf-overlay-card, [role="dialog"], [role="menu"]')) return false
+  return (typeof el.value === 'string' ? el.value : (el.textContent ?? '')) === ''
+}
+
+/** Ctrl/Cmd+A → `onSelectAll` on any page with a selectable task list (Tasks, Today, Inbox through
+ * useListKeys; project and area pages and the Planning board directly). Esc stays each page's own
+ * useEscapeStack. Without `onSelectAll` the browser's select-all is left alone. */
+export function useSelectAllKey(onSelectAll: (() => void) | undefined, active = true): void {
+  useEffect(() => {
+    if (!active || !onSelectAll) return
+    function onKeydown(e: KeyboardEvent) {
+      if (!isSelectAllKey(e)) return
+      e.preventDefault()
+      onSelectAll!()
+    }
+    window.addEventListener('keydown', onKeydown)
+    return () => window.removeEventListener('keydown', onKeydown)
+  }, [onSelectAll, active])
+}
+
 interface UseListKeysOptions {
   /** DOM id prefix for rows (`id="{idPrefix}{item.id}"`) — used to move real focus, not just a CSS ring. */
   idPrefix?: string
@@ -47,16 +80,12 @@ export function useListKeys<T extends { id: string }>(
     return () => usePageShortcutsStore.getState().clear()
   }, [sectionLabel, bindings])
 
+  useSelectAllKey(onSelectAll, active)
+
   useEffect(() => {
     if (!active) return
     function onKeydown(e: KeyboardEvent) {
       if (isTypingTarget(e.target)) return
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-        if (!onSelectAll) return
-        e.preventDefault()
-        onSelectAll()
-        return
-      }
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (items.length === 0) return
       const idx = items.findIndex((i) => i.id === focusedId)
@@ -82,7 +111,7 @@ export function useListKeys<T extends { id: string }>(
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [items, focusedId, bindings, active, onSelectAll])
+  }, [items, focusedId, bindings, active])
 
   return { focusedId, setFocusedId }
 }

@@ -40,7 +40,7 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     { key: 'tomorrow', label: `Tomorrow${n}`, hint: ctx.tomorrowHint },
     { key: 'date', label: `Pick date…${n}`, sub: true },
     ...(ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
-    { key: 'project', label: `Move to project…${n}`, hint: ctx.projectName ?? 'None', sub: true },
+    { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
     { key: 'repeat', label: 'Repeat', hint: task.recurrence_rule ? (REPEAT_LABELS[task.recurrence_rule] ?? 'Custom') : 'Never', sub: true },
     { key: 'remind', label: 'Remind', hint: task.reminder_at ? cairoTimeKey(new Date(task.reminder_at)) : 'Off', sub: true },

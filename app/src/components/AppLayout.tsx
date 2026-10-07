@@ -1,11 +1,9 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
-import { get } from 'idb-keyval'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
-import { unsyncedChanges, type OutboxEntry } from '../lib/outbox'
-import { syncHeader, syncRows } from './syncQueue'
+import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
 import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
@@ -374,83 +372,37 @@ function footerRow(icon: React.ReactNode, label: string, shortcut: string | unde
   )
 }
 
-function useOnline(): boolean {
-  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
-  useEffect(() => {
-    const on = () => setOnline(true)
-    const off = () => setOnline(false)
-    window.addEventListener('online', on)
-    window.addEventListener('offline', off)
-    return () => {
-      window.removeEventListener('online', on)
-      window.removeEventListener('offline', off)
-    }
-  }, [])
-  return online
-}
-
-// ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue.
-// Event-driven via outbox's 'kf-outbox-change' (foundation patch landed); the slow
-// interval is only a belt-and-braces fallback.
-// "Needs a look ⚠" (conflict) is N/A until the outbox grows conflict detection.
-// polish-c (2026-09-26 audit): `waiting` is P0-B's unsyncedChanges() — user actions, not queue
-// rows — so one capture reads "1", not "2" (every action also queues an activity_log row). ──
-function useOutboxQueue(): { queue: OutboxEntry[]; waiting: number } {
-  const [state, setState] = useState<{ queue: OutboxEntry[]; waiting: number }>({ queue: [], waiting: 0 })
-  useEffect(() => {
-    let alive = true
-    const read = () =>
-      void Promise.all([get<OutboxEntry[]>('kf-outbox'), unsyncedChanges()]).then(([q, waiting]) => {
-        if (alive) setState({ queue: q ?? [], waiting })
-      })
-    read()
-    const t = setInterval(read, 30_000)
-    window.addEventListener('kf-outbox-change', read)
-    window.addEventListener('online', read)
-    window.addEventListener('offline', read)
-    return () => {
-      alive = false
-      clearInterval(t)
-      window.removeEventListener('kf-outbox-change', read)
-      window.removeEventListener('online', read)
-      window.removeEventListener('offline', read)
-    }
-  }, [])
-  return state
-}
-
 function queueAgo(ts: number): string {
   const min = Math.max(1, Math.round((Date.now() - ts) / 60_000))
   return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
 }
 
+// ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue. Kai 2026-10-07:
+// it flipped "Syncing ↻ 1" ↔ "Synced ●" (with a glint) on every write, about two seconds per change.
+// It now says nothing while writes flush and speaks only when something is slow, offline or not
+// saved (useSyncStatus, ./syncQueue.ts); a brief "Synced" (2d's glint) ends an offline / not-saved spell. ──
 function TopBar() {
-  const online = useOnline()
   const owner = useOwner()
   const motionOn = useMotionEnabled()
-  const { queue, waiting: n } = useOutboxQueue()
+  const { view, online, queue, waiting: n, parked, seeParked } = useSyncStatus()
   const zone = useAppZone()
   const rows = useMemo(() => syncRows(queue), [queue])
-  const [popOpen, setPopOpen] = useState(false)
+  const label = syncLabel(view)
+  // The popover; `parked` holds the not-saved rows it was opened on — opening it is seeing them.
+  const [pop, setPop] = useState<{ parked: SyncRow[] | null } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
-
-  // States 2d — reconnect: the only celebration is one glint on the dot, 300ms.
-  const prevPending = useRef(0)
-  const [glint, setGlint] = useState(false)
-  useEffect(() => {
-    const was = prevPending.current
-    prevPending.current = n
-    if (was > 0 && n === 0 && online && motionOn) {
-      setGlint(true)
-      const t = setTimeout(() => setGlint(false), 600)
-      return () => clearTimeout(t)
-    }
-  }, [n, online, motionOn])
+  const popOpen = pop !== null
+  const togglePop = () => {
+    if (popOpen) return setPop(null)
+    if (view.kind !== 'parked') return setPop({ parked: null })
+    setPop({ parked: syncRows(parked, 'changed') })
+    seeParked()
+  }
 
   useEffect(() => {
     if (!popOpen) return
     const onDown = (e: MouseEvent) => {
-      if (popRef.current && !popRef.current.contains(e.target as Node)) setPopOpen(false)
+      if (popRef.current && !popRef.current.contains(e.target as Node)) setPop(null)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
@@ -461,9 +413,18 @@ function TopBar() {
   const now = new Date()
   const part = (o: Intl.DateTimeFormatOptions) => now.toLocaleDateString('en-GB', { ...o, timeZone: zone })
   const dateLabel = `${part({ weekday: 'short' })} ${part({ day: 'numeric' })} ${part({ month: 'short' })}`
-  // The ◌ glyph lives in the status STRING for offline (design position: `Offline ◌ — N saved here`);
-  // the trailing sage ● renders only when truly synced — States 2a: Syncing shows no dot.
-  const status = !online ? (n > 0 ? `Offline ◌ — ${n} saved here` : 'Offline ◌') : n > 0 ? `Syncing ↻ ${n}` : 'Synced'
+  const rowList = (list: SyncRow[]) => (
+    <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+      {list.map((r) => (
+        <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+        </div>
+      ))}
+    </div>
+  )
+  const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>{text}</div>
   return (
     <div
       className="app-topbar"
@@ -472,34 +433,48 @@ function TopBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
         {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
             (lib/owner.ts). The zone on the right is the user's own (Settings → Timezone): the
-            app's day boundary (B2), so that's the clock it's really keeping. */}
+            app's day boundary (B2), so that's the clock it's really keeping. The sync part shows
+            only when there is something to say. */}
         <span className="app-topbar-where">
-          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel} ·
+          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel}{label ? ' ·' : ''}
         </span>
-        <button
-          type="button"
-          onClick={() => setPopOpen((v) => !v)}
-          className="kf-hit app-topbar-sync"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: !online || n > 0 ? 'var(--ink-muted)' : 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-        >
-          {status}
-          {online && n === 0 && (
-            <span style={{ color: 'var(--acc-sage)', animation: glint ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: glint ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
-          )}
-        </button>
+        {label && (
+          <button
+            type="button"
+            onClick={togglePop}
+            className="kf-hit app-topbar-sync"
+            data-sync={view.kind}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: view.kind === 'parked' ? 'var(--acc-terra-ink)' : view.kind === 'synced' ? 'inherit' : 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            {label}
+            {/* States 2d — the only celebration is one glint on the dot, 300ms, when trouble clears. */}
+            {view.kind === 'synced' && (
+              <span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
+            )}
+          </button>
+        )}
         <span className="app-topbar-echo">
           <SeasonTopbarEcho />
         </span>
       </div>
       <div className="app-topbar-zone" style={{ flex: 'none' }}>{zone}</div>
 
-      {popOpen && (
+      {pop && (
         <div
           ref={popRef}
           className="kf-sync-pop kf-overlay-card"
           style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '12px 14px', textTransform: 'none', letterSpacing: 'normal' }}
         >
-          {n === 0 ? (
+          {pop.parked ? (
+            <>
+              {/* The server set these aside (lib/outbox.ts dead letters) so the rest could sync. */}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra-ink)' }}>
+                Not saved ⚠ · {pop.parked.length} {pop.parked.length === 1 ? 'change' : 'changes'}
+              </div>
+              {rowList(pop.parked)}
+              {hand('set aside so everything else syncs on — make the change again to keep it')}
+            </>
+          ) : n === 0 ? (
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
           ) : (
             <>
@@ -508,18 +483,8 @@ function TopBar() {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
                 {syncHeader(n, online)}
               </div>
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {rows.map((r) => (
-                  <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
-                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>
-                {online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back."}
-              </div>
+              {rowList(rows)}
+              {hand(online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back.")}
             </>
           )}
         </div>
