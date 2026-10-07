@@ -9,6 +9,7 @@ export const ParseResultSchema = z.object({
   domain_id: z.string().nullable().optional(),
   project_id: z.string().nullable().optional(),
   due_at: z.string().nullable().optional(),
+  has_time: z.boolean().nullable().optional(),
   duration_min: z.number().nullable().optional(),
   priority: z.number().nullable().optional(),
   reminder_offset_min: z.number().int().min(0).nullable().optional(),
