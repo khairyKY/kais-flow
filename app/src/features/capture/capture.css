@@ -269,3 +269,68 @@ button.kf-capture.kf-press {
   cursor: pointer;
 }
 .kf-rec-cancel { background: none; }
+
+/* ── The capture bar (features/command-bar/CommandBar) — Paper Capture 11a on a phone:
+   field · parse chips · [camera · mic] … [send]; on desktop the mic dictates into the field. ── */
+.kf-dictate {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--acc-terra-ink);
+  cursor: pointer;
+}
+.kf-dictate[aria-pressed='true'] {
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+}
+.kf-dictate:disabled { cursor: default; }
+.kf-dictate:focus-visible,
+.kf-capture-send:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+@media (pointer: coarse) { .kf-dictate { width: var(--touch-min); height: var(--touch-min); } }
+.kf-capture-tools {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.kf-capture-send {
+  margin-left: auto;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--acc-terra-ink);
+  color: var(--on-terra);
+  box-shadow: var(--shadow-cta);
+  cursor: pointer;
+}
+.kf-capture-send:disabled { opacity: 0.42; cursor: default; }
+.kf-capture-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.kf-capture-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}

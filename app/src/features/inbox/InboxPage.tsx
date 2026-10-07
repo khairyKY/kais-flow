@@ -13,7 +13,7 @@ import {
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useOpenTask } from '../tasks/openTask'
-import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { CaptureCta } from '../capture/CaptureCta'
 import { ReadyScans, ScanPaperButton, SourceLabel } from '../paper/PaperInbox'
 import { hydrangeaAsset } from '../../lib/gardenAssets'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
@@ -289,7 +289,7 @@ export function InboxPage() {
       {!isMobile && !zero && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1.5deg)' }}>clear them and the hydrangea calms ✿</span>
-          <VoiceCaptureButton />
+          <CaptureCta />
         </div>
       )}
     </div>

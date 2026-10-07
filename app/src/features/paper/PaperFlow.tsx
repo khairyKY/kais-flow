@@ -10,7 +10,7 @@ import { toastUndo } from '../../lib/undo'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { perZone } from '../../lib/appZone'
 import { useProjects } from '../projects/api'
-import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { openCapture } from '../command-bar/commandBarStore'
 import { applyResults, markReviewed, retryCapture, startReading, useCapture, usePageUrls } from './api'
 import { cropFrame, DAILY_PAGES, MAX_PAGES, needsCheck, toEditLine, type CaptureRow, type EditLine, type LineType } from './paperMath'
 import { pickPhotos, usePaperStore, type Stage } from './paperStore'
@@ -547,7 +547,7 @@ function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | '
     body = 'Reading resets at midnight. This photo is kept, and it’s read first thing tomorrow.'
     actions = (
       <>
-        <Button variant="cta" onClick={() => { close(); useCommandBarStore.getState().setOpen(true) }}>
+        <Button variant="cta" onClick={() => { close(); openCapture() }}>
           Type them in
         </Button>
         <Button variant="secondary" onClick={close}>
