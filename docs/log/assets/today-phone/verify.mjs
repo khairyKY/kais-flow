@@ -356,7 +356,11 @@ for (const theme of ['day', 'night']) {
     await sleep(1500)
     await shot(page, name)
     check(`${name} cache paints at once (no skeleton)`, (await count(page, `[id="task-${id(GOAL)}"]`)) === 1 && (await count(page, '.tp [role="status"][aria-busy="true"]')) === 0)
-    check(`${name} Syncing dot beside the header line`, (await text(page, '.tp-syncing')) === 'SYNCING', await text(page, '.tp-syncing'))
+    // tasks-noise (Kai 2026-10-07): the dot no longer blinks on for every refetch — only a fetch still
+    // going after ~4s shows it (components/syncQueue.ts useLingering). The answers here are held 5s.
+    check(`${name} no Syncing dot for the first seconds of a refetch`, (await count(page, '.tp-syncing')) === 0)
+    await sleep(2900)
+    check(`${name} Syncing dot beside the header line once the refetch is slow (~4s)`, (await text(page, '.tp-syncing')) === 'SYNCING', await text(page, '.tp-syncing'))
     first.state.hold = 0
     await phoneBasics(page, name, errors)
     await first.ctx.close()

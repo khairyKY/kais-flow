@@ -34,6 +34,7 @@ import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { useListKeys } from '../../components/useListKeys'
+import { useLingering } from '../../components/syncQueue'
 import { BulkBar } from '../../components/BulkBar'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
@@ -111,6 +112,9 @@ export function TodayPage() {
   // restored the query is pending but not fetching, so isLoading is false and the empty states lied.
   const tasksQuery = useTasks()
   const eventsQuery = useCalendarEvents()
+  // Kai 2026-10-07: the phone's "Syncing" dot blinked on with every refetch (each write's realtime
+  // echo refetches). The topbar's rule now: only a fetch that's still going after ~4s shows it.
+  const fetchingSlowly = useLingering(tasksQuery.isFetching || eventsQuery.isFetching)
   const { data: tasks = [], isPending: tasksPending } = tasksQuery
   const { data: events = [], isPending: eventsPending } = eventsQuery
   const { data: projects = [] } = useProjects()
@@ -524,7 +528,7 @@ export function TodayPage() {
         {tasksPending ? (
           <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
         ) : (
-          <PhoneSummary workload={workload} now={now} online={online} syncing={tasksQuery.isFetching || eventsQuery.isFetching} />
+          <PhoneSummary workload={workload} now={now} online={online} syncing={fetchingSlowly} />
         )}
 
         {card === 'slip' && slip && <NowSlip event={slip} task={slipTask} now={now} sel={slipTask ? rowSelection(slipTask) : {}} />}
