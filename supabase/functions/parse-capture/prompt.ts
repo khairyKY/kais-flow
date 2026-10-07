@@ -47,8 +47,9 @@ Rules:
 - priority: 1, 2, 3 or null, inferred from the wording (1 = most urgent). 1 = critical, urgent, ASAP, emergency, "must do today". 2 = important, high priority, "soon". 3 = low priority, whenever, no rush, "if I get time". null when nothing in the wording says how much it matters. A literal "!!!" means 1, "!!" means 2, "!" means 3.
 - duration_min: how long it takes, in minutes, when said or clearly implied ("an hour" = 60, "half an hour" = 30, "quick 15 min call" = 15, "30m" = 30), else null.
 - due_at: an ISO 8601 datetime in UTC if a date/time is mentioned, else null.
+- has_time: true when a clock time was said or clearly meant ("4am", "15:00", "noon", "at 3", "in 2 hours"); false for a date alone ("tomorrow", "friday", "next week"); null when there is no due_at. A timed task goes on the user's calendar, so never invent a time.
 - reminder_offset_min: if the user says something like "remind me 10 min before", output the number of minutes (e.g. 10). Prefer null over guessing — only set this if the user explicitly mentions a reminder time offset. Leave null if no reminder is mentioned.
 - domain_id/project_id: ONLY set these to an id from the lists above if you are genuinely confident it belongs there ("#name" in the text names one). Prefer null over guessing.
 - confidence (0 to 1): your honest confidence that kind + domain_id/project_id are correct. If unsure of placement, LOWER your confidence — the user strongly prefers triaging an item in their inbox over finding something misfiled later. Do not inflate confidence to seem helpful.
-- Respond with ONLY a JSON object with exactly these keys: kind, cleaned_text, title, description, domain_id, project_id, due_at, duration_min, priority, reminder_offset_min, confidence. Use null for unknown/inapplicable optional fields.`
+- Respond with ONLY a JSON object with exactly these keys: kind, cleaned_text, title, description, domain_id, project_id, due_at, has_time, duration_min, priority, reminder_offset_min, confidence. Use null for unknown/inapplicable optional fields.`
 }

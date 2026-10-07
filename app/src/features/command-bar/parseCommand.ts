@@ -5,6 +5,9 @@ import type { Domain, Project } from '../../lib/types'
 export interface ParsedCommand {
   title: string
   dueAt: string | null
+  /** A clock time was typed ("4am", "15:00", "in 2 hours") — not just a date, whose time chrono
+   * only implies. Kai's rule (calendar/replan.ts): a timed capture lands on the calendar as a block. */
+  dueTimed: boolean
   durationMin: number | null
   priority: number | null
   domainId: string | null
@@ -122,11 +125,13 @@ export function parseCommand(
   const { priority, durationMin } = stripped
 
   let dueAt: string | null = null
+  let dueTimed = false
   const reference = zone === 'cairo' ? { instant: now, timezone: cairoOffsetMinutes(now) } : now
   const results = chrono.parse(text, reference, { forwardDate: true })
   if (results.length > 0) {
     const first = results[0]
     dueAt = zone === 'cairo' ? cairoInstant(first.start) : first.start.date().toISOString()
+    dueTimed = first.start.isCertain('hour')
     text = (text.slice(0, first.index) + text.slice(first.index + first.text.length)).trim()
   }
 
@@ -155,5 +160,5 @@ export function parseCommand(
 
   const title = text.replace(/\s{2,}/g, ' ').trim()
 
-  return { title, dueAt, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
 }
