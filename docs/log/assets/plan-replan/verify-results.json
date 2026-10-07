@@ -1,6 +1,6 @@
 {
-  "passed": 103,
-  "failed": 0,
+  "passed": 102,
+  "failed": 1,
   "results": [
     {
       "name": "desk-day goal = the first pick starred (Crypto), rest by block: Gym 17:15, Read 22:00",
@@ -15,7 +15,7 @@
     {
       "name": "desk-day Top 3 row menu: Plan… first, Make goal of the day, Move up, Move down",
       "ok": true,
-      "detail": "[\"Plan… ▸\",\"Move to project… ▸\",\"Priority ▸\",\"Repeat ▸\",\"Remind ▸\",\"Remove from Top 3 T\",\"Make goal of the day\",\"Move up ⌥ ↑\",\"Move down ⌥ ↓\",\"Start focus\",\"Select ⌃ click\",\"Delete #\"]"
+      "detail": "[\"Plan… ▸\",\"Move to… ▸\",\"Priority ▸\",\"Repeat ▸\",\"Remind ▸\",\"Remove from Top 3 T\",\"Make goal of the day\",\"Move up ⌥ ↑\",\"Move down ⌥ ↓\",\"Start focus\",\"Select ⌃ click\",\"Delete #\"]"
     },
     {
       "name": "desk-day Make goal → Gym leads, ranks 1·2·3 written",
@@ -35,7 +35,7 @@
     {
       "name": "desk-day the goal's own menu: no Make goal, no Move up, Move down",
       "ok": true,
-      "detail": "[\"Plan… ▸\",\"Move to project… ▸\",\"Priority ▸\",\"Repeat ▸\",\"Remind ▸\",\"Remove from Top 3 T\",\"Move down ⌥ ↓\",\"Start focus\",\"Select ⌃ click\",\"Delete #\"]"
+      "detail": "[\"Plan… ▸\",\"Move to… ▸\",\"Priority ▸\",\"Repeat ▸\",\"Remind ▸\",\"Remove from Top 3 T\",\"Move down ⌥ ↓\",\"Start focus\",\"Select ⌃ click\",\"Delete #\"]"
     },
     {
       "name": "desk-day Alt+↓ on the focused goal → it moves to second; Gym leads",
@@ -70,7 +70,7 @@
     {
       "name": "desk-day an overdue row's menu starts with Replan…",
       "ok": true,
-      "detail": "[\"Replan… ▸\",\"Move to project… ▸\",\"Priority ▸\"]"
+      "detail": "[\"Replan… ▸\",\"Move to… ▸\",\"Priority ▸\"]"
     },
     {
       "name": "desk-day Replan list: one line each — where it lands and what it means",
@@ -85,7 +85,7 @@
     {
       "name": "desk-day Tomorrow, first thing → due Thu 09:00, Monday's stuck block off the calendar",
       "ok": true,
-      "detail": "[\"2026-10-08T06:00:00.000Z\",null,\"2026-10-07T06:46:30.155Z\"]"
+      "detail": "[\"2026-10-08T06:00:00.000Z\",null,\"2026-10-07T06:46:18.899Z\"]"
     },
     {
       "name": "desk-day \"Moved to tomorrow · Undo\"",
@@ -155,7 +155,7 @@
     {
       "name": "desk-day Confirm → 6 blocks today (the bank's stuck block moved), 1 to tomorrow 09:00, one Undo",
       "ok": true,
-      "detail": "6 · [\"7 replanned · 6 today, 1 tomorrow\"]"
+      "detail": "6 · [\"Goal of the day · Gym — upper body left the Top 3\",\"7 replanned · 6 today, 1 tomorrow\"]"
     },
     {
       "name": "desk-day Undo → the overdue pile is back (Overdue · 7)",
@@ -395,7 +395,7 @@
     {
       "name": "phone-day ⋯ sheet: Plan…, Make goal of the day, Move up, Move down",
       "ok": true,
-      "detail": "[\"Plan…\",\"Move to project… NONE\",\"Priority NONE\",\"Repeat NEVER\",\"Remind OFF\",\"Remove from Top 3\",\"Make goal of the day\",\"Move up\",\"Move down\",\"Start focus\",\"Select OR HOLD A ROW\",\"Delete UNDO 6S\"]"
+      "detail": "[\"Plan…\",\"Move to… NONE\",\"Priority NONE\",\"Repeat NEVER\",\"Remind OFF\",\"Remove from Top 3\",\"Make goal of the day\",\"Move up\",\"Move down\",\"Start focus\",\"Select OR HOLD A ROW\",\"Delete UNDO 6S\"]"
     },
     {
       "name": "phone-day Move up → Gym is the goal card, ranks written",
@@ -404,8 +404,8 @@
     },
     {
       "name": "phone-day swipe right rests on Tomorrow · Plan · Project",
-      "ok": true,
-      "detail": "[\"Tomorrow\",\"Plan\",\"Project\"]"
+      "ok": false,
+      "detail": "[\"Tomorrow\",\"Plan\",\"Move\"]"
     },
     {
       "name": "phone-day Plan sheet: Today · Next free slot · Tomorrow, first thing · This weekend · Next week · Pick date & time… · Someday · No date",

@@ -472,7 +472,7 @@ if (want('phone')) {
     const crypto = page.locator(`#task-${id(CRYPTO)}`)
     await swipeOpen(cdp, crypto)
     const acts = (await crypto.locator('.kf-swipe-act').allInnerTexts()).map((t) => t.trim())
-    check(`${name} swipe right rests on Tomorrow · Plan · Project`, JSON.stringify(acts) === JSON.stringify(['Tomorrow', 'Plan', 'Project']), JSON.stringify(acts))
+    check(`${name} swipe right rests on Tomorrow · Plan · Move (tasks-noise's Move to…)`, JSON.stringify(acts) === JSON.stringify(['Tomorrow', 'Plan', 'Move']), JSON.stringify(acts))
     await tap(cdp, crypto.locator('.kf-swipe-act', { hasText: 'Plan' }))
     await settle()
     const planRows = await rows(dialog(page))
