@@ -314,12 +314,13 @@ export function ActivityPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         <style>{styles}</style>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, borderRadius: 46 }} />
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 18px 0', position: 'relative', zIndex: 10 }}>
+        {/* Kai's phone review: the shell's 16px gutter is the page's, not 16 + 18 of its own. */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
             </span>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Activity</div>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Activity</h1>
           </div>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '14px 0 4px', scrollbarWidth: 'none' }} className="no-scrollbar">
             {CATEGORIES.filter((cat) => MOBILE_CATEGORIES.includes(cat.id)).map((cat) => (

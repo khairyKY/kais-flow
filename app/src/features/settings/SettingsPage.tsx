@@ -323,10 +323,11 @@ function AppearanceCard() {
 
 // Kai 2026-10-03: the view the calendar opens on, synced (app_settings.calendar_default_view) so
 // the computer and the phone agree. Until one is picked the row shows this device's own default.
-function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefaultView }) {
+function CalendarViewSeg({ platformDefault, fill }: { platformDefault: CalendarDefaultView; fill?: boolean }) {
   const view = useCalendarDefaultView(platformDefault)
   return (
     <Seg<CalendarDefaultView>
+      fill={fill}
       value={view ?? platformDefault}
       onChange={(v) => updateAppSetting('calendar_default_view', v)}
       options={[
@@ -1315,10 +1316,11 @@ function MobileSettings() {
   ]
 
   return (
-    <div style={{ padding: '8px 4px 0' }}>
+    // Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 4 of its own.
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--shadow-drop-sm)' }} />
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</div>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</h1>
       </div>
 
       <SCard style={{ marginTop: 16, boxShadow: 'var(--shadow-crisp)' }}>
@@ -1336,9 +1338,10 @@ function MobileSettings() {
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Paper texture</span>
           <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 160 }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
-          <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Calendar opens on</span>
-          <CalendarViewSeg platformDefault="day" />
+        {/* Beside its label the three views ran past the card at 360 — its own line, like Interface size. */}
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-body)', marginBottom: 8 }}>Calendar opens on</div>
+          <CalendarViewSeg platformDefault="day" fill />
         </div>
       </SCard>
 

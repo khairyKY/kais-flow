@@ -328,6 +328,9 @@ export function BackLink({ children, style, ...nav }: BackLinkProps) {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
+    // Kai's phone review: beside a page's meta line it wrapped "ALL / PROJECTS" — it never wraps or shrinks
+    whiteSpace: 'nowrap',
+    flex: 'none',
     ...style,
   }
   return nav.to ? (

@@ -641,18 +641,34 @@ export function FocusPage() {
           (30/40/64). At ≤767px that padding is 20/16/tab-bar, so -40px bled 24px past each
           edge and gave /focus a horizontal scrollbar. Re-state the bleed against the phone
           padding, and stop short of the tab bar instead of under it. */}
+      {/* Kai's phone review (2026-10-07): at a fixed height the timer view ran under the tab bar
+          (the garden strip and the controls' last row sat behind it), the controls ran off the right
+          edge and the mode row wrapped a word per line. On a phone it grows with its content (the
+          page scrolls), the rows wrap whole, and the desktop-only "esc leaves quietly" steps aside. */}
       <style>{`
         @media (max-width: 767px) {
           .focus-bleed {
             margin: -20px -16px 0 !important;
-            height: calc(var(--kf-vh) - 42px - 88px - env(safe-area-inset-bottom)) !important;
+            height: auto !important;
+            min-height: calc(var(--kf-vh) - 42px - 88px - env(safe-area-inset-bottom));
           }
+          .fp-strip { padding: 0 16px !important; }
+          .fp-esc { display: none; }
+          .fp-modes, .fp-ctrls { flex-wrap: wrap; justify-content: center; row-gap: 12px !important; padding: 0 16px; }
+          .fp-strip .chip { white-space: nowrap; }
+          .fp-modes > * { max-width: 100%; }
+          .fp-round { min-width: 0; }
+          .fp-ctrls > button { min-height: 48px; white-space: nowrap; }
+          .fp-ctrls > span { padding: 14px 4px; }
+          .fp-task { padding: 0 16px; }
+          .fp-garden-note { left: 16px !important; }
+          .fp-garden-link { right: 16px !important; bottom: auto !important; top: 10px; }
         }
       `}</style>
       <div className="grain" style={{ pointerEvents: 'none' }}></div>
 
       {/* Quiet top strip */}
-      <div style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px dashed var(--line-solid)', position: 'relative', zIndex: 10 }}>
+      <div className="fp-strip" style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px dashed var(--line-solid)', position: 'relative', zIndex: 10 }}>
         <span className="flabel" style={{ fontSize: 'var(--fs-meta)' }}>Focus{blockLabel ? ` · ${blockLabel}` : ''}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {sessionsToday > 0 && (
@@ -660,7 +676,7 @@ export function FocusPage() {
               session {sessionsToday} today
             </span>
           )}
-          <span className="flabel">esc leaves quietly</span>
+          <span className="flabel fp-esc">esc leaves quietly</span>
         </div>
       </div>
 
@@ -678,7 +694,7 @@ export function FocusPage() {
 
         {/* Mode Switcher pill and settings button */}
         {mode !== 'break' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26, position: 'relative', zIndex: 10 }}>
+          <div className="fp-modes" style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26, position: 'relative', zIndex: 10 }}>
             <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, padding: 3, gap: 3 }}>
               <span
                 onClick={() => {
@@ -743,13 +759,14 @@ export function FocusPage() {
                       />
                     )
                   })}
-                  <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                  <span className="fp-round" style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                     round {currentRound} of {settings.roundsBeforeLongBreak} · long break after
                   </span>
                 </>
               )}
 
               <span
+                className="kf-hit"
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', color: 'var(--ink-muted)', cursor: 'pointer' }}
                 title="pomodoro settings"
@@ -863,7 +880,7 @@ export function FocusPage() {
         {/* Active Task display */}
         {mode !== 'break' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 30, position: 'relative' }}>
+            <div className="fp-task" style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 30, position: 'relative' }}>
               <span
                 style={{ width: 19, height: 19, border: '1.5px solid var(--check-border)', borderRadius: 6, flex: 'none', cursor: 'pointer' }}
                 onClick={handleCheckOff}
@@ -941,7 +958,7 @@ export function FocusPage() {
 
         {/* Controls */}
         {mode !== 'break' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
+          <div className="fp-ctrls" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
             <button
               onClick={togglePlay}
               style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px', borderRadius: 999, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
@@ -1025,11 +1042,12 @@ export function FocusPage() {
           <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
         </div>
         <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-        <div style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
+        <div className="fp-garden-note" style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
           the garden grows while you work
         </div>
         <span
           onClick={() => setMode('garden')}
+          className="fp-garden-link"
           style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
         >
           open the garden →

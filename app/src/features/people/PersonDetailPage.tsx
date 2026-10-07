@@ -151,7 +151,7 @@ export function PersonDetailPage() {
   return (
     <div style={{ maxWidth: 760 }}>
       <style>{`
-        .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+        .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
         .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
         .fhelp{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;color:var(--ink-hairline)}
         .fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
@@ -161,7 +161,7 @@ export function PersonDetailPage() {
       `}</style>
 
       {/* Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
         <BackLink to="/people">People</BackLink>
         <span className="fhelp">added {new Date(person.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · {person.facts?.length || 0} facts · {personInteractions.length} interactions</span>
       </div>
@@ -189,7 +189,7 @@ export function PersonDetailPage() {
       </div>
 
       {/* Quick actions */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
         <span onClick={() => quickTouch('call')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>log a call</span>
         <span onClick={() => quickTouch('meet')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>met in person</span>
         <span onClick={() => quickTouch('text')} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>text</span>
@@ -243,9 +243,10 @@ export function PersonDetailPage() {
       <div className="slabel" style={{ margin: '26px 0 6px' }}><span>Facts · {person.facts?.length || 0}</span><span className="r" /></div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {(person.facts || []).map((f) => (
-          <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+          // A phone row too narrow for value + recurs + nudge wraps them whole onto a second line.
+          <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
             <span className="flabel" style={{ width: 88, flex: 'none' }}>{f.label}</span>
-            <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: 1 }}>{f.value}</span>
+            <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>
             {f.recurs && <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>↻ recurs</span>}
             {f.label === 'Birthday' && f.date && <span className="fhelp" style={{ marginLeft: 'auto' }}>nudges 2 weeks out</span>}
             <span onClick={() => removeFact(f.id)} style={{ fontSize: 11.5, color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 10 }}>✕</span>

@@ -336,9 +336,11 @@ export function HerbariumPage() {
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Projects · Herbarium" strip — that
           was Herbarium.dc.html's mock of the shell topbar, which the real shell already draws. */}
       {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
-      <div style={{ flex: 1, padding: '32px 0 48px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
-        <div style={{ width: 880, maxWidth: '100%', padding: '0 34px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 12 }}>
+      {/* Kai's phone review: on a phone the shell's 16px gutter is the page's, and the header stacks
+          ("The / Herbarium" and "Back to / the garden" wrapped side by side at 360). */}
+      <div style={{ flex: 1, padding: isMobile ? '0 0 24px' : '32px 0 48px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
+        <div style={{ width: 880, maxWidth: '100%', padding: isMobile ? 0 : '0 34px' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 14 : 24, marginBottom: 12 }}>
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {archivedProjects.length} specimens{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
@@ -347,7 +349,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>
             </div>
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, paddingBottom: 6 }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flexWrap: 'wrap', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? '10px 16px' : 10, paddingBottom: 6 }}>
               <Button variant="secondary" onClick={() => navigate('/projects')}>← Back to the garden</Button>
               <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was →</Link>
             </div>

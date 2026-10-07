@@ -74,6 +74,8 @@ button.kf-press {
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+  /* a short label on one line ("Scan paper" / "← Back to the garden" wrapped a word per line at 360) */
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 9px;

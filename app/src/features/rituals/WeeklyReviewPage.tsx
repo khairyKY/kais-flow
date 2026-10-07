@@ -244,7 +244,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domai
   const motion = useMotionEnabled()
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
-    <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+    <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? '8px 20px' : 20 }}>
       <style>{`
         @keyframes weekLine { from { stroke-dashoffset: 220 } to { stroke-dashoffset: 0 } }
         @keyframes weekDot { 0%, 60% { transform: scale(0); opacity: 0 } 80% { transform: scale(1.3); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
@@ -297,6 +297,7 @@ function countsLine(projectCount: number, areaCount: number, openCount: number):
 }
 
 const CHIP_BASE: CSSProperties = {
+  whiteSpace: 'nowrap', // "STILL / MOVING" wrapped inside the chip on a phone
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
   letterSpacing: '0.06em',
@@ -336,11 +337,12 @@ function SweepRow({
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none' }} />
       <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={name} /></span>
       <FHelp>{open} open · {touched}</FHelp>
-      <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+      <span style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {VERDICTS.map((v) => (
           <button
             key={v}
             type="button"
+            className="kf-hit"
             onClick={() => onVerdict(v)}
             style={{ ...CHIP_BASE, ...VERDICT_STYLE[v], opacity: verdict && verdict !== v ? 0.45 : 1 }}
           >

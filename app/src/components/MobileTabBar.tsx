@@ -104,7 +104,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               key={item.to}
               to={item.to}
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
@@ -117,10 +117,11 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
             </Link>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-          <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
-          <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
-          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
+        {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
+        <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)' }}>
+          <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
+          <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
+          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
         </div>
       </div>
     </div>
