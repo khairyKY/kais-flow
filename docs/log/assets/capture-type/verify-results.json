@@ -12,7 +12,7 @@
   {
     "name": "phone-tap-day its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
   },
   {
     "name": "phone-tap-day the sheet sits at the bottom of the screen (not the old overlay at the top)",
@@ -72,7 +72,7 @@
   {
     "name": "phone-tap-night its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
   },
   {
     "name": "phone-tap-night the sheet sits at the bottom of the screen (not the old overlay at the top)",
@@ -147,7 +147,7 @@
   {
     "name": "phone-mic mic → the capture sheet steps aside, the voice sheet is listening",
     "ok": true,
-    "detail": "LISTENING · 0:00\nsay what's on your mind…\nCancel\nStop & file"
+    "detail": "LISTENING · 0:01\nsay what's on your mind…\nCancel\nStop & file"
   },
   {
     "name": "phone-mic Stop & file → transcribed (fake mic → real MediaRecorder blob) and AI-filed as a task + toast",
@@ -207,7 +207,7 @@
   {
     "name": "phone-empty-state its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "phone-empty-state no page errors",
@@ -232,7 +232,7 @@
   {
     "name": "desktop-day its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "desktop-day a mic toggle in the bar (+ the camera keeps its place)",
@@ -287,7 +287,7 @@
   {
     "name": "desktop-night its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "desktop-night a mic toggle in the bar (+ the camera keeps its place)",
@@ -472,7 +472,7 @@
   {
     "name": "block-date-alone \"call Omar tomorrow\" → a task due tomorrow, nothing on the calendar",
     "ok": true,
-    "detail": "{\"due\":\"2026-10-08 11:23\",\"blocks\":0}"
+    "detail": "{\"due\":\"2026-10-08 14:48\",\"blocks\":0}"
   },
   {
     "name": "block-date-alone no page errors",

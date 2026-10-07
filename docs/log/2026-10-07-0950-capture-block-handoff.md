@@ -42,9 +42,11 @@ Where it is called:
 
 ## Evidence
 
+All numbers below are on the merged head: `origin/claude/wave-u` was merged in after it gained sounds, tasks-noise and the AppLayout keyboard-layout fix. The merge had no conflicts.
+
 **Gate:**
 - `tsc -b`: 0 errors.
-- vitest: 108 files / 1310 tests, under each of Africa/Cairo, UTC, America/Los_Angeles and Asia/Kolkata (PowerShell `$env:TZ`).
+- vitest: 110 files / 1357 tests, under each of Africa/Cairo, UTC, America/Los_Angeles and Asia/Kolkata (PowerShell `$env:TZ`).
 - oxlint: 0 errors (21 warnings, none in touched files).
 - `npm run build`: ok.
 
@@ -66,7 +68,12 @@ Where it is called:
 - "crypto session before sunrise !": no block at first. The AI reads 05:00 with `has_time` and fills the date, making a 05:00–05:30 block ("✦ Filled by AI: date"). Undo deletes the block and resets due to none.
 - The phase-1 checks now also verify the block: "tomorrow 9am" gives 09:00–09:30 and "tomorrow 3pm" gives 15:00–15:30. They now tolerate the outbox sending a task create and its `scheduled_start` as one row or two.
 
-**calendar-rail's `verify.mjs` on this build:** see the counts in the commit and the final report.
+**calendar-rail's `verify.mjs` on this build: 115/115.** Results are in `capture-type/calendar-rail/`.
+
+**Harness timing under load.** While other builders' harnesses pegged the CPU, the capture-type harness flaked twice. I hardened it rather than the app:
+- It now waits for the capture bar's chunk to be warm and for the voice sheet's mic to be live.
+- `goto` gets 90 seconds.
+Both harnesses pass cleanly when run alone.
 
 ## Not done / risks
 

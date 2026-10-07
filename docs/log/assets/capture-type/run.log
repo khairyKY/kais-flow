@@ -1,6 +1,6 @@
 PASS phone-tap-day centre tap → the capture sheet (a bottom sheet, field + camera + mic + send)
 PASS phone-tap-day the field has focus when the click finishes dispatching (same task as the tap) — {"atEnd":"kf-capture-input","active":"kf-capture-input"}
-PASS phone-tap-day its first focus() ran inside the click's task, with user activation, called from onClick → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)
+PASS phone-tap-day its first focus() ran inside the click's task, with user activation, called from onClick → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)
 PASS phone-tap-day the sheet sits at the bottom of the screen (not the old overlay at the top) — {"x":0,"y":637,"width":390,"height":207}
 PASS phone-tap-day first-run hint "Tap to type · hold to talk" on a first open
 PASS phone-tap-day centre button keeps the mic glyph; its name says tap to type, hold to talk
@@ -12,7 +12,7 @@ PASS phone-tap-day …and the sheet closes
 PASS phone-tap-day no page errors
 PASS phone-tap-night centre tap → the capture sheet (a bottom sheet, field + camera + mic + send)
 PASS phone-tap-night the field has focus when the click finishes dispatching (same task as the tap) — {"atEnd":"kf-capture-input","active":"kf-capture-input"}
-PASS phone-tap-night its first focus() ran inside the click's task, with user activation, called from onClick → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)
+PASS phone-tap-night its first focus() ran inside the click's task, with user activation, called from onClick → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)
 PASS phone-tap-night the sheet sits at the bottom of the screen (not the old overlay at the top) — {"x":0,"y":667,"width":390,"height":177}
 PASS phone-tap-night first-run hint "Tap to type · hold to talk" gone after 3 opens
 PASS phone-tap-night centre button keeps the mic glyph; its name says tap to type, hold to talk
@@ -27,7 +27,7 @@ PASS phone-send "→ Inbox" chip for a line with no structure
 PASS phone-send dismissed and reopened → the draft is still there (kit sheet: dismissing never discards)
 PASS phone-send Send → one Inbox capture (captureText), sheet closed; the unsure AI read only annotates that same row — [["ideas for the garden","pending",0.3]]
 PASS phone-send no page errors
-PASS phone-mic mic → the capture sheet steps aside, the voice sheet is listening — LISTENING · 0:00
+PASS phone-mic mic → the capture sheet steps aside, the voice sheet is listening — LISTENING · 0:01
 say what's on your mind…
 Cancel
 Stop & file
@@ -49,12 +49,12 @@ Save to Inbox untranscribed
 PASS phone-offline-voice Save → "Saved to Inbox — not transcribed yet." (queued in the outbox) — ["Saved to Inbox — not transcribed yet."]
 PASS phone-offline-voice no page errors
 PASS phone-empty-state the field has focus when the click finishes dispatching (same task as the tap) — {"atEnd":"kf-capture-input","active":"kf-capture-input"}
-PASS phone-empty-state its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
+PASS phone-empty-state its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
 PASS phone-empty-state no page errors
 PASS desktop-day Today's header CTA is "Capture" (no "Voice capture")
 PASS desktop-day Capture → the command bar, cursor in the field
 PASS desktop-day the field has focus when the click finishes dispatching (same task as the tap) — {"atEnd":"kf-capture-input","active":"kf-capture-input"}
-PASS desktop-day its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
+PASS desktop-day its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
 PASS desktop-day a mic toggle in the bar (+ the camera keeps its place)
 PASS desktop-day mic on → pressed, "Listening" in the hint row
 PASS desktop-day mic off → transcribed into the field after what was typed (for review, not filed) — Call the bank tomorrow 3pm about the mortgage
@@ -65,7 +65,7 @@ PASS desktop-day no page errors
 PASS desktop-night Today's header CTA is "Capture" (no "Voice capture")
 PASS desktop-night Capture → the command bar, cursor in the field
 PASS desktop-night the field has focus when the click finishes dispatching (same task as the tap) — {"atEnd":"kf-capture-input","active":"kf-capture-input"}
-PASS desktop-night its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
+PASS desktop-night its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture — inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)
 PASS desktop-night a mic toggle in the bar (+ the camera keeps its place)
 PASS desktop-night mic on → pressed, "Listening" in the hint row
 PASS desktop-night mic off → transcribed into the field after what was typed (for review, not filed) — Call the bank tomorrow 3pm about the mortgage
@@ -108,7 +108,7 @@ PASS block-4am …the task row carries the block (scheduled_start) — ["2026-10
 PASS block-4am …and the calendar draws it in 2026-10-08's column
 PASS block-4am no page errors
 PASS block-date-alone a date alone: the chip says just "Tomorrow" (no clock — no block coming) — TOMORROW
-PASS block-date-alone "call Omar tomorrow" → a task due tomorrow, nothing on the calendar — {"due":"2026-10-08 11:23","blocks":0}
+PASS block-date-alone "call Omar tomorrow" → a task due tomorrow, nothing on the calendar — {"due":"2026-10-08 14:48","blocks":0}
 PASS block-date-alone no page errors
 PASS block-ai-time no typed time: the task is written with no block
 PASS block-ai-time the AI reads a time (has_time) → it fills the date AND puts a 05:00–05:30 block on the calendar — {"blocks":[["2026-10-08 05:00","2026-10-08 05:30"]],"toasts":["✦ Filled by AI: date"]}
