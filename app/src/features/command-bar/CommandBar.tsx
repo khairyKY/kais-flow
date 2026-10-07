@@ -15,6 +15,7 @@ import { formatDueChip } from './dueChip'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
+import { playSound } from '../../lib/sounds'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Chip, KeyChip, KeyCombo } from '../../components/kit'
 import { Icon } from '../../components/Icon'
@@ -150,6 +151,7 @@ export function CommandBar() {
   function submit(close: () => void) {
     const trimmed = text.trim()
     if (!trimmed) return
+    playSound('capture')
     // Written at once from the local parse (never waits on the network); then the AI's read fills in
     // whatever the typed tokens left empty, or decides where a plain line belongs (Kai 2026-10-07:
     // "every property is extracted… let the AI understand the intent and decide").

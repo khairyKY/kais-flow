@@ -1,4 +1,5 @@
 import { useToastStore } from './toastStore'
+import { playSound } from './sounds'
 
 // Foundation F1 (punch item 6): the ONE way to toast a completing/destructive
 // action. Pattern for every call site:
@@ -12,6 +13,7 @@ export function toastUndo(message: string, undo: () => void | Promise<void>) {
   useToastStore.getState().push({
     message,
     onUndo: () => {
+      playSound('undo')
       void Promise.resolve()
         .then(undo)
         .catch(() => useToastStore.getState().push({ message: 'That undo slipped away — check the item.' }))
