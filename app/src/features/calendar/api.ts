@@ -8,6 +8,7 @@ import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
+import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 
 export function useCalendarEvents() {
   return useQuery({
@@ -25,11 +26,23 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+function cachedTask(taskId: string): Task | undefined {
+  return queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === taskId)
+}
+
+/** Every block write lands here. Kai 2026-10-07: a block moved or placed on today or later carries a
+ * missed due date with it (replan.dueFollows), so a replanned task stops reading "Overdue". */
 function touchTaskSchedule(taskId: string, start: string | null, end: string | null): void {
-  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-  const task = tasks.find((t) => t.id === taskId)
+  const task = cachedTask(taskId)
   if (!task) return
-  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end })
+  const follows = !!start && dueFollows(task.due_at, start, new Date())
+  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end, ...(follows ? { due_at: start } : null) })
+  if (follows) logActivity('task.rescheduled', 'task', taskId, { due_at: start })
+}
+
+/** The task's blocks on the calendar now. */
+function liveBlocks(taskId: string): CalendarEvent[] {
+  return (queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []).filter((e) => e.task_id === taskId && !e.deleted_at)
 }
 
 /** Click-drag an empty grid slot -> a plain native event, no linked task. */
@@ -55,28 +68,81 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
   return event
 }
 
-/** Drag a task from the unscheduled sidebar onto the grid -> a block linked to that task. */
-export function scheduleTask(task: Task, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
-  const event: CalendarEvent = {
-    id: crypto.randomUUID(),
-    title: task.title,
-    starts_at: startsAt,
-    ends_at: endsAt,
-    all_day: allDay,
-    task_id: task.id,
-    source: 'native',
-    gcal_id: null,
-    gcal_etag: null,
-    busy: true,
-    type: 'task',
-    color: null,
-    created_at: nowIso(),
-    updated_at: nowIso(),
+/** Carries out a BlockMoves (replan.ts) for one task; returns the block it ends on and the Undo
+ * (every step taken back, last first, then the task row's due date / schedule as they were). */
+function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: CalendarEvent | null; undo: () => void } {
+  const before = cachedTask(task.id) ?? task
+  const steps: (() => void)[] = []
+  for (const e of moves.clear) {
+    deleteEvent(e)
+    steps.push(() => restoreEvent(e))
   }
-  writeRow('calendar_events', event)
-  touchTaskSchedule(task.id, startsAt, endsAt)
-  logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
+  let event = moves.keep
+  if (moves.place) {
+    const { block, starts_at, ends_at } = moves.place
+    if (block) {
+      event = { ...block, starts_at, ends_at, all_day: allDay }
+      moveOrResizeEvent(block, starts_at, ends_at, allDay)
+      steps.push(() => moveOrResizeEvent(block, block.starts_at, block.ends_at, block.all_day))
+    } else {
+      const created: CalendarEvent = {
+        id: crypto.randomUUID(),
+        title: task.title,
+        starts_at,
+        ends_at,
+        all_day: allDay,
+        task_id: task.id,
+        source: 'native',
+        gcal_id: null,
+        gcal_etag: null,
+        busy: true,
+        type: 'task',
+        color: null,
+        created_at: nowIso(),
+        updated_at: nowIso(),
+      }
+      writeRow('calendar_events', created)
+      touchTaskSchedule(task.id, starts_at, ends_at)
+      event = created
+      steps.push(() => deleteEvent(created))
+    }
+    logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
+  } else if (moves.keep) {
+    touchTaskSchedule(task.id, moves.keep.starts_at, moves.keep.ends_at) // a cleared sibling un-set it
+  }
+  return {
+    event,
+    undo: () => {
+      steps.reverse().forEach((step) => step())
+      const now = cachedTask(task.id)
+      if (now) writeRow('tasks', { ...now, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end })
+    },
+  }
+}
+
+/** The one way a task goes on the calendar (a rail drop, Plan ▸, the phone Schedule sheet, the
+ * morning plan, a quick-created task): its block moves there if it has one — a missed block
+ * included — and never a second one. A missed due date follows (touchTaskSchedule). */
+export function placeTask(task: Task, startsAt: string, endsAt: string, allDay = false): { event: CalendarEvent; undo: () => void } {
+  const { event, undo } = applyMoves(task, placeMoves(liveBlocks(task.id), startsAt, endsAt), allDay)
+  return { event: event!, undo }
+}
+
+/** Drag a task from the rail onto the grid -> its block, at that time. */
+export function scheduleTask(task: Task, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
+  return placeTask(task, startsAt, endsAt, allDay).event
+}
+
+/** placeTask with "Scheduled · <title>" and an Undo that puts everything back as it was. */
+export function scheduleTaskWithUndo(task: Task, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
+  const { event, undo } = placeTask(task, startsAt, endsAt, allDay)
+  toastUndo(`Scheduled · ${task.title}`, undo)
   return event
+}
+
+/** A task's date changed (tasks/api rescheduleDue): its blocks follow THE RULE in replan.ts. */
+export function replanTaskBlocks(task: Task, dueAt: string | null, timed: boolean): () => void {
+  return applyMoves(task, replanMoves(liveBlocks(task.id), dueAt, timed, task.duration_min)).undo
 }
 
 /** Save any field edits (title, dates, toggles) on an event. */

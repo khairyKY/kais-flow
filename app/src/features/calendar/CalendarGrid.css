@@ -443,6 +443,17 @@
   border: 1px dashed color-mix(in srgb, var(--acc-terra) 55%, transparent);
 }
 .fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--acc-terra); }
+/* overdue (Kai 2026-10-07) — ended before today, not done: past-muted, the time row says
+   "Overdue · Replan" in terra; Replan opens the Plan menu. A short block keeps that row inline. */
+.fc .fc-timegrid-event.kf-overdue { opacity: 0.55; filter: saturate(0.6); }
+.fc .fc-timegrid-event.kf-overdue .fc-event-time { color: var(--acc-terra); }
+.fc .fc-timegrid-event.kf-overdue.fc-timegrid-event-short .fc-event-time { display: block; flex: none; }
+/* Where a column or a block is too small for the words, the link alone ("Replan") stays whole. */
+.kf-cal-narrow .fc .fc-timegrid-event.kf-overdue .kf-ev-overdue-word,
+.fc .fc-timegrid-event.kf-overdue.fc-timegrid-event-short .kf-ev-overdue-word,
+.fc .fc-timegrid-event.kf-overdue.kf-ov .kf-ev-overdue-word { display: none; }
+.fc .fc-timegrid-event .kf-ev-replan { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.fc .fc-timegrid-event:hover.kf-overdue { opacity: 0.8; }
 /* in-progress elapsed wash — the lived proportion, ACCENT-DEEP at 14% */
 .fc .fc-timegrid-event .kf-ev-elapsed {
   position: absolute;
