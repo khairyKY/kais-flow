@@ -24,13 +24,18 @@ vi.mock('../../lib/supabase', () => ({
     from: (table: string) => (claimCalls.push(['from', table]), claim),
   },
 }))
-vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'inbox_items' ? cachedInbox : []) } }))
+let cachedEvents: unknown[] = []
+vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'inbox_items' ? cachedInbox : key[0] === 'calendar_events' ? cachedEvents : []) } }))
+// calendar-rail's one way onto the calendar; its Undo is recorded so a capture's Undo can be checked.
+const placeTask = vi.fn()
+const unplace = vi.fn()
+vi.mock('../calendar/api', () => ({ placeTask: (...args: unknown[]) => (placeTask(...args), { event: { id: 'e1' }, undo: unplace }) }))
 vi.mock('../../lib/outbox', () => ({ writeRow: (...args: unknown[]) => writeRow(...args) }))
 vi.mock('../../lib/activity', () => ({ logActivity: vi.fn() }))
 vi.mock('../../lib/toastStore', () => ({ useToastStore: { getState: () => ({ push }) } }))
 vi.mock('../tasks/api', () => ({ createTask: (...args: unknown[]) => createTask(...args) }))
 
-const { captureWithAI, enrichTypedInboxItem, enrichTypedTask, processQueuedCaptures, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
+const { blockIfTimed, captureWithAI, enrichTypedInboxItem, enrichTypedTask, processQueuedCaptures, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
 const { AI_ALLOWANCE_USED_UP, DailyLimitError, INBOX_WITHOUT_AI } = await import('./aiAllowance')
 
 const json = (status: number, body: unknown) =>
@@ -45,6 +50,9 @@ beforeEach(() => {
   claimCalls.length = 0
   claimRows = []
   cachedInbox = []
+  cachedEvents = []
+  placeTask.mockReset()
+  unplace.mockReset()
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -248,5 +256,63 @@ describe('enrichTypedInboxItem (a plain typed line, already in the Inbox)', () =
     expect(createTask).not.toHaveBeenCalled()
     expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'pending', confidence: 0.4 }))
     expect(push).not.toHaveBeenCalled()
+  })
+})
+
+// Kai 2026-10-07 (the 4am complaint): a task given a TIME is on the calendar as a block; a date alone isn't.
+describe('a timed capture lands on the calendar', () => {
+  const base = { id: 't4', title: 'Crypto session', notes: null, due_at: null, priority: null, duration_min: null, project_id: null, domain_id: null, reminder_at: null, deleted_at: null }
+  const at4 = '2026-10-08T01:00:00.000Z' // 04:00 Cairo
+
+  it('blockIfTimed: a time → one block at it, its estimate or 30 minutes long; a date alone → none', () => {
+    blockIfTimed({ ...base, due_at: at4 } as never, true)
+    expect(placeTask).toHaveBeenLastCalledWith(expect.objectContaining({ id: 't4' }), at4, '2026-10-08T01:30:00.000Z')
+    blockIfTimed({ ...base, due_at: at4, duration_min: 90 } as never, true)
+    expect(placeTask).toHaveBeenLastCalledWith(expect.anything(), at4, '2026-10-08T02:30:00.000Z')
+    expect(blockIfTimed({ ...base, due_at: at4 } as never, false)).toBeNull()
+    expect(blockIfTimed(base as never, true)).toBeNull()
+    expect(placeTask).toHaveBeenCalledTimes(2)
+  })
+
+  it('the AI filling a time (has_time) makes the block; its Undo takes the block off too', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, has_time: true, confidence: 0.9 }, error: null })
+    await enrichTypedTask(base as never, 'crypto session at four in the morning')
+    expect(placeTask).toHaveBeenCalledWith(expect.objectContaining({ id: 't4', due_at: at4 }), at4, '2026-10-08T01:30:00.000Z')
+    const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
+    expect(toast.message).toBe('✦ Filled by AI: date')
+    toast.onUndo()
+    expect(unplace).toHaveBeenCalledTimes(1)
+    expect(writeRow).toHaveBeenLastCalledWith('tasks', expect.objectContaining({ id: 't4', due_at: null }))
+  })
+
+  it('the AI filling a date alone (has_time false, or an old function without it) makes no block', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, has_time: false, confidence: 0.9 }, error: null })
+    await enrichTypedTask(base as never, 'crypto session tomorrow')
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, confidence: 0.9 }, error: null })
+    await enrichTypedTask(base as never, 'crypto session tomorrow')
+    expect(placeTask).not.toHaveBeenCalled()
+  })
+
+  it('a length the AI read stretches the default 30-minute block the typed time made', async () => {
+    cachedEvents = [{ id: 'e1', task_id: 't4', starts_at: at4, ends_at: '2026-10-08T01:30:00.000Z', all_day: false, deleted_at: null }]
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', duration_min: 60, confidence: 0.9 }, error: null })
+    await enrichTypedTask({ ...base, due_at: at4 } as never, 'crypto session 4am for an hour')
+    expect(placeTask).toHaveBeenCalledWith(expect.objectContaining({ duration_min: 60 }), at4, '2026-10-08T02:00:00.000Z')
+  })
+
+  it('a timed task the AI files by itself goes on the calendar; Undo takes the block off before the task', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, has_time: true, confidence: 0.92 }, error: null })
+    createTask.mockReturnValue({ ...base, due_at: at4 })
+    await enrichTypedInboxItem({ id: 'i4', status: 'pending', raw_text: 'x' } as never, 'crypto session 4am tomorrow')
+    expect(placeTask).toHaveBeenCalledWith(expect.objectContaining({ id: 't4' }), at4, '2026-10-08T01:30:00.000Z')
+    ;(push.mock.calls[0][0] as { onUndo: () => void }).onUndo()
+    expect(unplace.mock.invocationCallOrder[0]).toBeLessThan(writeRow.mock.invocationCallOrder[writeRow.mock.calls.findIndex((c) => c[2] === 'delete')])
+  })
+
+  it('voice / ⌘↵ captures with a time are blocked the same way', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, has_time: true, confidence: 0.92 }, error: null })
+    createTask.mockReturnValue({ ...base, due_at: at4 })
+    await captureWithAI('crypto session 4am tomorrow', 'voice', 'crypto session 4am tomorrow')
+    expect(placeTask).toHaveBeenCalledTimes(1)
   })
 })

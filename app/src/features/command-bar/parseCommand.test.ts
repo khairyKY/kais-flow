@@ -208,6 +208,17 @@ describe('parseCommand, zone: cairo (T-4)', () => {
     expect(cairo('submit report friday', morning)).toBe('2026-10-02T09:00:00.000Z')
   })
 
+  it('dueTimed: only a typed clock time counts (Kai 2026-10-07: a timed capture is a calendar block)', () => {
+    const timed = (input: string) => parseCommand(input, domains, projects, { now: morning, zone: 'cairo' }).dueTimed
+    expect(timed('crypto session 4am')).toBe(true)
+    expect(timed('call Omar tomorrow 3pm')).toBe(true)
+    expect(timed('dentist nov 5 10:30')).toBe(true)
+    expect(timed('stretch in 2 hours')).toBe(true)
+    expect(timed('call Omar tomorrow')).toBe(false)
+    expect(timed('submit report friday')).toBe(false)
+    expect(timed('buy milk')).toBe(false)
+  })
+
   it('still strips the date from the title', () => {
     const result = parseCommand('call Omar tomorrow 3pm #shaheen', domains, projects, { now: morning, zone: 'cairo' })
     expect(result.title).toBe('call Omar')

@@ -31,4 +31,9 @@ describe('formatDueChip (command bar date chip)', () => {
     const { dueAt } = parseCommand('call Omar tomorrow 10am', [], [], { now: morning, zone: 'cairo' })
     expect(plain(formatDueChip(dueAt!, morning))).toBe('Tomorrow · 10:00 AM')
   })
+
+  it('a date typed without a time shows just the day (no block will be made)', () => {
+    const { dueAt, dueTimed } = parseCommand('call Omar tomorrow', [], [], { now: morning, zone: 'cairo' })
+    expect(formatDueChip(dueAt!, morning, dueTimed)).toBe('Tomorrow')
+  })
 })
