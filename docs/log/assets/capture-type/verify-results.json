@@ -12,7 +12,7 @@
   {
     "name": "phone-tap-day its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
   },
   {
     "name": "phone-tap-day the sheet sits at the bottom of the screen (not the old overlay at the top)",
@@ -45,6 +45,11 @@
     "detail": "[[\"Email Priya the slides\",\"2026-10-08 09:00\"]]"
   },
   {
+    "name": "phone-tap-day …a typed time is a calendar block: tomorrow 09:00–09:30 (capture-block)",
+    "ok": true,
+    "detail": "[[true,\"2026-10-08 09:00\",\"2026-10-08 09:30\"]]"
+  },
+  {
     "name": "phone-tap-day …and the sheet closes",
     "ok": true,
     "detail": ""
@@ -67,7 +72,7 @@
   {
     "name": "phone-tap-night its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
   },
   {
     "name": "phone-tap-night the sheet sits at the bottom of the screen (not the old overlay at the top)",
@@ -98,6 +103,11 @@
     "name": "phone-tap-night Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website",
     "ok": true,
     "detail": "[[\"Email Priya the slides\",\"2026-10-08 09:00\"]]"
+  },
+  {
+    "name": "phone-tap-night …a typed time is a calendar block: tomorrow 09:00–09:30 (capture-block)",
+    "ok": true,
+    "detail": "[[true,\"2026-10-08 09:00\",\"2026-10-08 09:30\"]]"
   },
   {
     "name": "phone-tap-night …and the sheet closes",
@@ -177,7 +187,7 @@
   {
     "name": "phone-offline-voice offline → the recording is kept (\"You're offline…\", Save to Inbox untranscribed)",
     "ok": true,
-    "detail": "—\nNOT TRANSCRIBED YET · 0:01\nyour recording is still here\nYou’re offline, so it couldn’t be transcribed.\nThe audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.\nDiscard\nTry again\nSave to Inbox untranscribed"
+    "detail": "—\nNOT TRANSCRIBED YET · 0:02\nyour recording is still here\nYou’re offline, so it couldn’t be transcribed.\nThe audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.\nDiscard\nTry again\nSave to Inbox untranscribed"
   },
   {
     "name": "phone-offline-voice Save → \"Saved to Inbox — not transcribed yet.\" (queued in the outbox)",
@@ -197,7 +207,7 @@
   {
     "name": "phone-empty-state its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "phone-empty-state no page errors",
@@ -222,7 +232,7 @@
   {
     "name": "desktop-day its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "desktop-day a mic toggle in the bar (+ the camera keeps its place)",
@@ -250,6 +260,11 @@
     "detail": "[[\"Call the bank about the mortgage\",\"2026-10-08 15:00\"]]"
   },
   {
+    "name": "desktop-day …and on the calendar: a 15:00–15:30 block",
+    "ok": true,
+    "detail": "[[\"2026-10-08 15:00\",\"2026-10-08 15:30\"]]"
+  },
+  {
     "name": "desktop-day no page errors",
     "ok": true,
     "detail": ""
@@ -272,7 +287,7 @@
   {
     "name": "desktop-night its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
     "ok": true,
-    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:188:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
   },
   {
     "name": "desktop-night a mic toggle in the bar (+ the camera keeps its place)",
@@ -298,6 +313,11 @@
     "name": "desktop-night Enter files it: a task due tomorrow 15:00 Cairo",
     "ok": true,
     "detail": "[[\"Call the bank about the mortgage\",\"2026-10-08 15:00\"]]"
+  },
+  {
+    "name": "desktop-night …and on the calendar: a 15:00–15:30 block",
+    "ok": true,
+    "detail": "[[\"2026-10-08 15:00\",\"2026-10-08 15:30\"]]"
   },
   {
     "name": "desktop-night no page errors",
@@ -416,6 +436,66 @@
   },
   {
     "name": "ai-offline no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "block-4am the chip shows the typed time",
+    "ok": true,
+    "detail": "TOMORROW · 4:00 AM\n↵\nQUICK ADD\n·\n⌘\n↵\nAI CAPTURE"
+  },
+  {
+    "name": "block-4am \"crypto session 4am\" → a task due 04:00 AND a 04:00–04:30 block on the calendar",
+    "ok": true,
+    "detail": "{\"due\":\"2026-10-08 04:00\",\"blocks\":[[\"2026-10-08 04:00\",\"2026-10-08 04:30\"]]}"
+  },
+  {
+    "name": "block-4am …the task row carries the block (scheduled_start)",
+    "ok": true,
+    "detail": "[\"2026-10-08T01:00:00.000Z\"]"
+  },
+  {
+    "name": "block-4am …and the calendar draws it in 2026-10-08's column",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "block-4am no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "block-date-alone a date alone: the chip says just \"Tomorrow\" (no clock — no block coming)",
+    "ok": true,
+    "detail": "TOMORROW"
+  },
+  {
+    "name": "block-date-alone \"call Omar tomorrow\" → a task due tomorrow, nothing on the calendar",
+    "ok": true,
+    "detail": "{\"due\":\"2026-10-08 14:48\",\"blocks\":0}"
+  },
+  {
+    "name": "block-date-alone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "block-ai-time no typed time: the task is written with no block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "block-ai-time the AI reads a time (has_time) → it fills the date AND puts a 05:00–05:30 block on the calendar",
+    "ok": true,
+    "detail": "{\"blocks\":[[\"2026-10-08 05:00\",\"2026-10-08 05:30\"]],\"toasts\":[\"✦ Filled by AI: date\"]}"
+  },
+  {
+    "name": "block-ai-time Undo → the block it made comes off the calendar and the date goes back to none",
+    "ok": true,
+    "detail": "{\"gone\":[true],\"due\":null,\"priority\":3}"
+  },
+  {
+    "name": "block-ai-time no page errors",
     "ok": true,
     "detail": ""
   }

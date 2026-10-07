@@ -32,6 +32,8 @@ export const ParseResultSchema = z.object({
   domain_id: z.string().nullable().optional(),
   project_id: z.string().nullable().optional(),
   due_at: z.string().nullable().optional(),
+  /** due_at carries a time that was said (4am), not just a date — a timed capture becomes a calendar block. */
+  has_time: z.boolean().nullable().optional(),
   duration_min: z.number().nullable().optional(),
   priority: z.number().nullable().optional(),
   reminder_offset_min: z.number().int().min(0).nullable().optional(),
@@ -78,6 +80,7 @@ function fallbackResult(rawText: string) {
     domain_id: null,
     project_id: null,
     due_at: null,
+    has_time: null,
     duration_min: null,
     priority: null,
     reminder_offset_min: null,

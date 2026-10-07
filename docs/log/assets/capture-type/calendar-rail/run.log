@@ -1,0 +1,117 @@
+PASS rail-day four sections with counts: Overdue 2 · Today 2 · Inbox 2 · Lists — OVERDUE 2 | TODAY 2 | INBOX 2 | LISTS 0
+PASS rail-day the rail is open by itself (an overdue pile, no fold chosen)
+PASS rail-day Overdue: the tax papers (2d) then the crypto session (its block missed yesterday, 1d) — ["Send the tax papers OVERDUE 2D PLAN ▾","Crypto — heavy session OVERDUE 1D PLAN ▾"]
+PASS rail-day Overdue's label is terra
+PASS rail-day Today: Review Kai (17:00, no time on the calendar) and the Top 3 pick — not the planned tyre call — ["Review Kai 30M PLAN ▾","Pick the 3 PLAN ▾"]
+PASS rail-day Inbox: the AI's cleaned title ("Buy printer ink") and the voice capture — ["Buy printer ink INBOX PLAN ▾","Call the bank about the card INBOX PLAN ▾"]
+PASS rail-day every card has Plan ▾
+PASS rail-day Lists is folded by default
+PASS rail-day a section folds on its header (aria-expanded false, cards gone)
+PASS rail-day …and stays folded after a reload
+PASS rail-day folded by hand → the tab reads "Overdue · 2" in terra — OVERDUE · 2
+PASS rail-day …the fold is respected after a reload (the count still shows)
+PASS rail-day no page errors
+PASS drop-4am-day one write: the missed block moved to today 04:00–05:30 (same id, no new block) — [["e0000000-0000-4000-8000-000000000001","2026-10-07T01:00:00.000Z","2026-10-07T02:30:00.000Z"]]
+PASS drop-4am-day the task's schedule is 04:00 and its missed due date followed (no longer overdue anywhere) — ["2026-10-07T01:00:00.000Z","2026-10-07T01:00:00.000Z"]
+PASS drop-4am-day "Scheduled · Crypto — heavy session" + Undo
+PASS drop-4am-day the block is on today's grid at 04:00, in view — {"x":775.5,"y":544.25,"width":86.0625,"height":100}
+PASS drop-4am-day it left Overdue (one card there now)
+PASS drop-4am-day Undo → the block back on yesterday 20:00, the due date back, Overdue 2 again
+PASS drop-4am-day an inbox card dropped at 15:00 → filed as "Buy printer ink" + its 15m block 15:00–15:15, the item marked filed — ["Buy printer ink","2026-10-07T12:00:00.000Z","2026-10-07T12:15:00.000Z","filed"]
+PASS drop-4am-day …one toast for both: "Scheduled · Buy printer ink"
+PASS drop-4am-day …Undo → the block off, the task removed, the capture back in the Inbox — [true,1,true,2]
+PASS drop-4am-day no page errors
+PASS plan-4am-day Plan ▾ (a 30m task at 14:40): Today · Next free slot · 14:45 · Tomorrow first thing · 08:00 · Pick date… — ["Today","Next free slot · 14:45","Tomorrow first thing · 08:00","Pick date… ▸"]
+PASS plan-4am-day Pick date… → Set time 04:00 → a block today 04:00–04:30 for the tax papers — [["10000000-0000-4000-8000-000000000002","2026-10-07T01:00:00.000Z"]]
+PASS plan-4am-day …and the grid scrolled to it: the 04:00 block is on screen — {"x":775.5,"y":520.25,"width":86.0625,"height":33}
+PASS plan-4am-day the task's right-click Pick date… → Set time 04:00 → it's on the calendar at 04:00 (a time = a block) — [["10000000-0000-4000-8000-000000000003","2026-10-07T01:00:00.000Z"]]
+PASS plan-4am-day …and its due time is 04:00
+PASS plan-4am-day Plan ▾ → Today (a date alone): the missed block comes off, the task moves to Today with no time
+PASS plan-4am-day …"Planned · Today" + Undo
+PASS plan-4am-day no page errors
+PASS overdue-block-day yesterday's missed block reads "Replan" in terra, muted (opacity .55) — Crypto — heavy session Replan
+PASS overdue-block-day …the Replan link sits whole inside the block
+PASS overdue-block-day Replan opens the Plan menu (not the details panel, no drag)
+PASS overdue-block-day Next free slot → the same block moves to today 16:30–18:00 (1h30 kept), nothing left on yesterday — [["e0000000-0000-4000-8000-000000000001","2026-10-07T13:30:00.000Z"]]
+PASS overdue-block-day …the grid went to today's week and shows it there, once
+PASS overdue-block-day no page errors
+PASS overdue-block-day right-click on it: "Replan…" beside Edit Task
+PASS details-day title, date and both times wear field chrome (a solid border, radius 6, filled) — {"title":{"border":"0.8px solid","bg":"rgb(251, 246, 233)","cursor":"text","radius":"6px"},"date":{"border":"0.8px solid","bg":"rgb(246, 240, 225)","cursor":"pointer","radius":"6px"},"start":{"border":"0.8px solid","bg":"rgb(246, 240, 225)","cursor":"pointer","radius":"6px"},"end":{"border":"0.8px solid","bg":"rgb(246, 240, 225)","cursor":"pointer","radius":"6px"}}
+PASS details-day …the date and times point; the title is a text field
+PASS details-day the date shows Wed 7 Oct, the times 1:00 PM – 2:00 PM (the user's clock)
+PASS details-day hover darkens a field's border — rgb(224, 216, 194) → rgb(106, 99, 84)
+PASS details-day click a time → its list opens in place, under the field, with a focus ring
+PASS details-day pick 1:30 PM → Save → one write 13:30–14:00 on the user's clock — [["2026-10-07T10:30:00.000Z","2026-10-07T11:00:00.000Z"]]
+PASS details-day a missed task block's panel: "Overdue" + Replan ▾
+PASS details-day …date → Today → Save: the same block moves to today 20:00–21:30, none left behind — [["e0000000-0000-4000-8000-000000000001","2026-10-07T17:00:00.000Z"]]
+PASS details-day no page errors
+PASS details-night title, date and both times wear field chrome (a solid border, radius 6, filled) — {"title":{"border":"0.8px solid","bg":"rgb(38, 34, 51)","cursor":"text","radius":"6px"},"date":{"border":"0.8px solid","bg":"rgb(46, 41, 66)","cursor":"pointer","radius":"6px"},"start":{"border":"0.8px solid","bg":"rgb(46, 41, 66)","cursor":"pointer","radius":"6px"},"end":{"border":"0.8px solid","bg":"rgb(46, 41, 66)","cursor":"pointer","radius":"6px"}}
+PASS details-night …the date and times point; the title is a text field
+PASS details-night the date shows Wed 7 Oct, the times 1:00 PM – 2:00 PM (the user's clock)
+PASS details-night hover darkens a field's border — rgba(240, 235, 221, 0.12) → rgb(154, 148, 172)
+PASS details-night click a time → its list opens in place, under the field, with a focus ring
+PASS details-night pick 1:30 PM → Save → one write 13:30–14:00 on the user's clock — [["2026-10-07T10:30:00.000Z","2026-10-07T11:00:00.000Z"]]
+PASS details-night no page errors
+PASS rail-night four sections with counts: Overdue 2 · Today 2 · Inbox 2 · Lists — OVERDUE 2 | TODAY 2 | INBOX 2 | LISTS 0
+PASS rail-night the rail is open by itself (an overdue pile, no fold chosen)
+PASS rail-night Overdue: the tax papers (2d) then the crypto session (its block missed yesterday, 1d) — ["Send the tax papers OVERDUE 2D PLAN ▾","Crypto — heavy session OVERDUE 1D PLAN ▾"]
+PASS rail-night Overdue's label is terra
+PASS rail-night Today: Review Kai (17:00, no time on the calendar) and the Top 3 pick — not the planned tyre call — ["Review Kai 30M PLAN ▾","Pick the 3 PLAN ▾"]
+PASS rail-night Inbox: the AI's cleaned title ("Buy printer ink") and the voice capture — ["Buy printer ink INBOX PLAN ▾","Call the bank about the card INBOX PLAN ▾"]
+PASS rail-night every card has Plan ▾
+PASS rail-night Lists is folded by default
+PASS rail-night a section folds on its header (aria-expanded false, cards gone)
+PASS rail-night …and stays folded after a reload
+PASS rail-night folded by hand → the tab reads "Overdue · 2" in terra — OVERDUE · 2
+PASS rail-night …the fold is respected after a reload (the count still shows)
+PASS rail-night no page errors
+PASS phone-strip-day segments "Overdue 2 · Today 2 · Inbox 2", Overdue chosen — ["Overdue 2","Today 2","Inbox 2"]
+PASS phone-strip-day the segment row is a 48px target row (options 40 inside it) — 48 · 40,40,40
+PASS phone-strip-day Overdue chips: the tax papers 2D, the crypto session 1D — ["Send the tax papers 2D","Crypto — heavy session 1D"]
+PASS phone-strip-day chips keep a 48px hit (40 + the ::after) — [48,48]
+PASS phone-strip-day Today → Review Kai · Pick the 3
+PASS phone-strip-day Inbox → Buy printer ink · Call the bank about the card
+PASS phone-strip-day no horizontal scroll at 390 — 390
+PASS phone-strip-day no page errors
+PASS phone-schedule-day Schedule · CRYPTO — HEAVY SESSION · 1H30 (its missed block's length) — CRYPTO — HEAVY SESSION · 1H30
+PASS phone-schedule-day Pick a time… 04:00 → the missed block moves to today 04:00–05:30 (same id, no second block) — [["e0000000-0000-4000-8000-000000000001","2026-10-07T01:00:00.000Z"]]
+PASS phone-schedule-day …and it's on today's grid, scrolled into view — [{"x":64,"y":273,"width":310,"height":96},{"x":0,"y":241,"width":390,"height":539}]
+PASS phone-schedule-day …the Overdue count drops to 1
+PASS phone-schedule-day an inbox chip → a slot → filed as "Buy printer ink" + a 15m block, the capture filed — {"id":"0aa82823-7160-40f9-a2d9-5fb41bc75825","title":"Buy printer ink","starts_at":"2026-10-07T11:45:00.000Z","ends_at":"2026-10-07T12:00:00.000Z","all_day":false,"task_id":"97586f2e-63c7-41b1-bfc8-43c6280847bb","source":"native","gcal_id":null,"gcal_etag":null,"busy":true,"type":"task","color":null,"created_at":"2026-10-07T11:40:08.062Z","updated_at":"2026-10-07T11:40:08.062Z"}
+PASS phone-schedule-day no horizontal scroll at 390 — 390
+PASS phone-schedule-day no page errors
+PASS phone-replan-day yesterday: the missed block reads "Overdue · Replan", muted — Crypto — heavy session OVERDUE · REPLAN
+PASS phone-replan-day a tap → the Replan sheet (Next free · Pick a time · Pick a date · Open task) — Replan CRYPTO — HEAVY SESSION · 1H30 NEXT FREE TODAY 16:30–18:00 Pick a time… Pi
+PASS phone-replan-day a slot → the same block moves to today 16:30 (1h30), the grid follows to today — [["e0000000-0000-4000-8000-000000000001","2026-10-07T13:30:00.000Z"]]
+PASS phone-replan-day no horizontal scroll at 390 — 390
+PASS phone-replan-day no page errors
+PASS phone-tasksheet-4am-day Date chip → Set time 04:00 → Done: the tax papers get a block today 04:00–04:30 — [["10000000-0000-4000-8000-000000000002","2026-10-07T01:00:00.000Z"]]
+PASS phone-tasksheet-4am-day …its sheet shows "On your calendar · Wed 7 · 04:00–04:30" — WED 7 · 04:00–04:30 · 30M
+PASS phone-tasksheet-4am-day no horizontal scroll at 390 — 390
+PASS phone-tasksheet-4am-day no page errors
+PASS phone-blocks-day "Read 2 pages" (10 min) draws 24 tall, compact, its title whole on one line with its time — {"h":24,"compact":true,"nameClipped":false,"nameFits":true,"time":"11:00–11:10","check":[18,18]}
+PASS phone-blocks-day …its checkbox is a whole 18px box — [18,18]
+PASS phone-blocks-day the 1h30 "Deep work — forecasting the quarterly numbers" wraps (2–3 lines, nothing cut) with its time on its own line — {"lines":2,"ellipsed":false,"timeOwnLine":true,"text":"Deep work — forecasting the quarterly numbers"}
+PASS phone-blocks-day lifted: the two handles sit outside its text (above and below it) — {"lifted":true,"topClear":true,"botClear":true,"b":[397,429],"name":[401,421],"top":400,"bot":426}
+PASS phone-blocks-day no horizontal scroll at 390 — 390
+PASS phone-blocks-day no page errors
+PASS phone-quick-time-day the draft 14:00–14:30 is drawn over the quick-create scrim, clear above its sheet — {"x":64,"y":273,"width":310,"height":32}
+PASS phone-quick-time-day with the Time sheet open, the draft is gone from over it
+PASS phone-quick-time-day the list opens selected on 14:45 (the next quarter), not 14:00 — 14:45
+PASS phone-quick-time-day …its 13:15 row is the sheet's own (nothing from the grid on top)
+PASS phone-quick-time-day no horizontal scroll at 390 — 390
+PASS phone-quick-time-day no page errors
+PASS phone-event-sheet-day the block stays in view above its sheet, never over it — [{"x":64,"y":273,"width":310,"height":61},{"x":0,"y":337.609375,"width":390,"height":506.390625}]
+PASS phone-event-sheet-day the title is a field (border, fill, 52 tall) — ["solid",true,52]
+PASS phone-event-sheet-day Date (Wed 7) and Time (13:00–14:00) rows, each a 48+ tap row with a chevron — ["Date WED 7","Time 13:00–14:00"]
+PASS phone-event-sheet-day rename → Done → one write with the new title, "✓ Saved"
+PASS phone-event-sheet-day no horizontal scroll at 390 — 390
+PASS phone-event-sheet-day no page errors
+PASS phone-strip-night segments "Overdue 2 · Today 2 · Inbox 2", Overdue chosen — ["Overdue 2","Today 2","Inbox 2"]
+PASS phone-strip-night the segment row is a 48px target row (options 40 inside it) — 48 · 40,40,40
+PASS phone-strip-night Overdue chips: the tax papers 2D, the crypto session 1D — ["Send the tax papers 2D","Crypto — heavy session 1D"]
+PASS phone-strip-night chips keep a 48px hit (40 + the ::after) — [48,48]
+PASS phone-strip-night no horizontal scroll at 390 — 390
+PASS phone-strip-night no page errors
+
+115/115 passed
