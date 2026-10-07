@@ -385,7 +385,7 @@ if (want('settings')) {
       await sleep(300)
       const segs = card.getByRole('button', { name: /^(Fri \+ Sat|Sat \+ Sun|Sun only|Custom)$/ })
       check(`${name} Weekend: Fri + Sat · Sat + Sun · Sun only · Custom, Sat + Sun on by default`, (await segs.count()) === 4 && (await card.getByRole('button', { name: 'Sat + Sun' }).getAttribute('aria-pressed')) === 'true')
-      check(`${name} "What the plan shortcuts mean" lists each option`, /What the plan shortcuts mean/.test(await card.innerText()) && /Next free slot — ASAP/.test(await card.innerText()) && /Tomorrow, first thing — tomorrow at 09:00/.test(await card.innerText()))
+      check(`${name} "What the plan shortcuts mean" lists each option`, /What the plan shortcuts mean/.test(await card.innerText()) && /Next free slot\s+ASAP/.test(await card.innerText()) && /Tomorrow, first thing\s+tomorrow at 09:00/.test(await card.innerText()))
       if (label === 'phone') {
         const hs = await segs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
         check(`${name} the presets are ≥ 48 tall`, hs.every((h) => h >= 48), JSON.stringify(hs))

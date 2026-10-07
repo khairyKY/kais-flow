@@ -454,7 +454,7 @@ for (const theme of ['day', 'night']) {
     if (view) {
       await shot(page, N('6-weight-phone'))
       const plus = await page.getByRole('button', { name: 'More Milestone weight' }).boundingBox()
-      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].some((el) => el.scrollLeft > 0))
+      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].filter((el) => el.scrollLeft > 0).map((el) => `${el.tagName}.${String(el.className).slice(0, 40)}[${el.getAttribute('aria-label') ?? ''}] ${el.scrollLeft}`).join(' | ') || false)
       check(`${N('number')} phone: the milestone row fits the card (−/+ in reach, nothing scrolled sideways)`, plus && plus.x + plus.width <= 390 && !shifted, JSON.stringify({ plus, shifted }))
     }
     check(`${N('number')} ${v}: no page errors`, errors.length === 0, errors.join(' | '))

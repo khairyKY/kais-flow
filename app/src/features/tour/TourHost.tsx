@@ -133,7 +133,9 @@ function Tour({ notes, at, mobile }: { notes: TourNote[]; at: number; mobile: bo
           const r = el.getBoundingClientRect()
           const vh = window.innerHeight
           const card = 240 * uiZoom() // about a note's height
-          if (r.top < 0 || r.bottom > vh) el.scrollIntoView({ block: 'center' })
+          // Vertical only, on the page's own scroller: scrollIntoView also scrolled clipped rows (a swipe row's
+          // track) sideways, leaving the page shifted after the tour.
+          if (r.top < 0 || r.bottom > vh) el.closest('.app-main-content')?.scrollBy({ top: (r.top + r.height / 2 - vh / 2) / uiZoom() })
           // A tall anchor (Top 3 with its goal card) leaves no room above or below: lift it to the top.
           else if (r.bottom + card > vh - 80 && r.top - card < 0) el.closest('.app-main-content')?.scrollBy({ top: (r.top - 72) / uiZoom() })
         }
@@ -376,11 +378,16 @@ function Hints({ seen, mobile }: { seen: ReadonlySet<string>; mobile: boolean })
   const left = mobile ? 16 : Math.max(16, Math.min(box.x, vp.w - width - 16))
   const below = box.y + box.h + 84 <= vp.h - (mobile ? 80 : 16)
   const caret = Math.max(18, Math.min(box.x + box.w / 2 - left - 6, width - 30))
-  const style: CSSProperties = below ? { left, width, top: box.y + box.h + 12 } : { left, width, bottom: vp.h - box.y + 12 }
+  // On a phone the calendar hint docks above the tab bar: anchored under a block, it sat on the blocks
+  // around it (and the "+N" chip) for as long as it stayed open.
+  const docked = mobile && shown.hint.key === 'hint:calendar'
+  const style: CSSProperties = docked
+    ? { left, width, bottom: 'calc(var(--tabbar-h) + var(--tabbar-inset) + 12px)' }
+    : below ? { left, width, top: box.y + box.h + 12 } : { left, width, bottom: vp.h - box.y + 12 }
   return (
     <Float>
       <div className="kf-hint" data-tour-ui data-hint={shown.hint.key} data-below={below || undefined} role="note" style={style}>
-        <span className="kf-hint-caret" aria-hidden style={{ left: caret }} />
+        {!docked && <span className="kf-hint-caret" aria-hidden style={{ left: caret }} />}
         <img src="/ds/assets/clover/seedling.png" alt="" />
         <span className="kf-hint-line">{mobile ? shown.hint.line.phone : shown.hint.line.desktop}</span>
         <button type="button" className="kf-hint-x" aria-label="Got it" onClick={() => setShown(null)}>
