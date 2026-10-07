@@ -11,11 +11,13 @@ import type { CalendarEvent } from '../../lib/types'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
-import { filterByScope } from '../tasks/grouping'
 import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { moveEventWithUndo, useCalendarEvents } from './api'
+import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents } from './api'
+import { blockLastDay, railBuckets, railMinutes } from './replan'
+import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
+import { Segmented } from '../rituals/RitualChrome'
 import { allDayOn, dayBlocks, eventSpan, rangeText, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
@@ -34,8 +36,17 @@ type Sheet =
   | { k: 'create'; day: string; start: number }
   | { k: 'block'; id: string }
   | { k: 'more'; ids: string[] }
-  | { k: 'schedule'; id: string }
+  /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
+  | { k: 'schedule'; id: string; replan?: boolean }
+  | { k: 'file'; id: string }
   | { k: 'plan' }
+
+type Seg = 'overdue' | 'today' | 'inbox'
+
+// How far under the grid's top a block or slot lands when its sheet opens (7c, 7d). The planning
+// strip's segment row (Kai 2026-10-07) moved the grid down 48px, so it's 32, not 80: the block sits
+// where it did, clear above a medium sheet.
+const SHEET_LEAD = 32
 
 const VIEWS: { v: PhoneView; label: string }[] = [
   { v: 'day', label: 'Day' },
@@ -72,7 +83,7 @@ export function PhoneCalendar() {
   }
   const linkedMin = linked.event && !linked.event.all_day ? eventSpan(linked.event).start : null
   useEffect(() => {
-    if (linkedMin != null) gridRef.current?.scrollToMinute(linkedMin, 80)
+    if (linkedMin != null) gridRef.current?.scrollToMinute(linkedMin, SHEET_LEAD)
   }, [linkedMin])
   const openTask = useOpenTask()
 
@@ -85,7 +96,13 @@ export function PhoneCalendar() {
 
   const days = visibleDays(view, anchor, today)
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
-  const unscheduled = useMemo(() => filterByScope(tasks, { kind: 'smart', id: 'today' }, now).filter((t) => !t.scheduled_start), [tasks, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Kai 2026-10-07: the strip is the desktop rail's Overdue · Today · Inbox, one segment at a time
+  // (the first with anything in it, until one is picked); a chip opens the 7g sheet.
+  const { data: inbox = [], isPending: inboxPending } = usePendingInboxItems()
+  const buckets = useMemo(() => railBuckets(tasks, events, now), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, inbox: inbox.length }
+  const [segPick, setSegPick] = useState<Seg | null>(null)
+  const seg: Seg = segPick ?? (['overdue', 'today', 'inbox'] as const).find((s) => counts[s] > 0) ?? 'today'
   const marked = useMemo(() => daysWithItems(tasks, events), [tasks, events])
 
   // CALENDAR.md §3, first match wins: a colour set on the block · a task's project hue (its own, else
@@ -100,21 +117,35 @@ export function PhoneCalendar() {
         ? { fill: 'var(--block-blossom)', ink: 'var(--acc-blossom-text)' }
         : { fill: 'var(--block-lavender)', ink: 'var(--acc-lavender-text)' }
     const done = task?.status === 'done'
-    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) } }
+    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined }
+  }
+
+  /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */
+  function overdueBlock(e: CalendarEvent): boolean {
+    const task = e.task_id ? taskById.get(e.task_id) : undefined
+    return task?.status === 'todo' && blockLastDay(e) < today
+  }
+
+  /** The 7g sheet placed it: the block (moved or new) is where the grid shows, in view above. */
+  function placed(startsAt: string) {
+    const day = cairoDateKey(new Date(startsAt))
+    if (!days.includes(day)) setAnchor(day)
+    gridRef.current?.scrollToMinute(eventSpan({ starts_at: startsAt, ends_at: startsAt }).start, SHEET_LEAD)
   }
 
   /** A drop, a resize or the event sheet's Time: one write, one toast with Undo (7m). */
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
-    if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, 80)
+    if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, SHEET_LEAD)
     moveEventWithUndo(e, from, to, mode)
   }
 
   /** A task opens as itself — the Task sheet over the calendar (Kai 2026-10-03, one tap less); a plain
    * event (or a block whose task isn't here) opens the event sheet (7d). The block stays in view above. */
   function tapBlock(e: CalendarEvent) {
-    if (!e.all_day) gridRef.current?.scrollToMinute(eventSpan(e).start, 80)
-    if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
+    if (!e.all_day) gridRef.current?.scrollToMinute(eventSpan(e).start, SHEET_LEAD)
+    if (e.task_id && overdueBlock(e)) setSheet({ k: 'schedule', id: e.task_id, replan: true })
+    else if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
     else setSheet({ k: 'block', id: e.id })
   }
 
@@ -128,6 +159,7 @@ export function PhoneCalendar() {
   const block = sheet?.k === 'block' ? events.find((e) => e.id === sheet.id) : undefined
   if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
+  const filing = sheet?.k === 'file' ? inbox.find((i) => i.id === sheet.id) : undefined
   const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0 && allDayOn(events, days).length === 0
   const strip = weekPage(anchor, today)
 
@@ -172,18 +204,38 @@ export function PhoneCalendar() {
         })}
       </div>
 
-      {(tasksPending || unscheduled.length > 0) && (
-        <div className="pc-uns">
-          <span className="pc-uns-label">Unscheduled{tasksPending ? '' : ` · ${unscheduled.length}`}</span>
-          {tasksPending
-            ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
-            : unscheduled.map((t) => (
-                <button key={t.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
-                  <span className="pc-chip-t">{t.title}</span>
-                  {t.duration_min != null && <span className="pc-chip-d">{formatDuration(t.duration_min)}</span>}
-                </button>
-              ))}
-        </div>
+      {(tasksPending || inboxPending || counts.overdue + counts.today + counts.inbox > 0) && (
+        <>
+          <div className="pc-segs">
+            <Segmented
+              label="To plan"
+              options={[
+                { value: 'overdue', label: `Overdue ${counts.overdue}` },
+                { value: 'today', label: `Today ${counts.today}` },
+                { value: 'inbox', label: `Inbox ${counts.inbox}` },
+              ]}
+              value={tasksPending ? null : seg}
+              onChange={setSegPick}
+            />
+          </div>
+          <div className="pc-uns" data-seg={seg}>
+            {tasksPending
+              ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
+              : seg === 'inbox'
+                ? inbox.map((item) => (
+                    <button key={item.id} type="button" className="pc-chip" aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
+                      <span className="pc-chip-t">{inboxTitle(item)}</span>
+                    </button>
+                  ))
+                : buckets[seg].map((r) => (
+                    <button key={r.task.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
+                      <span className="pc-chip-t">{r.task.title}</span>
+                      {r.late > 0 ? <span className="pc-chip-d is-late">{r.late}d</span> : r.task.duration_min != null && <span className="pc-chip-d">{formatDuration(r.task.duration_min)}</span>}
+                    </button>
+                  ))}
+            {!tasksPending && counts[seg] === 0 && <span className="pc-uns-label">{seg === 'overdue' ? 'Nothing overdue' : seg === 'today' ? 'Nothing left without a time' : 'Inbox zero'}</span>}
+          </div>
+        </>
       )}
 
       <PhoneGrid
@@ -200,7 +252,7 @@ export function PhoneCalendar() {
         onTapSlot={(day, minute) => {
           const start = tapStart(minute)
           // The slot stays in view above the sheet and the keyboard (7c).
-          gridRef.current?.scrollToMinute(start, 80)
+          gridRef.current?.scrollToMinute(start, SHEET_LEAD)
           setSheet({ k: 'create', day, start })
         }}
         onTapBlock={tapBlock}
@@ -248,12 +300,28 @@ export function PhoneCalendar() {
             })}
         />
       )}
-      {scheduling && (
+      {scheduling && sheet?.k === 'schedule' && (
         <ScheduleSheet
-          task={scheduling}
+          title={scheduling.title}
+          duration={railMinutes({ task: scheduling, block: buckets.overdue.find((r) => r.task.id === scheduling.id)?.block ?? null })}
+          heading={sheet.replan ? 'Replan' : 'Schedule'}
           events={events}
-          onPlaced={(day) => {
-            if (!days.includes(day)) setAnchor(day)
+          onPlace={(startsAt, endsAt) => {
+            scheduleTaskWithUndo(scheduling, startsAt, endsAt)
+            placed(startsAt)
+          }}
+          onOpen={sheet.replan ? () => openTask(scheduling.id) : undefined}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {filing && (
+        <ScheduleSheet
+          title={inboxTitle(filing)}
+          duration={inboxMinutes(filing)}
+          events={events}
+          onPlace={(startsAt, endsAt) => {
+            fileToCalendar(filing, startsAt, endsAt)
+            placed(startsAt)
           }}
           onClose={() => setSheet(null)}
         />
