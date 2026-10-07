@@ -4,6 +4,7 @@ import { appZone } from '../../lib/appZone'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
+import { playSound } from '../../lib/sounds'
 import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
 import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
@@ -108,6 +109,7 @@ export async function captureWithAI(
   transcript: string | null = null,
   overrides: CaptureOverrides = {},
 ): Promise<void> {
+  playSound('capture') // before any await, so it lands inside the tap that captured
   if (!navigator.onLine) {
     const item = newInboxItem(rawText, kind, transcript, null, { needs_parse: true, ...overridesPayload(overrides) })
     writeRow('inbox_items', item)

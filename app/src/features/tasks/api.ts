@@ -6,6 +6,7 @@ import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
+import { playCompletion } from '../../lib/sounds'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
@@ -99,6 +100,7 @@ const recentCompletions = new Map<string, CompletionUndo>()
 
 /** Completing a recurring task materializes its next occurrence as a fresh task (completion.ts). */
 export function completeTask(task: Task): CompletionUndo {
+  playCompletion(task) // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here
   const plan = planCompletion(task, queryClient.getQueryData<Task[]>(['tasks']) ?? [], nowIso(), () => crypto.randomUUID())
   writeRow('tasks', plan.done)
   logActivity('task.completed', 'task', task.id, {})

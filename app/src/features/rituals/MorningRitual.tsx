@@ -18,6 +18,7 @@ import { busyOnDay, fromMin, toMin } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { toastAction } from '../../lib/undo'
+import { playSound } from '../../lib/sounds'
 import { logRitualFinished, logRitualStep, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, morningPreselection, top3Diff } from './loopDay'
 import {
@@ -210,6 +211,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     }
     for (const step of PLAN_STEPS) if (!stepsToday?.morning.has(step) && !loggedHere.current.has(step)) logRitualStep('morning', step)
     logRitualFinished('morning', [...PLAN_STEPS])
+    playSound('ritual_done')
     finished.current = true
     close()
   }
