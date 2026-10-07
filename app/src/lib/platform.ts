@@ -36,6 +36,24 @@ export function syncShellChrome(theme: 'day' | 'night', w: Window | undefined = 
   if (hex) bridge.setChrome(hex, theme === 'day')
 }
 
+let sheetsUp = 0
+/** Android shell: while a bottom sheet is up, the strips take the sheet's colour, so the sheet runs
+ * on into the gesture-bar strip under the page instead of stopping a page-coloured band short of the
+ * screen's edge (Kai's 2026-10-07 phone review; the keyboard covers that strip, so the band only
+ * showed with it down). Returns the release; the last sheet down hands the strips back to the page. */
+export function holdShellChrome(el: Element, w: Window | undefined = typeof window === 'undefined' ? undefined : window): () => void {
+  const bridge = (w as unknown as { KaisFlowShell?: ShellBridge } | undefined)?.KaisFlowShell
+  if (!w || !bridge) return () => {}
+  const night = () => w.document.documentElement.dataset.theme === 'night'
+  const hex = rgbToHex(w.getComputedStyle(el).backgroundColor)
+  if (hex) bridge.setChrome(hex, !night())
+  sheetsUp += 1
+  return () => {
+    sheetsUp -= 1
+    if (sheetsUp === 0) syncShellChrome(night() ? 'night' : 'day', w)
+  }
+}
+
 /** Where emailed auth links (password reset, sign-up confirmation) should land. In a browser: this
  * page's origin. Inside a native shell the origin is `https://localhost` (Capacitor) or
  * `https://tauri.localhost`, which no email link can open, so they go to the public web app instead
