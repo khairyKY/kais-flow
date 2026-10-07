@@ -5,7 +5,7 @@
 // columns a row carries. A new column must be added here; columns.test.ts fails until it is.
 export const TASK_COLUMNS = [
   'id', 'user_id', 'project_id', 'domain_id', 'area_id', 'milestone_id', 'parent_task_id',
-  'title', 'notes', 'status', 'priority', 'labels', 'top3', 'someday', 'paused',
+  'title', 'notes', 'status', 'priority', 'labels', 'top3', 'top3_rank', 'someday', 'paused',
   'due_at', 'scheduled_start', 'scheduled_end', 'duration_min', 'snoozed_until',
   'recurrence_rule', 'reminder_at', 'reminder_sent', 'external_ref',
   'completed_at', 'deleted_at', 'created_at', 'updated_at',

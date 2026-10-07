@@ -52,6 +52,8 @@ export interface Task {
   scheduled_start: string | null
   scheduled_end: string | null
   top3: boolean
+  /** Place in Today's Top 3, 1 = the goal of the day (migration 0055); null/absent = not chosen. */
+  top3_rank?: number | null
   snoozed_until: string | null
   recurrence_rule: string | null
   labels: string[]
@@ -199,6 +201,8 @@ export interface AppSettings {
   notify_paused_until?: string | null
   /** Paper capture (migration 0049): keep page photos 7 days (default) or delete them once reviewed. */
   capture_keep_photos?: boolean
+  /** The user's weekend, weekdays 0 = Sunday … 6 = Saturday (migration 0055; read via lib/weekend.ts). */
+  weekend_days?: number[]
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
