@@ -32,6 +32,8 @@ import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
+import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
+import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
@@ -86,7 +88,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
   )
 }
 
-function Seg<T extends string | number>({ value, onChange, options, fill = false }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; fill?: boolean }) {
+function Seg<T extends string | number>({ value, onChange, options, fill = false, minHeight }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; fill?: boolean; minHeight?: number }) {
   // `fill`: span the row and share it equally (phone Interface size — five options must fit even at 175%).
   return (
     <div style={{ display: fill ? 'flex' : 'inline-flex', width: fill ? '100%' : undefined, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
@@ -99,7 +101,7 @@ function Seg<T extends string | number>({ value, onChange, options, fill = false
             onClick={() => onChange(o.value)}
             aria-pressed={on}
             style={{
-              padding: fill ? '6px 0' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
+              padding: fill ? '6px 0' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, minHeight, borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
               background: on ? 'var(--paper-parchment)' : 'none',
               boxShadow: on ? 'var(--shadow-crisp)' : 'none',
               color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
@@ -338,18 +340,93 @@ function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefault
   )
 }
 
-function CalendarCard() {
+function CalendarCard({ phone = false }: { phone?: boolean }) {
   return (
-    <SCard tapeTint="color-mix(in oklch, var(--acc-lavender) 40%, transparent)">
+    <SCard tapeTint="color-mix(in oklch, var(--acc-lavender) 40%, transparent)" style={phone ? { boxShadow: 'var(--shadow-crisp)' } : undefined}>
       <div style={{ ...flabel, marginBottom: 4 }}>Calendar</div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, padding: '12px 0 2px' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Opens on</div>
           <div style={fhelp}>on every device · the toolbar still switches it any time</div>
         </div>
-        <CalendarViewSeg platformDefault="week" />
+        <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} />
       </div>
+      <WeekendSetting phone={phone} />
+      <PlanGlossary />
     </SCard>
+  )
+}
+
+// Kai 2026-10-07: "My weekend is Friday and Saturday… Don't force people to be someone they're not."
+// app_settings.weekend_days (lib/weekend) — what the Plan menu's "This weekend" lands on.
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+function WeekendSetting({ phone }: { phone: boolean }) {
+  const { data } = useAppSettings()
+  const days = parseWeekend(data?.weekend_days)
+  const preset = weekendPreset(days)
+  const [customOpen, setCustomOpen] = useState(false)
+  const shown = customOpen ? 'custom' : preset
+  const set = (next: number[]) => updateAppSetting('weekend_days', [...next].sort((a, b) => a - b))
+  const h = phone ? 48 : undefined // phone targets ≥ 48px
+  return (
+    <div style={{ padding: '14px 0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Weekend</div>
+          <div style={fhelp}>“This weekend” lands on its first day · {weekendLabel(days)}</div>
+        </div>
+        <div style={phone ? { width: '100%' } : undefined}>
+          <Seg<string>
+            fill={phone}
+            minHeight={h}
+            value={shown}
+            onChange={(v) => {
+              setCustomOpen(v === 'custom')
+              const p = WEEKEND_PRESETS.find((x) => x.key === v)
+              if (p) set([...p.days])
+            }}
+            options={[...WEEKEND_PRESETS.map((p) => ({ value: p.key as string, label: p.label })), { value: 'custom', label: 'Custom' }]}
+          />
+        </div>
+      </div>
+      {shown === 'custom' && (
+        // One row of seven: on a 390 phone the card has ~310px, so each day is ~44 wide and 48 tall.
+        <div role="group" aria-label="Weekend days" style={{ display: phone ? 'grid' : 'flex', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, marginTop: 10 }}>
+          {WEEKDAY_SHORT.map((label, d) => {
+            const on = days.includes(d)
+            return (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={on}
+                onClick={() => set(on ? days.filter((x) => x !== d) : [...days, d])}
+                style={{ minWidth: phone ? 0 : 40, minHeight: h ?? 32, padding: phone ? 0 : '0 6px', borderRadius: 6, font: 'inherit', fontSize: 12, cursor: 'pointer', border: '1px solid var(--line-card)', background: on ? 'var(--block-lavender)' : 'var(--paper-bone)', color: on ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', fontWeight: on ? 600 : 400 }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** "What the plan shortcuts mean" — the Plan menu's options in a sentence each (tasks/planMath). */
+function PlanGlossary() {
+  const { data } = useAppSettings()
+  return (
+    <div style={{ padding: '16px 0 2px' }}>
+      <div style={{ fontSize: 14, color: 'var(--ink-body)', marginBottom: 6 }}>What the plan shortcuts mean</div>
+      <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
+        {planGlossary(parseWeekend(data?.weekend_days)).map((g) => (
+          <div key={g.label} style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--ink-muted)' }}>
+            <dt style={{ display: 'inline', color: 'var(--ink-body)', fontWeight: 600 }}>{g.label}</dt>
+            <dd style={{ display: 'inline', margin: 0 }}> — {g.means}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   )
 }
 
@@ -1336,11 +1413,12 @@ function MobileSettings() {
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Paper texture</span>
           <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 160 }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
-          <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Calendar opens on</span>
-          <CalendarViewSeg platformDefault="day" />
-        </div>
       </SCard>
+
+      {/* Calendar: Opens on (it sat under Appearance until the Weekend joined it, 2026-10-07). */}
+      <div id="settings-Calendar" style={{ marginTop: 12 }}>
+        <CalendarCard phone />
+      </div>
 
       <div style={{ marginTop: 12 }}>
         <TimezoneCard />
