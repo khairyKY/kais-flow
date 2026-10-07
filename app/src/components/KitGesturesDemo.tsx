@@ -12,6 +12,7 @@ import { daysOverdue, formatDuration } from '../features/tasks/taskDisplay'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../features/tasks/SwipeRow'
 import { useRowGrammar } from '../features/tasks/useRowGrammar'
 import type { TaskMenuActions } from '../features/tasks/TaskMenu'
+import { placeTask } from '../features/tasks/move'
 import type { Project, Task } from '../lib/types'
 import '../features/projects/xfx.css' // .kf-lift, as the app shell loads it: the rows here press like TaskRow's
 import { appZone } from '../lib/appZone'
@@ -133,7 +134,7 @@ export function KitGesturesDemo() {
     schedule: (iso) => patch([t.id], () => ({ due_at: iso, someday: false })),
     clearDate: () => patch([t.id], () => ({ due_at: null })),
     someday: () => patch([t.id], () => ({ someday: true })),
-    move: (projectId) => patch([t.id], () => ({ project_id: projectId })),
+    move: (to) => patch([t.id], (x) => placeTask(x, to)),
     priority: (priority) => patch([t.id], () => ({ priority })),
     repeat: (recurrence_rule) => patch([t.id], () => ({ recurrence_rule })),
     remind: (reminder_at) => patch([t.id], () => ({ reminder_at })),

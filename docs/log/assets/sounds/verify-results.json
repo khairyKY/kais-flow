@@ -1,0 +1,632 @@
+[
+  {
+    "name": "kalimba/complete peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-15.3 dBFS"
+  },
+  {
+    "name": "kalimba/complete rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "148 ms"
+  },
+  {
+    "name": "kalimba/complete no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00042 · max step 0.022"
+  },
+  {
+    "name": "kalimba/complete not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 667 Hz"
+  },
+  {
+    "name": "kalimba/complete_big peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-11.9 dBFS"
+  },
+  {
+    "name": "kalimba/complete_big rings ≤ 900 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "677 ms"
+  },
+  {
+    "name": "kalimba/complete_big no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00077 · max step 0.037"
+  },
+  {
+    "name": "kalimba/complete_big not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 698 Hz"
+  },
+  {
+    "name": "kalimba/capture peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-17.3 dBFS"
+  },
+  {
+    "name": "kalimba/capture rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "132 ms"
+  },
+  {
+    "name": "kalimba/capture no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00024 · max step 0.021"
+  },
+  {
+    "name": "kalimba/capture not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 935 Hz"
+  },
+  {
+    "name": "kalimba/focus_start peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-12.3 dBFS"
+  },
+  {
+    "name": "kalimba/focus_start rings ≤ 600 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "423 ms"
+  },
+  {
+    "name": "kalimba/focus_start no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00059 · max step 0.012"
+  },
+  {
+    "name": "kalimba/focus_start not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 263 Hz"
+  },
+  {
+    "name": "kalimba/focus_end peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-9.0 dBFS"
+  },
+  {
+    "name": "kalimba/focus_end rings ≤ 2500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "1421 ms"
+  },
+  {
+    "name": "kalimba/focus_end no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00077 · max step 0.058"
+  },
+  {
+    "name": "kalimba/focus_end not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 860 Hz"
+  },
+  {
+    "name": "kalimba/ritual_done peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-8.5 dBFS"
+  },
+  {
+    "name": "kalimba/ritual_done rings ≤ 1500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "1044 ms"
+  },
+  {
+    "name": "kalimba/ritual_done no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00081 · max step 0.032"
+  },
+  {
+    "name": "kalimba/ritual_done not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 469 Hz"
+  },
+  {
+    "name": "kalimba/undo peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-19.3 dBFS"
+  },
+  {
+    "name": "kalimba/undo rings ≤ 200 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "105 ms"
+  },
+  {
+    "name": "kalimba/undo no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00014 · max step 0.014"
+  },
+  {
+    "name": "kalimba/undo not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 719 Hz"
+  },
+  {
+    "name": "felt/complete peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-15.8 dBFS"
+  },
+  {
+    "name": "felt/complete rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "157 ms"
+  },
+  {
+    "name": "felt/complete no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00040 · max step 0.015"
+  },
+  {
+    "name": "felt/complete not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 362 Hz"
+  },
+  {
+    "name": "felt/complete_big peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-11.9 dBFS"
+  },
+  {
+    "name": "felt/complete_big rings ≤ 900 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "722 ms"
+  },
+  {
+    "name": "felt/complete_big no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00092 · max step 0.027"
+  },
+  {
+    "name": "felt/complete_big not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 384 Hz"
+  },
+  {
+    "name": "felt/capture peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-17.5 dBFS"
+  },
+  {
+    "name": "felt/capture rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "138 ms"
+  },
+  {
+    "name": "felt/capture no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00023 · max step 0.016"
+  },
+  {
+    "name": "felt/capture not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 517 Hz"
+  },
+  {
+    "name": "felt/focus_start peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-13.1 dBFS"
+  },
+  {
+    "name": "felt/focus_start rings ≤ 600 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "428 ms"
+  },
+  {
+    "name": "felt/focus_start no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00052 · max step 0.017"
+  },
+  {
+    "name": "felt/focus_start not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 286 Hz"
+  },
+  {
+    "name": "felt/focus_end peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-7.0 dBFS"
+  },
+  {
+    "name": "felt/focus_end rings ≤ 2500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "1729 ms"
+  },
+  {
+    "name": "felt/focus_end no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00089 · max step 0.058"
+  },
+  {
+    "name": "felt/focus_end not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 463 Hz"
+  },
+  {
+    "name": "felt/ritual_done peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-10.2 dBFS"
+  },
+  {
+    "name": "felt/ritual_done rings ≤ 1500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "966 ms"
+  },
+  {
+    "name": "felt/ritual_done no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00091 · max step 0.021"
+  },
+  {
+    "name": "felt/ritual_done not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 262 Hz"
+  },
+  {
+    "name": "felt/undo peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-19.8 dBFS"
+  },
+  {
+    "name": "felt/undo rings ≤ 200 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "110 ms"
+  },
+  {
+    "name": "felt/undo no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00013 · max step 0.009"
+  },
+  {
+    "name": "felt/undo not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 399 Hz"
+  },
+  {
+    "name": "glass/complete peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-16.8 dBFS"
+  },
+  {
+    "name": "glass/complete rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "154 ms"
+  },
+  {
+    "name": "glass/complete no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00041 · max step 0.029"
+  },
+  {
+    "name": "glass/complete not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 730 Hz"
+  },
+  {
+    "name": "glass/complete_big peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-12.1 dBFS"
+  },
+  {
+    "name": "glass/complete_big rings ≤ 900 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "660 ms"
+  },
+  {
+    "name": "glass/complete_big no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00069 · max step 0.057"
+  },
+  {
+    "name": "glass/complete_big not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.007% · centroid 791 Hz"
+  },
+  {
+    "name": "glass/capture peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-17.9 dBFS"
+  },
+  {
+    "name": "glass/capture rings ≤ 250 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "133 ms"
+  },
+  {
+    "name": "glass/capture no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00022 · max step 0.030"
+  },
+  {
+    "name": "glass/capture not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.005% · centroid 1014 Hz"
+  },
+  {
+    "name": "glass/focus_start peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-13.3 dBFS"
+  },
+  {
+    "name": "glass/focus_start rings ≤ 600 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "423 ms"
+  },
+  {
+    "name": "glass/focus_start no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00056 · max step 0.017"
+  },
+  {
+    "name": "glass/focus_start not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 287 Hz"
+  },
+  {
+    "name": "glass/focus_end peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-9.0 dBFS"
+  },
+  {
+    "name": "glass/focus_end rings ≤ 2500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "1378 ms"
+  },
+  {
+    "name": "glass/focus_end no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00078 · max step 0.100"
+  },
+  {
+    "name": "glass/focus_end not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.018% · centroid 1000 Hz"
+  },
+  {
+    "name": "glass/ritual_done peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-9.1 dBFS"
+  },
+  {
+    "name": "glass/ritual_done rings ≤ 1500 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "1014 ms"
+  },
+  {
+    "name": "glass/ritual_done no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00089 · max step 0.050"
+  },
+  {
+    "name": "glass/ritual_done not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.000% · centroid 505 Hz"
+  },
+  {
+    "name": "glass/undo peak ≤ −6 dBFS, nothing clipped",
+    "ok": true,
+    "detail": "-20.7 dBFS"
+  },
+  {
+    "name": "glass/undo rings ≤ 200 ms (to −60 dBFS)",
+    "ok": true,
+    "detail": "107 ms"
+  },
+  {
+    "name": "glass/undo no click: starts from silence, ends in silence, no jump anywhere",
+    "ok": true,
+    "detail": "first 5 ms 0.0000 · last 5 ms 0.00013 · max step 0.018"
+  },
+  {
+    "name": "glass/undo not hissy: < 1% of the energy above 6 kHz",
+    "ok": true,
+    "detail": "0.001% · centroid 769 Hz"
+  },
+  {
+    "name": "render: every pack × event (3 × 7) written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "render: WAVs are mono 44.1k, ≤ 2.5 s each",
+    "ok": true,
+    "detail": "1095 KB total"
+  },
+  {
+    "name": "render: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks-complete checking a plain task → complete, once (the box no longer plays its own)",
+    "ok": true,
+    "detail": "[\"complete\"]"
+  },
+  {
+    "name": "tasks-complete the toast's Undo → undo (turned on for this run; off by default)",
+    "ok": true,
+    "detail": "[\"complete\",\"undo\"]"
+  },
+  {
+    "name": "tasks-complete the capture bar's Enter → capture",
+    "ok": true,
+    "detail": "[\"complete\",\"undo\",\"capture\"]"
+  },
+  {
+    "name": "tasks-complete no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today-top3 a Top 3 pick with others still open → complete",
+    "ok": true,
+    "detail": "[\"complete\",\"complete_big\",\"complete_big\"]"
+  },
+  {
+    "name": "today-top3 the Goal of the day → complete_big",
+    "ok": true,
+    "detail": "[\"complete\",\"complete_big\",\"complete_big\"]"
+  },
+  {
+    "name": "today-top3 the last open Top 3 pick → complete_big",
+    "ok": true,
+    "detail": "[\"complete\",\"complete_big\",\"complete_big\"]"
+  },
+  {
+    "name": "today-top3 one sound per check",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "today-top3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus ▶ Start (a fresh round) → focus_start",
+    "ok": true,
+    "detail": "[\"focus_start\"]"
+  },
+  {
+    "name": "focus resuming a paused round is silent",
+    "ok": true,
+    "detail": "[\"focus_start\"]"
+  },
+  {
+    "name": "focus the round runs out → focus_end",
+    "ok": true,
+    "detail": "[\"focus_start\",\"focus_end\"]"
+  },
+  {
+    "name": "focus no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "morning Start the day → ritual_done",
+    "ok": true,
+    "detail": "[\"ritual_done\"]"
+  },
+  {
+    "name": "morning no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "evening Close the day → ritual_done (before the garden goes quiet)",
+    "ok": true,
+    "detail": "[\"ritual_done\"]"
+  },
+  {
+    "name": "evening …and the garden is closed now",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "evening no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day three packs, Kalimba chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day a ▶ per pack and per event, seven event rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day fits the width (no sideways scroll)",
+    "ok": true,
+    "detail": "card 648–1185 · overflow 0"
+  },
+  {
+    "name": "settings-desktop-day choosing Felt saves it and plays its phrase",
+    "ok": true,
+    "detail": "{\"event\":\"complete_big\",\"pack\":\"felt\"}"
+  },
+  {
+    "name": "settings-desktop-day ▶ Glass auditions glass without choosing it",
+    "ok": true,
+    "detail": "{\"event\":\"complete_big\",\"pack\":\"glass\"}"
+  },
+  {
+    "name": "settings-desktop-day turning Undo on saves it and lets you hear it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day ▶ on a row previews that event in the chosen pack",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day after a reload: Felt still chosen, Undo still on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-night three packs, Kalimba chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-night a ▶ per pack and per event, seven event rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-desktop-night fits the width (no sideways scroll)",
+    "ok": true,
+    "detail": "card 648–1185 · overflow 0"
+  },
+  {
+    "name": "settings-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-day three packs, Kalimba chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-day a ▶ per pack and per event, seven event rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-day fits the width (no sideways scroll)",
+    "ok": true,
+    "detail": "card 20–370 · overflow 0"
+  },
+  {
+    "name": "settings-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-night three packs, Kalimba chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-night a ▶ per pack and per event, seven event rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings-phone-night fits the width (no sideways scroll)",
+    "ok": true,
+    "detail": "card 20–370 · overflow 0"
+  },
+  {
+    "name": "settings-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

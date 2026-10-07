@@ -4,6 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { carryTasksToDomain } from '../tasks/api'
 import type { Area, Task } from '../../lib/types'
 
 export function useAreas() {
@@ -38,6 +39,21 @@ export function createArea(name: string, domainId: string | null = null, color: 
   writeRow('areas', area)
   logActivity('area.created', 'area', area.id, { name })
   return area
+}
+
+/** Kai 2026-10-07 ("you can't assign an area to a domain"): set or change an area's domain. Its
+ * tasks go with it (a task's domain follows its container), and one Undo takes all of it back. */
+export function reparentArea(area: Area, domainId: string | null, domainName: string): void {
+  if (area.domain_id === domainId) return
+  writeRow('areas', { ...area, domain_id: domainId, updated_at: nowIso() })
+  const undoTasks = carryTasksToDomain('area_id', area.id, domainId)
+  logActivity('area.reparented', 'area', area.id, { domain_id: domainId })
+  toastUndo(domainId ? `Moved to ${domainName}` : 'Out of its domain', () => {
+    const current = queryClient.getQueryData<Area[]>(['areas'])?.find((a) => a.id === area.id) ?? area
+    writeRow('areas', { ...current, domain_id: area.domain_id, updated_at: nowIso() })
+    undoTasks()
+    logActivity('area.reparented', 'area', area.id, { domain_id: area.domain_id })
+  })
 }
 
 export function renameArea(area: Area, name: string): void {
