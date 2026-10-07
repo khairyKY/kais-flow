@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { OutboxEntry } from '../lib/outbox'
-import { syncHeader, syncRows } from './syncQueue'
+import { CALM, SLOW_SYNC_MS, SYNCED_FLASH_MS, syncHeader, syncLabel, syncRows, syncStep, type SyncFacts, type SyncMemory, type SyncView } from './syncQueue'
 
 // Just enough of idb-keyval + supabase for lib/outbox.ts to load, so the row list can be checked
 // against the real `unsyncedChanges()` count it has to agree with.
@@ -102,5 +102,70 @@ describe('syncHeader', () => {
     expect(syncHeader(2, true)).toBe('Syncing ↻ · 2 changes waiting to sync')
     expect(syncHeader(1, true)).toBe('Syncing ↻ · 1 change waiting to sync')
     expect(syncHeader(3, false)).toBe('Offline ◌ · 3 changes saved here')
+  })
+})
+
+// Kai 2026-10-07: "tedious to keep seeing the sync status going and going back". A run of facts
+// through the machine, the way the topbar feeds it; returns what was shown at each step.
+function run(steps: Partial<SyncFacts>[], start: SyncMemory = CALM): (SyncView & { label: string | null; recheckAt: number | null })[] {
+  let memory = start
+  return steps.map((f) => {
+    const s = syncStep(memory, { online: true, waiting: 0, oldestAt: null, parked: 0, now: 0, ...f })
+    memory = s.memory
+    return { ...s.view, label: syncLabel(s.view), recheckAt: s.recheckAt }
+  })
+}
+
+describe('syncStep — the calm sync status', () => {
+  it('a burst of ordinary writes shows nothing at all (no Syncing, no Synced)', () => {
+    const burst = Array.from({ length: 20 }, (_, i) => [
+      { waiting: 1, oldestAt: i * 500, now: i * 500 + 50 },
+      { waiting: 0, now: i * 500 + 400 },
+    ]).flat()
+    expect(run(burst).every((v) => v.label === null)).toBe(true)
+  })
+  it('a write still waiting after ~4s shows "Syncing…"; the machine asks to look again right then', () => {
+    const [early, late] = run([
+      { waiting: 2, oldestAt: 1000, now: 1500 },
+      { waiting: 2, oldestAt: 1000, now: 1000 + SLOW_SYNC_MS },
+    ])
+    expect(early.label).toBeNull()
+    expect(early.recheckAt).toBe(1000 + SLOW_SYNC_MS)
+    expect(late).toMatchObject({ kind: 'syncing', label: 'Syncing…' })
+  })
+  it('when a slow sync finishes it simply goes quiet — "Synced" is only for trouble clearing', () => {
+    const [, done] = run([{ waiting: 1, oldestAt: 0, now: 5000 }, { waiting: 0, now: 6000 }])
+    expect(done.label).toBeNull()
+  })
+  it('offline says how many wait; back online it drains, then a brief "Synced", then nothing', () => {
+    const views = run([
+      { online: false, waiting: 0, now: 0 },
+      { online: false, waiting: 3, oldestAt: 100, now: 200 },
+      { online: true, waiting: 3, oldestAt: 100, now: 9000 }, // reconnect: the old writes are slow by now
+      { online: true, waiting: 0, now: 9500 },
+      { online: true, waiting: 0, now: 9500 + SYNCED_FLASH_MS - 1 },
+      { online: true, waiting: 0, now: 9500 + SYNCED_FLASH_MS },
+    ])
+    expect(views.map((v) => v.label)).toEqual(['Offline', 'Offline · 3 waiting', 'Syncing…', 'Synced', 'Synced', null])
+    expect(views[3].recheckAt).toBe(9500 + SYNCED_FLASH_MS)
+  })
+  it('a parked (rejected) write is a clear state until it is seen; then "Synced" once', () => {
+    const views = run([
+      { parked: 1, now: 0 },
+      { parked: 2, waiting: 1, oldestAt: 0, now: 100 },
+      { parked: 0, now: 200 },
+    ])
+    expect(views.map((v) => v.label)).toEqual(['1 change not saved ⚠', '2 changes not saved ⚠', 'Synced'])
+    expect(views[0].kind).toBe('parked')
+  })
+  it('a quick write while "Synced" shows neither blinks it off nor restarts it', () => {
+    const views = run([
+      { online: false, now: 0 },
+      { online: true, now: 100 }, // Synced until 100 + FLASH
+      { online: true, waiting: 1, oldestAt: 150, now: 150 },
+      { online: true, waiting: 0, now: 300 },
+      { online: true, waiting: 0, now: 100 + SYNCED_FLASH_MS },
+    ])
+    expect(views.map((v) => v.label)).toEqual(['Offline', 'Synced', 'Synced', 'Synced', null])
   })
 })

@@ -186,7 +186,8 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
             <>
               {act('tomorrow', 'Tomorrow', () => actions.tomorrow?.())}
               {actions.pickDate && act('pickdate', 'Pick date', (el) => actions.pickDate?.(at(el)))}
-              {actions.project && act('project', 'Project', (el) => actions.project?.(at(el)))}
+              {/* Opens "Move to…" (a project, an area or a domain), so it reads Move like the bulk bar. */}
+              {actions.project && act('project', 'Move', (el) => actions.project?.(at(el)))}
             </>
           )}
         </div>

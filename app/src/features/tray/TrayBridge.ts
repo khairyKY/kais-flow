@@ -4,8 +4,7 @@ import { create } from 'zustand'
 import { deliver, focusDoneNotice, inQuietHours, isPaused, reminderNotice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
-import { unsyncedChanges } from '../../lib/outbox'
-import { useOnline } from '../../lib/useOnline'
+import { useSyncStatus } from '../../components/syncQueue'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useFocusStore } from '../focus/focusStore'
 import { useGoalStore } from '../today/goalStore'
@@ -84,18 +83,6 @@ function togglePause(): void {
   updateAppSetting('notify_paused_until', until && new Date(until).getTime() > Date.now() ? null : new Date(Date.now() + 3_600_000).toISOString())
 }
 
-function useWaiting(): number {
-  const [waiting, setWaiting] = useState(0)
-  useEffect(() => {
-    if (!isTauri()) return
-    const read = () => void unsyncedChanges().then(setWaiting)
-    read()
-    window.addEventListener('kf-outbox-change', read)
-    return () => window.removeEventListener('kf-outbox-change', read)
-  }, [])
-  return waiting
-}
-
 function useSystemDark(): boolean {
   const [dark, setDark] = useState(() => matchMedia('(prefers-color-scheme: dark)').matches)
   useEffect(() => {
@@ -153,11 +140,14 @@ export function TrayBridge(): null {
     secondsLeft: useFocusStore((s) => s.secondsLeft),
     roundMin: useFocusStore((s) => s.settings.focusRoundMin),
   }
+  // Kai 2026-10-07: the K flipped to its offline look for every write's second or two in flight. It
+  // follows the topbar's calm status now — only a slow, offline or not-saved write changes it.
+  const sync = useSyncStatus().view
   const state = trayIconState({
     focus,
     needsYou: useNeedsYou((s) => s.on),
-    offline: !useOnline(),
-    waiting: useWaiting(),
+    offline: sync.kind === 'offline',
+    waiting: sync.kind === 'syncing' || sync.kind === 'parked' ? Math.max(1, sync.n) : 0,
     quiet: inQuietHours(settings, now, appZone()) || isPaused(settings, now),
   })
   const dark = useSystemDark()

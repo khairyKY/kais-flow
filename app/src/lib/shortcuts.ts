@@ -34,7 +34,7 @@ export const TASK_LIST_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['↵'], label: 'Open detail' },
   { keys: ['t'], label: 'Toggle Top 3' },
   { keys: ['1', '2', '3'], label: 'Today · Tmrw · Next wk' },
-  { keys: ['p'], label: 'Move to project' },
+  { keys: ['p'], label: 'Move to…' },
   { keys: ['x'], label: 'Select (multi)' },
   { keys: ['#'], label: 'Delete' },
 ]

@@ -155,6 +155,8 @@ async function drain(): Promise<void> {
       try {
         const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
         await set(DEAD_KEY, [...dead, { ...entry, error: message, failedAt: Date.now() }])
+        // The topbar's "not saved ⚠" (components/syncQueue.ts) reads the dead letters on this event.
+        window.dispatchEvent(new Event('kf-outbox-change'))
       } catch {
         /* storage full/unavailable — dropping it still beats wedging every later write */
       }

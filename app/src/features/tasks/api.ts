@@ -12,6 +12,7 @@ import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import { scheduleTomorrow } from '../../lib/dateShortcuts'
+import { placeTask, planReparent, type MoveTarget } from './move'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -244,9 +245,7 @@ export function deleteTasksWithUndo(tasks: Task[]): void {
  * tomorrow · Undo" — swipe, ⋯, the `2` key, the bulk bar, the morning ritual. Undo writes each
  * row back as it was (due date and someday flag). */
 export function moveToTomorrowWithUndo(tasks: Task[]): void {
-  const at = scheduleTomorrow()
-  const undos = tasks.map((t) => rescheduleDue(t, at))
-  toastUndo(tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow`, () => undos.forEach((undo) => undo()))
+  rescheduleTasksWithUndo(tasks, scheduleTomorrow(), { message: tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow` })
 }
 
 /** The task sheet's ⋯ → Duplicate: an open copy (same fields, not on the calendar, not in Top 3),
@@ -273,14 +272,51 @@ export function setSomeday(task: Task, someday: boolean): void {
   logActivity('task.someday_set', 'task', task.id, { someday })
 }
 
-/** Every move (⋯ / right-click "Move to project…", the swipe, the `p` key, the task sheet, bulk).
- * A task lives in a project or an area, not both (Kai 2026-10-06): kept, the old area_id won the
- * row's tag and the area page kept listing it, so a move never looked like it happened. A
- * milestone belongs to its own project, so it stays behind. */
-export function setProject(task: Task, projectId: string | null, domainId: string | null): void {
-  const leaving = projectId !== task.project_id && !!task.milestone_id
-  writeRow('tasks', { ...task, project_id: projectId, domain_id: domainId, area_id: projectId ? null : task.area_id, ...(leaving ? { milestone_id: null } : null) })
-  logActivity('task.moved', 'task', task.id, { project_id: projectId })
+const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
+
+/** Every move (⋯ / right-click "Move to…", the swipe, the `p` key, the task sheet, bulk): into a
+ * project, an area, a domain, or out of all three (./move.ts placeTask), with one "Moved to X ·
+ * Undo". Undo puts back each row's project, area, domain and milestone — only those. */
+export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
+  const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
+  for (const t of tasks) {
+    const moved = placeTask(t, to)
+    writeRow('tasks', moved)
+    logActivity('task.moved', 'task', t.id, place(moved))
+  }
+  const many = tasks.length === 1 ? '' : `${tasksLabel(tasks.length)} `
+  toastUndo(to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`, () => {
+    const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+    for (const t of tasks) {
+      const current = now.find((c) => c.id === t.id) ?? t
+      writeRow('tasks', { ...current, ...place(t), milestone_id: t.milestone_id ?? null })
+      logActivity('task.moved', 'task', t.id, place(t))
+    }
+  })
+}
+
+/** A project or area moved to another domain takes its tasks along (their domain follows the
+ * container). Returns the Undo for the tasks part. */
+export function carryTasksToDomain(field: 'project_id' | 'area_id', containerId: string, domainId: string | null): () => void {
+  const moved = planReparent(queryClient.getQueryData<Task[]>(['tasks']) ?? [], field, containerId, domainId)
+  moved.forEach((m) => writeRow('tasks', m.after))
+  return () => {
+    const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+    for (const m of moved) writeRow('tasks', { ...(now.find((c) => c.id === m.before.id) ?? m.after), domain_id: m.before.domain_id })
+  }
+}
+
+/** Bulk re-date with one Undo (each row's date, someday flag and calendar blocks come back, via
+ * rescheduleDue's own Undo) — the bulk bar's Pick date, Tomorrow, Overdue's "Reschedule all to
+ * today". `timed`: the picker set a time, which puts the tasks on the calendar (calendar/replan). */
+export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = false, message = `${tasksLabel(tasks.length)} scheduled` }: { timed?: boolean; message?: string } = {}): void {
+  const undos = tasks.map((t) => rescheduleDue(t, dueAt, timed))
+  toastUndo(message, () => undos.forEach((undo) => undo()))
+}
+
+export function somedayTasksWithUndo(tasks: Task[]): void {
+  tasks.forEach((t) => setSomeday(t, true))
+  toastUndo(`${tasksLabel(tasks.length)} parked for someday`, () => tasks.forEach((t) => setSomeday(t, t.someday)))
 }
 
 export function setLabels(task: Task, labels: string[]): void {

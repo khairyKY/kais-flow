@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, rescheduleDue, setProject, setSomeday, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, rescheduleDue, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue, formatDuration } from '../tasks/taskDisplay'
@@ -11,6 +11,7 @@ import { useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
+import { useAreas } from '../areas/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
 import { computeStreak, localDateKey, routinesForToday, todayTally } from '../routines/streaks'
 import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGrouping'
@@ -33,14 +34,15 @@ import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { useListKeys } from '../../components/useListKeys'
+import { useLingering } from '../../components/syncQueue'
 import { BulkBar } from '../../components/BulkBar'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { MovePicker } from '../tasks/MovePicker'
+import { placeKey, type MoveTarget } from '../tasks/move'
 import { ContextMenu } from '../../components/ContextMenu'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import { useOnline } from '../../lib/useOnline'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
@@ -110,6 +112,9 @@ export function TodayPage() {
   // restored the query is pending but not fetching, so isLoading is false and the empty states lied.
   const tasksQuery = useTasks()
   const eventsQuery = useCalendarEvents()
+  // Kai 2026-10-07: the phone's "Syncing" dot blinked on with every refetch (each write's realtime
+  // echo refetches). The topbar's rule now: only a fetch that's still going after ~4s shows it.
+  const fetchingSlowly = useLingering(tasksQuery.isFetching || eventsQuery.isFetching)
   const { data: tasks = [], isPending: tasksPending } = tasksQuery
   const { data: events = [], isPending: eventsPending } = eventsQuery
   const { data: projects = [] } = useProjects()
@@ -118,7 +123,6 @@ export function TodayPage() {
   const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
   const ritualPins = useRitualPins()
   const { data: slipping = [] } = useSlipping()
-  const { data: domains = [] } = useDomains()
   const { data: pendingInbox = [] } = usePendingInboxItems()
   const { data: people = [] } = usePeople()
   // Punch 2: the heading must not outlive its card — same source the card guards on.
@@ -270,18 +274,17 @@ export function TodayPage() {
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
 
-  const bulkToast = (verb: string) =>
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} ${verb}.` })
   // Punch 6 (Polish D): completing gets the same Undo as a single check — see completeTaskWithUndo.
+  // Kai 2026-10-07: every bulk action is an Undo toast now (no plain "N tasks moved." notices).
   function bulkComplete() {
     const undos = selectedTasks.map((t) => completeTask(t))
     toastUndo(`${undos.length} task${undos.length === 1 ? '' : 's'} completed.`, () => undos.forEach(undoCompletion))
     clearSelection()
   }
   function bulkTomorrow() { moveToTomorrowWithUndo(selectedTasks); clearSelection() }
-  function bulkSchedule(iso: string) { selectedTasks.forEach((t) => rescheduleDue(t, iso)); bulkToast('scheduled'); clearSelection() }
-  function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
-  function bulkSomeday() { selectedTasks.forEach((t) => setSomeday(t, true)); bulkToast('parked for someday'); clearSelection() }
+  function bulkSchedule(iso: string, _min?: number, timed?: boolean) { rescheduleTasksWithUndo(selectedTasks, iso, { timed }); clearSelection() }
+  function bulkMove(to: MoveTarget) { moveTasksWithUndo(selectedTasks, to); clearSelection() }
+  function bulkSomeday() { somedayTasksWithUndo(selectedTasks); clearSelection() }
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
 
@@ -484,9 +487,9 @@ export function TodayPage() {
         />
       )}
       {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={bulkSchedule} onSomeday={bulkSomeday} />}
-      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
       {kbProjectTask && (
-        <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
+        <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
 
       {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
@@ -524,7 +527,7 @@ export function TodayPage() {
         {tasksPending ? (
           <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
         ) : (
-          <PhoneSummary workload={workload} now={now} online={online} syncing={tasksQuery.isFetching || eventsQuery.isFetching} />
+          <PhoneSummary workload={workload} now={now} online={online} syncing={fetchingSlowly} />
         )}
 
         {card === 'slip' && slip && <NowSlip event={slip} task={slipTask} now={now} sel={slipTask ? rowSelection(slipTask) : {}} />}
@@ -1129,8 +1132,9 @@ type RowSelection = Pick<RowGrammarOptions, 'selected' | 'onToggleSelect' | 'sel
 function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule'>) {
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
+  const { data: areas = [] } = useAreas()
   const done = !!task.completed_at
-  return useRowGrammar(task, { projects, domains, ...o, onToggleSelect: done ? undefined : o.onToggleSelect })
+  return useRowGrammar(task, { projects, domains, areas, ...o, onToggleSelect: done ? undefined : o.onToggleSelect })
 }
 
 /** The block's own moves for a task row that stands for a calendar block (Up next, the slip):
