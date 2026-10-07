@@ -1,0 +1,1052 @@
+[
+  {
+    "name": "ctrl-a-day tasks-default: selects every open task (9)",
+    "ok": true,
+    "detail": "selected 9, rows 9, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-default: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-default: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-today: selects every open task (5)",
+    "ok": true,
+    "detail": "selected 5, rows 5, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-today: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-today: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-all: selects every open task (11)",
+    "ok": true,
+    "detail": "selected 11, rows 11, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-all: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-all: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-overdue: selects every open task (1)",
+    "ok": true,
+    "detail": "selected 1, rows 1, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-overdue: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-overdue: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-upcoming: selects every open task (1)",
+    "ok": true,
+    "detail": "selected 1, rows 1, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-upcoming: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-upcoming: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-someday: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-someday: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-someday: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-week: selects every open task (7)",
+    "ok": true,
+    "detail": "selected 7, rows 7, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-week: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-week: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-month: selects every open task (7)",
+    "ok": true,
+    "detail": "selected 7, rows 7, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day tasks-month: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day tasks-month: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day project-page: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day project-page: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day project-page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day area-page: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day area-page: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day area-page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day planning-board: selects every open task (10)",
+    "ok": true,
+    "detail": "selected 10, rows 10, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day planning-board: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day planning-board: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day today: selects every open task (9)",
+    "ok": true,
+    "detail": "selected 9, rows 0, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-day today: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day today: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day Done tab: no selection (done tasks aren't bulk-actionable)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day empty quick add (focus kept after Enter) hands Ctrl+A to the list",
+    "ok": true,
+    "detail": "focus in empty field true, selected 12"
+  },
+  {
+    "name": "ctrl-a-day a field with text keeps the browser select-all (text selected, no rows)",
+    "ok": true,
+    "detail": "[0,12,12]"
+  },
+  {
+    "name": "ctrl-a-day Arabic layout (key ش, code KeyA) selects too",
+    "ok": true,
+    "detail": "12"
+  },
+  {
+    "name": "ctrl-a-day quick add wrote one task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-day phone 390: Ctrl+A selects all, the selection app bar shows \"11 selected\"",
+    "ok": true,
+    "detail": "11"
+  },
+  {
+    "name": "ctrl-a-day phone: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day the picker: each domain, its areas, its projects; then No domain",
+    "ok": true,
+    "detail": "[[\"Work\",[\"Work\",\"Retainer Co\",\"Shaheen Website\"]],[\"Home\",[\"Home\",\"Health\"]],[\"No domain\",[\"Reading\",\"Garage\"]]]"
+  },
+  {
+    "name": "move-day one task → an area: area + its domain, no project",
+    "ok": true,
+    "detail": "[[null,\"30000000-0000-4000-8000-000000000001\",\"40000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-day toast \"Moved to Health\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day Undo puts it back (no area, no domain)",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Renew the passport\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day a project task → a domain: only the domain",
+    "ok": true,
+    "detail": "[[null,null,\"40000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-day None clears project, area and domain (\"Unfiled\")",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000003\",\"title\":\"Run 5k\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day `p` → type \"read\" → Enter files it in the Reading area",
+    "ok": true,
+    "detail": "[[\"10000000-0000-4000-8000-000000000005\",\"30000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day bulk: 11 tasks → Garage (project), out of their areas",
+    "ok": true,
+    "detail": "11 writes"
+  },
+  {
+    "name": "move-day bulk: one toast \"11 tasks moved to Garage\"",
+    "ok": true,
+    "detail": "11 tasks moved to Garage\nUndo"
+  },
+  {
+    "name": "move-day bulk Undo: every task back where it was",
+    "ok": true,
+    "detail": "[[null,\"30000000-0000-4000-8000-000000000001\",\"40000000-0000-4000-8000-000000000002\"],[\"20000000-0000-4000-8000-000000000001\",null,\"40000000-0000-4000-8000-000000000001\"]]"
+  },
+  {
+    "name": "move-day phone sheet: every row ≥ 48px",
+    "ok": true,
+    "detail": "[52,52,52,52,52,52,52,52]"
+  },
+  {
+    "name": "move-day phone: tap Health → in the area, with its domain",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Renew the passport\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":\"40000000-0000-4000-8000-000000000002\",\"area_id\":\"30000000-0000-4000-8000-000000000001\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-day phone: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-day phone bulk bar: Done · Tomorrow · Pick date · Move · Delete",
+    "ok": true,
+    "detail": "[\"Done\",\"Tomorrow\",\"Pick date\",\"Move\",\"Delete\"]"
+  },
+  {
+    "name": "move-day phone bulk: 11 tasks → the Work domain",
+    "ok": true,
+    "detail": "11"
+  },
+  {
+    "name": "domain-day the area page has a Domain field showing Home",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day area → Work: the area is written with it",
+    "ok": true,
+    "detail": "[{\"id\":\"30000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"name\":\"Health\",\"description\":null,\"color\":null,\"sort_order\":1,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-07T07:10:44.545Z\"}]"
+  },
+  {
+    "name": "domain-day area → Work: both its tasks follow (domain_id Work)",
+    "ok": true,
+    "detail": "[[\"10000000-0000-4000-8000-000000000003\",\"40000000-0000-4000-8000-000000000001\"],[\"10000000-0000-4000-8000-000000000012\",\"40000000-0000-4000-8000-000000000001\"]]"
+  },
+  {
+    "name": "domain-day toast \"Moved to Work\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day Undo: the area back in Home, each task back to its own domain",
+    "ok": true,
+    "detail": "[[\"40000000-0000-4000-8000-000000000002\"],{\"10000000-0000-4000-8000-000000000003\":\"40000000-0000-4000-8000-000000000002\",\"10000000-0000-4000-8000-000000000012\":null}]"
+  },
+  {
+    "name": "domain-day area page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day project → Home: its tasks follow too (they kept the old domain before)",
+    "ok": true,
+    "detail": "[\"40000000-0000-4000-8000-000000000002\",\"40000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "domain-day project Undo: back in Work, tasks too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day Projects ⋯ → Domain… → Home: Reading moves, its task follows",
+    "ok": true,
+    "detail": "[[{\"id\":\"30000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000002\",\"name\":\"Reading\",\"description\":null,\"color\":null,\"sort_order\":2,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-07T07:11:42.790Z\"}],[\"10000000-0000-4000-8000-000000000007\"]]"
+  },
+  {
+    "name": "domain-day phone: the area's Domain field is ≥ 48px tall",
+    "ok": true,
+    "detail": "48px"
+  },
+  {
+    "name": "domain-day phone: area → no domain, its tasks too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day phone: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-day phone Projects ⋯ → Domain…: a sheet of domains, rows ≥ 48px",
+    "ok": true,
+    "detail": "[52,52,52]"
+  },
+  {
+    "name": "domain-day phone: Reading → Work",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync-day desktop /routines: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop /routines: offline shows on the same strip",
+    "ok": true,
+    "detail": "Offline"
+  },
+  {
+    "name": "sync-day desktop /people: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop /settings: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop /projects: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop /tasks: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop /inbox: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-day desktop: nothing shows at rest",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "sync-day desktop: a burst of 24 writes — the status never showed",
+    "ok": true,
+    "detail": "24 writes, seen []"
+  },
+  {
+    "name": "sync-day desktop: and no toast for them",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "sync-day desktop: slow write — nothing at 2s, \"Syncing…\" at 4.6s, nothing once it lands",
+    "ok": true,
+    "detail": "[null,\"Syncing…\",null]"
+  },
+  {
+    "name": "sync-day desktop: offline → \"Offline\", a change → \"Offline · 1 waiting\"",
+    "ok": true,
+    "detail": "[\"Offline\",\"Offline · 1 waiting\"]"
+  },
+  {
+    "name": "sync-day desktop: back online it syncs, says \"Synced\" briefly, then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-day desktop: a refused write → \"1 change not saved ⚠\" + its toast",
+    "ok": true,
+    "detail": "[\"1 change not saved ⚠\",[\"One change couldn't be saved — set aside so the rest sync on.\"]]"
+  },
+  {
+    "name": "sync-day desktop: its popover names the change that wasn't saved",
+    "ok": true,
+    "detail": "NOT SAVED ⚠ · 1 CHANGE / TASK / 'Renew the passport' · changed / 1 min ago / set aside so everything else syncs on — make the change again to keep it"
+  },
+  {
+    "name": "sync-day desktop: once seen it calms — \"Synced\", then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-day phone /routines: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone /routines: offline shows on the same strip",
+    "ok": true,
+    "detail": "Offline"
+  },
+  {
+    "name": "sync-day phone /people: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone /settings: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone /projects: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone /tasks: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone /inbox: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-day phone: nothing shows at rest",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "sync-day phone: a burst of 24 writes — the status never showed",
+    "ok": true,
+    "detail": "24 writes, seen []"
+  },
+  {
+    "name": "sync-day phone: and no toast for them",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "sync-day phone: slow write — nothing at 2s, \"Syncing…\" at 4.6s, nothing once it lands",
+    "ok": true,
+    "detail": "[null,\"Syncing…\",null]"
+  },
+  {
+    "name": "sync-day phone: offline → \"Offline\", a change → \"Offline · 1 waiting\"",
+    "ok": true,
+    "detail": "[\"Offline\",\"Offline · 1 waiting\"]"
+  },
+  {
+    "name": "sync-day phone: back online it syncs, says \"Synced\" briefly, then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-day phone: a refused write → \"1 change not saved ⚠\" + its toast",
+    "ok": true,
+    "detail": "[\"1 change not saved ⚠\",[\"One change couldn't be saved — set aside so the rest sync on.\"]]"
+  },
+  {
+    "name": "sync-day phone: its popover names the change that wasn't saved",
+    "ok": true,
+    "detail": "NOT SAVED ⚠ · 1 CHANGE / TASK / 'Renew the passport' · changed / 1 min ago / set aside so everything else syncs on — make the change again to keep it"
+  },
+  {
+    "name": "sync-day phone: once seen it calms — \"Synced\", then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "ctrl-a-night tasks-default: selects every open task (9)",
+    "ok": true,
+    "detail": "selected 9, rows 9, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-default: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-default: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-today: selects every open task (5)",
+    "ok": true,
+    "detail": "selected 5, rows 5, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-today: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-today: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-all: selects every open task (11)",
+    "ok": true,
+    "detail": "selected 11, rows 11, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-all: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-all: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-overdue: selects every open task (1)",
+    "ok": true,
+    "detail": "selected 1, rows 1, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-overdue: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-overdue: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-upcoming: selects every open task (1)",
+    "ok": true,
+    "detail": "selected 1, rows 1, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-upcoming: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-upcoming: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-someday: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-someday: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-someday: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-week: selects every open task (7)",
+    "ok": true,
+    "detail": "selected 7, rows 7, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-week: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-week: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-month: selects every open task (7)",
+    "ok": true,
+    "detail": "selected 7, rows 7, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night tasks-month: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night tasks-month: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night project-page: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night project-page: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night project-page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night area-page: selects every open task (2)",
+    "ok": true,
+    "detail": "selected 2, rows 2, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night area-page: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night area-page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night planning-board: selects every open task (10)",
+    "ok": true,
+    "detail": "selected 10, rows 10, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night planning-board: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night planning-board: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night today: selects every open task (9)",
+    "ok": true,
+    "detail": "selected 9, rows 0, page text selected 0"
+  },
+  {
+    "name": "ctrl-a-night today: Esc clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night today: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night Done tab: no selection (done tasks aren't bulk-actionable)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night empty quick add (focus kept after Enter) hands Ctrl+A to the list",
+    "ok": true,
+    "detail": "focus in empty field true, selected 12"
+  },
+  {
+    "name": "ctrl-a-night a field with text keeps the browser select-all (text selected, no rows)",
+    "ok": true,
+    "detail": "[0,12,12]"
+  },
+  {
+    "name": "ctrl-a-night Arabic layout (key ش, code KeyA) selects too",
+    "ok": true,
+    "detail": "12"
+  },
+  {
+    "name": "ctrl-a-night quick add wrote one task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ctrl-a-night phone 390: Ctrl+A selects all, the selection app bar shows \"11 selected\"",
+    "ok": true,
+    "detail": "11"
+  },
+  {
+    "name": "ctrl-a-night phone: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night the picker: each domain, its areas, its projects; then No domain",
+    "ok": true,
+    "detail": "[[\"Work\",[\"Work\",\"Retainer Co\",\"Shaheen Website\"]],[\"Home\",[\"Home\",\"Health\"]],[\"No domain\",[\"Reading\",\"Garage\"]]]"
+  },
+  {
+    "name": "move-night one task → an area: area + its domain, no project",
+    "ok": true,
+    "detail": "[[null,\"30000000-0000-4000-8000-000000000001\",\"40000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-night toast \"Moved to Health\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night Undo puts it back (no area, no domain)",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Renew the passport\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-night a project task → a domain: only the domain",
+    "ok": true,
+    "detail": "[[null,null,\"40000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-night None clears project, area and domain (\"Unfiled\")",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000003\",\"title\":\"Run 5k\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-night `p` → type \"read\" → Enter files it in the Reading area",
+    "ok": true,
+    "detail": "[[\"10000000-0000-4000-8000-000000000005\",\"30000000-0000-4000-8000-000000000002\"]]"
+  },
+  {
+    "name": "move-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night bulk: 11 tasks → Garage (project), out of their areas",
+    "ok": true,
+    "detail": "11 writes"
+  },
+  {
+    "name": "move-night bulk: one toast \"11 tasks moved to Garage\"",
+    "ok": true,
+    "detail": "11 tasks moved to Garage\nUndo"
+  },
+  {
+    "name": "move-night bulk Undo: every task back where it was",
+    "ok": true,
+    "detail": "[[null,\"30000000-0000-4000-8000-000000000001\",\"40000000-0000-4000-8000-000000000002\"],[\"20000000-0000-4000-8000-000000000001\",null,\"40000000-0000-4000-8000-000000000001\"]]"
+  },
+  {
+    "name": "move-night phone sheet: every row ≥ 48px",
+    "ok": true,
+    "detail": "[52,52,52,52,52,52,52,52]"
+  },
+  {
+    "name": "move-night phone: tap Health → in the area, with its domain",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000004\",\"title\":\"Renew the passport\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":\"40000000-0000-4000-8000-000000000002\",\"area_id\":\"30000000-0000-4000-8000-000000000001\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-07T10:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":30,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "move-night phone: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "move-night phone bulk bar: Done · Tomorrow · Pick date · Move · Delete",
+    "ok": true,
+    "detail": "[\"Done\",\"Tomorrow\",\"Pick date\",\"Move\",\"Delete\"]"
+  },
+  {
+    "name": "move-night phone bulk: 11 tasks → the Work domain",
+    "ok": true,
+    "detail": "11"
+  },
+  {
+    "name": "domain-night the area page has a Domain field showing Home",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night area → Work: the area is written with it",
+    "ok": true,
+    "detail": "[{\"id\":\"30000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"name\":\"Health\",\"description\":null,\"color\":null,\"sort_order\":1,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-07T07:32:45.052Z\"}]"
+  },
+  {
+    "name": "domain-night area → Work: both its tasks follow (domain_id Work)",
+    "ok": true,
+    "detail": "[[\"10000000-0000-4000-8000-000000000003\",\"40000000-0000-4000-8000-000000000001\"],[\"10000000-0000-4000-8000-000000000012\",\"40000000-0000-4000-8000-000000000001\"]]"
+  },
+  {
+    "name": "domain-night toast \"Moved to Work\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night Undo: the area back in Home, each task back to its own domain",
+    "ok": true,
+    "detail": "[[\"40000000-0000-4000-8000-000000000002\"],{\"10000000-0000-4000-8000-000000000003\":\"40000000-0000-4000-8000-000000000002\",\"10000000-0000-4000-8000-000000000012\":null}]"
+  },
+  {
+    "name": "domain-night area page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night project → Home: its tasks follow too (they kept the old domain before)",
+    "ok": true,
+    "detail": "[\"40000000-0000-4000-8000-000000000002\",\"40000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "domain-night project Undo: back in Work, tasks too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night Projects ⋯ → Domain… → Home: Reading moves, its task follows",
+    "ok": true,
+    "detail": "[[{\"id\":\"30000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"domain_id\":\"40000000-0000-4000-8000-000000000002\",\"name\":\"Reading\",\"description\":null,\"color\":null,\"sort_order\":2,\"deleted_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-07T07:33:43.341Z\"}],[\"10000000-0000-4000-8000-000000000007\"]]"
+  },
+  {
+    "name": "domain-night phone: the area's Domain field is ≥ 48px tall",
+    "ok": true,
+    "detail": "48px"
+  },
+  {
+    "name": "domain-night phone: area → no domain, its tasks too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night phone: no sideways scroll, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "domain-night phone Projects ⋯ → Domain…: a sheet of domains, rows ≥ 48px",
+    "ok": true,
+    "detail": "[52,52,52]"
+  },
+  {
+    "name": "domain-night phone: Reading → Work",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync-night desktop /routines: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop /routines: offline shows on the same strip",
+    "ok": true,
+    "detail": "Offline"
+  },
+  {
+    "name": "sync-night desktop /people: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop /settings: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop /projects: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop /tasks: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop /inbox: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT · CAIRO AFRICA/CAIRO"
+  },
+  {
+    "name": "sync-night desktop: nothing shows at rest",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "sync-night desktop: a burst of 24 writes — the status never showed",
+    "ok": true,
+    "detail": "24 writes, seen []"
+  },
+  {
+    "name": "sync-night desktop: and no toast for them",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "sync-night desktop: slow write — nothing at 2s, \"Syncing…\" at 4.6s, nothing once it lands",
+    "ok": true,
+    "detail": "[null,\"Syncing…\",null]"
+  },
+  {
+    "name": "sync-night desktop: offline → \"Offline\", a change → \"Offline · 1 waiting\"",
+    "ok": true,
+    "detail": "[\"Offline\",\"Offline · 1 waiting\"]"
+  },
+  {
+    "name": "sync-night desktop: back online it syncs, says \"Synced\" briefly, then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-night desktop: a refused write → \"1 change not saved ⚠\" + its toast",
+    "ok": true,
+    "detail": "[\"1 change not saved ⚠\",[\"One change couldn't be saved — set aside so the rest sync on.\"]]"
+  },
+  {
+    "name": "sync-night desktop: its popover names the change that wasn't saved",
+    "ok": true,
+    "detail": "NOT SAVED ⚠ · 1 CHANGE / TASK / 'Renew the passport' · changed / 1 min ago / set aside so everything else syncs on — make the change again to keep it"
+  },
+  {
+    "name": "sync-night desktop: once seen it calms — \"Synced\", then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-night phone /routines: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone /routines: offline shows on the same strip",
+    "ok": true,
+    "detail": "Offline"
+  },
+  {
+    "name": "sync-night phone /people: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone /settings: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone /projects: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone /tasks: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone /inbox: the strip shows no sync status at rest",
+    "ok": true,
+    "detail": "DEMO'S FLOW · WED 7 OCT"
+  },
+  {
+    "name": "sync-night phone: nothing shows at rest",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "sync-night phone: a burst of 24 writes — the status never showed",
+    "ok": true,
+    "detail": "24 writes, seen []"
+  },
+  {
+    "name": "sync-night phone: and no toast for them",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "sync-night phone: slow write — nothing at 2s, \"Syncing…\" at 4.6s, nothing once it lands",
+    "ok": true,
+    "detail": "[null,\"Syncing…\",null]"
+  },
+  {
+    "name": "sync-night phone: offline → \"Offline\", a change → \"Offline · 1 waiting\"",
+    "ok": true,
+    "detail": "[\"Offline\",\"Offline · 1 waiting\"]"
+  },
+  {
+    "name": "sync-night phone: back online it syncs, says \"Synced\" briefly, then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  },
+  {
+    "name": "sync-night phone: a refused write → \"1 change not saved ⚠\" + its toast",
+    "ok": true,
+    "detail": "[\"1 change not saved ⚠\",[\"One change couldn't be saved — set aside so the rest sync on.\"]]"
+  },
+  {
+    "name": "sync-night phone: its popover names the change that wasn't saved",
+    "ok": true,
+    "detail": "NOT SAVED ⚠ · 1 CHANGE / TASK / 'Renew the passport' · changed / 1 min ago / set aside so everything else syncs on — make the change again to keep it"
+  },
+  {
+    "name": "sync-night phone: once seen it calms — \"Synced\", then nothing",
+    "ok": true,
+    "detail": "[\"Synced●\",null]"
+  }
+]

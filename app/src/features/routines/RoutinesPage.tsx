@@ -3,7 +3,6 @@ import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } 
 import { challengeDays, computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, streakOfGoal, todayTally, type StreakStatus } from './streaks'
 import { vineStage } from '../../lib/growthStages'
 import { groupRoutinesByTime } from './routineGrouping'
-import { useToastStore } from '../../lib/toastStore'
 import { NewRoutineForm } from './NewRoutineForm'
 import { StreakTrellis } from './StreakTrellis'
 import { MorningRitual } from '../rituals/MorningRitual'
@@ -77,8 +76,8 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
   const { current, status } = routineStreak(dates, routine.cadence)
 
   function toggle() {
+    // Kai 2026-10-07: no confirmation pop-ups for things the row already shows (the box ticks, the dots fill).
     toggleCompletion(routine)
-    useToastStore.getState().push({ message: doneToday ? 'Streak stepped back.' : 'Routine completed! Keep growing ✿' })
   }
 
   const check = (

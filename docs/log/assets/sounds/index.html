@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kai's Flow sounds</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #2e2b24; background: #faf6ec; }
+  h1 { font-size: 22px; } h2 { font-size: 17px; margin-top: 28px; }
+  table { border-collapse: collapse; width: 100%; } td { padding: 6px 8px; border-bottom: 1px dashed #d8d0bc; vertical-align: middle; font-size: 14px; }
+  td:nth-child(3), td:nth-child(4) { color: #8a8270; font-size: 12px; white-space: nowrap; } code { color: #8a8270; font-size: 11px; }
+  audio { width: 260px; max-width: 100%; height: 34px; }
+  p { font-size: 14px; color: #5d574a; }
+</style>
+</head>
+<body>
+<h1>Kai's Flow sounds</h1>
+<p>Every sound the app makes, rendered from the app's own synthesis code (app/src/lib/sounds.ts), at full volume. The app's default volume is quieter. One key (C major pentatonic) across all of them. Pick a pack in Settings → Sound.</p>
+<h2>Kalimba (the default): plucked tines, bright and round</h2>
+<table>
+      <tr><td>Task done<br><code>complete</code></td><td><audio controls preload="none" src="kalimba/complete.wav"></audio></td><td>148 ms</td><td>-15.3 dBFS</td></tr>
+      <tr><td>Goal / last Top 3 done<br><code>complete_big</code></td><td><audio controls preload="none" src="kalimba/complete_big.wav"></audio></td><td>677 ms</td><td>-11.9 dBFS</td></tr>
+      <tr><td>Captured<br><code>capture</code></td><td><audio controls preload="none" src="kalimba/capture.wav"></audio></td><td>132 ms</td><td>-17.3 dBFS</td></tr>
+      <tr><td>Focus begins<br><code>focus_start</code></td><td><audio controls preload="none" src="kalimba/focus_start.wav"></audio></td><td>423 ms</td><td>-12.3 dBFS</td></tr>
+      <tr><td>Focus ends<br><code>focus_end</code></td><td><audio controls preload="none" src="kalimba/focus_end.wav"></audio></td><td>1421 ms</td><td>-9.0 dBFS</td></tr>
+      <tr><td>Ritual done<br><code>ritual_done</code></td><td><audio controls preload="none" src="kalimba/ritual_done.wav"></audio></td><td>1044 ms</td><td>-8.5 dBFS</td></tr>
+      <tr><td>Undo<br><code>undo</code></td><td><audio controls preload="none" src="kalimba/undo.wav"></audio></td><td>105 ms</td><td>-19.3 dBFS</td></tr>
+</table>
+<h2>Felt: muted felt piano, warm and low</h2>
+<table>
+      <tr><td>Task done<br><code>complete</code></td><td><audio controls preload="none" src="felt/complete.wav"></audio></td><td>157 ms</td><td>-15.8 dBFS</td></tr>
+      <tr><td>Goal / last Top 3 done<br><code>complete_big</code></td><td><audio controls preload="none" src="felt/complete_big.wav"></audio></td><td>722 ms</td><td>-11.9 dBFS</td></tr>
+      <tr><td>Captured<br><code>capture</code></td><td><audio controls preload="none" src="felt/capture.wav"></audio></td><td>138 ms</td><td>-17.5 dBFS</td></tr>
+      <tr><td>Focus begins<br><code>focus_start</code></td><td><audio controls preload="none" src="felt/focus_start.wav"></audio></td><td>428 ms</td><td>-13.1 dBFS</td></tr>
+      <tr><td>Focus ends<br><code>focus_end</code></td><td><audio controls preload="none" src="felt/focus_end.wav"></audio></td><td>1729 ms</td><td>-7.0 dBFS</td></tr>
+      <tr><td>Ritual done<br><code>ritual_done</code></td><td><audio controls preload="none" src="felt/ritual_done.wav"></audio></td><td>966 ms</td><td>-10.2 dBFS</td></tr>
+      <tr><td>Undo<br><code>undo</code></td><td><audio controls preload="none" src="felt/undo.wav"></audio></td><td>110 ms</td><td>-19.8 dBFS</td></tr>
+</table>
+<h2>Glass: soft glass bells, airy</h2>
+<table>
+      <tr><td>Task done<br><code>complete</code></td><td><audio controls preload="none" src="glass/complete.wav"></audio></td><td>154 ms</td><td>-16.8 dBFS</td></tr>
+      <tr><td>Goal / last Top 3 done<br><code>complete_big</code></td><td><audio controls preload="none" src="glass/complete_big.wav"></audio></td><td>660 ms</td><td>-12.1 dBFS</td></tr>
+      <tr><td>Captured<br><code>capture</code></td><td><audio controls preload="none" src="glass/capture.wav"></audio></td><td>133 ms</td><td>-17.9 dBFS</td></tr>
+      <tr><td>Focus begins<br><code>focus_start</code></td><td><audio controls preload="none" src="glass/focus_start.wav"></audio></td><td>423 ms</td><td>-13.3 dBFS</td></tr>
+      <tr><td>Focus ends<br><code>focus_end</code></td><td><audio controls preload="none" src="glass/focus_end.wav"></audio></td><td>1378 ms</td><td>-9.0 dBFS</td></tr>
+      <tr><td>Ritual done<br><code>ritual_done</code></td><td><audio controls preload="none" src="glass/ritual_done.wav"></audio></td><td>1014 ms</td><td>-9.1 dBFS</td></tr>
+      <tr><td>Undo<br><code>undo</code></td><td><audio controls preload="none" src="glass/undo.wav"></audio></td><td>107 ms</td><td>-20.7 dBFS</td></tr>
+</table>
+</body>
+</html>

@@ -4,6 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { playSound } from '../../lib/sounds'
 import { challengeDays, localDateKey } from './streaks'
 import { fetchAll } from '../../lib/fetchAll'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
@@ -116,6 +117,7 @@ export function toggleCompletion(routine: Routine, date: Date = new Date()): voi
     writeRow('routine_completions', existing, 'delete')
     logActivity('routine.unchecked', 'routine', routine.id, { date: dateKey })
   } else {
+    playSound('complete') // a routine checked in sounds like a task checked off
     const completion: RoutineCompletion = {
       id: crypto.randomUUID(),
       routine_id: routine.id,

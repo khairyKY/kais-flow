@@ -140,7 +140,6 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   function saveLine(): boolean {
     const text = draft.line.trim()
     if (!text) return false
-    playSound('pencil_scratch')
     const prior = draft.saved
     const entry = upsertJournalEntry(prior ? { id: prior.id, created_at: prior.created_at, entry_date: day, body: text } : { entry_date: day, body: text }, !prior)
     // S8 (polish-f1): the event says a line was written, never what it says.
@@ -172,6 +171,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     const steps = SHUT_STEPS.filter((s) => s !== 'line' || wroteLine)
     steps.forEach(logStep)
     logRitualFinished('evening', steps)
+    playSound('ritual_done') // before the garden closes: closing it is what silences it
     // Settings 3a: "The garden is silent after you close it." Quiet hours lift at the date turn.
     closeTheGarden(localDateKey(new Date()))
     setSummary([...stats, `${stars.length} seeded`])
