@@ -4,9 +4,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { updateEvent, deleteEvent, restoreEvent } from './api'
 import { toastUndo } from '../../lib/undo'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
-import { localTimeKey, localToIso } from './eventTime'
-import { localDateKey } from '../routines/streaks'
+import { cairoTimeKey, cairoToIso } from './eventTime'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { completeTaskWithUndo } from '../tasks/api'
+import { DateField } from '../../components/DatePicker'
 import { ColorDots } from './formFields'
 import { TimeField } from './TimeField'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
@@ -20,7 +21,19 @@ interface EventDetailsPanelProps {
   event: CalendarEvent
   conflicts: string[]
   onClose: () => void
+  /** A ran-over task block that isn't done: "Replan ▾" opens the calendar's Plan menu here. */
+  onReplan?: (x: number, y: number) => void
 }
+
+// Kai 2026-10-07 ("it felt like a read-only pop-up"): the title, date and times wear the kit's field
+// chrome (formFields' bone fill + card line), darken on hover, ring on focus, and point; a click
+// on a time opens its list in place, on the date its picker.
+const FIELD_CSS = `
+  .edp-field, .edp-when input, .edp-when button { font: inherit; color: var(--ink-body); background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: 6px; padding: 3px 7px; cursor: pointer; text-transform: inherit; letter-spacing: inherit; transition: border-color var(--dur-quick), background var(--dur-quick); }
+  .edp-field:hover, .edp-when input:hover, .edp-when button:hover { border-color: var(--ink-faint); }
+  .edp-field:focus, .edp-when input:focus, .edp-when button:focus-visible { outline: none; border-color: var(--acc-lavender-deep); background: var(--paper-parchment); box-shadow: var(--focus-ring); }
+  .edp-title { cursor: text; }
+`
 
 function nextDay(isoDate: string): string {
   const d = new Date(isoDate + 'T00:00:00.000Z')
@@ -28,15 +41,15 @@ function nextDay(isoDate: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPanelProps) {
+export function EventDetailsPanel({ event, conflicts, onClose, onReplan }: EventDetailsPanelProps) {
   const openTask = useOpenTask()
   const qc = useQueryClient()
   const [title, setTitle] = useState(event.title)
-  // Which day this sits on isn't editable from the compact popover — dragging the block on the
-  // grid is how you move it to a different day; this only re-times it within the same day.
-  const date = localDateKey(new Date(event.starts_at))
-  const [startTime, setStartTime] = useState(event.all_day ? '' : localTimeKey(new Date(event.starts_at)))
-  const [endTime, setEndTime] = useState(event.all_day ? '' : localTimeKey(new Date(event.ends_at)))
+  // On the user's clock (lib/appZone), like QuickCreate. The day is editable too (Kai 2026-10-07): a
+  // missed block moves to today from here as well as by dragging it.
+  const [date, setDate] = useState(cairoDateKey(new Date(event.starts_at)))
+  const [startTime, setStartTime] = useState(event.all_day ? '' : cairoTimeKey(new Date(event.starts_at)))
+  const [endTime, setEndTime] = useState(event.all_day ? '' : cairoTimeKey(new Date(event.ends_at)))
   const [type, setType] = useState<CalendarEventType>(event.type ?? 'event')
   const [busy, setBusy] = useState(event.busy)
   const [color, setColor] = useState<string | null>(event.color ?? null)
@@ -60,8 +73,8 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
   function handleSave() {
     if (!dirty) { onClose(); return }
-    const startsAt = event.all_day ? `${date}T00:00:00.000Z` : localToIso(date, startTime)
-    const endsAt = event.all_day ? `${nextDay(date)}T00:00:00.000Z` : localToIso(date, endTime)
+    const startsAt = event.all_day ? `${date}T00:00:00.000Z` : cairoToIso(date, startTime)
+    const endsAt = event.all_day ? `${nextDay(date)}T00:00:00.000Z` : cairoToIso(date, endTime)
     updateEvent(event, { title, starts_at: startsAt, ends_at: endsAt, busy, type, color })
     onClose()
   }
@@ -86,8 +99,8 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
     openTask(event.task_id)
   }
 
-  const dateLabel = new Date(event.starts_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
   const stripColor = color ?? 'var(--acc-lavender)'
+  const overdue = cairoDateKey(new Date(Date.parse(event.ends_at) - 1)) < cairoDateKey(new Date())
 
   return (
     <div
@@ -95,7 +108,7 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
       onClick={onClose}
     >
       {/* Motion 3c — scrim and card arrive together, 210ms up-and-settle */}
-      <style>{'@keyframes edpFadeIn{from{opacity:0}}'}</style>
+      <style>{'@keyframes edpFadeIn{from{opacity:0}}' + FIELD_CSS}</style>
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ width: 280, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: 'hidden', animation: 'entryFadeUp 210ms var(--ease-out)' }}
@@ -110,24 +123,42 @@ export function EventDetailsPanel({ event, conflicts, onClose }: EventDetailsPan
 
           <input
             ref={titleRef}
+            className="edp-field edp-title"
+            aria-label="Title"
             value={title}
             onChange={(e) => { setTitle(e.target.value); markDirty() }}
             placeholder="Add title"
-            style={{ width: '100%', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
+            style={{ width: '100%', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, padding: '3px 7px' }}
           />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
-            <span>{dateLabel}</span>
+          <div className="edp-when" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
+            <DateField value={date} title="Date" ariaLabel="Date" clearable={false} onChange={(v) => { if (v) { setDate(v); markDirty() } }} />
             {!event.all_day && (
-              <>
-                <span>·</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 {/* C5 (2026-07-18 audit): themed TimeField, not native time inputs with OS chrome */}
-                <TimeField value={startTime} day={date} onChange={(v) => { setStartTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
+                <TimeField value={startTime} day={date} ariaLabel="Start time" onChange={(v) => { setStartTime(v); markDirty() }} style={{ width: 76 }} />
                 <span>–</span>
-                <TimeField value={endTime} day={date} onChange={(v) => { setEndTime(v); markDirty() }} style={{ font: 'inherit', color: 'inherit', background: 'none', border: 'none', width: 62, padding: 0, textTransform: 'inherit', letterSpacing: 'inherit' }} />
-              </>
+                <TimeField value={endTime} day={date} ariaLabel="End time" onChange={(v) => { setEndTime(v); markDirty() }} style={{ width: 76 }} />
+              </span>
             )}
           </div>
+
+          {onReplan && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <span style={{ color: 'var(--acc-terra)' }}>{overdue ? 'Overdue' : 'Ran over'}</span>
+              <button
+                type="button"
+                className="edp-field"
+                aria-haspopup="menu"
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect()
+                  onReplan(r.left, r.bottom + 4)
+                }}
+              >
+                Replan ▾
+              </button>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {linkedTask ? (
