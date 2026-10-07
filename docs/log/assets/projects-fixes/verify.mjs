@@ -361,7 +361,9 @@ for (const theme of ['day', 'night']) {
         const groupLabel = page.getByText(group, { exact: true }).first()
         const row = page.locator('button', { hasText: hits.find((h) => h.title.toLowerCase().includes(q))?.title }).first()
         if (q === 'remanage the hosting' && DAY && !view) await shot(page, N('4-search-overlay-150'))
+        await row.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {}) // search is debounced; under load 900ms wasn't always enough
         const found = (await groupLabel.count()) > 0 && (await row.count()) > 0
+        if (!found) { await page.screenshot({ path: path.join(OUT, `search-miss-${theme}-${v}-${q.replace(/\W+/g, '-')}.png`) }); console.log('MISS', q, JSON.stringify(await page.evaluate(() => [document.activeElement?.tagName, document.activeElement?.getAttribute('placeholder'), document.activeElement?.value]))) }
         await row.click()
         await sleep(1300)
         const ok = found && (await landed(page))
@@ -454,7 +456,7 @@ for (const theme of ['day', 'night']) {
     if (view) {
       await shot(page, N('6-weight-phone'))
       const plus = await page.getByRole('button', { name: 'More Milestone weight' }).boundingBox()
-      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].filter((el) => el.scrollLeft > 0).map((el) => `${el.tagName}.${String(el.className).slice(0, 40)}[${el.getAttribute('aria-label') ?? ''}] ${el.scrollLeft}`).join(' | ') || false)
+      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].filter((el) => el.scrollLeft > 0).map((el) => { const chain = []; for (let e = el; e && chain.length < 5; e = e.parentElement) chain.push(`${e.tagName}.${String(e.className).slice(0, 30)}${e.id ? '#' + e.id : ''}`); const lim = el.getBoundingClientRect().right + el.scrollLeft; const wide = [...el.querySelectorAll('*')].filter((d) => d.getBoundingClientRect().right + el.scrollLeft > lim + 1).slice(0, 4).map((d) => `${d.tagName}.${String(d.className).slice(0, 24)}"${(d.textContent || '').slice(0, 18)}" r${Math.round(d.getBoundingClientRect().right + el.scrollLeft - lim)}`); return `${chain.join(' < ')} [w${el.clientWidth}/${el.scrollWidth}] ${el.scrollLeft} :: ${wide.join(' ; ')}` }).join(' | ') || false)
       check(`${N('number')} phone: the milestone row fits the card (−/+ in reach, nothing scrolled sideways)`, plus && plus.x + plus.width <= 390 && !shifted, JSON.stringify({ plus, shifted }))
     }
     check(`${N('number')} ${v}: no page errors`, errors.length === 0, errors.join(' | '))
