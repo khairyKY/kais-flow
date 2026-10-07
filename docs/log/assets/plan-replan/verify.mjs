@@ -92,10 +92,12 @@ const DESKTOP = { viewport: { width: 1280, height: 800 } }
 
 async function open(theme, view, route = '/today', at = '10:00', mutate = (rows) => rows) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess]) => {
+  await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', sess)
-  }, [theme, JSON.stringify(session)])
+    // What's new (v1.0.22) toasts "Updated to vX" once per version — this harness counts its own toasts.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
+  }, [theme, JSON.stringify(session), UID])
   const state = { rows: mutate(tables()), writes: [] }
   let seq = 0
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
