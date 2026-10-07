@@ -10,7 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
@@ -19,14 +19,14 @@ import { labelOptions } from './taskDisplay'
 import { stripLabels } from '../command-bar/parseCommand'
 import { useListKeys } from '../../components/useListKeys'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { MovePicker } from './MovePicker'
+import { placeKey, type MoveTarget } from './move'
 import { BulkBar } from '../../components/BulkBar'
 import { Skeleton } from '../../components/States'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleToday, scheduleNextWeek } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { useToastStore } from '../../lib/toastStore'
 import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
@@ -600,19 +600,17 @@ export function TasksPage() {
     moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
-  function bulkSchedule(iso: string, when = '') {
-    selectedTasks.forEach((t) => rescheduleDue(t, iso))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled${when ? ' ' + when : ''}.` })
+  // Kai 2026-10-07: every bulk action is an Undo toast (no plain "N tasks moved." notices).
+  function bulkSchedule(iso: string) {
+    rescheduleTasksWithUndo(selectedTasks, iso)
     clearSelection()
   }
-  function bulkMove(projectId: string | null, domainId: string | null) {
-    selectedTasks.forEach((t) => setProject(t, projectId, domainId))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
+  function bulkMove(to: MoveTarget) {
+    moveTasksWithUndo(selectedTasks, to)
     clearSelection()
   }
   function bulkSomeday() {
-    selectedTasks.forEach((t) => setSomeday(t, true))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
+    somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
   // Flow Audit §4: delete = Trash + Undo, no confirm (only Trash's Delete forever confirms).
@@ -721,10 +719,7 @@ export function TasksPage() {
             type="button"
             onClick={() => {
               const stale = filterByList(displayTasks, 'overdue', now)
-              stale.forEach((t) => rescheduleDue(t, now.toISOString()))
-              useToastStore.getState().push({
-                message: `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`,
-              })
+              rescheduleTasksWithUndo(stale, now.toISOString(), `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today`)
             }}
             style={{
               marginTop: 14,
@@ -890,7 +885,7 @@ export function TasksPage() {
       </div>
 
       {kbProjectTask && (
-        <ProjectPicker position={rowAnchor('task-', kbProjectTask.id)} projects={projects} domains={domains} currentProjectId={kbProjectTask.project_id} onSelect={(projectId, domainId) => setProject(kbProjectTask, projectId, domainId)} onClose={() => setKbProjectId(null)} />
+        <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
 
       {!isDone && selected.size > 0 && (
@@ -906,7 +901,7 @@ export function TasksPage() {
         />
       )}
       {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
-      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>
   )
 }
