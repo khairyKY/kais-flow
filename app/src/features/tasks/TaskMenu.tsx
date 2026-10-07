@@ -24,7 +24,8 @@ import { useStartFocus } from '../today/startFocus'
 /** Every write the menu (and the swipe) can make for a row. */
 export interface TaskMenuActions {
   tomorrow: () => void
-  schedule: (iso: string) => void
+  /** `timed`: Pick date & time… set a time — that puts the task on the calendar (calendar/replan). */
+  schedule: (iso: string, timed?: boolean) => void
   someday: () => void
   move: (projectId: string | null, domainId: string | null) => void
   priority: (priority: number | null) => void
@@ -52,7 +53,7 @@ export interface TaskMenuActions {
 export interface BulkActions {
   count: number
   onTomorrow: () => void
-  onSchedule: (iso: string) => void
+  onSchedule: (iso: string, timed?: boolean) => void
   onSomeday: () => void
   onMove: (projectId: string | null, domainId: string | null) => void
   onDelete: () => void
@@ -150,7 +151,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx, projects, domain
       blockTomorrow={ctx.canUnschedule ? { hint: ctx.tomorrowHint } : undefined}
       onClose={close}
       actions={{
-        schedule: (iso) => done(() => actions.schedule(iso)),
+        schedule: (iso, timed) => done(() => actions.schedule(iso, timed)),
         tomorrow: () => done(actions.tomorrow),
         slot: bulk || !actions.slot ? undefined : (s, e) => done(() => actions.slot!(s, e)),
         someday: () => done(actions.someday),

@@ -5,7 +5,8 @@ import { DatePicker, Popover } from '../../components/DatePicker'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button } from '../../components/kit'
-import { durationLabel, freeStarts, fromMin } from '../../components/pickerMath'
+import { durationLabel, fromMin } from '../../components/pickerMath'
+import { scheduleSlots } from '../calendar/phoneGridMath'
 import { SheetTitle } from '../../components/TimePicker'
 import { useAppSettings } from '../../lib/settings'
 import { parseWeekend } from '../../lib/weekend'
@@ -24,7 +25,8 @@ import '../../components/pickers.css'
 
 /** The writes a plan makes — a row's TaskMenuActions, or a selection's bulk handlers. */
 export interface PlanActions {
-  schedule: (iso: string) => void
+  /** `timed`: the date picker's time sheet set a time (a time puts the task on the calendar). */
+  schedule: (iso: string, timed?: boolean) => void
   tomorrow: () => void
   /** Next free slot's Confirm (one task only). */
   slot?: (startsAt: string, endsAt: string) => void
@@ -74,8 +76,10 @@ export function PlanMenu({ task, bulkCount, spreadTasks, title: titleOverride, p
   const { data: events = [] } = useCalendarEvents()
   const bulk = !!bulkCount && bulkCount > 1
   const dur = task.duration_min || 30
-  // The task's own blocks don't count as busy — a free slot may be where it already sits.
-  const slots = useMemo(() => (bulk || !actions.slot ? [] : freeStarts(events.filter((e) => e.task_id !== task.id), new Date(), dur)), [bulk, actions.slot, events, task.id, dur])
+  // The phone Schedule sheet's own slots (calendar/phoneGridMath scheduleSlots — the calendar's Plan ▾
+  // "Next free slot" is its first): up to three today, else the next days'. The task's own blocks
+  // don't count as busy — a free slot may be where it already sits.
+  const slots = useMemo(() => (bulk || !actions.slot ? [] : scheduleSlots(events.filter((e) => e.task_id !== task.id), new Date(), dur).slots), [bulk, actions.slot, events, task.id, dur])
   const spread = useMemo(() => (actions.spread && spreadTasks?.length ? spreadPlan(spreadTasks, events, new Date()) : null), [actions.spread, spreadTasks, events])
   const now = new Date()
   const placed = spread?.filter((p) => p.slot).length ?? 0
@@ -92,7 +96,7 @@ export function PlanMenu({ task, bulkCount, spreadTasks, title: titleOverride, p
   const meta = bulk ? `${bulkCount} tasks` : task.title
 
   if (stage === 'pick') {
-    return <DatePicker title="Pick date & time" meta={meta} value={bulk ? null : task.due_at} withTime position={position} onPick={(iso) => actions.schedule(iso)} onClose={onClose} />
+    return <DatePicker title="Pick date & time" meta={meta} value={bulk ? null : task.due_at} withTime position={position} onPick={(iso, _min, timed) => actions.schedule(iso, timed)} onClose={onClose} />
   }
   if (stage === 'spread' && spread) {
     return <SpreadConfirm meta={meta} picks={spread} position={position} mobile={isMobile} onConfirm={() => actions.spread?.(spread)} onClose={onClose} />

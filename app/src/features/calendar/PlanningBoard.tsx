@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, createTask, rescheduleDue, planWithUndo, setSomeday, completeTask, undoCompletion, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { PlanMenu } from '../tasks/PlanMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
@@ -256,9 +256,9 @@ export function PlanningBoard() {
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
     clearSelection()
   }
-  function bulkSchedule(iso: string, when = '') {
-    selectedTasks.forEach((t) => rescheduleDue(t, iso))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled${when ? ' ' + when : ''}.` })
+  // The bulk bar's Plan (plan-replan): a date with a time is timed — it puts the tasks on the calendar.
+  function bulkSchedule(iso: string, timed?: boolean) {
+    planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled.`, timed)
     clearSelection()
   }
   function bulkMove(projectId: string | null, domainId: string | null) {
@@ -344,13 +344,8 @@ export function PlanningBoard() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && (
-        <ScheduleMenu
-          position={bulkSchedulePos}
-          onClose={() => setBulkSchedulePos(null)}
-          onSchedule={(iso) => bulkSchedule(iso)}
-          onSomeday={bulkSomeday}
-        />
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
       {bulkProjectPos && (
         <ProjectPicker

@@ -231,8 +231,8 @@ export function ProjectDetailPage() {
     toastUndo(`${plural(batch.length)} parked for someday.`, () => batch.forEach((t) => setSomeday(t, false)))
     clearSelection()
   }
-  const bulkSchedule = (iso: string) => {
-    planWithUndo(selectedTasks, iso, `${plural(selectedTasks.length)} scheduled.`)
+  const bulkSchedule = (iso: string, timed?: boolean) => {
+    planWithUndo(selectedTasks, iso, `${plural(selectedTasks.length)} scheduled.`, timed)
     clearSelection()
   }
   const bulkMove = (projectId: string | null, domainId: string | null) => {
@@ -267,7 +267,7 @@ export function ProjectDetailPage() {
         />
       )}
       {bulkSchedulePos && selectedTasks.length > 0 && (
-        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: (iso) => bulkSchedule(iso), tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>

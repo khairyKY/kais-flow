@@ -208,28 +208,6 @@ export function freeSlots(busy: readonly Busy[], day: string, now: Date, min = 3
   return out
 }
 
-export interface FreeStart {
-  day: string
-  start: number
-}
-
-/** "Next free slot" (Kai 2026-10-07, his "ASAP"): every start that fits `dur` in the free hours
- * (freeSlots: 08:00–20:00, not before now), today first, then each day after for `days` days —
- * stepping through a gap by the duration on the quarter grid (the task sheet's Suggest a time
- * steps the same way), so a long gap offers more than one. At most `limit`, earliest first. */
-export function freeStarts(events: readonly CalendarEvent[], now: Date, dur: number, limit = 12, days = 14): FreeStart[] {
-  const today = cairoDateKey(now)
-  const step = Math.max(15, Math.ceil(dur / 15) * 15)
-  const out: FreeStart[] = []
-  for (let i = 0; i < days && out.length < limit; i++) {
-    const day = addDays(today, i)
-    for (const gap of freeSlots(busyOnDay(events, day), day, now, dur, Infinity)) {
-      for (let t = gap.start; t + dur <= gap.end && out.length < limit; t += step) out.push({ day, start: t })
-    }
-  }
-  return out
-}
-
 /** The duration chips (minutes). */
 export const DURATIONS = [15, 30, 45, 60, 90, 120]
 /** 15m · 1h · 1h30 — MK Time Picker's chip labels. */

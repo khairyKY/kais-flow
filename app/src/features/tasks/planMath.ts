@@ -2,7 +2,8 @@
 // that are usable and don't clash… What does each shortcut mean?"). One list for every place a task
 // gets a date — the ⋯ / right-click menu, the swipe, the task sheet's date chip, the bulk bar — each
 // option saying the day and time it lands on and, in one plain line, what it means.
-import { addDays, atDay, busyOnDay, dayHint, freeSlots, fromMin, quickPicks, type FreeStart } from '../../components/pickerMath'
+import { addDays, atDay, busyOnDay, dayHint, freeSlots, fromMin, quickPicks } from '../../components/pickerMath'
+import type { PlaceSlot } from '../calendar/phoneGridMath'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { daysToWeekend, weekendLabel } from '../../lib/weekend'
 import { cairoTimeKey } from '../calendar/eventTime'
@@ -38,7 +39,7 @@ export function todayFor(task: Pick<Task, 'due_at'> | undefined, now = new Date(
 }
 
 /** "Today 14:30–15:00", "Tomorrow 09:00–09:30", "Thu 8 11:00–11:45". */
-export function slotText(s: FreeStart, dur: number, now = new Date()): string {
+export function slotText(s: PlaceSlot, dur: number, now = new Date()): string {
   const today = cairoDateKey(now)
   const day = s.day === today ? 'Today' : s.day === addDays(today, 1) ? 'Tomorrow' : dayHint(s.day, today)
   return `${day} ${fromMin(s.start)}–${fromMin(s.start + dur)}`
@@ -47,7 +48,7 @@ export function slotText(s: FreeStart, dur: number, now = new Date()): string {
 export interface SpreadPick {
   task: Task
   /** Its free slot today (minutes into the day), or null → tomorrow, first thing. */
-  slot: FreeStart | null
+  slot: PlaceSlot | null
   dur: number
 }
 
@@ -91,7 +92,7 @@ export interface PlanContext {
   task?: Task
   weekend: readonly number[]
   /** The first free slot for the task (`undefined` = don't offer the finder, `null` = none free). */
-  slot?: FreeStart | null
+  slot?: PlaceSlot | null
   dur?: number
   /** A selection's Spread into free slots (Today's Replan all): how many land today / tomorrow. */
   spread?: { today: number; tomorrow: number }

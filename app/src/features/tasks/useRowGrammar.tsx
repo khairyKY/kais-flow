@@ -3,7 +3,7 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
 import type { Domain, Project, Task } from '../../lib/types'
-import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveToTomorrowWithUndo, planSlot, planWithUndo, reopenTaskWithUndo, restorePlan, setPriority, setProject, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
+import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveToTomorrowWithUndo, planWithUndo, reopenTaskWithUndo, rescheduleDue, setPriority, setProject, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
 import type { SwipeActions } from './SwipeRow'
 import { dueChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
@@ -18,7 +18,8 @@ import { cairoTimeKey } from '../calendar/eventTime'
 export function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
-    schedule: (iso) => planWithUndo([task], iso, `Planned · ${dueChip(iso, new Date())}`),
+    // `timed`: Pick date & time… set a time, which puts the task on the calendar (calendar/replan).
+    schedule: (iso, timed) => planWithUndo([task], iso, `Planned · ${dueChip(iso, new Date())}`, timed),
     clearDate: () => planWithUndo([task], null, 'Date taken off'),
     someday: () => setSomeday(task, true),
     move: (projectId, domainId) => setProject(task, projectId, domainId),
@@ -29,10 +30,9 @@ export function taskActions(task: Task): TaskMenuActions {
     goal: () => makeGoalWithUndo(task),
     reopen: () => reopenTaskWithUndo(task),
     delete: () => deleteTasksWithUndo([task]),
-    slot: (startsAt, endsAt) => {
-      const u = planSlot(task, startsAt, endsAt)
-      toastUndo(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, () => restorePlan(u))
-    },
+    // Next free slot's Confirm = a timed replan into the slot: the task's block moves there (or one
+    // is placed) and it is due then (calendar/replan's rule, through rescheduleDue).
+    slot: (startsAt, endsAt) => toastUndo(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, rescheduleDue(task, startsAt, true)),
   }
 }
 

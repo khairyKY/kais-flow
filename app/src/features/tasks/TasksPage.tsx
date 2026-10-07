@@ -10,7 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, restorePlan, planWithUndo, toggleTop3, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, createTask, setSomeday, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -603,8 +603,8 @@ export function TasksPage() {
     moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
-  function bulkSchedule(iso: string) {
-    planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} planned`)
+  function bulkSchedule(iso: string, timed?: boolean) {
+    planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} planned`, timed)
     clearSelection()
   }
   function bulkMove(projectId: string | null, domainId: string | null) {
@@ -725,7 +725,7 @@ export function TasksPage() {
               // The Plan menu's Today for each (its own time), past blocks off the calendar, with Undo.
               const stale = filterByList(displayTasks, 'overdue', now)
               const undos = stale.map((t) => rescheduleDue(t, todayFor(t, now)))
-              toastUndo(`${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`, () => undos.forEach(restorePlan))
+              toastUndo(`${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`, () => undos.forEach((undo) => undo()))
             }}
             style={{
               marginTop: 14,
@@ -907,7 +907,7 @@ export function TasksPage() {
         />
       )}
       {bulkSchedulePos && selectedTasks.length > 0 && (
-        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: (iso) => bulkSchedule(iso), tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>

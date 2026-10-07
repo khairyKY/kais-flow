@@ -4,7 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
-import { deleteEventsForTask, moveOrResizeEvent, restoreEventsForTask, scheduleTask } from '../calendar/api'
+import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
@@ -17,7 +17,7 @@ import { cachedStarEvents } from '../today/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { fromMin } from '../../components/pickerMath'
 import type { SpreadPick } from './planMath'
-import type { CalendarEvent, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
 
@@ -251,10 +251,12 @@ export function moveToTomorrowWithUndo(tasks: Task[]): void {
   planWithUndo(tasks, scheduleTomorrow(), tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow`)
 }
 
-/** A Plan-menu pick for one task or a selection: the due moves (rescheduleDue), with "<message> · Undo". */
-export function planWithUndo(tasks: Task[], dueAt: string | null, message: string): void {
-  const undos = tasks.map((t) => rescheduleDue(t, dueAt))
-  toastUndo(message, () => undos.forEach(restorePlan))
+/** A Plan-menu pick for one task or a selection, with "<message> · Undo": the due moves and its
+ * blocks follow (rescheduleDue — `timed`: a time was set, which puts it on the calendar there; a
+ * date alone plans the day). */
+export function planWithUndo(tasks: Task[], dueAt: string | null, message: string, timed = false): void {
+  const undos = tasks.map((t) => rescheduleDue(t, dueAt, timed))
+  toastUndo(message, () => undos.forEach((undo) => undo()))
 }
 
 /** The task sheet's ⋯ → Duplicate: an open copy (same fields, not on the calendar, not in Top 3),
@@ -385,60 +387,14 @@ export function renameTask(task: Task, title: string): void {
   writeRow('tasks', { ...task, title })
 }
 
-/** What a plan changed, for its Undo: the task and its calendar blocks as they were, and the block
- * it made (a free slot with no block to move). */
-export interface PlanUndo {
-  task: Task
-  events: CalendarEvent[]
-  created: CalendarEvent | null
-}
-
-/** The task's live timed blocks, earliest first — undefined while the calendar hasn't loaded. */
-function blocksOf(taskId: string): CalendarEvent[] | undefined {
-  return queryClient
-    .getQueryData<CalendarEvent[]>(['calendar_events'])
-    ?.filter((e) => e.task_id === taskId && !e.deleted_at && !e.all_day)
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-}
-
-/** Every date change — the Plan menu, the swipe, the 1/2/3 keys, the bulk bar, the rituals. Setting a
- * real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3
- * all clear it). Kai 2026-10-07: replanning must not leave the task stuck on a past slot, so a
- * calendar block of it that is already over comes off the calendar (a block still ahead stays). */
-export function rescheduleDue(task: Task, dueAt: string | null): PlanUndo {
-  const now = Date.now()
-  const blocks = blocksOf(task.id)
-  const past = blocks?.filter((e) => Date.parse(e.ends_at) <= now) ?? []
-  const ahead = blocks?.find((e) => Date.parse(e.ends_at) > now)
-  for (const e of past) writeRow('calendar_events', { ...e, deleted_at: new Date(now).toISOString() })
-  const stale = blocks && !ahead && !!task.scheduled_end && Date.parse(task.scheduled_end) <= now
-  const schedule = ahead ? { scheduled_start: ahead.starts_at, scheduled_end: ahead.ends_at } : past.length || stale ? { scheduled_start: null, scheduled_end: null } : null
-  writeRow('tasks', { ...task, due_at: dueAt, someday: dueAt ? false : task.someday, ...schedule })
-  logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
-  return { task, events: past, created: null }
-}
-
-/** Next free slot's Confirm: the task goes on the calendar there and is due then. A block it already
- * has moves (the earliest — a stuck past one first); any other block already over comes off. */
-export function planSlot(task: Task, startsAt: string, endsAt: string): PlanUndo {
-  const now = Date.now()
-  const [move, ...rest] = blocksOf(task.id) ?? []
-  const past = rest.filter((e) => Date.parse(e.ends_at) <= now)
-  for (const e of past) writeRow('calendar_events', { ...e, deleted_at: new Date(now).toISOString() })
-  const created = move ? null : scheduleTask(task, startsAt, endsAt)
-  if (move) moveOrResizeEvent(move, startsAt, endsAt, false)
-  writeRow('tasks', { ...cached(task), due_at: startsAt, someday: false, scheduled_start: startsAt, scheduled_end: endsAt })
-  logActivity('task.rescheduled', 'task', task.id, { due_at: startsAt })
-  return { task, events: move ? [move, ...past] : past, created }
-}
-
-/** Replan all → Spread into free slots, once the preview is confirmed (planMath spreadPlan): each
- * placed task goes on the calendar in its slot, the rest to tomorrow, first thing — one Undo. */
+/** Replan all → Spread into free slots, once the preview is confirmed (planMath spreadPlan): a
+ * placed task gets its slot's time — a timed replan, so its block moves there (calendar/replan) —
+ * and the rest go to tomorrow, first thing. One Undo for all of it. */
 export function spreadWithUndo(picks: readonly SpreadPick[]): void {
   const at = (day: string, min: number) => cairoToIso(day, fromMin(min))
-  const undos = picks.map(({ task, slot, dur }) => (slot ? planSlot(task, at(slot.day, slot.start), at(slot.day, slot.start + dur)) : rescheduleDue(task, scheduleTomorrow())))
+  const undos = picks.map(({ task, slot }) => (slot ? rescheduleDue(task, at(slot.day, slot.start), true) : rescheduleDue(task, scheduleTomorrow())))
   const placed = picks.filter((p) => p.slot).length
-  toastUndo(`${picks.length} replanned · ${placed} today, ${picks.length - placed} tomorrow`, () => undos.forEach(restorePlan))
+  toastUndo(`${picks.length} replanned · ${placed} today, ${picks.length - placed} tomorrow`, () => undos.forEach((undo) => undo()))
 }
 
 /** A selection parked for Someday, with Undo (Today's Replan all). */
@@ -447,13 +403,23 @@ export function somedayWithUndo(tasks: readonly Task[]): void {
   toastUndo(tasks.length === 1 ? 'Parked for someday' : `${tasks.length} tasks parked for someday`, () => tasks.forEach((t) => setSomeday(cached(t), t.someday)))
 }
 
-/** Undo of rescheduleDue / planSlot: the blocks and the task's dates exactly as they were. */
-export function restorePlan(u: PlanUndo): void {
-  for (const e of u.events) writeRow('calendar_events', e)
-  if (u.created) writeRow('calendar_events', { ...u.created, deleted_at: new Date().toISOString() })
-  const { due_at, someday, scheduled_start, scheduled_end } = u.task
-  writeRow('tasks', { ...cached(u.task), due_at, someday, scheduled_start, scheduled_end })
-  logActivity('task.rescheduled', 'task', u.task.id, { due_at })
+/** Setting a real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3 all clear it).
+ * Every replan funnels through here (menus, swipes, keys, bulk bars, rituals, the task sheet and
+ * editor), so its calendar blocks follow here too (Kai 2026-10-07: an overdue task replanned stayed
+ * stuck on the calendar): `timed` = a time was set, which puts it on the calendar at that time; a
+ * date alone takes a block from another day off (calendar/replan.ts has the rule). Returns the
+ * Undo: the row and its blocks exactly as they were. */
+export function rescheduleDue(task: Task, dueAt: string | null, timed = false): () => void {
+  const before = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? task
+  writeRow('tasks', { ...task, due_at: dueAt, someday: dueAt ? false : task.someday })
+  logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+  const undoBlocks = replanTaskBlocks(task, dueAt, timed)
+  return () => {
+    undoBlocks()
+    const now = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? before
+    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday })
+    logActivity('task.rescheduled', 'task', task.id, { due_at: before.due_at })
+  }
 }
 
 export function setRecurrence(task: Task, rule: string | null): void {

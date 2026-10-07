@@ -286,7 +286,7 @@ export function TodayPage() {
     clearSelection()
   }
   function bulkTomorrow() { moveToTomorrowWithUndo(selectedTasks); clearSelection() }
-  function bulkSchedule(iso: string) { planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} planned`); clearSelection() }
+  function bulkSchedule(iso: string, timed?: boolean) { planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} planned`, timed); clearSelection() }
   function bulkMove(projectId: string | null, domainId: string | null) { selectedTasks.forEach((t) => setProject(t, projectId, domainId)); bulkToast('moved'); clearSelection() }
   function bulkSomeday() { selectedTasks.forEach((t) => setSomeday(t, true)); bulkToast('parked for someday'); clearSelection() }
   // Flow Audit §4: delete = Trash + Undo, no confirm.
@@ -538,7 +538,7 @@ export function TodayPage() {
           position={replanAt}
           onClose={() => setReplanAt(null)}
           actions={{
-            schedule: (iso) => planWithUndo(overdueOpen, iso, `${overdueOpen.length} overdue task${overdueOpen.length === 1 ? '' : 's'} replanned`),
+            schedule: (iso, timed) => planWithUndo(overdueOpen, iso, `${overdueOpen.length} overdue task${overdueOpen.length === 1 ? '' : 's'} replanned`, timed),
             tomorrow: () => moveToTomorrowWithUndo(overdueOpen),
             someday: () => somedayWithUndo(overdueOpen),
             spread: spreadWithUndo,

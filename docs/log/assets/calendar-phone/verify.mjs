@@ -211,7 +211,8 @@ for (const theme of ['day', 'night']) {
     check(`${name} the shell's mono top bar steps aside; the header is 56 tall`, (await page.locator('.app-topbar').isHidden()) && (await page.locator('.pc-head').evaluate((e) => e.getBoundingClientRect().height)) === 56)
     const cells = await page.locator('.pc-day').evaluateAll((els) => els.map((e) => [e.getBoundingClientRect().width >= 48 && e.getBoundingClientRect().height === 76, e.getAttribute('aria-current'), e.innerText.replace(/\s+/g, ' ')]))
     check(`${name} week strip: 7 × 76px targets, Sun 27 shown, today ringed`, cells.length === 7 && cells.every((c) => c[0]) && cells[0][1] === 'date' && cells[0][2] === 'S 27' && cells[6][2] === 'S 3', JSON.stringify(cells.map((c) => c[2])))
-    check(`${name} unscheduled strip: "Unscheduled · 2", paper cards 40 tall`, (await text(page.locator('.pc-uns-label'))) === 'UNSCHEDULED · 2' && (await page.locator('.pc-chip').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))).join() === '40,40')
+    // calendar-rail (Kai 2026-10-07) replaced the "Unscheduled · 2" label with the rail's segments.
+    check(`${name} planning strip: "Overdue 0 · Today 2 · Inbox 0" (Today chosen), paper cards 40 tall`, (await page.locator('.pc-segs [role="radio"]').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim()).join() === 'Overdue 0,Today 2,Inbox 0' && (await page.locator('.pc-segs [aria-checked="true"]').innerText()).includes('Today') && (await page.locator('.pc-chip').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))).join() === '40,40')
     const labels = await page.locator('.pc-hour > span').evaluateAll((els) => els.slice(11, 13).map((e) => e.getBoundingClientRect().top))
     check(`${name} hours are 64px`, labels[1] - labels[0] === 64, labels[1] - labels[0])
     check(`${name} four blocks today`, (await page.locator('.pc-pane .pc-block').count()) === 4)
@@ -274,10 +275,11 @@ for (const theme of ['day', 'night']) {
       await page.keyboard.press('Escape')
       await sleep(500)
       check(`${name} closing it leaves /calendar as it was`, (await ts.count()) === 0 && !new URL(page.url()).searchParams.has('task'), page.url())
-      // A plain event: the event sheet — "Event · 1h", Time only, Delete; no task, no Unschedule.
+      // A plain event: the event sheet — "Event · 1h", Date + Time (calendar-rail: its title is a field
+      // and the day moves too), Delete; no task, no Unschedule.
       await tap(cdp, block(page, 2).locator('.pc-name'))
       const e = dialog(page)
-      check(`${name} a plain event → the event sheet: "Event · 1h", Time only, Delete (no Unschedule, no checkbox)`, (await text(e.locator('.pc-bs-meta'))) === 'EVENT · 1H' && (await e.locator('.kf-as-row').count()) === 1 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0 && (await e.getByRole('checkbox').count()) === 0 && !new URL(page.url()).searchParams.has('task'))
+      check(`${name} a plain event → the event sheet: "Event · 1h", Date + Time, Delete (no Unschedule, no checkbox)`, (await text(e.locator('.pc-bs-meta'))) === 'EVENT · 1H' && (await e.locator('.kf-as-row').count()) === 2 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0 && (await e.getByRole('checkbox').count()) === 0 && !new URL(page.url()).searchParams.has('task'))
       const held = await page.locator('.pc-held').boundingBox()
       check(`${name} …the event stays in view above its sheet, drawn over the scrim`, (await text(page.locator('.pc-held'))).startsWith('Lunch with Omar') && held.y >= (await page.locator('.pc-scroll').boundingBox()).y && held.y + held.height <= (await e.boundingBox()).y, JSON.stringify(held))
       check(`${name} …its title sits on the sheet's gutter`, Math.abs((await e.locator('.pc-bs-title').boundingBox()).x - 20) <= 1, (await e.locator('.pc-bs-title').boundingBox()).x)
