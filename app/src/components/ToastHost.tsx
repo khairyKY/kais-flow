@@ -44,23 +44,29 @@ const CSS = `
   }
 `
 
-/** Over a sheet with a footer (Plan, Shut down, the pickers), a phone toast sits 8px above that
- * footer as MK draws it (6l / 8d) — the CSS top dock would cover the sheet's ✕. Measured when a
- * toast shows; null = the stylesheet's placement. */
-function sheetFooterDock(): number | null {
+/** Over a sheet with a footer (Plan, Shut down, the pickers, Paper capture's screens), a phone toast
+ * sits 8px above that footer as MK draws it (6l / 8d) — the CSS top dock would cover the sheet's ✕.
+ * A full-screen modal with no footer has its header at the top too, so the toast keeps the tab-bar
+ * dock. Measured when a toast shows; null = the stylesheet's placement. */
+const TABBAR_DOCK = 'calc(var(--tabbar-h) + var(--tabbar-inset) + var(--toast-gap))'
+function sheetFooterDock(): number | string | null {
   if (!window.matchMedia('(max-width: 767px)').matches) return null
   // Only the top sheet counts (sheets portal into <body> in order): an action sheet over the task
   // sheet has no footer, so the toast docks at the top instead of over the action rows.
   const modals = document.querySelectorAll('[aria-modal="true"]')
-  const footer = modals[modals.length - 1]?.querySelector('[data-sheet-footer]')
-  if (!footer) return null
-  return (window.innerHeight - footer.getBoundingClientRect().top) / uiZoom() + 8
+  const top = modals[modals.length - 1]
+  if (!top) return null
+  const footer = top.querySelector('[data-sheet-footer]')
+  if (footer) return (window.innerHeight - footer.getBoundingClientRect().top) / uiZoom() + 8
+  // A sheet's top edge sits ≥ 48px down (the full detent's gap) — the top dock goes there. A modal
+  // that starts at the screen's top edge has its header where that dock would land.
+  return top.getBoundingClientRect().top < 24 ? TABBAR_DOCK : null
 }
 
 export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts)
   const shown = visibleToasts(toasts)
-  const [dock, setDock] = useState<number | null>(null)
+  const [dock, setDock] = useState<number | string | null>(null)
   const count = shown.length
   useLayoutEffect(() => {
     if (!count) return
