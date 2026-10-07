@@ -49,11 +49,13 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 
 async function open(view, theme, route) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
-  await ctx.addInitScript(([t, s]) => {
+  await ctx.addInitScript(([t, s, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', s)
     localStorage.setItem('kf.today.more-open', '1')
-  }, [theme, JSON.stringify(session)])
+    // v1.0.22's one-time "Updated to vX" toast sat over the row this harness right-clicks.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
+  }, [theme, JSON.stringify(session), UID])
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
     const url = new URL(req.url())
@@ -119,7 +121,10 @@ async function tap(cdp, loc) {
 async function toastsGone(page) {
   for (let i = 0; i < 40 && (await page.locator('.kf-toast').count()) > 0; i++) await sleep(250)
 }
-const SPEC = ['Tomorrow', 'Pick date…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
+// v1.0.23: one Plan entry (Replan… when overdue), Move to…, Make goal of the day (hidden on the goal itself), Start focus.
+const SPEC = ['Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
+const onGoal = (l) => l !== 'Make goal of the day' // the row is already the goal
+const starred = (l) => (l === 'Add to Top 3' ? 'Remove from Top 3' : l)
 const phone = { viewport: { width: 390, height: 844 }, touch: true }
 const desktop = { viewport: { width: 1280, height: 800 }, touch: false }
 
@@ -146,7 +151,7 @@ for (const theme of ['day', 'night']) {
     await sleep(200)
     await tap(cdp, r1.getByRole('button', { name: /More actions/ }))
     const labels = (await page.locator('.kf-as-row').allInnerTexts()).map((t) => t.split('\n')[0].trim())
-    check(`${id} ⋯ sheet = MK list (starred row)`, JSON.stringify(labels) === JSON.stringify(SPEC.map((l) => (l === 'Add to Top 3' ? 'Remove from Top 3' : l))), JSON.stringify(labels))
+    check(`${id} ⋯ sheet = MK list (starred row)`, JSON.stringify(labels) === JSON.stringify(SPEC.filter(onGoal).map(starred)), JSON.stringify(labels))
     await page.screenshot({ path: path.join(OUT, `${id}-action-sheet.png`) })
     await tap(cdp, page.locator('.kf-as-row', { hasText: 'Select' }))
     await sleep(300)
@@ -180,7 +185,7 @@ for (const theme of ['day', 'night']) {
     await upnext.scrollIntoViewIfNeeded()
     await tap(cdp, upnext.getByRole('button', { name: /More actions/ }))
     const up = (await page.locator('.kf-as-row').allInnerTexts()).map((t) => t.split('\n')[0].trim())
-    check(`${id} Up next ⋯ = task list + Unschedule`, JSON.stringify(up) === JSON.stringify(['Tomorrow', 'Pick date…', 'Unschedule', ...SPEC.slice(2)]), JSON.stringify(up))
+    check(`${id} Up next ⋯ = task list + Unschedule`, JSON.stringify(up) === JSON.stringify(['Plan…', 'Unschedule', ...SPEC.slice(1)]), JSON.stringify(up))
     const hint = await page.locator('.kf-as-row').first().innerText()
     check(`${id} Up next Tomorrow keeps the block's own time`, !/09:00/.test(hint) || /09:00/.test(new Date(EVENTS[0].starts_at).toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo' })), hint.replace(/\n/g, ' '))
     await page.screenshot({ path: path.join(OUT, `${id}-upnext-sheet.png`) })
@@ -216,7 +221,8 @@ for (const theme of ['day', 'night']) {
       await sleep(300)
       items = (await page.locator('[role="menuitem"]').allInnerTexts()).map((t) => t.split('\n')[0].trim())
     }
-    const want = route === '/today' ? SPEC.map((l) => (l === 'Add to Top 3' ? 'Remove from Top 3' : l)) : SPEC
+    // Today's row 3 is a Top 3 pick (Remove from Top 3, and Move up/down for its place).
+    const want = route === '/today' ? SPEC.map(starred).flatMap((l) => (l === 'Make goal of the day' ? [l, 'Move up'] : [l])) : SPEC
     check(`${id} right-click = the ⋯ list`, JSON.stringify(items) === JSON.stringify(want), JSON.stringify(items))
     await page.screenshot({ path: path.join(OUT, `${id}-menu.png`) })
     await page.keyboard.press('Escape')

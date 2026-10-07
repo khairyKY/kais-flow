@@ -102,7 +102,7 @@ function Seg<T extends string | number>({ value, onChange, options, fill = false
             onClick={() => onChange(o.value)}
             aria-pressed={on}
             style={{
-              padding: fill ? '6px 0' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, minHeight, borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
+              padding: fill ? '6px 2px' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, minHeight, borderRadius: 5, fontSize: 12, lineHeight: 1.2, whiteSpace: fill ? 'normal' : 'nowrap', // a filled row wraps a long label instead of overlapping its neighbour (Weekend at 150%) border: 'none', cursor: 'pointer', font: 'inherit',
               background: on ? 'var(--paper-parchment)' : 'none',
               boxShadow: on ? 'var(--shadow-crisp)' : 'none',
               color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
@@ -378,9 +378,10 @@ function WeekendSetting({ phone }: { phone: boolean }) {
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Weekend</div>
           <div style={fhelp}>“This weekend” lands on its first day · {weekendLabel(days)}</div>
         </div>
-        <div style={phone ? { width: '100%' } : undefined}>
+        {/* Its own full-width line everywhere: beside the label, four options ran past the card at 150%. */}
+        <div style={{ width: '100%' }}>
           <Seg<string>
-            fill={phone}
+            fill
             minHeight={h}
             value={shown}
             onChange={(v) => {
@@ -424,8 +425,8 @@ function PlanGlossary() {
       <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
         {planGlossary(parseWeekend(data?.weekend_days)).map((g) => (
           <div key={g.label} style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--ink-muted)' }}>
-            <dt style={{ display: 'inline', color: 'var(--ink-body)', fontWeight: 600 }}>{g.label}</dt>
-            <dd style={{ display: 'inline', margin: 0 }}> — {g.means}</dd>
+            <dt style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{g.label}</dt>
+            <dd style={{ margin: 0 }}>{g.means}</dd>
           </div>
         ))}
       </dl>

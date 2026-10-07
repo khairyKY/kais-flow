@@ -128,13 +128,13 @@ for (const theme of ['day', 'night']) {
       const cal = page.locator('#settings-Calendar')
       await cal.scrollIntoViewIfNeeded()
       await sleep(300)
-      check(`${N('settings')} Calendar → Opens on shows Week (desktop default) when unset`, (await cal.locator('button[aria-pressed="true"]').innerText()) === 'Week')
+      check(`${N('settings')} Calendar → Opens on shows Week (desktop default) when unset`, (await cal.locator('button[aria-pressed="true"]').first().innerText()) === 'Week')
       const from = state.writes.length
       await cal.getByRole('button', { name: '3 days' }).click()
       await sleep(500)
       const w = writesTo(state, 'app_settings', from)
       check(`${N('settings')} picking 3 days writes calendar_default_view = '3day'`, w.length === 1 && w[0].calendar_default_view === '3day', JSON.stringify(w.map((x) => x.calendar_default_view)))
-      check(`${N('settings')} and the row shows it`, (await cal.locator('button[aria-pressed="true"]').innerText()) === '3 days')
+      check(`${N('settings')} and the row shows it`, (await cal.locator('button[aria-pressed="true"]').first().innerText()) === '3 days')
       await shot(page, N('settings-calendar'))
     }
     check(`${N('settings')} @${scale * 100}% no page errors`, errors.length === 0, errors.join(' | '))
