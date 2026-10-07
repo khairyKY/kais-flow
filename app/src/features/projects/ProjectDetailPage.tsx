@@ -552,7 +552,7 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 820px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'clip', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ display: 'flex', position: 'relative', zIndex: 10 }}>
@@ -945,7 +945,7 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 760px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'clip', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
         <div style={{ padding: isMobile ? '20px 16px 24px' : '30px 40px 36px', position: 'relative', zIndex: 10 }}>

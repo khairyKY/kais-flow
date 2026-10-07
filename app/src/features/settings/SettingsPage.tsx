@@ -793,12 +793,12 @@ function ResurfacingCard() {
   )
   return (
     <SCard tapeTint="color-mix(in oklch, var(--acc-buttercream) 40%, transparent)" style={{ scrollMarginTop: 24 }}>
-      <div style={{ ...flabel, marginBottom: 4 }}>Resurfacing · how long "Later" rests</div>
+      <div style={{ ...flabel, marginBottom: 4 }}>Resurfacing · how long "Not now" rests</div>
       {row('high', 'High priority', 'comes back soonest')}
       {row('med', 'Medium priority', 'a working week, roughly')}
       {row('low', 'Low priority', 'the long shelf')}
       <div style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
-        press Later and it goes quiet — then wanders back ✿
+        press Not now and it goes quiet — then wanders back ✿
       </div>
     </SCard>
   )

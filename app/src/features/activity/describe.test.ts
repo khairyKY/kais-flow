@@ -167,6 +167,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['domain.created', 'domain', { name: 'x' }], ['domain.renamed', 'domain', { name: 'x' }], ['domain.merged', 'domain', { into: RANDOM }],
   ['domain.swept', 'domain', { week: '2026-W39' }], ['review.verdict', 'project', { verdict: 'park it', week: '2026-W39' }], ['review.week_closed', 'review', { entity_key: 'x' }],
   ['entity.reviewed', 'project', {}], ['resurfaced.converted', 'inbox_item', {}], ['resurfaced.review_later', 'task', { snoozed_days: 3 }], ['resurfaced.dismissed', 'journal_entry', {}],
+  ['resurfaced.planned', 'task', {}], ['resurfaced.done', 'task', {}], ['resurfaced.kept', 'inbox_item', {}],
   ['book.created', 'book', { title: 'x' }], ['book.progress_updated', 'book', { current_page: 12, status: 'reading' }], ['book.deleted', 'book', {}],
   ['note.created', 'note', { title: 'x' }], ['note.updated', 'note', { title: 'x' }], ['note.deleted', 'note', {}],
   ['quote.created', 'quote', { author: 'x', source: 'y' }], ['quote.updated', 'quote', {}], ['quote.deleted', 'quote', {}], ['commentary.created', 'commentary', { parent_type: 'book' }],

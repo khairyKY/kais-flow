@@ -1,5 +1,20 @@
 [
   {
+    "v": "v1.0.25",
+    "date": "2026-10-07",
+    "title": "From a while ago, settled",
+    "highlights": [
+      "From a while ago says what it is and how old, and opens when you tap it",
+      "Every button settles it: Plan, Done, Let it go, or Not now with the real wait shown",
+      "Put something off twice and it asks once: keep it or let it go"
+    ],
+    "icons": [
+      "book",
+      "check",
+      "tomorrow"
+    ],
+    "art": "fern-unfurl1"
+  },  {
     "v": "v1.0.24",
     "date": "2026-10-07",
     "title": "AI assistants can connect",

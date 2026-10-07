@@ -27,7 +27,7 @@ import { useRitualPins } from '../rituals/ritualPins'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
-import { useLatestResurfaced } from '../resurfacing/api'
+import { useResurfacePick } from '../resurfacing/api'
 import { useTimeEntries } from '../focus/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
@@ -128,7 +128,7 @@ export function TodayPage() {
   const { data: pendingInbox = [] } = usePendingInboxItems()
   const { data: people = [] } = usePeople()
   // Punch 2: the heading must not outlive its card — same source the card guards on.
-  const { data: resurfacedRow } = useLatestResurfaced()
+  const resurfacePick = useResurfacePick()
   const [dismissedBdays, setDismissedBdays] = useState(() => {
     const s = new Set()
     if (typeof window !== 'undefined') {
@@ -437,7 +437,7 @@ export function TodayPage() {
   const hyd = pendingInbox.length === 0 ? 'zero' : pendingInbox.length < 5 ? 'light' : pendingInbox.length < 20 ? 'medium' : 'heavy'
   const vine = streak >= 30 ? 'lush' : streak >= 7 ? 'flowering' : streak >= 1 ? 'sprouting' : 'bare'
 
-  const resurfacing = resurfacedRow?.action === 'pending'
+  const resurfacing = !!resurfacePick
   const slippingCards = (
     // Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A).
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
