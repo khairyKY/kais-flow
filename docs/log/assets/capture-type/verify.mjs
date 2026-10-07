@@ -5,6 +5,8 @@
 // and writes are answered 201, go nowhere, and are recorded. transcribe / parse-capture are answered here
 // (never Groq). The mic is Chrome's fake device (--use-fake-device-for-media-stream): a real
 // getUserMedia + MediaRecorder, no stubs. Phone gestures are real CDP touch at 390×844.
+// Phase 2 (the ai-* scenes): typed captures are written from the local parse at once, then the mocked
+// AI read fills only what's empty (explicit tokens win), with "✦ … by AI · Undo"; offline = local stands.
 //   node verify.mjs <outDir> [baseUrl] [design-11a.png] [playwright-core path]
 import fs from 'node:fs'
 import path from 'node:path'
@@ -35,6 +37,13 @@ const DOMAINS = [{ id: 'd0000000-0000-4000-8000-000000000001', user_id: UID, nam
 const PROJECTS = [{ id: 'p0000000-0000-4000-8000-000000000001', user_id: UID, domain_id: DOMAINS[0].id, name: 'Website', type: 'standard', status: 'active', color: null, milestones: [], checklist: [], created_at: CREATED, updated_at: CREATED }]
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', created_at: CREATED, updated_at: CREATED }
 const PENDING = { id: 'i0000000-0000-4000-8000-000000000001', user_id: UID, kind: 'text', raw_text: 'book dentist', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: null, snoozed_until: null, created_at: CREATED, updated_at: CREATED }
+
+/** What the mocked parse-capture answers (keyed by a phrase in raw_text); anything else = an unsure note. */
+const AI = {
+  'call mum tomorrow 5pm': { kind: 'task', title: 'Call mum', confidence: 0.95 },
+  'Call the bank asap': { kind: 'task', title: 'Call the bank', priority: 1, description: 'Bring the payslips', confidence: 0.9 },
+  'renew the car licence': { kind: 'task', title: 'Renew the car licence', priority: 1, confidence: 0.9 },
+}
 
 /** Cairo wall clock of an ISO instant: "2026-10-08 09:00". */
 const cairo = (iso) => {
@@ -78,7 +87,7 @@ async function open(route, o = {}) {
     // Bubble phase on document: runs after React's root listener, still inside the same click dispatch.
     document.addEventListener('click', () => (window.__atClickEnd = document.activeElement?.id ?? null))
   }, [o.theme ?? 'day', JSON.stringify(session), o.hintSeen ?? null])
-  const state = { rows: { tasks: [], projects: PROJECTS, domains: DOMAINS, app_settings: [SETTINGS], inbox_items: [PENDING], calendar_events: [] }, writes: [], heard: 'call mum tomorrow 5pm', transcribe: 'ok', transcribed: 0 }
+  const state = { rows: { tasks: [], projects: PROJECTS, domains: DOMAINS, app_settings: [SETTINGS], inbox_items: [PENDING], calendar_events: [] }, writes: [], heard: 'call mum tomorrow 5pm', transcribe: 'ok', transcribed: 0, parseCalls: [], parsedAt: 0, aiDelay: o.aiDelay ?? 0 }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
     const url = new URL(req.url())
@@ -90,13 +99,17 @@ async function open(route, o = {}) {
     }
     if (url.pathname.startsWith('/functions/v1/parse-capture')) {
       const raw = req.postDataJSON()?.raw_text ?? ''
-      return r.fulfill({ json: { kind: 'task', cleaned_text: raw, title: 'Call mum', due_at: null, confidence: 0.95 } })
+      state.parseCalls.push({ raw, at: Date.now() })
+      await sleep(state.aiDelay)
+      const hit = Object.entries(AI).find(([k]) => raw.includes(k))?.[1]
+      state.parsedAt = Date.now()
+      return r.fulfill({ json: { cleaned_text: raw, description: null, ...(hit ?? { kind: 'note', title: raw, confidence: 0.3 }) } })
     }
     if (url.pathname.startsWith('/functions/v1/')) return r.fulfill({ json: {} })
     if (req.method() !== 'GET' && req.method() !== 'HEAD') {
       let body = null
       try { body = req.postDataJSON() } catch { body = req.postData() }
-      state.writes.push({ method: req.method(), table, query: url.search, body })
+      state.writes.push({ method: req.method(), table, query: url.search, body, at: Date.now() })
       return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
     }
     if (url.pathname.startsWith('/auth/v1/user')) return r.fulfill({ json: user })
@@ -215,7 +228,7 @@ for (const theme of ['day', 'night']) {
   const w0 = env.state.writes.length
   await tap(env, sheet(page).getByRole('button', { name: 'Add' }), 600)
   const items = writes(env.state, 'inbox_items', w0)
-  check(`${name} Send → one Inbox capture (captureText), sheet closed, field empty next time`, items.length === 1 && items[0].raw_text === 'ideas for the garden' && (await sheet(page).count()) === 0, JSON.stringify(items.map((i) => i.raw_text)))
+  check(`${name} Send → one Inbox capture (captureText), sheet closed; the unsure AI read only annotates that same row`, items.length >= 1 && items.every((i) => i.id === items[0].id && i.raw_text === 'ideas for the garden' && i.status === 'pending') && writes(env.state, 'tasks', w0).length === 0 && (await sheet(page).count()) === 0, JSON.stringify(items.map((i) => [i.raw_text, i.status, i.confidence])))
   basics(env, name)
   await env.ctx.close()
 }
@@ -375,6 +388,92 @@ for (const route of ['/tasks', '/inbox']) {
   await waitFor(async () => (await field(page).inputValue()) === 'water the plants')
   check(`${name} Try again → the words land in the field (not AI-filed behind your back)`, (await field(page).inputValue()) === 'water the plants' && (await voice.count()) === 0 && writes(state, 'tasks').length === 0 && writes(state, 'inbox_items').length === 0)
   basics(env, name)
+  await env.ctx.close()
+}
+
+// ═════ Phase 2 (Kai 2026-10-07): "every property is extracted… let the AI understand the intent and decide" ═════
+// The AI call is mocked (AI table above) and answers 700ms late, to prove the row never waits on it.
+const tomorrow3pm = (t) => cairo(t.due_at) === `${TOMORROW} 15:00`
+{
+  const name = 'ai-fill-desktop'
+  const env = await open('/today', { view: desktop, aiDelay: 700 })
+  const { page, state } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await page.keyboard.type('Call the bank asap tomorrow 3pm, bring the payslips')
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  await sleep(250)
+  const first = writes(state, 'tasks', w0)
+  check(`${name} Enter → the task is written at once from the local parse, before the AI answers`, first.length === 1 && tomorrow3pm(first[0]) && first[0].priority === null && state.parseCalls.length === 1 && state.parsedAt === 0, JSON.stringify(first.map((t) => [t.title, t.priority])))
+  await waitFor(async () => writes(state, 'tasks', w0).length >= 2)
+  const [, filled] = writes(state, 'tasks', w0)
+  check(`${name} …then the AI fills only the empties: priority 1 from "asap", the details as notes, a tidied title; the typed date stands`, filled && filled.id === first[0].id && filled.priority === 1 && filled.notes === 'Bring the payslips' && filled.title === 'Call the bank' && tomorrow3pm(filled), JSON.stringify(filled && [filled.title, filled.priority, filled.notes]))
+  check(`${name} "✦ Filled by AI: priority, notes" with Undo`, (await toasts(page)).includes('✦ Filled by AI: priority, notes'), JSON.stringify(await toasts(page)))
+  await shot(page, name)
+  await page.locator('.kf-toast', { hasText: '✦ Filled by AI' }).getByRole('button', { name: 'Undo' }).click()
+  await sleep(300)
+  const undone = writes(state, 'tasks', w0)[2]
+  check(`${name} Undo → back to what was typed (priority, notes, title), date untouched`, undone && undone.id === first[0].id && undone.priority === null && undone.notes === null && undone.title === first[0].title && tomorrow3pm(undone), JSON.stringify(undone && [undone.title, undone.priority, undone.notes]))
+  basics(env, name)
+  await env.ctx.close()
+}
+{
+  const name = 'ai-explicit-wins'
+  const env = await open('/today', { view: desktop })
+  const { page, state } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await page.keyboard.type('Call the bank asap tomorrow 3pm ! 30m')
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  // No AI delay here: the outbox may send the create and the fill as one row, so read the last one.
+  await waitFor(async () => writes(state, 'tasks', w0).some((x) => x.notes))
+  const t = writes(state, 'tasks', w0)
+  const last = t[t.length - 1]
+  check(`${name} a typed "!" and "30m" beat the AI (it read priority 1): priority 3, 30m kept; it only adds the notes`, t.length >= 1 && last.priority === 3 && last.duration_min === 30 && last.notes === 'Bring the payslips' && (await toasts(page)).includes('✦ Filled by AI: notes'), JSON.stringify(t.map((x) => [x.priority, x.duration_min, x.notes])))
+  basics(env, name)
+  await env.ctx.close()
+}
+{
+  const name = 'ai-files-plain-line-phone'
+  const env = await open('/today', { aiDelay: 500 })
+  const { page, state } = env
+  await tap(env, captureBtn(page))
+  await page.keyboard.type('renew the car licence, urgent')
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  await sleep(200)
+  const inbox = writes(state, 'inbox_items', w0)
+  check(`${name} a plain line lands in the Inbox at once (no AI wait)`, inbox.length === 1 && inbox[0].status === 'pending' && state.parsedAt === 0, JSON.stringify(inbox.map((i) => i.status)))
+  await waitFor(async () => writes(state, 'tasks', w0).length >= 1)
+  await sleep(300)
+  const t = writes(state, 'tasks', w0)
+  const after = writes(state, 'inbox_items', w0)
+  check(`${name} …the AI decides it's a task: filed with priority 1 from "urgent", the Inbox row marked filed`, t.length === 1 && t[0].title === 'Renew the car licence' && t[0].priority === 1 && after.some((i) => i.id === inbox[0].id && i.status === 'filed' && i.filed_task_id === t[0].id), JSON.stringify({ t: t.map((x) => [x.title, x.priority]), inbox: after.map((i) => i.status) }))
+  check(`${name} "✦ Filed by AI: “Renew the car licence”" with Undo`, (await toasts(page)).some((x) => x === '✦ Filed by AI: “Renew the car licence”'), JSON.stringify(await toasts(page)))
+  await shot(page, name)
+  basics(env, name)
+  await env.ctx.close()
+}
+{
+  const name = 'ai-offline'
+  const env = await open('/today', { view: desktop })
+  const { page, state, ctx } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await ctx.setOffline(true)
+  await page.keyboard.type('Call the bank asap tomorrow 3pm')
+  await page.keyboard.press('Enter')
+  await sleep(800)
+  check(`${name} offline: no AI call, no AI toast — the local parse stands`, state.parseCalls.length === 0 && !(await toasts(page)).some((x) => x.startsWith('✦')), JSON.stringify(await toasts(page)))
+  const w0 = state.writes.length
+  await ctx.setOffline(false)
+  await page.evaluate(() => window.dispatchEvent(new Event('online')))
+  await waitFor(async () => writes(state, 'tasks', w0).length >= 1, 8000)
+  const t = writes(state, 'tasks', w0)
+  check(`${name} back online → the queued task syncs as typed (nothing lost)`, t.length >= 1 && t[0].title === 'Call the bank asap' && tomorrow3pm(t[0]) && t[0].priority === null, JSON.stringify(t.map((x) => [x.title, x.priority])))
+  basics({ errors: env.errors.filter((e) => !/fetch|network/i.test(e)) }, name)
   await env.ctx.close()
 }
 

@@ -23,7 +23,7 @@ PASS phone-tap-night no page errors
 PASS phone-send Send is disabled while the field is empty
 PASS phone-send "→ Inbox" chip for a line with no structure
 PASS phone-send dismissed and reopened → the draft is still there (kit sheet: dismissing never discards)
-PASS phone-send Send → one Inbox capture (captureText), sheet closed, field empty next time — ["ideas for the garden"]
+PASS phone-send Send → one Inbox capture (captureText), sheet closed; the unsure AI read only annotates that same row — [["ideas for the garden","pending",0.3]]
 PASS phone-send no page errors
 PASS phone-mic mic → the capture sheet steps aside, the voice sheet is listening — LISTENING · 0:01
 say what's on your mind…
@@ -78,5 +78,19 @@ PASS desktop-header-inbox no page errors
 PASS desktop-dictate-kept transcribe fails → the voice sheet keeps the take (Try again · Save · Discard), bar still open
 PASS desktop-dictate-kept Try again → the words land in the field (not AI-filed behind your back)
 PASS desktop-dictate-kept no page errors
+PASS ai-fill-desktop Enter → the task is written at once from the local parse, before the AI answers — [["Call the bank asap , bring the payslips",null]]
+PASS ai-fill-desktop …then the AI fills only the empties: priority 1 from "asap", the details as notes, a tidied title; the typed date stands — ["Call the bank",1,"Bring the payslips"]
+PASS ai-fill-desktop "✦ Filled by AI: priority, notes" with Undo — ["✦ Filled by AI: priority, notes"]
+PASS ai-fill-desktop Undo → back to what was typed (priority, notes, title), date untouched — ["Call the bank asap , bring the payslips",null,null]
+PASS ai-fill-desktop no page errors
+PASS ai-explicit-wins a typed "!" and "30m" beat the AI (it read priority 1): priority 3, 30m kept; it only adds the notes — [[3,30,"Bring the payslips"]]
+PASS ai-explicit-wins no page errors
+PASS ai-files-plain-line-phone a plain line lands in the Inbox at once (no AI wait) — ["pending"]
+PASS ai-files-plain-line-phone …the AI decides it's a task: filed with priority 1 from "urgent", the Inbox row marked filed — {"t":[["Renew the car licence",1]],"inbox":["pending","filed"]}
+PASS ai-files-plain-line-phone "✦ Filed by AI: “Renew the car licence”" with Undo — ["✦ Filed by AI: “Renew the car licence”"]
+PASS ai-files-plain-line-phone no page errors
+PASS ai-offline offline: no AI call, no AI toast — the local parse stands — []
+PASS ai-offline back online → the queued task syncs as typed (nothing lost) — [["Call the bank asap",null]]
+PASS ai-offline no page errors
 
-70/70 passed
+84/84 passed

@@ -125,9 +125,9 @@
     "detail": ""
   },
   {
-    "name": "phone-send Send → one Inbox capture (captureText), sheet closed, field empty next time",
+    "name": "phone-send Send → one Inbox capture (captureText), sheet closed; the unsure AI read only annotates that same row",
     "ok": true,
-    "detail": "[\"ideas for the garden\"]"
+    "detail": "[[\"ideas for the garden\",\"pending\",0.3]]"
   },
   {
     "name": "phone-send no page errors",
@@ -346,6 +346,76 @@
   },
   {
     "name": "desktop-dictate-kept no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ai-fill-desktop Enter → the task is written at once from the local parse, before the AI answers",
+    "ok": true,
+    "detail": "[[\"Call the bank asap , bring the payslips\",null]]"
+  },
+  {
+    "name": "ai-fill-desktop …then the AI fills only the empties: priority 1 from \"asap\", the details as notes, a tidied title; the typed date stands",
+    "ok": true,
+    "detail": "[\"Call the bank\",1,\"Bring the payslips\"]"
+  },
+  {
+    "name": "ai-fill-desktop \"✦ Filled by AI: priority, notes\" with Undo",
+    "ok": true,
+    "detail": "[\"✦ Filled by AI: priority, notes\"]"
+  },
+  {
+    "name": "ai-fill-desktop Undo → back to what was typed (priority, notes, title), date untouched",
+    "ok": true,
+    "detail": "[\"Call the bank asap , bring the payslips\",null,null]"
+  },
+  {
+    "name": "ai-fill-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ai-explicit-wins a typed \"!\" and \"30m\" beat the AI (it read priority 1): priority 3, 30m kept; it only adds the notes",
+    "ok": true,
+    "detail": "[[3,30,\"Bring the payslips\"]]"
+  },
+  {
+    "name": "ai-explicit-wins no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ai-files-plain-line-phone a plain line lands in the Inbox at once (no AI wait)",
+    "ok": true,
+    "detail": "[\"pending\"]"
+  },
+  {
+    "name": "ai-files-plain-line-phone …the AI decides it's a task: filed with priority 1 from \"urgent\", the Inbox row marked filed",
+    "ok": true,
+    "detail": "{\"t\":[[\"Renew the car licence\",1]],\"inbox\":[\"pending\",\"filed\"]}"
+  },
+  {
+    "name": "ai-files-plain-line-phone \"✦ Filed by AI: “Renew the car licence”\" with Undo",
+    "ok": true,
+    "detail": "[\"✦ Filed by AI: “Renew the car licence”\"]"
+  },
+  {
+    "name": "ai-files-plain-line-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ai-offline offline: no AI call, no AI toast — the local parse stands",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "ai-offline back online → the queued task syncs as typed (nothing lost)",
+    "ok": true,
+    "detail": "[[\"Call the bank asap\",null]]"
+  },
+  {
+    "name": "ai-offline no page errors",
     "ok": true,
     "detail": ""
   }
