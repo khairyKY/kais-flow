@@ -610,6 +610,7 @@ function TriageCard({
   return (
     <div
       id={`inbox-${item.id}`}
+      data-tour="inbox-item"
       // Motion 4a + 3e (WB-1). kf-lift-TILT, not kf-lift: the card carries a pasted-in
       // rotation, and the plain lift would erase it on hover. The tilt moves to --kf-tilt so
       // the class owns `transform` outright (an inline one can't be overridden on :hover).

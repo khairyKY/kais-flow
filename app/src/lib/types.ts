@@ -203,6 +203,8 @@ export interface AppSettings {
   capture_keep_photos?: boolean
   /** The user's weekend, weekdays 0 = Sunday … 6 = Saturday (migration 0055; read via lib/weekend.ts). */
   weekend_days?: number[]
+  /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
+  help_seen?: string[] | null
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

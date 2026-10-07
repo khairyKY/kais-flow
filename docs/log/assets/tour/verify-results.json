@@ -1,0 +1,621 @@
+{
+ "passed": 123,
+ "failed": 0,
+ "results": [
+  {
+   "name": "phone-day note 1 (capture) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[167,784,56,56],\"s\":[157,774,76,76],\"clear\":true}"
+  },
+  {
+   "name": "phone-day Next and Skip are 48px targets",
+   "ok": true,
+   "detail": "[49,49]"
+  },
+  {
+   "name": "phone-day the dim takes no taps (only the card does)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day note 2 (top3) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[0,72,390,358],\"s\":[-4,68,398,366],\"clear\":true}"
+  },
+  {
+   "name": "phone-day note 3 (row) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[0,276,390,77],\"s\":[-4,272,398,85],\"clear\":true}"
+  },
+  {
+   "name": "phone-day the ghost finger swipes a copy of the row (looping)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day note 4 (plan) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[16,90,358,105],\"s\":[12,86,366,113],\"clear\":true}"
+  },
+  {
+   "name": "phone-day note 5 (ask) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[309,780,78,64],\"s\":[305,776,86,72],\"clear\":true}"
+  },
+  {
+   "name": "phone-day the last note: no spotlight, everything dimmed, one bloom",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day five notes then the closing card, in the design's order",
+   "ok": true,
+   "detail": "capture,top3,row,plan,ask,done"
+  },
+  {
+   "name": "phone-day Done ends it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day done counts as seen, the onboarding flag is spent, the row note taught the swipe",
+   "ok": true,
+   "detail": "[\"hint:swipe\",\"tour\"]"
+  },
+  {
+   "name": "phone-day no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "phone-day no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-day never again after Done (a reload shows no note)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night note 1 (capture) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[167,784,56,56],\"s\":[157,774,76,76],\"clear\":true}"
+  },
+  {
+   "name": "phone-night Next and Skip are 48px targets",
+   "ok": true,
+   "detail": "[49,49]"
+  },
+  {
+   "name": "phone-night the dim takes no taps (only the card does)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night note 2 (top3) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[0,72,390,358],\"s\":[-4,68,398,366],\"clear\":true}"
+  },
+  {
+   "name": "phone-night note 3 (row) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[0,276,390,77],\"s\":[-4,272,398,85],\"clear\":true}"
+  },
+  {
+   "name": "phone-night the ghost finger swipes a copy of the row (looping)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night note 4 (plan) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[16,90,358,105],\"s\":[12,86,366,113],\"clear\":true}"
+  },
+  {
+   "name": "phone-night note 5 (ask) lights its own element; the card leaves it clear",
+   "ok": true,
+   "detail": "{\"a\":[309,780,78,64],\"s\":[305,776,86,72],\"clear\":true}"
+  },
+  {
+   "name": "phone-night the last note: no spotlight, everything dimmed, one bloom",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night five notes then the closing card, in the design's order",
+   "ok": true,
+   "detail": "capture,top3,row,plan,ask,done"
+  },
+  {
+   "name": "phone-night Done ends it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night done counts as seen, the onboarding flag is spent, the row note taught the swipe",
+   "ok": true,
+   "detail": "[\"hint:swipe\",\"tour\"]"
+  },
+  {
+   "name": "phone-night no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "phone-night no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone-night never again after Done (a reload shows no note)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "skip: on note 2",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "skip: ends the tour at once and counts as seen",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "skip: never again",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "reduced motion: the row note has a still arrow, no ghost loop",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "missing anchors: the plan note lights the ⋯ menu instead",
+   "ok": true,
+   "detail": "{\"a\":[338,4,48,48],\"s\":[334,0,56,56],\"clear\":true}"
+  },
+  {
+   "name": "missing anchors: skipped, never a dead end (capture, plan, ask, done)",
+   "ok": true,
+   "detail": "capture,plan,ask,done"
+  },
+  {
+   "name": "waits: a sheet is up, no note over it",
+   "ok": true,
+   "detail": "modals 1"
+  },
+  {
+   "name": "waits: the sheet closes, the first note comes",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "restart from Guide: back on Today at note 1, hints forgotten",
+   "ok": true,
+   "detail": "capture http://localhost:5276/today"
+  },
+  {
+   "name": "restart from Settings → App: back on Today at note 1, hints forgotten",
+   "ok": true,
+   "detail": "capture http://localhost:5276/today"
+  },
+  {
+   "name": "desktop-day note 1 (sidebar) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[0,75,302,692],\"s\":[-5,70,312,702],\"clear\":true}"
+  },
+  {
+   "name": "desktop-day note 2 (command) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[1263,265,127,49],\"s\":[1258,260,137,59],\"clear\":true}"
+  },
+  {
+   "name": "desktop-day note 3 (top3) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[353,529,653,346],\"s\":[348,524,663,356],\"clear\":true}"
+  },
+  {
+   "name": "desktop-day note 4 (calendar) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[513,563,92,53],\"s\":[508,558,102,63],\"clear\":true}"
+  },
+  {
+   "name": "desktop-day the calendar note took the tour to the calendar",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-day note 5: the shortcut card, \"? shows every shortcut\", Done",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-day sidebar, command bar, Top 3, calendar, shortcuts",
+   "ok": true,
+   "detail": "sidebar,command,top3,calendar,keys"
+  },
+  {
+   "name": "desktop-day done: seen, and the calendar note taught the calendar hint",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-day no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-night note 1 (sidebar) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[0,75,302,692],\"s\":[-5,70,312,702],\"clear\":true}"
+  },
+  {
+   "name": "desktop-night note 2 (command) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[1263,265,127,49],\"s\":[1258,260,137,59],\"clear\":true}"
+  },
+  {
+   "name": "desktop-night note 3 (top3) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[353,529,653,346],\"s\":[348,524,663,356],\"clear\":true}"
+  },
+  {
+   "name": "desktop-night note 4 (calendar) lights its own element",
+   "ok": true,
+   "detail": "{\"a\":[513,563,92,53],\"s\":[508,558,102,63],\"clear\":true}"
+  },
+  {
+   "name": "desktop-night the calendar note took the tour to the calendar",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-night note 5: the shortcut card, \"? shows every shortcut\", Done",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-night sidebar, command bar, Top 3, calendar, shortcuts",
+   "ok": true,
+   "detail": "sidebar,command,top3,calendar,keys"
+  },
+  {
+   "name": "desktop-night done: seen, and the calendar note taught the calendar hint",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop-night no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint: shows on the first task row once the list settles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint: × is a 48px target",
+   "ok": true,
+   "detail": "[48]"
+  },
+  {
+   "name": "swipe hint: seen the moment it shows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint: × dismisses it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "swipe hint no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "swipe hint: never again",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (day): under a block on the first visit",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (day): holding a block dismisses it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (day): never again",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (night): under a block on the first visit",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (night): holding a block dismisses it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "calendar hint (night): never again",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "inbox hint: on the first item when the Inbox has some",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop: no swipe hint (a mouse never swipes)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop calendar hint: the drag wording",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "every hint seen: none shows anywhere",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (day): More → Guide",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (day): eleven articles in four sections",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (day): every target ≥ 48",
+   "ok": true,
+   "detail": "[48,48,74,64,64,64,64,64,64,64,64,64,64,64]"
+  },
+  {
+   "name": "guide (day) no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "guide (day) no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (day) no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide search: \"swipe\" finds Gestures",
+   "ok": true,
+   "detail": "[\"Gestures\",\"Calendar\"]"
+  },
+  {
+   "name": "guide search: \"streak\" finds Routines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide RTL: the rows mirror (icon on the right)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (day): Gestures, five steps",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (day): every step has its crop, lazy-loaded",
+   "ok": true,
+   "detail": "[[\"lazy\",\"/guide/gestures-1.webp\"],[\"lazy\",\"/guide/gestures-2.webp\"]]"
+  },
+  {
+   "name": "guide article (day): the crops load",
+   "ok": true,
+   "detail": "5"
+  },
+  {
+   "name": "guide article (day) no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "guide article (day) no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (day) no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (night): More → Guide",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (night): eleven articles in four sections",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (night): every target ≥ 48",
+   "ok": true,
+   "detail": "[48,48,74,64,64,64,64,64,64,64,64,64,64,64]"
+  },
+  {
+   "name": "guide (night) no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "guide (night) no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide (night) no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (night): Gestures, five steps",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (night): every step has its crop, lazy-loaded",
+   "ok": true,
+   "detail": "[[\"lazy\",\"/guide/gestures-1.webp\"],[\"lazy\",\"/guide/gestures-2.webp\"]]"
+  },
+  {
+   "name": "guide article (night): the crops load",
+   "ok": true,
+   "detail": "5"
+  },
+  {
+   "name": "guide article (night) no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "guide article (night) no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guide article (night) no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (day): from the sidebar foot; eleven cards",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (day): the Calendar article with \"On this page\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (day): no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (night): from the sidebar foot; eleven cards",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (night): the Calendar article with \"On this page\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop guide (night): no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "chat (phone): three starters",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "chat (phone): starters are ≥ 48 tall",
+   "ok": true,
+   "detail": "[52,52,52]"
+  },
+  {
+   "name": "chat (phone) no horizontal scroll at 390",
+   "ok": true,
+   "detail": "390"
+  },
+  {
+   "name": "chat (phone) no text under 12px",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "chat (phone) no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "chat (phone): a tap sends it",
+   "ok": true,
+   "detail": "[{\"messages\":[{\"role\":\"user\",\"content\":\"What’s on today?\"}]}]"
+  },
+  {
+   "name": "? sheet (day): paper, with the way back to the tour and the Guide",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "? sheet (day): Open the Guide → goes there",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop chat + ? (day): no page or console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "? sheet (night): paper, with the way back to the tour and the Guide",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "? sheet (night): Open the Guide → goes there",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop chat + ? (night): no page or console errors",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

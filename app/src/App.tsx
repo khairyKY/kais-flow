@@ -46,6 +46,8 @@ const PersonDetailPage = page(() => import('./features/people/PersonDetailPage')
 const OnboardingPage = page(() => import('./features/onboarding/OnboardingPage'), 'OnboardingPage')
 const OnboardingGate = page(() => import('./features/onboarding/OnboardingGate'), 'OnboardingGate')
 const ImportPage = page(() => import('./features/import/ImportPage'), 'ImportPage')
+// Tour & help: the Guide (index and articles; More on a phone, the sidebar foot on a computer).
+const GuidePage = page(() => import('./features/guide/GuidePage'), 'GuidePage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
 // Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the pages so the first tap opens it at once.
@@ -140,6 +142,8 @@ const router = createBrowserRouter([
           { path: 'trash', element: <TrashPage /> },
           { path: 'search', element: <SearchPage /> },
           { path: 'perennials', element: <PerennialsPage /> },
+          { path: 'guide', element: <GuidePage /> },
+          { path: 'guide/:slug', element: <GuidePage /> },
           ...galleries.shell,
           { id: NOT_FOUND, path: '*', element: <NotFoundPage /> },
         ],

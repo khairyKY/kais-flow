@@ -5,7 +5,7 @@ import { useEscapeStack } from '../lib/overlayStack'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
-import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
+import { FlowerIcon, GuideGlyph, ProjectsGlyph } from './icons/NavGlyphs'
 import './kit.css'
 
 // Pixel contract: MK Tab Bar.dc.html + DS-CHANGELOG §3 "Tab bar" (2026-09-28 refresh — replaces the
@@ -17,7 +17,7 @@ import './kit.css'
 const A = '/ds/assets'
 
 /** One tab. Exported so /design-system can show each state signed-out. */
-export function TabItem({ label, icon, tint, active, badge = 0, to, onClick }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void }) {
+export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tour }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void; tour?: string }) {
   const motionOn = useMotionEnabled()
   const inner = (
     <>
@@ -31,7 +31,7 @@ export function TabItem({ label, icon, tint, active, badge = 0, to, onClick }: {
   const name = badge > 0 ? `${label}, ${badge} waiting` : undefined
   if (!to) {
     return (
-      <button type="button" className="kf-tab" data-active={active || undefined} aria-label={name} aria-haspopup="dialog" onClick={onClick}>
+      <button type="button" className="kf-tab" data-active={active || undefined} data-tour={tour} aria-label={name} aria-haspopup="dialog" onClick={onClick}>
         {inner}
       </button>
     )
@@ -74,6 +74,8 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
   { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 20 },
   { to: '/people', label: 'People', dot: '--acc-clover' },
+  // Tour & help 14i: the Guide waits in More, beside Settings.
+  { to: '/guide', label: 'Guide', glyph: <GuideGlyph size={18} /> },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
   { to: '/activity', label: 'Activity', dot: '--acc-gold' },
@@ -147,7 +149,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
           <CaptureButton />
         </div>
         <TabItem to="/calendar" label="Calendar" icon="calendar" tint="var(--block-lavender)" active={pathname === '/calendar'} />
-        <TabItem label="More" icon="more" tint="var(--block-buttercream)" active={moreOpen || onMorePage} onClick={() => setMoreOpen(true)} />
+        <TabItem label="More" icon="more" tint="var(--block-buttercream)" active={moreOpen || onMorePage} onClick={() => setMoreOpen(true)} tour="more" />
       </nav>
 
       {moreOpen && (
