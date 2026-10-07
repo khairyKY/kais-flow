@@ -147,7 +147,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['capture.autofiled', 'task', { confidence: 0.9 }], ['capture.autofiled', 'task', { confidence: 0.9, source: 'reconnect' }],
   ['inbox.captured', 'inbox_item', { kind: 'text' }], ['inbox.captured', 'inbox_item', { kind: 'voice', offline: true }], ['inbox.captured', 'inbox_item', { kind: 'text', undoneFrom: TASK }],
   ['inbox.filed', 'inbox_item', { task_id: TASK }], ['inbox.dismissed', 'inbox_item', {}], ['inbox.snoozed', 'inbox_item', { until: 'x' }], ['inbox.restored', 'inbox_item', {}], ['inbox.purged', 'inbox_item', {}],
-  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}],
+  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}], ['routine.restored', 'routine', { name: 'x' }],
   ['routine.checked', 'routine', { date: '2026-09-26' }], ['routine.unchecked', 'routine', { date: '2026-09-26' }],
   ['ritual.step_completed', 'ritual', { ritual: 'morning', step: 'overdue', date: '2026-09-26' }],
   ['calendar_event.created', 'calendar_event', { title: 'x', type: 'event' }], ['calendar_event.deleted', 'calendar_event', {}], ['calendar_event.restored', 'calendar_event', {}],
