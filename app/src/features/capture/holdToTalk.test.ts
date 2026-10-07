@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CANCEL_DISTANCE, LOCK_DISTANCE, formatTake, holdStep, type HoldEvent, type HoldState } from './holdToTalk'
+import { CANCEL_DISTANCE, LOCK_DISTANCE, appendDictation, clickIsTap, formatTake, holdStep, micAction, type HoldEvent, type HoldState } from './holdToTalk'
 
 /** Runs events from idle; returns the final state and every non-null effect in order. */
 function run(...events: HoldEvent[]): { state: HoldState; effects: string[] } {
@@ -64,6 +64,27 @@ describe('holdStep — hold-to-talk on the capture button', () => {
   it('the locked bar buttons do nothing outside the locked state', () => {
     expect(run(down, { type: 'longpress' }, { type: 'send' }).state.phase).toBe('recording')
     expect(run({ type: 'discard' }).state.phase).toBe('idle')
+  })
+})
+
+describe('which capture surface opens', () => {
+  it('a tap or Enter/Space on the button opens the capture sheet; the click that ends a hold does not', () => {
+    expect(clickIsTap(1, false)).toBe(true)
+    expect(clickIsTap(0, true)).toBe(true) // keyboard: there is no hold
+    expect(clickIsTap(1, true)).toBe(false)
+  })
+
+  it("the bar's mic: the voice sheet on a phone (hold-to-talk's tap twin), dictation on desktop", () => {
+    expect(micAction(true)).toBe('voice-sheet')
+    expect(micAction(false)).toBe('dictate')
+  })
+})
+
+describe('appendDictation', () => {
+  it('joins dictated words to what is typed with one space', () => {
+    expect(appendDictation('', ' call mum tomorrow ')).toBe('call mum tomorrow')
+    expect(appendDictation('Email Priya ', 'the slides tomorrow 9')).toBe('Email Priya the slides tomorrow 9')
+    expect(appendDictation('Email Priya', '')).toBe('Email Priya')
   })
 })
 

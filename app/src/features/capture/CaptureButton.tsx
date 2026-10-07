@@ -2,11 +2,11 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../../components/Icon'
 import { useAuth } from '../auth/AuthProvider'
-import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { openCapture } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { voiceLimitReachedToday } from './aiAllowance'
-import { LOCK_DISTANCE, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
+import { LOCK_DISTANCE, clickIsTap, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
 import './capture.css'
 import { longPress } from '../../lib/haptics'
 import { usePaperStore } from '../paper/paperStore'
@@ -14,8 +14,10 @@ import { usePaperStore } from '../paper/paperStore'
 // The sheet (and its transcribe/parse chain) only loads once a take needs filing.
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
-// MK Capture.dc.html: the tab bar's centre button. Tap = the capture (text) sheet — it never opens
-// the mic. Hold ≥ --dur-longpress = record while held; release sends; slide up onto the lock =
+// MK Capture.dc.html: the tab bar's centre button. Tap = the capture (text) sheet with the keyboard
+// up (Paper Capture 11a; its mic switches to talking) — it never opens the mic itself. The glyph
+// stays the kit's mic (MK Capture + 11a draw it), so the label and the sheet's first-run hint say
+// "tap to type · hold to talk". Hold ≥ --dur-longpress = record while held; release sends; slide up onto the lock =
 // hands-free [Cancel · timer · waveform · Send]; slide left = discard, with Undo.
 // Sending hands the take to VoiceCaptureSheet, which transcribes + files it and keeps it (Try
 // again / Save to Inbox) if that fails — the same "never lose a recording" path as the sheet's mic.
@@ -213,8 +215,8 @@ export function CaptureButton() {
         }}
         onContextMenu={(e) => e.preventDefault()}
         onClick={(e) => {
-          // detail 0 = Enter / Space: always a tap (there's no keyboard hold-to-talk).
-          if (e.detail === 0 || !held.current) useCommandBarStore.getState().setOpen(true)
+          // Opened and focused inside this tap, so the phone keyboard comes up with the sheet.
+          if (clickIsTap(e.detail, held.current)) openCapture()
         }}
       >
         <Icon name="mic" size={24} />

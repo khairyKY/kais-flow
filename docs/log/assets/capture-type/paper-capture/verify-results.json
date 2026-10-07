@@ -1,0 +1,612 @@
+[
+  {
+    "name": "11a-day centre tap → the capture sheet, a camera button in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11a-day camera target ≥ 48 on touch",
+    "ok": true,
+    "detail": "{\"x\":16,\"y\":768,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "11a-day-offline \"2 pages waiting\" chip + a dot on the centre button",
+    "ok": true,
+    "detail": "2 pages waiting · read when online dot=1"
+  },
+  {
+    "name": "11g-day \"Scan paper\" in the Inbox header",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11b-day Scan paper opens the camera (capture=\"environment\")",
+    "ok": true,
+    "detail": "environment"
+  },
+  {
+    "name": "11b-day one photo → \"A quick look\", Read is the terra action",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-day three pages → the strip \"3 pages · page 2\"",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 2"
+  },
+  {
+    "name": "11c-day rotate turns the page a quarter",
+    "ok": true,
+    "detail": "transform: rotate(90deg);"
+  },
+  {
+    "name": "11d-day Read → \"Reading your page…\", pages ticking, \"you can leave\"",
+    "ok": true,
+    "detail": "Reading your page…\nPage 1 of 3 · about 30 seconds\nYou can leave — we’ll tell you when it’s ready.\nLeave it reading"
+  },
+  {
+    "name": "11d-day three pages uploaded to <uid>/<capture>/<n>.jpg as JPEG",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/0.jpg\",\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/1.jpg\",\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/2.jpg\"]"
+  },
+  {
+    "name": "11d-day resized on the phone: ≤1600px long edge, ≤ 250 KB",
+    "ok": true,
+    "detail": "[{\"k\":\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/0.jpg\",\"h\":1600,\"w\":1200,\"bytes\":87901},{\"k\":\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/1.jpg\",\"h\":1200,\"w\":900,\"bytes\":25636},{\"k\":\"00000000-0000-4000-8000-00000000d3e0/cd484307-ba2c-4d7c-81bd-fac48758e8f4/2.jpg\",\"h\":1200,\"w\":900,\"bytes\":27280}]"
+  },
+  {
+    "name": "11d-day one capture-image call per page, in order",
+    "ok": true,
+    "detail": "[0,1,2]"
+  },
+  {
+    "name": "11e-day \"From your page · 9 things\" (7 + 1 + 1)",
+    "ok": true,
+    "detail": "From your page · 9 things"
+  },
+  {
+    "name": "11e-day meta: OS LECTURE 3 · 3 PAGES · READ",
+    "ok": true,
+    "detail": "OS LECTURE 3 · 3 PAGES · READ 09:52"
+  },
+  {
+    "name": "11e-day two unsure lines, tinted, \"Check this\"",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "11e-day the unsure line shows its handwriting, cropped from the photo",
+    "ok": true,
+    "detail": "{\"w\":291,\"h\":41,\"loaded\":true,\"nat\":\"1200x1600\",\"top\":\"-128.1px\"}"
+  },
+  {
+    "name": "11e-day parse chips: Task · Thu 8 Oct · 23:59 · OS",
+    "ok": true,
+    "detail": "Task\nThu 8 Oct · 23:59\nOS"
+  },
+  {
+    "name": "11e-day footer: Inbox only · Add all 9",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11e-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11f-day the type chip → Event",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11f-day tap the text to edit it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11f-day swipe left drops a line (\"Line dropped · Undo\", 8 left)",
+    "ok": true,
+    "detail": "[\"Line dropped\"]"
+  },
+  {
+    "name": "11g-day Add all: 4 tasks with a photo link",
+    "ok": true,
+    "detail": "[\"Assignment 2\",\"Read ch. 4 — scheduling\",\"Ask Dr. Hany about lab groups\",\"Email the TA about the lab report\"]"
+  },
+  {
+    "name": "11g-day …Assignment 2 due Thu 8 Oct 23:59 Cairo, in OS",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11g-day …the Quiz became an all-day event on Sun 11 Oct",
+    "ok": true,
+    "detail": "[{\"id\":\"ac71b5ae-f1b7-4aaf-ba95-c27e364f165a\",\"title\":\"Quiz — OS\",\"starts_at\":\"2026-10-11T00:00:00.000Z\",\"ends_at\":\"2026-10-12T00:00:00.000Z\",\"all_day\":true,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-10-04T06:52:14.286Z\",\"updated_at\":\"2026-10-04T06:52:14.286Z\"}]"
+  },
+  {
+    "name": "11g-day …2 notes to the Inbox, each with its read and the way back to the photo",
+    "ok": true,
+    "detail": "[\"OS lecture 3 — 4 Oct\",\"Idea: Kai’s Flow paper mode\"]"
+  },
+  {
+    "name": "11g-day …1 journal entry for today",
+    "ok": true,
+    "detail": "[{\"id\":\"6a1c8c71-cb16-477f-9d54-a603cd72484b\",\"body\":\"Tired but happy — the lecture ran late\",\"entry_date\":\"2026-10-04\",\"mood\":null,\"transcript\":null,\"media_paths\":[],\"gratitude\":[],\"deleted_at\":null,\"created_at\":\"2026-10-04T06:52:14.286Z\",\"updated_at\":\"2026-10-04T06:52:14.286Z\"}]"
+  },
+  {
+    "name": "11g-day …the capture marked reviewed (photo kept 7 days)",
+    "ok": true,
+    "detail": "[[\"2026-10-04T06:52:14.286Z\",\"2026-10-11T06:52:07.863Z\"]]"
+  },
+  {
+    "name": "11g-day toast \"Added 4 tasks · 1 event · 2 notes · a journal entry\" with Undo",
+    "ok": true,
+    "detail": "[\"Line dropped\",\"Added 4 tasks · 1 event · 2 notes · a journal entry\"]"
+  },
+  {
+    "name": "11g-day Inbox rows from the page carry the 📷 + page title",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "11g-day the 📷 reopens the photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11g-day Undo deletes what was added and un-reviews the capture",
+    "ok": true,
+    "detail": "[\"inbox_items\",\"tasks\",\"tasks\",\"tasks\",\"calendar_events\",\"inbox_items\",\"tasks\",\"journal_entries\"]"
+  },
+  {
+    "name": "11h Arabic lines read right-to-left inside the LTR app, in their own words",
+    "ok": true,
+    "detail": "[[\"مراجعة الفصل الثالث\",\"rtl\",\"auto\"],[\"اجتماع الفريق الساعة ٥\",\"rtl\",\"auto\"],[\"شراء دفتر جديد\",\"rtl\",\"auto\"]]"
+  },
+  {
+    "name": "11h \"٥\" read as today 17:00, an Event, unsure → its crop",
+    "ok": true,
+    "detail": "Event\nToday · 17:00"
+  },
+  {
+    "name": "11h meta says Arabic",
+    "ok": true,
+    "detail": "1 PAGE · ARABIC · READ 09:52"
+  },
+  {
+    "name": "Inbox only: every line lands as an Inbox note, nothing else",
+    "ok": true,
+    "detail": "[\"مراجعة الفصل الثالث\",\"اجتماع الفريق الساعة ٥\",\"شراء دفتر جديد\"]"
+  },
+  {
+    "name": "Inbox only: the meeting keeps its read (event · today 17:00)",
+    "ok": true,
+    "detail": "[{\"kind\":\"task\",\"cleaned_text\":\"مراجعة الفصل الثالث\",\"title\":\"مراجعة الفصل الثالث\",\"due_at\":null,\"project_id\":\"p0000000-0000-4000-8000-000000000003\",\"domain_id\":null,\"confidence\":0.9},{\"kind\":\"event\",\"cleaned_text\":\"اجتماع الفريق الساعة ٥\",\"title\":\"اجتماع الفريق الساعة ٥\",\"due_at\":\"2026-10-04T14:00:00.000Z\",\"project_id\":null,\"domain_id\":null,\"confidence\":0.64},{\"kind\":\"task\",\"cleaned_text\":\"شراء دفتر جديد\",\"title\":\"شراء دفتر جديد\",\"due_at\":null,\"project_id\":null,\"domain_id\":null,\"confidence\":0.88}]"
+  },
+  {
+    "name": "Inbox only: toast \"Added 3 notes\"",
+    "ok": true,
+    "detail": "[\"Added 3 notes\"]"
+  },
+  {
+    "name": "11i-day a blank page → \"Couldn’t read this one — retake?\" with Retake + Pick another photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11i-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-day Retake: the camera again, and the unreadable photo goes now",
+    "ok": true,
+    "detail": "[\"2026-10-04T06:52:04.391Z\"]"
+  },
+  {
+    "name": "11j-day 15 pages today → calm, \"Type them in\" first, the photo kept for tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11j-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-day \"Type them in\" opens the capture bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-day camera off → \"The camera is switched off\", Pick from gallery instead",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11k-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-day the gallery (no capture attribute) → the quick look",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "11a-night centre tap → the capture sheet, a camera button in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11a-night camera target ≥ 48 on touch",
+    "ok": true,
+    "detail": "{\"x\":16,\"y\":768,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "11g-night \"Scan paper\" in the Inbox header",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11b-night Scan paper opens the camera (capture=\"environment\")",
+    "ok": true,
+    "detail": "environment"
+  },
+  {
+    "name": "11b-night one photo → \"A quick look\", Read is the terra action",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-night three pages → the strip \"3 pages · page 2\"",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 2"
+  },
+  {
+    "name": "11c-night rotate turns the page a quarter",
+    "ok": true,
+    "detail": "transform: rotate(90deg);"
+  },
+  {
+    "name": "11d-night Read → \"Reading your page…\", pages ticking, \"you can leave\"",
+    "ok": true,
+    "detail": "Reading your page…\nPage 1 of 3 · about 30 seconds\nYou can leave — we’ll tell you when it’s ready.\nLeave it reading"
+  },
+  {
+    "name": "11d-night three pages uploaded to <uid>/<capture>/<n>.jpg as JPEG",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/0.jpg\",\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/1.jpg\",\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/2.jpg\"]"
+  },
+  {
+    "name": "11d-night resized on the phone: ≤1600px long edge, ≤ 250 KB",
+    "ok": true,
+    "detail": "[{\"k\":\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/0.jpg\",\"h\":1600,\"w\":1200,\"bytes\":87901},{\"k\":\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/1.jpg\",\"h\":1200,\"w\":900,\"bytes\":25636},{\"k\":\"00000000-0000-4000-8000-00000000d3e0/c351b569-74ce-45c7-b5b4-eb125698d1cd/2.jpg\",\"h\":1200,\"w\":900,\"bytes\":27280}]"
+  },
+  {
+    "name": "11d-night one capture-image call per page, in order",
+    "ok": true,
+    "detail": "[0,1,2]"
+  },
+  {
+    "name": "11e-night \"From your page · 9 things\" (7 + 1 + 1)",
+    "ok": true,
+    "detail": "From your page · 9 things"
+  },
+  {
+    "name": "11e-night meta: OS LECTURE 3 · 3 PAGES · READ",
+    "ok": true,
+    "detail": "OS LECTURE 3 · 3 PAGES · READ 09:52"
+  },
+  {
+    "name": "11e-night two unsure lines, tinted, \"Check this\"",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "11e-night the unsure line shows its handwriting, cropped from the photo",
+    "ok": true,
+    "detail": "{\"w\":291,\"h\":41,\"loaded\":true,\"nat\":\"1200x1600\",\"top\":\"-128.1px\"}"
+  },
+  {
+    "name": "11e-night parse chips: Task · Thu 8 Oct · 23:59 · OS",
+    "ok": true,
+    "detail": "Task\nThu 8 Oct · 23:59\nOS"
+  },
+  {
+    "name": "11e-night footer: Inbox only · Add all 9",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11e-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-night a blank page → \"Couldn’t read this one — retake?\" with Retake + Pick another photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11i-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11i-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-night 15 pages today → calm, \"Type them in\" first, the photo kept for tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11j-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11j-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-night camera off → \"The camera is switched off\", Pick from gallery instead",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11k-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11k-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Groq busy → \"We’ll read your page in a bit\", the flow closes calmly",
+    "ok": true,
+    "detail": "[\"We'll read your page in a bit.\"]"
+  },
+  {
+    "name": "uploaded but the read never reached the server → \"We'll read your page when you're back online\"",
+    "ok": true,
+    "detail": "[\"We'll read your page when you're back online.\"]"
+  },
+  {
+    "name": "…and it waits on this device (\"1 page waiting\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…online again → read without uploading twice",
+    "ok": true,
+    "detail": "[\"We'll read your page when you're back online.\",\"Your page is read · 7 things\"]"
+  },
+  {
+    "name": "offline Read → \"Saved — 1 page waiting, read when you’re online\", nothing uploaded",
+    "ok": true,
+    "detail": "[\"Saved — 1 page waiting, read when you're online.\"]"
+  },
+  {
+    "name": "offline: the capture sheet shows \"1 page waiting · read when online\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "back online → uploaded, read, \"Your page is read · 7 things · Review\"",
+    "ok": true,
+    "detail": "[\"Saved — 1 page waiting, read when you're online.\",\"Your page is read · 7 things\"]"
+  },
+  {
+    "name": "Review → the results sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Leave it reading → the flow steps aside",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…then \"Your page is read · 7 things\" and an Inbox row \"Ready to review\"",
+    "ok": true,
+    "detail": "OS lecture 3 · 7 things\nREADY TO REVIEW\nReview"
+  },
+  {
+    "name": "11m-day dragging a file in → \"Drop a page to read it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-day drop → the overlay goes, the quick look opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-day results as a centred panel, the page beside the lines",
+    "ok": true,
+    "detail": "{\"x\":38.40625,\"y\":32,\"width\":1203.1875,\"height\":736}"
+  },
+  {
+    "name": "11m-day hovering a line marks where it came from",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-day no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "11m-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "paste an image into the capture bar → the quick look (and the bar closes)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-night dragging a file in → \"Drop a page to read it\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-night drop → the overlay goes, the quick look opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-night results as a centred panel, the page beside the lines",
+    "ok": true,
+    "detail": "{\"x\":38.40625,\"y\":32,\"width\":1203.1875,\"height\":736}"
+  },
+  {
+    "name": "11m-night hovering a line marks where it came from",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-night no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "11m-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11m-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11o-phone Settings → Capture: \"Scans today 4 of 15\", queue 0",
+    "ok": true,
+    "detail": "CAPTURE · PHOTOS OF YOUR PAGES\nPhotos of your pages\nKeep for 7 days\nDelete after reading\nSo you can look back at the page. Then they’re deleted.\nScans today\n4 OF 15\nRead when offline\nQUEUE · 0"
+  },
+  {
+    "name": "11o-phone \"Delete after reading\" saves capture_keep_photos = false",
+    "ok": true,
+    "detail": "[{\"id\":\"a0000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"onboarded_at\":\"2026-01-02T00:00:00Z\",\"display_name\":\"Demo\",\"capture_keep_photos\":false,\"created_at\":\"2026-09-21T06:00:00Z\",\"updated_at\":\"2026-09-21T06:00:00Z\"}]"
+  },
+  {
+    "name": "11o-phone no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11o-phone no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11o-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11o-desktop Settings → Capture: \"Scans today 4 of 15\", queue 0",
+    "ok": true,
+    "detail": "CAPTURE · PHOTOS OF YOUR PAGES\nPhotos of your pages\nKeep for 7 days\nDelete after reading\nSo you can look back at the page. Then they’re deleted.\nScans today\n4 OF 15\nRead when offline\nQUEUE · 0"
+  },
+  {
+    "name": "11o-desktop \"Delete after reading\" saves capture_keep_photos = false",
+    "ok": true,
+    "detail": "[{\"id\":\"a0000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"onboarded_at\":\"2026-01-02T00:00:00Z\",\"display_name\":\"Demo\",\"capture_keep_photos\":false,\"created_at\":\"2026-09-21T06:00:00Z\",\"updated_at\":\"2026-09-21T06:00:00Z\"}]"
+  },
+  {
+    "name": "11o-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "11o-desktop no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11o-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

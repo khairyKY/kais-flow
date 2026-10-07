@@ -41,6 +41,8 @@ export interface CreateTaskInput {
   priority?: number | null
   /** Quick add's `*label` words. */
   labels?: string[]
+  /** The AI parse's description (capture). */
+  notes?: string | null
   /** One level deep (Akiflow model) — callers must not pass a task that is itself a child. */
   parentTaskId?: string | null
   /** Where the task came from (0027) — a filed GitHub issue keeps its url here. */
@@ -57,7 +59,7 @@ export function createTask(input: CreateTaskInput): Task {
     project_id: input.projectId ?? null,
     domain_id: input.domainId ?? null,
     title: input.title,
-    notes: null,
+    notes: input.notes ?? null,
     status: 'todo',
     due_at: input.dueAt ?? null,
     scheduled_start: null,
