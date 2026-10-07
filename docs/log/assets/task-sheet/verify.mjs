@@ -335,15 +335,16 @@ for (const theme of ['day', 'night']) {
   }
 
   // 4d — project chip → the picker sheet over the sheet; a tap applies + closes; search doubles as create.
+  // tasks-noise (Kai 2026-10-07): the chip opens "Move to" — each domain, its areas, its projects, then None.
   {
     const name = '4d-day'
     const { ctx, page, cdp, errors, state } = await fromTasks()
     await tap(cdp, sheetOf(page).locator('.ts-chips .kf-chip', { hasText: 'Shaheen Tasks' }))
     await sleep(300)
-    const picker = page.locator('[role="dialog"]').filter({ has: page.getByPlaceholder('Search or create a project') })
+    const picker = page.locator('[role="dialog"]').filter({ has: page.getByPlaceholder('Find a domain, area or project') })
     await shot(page, name)
     const rows = (await picker.locator('.kf-as-row').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim())
-    check(`${name} picker: projects with their domain, the current one checked, No project last`, JSON.stringify(rows) === JSON.stringify(['Shaheen Tasks SHAHEEN', 'Shaheen Website SHAHEEN', 'Forecasting app WORK', 'Home PERSONAL', 'Finance WORK', 'No project INBOX']) && (await picker.locator('.kf-as-row[aria-current="true"]').innerText()).startsWith('Shaheen Tasks'), JSON.stringify(rows))
+    check(`${name} picker: each domain then its projects, the current one checked, None last`, JSON.stringify(rows) === JSON.stringify(['Shaheen DOMAIN', 'Shaheen Tasks PROJECT', 'Shaheen Website PROJECT', 'Work DOMAIN', 'Forecasting app PROJECT', 'Finance PROJECT', 'Personal DOMAIN', 'Home PROJECT', 'None NO PROJECT, AREA OR DOMAIN']) && (await picker.locator('.kf-as-row[aria-current="true"]').innerText()).startsWith('Shaheen Tasks'), JSON.stringify(rows))
     check(`${name} a second scrim over the task sheet`, (await page.locator('[role="dialog"]').count()) === 2)
     const w0 = state.writes.length
     await tap(cdp, picker.locator('.kf-as-row', { hasText: 'Forecasting app' }))
@@ -353,14 +354,14 @@ for (const theme of ['day', 'night']) {
     check(`${name} Saved in the task sheet, chip reads the new project`, (await text(sheetOf(page).locator('.ts-save'))) === 'SAVED' && (await chipTexts(page)).includes('FORECASTING APP'))
     await tap(cdp, sheetOf(page).locator('.ts-chips .kf-chip', { hasText: 'Forecasting app' }))
     await sleep(300)
-    await page.locator('[role="dialog"]').getByPlaceholder('Search or create a project').fill('Tyres')
+    await page.locator('[role="dialog"]').getByPlaceholder('Find a domain, area or project').fill('Tyres')
     await sleep(200)
     const w1 = state.writes.length
-    await tap(cdp, page.locator('.kf-as-row', { hasText: 'Create “Tyres”' }))
+    await tap(cdp, page.locator('.kf-as-row', { hasText: 'Create project “Tyres”' }))
     await sleep(300)
     const made = state.writes.slice(w1).filter((x) => x.table === 'projects').map((x) => x.body)
     const moved = taskWrites(state, w1)
-    check(`${name} search → "Create “Tyres”" makes the project and moves the task`, made.length === 1 && made[0].name === 'Tyres' && moved.some((r) => r.project_id === made[0].id), JSON.stringify(made))
+    check(`${name} search → "Create project “Tyres”" makes the project and moves the task`, made.length === 1 && made[0].name === 'Tyres' && moved.some((r) => r.project_id === made[0].id), JSON.stringify(made))
     await sheetBasics(page, name, errors)
     await ctx.close()
   }

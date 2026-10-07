@@ -26,7 +26,7 @@ import {
   isThisMonth,
   renameProject,
 } from './api'
-import { useAreas, renameArea } from '../areas/api'
+import { useAreas, renameArea, reparentArea } from '../areas/api'
 import { RenameField } from '../../components/RenameField'
 import { NumberField } from '../../components/NumberField'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -39,16 +39,18 @@ import {
   completeTaskWithUndo,
   undoCompletion,
   createTask,
-  setSomeday,
-  setProject,
-  planWithUndo,
+  moveTasksWithUndo,
+  rescheduleTasksWithUndo,
+  somedayTasksWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { BulkBar } from '../../components/BulkBar'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { MovePicker } from '../tasks/MovePicker'
+import type { MoveTarget } from '../tasks/move'
+import { useSelectAllKey } from '../../components/useListKeys'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
@@ -226,21 +228,20 @@ export function ProjectDetailPage() {
     clearSelection()
   }
   const bulkSomeday = () => {
-    const batch = selectedTasks
-    batch.forEach((t) => setSomeday(t, true))
-    toastUndo(`${plural(batch.length)} parked for someday.`, () => batch.forEach((t) => setSomeday(t, false)))
+    somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
   const bulkSchedule = (iso: string, timed?: boolean) => {
-    planWithUndo(selectedTasks, iso, `${plural(selectedTasks.length)} scheduled.`, timed)
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
-  const bulkMove = (projectId: string | null, domainId: string | null) => {
-    const batch = selectedTasks
-    batch.forEach((t) => setProject(t, projectId, domainId))
-    toastUndo(`${plural(batch.length)} moved.`, () => batch.forEach((t) => setProject(t, t.project_id, t.domain_id)))
+  const bulkMove = (to: MoveTarget) => {
+    moveTasksWithUndo(selectedTasks, to)
     clearSelection()
   }
+  // Kai 2026-10-07: Ctrl/Cmd+A selects this page's open tasks too (it only worked on Tasks/Today/Inbox).
+  // `id` is a project or an area, never both, so one filter serves both pages.
+  useSelectAllKey(() => setSelected(new Set(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)).map((t) => t.id))), !bulkSchedulePos && !bulkProjectPos)
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
   const bulkDelete = () => {
     deleteTasksWithUndo(selectedTasks)
@@ -269,7 +270,7 @@ export function ProjectDetailPage() {
       {bulkSchedulePos && selectedTasks.length > 0 && (
         <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
-      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )
 
@@ -615,10 +616,10 @@ export function ProjectDetailPage() {
             <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
             <Select
               value={project.domain_id ?? ''}
-              onChange={(v) => reparentProject(project, v || null)}
+              onChange={(v) => reparentProject(project, v || null, domains.find((d) => d.id === v)?.name)}
               options={[{ value: '', label: '— no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
               ariaLabel="Project domain"
-              style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }}
+              style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}
             />
 
             {/* Hours + Milestones */}
@@ -963,6 +964,16 @@ export function ProjectDetailPage() {
               area, not a project
             </span>
           </div>
+
+          {/* Kai 2026-10-07: an area's domain, set or changed here (its tasks follow; Undo in the toast) — the project page's own field. */}
+          <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+          <Select
+            value={area.domain_id ?? ''}
+            onChange={(v) => reparentArea(area, v || null, domains.find((d) => d.id === v)?.name ?? '')}
+            options={[{ value: '', label: '— no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+            ariaLabel="Area domain"
+            style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}
+          />
 
           {/* Cadence health cards */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 22 }}>

@@ -2,8 +2,9 @@ import { useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
-import type { Domain, Project, Task } from '../../lib/types'
-import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveToTomorrowWithUndo, planWithUndo, reopenTaskWithUndo, rescheduleDue, setPriority, setProject, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
+import type { Area, Domain, Project, Task } from '../../lib/types'
+import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, reopenTaskWithUndo, rescheduleDue, rescheduleTasksWithUndo, setPriority, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
+import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
 import { dueChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
@@ -19,10 +20,10 @@ export function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
     // `timed`: Pick date & time… set a time, which puts the task on the calendar (calendar/replan).
-    schedule: (iso, timed) => planWithUndo([task], iso, `Planned · ${dueChip(iso, new Date())}`, timed),
-    clearDate: () => planWithUndo([task], null, 'Date taken off'),
+    schedule: (iso, timed) => rescheduleTasksWithUndo([task], iso, { timed, message: `Planned · ${dueChip(iso, new Date())}` }),
+    clearDate: () => toastUndo('Date taken off', rescheduleDue(task, null)),
     someday: () => setSomeday(task, true),
-    move: (projectId, domainId) => setProject(task, projectId, domainId),
+    move: (to) => moveTasksWithUndo([task], to),
     priority: (p) => setPriority(task, p),
     repeat: (rule) => setRecurrence(task, rule),
     remind: (iso) => setReminder(task, iso),
@@ -39,6 +40,8 @@ export function taskActions(task: Task): TaskMenuActions {
 export interface RowGrammarOptions {
   projects: Project[]
   domains: Domain[]
+  /** Names the menu's "Move to…" hint when the task lives in an area. */
+  areas?: Area[]
   selected?: boolean
   onToggleSelect?: () => void
   /** Something on this page is selected: a phone then taps to select instead of opening. */
@@ -101,7 +104,7 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
         actions={actions}
         ctx={{
           tomorrowHint: hint,
-          projectName: o.projects.find((p) => p.id === task.project_id)?.name,
+          projectName: placeName(task, o.projects, o.areas ?? [], o.domains),
           bulkCount: bulk?.count,
           selected: o.selected,
           canSelect: !!o.onToggleSelect,
@@ -109,8 +112,6 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
           place: o.place,
           goal: o.goal,
         }}
-        projects={o.projects}
-        domains={o.domains}
       />
     ),
   }

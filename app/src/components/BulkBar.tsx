@@ -53,7 +53,8 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
     { label: 'Done', icon: 'check', run: onComplete },
     { label: 'Tomorrow', icon: 'tomorrow', run: onTomorrow },
     { label: 'Plan', icon: 'pickdate', run: onSchedule, menu: true },
-    { label: isMobile ? 'Project' : 'Move', icon: 'project', run: onMoveToProject, menu: true },
+    // "Move to…" a project, an area or a domain (features/tasks/MovePicker) — "Move" on both.
+    { label: 'Move', icon: 'project', run: onMoveToProject, menu: true },
     { label: 'Delete', icon: 'delete', run: onDelete, destructive: true },
   ]
 

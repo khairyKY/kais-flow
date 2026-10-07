@@ -17,6 +17,8 @@ import { deleteEventWithUndo, moveEventWithUndo, scheduleTask, useCalendarEvents
 import { cairoToIso } from '../calendar/eventTime'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useDomains } from '../domains/api'
+import { useAreas } from '../areas/api'
+import { placeName } from './move'
 import { useFocusStore } from '../focus/focusStore'
 import { githubUrl } from '../inbox/inboxDisplay'
 import { useProjects } from '../projects/api'
@@ -50,6 +52,7 @@ export function TaskSheet({ id }: { id: string }) {
   const { data: events = [] } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
+  const { data: areas = [] } = useAreas()
   const online = useOnline()
   const { pending } = useOutboxMarks('tasks')
   const startFocus = useStartFocus()
@@ -125,7 +128,8 @@ export function TaskSheet({ id }: { id: string }) {
   const t = task
   const now = new Date()
   const done = t.status === 'done' || !!t.completed_at
-  const project = projects.find((p) => p.id === t.project_id)
+  // Its project, else its area, else its domain (Kai 2026-10-07: the chip opens "Move to…").
+  const place = placeName(t, projects, areas, domains)
   const block = events.find((e) => e.task_id === t.id)
   const span = block && eventSpan(block)
   const subs = t.parent_task_id ? null : tasks.filter((c) => c.parent_task_id === t.id)
@@ -181,7 +185,7 @@ export function TaskSheet({ id }: { id: string }) {
       () => push({ message: "Couldn't copy the link" }),
     )
   }
-  const meta = [project?.name, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
+  const meta = [place, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
 
   return (
     <BottomSheet
@@ -251,7 +255,7 @@ export function TaskSheet({ id }: { id: string }) {
           <div className="ts-chips">
             {t.due_at ? chip('date', dueChip(t.due_at, now), 'date') : unset('date', 'Date', 'calendar')}
             {t.duration_min ? chip('duration', durationLabel(t.duration_min), 'duration') : unset('duration', 'Duration', 'clock')}
-            {project ? chip('project', <EmojiText text={project.name} />, 'project') : unset('project', 'Project', 'projects')}
+            {place ? chip('project', <EmojiText text={place} />, 'project') : unset('project', 'Move to…', 'projects')}
             {t.priority ? chip('priority', `P${t.priority}`, 'priority') : unset('priority', 'Priority', 'priority')}
             {t.recurrence_rule ? chip('repeat', repeatLabel(t.recurrence_rule), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
             {t.reminder_at ? chip('remind', remindChip(t.reminder_at, t.due_at), 'date', 'remind') : unset('remind', 'Remind', 'remind')}
@@ -389,9 +393,7 @@ export function TaskSheet({ id }: { id: string }) {
               anchor={{ at: { x: 0, y: 0 }, sub: picker }}
               onClose={() => setPicker(null)}
               actions={actions}
-              ctx={{ tomorrowHint: tomorrowHint(), projectName: project?.name }}
-              projects={projects}
-              domains={domains}
+              ctx={{ tomorrowHint: tomorrowHint(), projectName: place }}
             />
           )}
           {blockTime && block && span && (

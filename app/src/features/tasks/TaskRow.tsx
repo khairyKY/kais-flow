@@ -151,7 +151,7 @@ export function TaskRow({
 
   // J-3 (K-d, 2026-09-24): right-click never changes the selection. The menu acts on this row, or
   // on the whole selection when this row is part of it (bulk).
-  const grammar = useRowGrammar(task, { projects, domains, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
+  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
 
   // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
   // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks

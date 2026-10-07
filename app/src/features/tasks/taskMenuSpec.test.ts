@@ -14,7 +14,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
   // Kai 2026-10-07: Tomorrow + Pick date… became the one Plan… list; Make goal of the day joined.
   it('is MK Action Sheet, in its order, Delete last', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 09:00', canSelect: true })).toEqual([
-      'Plan…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete',
+      'Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete',
     ])
   })
 
@@ -51,9 +51,9 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Select')
   })
 
-  it('bulk: the plan, project and delete rows name how many they move; no goal, no focus', () => {
+  it('bulk: the plan, move and delete rows name how many they move; no goal, no focus', () => {
     expect(labels(task(), { tomorrowHint: 'x', bulkCount: 3, selected: true, canSelect: true, overdue: true, place: { index: 1, last: 2 } })).toEqual([
-      'Plan… (3)', 'Move to project… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Deselect', 'Delete (3)',
+      'Plan… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Deselect', 'Delete (3)',
     ])
   })
 
@@ -66,7 +66,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
   })
 
   it('a Top 3 row on Today moves up / down within the open picks', () => {
-    const at = (index: number, last = 2) => labels(task({ top3: true }), { tomorrowHint: 'x', place: { index, last } }).filter((l) => l.startsWith('Move ') && l !== 'Move to project…')
+    const at = (index: number, last = 2) => labels(task({ top3: true }), { tomorrowHint: 'x', place: { index, last } }).filter((l) => l === 'Move up' || l === 'Move down')
     expect(at(0)).toEqual(['Move down']) // the goal can only go down
     expect(at(1)).toEqual(['Move up', 'Move down'])
     expect(at(2)).toEqual(['Move up'])

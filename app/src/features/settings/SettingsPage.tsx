@@ -16,7 +16,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
-import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
+import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
@@ -73,12 +73,13 @@ function SCard({ children, style, tapeTint }: { children: ReactNode; style?: CSS
   )
 }
 
-function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
+function Toggle({ on, onToggle, label }: { on: boolean; onToggle?: () => void; label?: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      aria-label={label}
       onClick={onToggle}
       disabled={!onToggle}
       style={{ width: 34, height: 20, borderRadius: 999, background: on ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', border: 'none', cursor: onToggle ? 'pointer' : 'default', padding: 0 }}
@@ -228,16 +229,16 @@ function useThemeMode() {
   return { mode, setMode: setMode_, theme }
 }
 
-// ── Sound catalog — local preference, no audio pipeline shipped yet (out of a reskin wave's
-// scope); toggles persist so the eventual player has real state to read. ──
-const SOUND_CATALOG = [
-  { id: 'paper_rustle', label: 'Paper rustle', help: 'Completing a task', defaultOn: true },
-  { id: 'petal_fall', label: 'Petal fall', help: 'A bloom moment (project / streak milestone)', defaultOn: true },
-  { id: 'distant_chime', label: 'Distant chime', help: 'A ritual begins', defaultOn: false },
-  { id: 'birdsong', label: 'Birdsong', help: 'First open of the morning', defaultOn: false },
-  { id: 'rain_patter', label: 'Rain patter', help: 'Gentle rain / rainy weather', defaultOn: true },
-  { id: 'pencil_scratch', label: 'Pencil scratch', help: 'Saving a journal line', defaultOn: false },
-] as const
+// ── Sound (v2, Kai 2026-10-07): one row per event that really plays, in the order a day meets them. ──
+const SOUND_ROWS: { id: SoundEvent; label: string; help: string }[] = [
+  { id: 'complete', label: 'Task done', help: 'a soft tock as you check one off' },
+  { id: 'complete_big', label: 'Goal done', help: 'the Goal of the day, or the last of your Top 3' },
+  { id: 'capture', label: 'Captured', help: 'saved from the capture bar' },
+  { id: 'focus_start', label: 'Focus begins', help: 'a fresh round starts' },
+  { id: 'focus_end', label: 'Focus ends', help: 'the round is over, heard across the room' },
+  { id: 'ritual_done', label: 'Ritual', help: 'Start the day · Goodnight' },
+  { id: 'undo', label: 'Undo', help: 'a tiny step back' },
+]
 
 
 // (the old local sound store lived here — superseded by lib/sounds.ts)
@@ -1193,20 +1194,42 @@ function IntegrationsPage() {
   )
 }
 
-// Settings.dc.html 3a — master row with the whisper↔full meter, six sounds each with a
-// working preview, quiet hours. Kai un-cut Sounds on 2026-07-26; the voices are synthesised
-// in lib/sounds.ts (no audio files — $0 and weightless).
+/** The round ▶ every sound row and pack card uses. */
+function PlayButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', background: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+    >
+      <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
+    </button>
+  )
+}
+
+// Settings.dc.html 3a: master row with the whisper↔full meter, quiet hours. Sounds v2 (Kai
+// 2026-10-07, "I hate the current sounds"): a pack picker (kalimba / felt / glass, each with ▶ to
+// hear its phrase) and one row per event that actually plays. Synthesised in lib/sounds.ts.
 export function SoundCatalogCard() {
-  const [sounds, setSounds] = useState(readSoundCatalog)
+  const [events, setEvents] = useState(readSoundEvents)
+  const [pack, setPack] = useState(readSoundPack)
   const [volume, setVolume] = useState(readVolume)
   const [quiet, setQuiet] = useState(readQuietHours)
+  const mobile = useIsMobile()
   const masterOn = volume > 0
 
-  function toggleSound(id: SoundId, on: boolean) {
-    const next = { ...sounds, [id]: on }
-    setSounds(next)
-    writeSoundCatalog(next)
+  function toggleEvent(id: SoundEvent, on: boolean) {
+    const next = { ...events, [id]: on }
+    setEvents(next)
+    writeSoundEvents(next)
     if (on) previewSound(id) // turning one on should let you hear what you just agreed to
+  }
+  function choosePack(p: SoundPack) {
+    setPack(p)
+    writeSoundPack(p)
+    previewSound('complete_big', p)
   }
   function setVol(v: number) {
     setVolume(v)
@@ -1219,7 +1242,7 @@ export function SoundCatalogCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Sound</div>
-          <div style={fhelp}>quiet, papery, never musical</div>
+          <div style={fhelp}>soft, warm, a little musical</div>
         </div>
         {/* The design's whisper↔full meter: three bars that fill with the volume. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginLeft: 'auto' }}>
@@ -1232,7 +1255,7 @@ export function SoundCatalogCard() {
                 aria-label={`Volume ${i + 1} of 3`}
                 onClick={() => {
                   setVol(step)
-                  previewSound('paper_rustle')
+                  previewSound('complete')
                 }}
                 style={{
                   width: 5, height: 6 + i * 5, padding: 0, border: 'none', borderRadius: 1, cursor: 'pointer',
@@ -1242,33 +1265,48 @@ export function SoundCatalogCard() {
             ))}
           </span>
           <span style={{ ...flabel, fontSize: 'var(--fs-meta)' }}>full</span>
-          <Toggle on={masterOn} onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
+          <Toggle on={masterOn} label="Sound" onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
         </div>
       </div>
-      {SOUND_CATALOG.map((s) => {
-        const on = sounds[s.id as SoundId] ?? s.defaultOn
+      <div role="radiogroup" aria-label="Sound pack" style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: 8, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        {SOUND_PACKS.map((p) => {
+          const on = p === pack
+          return (
+            // The whole card picks the pack; its ▶ only auditions it.
+            <div key={p} data-sound-pack={p} style={{ position: 'relative', borderRadius: 7, border: `1px solid ${on ? 'var(--acc-sage)' : 'var(--line-card)'}`, background: on ? 'var(--paper-bone)' : 'none' }}>
+              <button type="button" role="radio" aria-checked={on} onClick={() => choosePack(p)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <div style={{ fontSize: 14, color: 'var(--ink-body)', minHeight: 24, paddingRight: 30 }}>
+                  {PACKS[p].label}
+                  {on && <span style={{ color: 'var(--acc-sage)', marginLeft: 6 }}>✓</span>}
+                </div>
+                <div style={{ ...fhelp, marginTop: 3 }}>{PACKS[p].blurb}</div>
+              </button>
+              <span style={{ position: 'absolute', top: 8, right: 8 }}>
+                <PlayButton label={`Hear ${PACKS[p].label}`} onClick={() => previewSound('complete_big', p)} />
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      {SOUND_ROWS.map((s) => {
+        const on = events[s.id]
         return (
-          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: masterOn && on ? 1 : 0.6 }}>
-            <button
-              type="button"
-              aria-label={`Preview ${s.label}`}
-              title={`Preview ${s.label}`}
-              onClick={() => previewSound(s.id as SoundId)}
-              style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', background: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
-            >
-              <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
-            </button>
-            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)', width: 120, flex: 'none' }}>{s.label}</span>
-            <span style={{ ...flabel, fontSize: 'var(--fs-meta)', flex: 1 }}>{s.help}</span>
-            <Toggle on={on} onToggle={() => toggleSound(s.id as SoundId, !on)} />
+          <div key={s.id} data-sound-event={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: masterOn && on ? 1 : 0.6 }}>
+            <PlayButton label={`Preview ${s.label}`} onClick={() => previewSound(s.id)} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)' }}>{s.label}</div>
+              <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginTop: 2 }}>{s.help}</div>
+            </div>
+            <Toggle on={on} label={s.label} onToggle={() => toggleEvent(s.id, !on)} />
           </div>
         )
       })}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--ink-hairline)" /></svg>
-        <span style={{ ...fhelp, marginTop: 0, flex: 1 }}>The garden is silent after you close it.</span>
+        <span style={{ ...fhelp, marginTop: 0, flex: 1 }}>The garden is silent after you close it. Quiet hours and paused notifications hush it too.</span>
         <Toggle
           on={quiet}
+          label="Silent after you close the garden"
           onToggle={() => {
             setQuiet(!quiet)
             writeQuietHours(!quiet)
@@ -1418,6 +1456,11 @@ function MobileSettings() {
       {/* Calendar: Opens on (it sat under Appearance until the Weekend joined it, 2026-10-07). */}
       <div id="settings-Calendar" style={{ marginTop: 12 }}>
         <CalendarCard phone />
+      </div>
+
+      {/* Sounds v2: the phone plays them too, so it gets the same card (it had none). */}
+      <div id="settings-Sound" style={{ marginTop: 12 }}>
+        <SoundCatalogCard />
       </div>
 
       <div style={{ marginTop: 12 }}>

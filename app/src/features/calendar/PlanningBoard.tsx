@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { useTasks, createTask, rescheduleDue, planWithUndo, setSomeday, completeTask, undoCompletion, setProject, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, createTask, rescheduleDue, setSomeday, completeTask, undoCompletion, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { planningColumns, type PlanningColumn, type PlanningColumnKey } from '../tasks/grouping'
 import { PlanMenu } from '../tasks/PlanMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { MovePicker } from '../tasks/MovePicker'
+import type { MoveTarget } from '../tasks/move'
 import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
-import { useProjects } from '../projects/api'
-import { useDomains } from '../domains/api'
+import { useSelectAllKey } from '../../components/useListKeys'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import { scheduleNextWeek, scheduleThisWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
@@ -193,8 +192,6 @@ function BoardColumn({
  * re-date actions without one, so nothing here is drag-only. */
 export function PlanningBoard() {
   const { data: tasks = [] } = useTasks()
-  const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
   const columns = planningColumns(tasks)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const [expandedCols, setExpandedCols] = useState<Set<PlanningColumnKey>>(new Set())
@@ -251,21 +248,25 @@ export function PlanningBoard() {
     moveToTomorrowWithUndo(selectedTasks)
     clearSelection()
   }
+  // Kai 2026-10-07: every bulk action is an Undo toast (no plain "N tasks moved." notices).
   function bulkSomeday() {
-    selectedTasks.forEach((t) => setSomeday(t, true))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} parked for someday.` })
+    somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
   // The bulk bar's Plan (plan-replan): a date with a time is timed — it puts the tasks on the calendar.
   function bulkSchedule(iso: string, timed?: boolean) {
-    planWithUndo(selectedTasks, iso, `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled.`, timed)
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
-  function bulkMove(projectId: string | null, domainId: string | null) {
-    selectedTasks.forEach((t) => setProject(t, projectId, domainId))
-    useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
+  function bulkMove(to: MoveTarget) {
+    moveTasksWithUndo(selectedTasks, to)
     clearSelection()
   }
+  // Ctrl/Cmd+A: every card on the board you can see (a collapsed column's first few).
+  useSelectAllKey(
+    () => setSelected(new Set(columns.flatMap((c) => (expandedCols.has(c.key) ? c.tasks : c.tasks.slice(0, COLLAPSED_CAP))).map((t) => t.id))),
+    !bulkSchedulePos && !bulkProjectPos,
+  )
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() {
     deleteTasksWithUndo(selectedTasks)
@@ -347,16 +348,7 @@ export function PlanningBoard() {
       {bulkSchedulePos && selectedTasks.length > 0 && (
         <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
-      {bulkProjectPos && (
-        <ProjectPicker
-          position={bulkProjectPos}
-          projects={projects}
-          domains={domains}
-          currentProjectId={null}
-          onSelect={bulkMove}
-          onClose={() => setBulkProjectPos(null)}
-        />
-      )}
+      {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>
   )
 }

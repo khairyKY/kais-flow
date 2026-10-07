@@ -31,7 +31,7 @@ vi.mock('../calendar/api', () => ({
     return () => void (r.undone = true)
   },
 }))
-const { currentTop3, makeGoalWithUndo, moveInTop3Order, planWithUndo, spreadWithUndo } = await import('./api')
+const { currentTop3, makeGoalWithUndo, moveInTop3Order, rescheduleTasksWithUndo, spreadWithUndo } = await import('./api')
 const { scheduleTomorrow } = await import('../../lib/dateShortcuts')
 const { cairoToIso } = await import('../calendar/eventTime')
 
@@ -44,13 +44,13 @@ beforeEach(() => {
   replans.length = 0
 })
 
-describe('planWithUndo — a Plan pick for one task or a selection', () => {
+describe('rescheduleTasksWithUndo — a Plan pick for one task or a selection', () => {
   it('a date alone is date-only for the blocks; Pick date & time with a time is timed; one Undo puts the dates back', () => {
     cache.tasks = [task('a', { due_at: '2026-10-05T06:00:00.000Z', someday: true }), task('b')]
-    planWithUndo([T('a'), T('b')], '2026-10-08T06:00:00.000Z', '2 tasks planned')
+    rescheduleTasksWithUndo([T('a'), T('b')], '2026-10-08T06:00:00.000Z')
     expect(replans.map((r) => [r.id, r.timed])).toEqual([['a', false], ['b', false]])
     expect(T('a')).toMatchObject({ due_at: '2026-10-08T06:00:00.000Z', someday: false })
-    planWithUndo([T('b')], '2026-10-08T12:30:00.000Z', 'Planned', true)
+    rescheduleTasksWithUndo([T('b')], '2026-10-08T12:30:00.000Z', { timed: true })
     expect(replans.at(-1)).toMatchObject({ id: 'b', timed: true })
     toasts[0].undo!()
     expect(replans.slice(0, 2).every((r) => r.undone)).toBe(true)

@@ -119,7 +119,7 @@ async function tap(cdp, loc) {
 async function toastsGone(page) {
   for (let i = 0; i < 40 && (await page.locator('.kf-toast').count()) > 0; i++) await sleep(250)
 }
-const SPEC = ['Tomorrow', 'Pick date…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
+const SPEC = ['Tomorrow', 'Pick date…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
 const phone = { viewport: { width: 390, height: 844 }, touch: true }
 const desktop = { viewport: { width: 1280, height: 800 }, touch: false }
 

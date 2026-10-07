@@ -10,7 +10,7 @@ import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
 import { EveningRitual } from '../rituals/EveningRitual'
-import { readSoundCatalog, writeSoundCatalog, previewSound } from '../../lib/sounds'
+import { readSoundEvents, writeSoundEvents, previewSound } from '../../lib/sounds'
 import { useTimeEntries, logTimeEntry } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
@@ -92,7 +92,7 @@ export function FocusPage() {
   const settings = useFocusStore((s) => s.settings)
   const saveSettings = useFocusStore((s) => s.saveSettings)
   // The chime row is a view onto the shared sound catalog (see the popover row below).
-  const [chimeOn, setChimeOn] = useState(() => readSoundCatalog().distant_chime)
+  const [chimeOn, setChimeOn] = useState(() => readSoundEvents().focus_end)
 
   // 3. Focus session state — R4-D3: owned by focusStore so a running session survives
   // navigation and is shared with the MiniFocus widget on a task's detail page.
@@ -143,25 +143,9 @@ export function FocusPage() {
   // session keeps running when Kai navigates away from this page.
 
 
-  // Handle Play/Pause toggle
-  const togglePlay = () => {
-    if (!isRunning) {
-      const now = new Date()
-      if (mode === 'pomodoro') {
-        if (!pomodoroStartIso) {
-          setPomodoroStartIso(now.toISOString())
-        }
-      } else if (mode === 'stopwatch') {
-        if (stopwatchSeconds === 0) {
-          setStopwatchStartIso(now.toISOString())
-          setStopwatchStartStr(
-            now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
-          )
-        }
-      }
-    }
-    setIsRunning(!isRunning)
-  }
+  // Handle Play/Pause toggle: the store's own, so a fresh round sounds focus_start here too (Sounds v2)
+  // instead of a copy of it that stamped the start and skipped the sound.
+  const togglePlay = () => useFocusStore.getState().togglePlay()
 
   // Handle "+5 min"
   const addFiveMinutes = () => {
@@ -1232,8 +1216,8 @@ export function FocusPage() {
               </span>
             </div>
             {/* Punch 52 + 8 (orchestrator patch): the chime is real again (synthesised, not the
-                missing chime.mp3), and this row is now the SAME switch as Settings' "Distant
-                chime" — it writes the shared sound catalog rather than a private flag that
+                missing chime.mp3), and this row is now the SAME switch as Settings' "Focus round
+                ends" — it writes the shared sound catalog rather than a private flag that
                 decided nothing. One sound, one setting, wherever you toggle it. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>
@@ -1241,8 +1225,8 @@ export function FocusPage() {
                 onClick={() => {
                   const next = !chimeOn
                   setChimeOn(next)
-                  writeSoundCatalog({ ...readSoundCatalog(), distant_chime: next })
-                  if (next) previewSound('distant_chime')
+                  writeSoundEvents({ ...readSoundEvents(), focus_end: next })
+                  if (next) previewSound('focus_end')
                 }}
                 style={{ width: 34, height: 20, borderRadius: 999, background: chimeOn ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
               >
