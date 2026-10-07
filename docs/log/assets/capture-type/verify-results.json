@@ -1,0 +1,352 @@
+[
+  {
+    "name": "phone-tap-day centre tap → the capture sheet (a bottom sheet, field + camera + mic + send)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-day the field has focus when the click finishes dispatching (same task as the tap)",
+    "ok": true,
+    "detail": "{\"atEnd\":\"kf-capture-input\",\"active\":\"kf-capture-input\"}"
+  },
+  {
+    "name": "phone-tap-day its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
+    "ok": true,
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+  },
+  {
+    "name": "phone-tap-day the sheet sits at the bottom of the screen (not the old overlay at the top)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":637,\"width\":390,\"height\":207}"
+  },
+  {
+    "name": "phone-tap-day first-run hint \"Tap to type · hold to talk\" on a first open",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-day centre button keeps the mic glyph; its name says tap to type, hold to talk",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-day keyboard up → the sheet rides on it (bottom at 844 − 300)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":301,\"width\":390,\"height\":243}"
+  },
+  {
+    "name": "phone-tap-day parse chips: date (tomorrow 9) + project",
+    "ok": true,
+    "detail": "[\"TOMORROW · 9:00 AM\",\"WEBSITE\"]"
+  },
+  {
+    "name": "phone-tap-day Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website",
+    "ok": true,
+    "detail": "[[\"Email Priya the slides\",\"2026-10-08 09:00\"]]"
+  },
+  {
+    "name": "phone-tap-day …and the sheet closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-night centre tap → the capture sheet (a bottom sheet, field + camera + mic + send)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-night the field has focus when the click finishes dispatching (same task as the tap)",
+    "ok": true,
+    "detail": "{\"atEnd\":\"kf-capture-input\",\"active\":\"kf-capture-input\"}"
+  },
+  {
+    "name": "phone-tap-night its first focus() ran inside the click's task, with user activation, called from onClick → openCapture",
+    "ok": true,
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← onClick (features/capture/CaptureButton.tsx:231:45)"
+  },
+  {
+    "name": "phone-tap-night the sheet sits at the bottom of the screen (not the old overlay at the top)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":667,\"width\":390,\"height\":177}"
+  },
+  {
+    "name": "phone-tap-night first-run hint \"Tap to type · hold to talk\" gone after 3 opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-night centre button keeps the mic glyph; its name says tap to type, hold to talk",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-night keyboard up → the sheet rides on it (bottom at 844 − 300)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":331,\"width\":390,\"height\":213}"
+  },
+  {
+    "name": "phone-tap-night parse chips: date (tomorrow 9) + project",
+    "ok": true,
+    "detail": "[\"TOMORROW · 9:00 AM\",\"WEBSITE\"]"
+  },
+  {
+    "name": "phone-tap-night Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website",
+    "ok": true,
+    "detail": "[[\"Email Priya the slides\",\"2026-10-08 09:00\"]]"
+  },
+  {
+    "name": "phone-tap-night …and the sheet closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-tap-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-send Send is disabled while the field is empty",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-send \"→ Inbox\" chip for a line with no structure",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-send dismissed and reopened → the draft is still there (kit sheet: dismissing never discards)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-send Send → one Inbox capture (captureText), sheet closed, field empty next time",
+    "ok": true,
+    "detail": "[\"ideas for the garden\"]"
+  },
+  {
+    "name": "phone-send no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-mic mic → the capture sheet steps aside, the voice sheet is listening",
+    "ok": true,
+    "detail": "LISTENING · 0:01\nsay what's on your mind…\nCancel\nStop & file"
+  },
+  {
+    "name": "phone-mic Stop & file → transcribed (fake mic → real MediaRecorder blob) and AI-filed as a task + toast",
+    "ok": true,
+    "detail": "{\"transcribed\":1,\"tasks\":[\"Call mum\"],\"toasts\":[\"Added \\\"Call mum\\\"\"]}"
+  },
+  {
+    "name": "phone-mic no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-hold hold ≥ 400ms → recording (pill + grown button)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-hold release → sent, transcribed, filed",
+    "ok": true,
+    "detail": "[\"Call mum\"]"
+  },
+  {
+    "name": "phone-hold the click that ends a hold does not open the capture sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-hold slide up onto the lock → hands-free bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-hold no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-offline-voice offline → the recording is kept (\"You're offline…\", Save to Inbox untranscribed)",
+    "ok": true,
+    "detail": "—\nNOT TRANSCRIBED YET · 0:01\nyour recording is still here\nYou’re offline, so it couldn’t be transcribed.\nThe audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.\nDiscard\nTry again\nSave to Inbox untranscribed"
+  },
+  {
+    "name": "phone-offline-voice Save → \"Saved to Inbox — not transcribed yet.\" (queued in the outbox)",
+    "ok": true,
+    "detail": "[\"Saved to Inbox — not transcribed yet.\"]"
+  },
+  {
+    "name": "phone-offline-voice no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-empty-state the field has focus when the click finishes dispatching (same task as the tap)",
+    "ok": true,
+    "detail": "{\"atEnd\":\"kf-capture-input\",\"active\":\"kf-capture-input\"}"
+  },
+  {
+    "name": "phone-empty-state its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
+    "ok": true,
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+  },
+  {
+    "name": "phone-empty-state no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Today's header CTA is \"Capture\" (no \"Voice capture\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Capture → the command bar, cursor in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day the field has focus when the click finishes dispatching (same task as the tap)",
+    "ok": true,
+    "detail": "{\"atEnd\":\"kf-capture-input\",\"active\":\"kf-capture-input\"}"
+  },
+  {
+    "name": "desktop-day its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
+    "ok": true,
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+  },
+  {
+    "name": "desktop-day a mic toggle in the bar (+ the camera keeps its place)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day mic on → pressed, \"Listening\" in the hint row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day mic off → transcribed into the field after what was typed (for review, not filed)",
+    "ok": true,
+    "detail": "Call the bank tomorrow 3pm about the mortgage"
+  },
+  {
+    "name": "desktop-day …focus back in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Enter files it: a task due tomorrow 15:00 Cairo",
+    "ok": true,
+    "detail": "[[\"Call the bank about the mortgage\",\"2026-10-08 15:00\"]]"
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Today's header CTA is \"Capture\" (no \"Voice capture\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Capture → the command bar, cursor in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night the field has focus when the click finishes dispatching (same task as the tap)",
+    "ok": true,
+    "detail": "{\"atEnd\":\"kf-capture-input\",\"active\":\"kf-capture-input\"}"
+  },
+  {
+    "name": "desktop-night its first focus() ran inside the click's task, with user activation, called from openCapture → openCapture",
+    "ok": true,
+    "detail": "inClickTask=true activation=true · http://localhost:5262/src/features/command-bar/CommandBar.tsx:187:22 ← flushSyncWorkAcrossRoots_impl (react-dom_client.js:8984:302) ← flushSyncWork$1 (react-dom_client.js:8122:81) ← exports.flushSync (react-dom.js:81:100) ← openCapture (features/command-bar/commandBarStore.ts:20:2) ← executeDispatch (react-dom_client.js:9141:5)"
+  },
+  {
+    "name": "desktop-night a mic toggle in the bar (+ the camera keeps its place)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night mic on → pressed, \"Listening\" in the hint row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night mic off → transcribed into the field after what was typed (for review, not filed)",
+    "ok": true,
+    "detail": "Call the bank tomorrow 3pm about the mortgage"
+  },
+  {
+    "name": "desktop-night …focus back in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Enter files it: a task due tomorrow 15:00 Cairo",
+    "ok": true,
+    "detail": "[[\"Call the bank about the mortgage\",\"2026-10-08 15:00\"]]"
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-tasks header CTA \"Capture\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-tasks → the bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-tasks no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-inbox header CTA \"Capture\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-inbox → the bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-header-inbox no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-dictate-kept transcribe fails → the voice sheet keeps the take (Try again · Save · Discard), bar still open",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-dictate-kept Try again → the words land in the field (not AI-filed behind your back)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-dictate-kept no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
