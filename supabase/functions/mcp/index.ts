@@ -18,7 +18,10 @@
 //        -H "Content-Type: application/json" -H "MCP-Protocol-Version: 2025-11-25" \
 //        -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"today","arguments":{}}}'
 import postgres from 'npm:postgres@3'
-import { RRule } from 'npm:rrule@2'
+// rrule is CommonJS: Deno can't take a named export from it (the function crashed on boot, 503 —
+// found on the first live MCP call, 2026-10-07). Vite tolerates the named import; Deno doesn't.
+import rrulePkg from 'npm:rrule@2'
+const { RRule } = rrulePkg
 import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
