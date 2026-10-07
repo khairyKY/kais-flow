@@ -93,3 +93,61 @@ The desktop CTA uses the kf `plus`, the same glyph as the sidebar's Capture row.
 - **Cold-start window.** The bar's chunk loads on the first idle callback after boot (≤2s; 500ms fallback without `requestIdleCallback`). A tap before that still opens the sheet but may not raise the keyboard. The PWA precaches the chunk, so this is a load, not a network wait.
 - **CommandBar is now always mounted after idle.** The cost is its two queries (domains and projects, which the sidebar already caches) and a `prefill-command-bar` listener, which now actually works when the bar is closed.
 - **BottomSheet footer padding.** The kit footer keeps its 28px bottom padding, so a band shows between the toolbar and the keyboard (11a draws the toolbar flush). This is cosmetic.
+
+---
+
+# Phase 2: every property extracted from typed captures (Akiflow-style)
+
+These are new commits on the same branch, after `64e6db5`. Phase 1 shipped there as v1.0.22. The conductor merges phase 2 separately.
+
+Kai (2026-10-07): "When they capture something, every property is extracted — date, time, priority, description — like Akiflow. I don't want my user to type !!! for priority or // for a description. Let the AI understand the intent and decide."
+
+## What changed
+
+**Server: `supabase/functions/parse-capture/`**
+- The prompt moved to a pure `prompt.ts`, tested from the app suite in `capture/parsePrompt.test.ts`.
+- `ParseResultSchema` gains `description`: notes beyond the title, null if none. The app's `parseSchema.ts` mirrors it.
+- The prompt now infers these from the plain words:
+  - **priority**, on the app's 1–3 scale (1 = most urgent, same as `!!!`/`!!`/`!`): critical/urgent/ASAP → 1, important/soon → 2, low/whenever/no rush → 3, otherwise null.
+  - **duration**: "an hour" = 60, "quick 15 min call" = 15.
+  - date/time, reminder, and project/domain as before.
+- It keeps the words it turned into fields out of the title.
+- **Needs a deploy:** `supabase functions deploy parse-capture`. Until then the old function answers without `description` and priority, so phase 2 just fills less. Nothing breaks, because the field is optional.
+
+**App: typed capture (Enter in the bar or sheet).**
+- The row is still written at once from the local chrono parse (the preview chips are unchanged). It never waits on the network.
+- Then the AI read follows:
+  - **With structure** (a task was created): `enrichTypedTask` → `aiFill` fills **only empty fields**: date, priority, duration, project/domain, reminder, notes.
+    - An explicit token always wins, because it already set its field: `!`, `30m`, `#tag`, `*label`, and the date chip.
+    - So does anything the person changed meanwhile.
+    - The title is replaced only when the AI pulled something else out of the words and the title is still the typed one.
+    - Toast: **"✦ Filled by AI: priority, notes · Undo"**. Undo restores only the fields the AI wrote, and only where they still hold its values.
+  - **A plain line** (it went to the Inbox): `enrichTypedInboxItem`. The AI decides, like a voice capture.
+    - A task it is sure of (≥ 0.75) is filed with everything it read. Toast: **"✦ Filed by AI: "…" · Undo"**, where Undo puts it back in the Inbox.
+    - Anything else stays in the Inbox, carrying the AI read (`ai_parse`, `confidence`) for triage.
+  - Offline, over quota, or on any failure, nothing happens: the local parse stands and nothing is lost.
+- ⌘↵ AI capture is unchanged.
+
+**Every AI-filed path now takes the AI's priority and description.**
+- This covers voice, ⌘↵ and queued/endpoint captures, through one helper, `taskFromParse`.
+- They used to drop `priority` and had no description. Typed `!`/`30m` overrides still win.
+- The AI's project/domain ids are validated against this device's live projects and domains, and placement needs ≥ 0.75. A made-up id would otherwise park the write.
+- `createTask` takes `notes`.
+
+## Evidence
+- **Unit tests:**
+  - `capture/aiFill.test.ts`: explicit tokens beat the AI, run through the real `parseCommand`; the AI only fills empties; a rename is kept; made-up ids, off-scale priorities and nonsense dates are dropped; `taskFromParse`.
+  - `capture/api.test.ts`: `enrichTypedTask` fill + toast + Undo; offline/429/failure write nothing; `enrichTypedInboxItem` files or annotates.
+  - `capture/parsePrompt.test.ts`.
+- **Gate:** `tsc -b` 0 · vitest 105 files / 1256 tests under each of Africa/Cairo, UTC, America/Los_Angeles, Asia/Kolkata · oxlint 0 errors (21 warnings, none in touched files) · build ok.
+  - Deno isn't installed here, so `parse-capture/index.ts` itself wasn't `deno check`ed. Its change is an import, one optional schema field and the fallback's `description: null`. `prompt.ts` is type-checked through the app suite.
+- **Harness:** `capture-type/verify.mjs` now scores **84/84** (the 70 phase-1 checks + the `ai-*` scenes). The mocked parse-capture answers 700ms late:
+  - The task POST lands before the AI answers. The fill then writes priority 1 (from "asap"), notes "Bring the payslips" and the title "Call the bank", while the typed tomorrow-15:00 stands. The toast follows, and Undo restores what was typed.
+  - With "! 30m" typed, the result is priority 3 and 30m: the AI only added notes.
+  - On a phone, "renew the car licence, urgent" → Inbox at once → the AI files it as a task with priority 1 and marks the Inbox row filed, with the "✦ Filed by AI" toast.
+  - Offline: no AI call and no toast; back online, the task syncs as typed.
+
+## Risks
+- **AI quota.** Every typed Enter now costs one parse call (one row per capture; the parse allowance is shared with voice/⌘↵). Over the allowance, enrichment just stops for the day: the 429 is silent and the local parse stands.
+- **A plain typed line can now become a task by itself** when the AI is ≥ 0.75 sure it's a task. Before, it always waited in the Inbox. The toast's Undo puts it back. If Kai wants plain lines to stay in the Inbox (annotated only), drop the filing branch in `enrichTypedInboxItem`.
+- **The desktop "→ Inbox (unfiled)" / phone "→ Inbox" chip** still describes the instant write, not the AI's later decision.
