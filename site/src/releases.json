@@ -1,5 +1,16 @@
 [
   {
+    "v": "v1.0.24",
+    "date": "2026-10-07",
+    "title": "AI assistants can connect",
+    "highlights": [
+      "The MCP server for AI assistants starts again: it crashed on start-up, so connecting with your AI access key always failed"
+    ],
+    "icons": [
+      "chat"
+    ],
+    "art": "clover-awake"
+  },  {
     "v": "v1.0.23",
     "date": "2026-10-07",
     "title": "Plan, replan, and a calmer day",
