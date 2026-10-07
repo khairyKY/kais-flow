@@ -2,6 +2,7 @@ import { useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import type { Area, Domain, Project, Task } from '../../lib/types'
+import { setTimeOf } from '../calendar/replan'
 import { deleteTasksWithUndo, moveTasksWithUndo, moveToTomorrowWithUndo, reopenTaskWithUndo, rescheduleDue, setPriority, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
 import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
@@ -15,8 +16,10 @@ import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } fro
 export function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
-    schedule: (iso) => rescheduleDue(task, iso),
-    clearDate: () => rescheduleDue(task, null),
+    // The picker says whether a time was set (a time puts the task on the calendar — calendar/replan);
+    // a path that drops its flag falls back to "not the 09:00 a date alone lands on".
+    schedule: (iso: string, _min?: number, timed?: boolean) => void rescheduleDue(task, iso, timed ?? setTimeOf(iso)),
+    clearDate: () => void rescheduleDue(task, null),
     someday: () => setSomeday(task, true),
     move: (to) => moveTasksWithUndo([task], to),
     priority: (p) => setPriority(task, p),

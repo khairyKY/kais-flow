@@ -1,5 +1,5 @@
 import { img, head2, icon, btn, live, coming } from '../lib.mjs'
-import { RELEASES, ROADMAP, REPO, shortDate, apkUrl } from '../data.mjs'
+import { APP_URL, RELEASES, ROADMAP, REPO, shortDate, longDate, apkUrl } from '../data.mjs'
 
 // ── integrations & imports ──
 const INTEGRATIONS = [
@@ -71,9 +71,40 @@ const compare = {
 </div></section>`,
 }
 
+// ── what's new: the newest release up close, the two before it lighter (same releases.json as Field
+// notes and the app's What's new sheet) ──
+const TONES = ['t-terra', 't-lav', 't-sage', 't-butter', 't-blossom', 't-hyd']
+const COUNT = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+const [NEW, ...BEFORE] = RELEASES
+const older = (r) => `<article class="wn-old" aria-labelledby="wn-${r.v}">
+  <div class="wn-old-h">${img(r.art, '', { w: 44 })}<div><h3 id="wn-${r.v}">${r.title ?? `What changed in ${r.v}`}</h3><span class="entry-v">${r.v} · ${longDate(r.date)}</span></div></div>
+  <ul>${r.highlights.map((l) => `<li>${l}</li>`).join('')}</ul>
+</article>`
+const whatsNew = {
+  path: '/whats-new/',
+  title: 'What’s new',
+  description: `What’s new in Kai’s Flow ${NEW.v}${NEW.title ? `: ${NEW.title.charAt(0).toLowerCase()}${NEW.title.slice(1)}` : ''}. The newest release up close, and the two before it.`,
+  og: 'whats-new',
+  body: `<section class="sec first wn-hero"><div class="wrap">
+  <div class="wn-top">
+    <div class="wn-copy">${head2({ eyebrow: `What’s new · ${NEW.v} · ${longDate(NEW.date)}`, title: NEW.title ?? `What’s new in ${NEW.v}`, h: 'h1',
+      lead: `${COUNT[NEW.highlights.length] ?? NEW.highlights.length} ${NEW.highlights.length === 1 ? 'change' : 'changes'} in ${NEW.v}. The web app has them already; on Android and Windows, Settings → App → Check for updates brings them in.` })}
+      <div class="btns" style="margin-top:28px">${btn('Open the app', APP_URL)}${btn(`Get ${NEW.v}`, '/download/', { kind: 'secondary', ic: 'download' })}</div>
+    </div>
+    ${img(NEW.art, '', { w: 240, cls: 'wn-art' })}
+  </div>
+  <ul class="wn-grid" role="list">${NEW.highlights.map((t, i) => `<li class="wn-cell"><span class="dot ${TONES[i % TONES.length]}">${icon(NEW.icons?.[i] ?? 'sprout')}</span><p>${t}</p></li>`).join('')}</ul>
+</div></section>
+<section class="sec"><div class="wrap">
+  ${head2({ eyebrow: 'Before that', title: 'The two releases before' })}
+  <div class="wn-prev">${BEFORE.slice(0, 2).map(older).join('')}</div>
+  <p class="btns" style="margin-top:36px"><a class="more" href="/field-notes/">All field notes →</a><a class="more" href="${REPO}/releases">GitHub releases →</a></p>
+</div></section>`,
+}
+
 // ── field notes (the changelog) ──
 const entry = (r, i) => {
-  const shown = r.lines.slice(0, 4), rest = r.lines.slice(4)
+  const shown = r.highlights.slice(0, 4), rest = r.highlights.slice(4)
   const lis = (ls) => `<ul>${ls.map((l) => `<li>${l}</li>`).join('')}</ul>`
   return `<article class="entry${i === 0 ? ' card' : ''}" id="${r.v}" aria-labelledby="${r.v}-h">
   <div class="entry-side">${img(r.art, '', { w: 56 })}<div><h2 class="entry-date" id="${r.v}-h">${shortDate(r.date)}</h2><span class="entry-v">${r.v}</span></div></div>
@@ -114,4 +145,4 @@ const growing = {
 </div></section>`,
 }
 
-export const morePages = [integrations, compare, fieldNotes, growing]
+export const morePages = [integrations, compare, whatsNew, fieldNotes, growing]

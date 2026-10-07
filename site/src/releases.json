@@ -1,0 +1,201 @@
+[
+  {
+    "v": "v1.0.22",
+    "date": "2026-10-07",
+    "title": "Capture that types, and fills itself in",
+    "highlights": [
+      "Tap Capture to type: on your phone the keyboard comes up with the sheet, and desktop has a Capture button",
+      "Hold to talk, or tap the mic in the sheet; on desktop the mic dictates into the field so you can check it first",
+      "Write it the way you'd say it: the AI picks up the date, time, priority, length and notes, no !!! or // needed",
+      "Whatever the AI filled in shows in a note with Undo, and anything you typed yourself always wins",
+      "A What's new page, and a heads-up in Settings → App when an update is ready"
+    ],
+    "icons": [
+      "keyboard",
+      "mic",
+      "sprout",
+      "check",
+      "download"
+    ],
+    "art": "daisy-morning"
+  },
+  {
+    "v": "v1.0.21",
+    "date": "2026-10-07",
+    "title": "Your own time zone, and easier projects",
+    "highlights": [
+      "Your own time zone: Today, reminders and the morning digest follow your clock, wherever you are",
+      "AI assistants can read and add to your days over MCP, with a key you make in Settings",
+      "Rename a project or area from inside it, and change what a thing is: project, retainer, area or domain",
+      "Domains can be made, renamed, recoloured, merged and deleted from anywhere",
+      "Search results open the thing itself, and a project’s status updates can be edited",
+      "Easier number fields: tap to select, or nudge with − and +"
+    ],
+    "icons": [
+      "globe",
+      "chat",
+      "sync",
+      "sprout",
+      "search",
+      "keyboard"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
+    "v": "v1.0.20",
+    "date": "2026-10-04",
+    "title": "A tray icon, and paper that becomes tasks",
+    "highlights": [
+      "A tray icon on Windows, with a little flyout: now, next, your Top 3, quick capture and focus",
+      "Notifications with buttons — Done and Tomorrow right from a reminder",
+      "Quiet hours, and task names hidden on the lock screen until you choose",
+      "Paper capture: photograph your handwritten notes and they come back as tasks, events and notes (Arabic too)"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
+    "v": "v1.0.19",
+    "date": "2026-10-04",
+    "highlights": [
+      "Signing up works straight away while email is being set up"
+    ],
+    "art": "fern-coil"
+  },
+  {
+    "v": "v1.0.18",
+    "date": "2026-10-04",
+    "highlights": [
+      "Sign-up and reset emails lead back to the app",
+      "The chat answers from your day and knows how the app works — in your language",
+      "GitHub in Settings leads straight to your issues"
+    ],
+    "art": "hydrangea-light"
+  },
+  {
+    "v": "v1.0.17",
+    "date": "2026-10-04",
+    "title": "Settings that tell the truth, and the share sheet",
+    "highlights": [
+      "Settings tells the truth: real reminder times, the real GitHub state, and Google Calendar marked as coming",
+      "Kai’s Flow is in the Android share sheet",
+      "Make capture keys on the phone",
+      "Labels on task rows, and *label to add one",
+      "Streak goals for routines",
+      "Retainer projects roll their open tasks into the new month"
+    ],
+    "art": "daisy-evening"
+  },
+  {
+    "v": "v1.0.16",
+    "date": "2026-10-03",
+    "title": "Settings that scroll, and a calendar that snaps",
+    "highlights": [
+      "Settings scrolls everywhere",
+      "Our own right-click menu",
+      "Delete areas",
+      "Search in Focus",
+      "The calendar snaps to 15 minutes",
+      "A default calendar view",
+      "Check for updates",
+      "A Windows installer that looks like the app"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
+    "v": "v1.0.15",
+    "date": "2026-10-03",
+    "highlights": [
+      "Plan my day searches all your tasks and lets you pick in place",
+      "A calendar task opens in one tap",
+      "Reminders move with their task",
+      "Routines fold by time of day",
+      "The pressing ceremony waits for you",
+      "Import from Todoist, TickTick, Notion, Obsidian, Kindle and Goodreads"
+    ],
+    "art": "hydrangea-light"
+  },
+  {
+    "v": "v1.0.14",
+    "date": "2026-10-02",
+    "highlights": [
+      "The new icon: a Source Serif K on warm paper"
+    ],
+    "art": "clover-four_leaf"
+  },
+  {
+    "v": "v1.0.13",
+    "date": "2026-09-29",
+    "highlights": [
+      "A touch calendar for phones: swipe days, hold to move, resize handles"
+    ],
+    "art": "daisy-midday"
+  },
+  {
+    "v": "v1.0.12",
+    "date": "2026-09-29",
+    "highlights": [
+      "Open a task as a sheet over any page",
+      "A calmer first run"
+    ],
+    "art": "fern-unfurl1"
+  },
+  {
+    "v": "v1.0.11",
+    "date": "2026-09-28",
+    "highlights": [
+      "Plan my day and Shut down, redrawn"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
+    "v": "v1.0.10",
+    "date": "2026-09-28",
+    "highlights": [
+      "Our own date and time pickers",
+      "Today on the phone, with the NOW slip"
+    ],
+    "art": "vine-leaf-right"
+  },
+  {
+    "v": "v1.0.9",
+    "date": "2026-09-28",
+    "highlights": [
+      "Swipe right for Tomorrow, left for Trash with Undo",
+      "Hold to select"
+    ],
+    "art": "cherry-bud"
+  },
+  {
+    "v": "v1.0.8",
+    "date": "2026-09-28",
+    "highlights": [
+      "The refreshed design system",
+      "The native Android app"
+    ],
+    "art": "clover-awake"
+  },
+  {
+    "v": "v1.0.7",
+    "date": "2026-09-27",
+    "highlights": [
+      "The phone pass: readability, phone type, tab icons"
+    ],
+    "art": "daisy-morning"
+  },
+  {
+    "v": "v1.0.6",
+    "date": "2026-09-27",
+    "highlights": [
+      "GitHub issues into your Inbox"
+    ],
+    "art": "hydrangea-medium"
+  },
+  {
+    "v": "v1.0.5",
+    "date": "2026-09-27",
+    "highlights": [
+      "Capture from anywhere with a link"
+    ],
+    "art": "fern-coil"
+  }
+]

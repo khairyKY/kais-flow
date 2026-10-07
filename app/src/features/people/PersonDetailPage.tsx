@@ -4,7 +4,7 @@ import { usePeople, useInteractions, upsertPerson, deletePerson, createInteracti
 import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { BackLink, Button } from '../../components/kit'
-import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { openCapture } from '../command-bar/commandBarStore'
 import { ConfirmCard } from '../projects/ConfirmCard'
 
 function getAvatarBgColor(name: string): string {
@@ -62,7 +62,6 @@ export function PersonDetailPage() {
   const { data: people = [], refetch: refetchPeople } = usePeople()
   const { data: interactions = [], refetch: refetchInteractions } = useInteractions()
   const { data: domains = [] } = useDomains()
-  const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
 
   const person = useMemo(() => people.find((p) => p.id === id) ?? null, [people, id])
   const personInteractions = useMemo(() => interactions.filter((i) => i.person_id === id).sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)), [interactions, id])
@@ -175,7 +174,7 @@ export function PersonDetailPage() {
             <div style={{ fontSize: '14.5px', color: 'var(--ink-body)' }}>{getBannerText(person.name, daysUntilBday)}</div>
             <div className="fhelp" style={{ marginTop: 3 }}>Birthday · {bdayFact.value} · repeats yearly</div>
           </div>
-          <span onClick={() => { window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` })); setCommandBarOpen(true) }} style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}>Plan something →</span>
+          <span onClick={() => { window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` })); openCapture() }} style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}>Plan something →</span>
         </div>
       )}
 

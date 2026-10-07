@@ -231,8 +231,8 @@ export function ProjectDetailPage() {
     somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
-  const bulkSchedule = (iso: string) => {
-    rescheduleTasksWithUndo(selectedTasks, iso)
+  const bulkSchedule = (iso: string, timed?: boolean) => {
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
   const bulkMove = (to: MoveTarget) => {
@@ -267,7 +267,7 @@ export function ProjectDetailPage() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)} onSomeday={bulkSomeday} />}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )

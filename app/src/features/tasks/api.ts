@@ -4,7 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
-import { deleteEventsForTask, restoreEventsForTask } from '../calendar/api'
+import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
@@ -42,6 +42,8 @@ export interface CreateTaskInput {
   priority?: number | null
   /** Quick add's `*label` words. */
   labels?: string[]
+  /** The AI parse's description (capture). */
+  notes?: string | null
   /** One level deep (Akiflow model) — callers must not pass a task that is itself a child. */
   parentTaskId?: string | null
   /** Where the task came from (0027) — a filed GitHub issue keeps its url here. */
@@ -58,7 +60,7 @@ export function createTask(input: CreateTaskInput): Task {
     project_id: input.projectId ?? null,
     domain_id: input.domainId ?? null,
     title: input.title,
-    notes: null,
+    notes: input.notes ?? null,
     status: 'todo',
     due_at: input.dueAt ?? null,
     scheduled_start: null,
@@ -241,7 +243,7 @@ export function deleteTasksWithUndo(tasks: Task[]): void {
  * tomorrow · Undo" — swipe, ⋯, the `2` key, the bulk bar, the morning ritual. Undo writes each
  * row back as it was (due date and someday flag). */
 export function moveToTomorrowWithUndo(tasks: Task[]): void {
-  rescheduleTasksWithUndo(tasks, scheduleTomorrow(), tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow`)
+  rescheduleTasksWithUndo(tasks, scheduleTomorrow(), { message: tasks.length === 1 ? 'Moved to tomorrow' : `${tasks.length} tasks moved to tomorrow` })
 }
 
 /** The task sheet's ⋯ → Duplicate: an open copy (same fields, not on the calendar, not in Top 3),
@@ -302,11 +304,12 @@ export function carryTasksToDomain(field: 'project_id' | 'area_id', containerId:
   }
 }
 
-/** Bulk re-date with one Undo (each row's own date and someday flag come back) — the bulk bar's
- * Pick date, Overdue's "Reschedule all to today". */
-export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, message = `${tasksLabel(tasks.length)} scheduled`): void {
-  tasks.forEach((t) => rescheduleDue(t, dueAt))
-  toastUndo(message, () => tasks.forEach((t) => rescheduleDue(t, t.due_at)))
+/** Bulk re-date with one Undo (each row's date, someday flag and calendar blocks come back, via
+ * rescheduleDue's own Undo) — the bulk bar's Pick date, Tomorrow, Overdue's "Reschedule all to
+ * today". `timed`: the picker set a time, which puts the tasks on the calendar (calendar/replan). */
+export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = false, message = `${tasksLabel(tasks.length)} scheduled` }: { timed?: boolean; message?: string } = {}): void {
+  const undos = tasks.map((t) => rescheduleDue(t, dueAt, timed))
+  toastUndo(message, () => undos.forEach((undo) => undo()))
 }
 
 export function somedayTasksWithUndo(tasks: Task[]): void {
@@ -341,10 +344,23 @@ export function renameTask(task: Task, title: string): void {
   writeRow('tasks', { ...task, title })
 }
 
-/** Setting a real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3 all clear it). */
-export function rescheduleDue(task: Task, dueAt: string | null): void {
+/** Setting a real due date is a "plan action" — clears `someday` (per the phase's own rule: date/schedule/top-3 all clear it).
+ * Every replan funnels through here (menus, swipes, keys, bulk bars, rituals, the task sheet and
+ * editor), so its calendar blocks follow here too (Kai 2026-10-07: an overdue task replanned stayed
+ * stuck on the calendar): `timed` = a time was set, which puts it on the calendar at that time; a
+ * date alone takes a block from another day off (calendar/replan.ts has the rule). Returns the
+ * Undo: the row and its blocks exactly as they were. */
+export function rescheduleDue(task: Task, dueAt: string | null, timed = false): () => void {
+  const before = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? task
   writeRow('tasks', { ...task, due_at: dueAt, someday: dueAt ? false : task.someday })
   logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+  const undoBlocks = replanTaskBlocks(task, dueAt, timed)
+  return () => {
+    undoBlocks()
+    const now = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? before
+    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday })
+    logActivity('task.rescheduled', 'task', task.id, { due_at: before.due_at })
+  }
 }
 
 export function setRecurrence(task: Task, rule: string | null): void {

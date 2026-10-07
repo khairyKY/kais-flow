@@ -252,6 +252,13 @@ jobs:
     outputs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
+      # Only for site/src/releases.json: the release's own notes become its body (the apps read it).
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.deploy.outputs.sha }}
+          sparse-checkout: site/src/releases.json
+          sparse-checkout-cone-mode: false
+
       - id: release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -262,7 +269,17 @@ jobs:
           case "$TAG" in v[0-9]*) ;; *) echo "::notice::'$TAG' is not a version tag, so no GitHub Release"; exit 0 ;; esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then exit 0; fi
-          gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target "$SHA" --title "Kai's Flow $TAG"             --generate-notes --notes "Live at $APP_URL · Android APK and Windows installer attached below once built (docs/INSTALL.md)."
+          live="Live at $APP_URL · Android APK and Windows installer attached below once built (docs/INSTALL.md)."
+          # The body = this tag's entry in releases.json (its highlights as "- " lines, which the app's
+          # What's new reads); no entry → GitHub's generated notes, as before.
+          notes="$RUNNER_TEMP/notes.md"
+          jq -r --arg v "$TAG" --arg live "$live" 'first(.[] | select(.v == $v)) | ((if .title then .title + "\n\n" else "" end) + (.highlights | map("- " + .) | join("\n")) + "\n\n" + $live)' site/src/releases.json > "$notes" || true
+          if [ -s "$notes" ]; then
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target "$SHA" --title "Kai's Flow $TAG" --notes-file "$notes"
+          else
+            echo "::warning::No $TAG entry in site/src/releases.json, so the release body is GitHub's generated notes (the apps show no highlights for it)."
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target "$SHA" --title "Kai's Flow $TAG" --generate-notes --notes "$live"
+          fi
           echo "- GitHub Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
 
   android:

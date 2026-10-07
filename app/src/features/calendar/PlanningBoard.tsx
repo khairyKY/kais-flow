@@ -253,8 +253,8 @@ export function PlanningBoard() {
     somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
-  function bulkSchedule(iso: string) {
-    rescheduleTasksWithUndo(selectedTasks, iso)
+  function bulkSchedule(iso: string, timed?: boolean) {
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
   function bulkMove(to: MoveTarget) {
@@ -348,7 +348,7 @@ export function PlanningBoard() {
         <ScheduleMenu
           position={bulkSchedulePos}
           onClose={() => setBulkSchedulePos(null)}
-          onSchedule={(iso) => bulkSchedule(iso)}
+          onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)}
           onSomeday={bulkSomeday}
         />
       )}

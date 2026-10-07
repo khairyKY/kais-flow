@@ -38,7 +38,7 @@ const items = RELEASES.map((r) => `  <item>
     <link>${SITE}/field-notes/#${r.v}</link>
     <guid isPermaLink="false">kais-flow-${r.v}</guid>
     <pubDate>${new Date(r.date + 'T12:00:00+03:00').toUTCString()}</pubDate>
-    <description>${x(r.lines.join(' · '))}</description>
+    <description>${x(r.highlights.join(' · '))}</description>
   </item>`)
 write('field-notes/feed.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">

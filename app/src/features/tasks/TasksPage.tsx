@@ -31,7 +31,7 @@ import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } f
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
-import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { CaptureCta } from '../capture/CaptureCta'
 import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
@@ -601,8 +601,8 @@ export function TasksPage() {
     clearSelection()
   }
   // Kai 2026-10-07: every bulk action is an Undo toast (no plain "N tasks moved." notices).
-  function bulkSchedule(iso: string) {
-    rescheduleTasksWithUndo(selectedTasks, iso)
+  function bulkSchedule(iso: string, timed?: boolean) {
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
   function bulkMove(to: MoveTarget) {
@@ -698,7 +698,7 @@ export function TasksPage() {
             </div>
           ) : (
             // Phone: the tab bar's mic is the capture button; a second one here wrapped to two lines.
-            !isSomeday && <span className="tasks-head-capture"><VoiceCaptureButton /></span>
+            !isSomeday && <span className="tasks-head-capture"><CaptureCta /></span>
           )}
         </div>
 
@@ -719,7 +719,7 @@ export function TasksPage() {
             type="button"
             onClick={() => {
               const stale = filterByList(displayTasks, 'overdue', now)
-              rescheduleTasksWithUndo(stale, now.toISOString(), `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today`)
+              rescheduleTasksWithUndo(stale, now.toISOString(), { message: `${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today` })
             }}
             style={{
               marginTop: 14,
@@ -900,7 +900,7 @@ export function TasksPage() {
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso, _min, timed) => bulkSchedule(iso, timed)} onSomeday={bulkSomeday} />}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </div>
   )

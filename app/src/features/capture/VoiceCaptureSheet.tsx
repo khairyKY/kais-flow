@@ -4,7 +4,7 @@ import { transcribeAudio, captureWithAI, saveUntranscribedVoiceNote } from './ap
 import { isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from './aiAllowance'
 import { KEPT_ACTIONS, KEPT_AUDIO_NOTE, KEPT_HAND, KEPT_STATUS, RESTING, keptReasonLine, type KeptReason } from './voiceCopy'
 import { useAuth } from '../auth/AuthProvider'
-import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { openCapture } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled } from '../../lib/motion'
@@ -17,6 +17,9 @@ interface VoiceCaptureSheetProps {
   /** A take already recorded elsewhere (the tab bar's hold-to-talk): the sheet skips the mic and
    * goes straight to transcribing it — with every "never lose a recording" path below. */
   recording?: { blob: Blob; seconds: number }
+  /** Where a transcript goes instead of being AI-filed: the command bar's dictation, whose take
+   * failed to transcribe, gets its words back in the field once Try again works. */
+  onText?: (text: string) => void
 }
 
 /**
@@ -30,7 +33,7 @@ interface VoiceCaptureSheetProps {
  */
 type Phase = 'resting' | 'recording' | 'transcribing' | 'kept'
 
-export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: VoiceCaptureSheetProps) {
+export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText }: VoiceCaptureSheetProps) {
   const [phase, setPhase] = useState<Phase>(handedOver ? 'transcribing' : 'recording')
   const [keptReason, setKeptReason] = useState<KeptReason>('other')
   const [recording, setRecording] = useState(false)
@@ -42,6 +45,8 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: Voic
   const timerRef = useRef<number | null>(null)
   /** The finished recording, held until it's filed, saved, or discarded. */
   const keptRef = useRef<Blob | null>(null)
+  /** The handed-over take already sent to transcription. */
+  const sentRef = useRef<Blob | null>(null)
   /** Bumped whenever the sheet lets go of a recording, so a late getUserMedia can't revive it. */
   const generationRef = useRef(0)
   const motion = useMotionEnabled()
@@ -58,10 +63,14 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: Voic
   useEffect(() => {
     if (open) {
       setVisible(true)
-      keptRef.current = null
+      keptRef.current = handedOver?.blob ?? null
       if (handedOver) {
-        keptRef.current = handedOver.blob
-        void transcribeKept()
+        // Once per take: StrictMode's dev re-run of this effect sent it twice (two filings, or the
+        // dictated words twice in the field).
+        if (sentRef.current !== handedOver.blob) {
+          sentRef.current = handedOver.blob
+          void transcribeKept()
+        }
       } else if (voiceLimitReachedToday(uidRef.current)) {
         setPhase('resting')
       } else {
@@ -161,7 +170,9 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: Voic
       return
     }
     keptRef.current = null
-    if (text) {
+    if (text && onText) {
+      onText(text)
+    } else if (text) {
       await captureWithAI(text, 'voice', text)
     } else {
       useToastStore.getState().push({ message: "Didn't catch that — try again" })
@@ -189,7 +200,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver }: Voic
 
   function typeInstead() {
     onClose()
-    useCommandBarStore.getState().setOpen(true)
+    openCapture()
   }
 
   /** Cancel button, Esc and a tap outside. A kept recording only leaves through its own buttons. */

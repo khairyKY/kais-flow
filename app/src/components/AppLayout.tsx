@@ -5,7 +5,7 @@ import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
 import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
-import { useCommandBarStore } from '../features/command-bar/commandBarStore'
+import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
 import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
@@ -18,8 +18,9 @@ import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
 import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
-// the initial chunk. Lazy + mounted-only-when-open. ⌘K's listener moved into the shell's
-// hotkey effect below, since CommandBar used to own it and can no longer be always-mounted.
+// the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
+// first page is idle (capture-type, see captureWarm below). ⌘K's listener lives in the shell's
+// hotkey effect below.
 const CommandBar = lazy(() => import('../features/command-bar/CommandBar').then((m) => ({ default: m.CommandBar })))
 const ChatPanel = lazy(() => import('../features/chat/ChatPanel').then((m) => ({ default: m.ChatPanel })))
 const SearchOverlay = lazy(() => import('../features/search/SearchOverlay').then((m) => ({ default: m.SearchOverlay })))
@@ -32,6 +33,7 @@ const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
+import { WhatsNewHost } from '../features/whats-new/WhatsNew'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -526,10 +528,21 @@ export function AppLayout() {
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
   const zone = useAppZone()
-  useOfferDeviceZone(useAuth().session?.user.id)
+  const user = useAuth().session?.user
+  useOfferDeviceZone(user?.id)
   const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const toggleCommandBar = useCommandBarStore((s) => s.toggle)
   const commandBarOpen = useCommandBarStore((s) => s.open)
+  // Kai 2026-10-07 (capture-type): a tap must open the capture bar AND focus its field inside that
+  // tap, or a phone raises no keyboard (features/command-bar/commandBarStore openCapture). So once
+  // the first page is up, the bar's chunk loads and CommandBar stays mounted (it renders nothing
+  // while closed): every later open renders synchronously, no lazy boundary on the tap path.
+  const [captureWarm, setCaptureWarm] = useState(false)
+  useEffect(() => {
+    const warm = () => setCaptureWarm(true)
+    if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 2000 })
+    else setTimeout(warm, 500) // older iOS Safari has no idle callback
+  }, [])
   const { data: pendingInbox = [] } = usePendingInboxItems()
   // Captures queued for the AI (needs_parse: the capture endpoint's ?file=1, or made offline) are
   // filed once they're here — not only on a reconnect, which a fresh start never sees.
@@ -778,7 +791,7 @@ export function AppLayout() {
             default 125% size a 1280×800 window is only ~640 layout px tall, so inside the scroll
             Settings / Sign out sat ~290px below the fold. Pinned, they're always one tap away. */}
         <div className="app-sidebar-footer" style={{ flex: 'none', padding: '4px 14px 18px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {footerRow(PlusGlyph, 'Capture', '⌘K', () => setCommandBarOpen(true))}
+          {footerRow(PlusGlyph, 'Capture', '⌘K', openCapture)}
           {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
           {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
           <NavLink
@@ -813,8 +826,9 @@ export function AppLayout() {
         onSignOut={signOutFlow.request}
       />
 
+      {/* Its own boundary: the warm-up's one suspend must not blank an open TaskSheet below. */}
+      <Suspense fallback={null}>{(commandBarOpen || captureWarm) && <CommandBar />}</Suspense>
       <Suspense fallback={null}>
-        {commandBarOpen && <CommandBar />}
         {searchOpen && <SearchOverlay open onClose={() => setSearchOpen(false)} />}
         {chatOpen && <ChatPanel open onClose={() => setChatOpen(false)} />}
         {shortcutsOpen && <ShortcutOverlay open onClose={() => setShortcutsOpen(false)} />}
@@ -824,6 +838,8 @@ export function AppLayout() {
         <TrayBridge />
       </Suspense>
       <PaperHost />
+      {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}
+      <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
       <ToastHost />
       {signOutFlow.prompt}
     </div>
