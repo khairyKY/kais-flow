@@ -559,16 +559,18 @@ export function AppLayout() {
   }, [])
 
   useEffect(() => {
+    // Layout-proof (as useListKeys' Ctrl+A): on an Arabic keyboard Ctrl+K arrives as key 'ن', code 'KeyK'.
+    const pressed = (e: KeyboardEvent, ch: string, code: string) => (/^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() === ch : e.code === code)
     function onKeydown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+      if ((e.ctrlKey || e.metaKey) && pressed(e, '/', 'Slash')) {
         e.preventDefault()
         setSearchOpen((v) => !v)
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+      if ((e.ctrlKey || e.metaKey) && pressed(e, 'j', 'KeyJ')) {
         e.preventDefault()
         setChatOpen((v) => !v)
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      if ((e.ctrlKey || e.metaKey) && pressed(e, 'k', 'KeyK')) {
         e.preventDefault()
         toggleCommandBar()
       }
