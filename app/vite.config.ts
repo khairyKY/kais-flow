@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
 
 // T-3: stamp every build with the commit it came from, so "live = the merged commit" is provable
@@ -18,13 +19,16 @@ function buildStamp(): Plugin {
     }
   }
   const builtAt = new Date().toISOString()
+  // The release this build is (site/src/releases.json's newest, = lib/whatsNew's BUNDLED_VERSION), so an
+  // open tab can tell "v1.0.22 is out" from just another deploy of the same version.
+  const version = (JSON.parse(readFileSync(new URL('../site/src/releases.json', import.meta.url), 'utf8')) as { v: string }[])[0].v
   return {
     name: 'kf-build-stamp',
     apply: 'build',
     transformIndexHtml: () => [{ tag: 'meta', attrs: { name: 'kf-build', content: `${commit} ${builtAt}` }, injectTo: 'head' }],
     // Not in the PWA precache (globPatterns has no json), so a fetch always reaches the server.
     generateBundle() {
-      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ commit, builtAt }) + '\n' })
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ commit, builtAt, version }) + '\n' })
     },
   }
 }
@@ -98,6 +102,7 @@ export default defineConfig({
     }),
   ],
   // The notification copy is one module shared with the notify edge function
-  // (supabase/functions/notify/copy.ts); the dev server may read that one folder outside app/.
-  server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), '../supabase/functions/notify'] } },
+  // (supabase/functions/notify/copy.ts), and the release notes are the site's (site/src/releases.json,
+  // lib/whatsNew); the dev server may read those two outside app/.
+  server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), '../supabase/functions/notify', '../site/src/releases.json'] } },
 })

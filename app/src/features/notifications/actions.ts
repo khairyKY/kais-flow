@@ -3,6 +3,8 @@ import { queryClient } from '../../lib/queryClient'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { completeTaskWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { useFocusStore } from '../focus/focusStore'
+import { BUNDLED_VERSION, openWhatsNew } from '../../lib/whatsNew'
+import { native } from '../tray/native'
 import type { Task } from '../../lib/types'
 
 // What a notification's buttons do (Tray and Notifications.dc.html 12k), wherever they were pressed:
@@ -15,6 +17,8 @@ export interface NotificationAction {
   kind?: string | null
   taskIds?: string[]
   url?: string
+  /** 'whats-new': the version the toast was about. */
+  version?: string
 }
 
 /** The action a fresh window was opened for (sw-push.js kfActionUrl), or null. */
@@ -69,6 +73,11 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
       return
     case 'shutdown':
       navigate('/today?ritual=evening')
+      return
+    case 'whats-new':
+      // The Windows "vX is out" toast's button (features/whats-new): bring the window forward, open the sheet.
+      void native('tray_open')
+      openWhatsNew(a.version ?? BUNDLED_VERSION)
       return
     default:
       navigate(a.url ?? '/today')

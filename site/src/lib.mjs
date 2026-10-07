@@ -54,9 +54,9 @@ export const kai = (t) => `<span class="todo">[Kai writes this: ${t}]</span>`
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 // ── chrome ──
-const NAV = { en: [['Features', '/features/'], ['Paper', '/paper/'], ['Download', '/download/'], ['Field notes', '/field-notes/']],
-  ar: [['الميزات', '/features/'], ['الورق', '/paper/'], ['التنزيل', '/download/'], ['ملاحظات ميدانية', '/field-notes/']] }
-const FOOT = { en: [['Features', '/features/'], ['Guides', '/guides/'], ['Field notes', '/field-notes/'], ['What’s growing', '/growing/'], ['Compare', '/compare/'], ['About', '/about/'], ['Press', '/press/'], ['Privacy', '/privacy/'], ['Terms', '/terms/'], ['Contact', '/privacy/#contact'], ['GitHub', REPO]],
+const NAV = { en: [['Features', '/features/'], ['Paper', '/paper/'], ['Download', '/download/'], ['What’s new', '/whats-new/'], ['Field notes', '/field-notes/']],
+  ar: [['الميزات', '/features/'], ['الورق', '/paper/'], ['التنزيل', '/download/'], ['ما الجديد', '/whats-new/'], ['ملاحظات ميدانية', '/field-notes/']] }
+const FOOT = { en: [['Features', '/features/'], ['Guides', '/guides/'], ['What’s new', '/whats-new/'], ['Field notes', '/field-notes/'], ['What’s growing', '/growing/'], ['Compare', '/compare/'], ['About', '/about/'], ['Press', '/press/'], ['Privacy', '/privacy/'], ['Terms', '/terms/'], ['Contact', '/privacy/#contact'], ['GitHub', REPO]],
   ar: [['الخصوصية', '/privacy/'], ['الشروط', '/terms/'], ['تواصل', '/privacy/#contact'], ['GitHub', REPO]] }
 const T = { en: { skip: 'Skip to content', open: 'Open the app', menu: 'Menu', main: 'Main', lang: 'Language', foot: 'Footer', tag: 'a field journal of days', fine: '© 2026 Kai’s Flow · no cookies, no trackers on this site', home: 'Kai’s Flow, home', toNight: 'Switch to night', toDay: 'Switch to day' },
   ar: { skip: 'انتقل إلى المحتوى', open: 'افتح التطبيق', menu: 'القائمة', main: 'الرئيسية', lang: 'اللغة', foot: 'التذييل', tag: 'سجلّ ميداني للأيام', fine: '© 2026 Kai’s Flow · لا ملفات تعريف ارتباط ولا تتبّع على هذا الموقع', home: 'Kai’s Flow، الرئيسية', toNight: 'الوضع الليلي', toDay: 'الوضع النهاري' } }

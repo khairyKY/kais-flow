@@ -1,0 +1,371 @@
+{
+ "pass": 73,
+ "total": 73,
+ "results": [
+  {
+   "name": "desktop day: first launch of a newer version → “Updated to v1.0.21” with a What’s new action",
+   "ok": true,
+   "detail": "[\"Updated to v1.0.21\"]"
+  },
+  {
+   "name": "desktop day: the sheet is a centred card: title, “Your version · 7 Oct 2026”, the release’s title",
+   "ok": true,
+   "detail": "What’s new in v1.0.21 | YOUR VERSION · 7 OCT 2026 | Your own time zone, and easier projects"
+  },
+  {
+   "name": "desktop day: centred on the screen, not a bottom sheet",
+   "ok": true,
+   "detail": "{\"x\":340,\"y\":70.3125,\"width\":600,\"height\":659.375}"
+  },
+  {
+   "name": "desktop day: its 6 highlights, from the bundled notes",
+   "ok": true,
+   "detail": "6"
+  },
+  {
+   "name": "desktop day: “All release notes →” opens the site’s What’s new outside the app",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: the running version’s primary button is “Got it” (no Update)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: Esc closes it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: the device now remembers v1.0.21 as seen",
+   "ok": true,
+   "detail": "{\"seen\":\"v1.0.21\",\"checkedAt\":1791325945915}"
+  },
+  {
+   "name": "desktop day: once per version — no “Updated” toast on the next launch",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "desktop day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "first launch here, older account → “Updated to v1.0.21” once",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "first launch, brand-new account (signed up an hour ago) → no “Updated” toast, version recorded",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "an older bundle than one already seen → nothing, and “seen” stays v1.0.22",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: “Updated to v1.0.21 · What’s new”",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: a bottom sheet (full width, on the bottom edge)",
+   "ok": true,
+   "detail": "{\"x\":0,\"y\":181.40625,\"width\":390,\"height\":662.59375}"
+  },
+  {
+   "name": "phone day: the six highlights + All release notes + Got it in its footer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: Got it closes the sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "web night: the quiet check on start finds v1.0.22 → “v1.0.22 is out · See what’s new”",
+   "ok": true,
+   "detail": "[\"v1.0.22 is out\"]"
+  },
+  {
+   "name": "web night: it asked /version.json once and GitHub once (for the notes)",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "web night: remembers it told about v1.0.22, and when it checked",
+   "ok": true,
+   "detail": "{\"seen\":\"v1.0.21\",\"checkedAt\":1791325966383,\"notified\":\"v1.0.22\"}"
+  },
+  {
+   "name": "web night: the sheet is v1.0.22’s, “Ready to update”, notes read from its GitHub Release body",
+   "ok": true,
+   "detail": "What’s new in v1.0.22 | READY TO UPDATE | A morning page that waits for you | Undo on every swipe | All release notes → | Update"
+  },
+  {
+   "name": "web night: its primary button is Update",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "web night: night theme",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "web night: Update reloads the page onto the new version (lib/appUpdate reloadToUpdate)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "web night: once per version — after the reload, no second “is out” toast",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "web night: two days later the check runs again, but v1.0.22 is not toasted twice",
+   "ok": true,
+   "detail": "checks 1 → 2"
+  },
+  {
+   "name": "web night: and not more than once a day (a reload the same day doesn’t check)",
+   "ok": true,
+   "detail": "2"
+  },
+  {
+   "name": "web night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "web: a newer deploy of v1.0.21 → no toast, no GitHub call",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":0,\"downloads\":[]}"
+  },
+  {
+   "name": "phone night: “v1.0.22 is out”",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: bottom sheet with v1.0.22’s notes and Update in its footer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: opening Settings ran the check (version.json + GitHub), with no repeat toast",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "desktop day: “v1.0.22 is out”, the web version number shown",
+   "ok": true,
+   "detail": "APP · KAI'S FLOW | Check for updates | v1.0.22 is out | v1.0.21 · build abc1234 · built 6 Oct 2026"
+  },
+  {
+   "name": "desktop day: “Coming in v1.0.22” lists its notes, with Update",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: no separate Reload button beside it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: “What’s new in your version (v1.0.21)” starts folded",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: unfolded, it lists v1.0.21’s 6 highlights",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: Update in Settings reloads onto the new version",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop night: opening Settings ran the check (version.json + GitHub), with no repeat toast",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "desktop night: “v1.0.22 is out”, the web version number shown",
+   "ok": true,
+   "detail": "APP · KAI'S FLOW | Check for updates | v1.0.22 is out | v1.0.21 · build abc1234 · built 6 Oct 2026"
+  },
+  {
+   "name": "desktop night: “Coming in v1.0.22” lists its notes, with Update",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop night: no separate Reload button beside it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop night: “What’s new in your version (v1.0.21)” starts folded",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop night: unfolded, it lists v1.0.21’s 6 highlights",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: opening Settings ran the check (version.json + GitHub), with no repeat toast",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "phone day: “v1.0.22 is out”, the web version number shown",
+   "ok": true,
+   "detail": "APP · KAI'S FLOW | Check for updates | v1.0.22 is out | v1.0.21 · build abc1234 · built 6 Oct 2026"
+  },
+  {
+   "name": "phone day: “Coming in v1.0.22” lists its notes, with Update",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: no separate Reload button beside it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: “What’s new in your version (v1.0.21)” starts folded",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: unfolded, it lists v1.0.21’s 6 highlights",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: opening Settings ran the check (version.json + GitHub), with no repeat toast",
+   "ok": true,
+   "detail": "{\"versionJson\":1,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "phone night: “v1.0.22 is out”, the web version number shown",
+   "ok": true,
+   "detail": "APP · KAI'S FLOW | Check for updates | v1.0.22 is out | v1.0.21 · build abc1234 · built 6 Oct 2026"
+  },
+  {
+   "name": "phone night: “Coming in v1.0.22” lists its notes, with Update",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: no separate Reload button beside it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: “What’s new in your version (v1.0.21)” starts folded",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: unfolded, it lists v1.0.21’s 6 highlights",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "phone night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "up to date: “You’re on the latest (v1.0.21)”, no “Coming in”",
+   "ok": true,
+   "detail": "APP · KAI'S FLOW | Check for updates | You're on the latest (v1.0.21)"
+  },
+  {
+   "name": "Settings opening finds v1.0.22 first → the one toast comes from there",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows (in the tray, 13:00): one native toast, same copy, a See what’s new button",
+   "ok": true,
+   "detail": "{\"title\":\"v1.0.22 is out\",\"body\":\"See what’s new\",\"actions\":[[\"whats-new\",\"See what’s new\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"whats_new\\\",\\\"version\\\":\\\"v1.0.22\\\"}\"}"
+  },
+  {
+   "name": "windows: the in-app toast too, and one GitHub call (installed version from the shell)",
+   "ok": true,
+   "detail": "{\"versionJson\":0,\"github\":1,\"downloads\":[]}"
+  },
+  {
+   "name": "windows: the button brings the window forward (tray_open) and opens v1.0.22’s sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows: Update downloads this platform’s installer (lib/appUpdate openDownload)",
+   "ok": true,
+   "detail": "https://github.com/khairyKY/kais-flow/releases/download/v1.0.22/kais-flow-v1.0.22-windows-setup.exe"
+  },
+  {
+   "name": "windows: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows in quiet hours (23:30): no native toast, the in-app toast still says it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows while notifications are paused: no native toast, the in-app toast still says it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows while someone is looking at the window: no native toast, the in-app toast still says it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "windows: a release without its installer yet → no toast, not marked as told",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}
