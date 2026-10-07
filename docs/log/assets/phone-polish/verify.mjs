@@ -516,6 +516,10 @@ if (!ONLY || ONLY.has('routines')) {
     check(`${name} the ⋯ is visible at rest (not hover-only)`, (await more.evaluate((el) => getComputedStyle(el).opacity)) === '1' && (await more.isVisible()))
     check(`${name} the pin keeps its "pinned" label on a computer`, (await page.locator('[data-ritual="morning"]').innerText()).toUpperCase().includes('PINNED'))
     await shot(page, `routines-desktop-${theme}`)
+    // Scroll first and let the scroll event land: a context menu closes on any scroll under it, and
+    // Playwright's own scroll-into-view fires its event a frame after the click it precedes.
+    await more.scrollIntoViewIfNeeded()
+    await sleep(300)
     await more.click()
     await sleep(300)
     const item = page.getByRole('menuitem', { name: 'Archive' }).or(page.locator('button', { hasText: /^Archive$/ }))
