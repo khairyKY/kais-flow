@@ -5,7 +5,7 @@ import { useProjects } from '../projects/api'
 import { createTask } from '../tasks/api'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { captureText } from '../inbox/api'
-import { captureWithAI, transcribeAudio } from '../capture/api'
+import { captureWithAI, enrichTypedInboxItem, enrichTypedTask, transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
@@ -150,8 +150,11 @@ export function CommandBar() {
   function submit(close: () => void) {
     const trimmed = text.trim()
     if (!trimmed) return
+    // Written at once from the local parse (never waits on the network); then the AI's read fills in
+    // whatever the typed tokens left empty, or decides where a plain line belongs (Kai 2026-10-07:
+    // "every property is extracted… let the AI understand the intent and decide").
     if (hasStructure(parsed)) {
-      createTask({
+      const task = createTask({
         title: parsed.title || trimmed,
         domainId: parsed.domainId,
         projectId: parsed.projectId,
@@ -160,8 +163,9 @@ export function CommandBar() {
         priority: parsed.priority,
         labels: parsed.labels,
       })
+      void enrichTypedTask(task, trimmed)
     } else {
-      captureText(trimmed)
+      void enrichTypedInboxItem(captureText(trimmed), trimmed)
     }
     setText('')
     close()

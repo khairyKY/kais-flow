@@ -30,7 +30,7 @@ vi.mock('../../lib/activity', () => ({ logActivity: vi.fn() }))
 vi.mock('../../lib/toastStore', () => ({ useToastStore: { getState: () => ({ push }) } }))
 vi.mock('../tasks/api', () => ({ createTask: (...args: unknown[]) => createTask(...args) }))
 
-const { captureWithAI, processQueuedCaptures, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
+const { captureWithAI, enrichTypedInboxItem, enrichTypedTask, processQueuedCaptures, saveUntranscribedVoiceNote, transcribeAudio } = await import('./api')
 const { AI_ALLOWANCE_USED_UP, DailyLimitError, INBOX_WITHOUT_AI } = await import('./aiAllowance')
 
 const json = (status: number, body: unknown) =>
@@ -175,5 +175,78 @@ describe('processQueuedCaptures with an endpoint capture', () => {
     expect(invoke).not.toHaveBeenCalled()
     expect(createTask).not.toHaveBeenCalled()
     expect(writeRow).not.toHaveBeenCalled()
+  })
+})
+
+// Kai 2026-10-07: typed captures are written at once from the local parse; the AI's read follows.
+describe('enrichTypedTask (a typed capture with structure)', () => {
+  const created = {
+    id: 't1', title: 'Call the bank asap about the mortgage', notes: null, due_at: '2026-10-08T12:00:00.000Z', priority: null,
+    duration_min: null, project_id: null, domain_id: null, reminder_at: null, deleted_at: null,
+  } as never
+  const read = (over: Record<string, unknown> = {}) => ({
+    data: { kind: 'task', cleaned_text: 'x', title: 'Call the bank about the mortgage', priority: 1, description: 'Ask about the fixed rate', confidence: 0.9, ...over },
+    error: null,
+  })
+
+  it('fills only the empty fields, says so, and Undo puts back exactly what it wrote', async () => {
+    invoke.mockResolvedValue(read({ due_at: '2026-12-01T09:00:00Z' }))
+
+    await enrichTypedTask(created, 'Call the bank asap about the mortgage tomorrow 3pm')
+
+    expect(writeRow).toHaveBeenCalledTimes(1)
+    const [table, row] = writeRow.mock.calls[0] as [string, Record<string, unknown>]
+    expect(table).toBe('tasks')
+    // the typed date stands; priority, notes (and the tidied title) come from the AI
+    expect(row).toMatchObject({ id: 't1', due_at: '2026-10-08T12:00:00.000Z', priority: 1, notes: 'Ask about the fixed rate', title: 'Call the bank about the mortgage' })
+    const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
+    expect(toast.message).toBe('✦ Filled by AI: priority, notes')
+    toast.onUndo()
+    expect(writeRow.mock.calls[1][1]).toMatchObject({ id: 't1', priority: null, notes: null, title: 'Call the bank asap about the mortgage', due_at: '2026-10-08T12:00:00.000Z' })
+  })
+
+  it('offline, over the allowance or failing: the local parse stands, nothing written, no toast', async () => {
+    vi.stubGlobal('navigator', { onLine: false })
+    await enrichTypedTask(created, 'x')
+    vi.stubGlobal('navigator', { onLine: true })
+    invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(json(429, { error: 'daily_limit' })) })
+    await enrichTypedTask(created, 'x')
+    invoke.mockRejectedValue(new Error('network'))
+    await enrichTypedTask(created, 'x')
+
+    expect(writeRow).not.toHaveBeenCalled()
+    expect(push).not.toHaveBeenCalled()
+  })
+})
+
+describe('enrichTypedInboxItem (a plain typed line, already in the Inbox)', () => {
+  const item = {
+    id: 'i9', kind: 'text', raw_text: 'call mum about sunday, urgent', transcript: null, ai_parse: null, confidence: null, status: 'pending',
+    filed_task_id: null, payload: null, snoozed_until: null, created_at: '2026-10-07T08:00:00.000Z', updated_at: '2026-10-07T08:00:00.000Z',
+  } as never
+
+  it('a task the AI is sure of is filed for you, with Undo back to the Inbox', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Call mum about Sunday', priority: 1, confidence: 0.92 }, error: null })
+    createTask.mockReturnValue({ id: 't9', title: 'Call mum about Sunday' })
+
+    await enrichTypedInboxItem(item, 'call mum about sunday, urgent')
+
+    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Call mum about Sunday', priority: 1 }))
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'filed', filed_task_id: 't9', confidence: 0.92 }))
+    const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
+    expect(toast.message).toBe('✦ Filed by AI: “Call mum about Sunday”')
+    toast.onUndo()
+    expect(writeRow).toHaveBeenCalledWith('tasks', { id: 't9', title: 'Call mum about Sunday' }, 'delete')
+    expect(writeRow).toHaveBeenLastCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'pending', filed_task_id: null }))
+  })
+
+  it('anything less stays in the Inbox, quietly carrying the AI read for triage', async () => {
+    invoke.mockResolvedValue({ data: { kind: 'note', cleaned_text: 'x', title: 'x', confidence: 0.4 }, error: null })
+
+    await enrichTypedInboxItem(item, 'x')
+
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'pending', confidence: 0.4 }))
+    expect(push).not.toHaveBeenCalled()
   })
 })
