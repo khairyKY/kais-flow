@@ -215,13 +215,13 @@ export const ARTICLES: Article[] = [
   },
 ]
 
-const SIZES = CROPS as Record<string, [number, number]>
+const SIZES: Record<string, number[]> = CROPS
 
 /** A step's crop, with its size; null when the harness hasn't made one. */
 export function cropOf(slug: string, i: number): { src: string; w: number; h: number } | null {
   const name = `${slug}-${i + 1}`
   const size = SIZES[name]
-  return size ? { src: `/guide/${name}.webp`, w: size[0], h: size[1] } : null
+  return size?.length === 2 ? { src: `/guide/${name}.webp`, w: size[0], h: size[1] } : null
 }
 
 const fold = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'")
