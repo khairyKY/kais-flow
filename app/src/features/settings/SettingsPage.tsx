@@ -12,6 +12,7 @@ import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
 import { UpdateNotes } from '../whats-new/WhatsNew'
+import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
@@ -397,6 +398,14 @@ function AppUpdateCard() {
         {!available && r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
       </div>
       <div style={fhelp}>{current}{built ? ` · built ${built}` : ''}</div>
+      {/* Tour & help (Tour and Help Guide.dc.html, "Also in Settings → App"): the notes again. */}
+      <button type="button" onClick={restartTour} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 56, marginTop: 14, padding: '6px 0', border: 'none', borderTop: '1px dashed var(--line-dashed)', borderBottom: '1px dashed var(--line-dashed)', background: 'none', font: 'inherit', textAlign: 'start', cursor: 'pointer' }}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: 'var(--acc-terra-ink)' }}>Show me around again</span>
+          <span style={{ display: 'block', marginTop: 2, fontSize: 13, color: 'var(--ink-muted)' }}>Replays the notes on Today and clears seen hints</span>
+        </span>
+        <Icon name="chevright" size={20} style={{ color: 'var(--ink-muted)' }} />
+      </button>
       <UpdateNotes running={running} />
     </SCard>
   )

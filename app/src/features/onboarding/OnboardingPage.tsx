@@ -8,6 +8,7 @@ import { DatePicker } from '../../components/DatePicker'
 import { uiZoom } from '../../lib/uiScale'
 import { useAuth } from '../auth/AuthProvider'
 import { markFirstTodayHint } from '../today/firstTodayHint'
+import { markTourPending } from '../tour/help'
 import { readFirstThing, whenChip, withPicked, type PickedDate } from './firstThings'
 
 // ── First Run.dc.html 9g (empty) / 9h (filled, a date parse chip) / 9l-g night / 9m-g desktop:
@@ -59,6 +60,7 @@ export function OnboardingPage() {
   function finish(to: string, withThings: boolean) {
     completeOnboarding(name, withThings ? things.filter((t) => t !== null) : [])
     if (!replant) markFirstTodayHint(session?.user.id) // 9i: the first Today explains its top card
+    if (!replant) markTourPending(session?.user.id) // Tour & help: the garden notes, once, on that first Today
     navigate(to, { replace: true })
   }
 

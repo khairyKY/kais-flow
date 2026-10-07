@@ -18,7 +18,7 @@ import { useMotionEnabled } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
-import { FlowerIcon, FocusGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { FlowerIcon, FocusGlyph, GuideGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
 // first page is idle (capture-type, see captureWarm below). ⌘K's listener lives in the shell's
@@ -31,6 +31,8 @@ const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ de
 const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => ({ default: m.TaskSheet })))
 // Notification buttons, focus-done notices, the tray flyout's focus mirror and (Windows) the tray.
 const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => ({ default: m.TrayBridge })))
+// Tour & help: the garden notes after onboarding and the one-line hints (its own chunk).
+const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
 
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
@@ -806,7 +808,7 @@ export function AppLayout() {
 
         <PlanDrawer />
 
-        <nav style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav data-tour="sidebar" style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <GroupLabel>Tend</GroupLabel>
           {TEND.map((item) => (
             <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} collapsed={collapsed} />
@@ -829,6 +831,11 @@ export function AppLayout() {
           {footerRow(PlusGlyph, 'Capture', '⌘K', openCapture)}
           {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
           {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
+          {/* Tour & help 14k: the Guide sits in the sidebar foot, beside Settings. */}
+          <NavLink to="/guide" title="Guide" aria-label="Guide" className="kf-side-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}>
+            <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}><GuideGlyph /></span>
+            <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>
+          </NavLink>
           <NavLink
             to="/settings"
             title="Settings"
@@ -871,6 +878,9 @@ export function AppLayout() {
       </Suspense>
       <Suspense fallback={null}>
         <TrayBridge />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TourHost />
       </Suspense>
       <PaperHost />
       {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}

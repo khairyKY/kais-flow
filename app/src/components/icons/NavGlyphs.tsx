@@ -86,3 +86,13 @@ export function ReviewGlyph() {
     </svg>
   )
 }
+
+// Guide (Tour & help 14i/14k) — an open book: the sidebar foot and the phone's More sheet
+export function GuideGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg {...base} width={size} height={size}>
+      <path d="M12 6.5C10.2 5.2 7.6 4.5 4 4.5v13c3.6 0 6.2.7 8 2 1.8-1.3 4.4-2 8-2v-13c-3.6 0-6.2.7-8 2Z" />
+      <path d="M12 6.5v13" />
+    </svg>
+  )
+}

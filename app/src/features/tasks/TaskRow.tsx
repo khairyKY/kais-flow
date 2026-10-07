@@ -271,6 +271,7 @@ export function TaskRow({
   return (
     <SwipeRow
       id={`task-${task.id}`}
+      data-tour="task-row"
       // Motion 4a (WB-1): `overflow: hidden` (the swipe layers need it) clips the hover
       // shadow, so this variant reads the lift as travel only.
       className={`task-row kf-lift${checking ? ' tr-checking' : ''}`}

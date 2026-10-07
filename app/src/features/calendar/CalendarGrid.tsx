@@ -310,6 +310,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     // it's also in the FC key because slot geometry is measured once per mount.
     <div
       ref={wrapRef}
+      data-tour="calendar"
       className={narrow ? 'kf-cal-narrow' : undefined}
       onContextMenu={handleGridContextMenu}
       style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
@@ -581,7 +582,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             : 0
 
         return (
-          <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
+          <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
             {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
             {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}

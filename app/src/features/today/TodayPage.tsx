@@ -539,7 +539,7 @@ export function TodayPage() {
           </div>
         ) : (
           <>
-            <section style={{ position: 'relative' }}>
+            <section data-tour="top3" style={{ position: 'relative' }}>
               {celebrate && <DayCompleteBurst />}
               <PhoneSection label="Top 3" link={tasksPending ? undefined : { to: '/tasks', label: 'All tasks' }} first />
               {tasksPending ? (
@@ -760,7 +760,7 @@ export function TodayPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) clamp(264px, 28%, 340px)', gap: 44, alignItems: 'start' }}>
         <div className="kf-bulk-anchor" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
           {birthdayCards}
-          <section className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
+          <section data-tour="top3" className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             <SectionLabel style={{ marginBottom: 14 }}>Top 3 for today</SectionLabel>
             {tasksPending ? (
@@ -852,7 +852,7 @@ function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; mo
       <button type="button" className="tp-icon" aria-label="Search" onClick={() => window.dispatchEvent(new Event('kf-open-search'))}>
         <Icon name="search" />
       </button>
-      <button type="button" className="tp-icon" aria-label="Today menu" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+      <button type="button" className="tp-icon" data-tour="plan-menu" aria-label="Today menu" aria-haspopup="dialog" onClick={() => setMenu(true)}>
         <Icon name="dots" />
       </button>
       {menu && (
@@ -1274,7 +1274,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
             !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
           ].filter(Boolean)
     return (
-      <SwipeRow {...rowProps} className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
+      <SwipeRow {...rowProps} data-tour="task-row" className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
         <span className="tp-hit">
           {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
         </span>

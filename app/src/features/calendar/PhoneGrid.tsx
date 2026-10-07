@@ -309,6 +309,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         key={ev.id}
         className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}`}
         data-id={ev.id}
+        data-tour="calendar-block"
         style={{ ...style, '--pc-lines': titleLines(h) } as CSSProperties}
         onClick={() => onTapBlock(ev)}
       >

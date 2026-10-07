@@ -195,6 +195,7 @@ export function CaptureButton() {
         type="button"
         className="kf-capture kf-press"
         data-phase={hold.phase}
+        data-tour="capture"
         aria-label={`Capture — tap to type, hold to talk${waiting ? ` · ${waiting} ${waiting === 1 ? 'page' : 'pages'} waiting` : ''}`}
         style={recording ? { transform: `translate(${hold.dx}px, ${hold.dy}px) scale(${GROWN})` } : undefined}
         onPointerDown={(e) => {

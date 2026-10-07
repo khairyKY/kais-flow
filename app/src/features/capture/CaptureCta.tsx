@@ -9,7 +9,7 @@ import { openCapture } from '../command-bar/commandBarStore'
 // so it takes the CTA's --on-terra ink.
 export function CaptureCta() {
   return (
-    <Button type="button" variant="cta" icon={<Icon name="plus" size={16} />} onClick={openCapture} title="Capture — type, or use the mic to talk (⌘K)">
+    <Button type="button" variant="cta" data-tour="command-bar" icon={<Icon name="plus" size={16} />} onClick={openCapture} title="Capture — type, or use the mic to talk (⌘K)">
       Capture
     </Button>
   )

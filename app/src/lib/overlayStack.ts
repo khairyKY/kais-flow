@@ -18,6 +18,9 @@ export function pushOverlay(close: () => void): () => void {
   }
 }
 
+/** How many overlays are open — the tour waits while any is (features/tour). */
+export const overlayCount = (): number => stack.length
+
 /** Closes the topmost overlay; false when none is open. The overlay leaves the stack itself,
  * when it unmounts or goes inactive — an overlay that refuses to close stays on top. */
 export function closeTopOverlay(): boolean {

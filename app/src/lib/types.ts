@@ -199,6 +199,8 @@ export interface AppSettings {
   notify_paused_until?: string | null
   /** Paper capture (migration 0049): keep page photos 7 days (default) or delete them once reviewed. */
   capture_keep_photos?: boolean
+  /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
+  help_seen?: string[] | null
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
