@@ -41,13 +41,13 @@ import {
   createTask,
   setSomeday,
   setProject,
-  rescheduleDue,
+  planWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
+import { PlanMenu } from '../tasks/PlanMenu'
 import { BulkBar } from '../../components/BulkBar'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
@@ -232,9 +232,7 @@ export function ProjectDetailPage() {
     clearSelection()
   }
   const bulkSchedule = (iso: string) => {
-    const batch = selectedTasks
-    batch.forEach((t) => rescheduleDue(t, iso))
-    toastUndo(`${plural(batch.length)} scheduled.`, () => batch.forEach((t) => rescheduleDue(t, t.due_at)))
+    planWithUndo(selectedTasks, iso, `${plural(selectedTasks.length)} scheduled.`)
     clearSelection()
   }
   const bulkMove = (projectId: string | null, domainId: string | null) => {
@@ -268,7 +266,9 @@ export function ProjectDetailPage() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: (iso) => bulkSchedule(iso), tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+      )}
       {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )

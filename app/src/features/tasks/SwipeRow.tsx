@@ -7,7 +7,7 @@ import './TaskRow.css'
 import { longPress, tick } from '../../lib/haptics'
 
 // ── The task-row gesture layer (DS-CHANGELOG §3 "Swipe row" + "Selection mode", Flow Audit §4):
-// swipe right reveals Tomorrow · Pick date · Project and, past --swipe-commit, commits Tomorrow;
+// swipe right reveals Tomorrow · Plan · Project and, past --swipe-commit, commits Tomorrow;
 // swipe left reveals Delete and, past the line, sends the task to Trash; hold 400ms selects.
 // Touch only — a mouse never swipes (J-1/J-9); desktop has right-click and ⋯ for the same actions.
 // Tasks' TaskRow and Today's Top 3 / goal card / Up next rows all wrap their content in this. ──
@@ -185,7 +185,8 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
           ) : (
             <>
               {act('tomorrow', 'Tomorrow', () => actions.tomorrow?.())}
-              {actions.pickDate && act('pickdate', 'Pick date', (el) => actions.pickDate?.(at(el)))}
+              {/* Kai 2026-10-07: the Plan list (every date option), not just the calendar. */}
+              {actions.pickDate && act('pickdate', 'Plan', (el) => actions.pickDate?.(at(el)))}
               {actions.project && act('project', 'Project', (el) => actions.project?.(at(el)))}
             </>
           )}

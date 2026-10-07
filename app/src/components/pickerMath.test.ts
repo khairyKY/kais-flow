@@ -13,6 +13,7 @@ import {
   daysWithItems,
   durationLabel,
   freeSlots,
+  freeStarts,
   monthGrid,
   quickPicks,
   shiftDay,
@@ -213,5 +214,52 @@ describe('time rows, busy blocks and free slots', () => {
   })
   it('duration chip labels', () => {
     expect([15, 30, 45, 60, 90, 120].map(durationLabel)).toEqual(['15m', '30m', '45m', '1h', '1h30', '2h'])
+  })
+})
+
+describe('freeStarts — Plan’s Next free slot (Kai’s “ASAP”)', () => {
+  const day = '2026-09-28' // a Monday, UTC+3
+  const at = (hhmm: string, d = day) => atDay(d, hhmm)
+  const events = [
+    ev('Standup', at('09:30'), at('09:45')),
+    ev('Deep work', at('09:45'), at('11:00')),
+    ev('Lunch', at('12:00'), at('14:30')),
+    ev('Review', at('16:00'), at('20:00')),
+  ]
+  const ten = new Date('2026-09-28T10:07:00+03:00')
+  it('the first gap that fits, from the next quarter: 30m at 11:00, then on through the day', () => {
+    expect(freeStarts(events, ten, 30, 4)).toEqual([
+      { day, start: 660 },
+      { day, start: 690 },
+      { day, start: 870 },
+      { day, start: 900 },
+    ])
+  })
+  it('a longer task skips the gaps it doesn’t fit', () => {
+    expect(freeStarts(events, ten, 90, 2)).toEqual([{ day, start: 870 }, { day: '2026-09-29', start: 480 }])
+  })
+  it('nothing left today → tomorrow from 08:00; a full fortnight → none', () => {
+    const late = new Date('2026-09-28T19:50:00+03:00')
+    expect(freeStarts(events, late, 30, 1)).toEqual([{ day: '2026-09-29', start: 480 }])
+    const wall = Array.from({ length: 15 }, (_, i) => ev(`busy${i}`, at('08:00', addDays(day, i)), at('20:00', addDays(day, i))))
+    expect(freeStarts(wall, ten, 30)).toEqual([])
+  })
+  it('all-day and free events don’t block it', () => {
+    expect(freeStarts([ev('Holiday', at('00:00'), at('23:59'), { all_day: true }), ev('Maybe', at('10:00'), at('18:00'), { busy: false })], ten, 30, 1)).toEqual([{ day, start: 615 }])
+  })
+})
+
+describe('quickPicks — This weekend is the user’s weekend', () => {
+  const wed = new Date('2026-10-07T10:00:00+03:00')
+  const weekend = (days: number[], now = wed) => quickPicks(now, true, days).find((p) => p.key === 'weekend')
+  it('Sat + Sun → Saturday; Fri + Sat → Friday; Sun only → Sunday; none → no pick', () => {
+    expect(weekend([0, 6])?.day).toBe('2026-10-10')
+    expect(weekend([5, 6])?.day).toBe('2026-10-09')
+    expect(weekend([0])?.day).toBe('2026-10-11')
+    expect(weekend([])).toBeUndefined()
+    expect(quickPicks(wed, true, []).map((p) => p.key)).toEqual(['today', 'tomorrow', 'nextweek'])
+  })
+  it('still one pick per day: Fri + Sat on a Thursday is just Tomorrow', () => {
+    expect(quickPicks(new Date('2026-10-08T10:00:00+03:00'), true, [5, 6]).map((p) => p.key)).toEqual(['today', 'tomorrow', 'nextweek'])
   })
 })

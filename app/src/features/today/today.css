@@ -272,6 +272,10 @@
 .tp-goal-title { font-family: var(--font-display); font-size: 18px; font-weight: var(--fw-semibold); line-height: 1.3; color: var(--ink-body); text-wrap: pretty; }
 .tp-goal-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .tp-goal .tp-meta { margin-top: 6px; color: var(--acc-gold); }
+/* Kai 2026-10-07 (a 390 phone): "14:45–16:15 · STARTS IN 3M" stays on one line. Under ~420px the
+   pressed clover gives its width to the title and meta; the meta never wraps (ellipsis at worst). */
+.tp-goal .tp-meta { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 420px) { .tp-goal-clover { display: none; } }
 
 /* 2i: all three tended. */
 .tp-tended { display: flex; align-items: center; gap: 10px; padding: 14px var(--gutter-phone) 2px; }

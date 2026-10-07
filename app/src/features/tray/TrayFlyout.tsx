@@ -8,9 +8,9 @@ import { useRoutines } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { captureWithAI } from '../capture/api'
 import { useStarEvents } from '../today/api'
-import { useGoalStore } from '../today/goalStore'
+import { legacyGoalId } from '../today/goalStore'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { starredIds, top3OfToday } from '../today/top3Today'
+import { dayTop3 } from '../today/top3Order'
 import { isInProgress, upNextEvents } from '../today/upNext'
 import { dayOfJourney } from '../today/todayLayout'
 import { Checkbox } from '../../components/kit'
@@ -42,7 +42,6 @@ export function TrayFlyout() {
   const { data: projects = [] } = useProjects()
   const { data: routines = [] } = useRoutines()
   const { data: inbox = [] } = usePendingInboxItems()
-  const goalId = useGoalStore((s) => s.goalTaskId)
   const [focus, sendFocus] = useFocusMirror()
   const [text, setText] = useState('')
   const [voiceOpen, setVoiceOpen] = useState(false)
@@ -63,12 +62,11 @@ export function TrayFlyout() {
     }
   }, [voiceOpen])
 
-  // Today's Top 3, goal first, finished picks included (Today's own rule, ../today/top3Today).
+  // Today's Top 3 in its order, goal first, finished picks included (Today's own rule, ../today/top3Order).
   const visible = todayListTasks(tasks, now)
-  const { data: starEvents = [] } = useStarEvents(visible.filter((t) => t.completed_at).map((t) => t.id))
-  const picks = top3OfToday(visible, starredIds(starEvents))
-  const goal = picks.find((t) => t.id === goalId)
-  const top3 = goal ? [goal, ...picks.filter((t) => t !== goal)] : picks
+  const { data: starEvents = [] } = useStarEvents(visible.filter((t) => t.completed_at || t.top3).map((t) => t.id))
+  const top3 = dayTop3(tasks, legacyGoalId(), starEvents, now)
+  const goalId = top3[0]?.id ?? null
   const day = dayOfJourney(
     [...tasks.map((t) => t.created_at), ...inbox.map((i) => i.created_at), ...projects.map((p) => p.created_at), ...routines.map((r) => r.created_at)].sort()[0] ?? null,
     now,

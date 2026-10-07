@@ -22,7 +22,7 @@ import { githubUrl } from '../inbox/inboxDisplay'
 import { useProjects } from '../projects/api'
 import { useStartFocus } from '../today/startFocus'
 import { usePaperStore } from '../paper/paperStore'
-import { completeTaskWithUndo, deleteTasksWithUndo, duplicateTaskWithUndo, reopenTaskWithUndo, setDuration, setLabels, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
+import { completeTaskWithUndo, currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, reopenTaskWithUndo, setDuration, setLabels, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
 import { TASK_PARAM } from './openTask'
 import { TaskMenu, type MenuSub, type TaskMenuActions } from './TaskMenu'
 import { blockLine, createdLine, dayWord, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
@@ -148,6 +148,7 @@ export function TaskSheet({ id }: { id: string }) {
   const actions: TaskMenuActions = {
     ...a,
     schedule: on('date', a.schedule),
+    slot: a.slot && on('date', a.slot),
     clearDate: a.clearDate && on('date', a.clearDate),
     someday: on('date', a.someday),
     move: on('project', a.move),
@@ -412,6 +413,8 @@ export function TaskSheet({ id }: { id: string }) {
               meta={meta || undefined}
               onClose={() => setMore(false)}
               items={[
+                // Kai 2026-10-07: the goal of the day from the task itself (not on the goal, not once done).
+                ...(done || currentTop3()[0]?.id === t.id ? [] : [{ label: 'Make goal of the day', icon: <Icon name="focus-ring" size={24} />, onSelect: () => edit('top3', () => makeGoalWithUndo(t)) }]),
                 // The icon set has no duplicate / link glyph yet: plus and send stand in (SCREENS §Task sheet).
                 { label: 'Duplicate', icon: <Icon name="duplicate" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
                 { label: 'Copy link', icon: <Icon name="link" size={24} />, onSelect: copyLink },

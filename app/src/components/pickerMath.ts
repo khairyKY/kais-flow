@@ -1,4 +1,5 @@
 import { cairoDateKey, daysUntilNextWeek, scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
+import { daysToWeekend, weekendDays as weekendDaysSetting } from '../lib/weekend'
 import { cairoTimeKey, cairoToIso } from '../features/calendar/eventTime'
 import type { CalendarEvent, Task } from '../lib/types'
 
@@ -107,16 +108,19 @@ export interface QuickPick {
   hint: string
 }
 
-/** MK Date Picker's dated quick picks (up to four, one per day). This weekend = the coming Saturday. `withTime` adds "· 09:00" to Tomorrow's hint where the caller stores an instant. */
-export function quickPicks(now: Date, withTime: boolean): QuickPick[] {
+/** MK Date Picker's dated quick picks (up to four, one per day). This weekend = the first day of the
+ * user's weekend (lib/weekend; none when they have no weekend). `withTime` adds "· 09:00" to
+ * Tomorrow's hint where the caller stores an instant. */
+export function quickPicks(now: Date, withTime: boolean, weekendDays: readonly number[] = weekendDaysSetting()): QuickPick[] {
   const today = cairoDateKey(now)
-  const weekend = addDays(today, (6 - weekday(today) + 7) % 7)
+  const toWeekend = daysToWeekend(weekday(today), weekendDays)
+  const weekend = toWeekend == null ? null : addDays(today, toWeekend)
   const tomorrow = addDays(today, 1)
   const nextWeek = addDays(today, daysUntilNextWeek(now))
   const picks: QuickPick[] = [
     { key: 'today', label: 'Today', day: today, iso: scheduleToday(now), hint: dayHint(today, today) },
     { key: 'tomorrow', label: 'Tomorrow', day: tomorrow, iso: scheduleTomorrow(now), hint: dayHint(tomorrow, today) + (withTime ? ' · 09:00' : '') },
-    { key: 'weekend', label: 'This weekend', day: weekend, iso: atDay(weekend), hint: dayHint(weekend, today) },
+    ...(weekend ? [{ key: 'weekend' as const, label: 'This weekend', day: weekend, iso: atDay(weekend), hint: dayHint(weekend, today) }] : []),
     { key: 'nextweek', label: 'Next week', day: nextWeek, iso: scheduleNextWeek(now), hint: dayHint(nextWeek, today) },
   ]
   // Kai 2026-10-03: a pick landing on the same day as one above it is noise — This weekend is Today
@@ -200,6 +204,28 @@ export function freeSlots(busy: readonly Busy[], day: string, now: Date, min = 3
     if (end - cur >= min) out.push({ start: cur, end })
     cur = up(Math.max(cur, b.end))
     if (cur >= FREE_TO || out.length === limit) break
+  }
+  return out
+}
+
+export interface FreeStart {
+  day: string
+  start: number
+}
+
+/** "Next free slot" (Kai 2026-10-07, his "ASAP"): every start that fits `dur` in the free hours
+ * (freeSlots: 08:00–20:00, not before now), today first, then each day after for `days` days —
+ * stepping through a gap by the duration on the quarter grid (the task sheet's Suggest a time
+ * steps the same way), so a long gap offers more than one. At most `limit`, earliest first. */
+export function freeStarts(events: readonly CalendarEvent[], now: Date, dur: number, limit = 12, days = 14): FreeStart[] {
+  const today = cairoDateKey(now)
+  const step = Math.max(15, Math.ceil(dur / 15) * 15)
+  const out: FreeStart[] = []
+  for (let i = 0; i < days && out.length < limit; i++) {
+    const day = addDays(today, i)
+    for (const gap of freeSlots(busyOnDay(events, day), day, now, dur, Infinity)) {
+      for (let t = gap.start; t + dur <= gap.end && out.length < limit; t += step) out.push({ day, start: t })
+    }
   }
   return out
 }
