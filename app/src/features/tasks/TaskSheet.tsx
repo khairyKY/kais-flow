@@ -148,6 +148,7 @@ export function TaskSheet({ id }: { id: string }) {
   const actions: TaskMenuActions = {
     ...a,
     schedule: on('date', a.schedule),
+    tomorrow: on('date', a.tomorrow), // the Plan list's Tomorrow, first thing — was a quick pick through schedule
     slot: a.slot && on('date', a.slot),
     clearDate: a.clearDate && on('date', a.clearDate),
     someday: on('date', a.someday),
