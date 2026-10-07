@@ -89,6 +89,8 @@ async function open(route, s = {}, o = {}) {
     if (one) return rows.length ? r.fulfill({ json: rows[0] }) : r.fulfill({ status: 406, json: { code: 'PGRST116', message: 'no rows' } })
     return r.fulfill({ json: rows, headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
   })
+  // Routes a page needs from its first load (v1.0.22: opening Settings runs the update check itself).
+  if (o.before) await o.before(ctx)
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -430,7 +432,7 @@ for (const theme of ['day', 'night']) {
     }
     {
       const { ctx, text } = await web(MINE)
-      check("updates (web) same commit → You're on the latest", text.includes("You're on the latest (build aaaaaaa)"), text.replace(/\n/g, ' / '))
+      check("updates (web) same commit → You're on the latest", text.includes("You're on the latest (v") && text.includes('build aaaaaaa'), text.replace(/\n/g, ' / '))
       await ctx.close()
     }
     {
@@ -439,29 +441,30 @@ for (const theme of ['day', 'night']) {
       await ctx.close()
     }
     const native = async (tag) => {
-      const env = await open('/settings', {}, { theme, tauriVersion: '1.0.14' })
       const requested = []
-      await env.ctx.route('https://api.github.com/**', (r) => {
+      const env = await open('/settings', {}, { theme, tauriVersion: '1.0.14', before: (ctx) => Promise.all([ctx.route('https://api.github.com/**', (r) => {
         requested.push(r.request().url())
         if (tag === 'offline') return r.abort()
         return r.fulfill({ json: { tag_name: tag, assets: [{ name: `kais-flow-${tag}.apk`, browser_download_url: `https://github.com/khairyKY/kais-flow/releases/download/${tag}/kais-flow-${tag}.apk` }, { name: `kais-flow-${tag}-windows-setup.exe`, browser_download_url: `https://github.com/khairyKY/kais-flow/releases/download/${tag}/kais-flow-${tag}-windows-setup.exe` }] } })
-      })
-      await env.ctx.route('https://github.com/**', (r) => { requested.push(r.request().url()); return r.fulfill({ status: 200, headers: { 'content-disposition': 'attachment; filename=setup.exe', 'content-type': 'application/octet-stream' }, body: 'x' }) })
+      }),
+      ctx.route('https://github.com/**', (r) => { requested.push(r.request().url()); return r.fulfill({ status: 200, headers: { 'content-disposition': 'attachment; filename=setup.exe', 'content-type': 'application/octet-stream' }, body: 'x' }) })]) })
       const card = env.page.locator('#settings-App')
       await card.scrollIntoViewIfNeeded()
       const before = await card.innerText()
+      const pre = requested.length // opening Settings already checked once (v1.0.22)
       await card.getByRole('button', { name: 'Check for updates' }).click()
       await sleep(700)
-      return { ...env, card, requested, before, text: await card.innerText() }
+      return { ...env, card, requested, before, fromClick: requested.length - pre, text: await card.innerText() }
     }
     {
-      const { ctx, page, card, requested, before, text } = await native('v1.0.15')
+      const { ctx, page, card, requested, before, fromClick, text } = await native('v1.0.15')
       check('updates (Windows) shows the installed version', before.includes('v1.0.14'), before.replace(/\n/g, ' / '))
-      check('updates (Windows) newer release → "v1.0.15 is out" + Download, one request', text.includes('v1.0.15 is out') && (await card.getByRole('button', { name: 'Download' }).count()) === 1 && requested.length === 1)
+      // v1.0.22 (What's new): a newer release's button is Update, beside its notes.
+      check('updates (Windows) newer release → "v1.0.15 is out" + Update, one request', text.includes('v1.0.15 is out') && (await card.getByRole('button', { name: 'Update', exact: true }).count()) === 1 && fromClick === 1, `requests from the click: ${fromClick}`)
       await shot(page, 'updates-windows-newer-day')
-      await card.getByRole('button', { name: 'Download' }).click().catch(() => {})
+      await card.getByRole('button', { name: 'Update', exact: true }).click().catch(() => {})
       await sleep(800)
-      check('updates (Windows) Download asks for the Windows installer', requested.some((u) => u.endsWith('/kais-flow-v1.0.15-windows-setup.exe')), requested.join(' '))
+      check('updates (Windows) Update asks for the Windows installer', requested.some((u) => u.endsWith('/kais-flow-v1.0.15-windows-setup.exe')), requested.join(' '))
       await ctx.close()
     }
     {

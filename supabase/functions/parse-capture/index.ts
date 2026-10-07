@@ -3,7 +3,7 @@ import { z } from 'npm:zod@^4'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
-import { userZone, wallClock } from '../_shared/zone.ts'
+import { buildSystemPrompt } from './prompt.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 // SCALE: a small model is plenty for turning one capture into JSON, and on Groq's free plan each
@@ -27,6 +27,8 @@ export const ParseResultSchema = z.object({
   kind: z.enum(['task', 'event', 'routine_idea', 'note', 'unknown']),
   cleaned_text: z.string(),
   title: z.string(),
+  /** Notes beyond the title (Kai 2026-10-07: no "//" needed); null if none. */
+  description: z.string().nullable().optional(),
   domain_id: z.string().nullable().optional(),
   project_id: z.string().nullable().optional(),
   due_at: z.string().nullable().optional(),
@@ -36,41 +38,7 @@ export const ParseResultSchema = z.object({
   confidence: z.number().min(0).max(1),
 })
 
-type Context = z.infer<typeof RequestSchema>['context']
-
-/** The user's "now" on their own clock, so "tomorrow 3pm" is their tomorrow at 15:00 there. */
-function nowLine(ctx: Context): string {
-  const said = new Date(ctx.today)
-  const at = Number.isNaN(said.getTime()) ? new Date() : said
-  return `Now, on the user's clock: ${wallClock(at, ctx.timezone)}. Read every date and time in the capture on that clock (in ${userZone(ctx.timezone)}), then give due_at in UTC.`
-}
-
-function buildSystemPrompt(ctx: Context): string {
-  const domainList = ctx.domains.map((d) => `- ${d.id}: ${d.name}`).join('\n') || '(none yet)'
-  const projectList =
-    ctx.projects
-      .map((p) => `- ${p.id}: ${p.name} (domain: ${p.domain_id ?? 'none'})`)
-      .join('\n') || '(none yet)'
-
-  return `You parse a short capture (voice or text) from a personal task/life-management app into structured JSON.
-
-${nowLine(ctx)}
-
-Known domains:
-${domainList}
-
-Known projects:
-${projectList}
-
-Rules:
-- Strip filler words ("um", "uh", "like"), rewrite the text tersely and cleanly into "cleaned_text" and a short "title".
-- kind is one of: task, event, routine_idea, note, unknown.
-- domain_id/project_id: ONLY set these to an id from the lists above if you are genuinely confident it belongs there. Prefer null over guessing.
-- due_at: an ISO 8601 datetime in UTC if a date/time is mentioned, else null.
-- reminder_offset_min: if the user says something like "remind me 10 min before", output the number of minutes (e.g. 10). Prefer null over guessing — only set this if the user explicitly mentions a reminder time offset. Leave null if no reminder is mentioned.
-- confidence (0 to 1): your honest confidence that kind + domain_id/project_id are correct. If unsure of placement, LOWER your confidence — the user strongly prefers triaging an item in their inbox over finding something misfiled later. Do not inflate confidence to seem helpful.
-- Respond with ONLY a JSON object with exactly these keys: kind, cleaned_text, title, domain_id, project_id, due_at, duration_min, priority, reminder_offset_min, confidence. Use null for unknown/inapplicable optional fields.`
-}
+// The prompt (priority / duration / description inferred from the wording) lives in ./prompt.ts.
 
 async function callGroq(rawText: string, systemPrompt: string): Promise<unknown> {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -106,6 +74,7 @@ function fallbackResult(rawText: string) {
     kind: 'unknown' as const,
     cleaned_text: rawText,
     title: rawText.slice(0, 80),
+    description: null,
     domain_id: null,
     project_id: null,
     due_at: null,

@@ -8,7 +8,11 @@ import {
   sendTestNotification,
 } from '../notifications/api'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView, type CalendarDefaultView } from '../../lib/settings'
-import { appPlatform, buildStamp, checkForUpdate, installedVersion, openDownload, reloadToUpdate, type UpdateResult } from '../../lib/appUpdate'
+import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate } from '../../lib/appUpdate'
+import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
+import { checkForUpdates } from '../whats-new/check'
+import { UpdateNotes } from '../whats-new/WhatsNew'
+import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
@@ -350,46 +354,49 @@ function CalendarCard() {
 }
 
 // Kai 2026-10-03: "Check for updates" — one button for the web app, the Android app and the
-// Windows app (lib/appUpdate.ts says how each one checks).
+// Windows app (lib/appUpdate.ts says how each one checks). Kai 2026-10-07: opening Settings checks
+// too, and the card shows what's in this version and what's coming (features/whats-new).
 function AppUpdateCard() {
   const platform = appPlatform()
   const stamp = buildStamp()
+  const uid = useAuth().session?.user.id
   const [installed, setInstalled] = useState<string | null>(null)
-  const [state, setState] = useState<'idle' | 'checking' | UpdateResult>('idle')
+  const checking = useWhatsNew((s) => s.checking)
+  const r = useWhatsNew((s) => s.result)
+  const available = useWhatsNew((s) => s.available)
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
+  useEffect(() => {
+    void checkForUpdates(uid)
+  }, [uid])
   const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: appZone() }) : null
-  const current = platform === 'web' ? (stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build') : installed ? `v${installed.replace(/^v/, '')}` : 'version unknown'
-  const r = typeof state === 'object' ? state : null
+  const running = platform === 'web' || !installed ? BUNDLED_VERSION : `v${installed.replace(/^v/, '')}`
+  const current = platform === 'web' ? `${BUNDLED_VERSION} · ${stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build'}` : installed ? running : 'version unknown'
   const file = platform === 'android' ? 'APK' : 'installer'
   const line =
     !r ? null
+    : available ? `${available.v} is out`
     : r.kind === 'reload' ? 'A new version is ready'
     : r.kind === 'download' ? `${r.version} is out`
     : r.kind === 'pending' ? `${r.version} is out — its ${file} is still on its way, try again in a few minutes`
-    : r.kind === 'current' ? `You're on the latest (${r.version ?? current})`
+    : r.kind === 'current' ? `You're on the latest (${r.version ?? running})`
     : r.kind === 'dev' ? 'This is a development build — nothing to compare it with'
     : 'Couldn’t reach the update check — look at the connection and try again'
   return (
     <SCard>
       <div style={{ ...flabel, marginBottom: 12 }}>App · Kai's Flow</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <Button
-          variant="secondary"
-          disabled={state === 'checking'}
-          onClick={() => {
-            setState('checking')
-            void checkForUpdate(platform).then(setState)
-          }}
-        >
-          {state === 'checking' ? 'Checking…' : 'Check for updates'}
+        <Button variant="secondary" disabled={checking} onClick={() => void checkForUpdates(uid)}>
+          {checking ? 'Checking…' : 'Check for updates'}
         </Button>
-        {line && <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>}
-        {r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
-        {r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
+        {line && !checking && <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>}
+        {/* A newer release has its Update beside its notes below; this is a newer deploy of the same version. */}
+        {!available && r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
+        {!available && r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
       </div>
       <div style={fhelp}>{current}{built ? ` · built ${built}` : ''}</div>
+      <UpdateNotes running={running} />
     </SCard>
   )
 }

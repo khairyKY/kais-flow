@@ -8,13 +8,18 @@ import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
 import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
 import { SAVED_UNTRANSCRIBED, UNTRANSCRIBED_VOICE_NOTE } from './voiceCopy'
-import type { Domain, Project, InboxItem } from '../../lib/types'
-
-// TODO(P4): read from app_settings.confidence_threshold once settings UI exists.
-const CONFIDENCE_THRESHOLD = 0.75
+import { CONFIDENCE_THRESHOLD, aiFill, taskFromParse, type AiFields, type KnownPlaces } from './aiFill'
+import type { Domain, Project, InboxItem, Task } from '../../lib/types'
 
 function nowIso(): string {
   return new Date().toISOString()
+}
+
+/** The live (not trashed) projects and domains this device knows — what the AI may place a capture in. */
+function knownPlaces(): KnownPlaces {
+  const domains = (queryClient.getQueryData<Domain[]>(['domains']) ?? []).filter((d) => !d.deleted_at)
+  const projects = (queryClient.getQueryData<Project[]>(['projects']) ?? []).filter((p) => !p.deleted_at)
+  return { projects, domainIds: domains.map((d) => d.id) }
 }
 
 // `today` is when the words were said: a queued capture parsed hours later still reads "tomorrow" from then.
@@ -124,15 +129,9 @@ export async function captureWithAI(
   // Only 'task' has an auto-file target so far (P1 scope); everything else always goes to Inbox,
   // regardless of confidence — there's nowhere else to file a note/event/routine_idea yet.
   if (parse && parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
-    const task = createTask({
-      title: parse.title,
-      domainId: parse.domain_id ?? null,
-      projectId: parse.project_id ?? null,
-      dueAt: parse.due_at ?? null,
-      reminderOffsetMin: parse.reminder_offset_min ?? null,
-      durationMin: overrides.durationMin ?? parse.duration_min ?? null,
-      priority: overrides.priority ?? null,
-    })
+    // Everything it read — priority from the wording, the description as notes — with a typed
+    // `!` / `30m` still beating its own reading.
+    const task = createTask(taskFromParse(parse, knownPlaces(), overrides))
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
     useToastStore.getState().push({
       message: `Added "${task.title}"`,
@@ -151,6 +150,72 @@ export async function captureWithAI(
   writeRow('inbox_items', item)
   logActivity('inbox.captured', 'inbox_item', item.id, { kind })
   useToastStore.getState().push({ message: aiAllowanceUsedUp ? INBOX_WITHOUT_AI : 'Added to Inbox for review' })
+}
+
+/** The AI's read of a typed capture, or null when it can't be had — offline, over today's allowance,
+ * a failure. Then the local parse simply stands: the row is already written, nothing is lost. */
+async function readQuietly(rawText: string): Promise<ParseResult | null> {
+  if (!navigator.onLine) return null
+  try {
+    return await callParseCapture(rawText)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Kai 2026-10-07 (Akiflow-style capture): a typed capture with structure was just created from the
+ * local parse; the AI's read fills in only what is still empty (aiFill) — a priority from "asap",
+ * a duration from "an hour", notes from the details — then says so: "✦ Filled by AI: … · Undo".
+ * Fields the person changed meanwhile are theirs; Undo puts back only what the AI wrote.
+ */
+export async function enrichTypedTask(created: Task, rawText: string): Promise<void> {
+  const ai = await readQuietly(rawText)
+  if (!ai) return
+  const current = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === created.id) ?? created
+  if (current.deleted_at) return
+  const { patch, filled } = aiFill(current, ai, knownPlaces(), created.title)
+  if (!filled.length) return
+  const keys = Object.keys(patch) as (keyof AiFields)[]
+  const before = Object.fromEntries(keys.map((k) => [k, current[k]])) as Partial<AiFields>
+  writeRow('tasks', { ...current, ...patch, updated_at: nowIso() })
+  logActivity('capture.ai_filled', 'task', current.id, { fields: filled })
+  useToastStore.getState().push({
+    message: `✦ Filled by AI: ${filled.join(', ')}`,
+    onUndo: () => {
+      const latest = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === current.id) ?? { ...current, ...patch }
+      const back = Object.fromEntries(keys.filter((k) => latest[k] === patch[k]).map((k) => [k, before[k]]))
+      writeRow('tasks', { ...latest, ...back, updated_at: nowIso() })
+    },
+  })
+}
+
+/**
+ * A typed line with no structure was just put in the Inbox (instantly, as always). The AI then
+ * decides, like a voice capture: a task it's sure of is filed for you ("✦ Filed by AI · Undo" puts
+ * it back in the Inbox); anything else stays in the Inbox with the AI's read for triage.
+ */
+export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Promise<void> {
+  const ai = await readQuietly(rawText)
+  if (!ai) return
+  const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
+  if (current.status !== 'pending') return // triaged meanwhile — the person's call stands
+  const read = { ...current, ai_parse: ai as unknown as Record<string, unknown>, confidence: ai.confidence, updated_at: nowIso() }
+  if (ai.kind !== 'task' || ai.confidence < CONFIDENCE_THRESHOLD) {
+    writeRow('inbox_items', read)
+    return
+  }
+  const task = createTask(taskFromParse(ai, knownPlaces()))
+  writeRow('inbox_items', { ...read, status: 'filed', filed_task_id: task.id })
+  logActivity('capture.autofiled', 'task', task.id, { confidence: ai.confidence, source: 'typed' })
+  useToastStore.getState().push({
+    message: `✦ Filed by AI: “${task.title}”`,
+    onUndo: () => {
+      writeRow('tasks', task, 'delete')
+      logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
+      writeRow('inbox_items', { ...read, status: 'pending', filed_task_id: null, updated_at: nowIso() })
+    },
+  })
 }
 
 /** Polish E: a recording that couldn't be transcribed still lands in the Inbox — as a voice item
@@ -204,14 +269,8 @@ async function parseQueued(): Promise<void> {
       }
       const parse = await callParseCapture(item.raw_text, item.created_at)
       if (parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
-        const task = createTask({
-          title: parse.title,
-          domainId: parse.domain_id ?? null,
-          projectId: parse.project_id ?? null,
-          dueAt: parse.due_at ?? null,
-          reminderOffsetMin: parse.reminder_offset_min ?? null,
-          durationMin: parse.duration_min ?? null,
-        })
+        const over = rest as { priority_override?: number | null; duration_override?: number | null }
+        const task = createTask(taskFromParse(parse, knownPlaces(), { priority: over.priority_override, durationMin: over.duration_override }))
         writeRow('inbox_items', {
           ...item,
           status: 'filed',

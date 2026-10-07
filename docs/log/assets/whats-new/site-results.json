@@ -1,0 +1,221 @@
+{
+ "pass": 43,
+ "total": 43,
+ "results": [
+  {
+   "name": "1440 day: loads with no console errors, theme day",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: no sideways scroll, images load with alt, one h1",
+   "ok": true,
+   "detail": "hs 0 · broken 0 · h1 \"Your own time zone, and easier projects\""
+  },
+  {
+   "name": "1440 day: the newest release is the hero (v1.0.21, its title, its date)",
+   "ok": true,
+   "detail": "What’s new · v1.0.21 · 7 Oct 2026"
+  },
+  {
+   "name": "1440 day: its 6 highlights, each with an icon",
+   "ok": true,
+   "detail": "436/436/436/436/436/436 px wide"
+  },
+  {
+   "name": "1440 day: the two releases before it, lighter",
+   "ok": true,
+   "detail": "v1.0.20 · 4 Oct 2026:4, v1.0.19 · 4 Oct 2026:1"
+  },
+  {
+   "name": "1440 day: “All field notes →” goes to /field-notes/",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: text contrast AA (48 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 day: “What’s new” is in the header nav, current on this page",
+   "ok": true,
+   "detail": "What’s new"
+  },
+  {
+   "name": "1440 day: in the footer, title + OG card",
+   "ok": true,
+   "detail": "https://kais-flow-site.pages.dev/og/whats-new.png"
+  },
+  {
+   "name": "1440 night: loads with no console errors, theme night",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: no sideways scroll, images load with alt, one h1",
+   "ok": true,
+   "detail": "hs 0 · broken 0 · h1 \"Your own time zone, and easier projects\""
+  },
+  {
+   "name": "1440 night: the newest release is the hero (v1.0.21, its title, its date)",
+   "ok": true,
+   "detail": "What’s new · v1.0.21 · 7 Oct 2026"
+  },
+  {
+   "name": "1440 night: its 6 highlights, each with an icon",
+   "ok": true,
+   "detail": "436/436/436/436/436/436 px wide"
+  },
+  {
+   "name": "1440 night: the two releases before it, lighter",
+   "ok": true,
+   "detail": "v1.0.20 · 4 Oct 2026:4, v1.0.19 · 4 Oct 2026:1"
+  },
+  {
+   "name": "1440 night: “All field notes →” goes to /field-notes/",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: text contrast AA (48 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1440 night: “What’s new” is in the header nav, current on this page",
+   "ok": true,
+   "detail": "What’s new"
+  },
+  {
+   "name": "1440 night: in the footer, title + OG card",
+   "ok": true,
+   "detail": "https://kais-flow-site.pages.dev/og/whats-new.png"
+  },
+  {
+   "name": "390 day: loads with no console errors, theme day",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: no sideways scroll, images load with alt, one h1",
+   "ok": true,
+   "detail": "hs 0 · broken 0 · h1 \"Your own time zone, and easier projects\""
+  },
+  {
+   "name": "390 day: the newest release is the hero (v1.0.21, its title, its date)",
+   "ok": true,
+   "detail": "What’s new · v1.0.21 · 7 Oct 2026"
+  },
+  {
+   "name": "390 day: its 6 highlights, each with an icon",
+   "ok": true,
+   "detail": "350/350/350/350/350/350 px wide"
+  },
+  {
+   "name": "390 day: the two releases before it, lighter",
+   "ok": true,
+   "detail": "v1.0.20 · 4 Oct 2026:4, v1.0.19 · 4 Oct 2026:1"
+  },
+  {
+   "name": "390 day: “All field notes →” goes to /field-notes/",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: text contrast AA (40 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: “What’s new” is in the phone menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 day: in the footer, title + OG card",
+   "ok": true,
+   "detail": "https://kais-flow-site.pages.dev/og/whats-new.png"
+  },
+  {
+   "name": "390 night: loads with no console errors, theme night",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: no sideways scroll, images load with alt, one h1",
+   "ok": true,
+   "detail": "hs 0 · broken 0 · h1 \"Your own time zone, and easier projects\""
+  },
+  {
+   "name": "390 night: the newest release is the hero (v1.0.21, its title, its date)",
+   "ok": true,
+   "detail": "What’s new · v1.0.21 · 7 Oct 2026"
+  },
+  {
+   "name": "390 night: its 6 highlights, each with an icon",
+   "ok": true,
+   "detail": "350/350/350/350/350/350 px wide"
+  },
+  {
+   "name": "390 night: the two releases before it, lighter",
+   "ok": true,
+   "detail": "v1.0.20 · 4 Oct 2026:4, v1.0.19 · 4 Oct 2026:1"
+  },
+  {
+   "name": "390 night: “All field notes →” goes to /field-notes/",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: text contrast AA (40 text runs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: “What’s new” is in the phone menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "390 night: in the footer, title + OG card",
+   "ok": true,
+   "detail": "https://kais-flow-site.pages.dev/og/whats-new.png"
+  },
+  {
+   "name": "the sitemap lists /whats-new/",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "the OG card is there (1200×630 PNG)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "RSS: one item per release, newest first, from releases.json",
+   "ok": true,
+   "detail": "17 items"
+  },
+  {
+   "name": "Field notes: every release, in order",
+   "ok": true,
+   "detail": "17 entries"
+  },
+  {
+   "name": "Download shows the newest version",
+   "ok": true,
+   "detail": "v1.0.21"
+  },
+  {
+   "name": "1024: the header still fits (nav folds into the menu below 1024)",
+   "ok": true,
+   "detail": "{\"nav\":\"flex\",\"over\":0,\"hs\":0}"
+  },
+  {
+   "name": "1100: five nav links on one line, nothing overflows",
+   "ok": true,
+   "detail": "{\"nav\":\"flex\",\"over\":0,\"n\":5,\"oneLine\":true}"
+  }
+ ]
+}

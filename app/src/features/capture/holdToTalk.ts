@@ -66,6 +66,26 @@ export function holdStep(s: HoldState, e: HoldEvent): [HoldState, HoldEffect] {
   }
 }
 
+/** Is this click on the capture button a tap (→ the capture sheet)? Not the click a hold ends with —
+ * that take is already on its way. detail 0 = Enter / Space: always a tap (no keyboard hold-to-talk). */
+export function clickIsTap(detail: number, held: boolean): boolean {
+  return detail === 0 || !held
+}
+
+/** The capture bar's mic. On a phone it is hold-to-talk's tap twin (DS gesture parity: "hold-to-talk =
+ * tap capture → mic in the sheet") — the voice sheet, which records and files by AI. On desktop there's
+ * no button to hold, so it dictates into the field: the words are checked, then Enter files them. */
+export function micAction(phone: boolean): 'voice-sheet' | 'dictate' {
+  return phone ? 'voice-sheet' : 'dictate'
+}
+
+/** Dictated words join what's already typed, one space between. */
+export function appendDictation(typed: string, heard: string): string {
+  const a = typed.trimEnd()
+  const b = heard.trim()
+  return a && b ? `${a} ${b}` : a || b
+}
+
 /** The recorder's container: the first one this browser can write (shared with VoiceCaptureSheet). */
 export function pickMimeType(): string {
   const candidates = ['audio/webm', 'audio/mp4', 'audio/aac']

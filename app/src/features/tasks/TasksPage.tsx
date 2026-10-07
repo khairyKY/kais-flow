@@ -31,7 +31,7 @@ import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } f
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { useGoalStore } from '../today/goalStore'
-import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { CaptureCta } from '../capture/CaptureCta'
 import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
@@ -700,7 +700,7 @@ export function TasksPage() {
             </div>
           ) : (
             // Phone: the tab bar's mic is the capture button; a second one here wrapped to two lines.
-            !isSomeday && <span className="tasks-head-capture"><VoiceCaptureButton /></span>
+            !isSomeday && <span className="tasks-head-capture"><CaptureCta /></span>
           )}
         </div>
 

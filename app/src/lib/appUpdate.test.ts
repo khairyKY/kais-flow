@@ -34,6 +34,10 @@ describe('nativeVerdict', () => {
   it('names a newer release whose file for this platform is not attached yet', () => {
     expect(nativeVerdict({ tag_name: 'v1.0.15', assets: [] }, '1.0.14', 'android')).toEqual({ kind: 'pending', version: 'v1.0.15' })
   })
+  it('hands on the release notes for What’s new', () => {
+    expect(nativeVerdict({ ...release('v1.0.22'), body: '- One' }, '1.0.21', 'android')).toMatchObject({ kind: 'download', body: '- One' })
+    expect(nativeVerdict({ tag_name: 'v1.0.22', body: '- One', assets: [] }, '1.0.21', 'windows')).toEqual({ kind: 'pending', version: 'v1.0.22', body: '- One' })
+  })
   it('names the files the release workflows attach', () => {
     expect(releaseAssetName('v1.0.15', 'android')).toBe('kais-flow-v1.0.15.apk')
     expect(releaseAssetName('v1.0.15', 'windows')).toBe('kais-flow-v1.0.15-windows-setup.exe')

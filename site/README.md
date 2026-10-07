@@ -5,7 +5,7 @@ little JS, built by one Node script with **no dependencies** (no `npm install`).
 cookies, no framework. Separate from the app in `../app` — it doesn't import anything from it.
 
 ```
-node build.mjs          # → dist/  (30 pages, sitemap.xml, robots.txt, field-notes/feed.xml)
+node build.mjs          # → dist/  (31 pages, sitemap.xml, robots.txt, field-notes/feed.xml)
 ```
 
 Preview: serve `dist/` with any static server (`npx serve dist`, `python -m http.server -d dist`).
@@ -33,7 +33,8 @@ rebuild the site. `404.html` is picked up automatically for unknown addresses; n
 | Path | What |
 |---|---|
 | `build.mjs` | renders every page, copies `public/`, writes sitemap/robots/RSS |
-| `src/data.mjs` | **every fact**: app URL, latest release (fallback), field notes, the roadmap, contact email |
+| `src/releases.json` | **the release notes**, newest first: Field notes, What’s new, RSS, the app’s What’s new sheet and the GitHub Release body all read it |
+| `src/data.mjs` | **every other fact**: app URL, latest release (fallback, from releases.json), the roadmap, contact email |
 | `src/pages/*.mjs` | one module per page group (home, features, paper, guides, info, Arabic…) |
 | `src/lib.mjs` · `src/parts.mjs` | the page shell (header, footer, head tags) and shared sections |
 | `src/tokens.css` | the app's colour/type tokens, copied (not imported) from `app/src/styles/tokens` |
@@ -44,9 +45,11 @@ rebuild the site. `404.html` is picked up automatically for unknown addresses; n
 
 ## Keeping it true
 
-- **A new release**: add it to the top of `RELEASES` in `src/data.mjs` and bump `LATEST` (the page
-  also asks GitHub for the newest release when it loads, so the version on the download cards is
-  current even before you do). Re-run `tools/render-assets.mjs` so the field-notes share card shows it.
+- **A new release**: add it to the top of `src/releases.json` **before tagging** — `{ v, date, title?, highlights,
+  icons?, art }`, short warm lines, no jargon. `LATEST` follows it (the page also asks GitHub for the newest
+  release when it loads). The app bundles the same file (its What's new sheet), and the release workflow
+  writes that entry as the GitHub Release body, which older installs read for "Coming in …". Re-run
+  `tools/render-assets.mjs` so the What’s new / Field notes / Download share cards show it.
 - **The roadmap**: `ROADMAP` in `src/data.mjs`.
 - **Placeholders for Kai** are shown on the page as `[Kai writes this …]` / `[contact email]`:
   the About story and photo, `CONTACT_EMAIL`, how long database backups are kept (Privacy §1), and

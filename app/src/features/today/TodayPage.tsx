@@ -17,7 +17,7 @@ import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGroupi
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
-import { VoiceCaptureButton } from '../capture/VoiceCaptureButton'
+import { CaptureCta } from '../capture/CaptureCta'
 import { useRitualStepsToday, type RitualKind } from '../rituals/api'
 import { useRitualPins } from '../rituals/ritualPins'
 import { MorningRitual } from '../rituals/MorningRitual'
@@ -27,7 +27,7 @@ import { useLatestResurfaced } from '../resurfacing/api'
 import { useTimeEntries } from '../focus/api'
 import { useGoalStore } from './goalStore'
 import { useTerrariumStore } from './terrariumStore'
-import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { openCapture } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button, Star } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
@@ -145,7 +145,6 @@ export function TodayPage() {
   })
   const { goalTaskId } = useGoalStore()
   const terrariumOn = useTerrariumStore((s) => s.on)
-  const setCommandBarOpen = useCommandBarStore((s) => s.setOpen)
   const isMobile = useIsMobile()
   // DS-CHANGELOG §3 Offline: a phone row not yet synced carries a pending ring while offline.
   const online = useOnline()
@@ -452,7 +451,7 @@ export function TodayPage() {
           <span
             onClick={() => {
               window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` }))
-              setCommandBarOpen(true)
+              openCapture()
             }}
             style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}
           >
@@ -536,7 +535,7 @@ export function TodayPage() {
         {empty ? (
           // Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA.
           <div style={{ paddingTop: 64 }}>
-            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: () => setCommandBarOpen(true) }} />
+            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} />
           </div>
         ) : (
           <>
@@ -653,7 +652,7 @@ export function TodayPage() {
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Today</div>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 42, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{dateLabel}</h1>
       </div>
-      <VoiceCaptureButton />
+      <CaptureCta />
     </div>
   )
 
@@ -770,7 +769,7 @@ export function TodayPage() {
                 <Skeleton rows={2} />
               </>
             ) : nothingPlanned ? (
-              <EmptyTodayCard onPlan={() => setCommandBarOpen(true)} />
+              <EmptyTodayCard onPlan={openCapture} />
             ) : allDone ? (
               <DoneTodayCard />
             ) : (
