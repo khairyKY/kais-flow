@@ -134,13 +134,15 @@ function answerFor(state, body) {
 async function open(route, o = {}) {
   const view = o.view ?? phone
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess]) => {
+  await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', sess)
+    // v1.0.22's one-time "Updated to vX" toast docks over a modal's header on phones (covering Rotate).
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
     // 11k: the camera switched off for the app (set per test).
     const q = navigator.permissions.query.bind(navigator.permissions)
     navigator.permissions.query = (d) => (d?.name === 'camera' && window.__cameraDenied ? Promise.resolve({ state: 'denied' }) : q(d))
-  }, [o.theme ?? 'day', JSON.stringify(session)])
+  }, [o.theme ?? 'day', JSON.stringify(session), UID])
   const state = {
     rows: { tasks: [], projects: PROJECTS, domains: [], app_settings: [SETTINGS], inbox_items: [...OLD_INBOX], captures: o.captures ?? [], calendar_events: [] },
     writes: [], uploads: {}, reads: [], scenario: o.scenario ?? 'ok', batch: o.batch ?? ['lecture'], hold: o.hold ?? 0, scans: o.scans ?? 4,

@@ -16,7 +16,7 @@ const BASE = process.argv[3] ?? 'http://localhost:5261'
 const PW = 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
 const { chromium } = await import(pathToFileURL(PW).href)
 const NOTES = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../site/src/releases.json'), 'utf8'))
-const CUR = NOTES[0] // v1.0.21, the bundled newest
+const CUR = NOTES[0] // the bundled newest (the version this build is)
 fs.mkdirSync(OUT, { recursive: true })
 const results = []
 const check = (name, ok, detail = '') => {
@@ -35,7 +35,7 @@ const MEM = `kf-whats-new:${UID}`
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Kai', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 
 // ── the next release, as GitHub would serve it once release.yml wrote its body from releases.json ──
-const NEXT = 'v1.0.22'
+const NEXT = CUR.v.replace(/\d+$/, (n) => String(Number(n) + 1)) // the release after the bundled one
 const NEXT_LINES = ['A morning page that waits for you', 'Undo on every swipe']
 const exe = `https://github.com/khairyKY/kais-flow/releases/download/${NEXT}/kais-flow-${NEXT}-windows-setup.exe`
 const releaseOf = (tag, lines) => ({
@@ -133,7 +133,7 @@ const reload = async (page) => { await page.reload({ waitUntil: 'networkidle' })
   const d = dialog(page)
   const text = await d.innerText()
   const items = await d.locator('li').allInnerTexts()
-  check('desktop day: the sheet is a centred card: title, “Your version · 7 Oct 2026”, the release’s title', /What’s new in v1\.0\.21/.test(text) && /YOUR VERSION · 7 OCT 2026/i.test(text) && text.includes(CUR.title), text.split('\n').slice(0, 3).join(' | '))
+  check('desktop day: the sheet is a centred card: title, “Your version · 7 Oct 2026”, the release’s title', text.includes(`What’s new in ${CUR.v}`) && text.toUpperCase().includes(`YOUR VERSION · ${new Date(CUR.date + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase()}`) && text.includes(CUR.title), text.split('\n').slice(0, 3).join(' | '))
   const box = await d.boundingBox()
   check('desktop day: centred on the screen, not a bottom sheet', Math.abs(box.x + box.width / 2 - 640) < 2 && box.y > 40 && box.y + box.height < 780, JSON.stringify(box))
   check(`desktop day: its ${CUR.highlights.length} highlights, from the bundled notes`, JSON.stringify(items) === JSON.stringify(CUR.highlights), items.length)
@@ -161,8 +161,8 @@ const reload = async (page) => { await page.reload({ waitUntil: 'networkidle' })
   const t = await toasts(b.page)
   check('first launch, brand-new account (signed up an hour ago) → no “Updated” toast, version recorded', !t.some((x) => x.startsWith('Updated')) && (await memory(b.page))?.seen === CUR.v, JSON.stringify(t))
   await b.ctx.close()
-  const c = await device({ memory: { seen: 'v1.0.22' } })
-  check('an older bundle than one already seen → nothing, and “seen” stays v1.0.22', !(await toasts(c.page)).some((x) => x.startsWith('Updated')) && (await memory(c.page))?.seen === 'v1.0.22')
+  const c = await device({ memory: { seen: NEXT } })
+  check('an older bundle than one already seen → nothing, and “seen” stays v1.0.22', !(await toasts(c.page)).some((x) => x.startsWith('Updated')) && (await memory(c.page))?.seen === NEXT)
   await c.ctx.close()
 }
 
@@ -198,7 +198,7 @@ const reload = async (page) => { await page.reload({ waitUntil: 'networkidle' })
   await sleep(500)
   const d = dialog(page)
   const text = await d.innerText()
-  check('web night: the sheet is v1.0.22’s, “Ready to update”, notes read from its GitHub Release body', /What’s new in v1\.0\.22/.test(text) && /READY TO UPDATE/i.test(text) && JSON.stringify(await d.locator('li').allInnerTexts()) === JSON.stringify(NEXT_LINES), text.replace(/\n/g, ' | ').slice(0, 160))
+  check('web night: the sheet is v1.0.22’s, “Ready to update”, notes read from its GitHub Release body', text.includes(`What’s new in ${NEXT}`) && /READY TO UPDATE/i.test(text) && JSON.stringify(await d.locator('li').allInnerTexts()) === JSON.stringify(NEXT_LINES), text.replace(/\n/g, ' | ').slice(0, 160))
   check('web night: its primary button is Update', (await d.getByRole('button', { name: 'Update' }).isEnabled()))
   check('web night: night theme', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'night')
   await shot(page, '3-sheet-update-desktop-night')
@@ -284,7 +284,7 @@ for (const [view, vname] of [[DESKTOP, 'desktop'], [PHONE, 'phone']]) {
 
 // ── 6 · the Windows app: the native toast through tray.rs notify_local, quiet hours, pause, looking ──
 {
-  const { ctx, page, net, errors } = await device({ tauri: '1.0.21', unfocused: true, time: '13:00', gh: NEWER, memory: { seen: CUR.v } })
+  const { ctx, page, net, errors } = await device({ tauri: CUR.v.slice(1), unfocused: true, time: '13:00', gh: NEWER, memory: { seen: CUR.v } })
   const n = await calls(page, 'notify_local')
   const a = n[0]?.args
   check('windows (in the tray, 13:00): one native toast, same copy, a See what’s new button', n.length === 1 && a.title === `${NEXT} is out` && a.body === 'See what’s new' && JSON.stringify(a.actions) === JSON.stringify([['whats-new', 'See what’s new']]) && JSON.parse(a.payload).version === NEXT, JSON.stringify(a))
@@ -293,7 +293,7 @@ for (const [view, vname] of [[DESKTOP, 'desktop'], [PHONE, 'phone']]) {
   await page.evaluate((p) => window.__kfNotifyAction('whats-new', JSON.parse(p)), a.payload)
   await sleep(600)
   const d = dialog(page)
-  check('windows: the button brings the window forward (tray_open) and opens v1.0.22’s sheet', (await calls(page, 'tray_open')).length === 1 && /What’s new in v1\.0\.22/.test(await d.innerText()))
+  check('windows: the button brings the window forward (tray_open) and opens v1.0.22’s sheet', (await calls(page, 'tray_open')).length === 1 && (await d.innerText()).includes(`What’s new in ${NEXT}`))
   await shot(page, '6-windows-sheet-from-native-toast')
   await d.getByRole('button', { name: 'Update' }).click()
   await sleep(800)
@@ -306,14 +306,14 @@ for (const [label, o] of [
   ['while notifications are paused', { time: '13:00', settings: { notify_paused_until: new Date(cairo('13:00').getTime() + 3_600_000).toISOString() } }],
   ['while someone is looking at the window', { time: '13:00', unfocused: false }],
 ]) {
-  const { ctx, page } = await device({ tauri: '1.0.21', unfocused: true, gh: NEWER, memory: { seen: CUR.v }, ...o })
+  const { ctx, page } = await device({ tauri: CUR.v.slice(1), unfocused: true, gh: NEWER, memory: { seen: CUR.v }, ...o })
   check(`windows ${label}: no native toast, the in-app toast still says it`, (await calls(page, 'notify_local')).length === 0 && (await toasts(page)).includes(`${NEXT} is out`))
   await ctx.close()
 }
 {
   // a release whose installer is still building: shown in Settings, not toasted yet (and not marked told)
   const pending = { ...NEWER, assets: [] }
-  const { ctx, page } = await device({ tauri: '1.0.21', unfocused: true, time: '13:00', gh: pending, memory: { seen: CUR.v } })
+  const { ctx, page } = await device({ tauri: CUR.v.slice(1), unfocused: true, time: '13:00', gh: pending, memory: { seen: CUR.v } })
   check('windows: a release without its installer yet → no toast, not marked as told', !(await toasts(page)).some((x) => x.endsWith('is out')) && (await calls(page, 'notify_local')).length === 0 && !(await memory(page))?.notified)
   await ctx.close()
 }
