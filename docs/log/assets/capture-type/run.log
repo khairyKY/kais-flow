@@ -7,6 +7,7 @@ PASS phone-tap-day centre button keeps the mic glyph; its name says tap to type,
 PASS phone-tap-day keyboard up → the sheet rides on it (bottom at 844 − 300) — {"x":0,"y":301,"width":390,"height":243}
 PASS phone-tap-day parse chips: date (tomorrow 9) + project — ["TOMORROW · 9:00 AM","WEBSITE"]
 PASS phone-tap-day Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website — [["Email Priya the slides","2026-10-08 09:00"]]
+PASS phone-tap-day …a typed time is a calendar block: tomorrow 09:00–09:30 (capture-block) — [[true,"2026-10-08 09:00","2026-10-08 09:30"]]
 PASS phone-tap-day …and the sheet closes
 PASS phone-tap-day no page errors
 PASS phone-tap-night centre tap → the capture sheet (a bottom sheet, field + camera + mic + send)
@@ -18,6 +19,7 @@ PASS phone-tap-night centre button keeps the mic glyph; its name says tap to typ
 PASS phone-tap-night keyboard up → the sheet rides on it (bottom at 844 − 300) — {"x":0,"y":331,"width":390,"height":213}
 PASS phone-tap-night parse chips: date (tomorrow 9) + project — ["TOMORROW · 9:00 AM","WEBSITE"]
 PASS phone-tap-night Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website — [["Email Priya the slides","2026-10-08 09:00"]]
+PASS phone-tap-night …a typed time is a calendar block: tomorrow 09:00–09:30 (capture-block) — [[true,"2026-10-08 09:00","2026-10-08 09:30"]]
 PASS phone-tap-night …and the sheet closes
 PASS phone-tap-night no page errors
 PASS phone-send Send is disabled while the field is empty
@@ -25,7 +27,7 @@ PASS phone-send "→ Inbox" chip for a line with no structure
 PASS phone-send dismissed and reopened → the draft is still there (kit sheet: dismissing never discards)
 PASS phone-send Send → one Inbox capture (captureText), sheet closed; the unsure AI read only annotates that same row — [["ideas for the garden","pending",0.3]]
 PASS phone-send no page errors
-PASS phone-mic mic → the capture sheet steps aside, the voice sheet is listening — LISTENING · 0:01
+PASS phone-mic mic → the capture sheet steps aside, the voice sheet is listening — LISTENING · 0:00
 say what's on your mind…
 Cancel
 Stop & file
@@ -37,7 +39,7 @@ PASS phone-hold the click that ends a hold does not open the capture sheet
 PASS phone-hold slide up onto the lock → hands-free bar
 PASS phone-hold no page errors
 PASS phone-offline-voice offline → the recording is kept ("You're offline…", Save to Inbox untranscribed) — —
-NOT TRANSCRIBED YET · 0:01
+NOT TRANSCRIBED YET · 0:02
 your recording is still here
 You’re offline, so it couldn’t be transcribed.
 The audio stays only until you close this sheet. Saving to the Inbox keeps a reminder, not the audio.
@@ -58,6 +60,7 @@ PASS desktop-day mic on → pressed, "Listening" in the hint row
 PASS desktop-day mic off → transcribed into the field after what was typed (for review, not filed) — Call the bank tomorrow 3pm about the mortgage
 PASS desktop-day …focus back in the field
 PASS desktop-day Enter files it: a task due tomorrow 15:00 Cairo — [["Call the bank about the mortgage","2026-10-08 15:00"]]
+PASS desktop-day …and on the calendar: a 15:00–15:30 block — [["2026-10-08 15:00","2026-10-08 15:30"]]
 PASS desktop-day no page errors
 PASS desktop-night Today's header CTA is "Capture" (no "Voice capture")
 PASS desktop-night Capture → the command bar, cursor in the field
@@ -68,6 +71,7 @@ PASS desktop-night mic on → pressed, "Listening" in the hint row
 PASS desktop-night mic off → transcribed into the field after what was typed (for review, not filed) — Call the bank tomorrow 3pm about the mortgage
 PASS desktop-night …focus back in the field
 PASS desktop-night Enter files it: a task due tomorrow 15:00 Cairo — [["Call the bank about the mortgage","2026-10-08 15:00"]]
+PASS desktop-night …and on the calendar: a 15:00–15:30 block — [["2026-10-08 15:00","2026-10-08 15:30"]]
 PASS desktop-night no page errors
 PASS desktop-header-tasks header CTA "Capture"
 PASS desktop-header-tasks → the bar, focused
@@ -92,5 +96,23 @@ PASS ai-files-plain-line-phone no page errors
 PASS ai-offline offline: no AI call, no AI toast — the local parse stands — []
 PASS ai-offline back online → the queued task syncs as typed (nothing lost) — [["Call the bank asap",null]]
 PASS ai-offline no page errors
+PASS block-4am the chip shows the typed time — TOMORROW · 4:00 AM
+↵
+QUICK ADD
+·
+⌘
+↵
+AI CAPTURE
+PASS block-4am "crypto session 4am" → a task due 04:00 AND a 04:00–04:30 block on the calendar — {"due":"2026-10-08 04:00","blocks":[["2026-10-08 04:00","2026-10-08 04:30"]]}
+PASS block-4am …the task row carries the block (scheduled_start) — ["2026-10-08T01:00:00.000Z"]
+PASS block-4am …and the calendar draws it in 2026-10-08's column
+PASS block-4am no page errors
+PASS block-date-alone a date alone: the chip says just "Tomorrow" (no clock — no block coming) — TOMORROW
+PASS block-date-alone "call Omar tomorrow" → a task due tomorrow, nothing on the calendar — {"due":"2026-10-08 11:23","blocks":0}
+PASS block-date-alone no page errors
+PASS block-ai-time no typed time: the task is written with no block
+PASS block-ai-time the AI reads a time (has_time) → it fills the date AND puts a 05:00–05:30 block on the calendar — {"blocks":[["2026-10-08 05:00","2026-10-08 05:30"]],"toasts":["✦ Filled by AI: date"]}
+PASS block-ai-time Undo → the block it made comes off the calendar and the date goes back to none — {"gone":[true],"due":null,"priority":3}
+PASS block-ai-time no page errors
 
-84/84 passed
+100/100 passed
