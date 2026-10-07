@@ -1,0 +1,125 @@
+PASS phone-day note 1 (capture) lights its own element; the card leaves it clear — {"a":[167,784,56,56],"s":[157,774,76,76],"clear":true}
+PASS phone-day Next and Skip are 48px targets — [49,49]
+PASS phone-day the dim takes no taps (only the card does)
+PASS phone-day note 2 (top3) lights its own element; the card leaves it clear — {"a":[0,72,390,358],"s":[-4,68,398,366],"clear":true}
+PASS phone-day note 3 (row) lights its own element; the card leaves it clear — {"a":[0,276,390,77],"s":[-4,272,398,85],"clear":true}
+PASS phone-day the ghost finger swipes a copy of the row (looping)
+PASS phone-day note 4 (plan) lights its own element; the card leaves it clear — {"a":[16,90,358,105],"s":[12,86,366,113],"clear":true}
+PASS phone-day note 5 (ask) lights its own element; the card leaves it clear — {"a":[309,780,78,64],"s":[305,776,86,72],"clear":true}
+PASS phone-day the last note: no spotlight, everything dimmed, one bloom
+PASS phone-day five notes then the closing card, in the design's order — capture,top3,row,plan,ask,done
+PASS phone-day Done ends it
+PASS phone-day done counts as seen, the onboarding flag is spent, the row note taught the swipe — ["hint:swipe","tour"]
+PASS phone-day no horizontal scroll at 390 — 390
+PASS phone-day no text under 12px
+PASS phone-day no page or console errors
+PASS phone-day never again after Done (a reload shows no note)
+PASS phone-night note 1 (capture) lights its own element; the card leaves it clear — {"a":[167,784,56,56],"s":[157,774,76,76],"clear":true}
+PASS phone-night Next and Skip are 48px targets — [49,49]
+PASS phone-night the dim takes no taps (only the card does)
+PASS phone-night note 2 (top3) lights its own element; the card leaves it clear — {"a":[0,72,390,358],"s":[-4,68,398,366],"clear":true}
+PASS phone-night note 3 (row) lights its own element; the card leaves it clear — {"a":[0,276,390,77],"s":[-4,272,398,85],"clear":true}
+PASS phone-night the ghost finger swipes a copy of the row (looping)
+PASS phone-night note 4 (plan) lights its own element; the card leaves it clear — {"a":[16,90,358,105],"s":[12,86,366,113],"clear":true}
+PASS phone-night note 5 (ask) lights its own element; the card leaves it clear — {"a":[309,780,78,64],"s":[305,776,86,72],"clear":true}
+PASS phone-night the last note: no spotlight, everything dimmed, one bloom
+PASS phone-night five notes then the closing card, in the design's order — capture,top3,row,plan,ask,done
+PASS phone-night Done ends it
+PASS phone-night done counts as seen, the onboarding flag is spent, the row note taught the swipe — ["hint:swipe","tour"]
+PASS phone-night no horizontal scroll at 390 — 390
+PASS phone-night no text under 12px
+PASS phone-night no page or console errors
+PASS phone-night never again after Done (a reload shows no note)
+PASS skip: on note 2
+PASS skip: ends the tour at once and counts as seen
+PASS skip: never again
+PASS reduced motion: the row note has a still arrow, no ghost loop
+PASS missing anchors: the plan note lights the ⋯ menu instead — {"a":[338,4,48,48],"s":[334,0,56,56],"clear":true}
+PASS missing anchors: skipped, never a dead end (capture, plan, ask, done) — capture,plan,ask,done
+PASS waits: a sheet is up, no note over it — modals 1
+PASS waits: the sheet closes, the first note comes
+PASS restart from Guide: back on Today at note 1, hints forgotten — capture http://localhost:5276/today
+PASS restart from Settings → App: back on Today at note 1, hints forgotten — capture http://localhost:5276/today
+PASS desktop-day note 1 (sidebar) lights its own element — {"a":[0,75,302,692],"s":[-5,70,312,702],"clear":true}
+PASS desktop-day note 2 (command) lights its own element — {"a":[1263,265,127,49],"s":[1258,260,137,59],"clear":true}
+PASS desktop-day note 3 (top3) lights its own element — {"a":[353,529,653,346],"s":[348,524,663,356],"clear":true}
+PASS desktop-day note 4 (calendar) lights its own element — {"a":[513,563,92,53],"s":[508,558,102,63],"clear":true}
+PASS desktop-day the calendar note took the tour to the calendar
+PASS desktop-day note 5: the shortcut card, "? shows every shortcut", Done
+PASS desktop-day sidebar, command bar, Top 3, calendar, shortcuts — sidebar,command,top3,calendar,keys
+PASS desktop-day done: seen, and the calendar note taught the calendar hint
+PASS desktop-day no page or console errors
+PASS desktop-night note 1 (sidebar) lights its own element — {"a":[0,75,302,692],"s":[-5,70,312,702],"clear":true}
+PASS desktop-night note 2 (command) lights its own element — {"a":[1263,265,127,49],"s":[1258,260,137,59],"clear":true}
+PASS desktop-night note 3 (top3) lights its own element — {"a":[353,529,653,346],"s":[348,524,663,356],"clear":true}
+PASS desktop-night note 4 (calendar) lights its own element — {"a":[513,563,92,53],"s":[508,558,102,63],"clear":true}
+PASS desktop-night the calendar note took the tour to the calendar
+PASS desktop-night note 5: the shortcut card, "? shows every shortcut", Done
+PASS desktop-night sidebar, command bar, Top 3, calendar, shortcuts — sidebar,command,top3,calendar,keys
+PASS desktop-night done: seen, and the calendar note taught the calendar hint
+PASS desktop-night no page or console errors
+PASS swipe hint: shows on the first task row once the list settles
+PASS swipe hint: × is a 48px target — [48]
+PASS swipe hint: seen the moment it shows
+PASS swipe hint: × dismisses it
+PASS swipe hint no horizontal scroll at 390 — 390
+PASS swipe hint no text under 12px
+PASS swipe hint no page or console errors
+PASS swipe hint: never again
+PASS calendar hint (day): under a block on the first visit
+PASS calendar hint (day): holding a block dismisses it
+PASS calendar hint (day): never again
+PASS calendar hint (night): under a block on the first visit
+PASS calendar hint (night): holding a block dismisses it
+PASS calendar hint (night): never again
+PASS inbox hint: on the first item when the Inbox has some
+PASS desktop: no swipe hint (a mouse never swipes)
+PASS desktop calendar hint: the drag wording
+PASS every hint seen: none shows anywhere
+PASS guide (day): More → Guide
+PASS guide (day): eleven articles in four sections
+PASS guide (day): every target ≥ 48 — [48,48,74,64,64,64,64,64,64,64,64,64,64,64]
+PASS guide (day) no horizontal scroll at 390 — 390
+PASS guide (day) no text under 12px
+PASS guide (day) no page or console errors
+PASS guide search: "swipe" finds Gestures — ["Gestures","Calendar"]
+PASS guide search: "streak" finds Routines
+PASS guide RTL: the rows mirror (icon on the right)
+PASS guide article (day): Gestures, five steps
+PASS guide article (day): every step has its crop, lazy-loaded — [["lazy","/guide/gestures-1.webp"],["lazy","/guide/gestures-2.webp"]]
+PASS guide article (day): the crops load — 5
+PASS guide article (day) no horizontal scroll at 390 — 390
+PASS guide article (day) no text under 12px
+PASS guide article (day) no page or console errors
+PASS guide (night): More → Guide
+PASS guide (night): eleven articles in four sections
+PASS guide (night): every target ≥ 48 — [48,48,74,64,64,64,64,64,64,64,64,64,64,64]
+PASS guide (night) no horizontal scroll at 390 — 390
+PASS guide (night) no text under 12px
+PASS guide (night) no page or console errors
+PASS guide article (night): Gestures, five steps
+PASS guide article (night): every step has its crop, lazy-loaded — [["lazy","/guide/gestures-1.webp"],["lazy","/guide/gestures-2.webp"]]
+PASS guide article (night): the crops load — 5
+PASS guide article (night) no horizontal scroll at 390 — 390
+PASS guide article (night) no text under 12px
+PASS guide article (night) no page or console errors
+PASS desktop guide (day): from the sidebar foot; eleven cards
+PASS desktop guide (day): the Calendar article with "On this page"
+PASS desktop guide (day): no page or console errors
+PASS desktop guide (night): from the sidebar foot; eleven cards
+PASS desktop guide (night): the Calendar article with "On this page"
+PASS desktop guide (night): no page or console errors
+PASS chat (phone): three starters
+PASS chat (phone): starters are ≥ 48 tall — [52,52,52]
+PASS chat (phone) no horizontal scroll at 390 — 390
+PASS chat (phone) no text under 12px
+PASS chat (phone) no page or console errors
+PASS chat (phone): a tap sends it — [{"messages":[{"role":"user","content":"What’s on today?"}]}]
+PASS ? sheet (day): paper, with the way back to the tour and the Guide
+PASS ? sheet (day): Open the Guide → goes there
+PASS desktop chat + ? (day): no page or console errors
+PASS ? sheet (night): paper, with the way back to the tour and the Guide
+PASS ? sheet (night): Open the Guide → goes there
+PASS desktop chat + ? (night): no page or console errors
+
+123/123 passed
