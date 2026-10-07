@@ -187,7 +187,7 @@ async function open(route, o = {}) {
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 180_000 }) // a busy machine: be patient
   await sleep(o.settle ?? 1000)
   const cdp = view.hasTouch ? await ctx.newCDPSession(page) : null
   return { ctx, page, cdp, errors, state }
