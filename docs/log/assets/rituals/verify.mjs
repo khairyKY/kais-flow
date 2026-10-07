@@ -303,7 +303,7 @@ if (want('6c')) {
   await sleep(200)
   await shot(page, '6c-day')
   const audit = row(page, AUDIT)
-  check('6c seeds pre-selected: stars on, sprout "Seed", the first is "✶ Goal"', (await audit.locator('.kf-star[aria-pressed="true"]').count()) === 1 && /✶ GOAL/i.test(await text(audit)) && /SEED/i.test(await text(audit)) && /SEED/i.test(await text(row(page, TYRE))) && !/GOAL/i.test(await text(row(page, TYRE))), (await text(audit)).replace(/\n/g, ' '))
+  check('6c seeds pre-selected: stars on, sprout "Seed", the first is "✶ Goal"', (await audit.locator('.kf-star[aria-pressed="true"]').count()) === 1 && /✶ GOAL/i.test(await text(audit)) && /SEED/i.test(await text(audit)) && /SEED/i.test(await text(row(page, TYRE))) && !/✶ GOAL/i.test(await text(row(page, TYRE))) && /☆ MAKE GOAL/i.test(await text(row(page, TYRE))), (await text(audit)).replace(/\n/g, ' ')) // plan-replan: every other pick offers "☆ Make goal"
   check('6c unstarred rows: node.js, plants (due today)', (await row(page, NODE).locator('.kf-star[aria-pressed="false"]').count()) === 1 && /DUE TODAY/i.test(await text(row(page, PLANTS))))
   check('6c carried rows are not listed again under Pick your 3', (await page.locator(`[id="rt-${id(REVIEW)}"]`).count()) === 1)
   // 6d: third pick → every pick has a dashed suggested pill; change the third → the time picker.
@@ -349,7 +349,10 @@ if (want('6c')) {
   check('6l the plants pick set to No time; 3 picked · 2 timed', /Water the balcony plants/.test(await text(times.nth(2))) && /NO TIME/i.test(await text(times.nth(2))) && /3 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
   // Start the day writes the picks, the goal, every timed pick (no ✓ needed), the ritual.
   await tap(cdp, page.getByRole('button', { name: 'Start the day' }))
-  await sleep(900)
+  // plan-replan: Start the day also writes the picks' places (top3_rank), so the outbox has more to
+  // flush — wait for its last row (ritual.finished) instead of a fixed 900ms.
+  for (let i = 0; i < 40 && !state.writes.some((w) => w.row.event_type === 'ritual.finished'); i++) await sleep(150)
+  await sleep(300)
   const starred = (state.rows.tasks ?? []).filter((t) => t.top3).map((t) => t.id).sort()
   check('Start the day: the picks become the Top 3', JSON.stringify(starred) === JSON.stringify([id(AUDIT), id(TYRE), id(PLANTS)].sort()), JSON.stringify(starred))
   const blocks = (state.rows.calendar_events ?? []).filter((e) => e.task_id && !e.id.startsWith('e0'))
@@ -357,7 +360,9 @@ if (want('6c')) {
   check('Start the day: the "No time" pick stays unscheduled', !blocks.some((b) => b.task_id === id(PLANTS)), JSON.stringify(blocks.map((b) => b.task_id)))
   check('Start the day: ritual.finished (morning) logged; the sheet is gone', state.writes.some((w) => w.row.event_type === 'ritual.finished' && w.row.payload?.ritual === 'morning') && (await page.locator('.rt').count()) === 0)
   check('Start the day: Today no longer offers Plan', (await page.locator('.tp-ritual').count()) === 0 || !(await text(page.locator('.tp-ritual'))).includes('Plan my day'), await text(page.locator('.tp-ritual')))
-  check('Start the day: the goal is the first pick', (await page.evaluate(() => localStorage.getItem('kf_goal_task_id'))) === id(AUDIT))
+  // plan-replan (0055): the goal is synced on the rows (top3_rank, 1 = goal), no longer this device's localStorage.
+  const ranks = Object.fromEntries((state.rows.tasks ?? []).filter((t) => t.top3).map((t) => [t.id, t.top3_rank]))
+  check('Start the day: the goal is the first pick (ranked 1, the picks in pick order)', ranks[id(AUDIT)] === 1 && ranks[id(TYRE)] === 2 && ranks[id(PLANTS)] === 3, JSON.stringify(ranks))
   await phoneBasics(page, '6c-6d-6l', errors)
   await ctx.close()
 }
