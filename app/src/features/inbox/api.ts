@@ -5,10 +5,11 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { createTask } from '../tasks/api'
+import { placeTask } from '../calendar/api'
 import { dayWord, formatDue, githubUrl } from './inboxDisplay'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
-import type { InboxItem, Task } from '../../lib/types'
+import type { CalendarEvent, InboxItem, Task } from '../../lib/types'
 
 async function fetchInboxItems(): Promise<InboxItem[]> {
   return fetchAll<InboxItem>((from, to) =>
@@ -126,6 +127,29 @@ export function fileToTask(
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })
   if (!opts.silent) toastUndo(`Filed to ${destinationOf(task)}`, () => unfile(prior, task))
   return task
+}
+
+/** The AI's suggestion for an item (the Inbox page's `E`): its cleaned title, domain and project. */
+export function aiFiling(item: InboxItem): { title?: string; domainId: string | null; projectId: string | null } {
+  const parse = item.ai_parse as { cleaned_text?: string; domain_id?: string | null; project_id?: string | null } | null
+  return { title: parse?.cleaned_text ?? undefined, domainId: parse?.domain_id ?? null, projectId: parse?.project_id ?? null }
+}
+
+/** How the calendar rail names an item, and how long it blocks one (its typed `30m`, else 30). */
+export const inboxTitle = (item: InboxItem): string => aiFiling(item).title ?? item.raw_text
+export const inboxMinutes = (item: InboxItem): number => (item.payload as { duration_override?: number | null } | null)?.duration_override || 30
+
+/** The calendar rail (Kai 2026-10-07): an inbox item dropped on the grid, or planned at a time, is
+ * filed as its AI suggestion says and time-blocked there. One toast, one Undo for both. */
+export function fileToCalendar(item: InboxItem, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
+  const prior = { ...item }
+  const task = fileToTask(item, { ...aiFiling(item), dueAt: startsAt, silent: true })
+  const { event, undo } = placeTask(task, startsAt, endsAt, allDay)
+  toastUndo(`Scheduled · ${task.title}`, () => {
+    undo()
+    unfile(prior, task)
+  })
+  return event
 }
 
 export function dismissInboxItem(item: InboxItem, silent = false): void {
