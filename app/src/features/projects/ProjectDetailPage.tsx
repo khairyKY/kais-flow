@@ -233,8 +233,8 @@ export function ProjectDetailPage() {
   }
   const bulkSchedule = (iso: string) => {
     const batch = selectedTasks
-    batch.forEach((t) => rescheduleDue(t, iso))
-    toastUndo(`${plural(batch.length)} scheduled.`, () => batch.forEach((t) => rescheduleDue(t, t.due_at)))
+    const undos = batch.map((t) => rescheduleDue(t, iso))
+    toastUndo(`${plural(batch.length)} scheduled.`, () => undos.forEach((undo) => undo()))
     clearSelection()
   }
   const bulkMove = (projectId: string | null, domainId: string | null) => {

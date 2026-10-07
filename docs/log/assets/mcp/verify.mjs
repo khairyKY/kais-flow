@@ -45,10 +45,12 @@ async function open(route, o = {}) {
   const view = o.view ?? phone
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
-  await ctx.addInitScript(([t, sess]) => {
+  await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', sess)
-  }, [o.theme ?? 'day', JSON.stringify(session)])
+    // What's new (v1.0.22) toasts "Updated to vX" once per version; this page's toasts are about keys.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
+  }, [o.theme ?? 'day', JSON.stringify(session), UID])
   const state = { rows: { app_settings: [SETTINGS], mcp_keys: [], ...(o.rows ?? {}) }, writes: [], urls: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()

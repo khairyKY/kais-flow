@@ -234,7 +234,7 @@ export function TaskRow({
         overlay={
           <>
             {grammar.menuNode}
-            {schedulePos && <ScheduleMenu position={schedulePos} title={task.title} onClose={() => setSchedulePos(null)} onSchedule={(iso) => rescheduleDue(task, iso)} />}
+            {schedulePos && <ScheduleMenu position={schedulePos} title={task.title} onClose={() => setSchedulePos(null)} onSchedule={(iso, _min, timed) => rescheduleDue(task, iso, timed)} />}
           </>
         }
       >

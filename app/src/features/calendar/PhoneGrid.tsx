@@ -23,6 +23,8 @@ export interface BlockLook {
   ink: string
   /** Task blocks draw the 18px checkbox, always (never on hover only). */
   check?: { done: boolean; toggle: () => void }
+  /** Replaces the time line — an overdue block's "Overdue · Replan" (Kai 2026-10-07). */
+  note?: string
 }
 
 export interface PhoneGridHandle {
@@ -63,6 +65,12 @@ interface Props {
 }
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
+// Kai 2026-10-07 (a 10-minute block was a clipped strip, its checkbox "[ ]", the handles over its
+// text): every block draws at least one line of title (24px); under 25 minutes it's one compact line,
+// title + time; from 56px the title wraps — as many 18px lines as fit over the time line, up to 3.
+const MIN_BLOCK_PX = 24
+const COMPACT_PX = minToPx(25)
+const titleLines = (h: number) => Math.max(1, Math.min(3, Math.floor((h - 12 - 18) / 18)))
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
 export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onTapMore, onCommit, overlay }, ref) {
@@ -116,7 +124,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       if (!r || i < 0) return null
       const w = r.width / days.length
       const pxPerMin = r.height / 1440
-      return { left: r.left + i * w + (multi ? 2 : 4), top: r.top + start * pxPerMin, width: w - (multi ? 4 : 20), height: (end - start) * pxPerMin }
+      return { left: r.left + i * w + (multi ? 2 : 4), top: r.top + start * pxPerMin, width: w - (multi ? 4 : 20), height: Math.max((MIN_BLOCK_PX * pxPerMin) / minToPx(1), (end - start) * pxPerMin) }
     },
   }))
 
@@ -274,17 +282,17 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string }) {
     const lifted = lift?.id === ev.id ? lift : null
     const s = lifted ? lifted.draft : { start, end }
-    const h = minToPx(s.end - s.start)
+    const h = Math.max(MIN_BLOCK_PX, minToPx(s.end - s.start))
     const lk = look(ev)
     const evStart = Date.parse(ev.starts_at)
     const evEnd = Date.parse(ev.ends_at)
     const t = now.getTime()
     const live = !lifted && evStart <= t && t < evEnd
     const past = !lifted && evEnd <= t
-    // Two lines (title, then time) from 56px: always in the narrow columns, where the time can't sit
-    // beside the title; in the day view for blocks without a checkbox (a task keeps its one row, 7f).
-    const stacked = h >= 56 && (multi || !lk.check)
-    const time = live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : rangeText(s.start, s.end)
+    // Title, then time on its own line, from 56px — task blocks too since Kai 2026-10-07 ("Crypto —
+    // heavy sessio…" on one line of a 1h30 block, the rest empty); under that, one row.
+    const stacked = h >= 56
+    const time = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : rangeText(s.start, s.end))
     // A move into another column (3 days / week) slides the same node over, so the finger never loses it.
     const colShift = lifted ? days.indexOf(lifted.draft.day) - days.indexOf(lifted.orig.day) : 0
     const style = {
@@ -299,9 +307,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     return (
       <div
         key={ev.id}
-        className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}`}
+        className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}`}
         data-id={ev.id}
-        style={style}
+        style={{ ...style, '--pc-lines': titleLines(h) } as CSSProperties}
         onClick={() => onTapBlock(ev)}
       >
         <div className={`pc-block-body${stacked ? ' is-stacked' : ''}`} style={{ height: stacked ? undefined : Math.min(32, h) }}>
