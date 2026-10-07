@@ -479,6 +479,12 @@ function describeResurfaced(e: ActivityLogEntry, names: ActivityNames): Activity
     }
     case 'resurfaced.dismissed':
       return line(named(name, (q) => `Let ${q} go`, 'Let a resurfaced pick go'), 'resurfaced')
+    case 'resurfaced.planned':
+      return line(named(name, (q) => `Planned ${q}`, 'Planned a resurfaced task'), 'resurfaced')
+    case 'resurfaced.done':
+      return line(named(name, (q) => `Finished ${q}`, 'Finished a resurfaced task'), 'resurfaced')
+    case 'resurfaced.kept':
+      return line(named(name, (q) => `Kept ${q}`, 'Kept a resurfaced note'), 'resurfaced')
     default:
       return line(named(name, (q) => `Looked at ${q} again`, 'Looked at a resurfaced pick'), 'resurfaced')
   }

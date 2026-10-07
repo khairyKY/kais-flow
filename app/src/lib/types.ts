@@ -246,7 +246,7 @@ export interface Citation {
   title: string
 }
 
-export type ResurfaceAction = 'pending' | 'converted' | 'review_later' | 'dismissed'
+export type ResurfaceAction = 'pending' | 'converted' | 'review_later' | 'dismissed' | 'done'
 
 export interface ResurfacedLogRow {
   id: string
@@ -254,6 +254,8 @@ export interface ResurfacedLogRow {
   entity_id: string
   shown_on: string
   action: ResurfaceAction
+  /** Migration 0059 — "Not now" on the server. Absent from rows fetched before it is pushed. */
+  snoozed_until?: string | null
   created_at: string
 }
 
