@@ -1,0 +1,1606 @@
+{
+  "passed": 320,
+  "failed": 0,
+  "results": [
+    {
+      "name": "phone-day task meta line",
+      "ok": true,
+      "detail": "Task · Shaheen website · added 3 weeks ago, untouched"
+    },
+    {
+      "name": "phone-day task buttons: Plan… · Done · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Plan…\",\"Done\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-day ? explains: saved a while ago, keep / plan / let go",
+      "ok": true,
+      "detail": "Something you saved a while ago. Keep it, plan it, or let it go."
+    },
+    {
+      "name": "phone-day task no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day task no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day tap the quote → the task sheet over Today",
+      "ok": true,
+      "detail": "/today?task=10000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-day pre-0059 done → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-day pre-0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "phone-day pre-0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 done Undo → task open again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-day pre-0059 letgo → task in Trash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo → toast \"Moved to Trash\" with Undo",
+      "ok": true,
+      "detail": "[\"Moved to Trash\"]"
+    },
+    {
+      "name": "phone-day pre-0059 letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo Undo → task restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-day pre-0059 notnow → no snoozed_until sent (column not there yet), snooze on this device",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-day pre-0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow Undo → device snooze cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day pre-0059 no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-day 0059 notnow → snoozed_until ≈ now + 5 days on the row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-day 0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow Undo → snoozed_until null again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 done → pick marked done",
+      "ok": true,
+      "detail": "\"done\""
+    },
+    {
+      "name": "phone-day 0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "phone-day 0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day 0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Plan… opens the shared Plan list (Today · Next free slot · Tomorrow …)",
+      "ok": true,
+      "detail": "[\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Pick date & time…\",\"Someday\"]"
+    },
+    {
+      "name": "phone-day Plan → Tomorrow: task due tomorrow",
+      "ok": true,
+      "detail": "2026-10-08T06:00:00.000Z"
+    },
+    {
+      "name": "phone-day Plan → pick marked converted, logged resurfaced.planned",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Plan → one toast \"Moved to tomorrow\"",
+      "ok": true,
+      "detail": "[\"Moved to tomorrow\"]"
+    },
+    {
+      "name": "phone-day Plan → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Plan Undo → no date again, pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Plan no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day twice put off: asks \"keep it or let it go?\"",
+      "ok": true,
+      "detail": "You've put this off twice — keep it or let it go?"
+    },
+    {
+      "name": "phone-day twice put off: Keep · Plan… and Let it go only",
+      "ok": true,
+      "detail": "[\"Keep · Plan…\",\"Let it go\"]"
+    },
+    {
+      "name": "phone-day twice no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day twice no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note meta line",
+      "ok": true,
+      "detail": "Inbox note · captured 5 weeks ago"
+    },
+    {
+      "name": "phone-day note buttons: Make it a task · Let it go · Not now",
+      "ok": true,
+      "detail": "[\"Make it a task\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-day note no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-day note convert → a task made, the note filed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert → logged resurfaced.converted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert → toast \"Made it a task\" with Undo",
+      "ok": true,
+      "detail": "[\"Made it a task\"]"
+    },
+    {
+      "name": "phone-day note convert Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note convert Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-day note letgo → note dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "phone-day note letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day tap the note → the Inbox, focused on it",
+      "ok": true,
+      "detail": "/inbox?focus=i0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day nothing resurfaced → no \"From a while ago\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night task meta line",
+      "ok": true,
+      "detail": "Task · Shaheen website · added 3 weeks ago, untouched"
+    },
+    {
+      "name": "phone-night task buttons: Plan… · Done · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Plan…\",\"Done\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-night ? explains: saved a while ago, keep / plan / let go",
+      "ok": true,
+      "detail": "Something you saved a while ago. Keep it, plan it, or let it go."
+    },
+    {
+      "name": "phone-night task no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night task no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night tap the quote → the task sheet over Today",
+      "ok": true,
+      "detail": "/today?task=10000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-night pre-0059 done → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-night pre-0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "phone-night pre-0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 done Undo → task open again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-night pre-0059 letgo → task in Trash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo → toast \"Moved to Trash\" with Undo",
+      "ok": true,
+      "detail": "[\"Moved to Trash\"]"
+    },
+    {
+      "name": "phone-night pre-0059 letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo Undo → task restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-night pre-0059 notnow → no snoozed_until sent (column not there yet), snooze on this device",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-night pre-0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow Undo → device snooze cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night pre-0059 no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-night 0059 notnow → snoozed_until ≈ now + 5 days on the row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-night 0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow Undo → snoozed_until null again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 done → pick marked done",
+      "ok": true,
+      "detail": "\"done\""
+    },
+    {
+      "name": "phone-night 0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "phone-night 0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night 0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Plan… opens the shared Plan list (Today · Next free slot · Tomorrow …)",
+      "ok": true,
+      "detail": "[\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Pick date & time…\",\"Someday\"]"
+    },
+    {
+      "name": "phone-night Plan → Tomorrow: task due tomorrow",
+      "ok": true,
+      "detail": "2026-10-08T06:00:00.000Z"
+    },
+    {
+      "name": "phone-night Plan → pick marked converted, logged resurfaced.planned",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Plan → one toast \"Moved to tomorrow\"",
+      "ok": true,
+      "detail": "[\"Moved to tomorrow\"]"
+    },
+    {
+      "name": "phone-night Plan → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Plan Undo → no date again, pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Plan no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night twice put off: asks \"keep it or let it go?\"",
+      "ok": true,
+      "detail": "You've put this off twice — keep it or let it go?"
+    },
+    {
+      "name": "phone-night twice put off: Keep · Plan… and Let it go only",
+      "ok": true,
+      "detail": "[\"Keep · Plan…\",\"Let it go\"]"
+    },
+    {
+      "name": "phone-night twice no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night twice no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note meta line",
+      "ok": true,
+      "detail": "Inbox note · captured 5 weeks ago"
+    },
+    {
+      "name": "phone-night note buttons: Make it a task · Let it go · Not now",
+      "ok": true,
+      "detail": "[\"Make it a task\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-night note no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-night note convert → a task made, the note filed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert → logged resurfaced.converted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert → toast \"Made it a task\" with Undo",
+      "ok": true,
+      "detail": "[\"Made it a task\"]"
+    },
+    {
+      "name": "phone-night note convert Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note convert Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-night note letgo → note dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "phone-night note letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night tap the note → the Inbox, focused on it",
+      "ok": true,
+      "detail": "/inbox?focus=i0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night nothing resurfaced → no \"From a while ago\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day task meta line",
+      "ok": true,
+      "detail": "Task · Shaheen website · added 3 weeks ago, untouched"
+    },
+    {
+      "name": "desk-day task buttons: Plan… · Done · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Plan…\",\"Done\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-day ? explains: saved a while ago, keep / plan / let go",
+      "ok": true,
+      "detail": "Something you saved a while ago. Keep it, plan it, or let it go."
+    },
+    {
+      "name": "desk-day task no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day task no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day click the quote → the task editor",
+      "ok": true,
+      "detail": "/tasks/10000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-day pre-0059 done → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-day pre-0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "desk-day pre-0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 done Undo → task open again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-day pre-0059 letgo → task in Trash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo → toast \"Moved to Trash\" with Undo",
+      "ok": true,
+      "detail": "[\"Moved to Trash\"]"
+    },
+    {
+      "name": "desk-day pre-0059 letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo Undo → task restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-day pre-0059 notnow → no snoozed_until sent (column not there yet), snooze on this device",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-day pre-0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow Undo → device snooze cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day pre-0059 no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-day 0059 notnow → snoozed_until ≈ now + 5 days on the row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-day 0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow Undo → snoozed_until null again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 done → pick marked done",
+      "ok": true,
+      "detail": "\"done\""
+    },
+    {
+      "name": "desk-day 0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "desk-day 0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day 0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Plan… opens the shared Plan list (Today · Next free slot · Tomorrow …)",
+      "ok": true,
+      "detail": "[\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Pick date & time…\",\"Someday\"]"
+    },
+    {
+      "name": "desk-day Plan → Tomorrow: task due tomorrow",
+      "ok": true,
+      "detail": "2026-10-08T06:00:00.000Z"
+    },
+    {
+      "name": "desk-day Plan → pick marked converted, logged resurfaced.planned",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Plan → one toast \"Moved to tomorrow\"",
+      "ok": true,
+      "detail": "[\"Moved to tomorrow\"]"
+    },
+    {
+      "name": "desk-day Plan → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Plan Undo → no date again, pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Plan no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day twice put off: asks \"keep it or let it go?\"",
+      "ok": true,
+      "detail": "You've put this off twice — keep it or let it go?"
+    },
+    {
+      "name": "desk-day twice put off: Keep · Plan… and Let it go only",
+      "ok": true,
+      "detail": "[\"Keep · Plan…\",\"Let it go\"]"
+    },
+    {
+      "name": "desk-day twice no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day twice no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note meta line",
+      "ok": true,
+      "detail": "Inbox note · captured 5 weeks ago"
+    },
+    {
+      "name": "desk-day note buttons: Make it a task · Let it go · Not now",
+      "ok": true,
+      "detail": "[\"Make it a task\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-day note no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-day note convert → a task made, the note filed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert → logged resurfaced.converted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert → toast \"Made it a task\" with Undo",
+      "ok": true,
+      "detail": "[\"Made it a task\"]"
+    },
+    {
+      "name": "desk-day note convert Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note convert Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-day note letgo → note dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "desk-day note letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day tap the note → the Inbox, focused on it",
+      "ok": true,
+      "detail": "/inbox?focus=i0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day nothing resurfaced → no \"From a while ago\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night task meta line",
+      "ok": true,
+      "detail": "Task · Shaheen website · added 3 weeks ago, untouched"
+    },
+    {
+      "name": "desk-night task buttons: Plan… · Done · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Plan…\",\"Done\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-night ? explains: saved a while ago, keep / plan / let go",
+      "ok": true,
+      "detail": "Something you saved a while ago. Keep it, plan it, or let it go."
+    },
+    {
+      "name": "desk-night task no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night task no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night click the quote → the task editor",
+      "ok": true,
+      "detail": "/tasks/10000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-night pre-0059 done → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-night pre-0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "desk-night pre-0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 done Undo → task open again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-night pre-0059 letgo → task in Trash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo → toast \"Moved to Trash\" with Undo",
+      "ok": true,
+      "detail": "[\"Moved to Trash\"]"
+    },
+    {
+      "name": "desk-night pre-0059 letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo Undo → task restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-night pre-0059 notnow → no snoozed_until sent (column not there yet), snooze on this device",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-night pre-0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow Undo → device snooze cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night pre-0059 no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-night 0059 notnow → snoozed_until ≈ now + 5 days on the row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-night 0059 notnow Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow Undo → snoozed_until null again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 notnow Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 done → pick marked done",
+      "ok": true,
+      "detail": "\"done\""
+    },
+    {
+      "name": "desk-night 0059 done → task completed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 done → logged resurfaced.done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 done → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 done → toast \"Done\" with Undo",
+      "ok": true,
+      "detail": "[\"Done\"]"
+    },
+    {
+      "name": "desk-night 0059 done Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night 0059 done Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Plan… opens the shared Plan list (Today · Next free slot · Tomorrow …)",
+      "ok": true,
+      "detail": "[\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Pick date & time…\",\"Someday\"]"
+    },
+    {
+      "name": "desk-night Plan → Tomorrow: task due tomorrow",
+      "ok": true,
+      "detail": "2026-10-08T06:00:00.000Z"
+    },
+    {
+      "name": "desk-night Plan → pick marked converted, logged resurfaced.planned",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Plan → one toast \"Moved to tomorrow\"",
+      "ok": true,
+      "detail": "[\"Moved to tomorrow\"]"
+    },
+    {
+      "name": "desk-night Plan → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Plan Undo → no date again, pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Plan no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night twice put off: asks \"keep it or let it go?\"",
+      "ok": true,
+      "detail": "You've put this off twice — keep it or let it go?"
+    },
+    {
+      "name": "desk-night twice put off: Keep · Plan… and Let it go only",
+      "ok": true,
+      "detail": "[\"Keep · Plan…\",\"Let it go\"]"
+    },
+    {
+      "name": "desk-night twice no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night twice no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note meta line",
+      "ok": true,
+      "detail": "Inbox note · captured 5 weeks ago"
+    },
+    {
+      "name": "desk-night note buttons: Make it a task · Let it go · Not now",
+      "ok": true,
+      "detail": "[\"Make it a task\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-night note no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-night note convert → a task made, the note filed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert → logged resurfaced.converted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert → toast \"Made it a task\" with Undo",
+      "ok": true,
+      "detail": "[\"Made it a task\"]"
+    },
+    {
+      "name": "desk-night note convert Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note convert Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-night note letgo → note dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo → card gone, section hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "desk-night note letgo Undo → pick pending again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo Undo → note waiting again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note letgo Undo → card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night tap the note → the Inbox, focused on it",
+      "ok": true,
+      "detail": "/inbox?focus=i0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night nothing resurfaced → no \"From a while ago\"",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
