@@ -134,7 +134,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
         const r = e.currentTarget.getBoundingClientRect()
         onMenu({ x: r.left, y: r.bottom })
       }}
-      style={{ flex: 'none', width: isMobile ? 48 : 28, height: isMobile ? 48 : 28, marginRight: isMobile ? -14 : 0, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+      style={{ flex: 'none', width: isMobile ? 48 : 28, height: isMobile ? 48 : 28, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
     >
       <Icon name="dots" size={20} />
     </button>
