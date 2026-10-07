@@ -7,6 +7,7 @@ import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { BulkBar } from '../../components/BulkBar'
 import { BackLink } from '../../components/kit'
+import { useSelectAllKey } from '../../components/useListKeys'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { dragLift, useMotionEnabled } from '../../lib/motion'
@@ -266,6 +267,11 @@ export function PlanningBoard() {
     useToastStore.getState().push({ message: `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} moved.` })
     clearSelection()
   }
+  // Ctrl/Cmd+A: every card on the board you can see (a collapsed column's first few).
+  useSelectAllKey(
+    () => setSelected(new Set(columns.flatMap((c) => (expandedCols.has(c.key) ? c.tasks : c.tasks.slice(0, COLLAPSED_CAP))).map((t) => t.id))),
+    !bulkSchedulePos && !bulkProjectPos,
+  )
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() {
     deleteTasksWithUndo(selectedTasks)

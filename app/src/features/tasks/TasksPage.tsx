@@ -836,9 +836,9 @@ export function TasksPage() {
                       task={t}
                       highlighted={t.id === kbFocusedId || t.id === focusId}
                       selected={selected.has(t.id)}
-                      onToggleSelect={isSomeday ? undefined : () => toggleSelected(t.id)}
+                      onToggleSelect={() => toggleSelected(t.id)}
                       selecting={selected.size > 0}
-                      bulk={isSomeday ? undefined : bulkActions}
+                      bulk={bulkActions}
                       goalTaskId={goalTaskId}
                       justCompletedId={justCompletedId}
                       onComplete={handleRowComplete}

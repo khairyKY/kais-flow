@@ -49,6 +49,7 @@ import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { BulkBar } from '../../components/BulkBar'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { ProjectPicker } from '../../components/ProjectPicker'
+import { useSelectAllKey } from '../../components/useListKeys'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
@@ -243,6 +244,9 @@ export function ProjectDetailPage() {
     toastUndo(`${plural(batch.length)} moved.`, () => batch.forEach((t) => setProject(t, t.project_id, t.domain_id)))
     clearSelection()
   }
+  // Kai 2026-10-07: Ctrl/Cmd+A selects this page's open tasks too (it only worked on Tasks/Today/Inbox).
+  // `id` is a project or an area, never both, so one filter serves both pages.
+  useSelectAllKey(() => setSelected(new Set(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)).map((t) => t.id))), !bulkSchedulePos && !bulkProjectPos)
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
   const bulkDelete = () => {
     deleteTasksWithUndo(selectedTasks)
