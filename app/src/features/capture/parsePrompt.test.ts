@@ -36,9 +36,16 @@ describe('parse-capture prompt (Kai 2026-10-07: every property extracted, no sym
     expect(p).toContain('Leave out the words you turn into the fields below')
   })
 
-  it('asks for exactly the keys the app parses, description included', () => {
+  it('asks for exactly the keys the app parses, description and has_time included', () => {
     expect(buildSystemPrompt(ctx)).toContain(
-      'exactly these keys: kind, cleaned_text, title, description, domain_id, project_id, due_at, duration_min, priority, reminder_offset_min, confidence.',
+      'exactly these keys: kind, cleaned_text, title, description, domain_id, project_id, due_at, has_time, duration_min, priority, reminder_offset_min, confidence.',
     )
+  })
+
+  it('says whether a time was given — only a timed task becomes a calendar block, so no invented times', () => {
+    const p = buildSystemPrompt(ctx)
+    expect(p).toContain('has_time: true when a clock time was said')
+    expect(p).toContain('false for a date alone ("tomorrow"')
+    expect(p).toContain('never invent a time')
   })
 })

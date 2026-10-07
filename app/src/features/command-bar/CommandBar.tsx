@@ -5,7 +5,7 @@ import { useProjects } from '../projects/api'
 import { createTask } from '../tasks/api'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { captureText } from '../inbox/api'
-import { captureWithAI, enrichTypedInboxItem, enrichTypedTask, transcribeAudio } from '../capture/api'
+import { blockIfTimed, captureWithAI, enrichTypedInboxItem, enrichTypedTask, transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
@@ -165,6 +165,8 @@ export function CommandBar() {
         priority: parsed.priority,
         labels: parsed.labels,
       })
+      // A typed time ("crypto session 4am") puts it on the calendar as a block; a date alone doesn't.
+      blockIfTimed(task, parsed.dueTimed)
       void enrichTypedTask(task, trimmed)
     } else {
       void enrichTypedInboxItem(captureText(trimmed), trimmed)
@@ -377,7 +379,7 @@ export function CommandBar() {
                 {field(close, { width: '100%', minHeight: 'var(--touch-min)' })}
                 {text.trim() && (
                   <div className="kf-capture-chips">
-                    {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt)}</Chip>}
+                    {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}</Chip>}
                     {matchChip && <Chip tone="project">{matchChip}</Chip>}
                     {parsed.durationMin != null && <Chip tone="duration">{formatDuration(parsed.durationMin)}</Chip>}
                     {parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
@@ -484,7 +486,7 @@ export function CommandBar() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
                 {parsed.dueAt && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
-                    {formatDueChip(parsed.dueAt)}
+                    {formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}
                   </span>
                 )}
                 {parsed.durationMin != null && (
