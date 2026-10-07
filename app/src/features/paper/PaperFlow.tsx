@@ -24,7 +24,8 @@ const TYPE_HINT: Record<LineType, string> = { task: 'to do', event: 'on the cale
 
 const store = () => usePaperStore.getState()
 
-/** Full screen on a phone, a centred panel on desktop. Esc closes. */
+/** Full screen on a phone, a centred panel on desktop. Esc closes. Each screen's bottom bar (.pp-foot)
+ * carries data-sheet-footer, so a phone toast docks just above it — never over the ✕ / Rotate header. */
 function Frame({ label, onClose, wide, children }: { label: string; onClose: () => void; wide?: boolean; children: ReactNode }) {
   useEscapeStack(true, onClose)
   return createPortal(
@@ -121,7 +122,7 @@ function QuickLook() {
           </div>
         </div>
       )}
-      <div className="pp-foot is-row">
+      <div data-sheet-footer className="pp-foot is-row">
         {several ? (
           <Button variant="secondary" onClick={retake}>
             Retake
@@ -172,7 +173,7 @@ function Reading({ stage }: { stage: Extract<Stage, { kind: 'reading' }> }) {
           </div>
         )}
       </div>
-      <div className="pp-foot">
+      <div data-sheet-footer className="pp-foot">
         <div className="pp-foot-note">You can leave — we’ll tell you when it’s ready.</div>
         <Button variant="secondary" onClick={leave}>
           Leave it reading
@@ -452,7 +453,7 @@ function DesktopResults({ id }: { id: string }) {
               />
             ))}
           </div>
-          <div className="pp-foot is-row is-end">
+          <div data-sheet-footer className="pp-foot is-row is-end">
             <ResultsFoot count={r.lines.length} apply={r.apply} />
           </div>
         </div>
@@ -478,7 +479,7 @@ function PhotoView({ stage }: { stage: Extract<Stage, { kind: 'photo' }> }) {
         )}
       </div>
       {capture && capture.pages > 1 && (
-        <div className="pp-foot is-row">
+        <div data-sheet-footer className="pp-foot is-row">
           {Array.from({ length: capture.pages }, (_, i) => (
             <button key={i} type="button" className="pp-chip" aria-current={i === stage.page || undefined} onClick={() => store().show({ ...stage, page: i })}>
               Page {i + 1}
@@ -589,7 +590,7 @@ function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | '
           </div>
         )}
       </div>
-      <div className="pp-foot">{actions}</div>
+      <div data-sheet-footer className="pp-foot">{actions}</div>
     </Frame>
   )
 }

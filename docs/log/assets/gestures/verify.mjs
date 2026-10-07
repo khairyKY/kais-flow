@@ -17,7 +17,8 @@ const check = (name, ok, detail = '') => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 
-const SPEC = ['Tomorrow', 'Pick date…', 'Move to project…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Select', 'Delete']
+// v1.0.23 (plan-replan + tasks-noise): one Plan/Replan entry replaces Tomorrow + Pick date, "Move to…", Make goal, Start focus.
+const SPEC = ['Replan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
 
 async function open(view, theme) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
@@ -110,7 +111,7 @@ for (const theme of ['day', 'night']) {
   check(`${id} pressed row: no scale(0.97) shrink (a bare .kf-lift does shrink)`, pressed === 'none' && /^matrix\(0\.97/.test(control), `row ${pressed}, control ${control}`)
   check(`${id} swipe right under 40% rests open at 196`, (await fgX(page, 3)) === 196, String(await fgX(page, 3)))
   const acts = row(page, 3).locator('.kf-swipe-act')
-  check(`${id} partial reveal = Tomorrow · Pick date · Project`, JSON.stringify(await acts.allInnerTexts()) === JSON.stringify(['Tomorrow', 'Pick date', 'Project']), JSON.stringify(await acts.allInnerTexts()))
+  check(`${id} partial reveal = Tomorrow · Plan · Move`, JSON.stringify(await acts.allInnerTexts()) === JSON.stringify(['Tomorrow', 'Plan', 'Move']), JSON.stringify(await acts.allInnerTexts()))
   const fs12 = await acts.first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))
   check(`${id} action labels ≥ 12px`, fs12 >= 12, `${fs12}px`)
   const bg = await row(page, 3).locator('.kf-swipe-bg').evaluate((e) => getComputedStyle(e).backgroundColor)
@@ -143,7 +144,8 @@ for (const theme of ['day', 'night']) {
     },
   })
   check(`${id} past 40%: "Tomorrow · <day> 09:00"`, /^Tomorrow\s+[A-Z]{3} 09:00$/i.test(commitText.replace(/\n/g, ' ').trim()), JSON.stringify(commitText))
-  check(`${id} haptic tick at the line`, (await page.evaluate(() => window.__buzz)) > buzz0)
+  // Haptics are native-only since lib/haptics (the web has no tick), so nothing to count here.
+  void buzz0
   await sleep(300)
   check(`${id} commit toasts "Moved to tomorrow" + Undo`, (await toasts(page)).includes('Moved to tomorrow') && (await page.getByRole('button', { name: 'Undo' }).count()) >= 1, JSON.stringify(await toasts(page)))
   check(`${id} one toast host (no double toast)`, (await page.locator('.kf-toast-msg', { hasText: 'Moved to tomorrow' }).count()) === 1)
@@ -188,7 +190,7 @@ for (const theme of ['day', 'night']) {
   const labels = (await asRows.allInnerTexts()).map((t) => t.split('\n')[0].trim())
   check(`${id} ⋯ sheet items in MK order`, JSON.stringify(labels) === JSON.stringify(SPEC), JSON.stringify(labels))
   const hTomorrow = await asRows.first().innerText()
-  check(`${id} Tomorrow hint "<day> 09:00"`, /09:00/.test(hTomorrow), hTomorrow.replace(/\n/g, ' '))
+  check(`${id} first entry plans (Replan… on an overdue row)`, /^(Re)?[Pp]lan…/.test(hTomorrow), hTomorrow.replace(/\n/g, ' '))
   const rowH = await asRows.first().evaluate((e) => e.getBoundingClientRect().height)
   check(`${id} sheet rows 52 tall`, Math.abs(rowH - 52) < 1, String(rowH))
   const del = asRows.last()
@@ -209,9 +211,9 @@ for (const theme of ['day', 'night']) {
   await hold(page, cdp, 1)
   const top = page.locator('.kf-selbar-top')
   check(`${id} hold → "1 selected" app bar`, (await top.count()) === 1 && /1 selected/.test(await top.innerText()))
-  check(`${id} hold gives a haptic tick`, (await page.evaluate(() => window.__buzz)) > buzz1)
+  void buzz1
   const bottom = page.locator('.kf-selbar-bottom')
-  check(`${id} bulk bar: Done · Tomorrow · Pick date · Project · Delete`, JSON.stringify((await bottom.locator('button').allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['Done', 'Tomorrow', 'Pick date', 'Project', 'Delete']))
+  check(`${id} bulk bar: Done · Tomorrow · Plan · Move · Delete`, JSON.stringify((await bottom.locator('button').allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Delete']), JSON.stringify((await bottom.locator('button').allInnerTexts()).map((t) => t.trim())))
   const covers = await page.evaluate(() => {
     const tab = document.querySelector('.app-tabbar')?.getBoundingClientRect()
     if (!tab) return 'no tab bar'
@@ -271,9 +273,12 @@ for (const theme of ['day', 'night']) {
   await sleep(250)
   const items2 = (await page.locator('[role="menuitem"]').allInnerTexts()).map((t) => t.split('\n')[0].trim())
   check(`${id} ⋯ opens the same menu`, JSON.stringify(items2) === JSON.stringify(SPEC), JSON.stringify(items2))
-  await page.locator('[role="menuitem"]', { hasText: 'Tomorrow' }).click()
+  // Tomorrow lives in the Plan / Replan submenu since v1.0.23.
+  await page.locator('[role="menuitem"]', { hasText: /^(Re)?[Pp]lan…/ }).first().click()
   await sleep(300)
-  check(`${id} menu Tomorrow → toast`, (await toasts(page)).includes('Moved to tomorrow'))
+  await page.locator('.kf-as-row', { hasText: 'Tomorrow, first thing' }).first().click() // the Plan sheet / popover's rows
+  await sleep(300)
+  check(`${id} menu Plan → Tomorrow → toast`, (await toasts(page)).some((t) => /tomorrow/i.test(t)), JSON.stringify(await toasts(page)))
   // A mouse drag never swipes (J-1)
   const r3 = await row(page, 3).boundingBox()
   await page.mouse.move(r3.x + 100, r3.y + 20)
@@ -287,7 +292,7 @@ for (const theme of ['day', 'night']) {
   await row(page, 4).click({ modifiers: ['Control'], position: { x: 200, y: 20 } })
   const pill = page.locator('.kf-bulkbar')
   check(`${id} ⌃-click selects → pill bar`, /2 selected/i.test(await pill.innerText()))
-  check(`${id} pill: Done · Tomorrow · Pick date · Move · Delete`, JSON.stringify((await pill.locator('.kf-bulk-act').allInnerTexts()).map((t) => t.replace('▾', '').trim()).filter(Boolean)) === JSON.stringify(['Done', 'Tomorrow', 'Pick date', 'Move', 'Delete']))
+  check(`${id} pill: Done · Tomorrow · Plan · Move · Delete`, JSON.stringify((await pill.locator('.kf-bulk-act').allInnerTexts()).map((t) => t.replace('▾', '').trim()).filter(Boolean)) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Delete']), JSON.stringify((await pill.locator('.kf-bulk-act').allInnerTexts()).map((t) => t.replace('▾', '').trim()).filter(Boolean)))
   await page.screenshot({ path: path.join(OUT, `${id}-bulk-pill.png`) })
   await page.keyboard.press('Escape')
   await sleep(200)

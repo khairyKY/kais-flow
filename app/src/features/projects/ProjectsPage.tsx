@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, useTimeEntries, restoreProject, isThisMonth, renameProject, deleteProjectWithUndo } from './api'
-import { useAreas, renameArea, deleteAreaWithUndo } from '../areas/api'
+import { useProjects, useTimeEntries, restoreProject, isThisMonth, renameProject, deleteProjectWithUndo, reparentProject } from './api'
+import { useAreas, renameArea, deleteAreaWithUndo, reparentArea } from '../areas/api'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
@@ -235,6 +235,8 @@ export function ProjectsPage() {
     return [
       { label: 'Open', icon: 'chevright', run: () => navigate(`/projects/${m.id}`) },
       { label: 'Rename', icon: 'label', run: () => setRenaming(m.id) },
+      // Kai 2026-10-07: "you can't assign an area to a domain" — set or change it here (its tasks follow).
+      { label: 'Domain…', icon: 'projects', run: () => setDomainMenu(m) },
       // Kai 2026-10-06: project ↔ retainer, project / retainer ↔ area (./ChangeType.tsx).
       ...(project || area ? [{ label: 'Change type…', icon: 'rotate' as IconName, run: () => setTypeMenu({ thing: project ? { table: 'projects' as const, row: project } : { table: 'areas' as const, row: area! }, at: { x: m.x, y: m.y } }) }] : []),
       // The press ceremony archives it when it closes (punch 51), with its own Undo.
@@ -244,10 +246,33 @@ export function ProjectsPage() {
   }
   const [typeMenu, setTypeMenu] = useState<{ thing: Convertible; at: { x: number; y: number } } | null>(null)
   const changeType = useChangeType()
+  // The row menu's Domain…: every domain, then No domain; the current one is checked.
+  const [domainMenu, setDomainMenu] = useState<NonNullable<typeof menu> | null>(null)
+  const domainChoices = (m: NonNullable<typeof menu>) => {
+    const project = m.kind === 'project' ? allProjects.find((p) => p.id === m.id) : undefined
+    const area = m.kind === 'area' ? areas.find((a) => a.id === m.id) : undefined
+    const current = (project ?? area)?.domain_id ?? null
+    const set = (id: string | null, name: string) => (project ? reparentProject(project, id, name) : area && reparentArea(area, id, name))
+    return [...domains.map((d) => ({ id: d.id as string | null, name: d.name })), { id: null, name: 'No domain' }].map((d) => ({ ...d, current: d.id === current, run: () => set(d.id, d.name) }))
+  }
   const typeLayer = (
     <>
       {typeMenu && <TypeMenu thing={typeMenu.thing} at={typeMenu.at} onPick={(to) => changeType.ask(typeMenu.thing, to)} onClose={() => setTypeMenu(null)} />}
       {changeType.node}
+      {domainMenu && (isMobile ? (
+        <ActionSheet
+          title="Domain"
+          meta={domainMenu.name}
+          onClose={() => setDomainMenu(null)}
+          items={domainChoices(domainMenu).map((d) => ({ label: d.name, selected: d.current, onSelect: d.run }))}
+        />
+      ) : (
+        <ContextMenu
+          position={{ x: domainMenu.x, y: domainMenu.y }}
+          onClose={() => setDomainMenu(null)}
+          items={domainChoices(domainMenu).map((d) => ({ label: d.current ? `${d.name} ✓` : d.name, disabled: d.current, onClick: d.run }))}
+        />
+      ))}
     </>
   )
   const menuLayer = menu && (isMobile ? (
@@ -294,20 +319,22 @@ export function ProjectsPage() {
     return (
       <div style={{ width: '100%', maxWidth: 398, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
-        <div style={{ flex: 1, padding: '16px 18px 24px', position: 'relative', zIndex: 10 }}>
+        {/* Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 18 of its own. */}
+        <div style={{ flex: 1, padding: '0 0 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
               <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</div>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</h1>
             </div>
-            {/* X4: 44px touch target */}
+            {/* 48px touch target (the kit's --touch-min) */}
             <button
               onClick={() => {
                 setNewType('standard')
                 setShowNewModal(true)
               }}
+              aria-label="New project"
               className="kf-lift"
-              style={{ width: 44, height: 44, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
+              style={{ width: 48, height: 48, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
             >
               +
             </button>

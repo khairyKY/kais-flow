@@ -147,7 +147,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['capture.autofiled', 'task', { confidence: 0.9 }], ['capture.autofiled', 'task', { confidence: 0.9, source: 'reconnect' }],
   ['inbox.captured', 'inbox_item', { kind: 'text' }], ['inbox.captured', 'inbox_item', { kind: 'voice', offline: true }], ['inbox.captured', 'inbox_item', { kind: 'text', undoneFrom: TASK }],
   ['inbox.filed', 'inbox_item', { task_id: TASK }], ['inbox.dismissed', 'inbox_item', {}], ['inbox.snoozed', 'inbox_item', { until: 'x' }], ['inbox.restored', 'inbox_item', {}], ['inbox.purged', 'inbox_item', {}],
-  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}],
+  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}], ['routine.restored', 'routine', { name: 'x' }],
   ['routine.checked', 'routine', { date: '2026-09-26' }], ['routine.unchecked', 'routine', { date: '2026-09-26' }],
   ['ritual.step_completed', 'ritual', { ritual: 'morning', step: 'overdue', date: '2026-09-26' }],
   ['calendar_event.created', 'calendar_event', { title: 'x', type: 'event' }], ['calendar_event.deleted', 'calendar_event', {}], ['calendar_event.restored', 'calendar_event', {}],
@@ -217,5 +217,20 @@ describe('describeActivity — the notification history (Tray and Notifications.
     const nudge = describeActivity(entry('notify.evening_nudge', 'notification', RANDOM, { title: 'The garden’s ready to close', body: '4 done · 2 left' }))
     expect(nudge).toMatchObject({ details: '4 done · 2 left', notice: { kind: 'evening_nudge' } })
     expect(nudge.notice?.actions.map((a) => a.title)).toEqual(['Shut down'])
+  })
+})
+
+describe('describeActivity — "Move to…" (2026-10-07): projects, areas and domains', () => {
+  const AREA = '88888888-8888-4888-8888-888888888888'
+  const DOMAIN = '99999999-9999-4999-8999-999999999999'
+  const names: ActivityNames = { ...NAMES, area: (id) => (id === AREA ? 'Health' : undefined), domain: (id) => (id === DOMAIN ? 'Work' : undefined) }
+  it('names the project, area or domain a task moved into', () => {
+    expect(describeActivity(entry('task.moved', 'task', TASK, { project_id: null, area_id: AREA, domain_id: DOMAIN }), names).text).toBe('Moved "Send the invoice" into Health')
+    expect(describeActivity(entry('task.moved', 'task', TASK, { project_id: null, area_id: null, domain_id: DOMAIN }), names).text).toBe('Moved "Send the invoice" into Work')
+    expect(describeActivity(entry('task.moved', 'task', TASK, { project_id: PROJECT, area_id: null, domain_id: null }), names).text).toBe('Moved "Send the invoice" into Shaheen website')
+  })
+  it('an area changing domain says where it went', () => {
+    expect(describeActivity(entry('area.reparented', 'area', AREA, { domain_id: DOMAIN }), names).text).toBe('Moved the area "Health" into Work')
+    expect(describeActivity(entry('area.reparented', 'area', AREA, { domain_id: null }), names).text).toBe('Took the area "Health" out of its domain')
   })
 })

@@ -1,6 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode } from 'react'
 import { Link } from 'react-router'
-import { playSound } from '../lib/sounds'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
@@ -228,12 +227,9 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
       disabled={disabled}
       data-subtask={subtask || undefined}
       aria-label={label ? `Complete "${label}"` : checked ? 'Mark not done' : 'Mark done'}
-      onClick={() => {
-        // Sound map (MOTION_RETROFIT §E): paper rustle on task complete. Silent unless the
-        // user turned it on — playSound gates itself, so no settings branch here.
-        if (!checked) playSound('paper_rustle')
-        onChange?.(!checked)
-      }}
+      // Sounds v2 (2026-10-07): a task's sound plays where it completes (tasks/api completeTask),
+      // so swipes, menus and keys sound too and the Goal / last Top 3 gets its phrase.
+      onClick={() => onChange?.(!checked)}
       className="kf-checkbox"
       style={{
         width: size,
@@ -328,6 +324,9 @@ export function BackLink({ children, style, ...nav }: BackLinkProps) {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
+    // Kai's phone review: beside a page's meta line it wrapped "ALL / PROJECTS" — it never wraps or shrinks
+    whiteSpace: 'nowrap',
+    flex: 'none',
     ...style,
   }
   return nav.to ? (

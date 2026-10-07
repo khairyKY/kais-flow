@@ -1,0 +1,720 @@
+PASS after routines @360 day no sideways scroll — 0
+PASS after routines @360 day no text wrapping one word per line
+PASS after routines @360 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @360 day no overlapping text
+PASS after routines @360 day no page errors
+PASS after projects @360 day no sideways scroll — 0
+PASS after projects @360 day no text wrapping one word per line
+PASS after projects @360 day the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @360 day no overlapping text
+PASS after projects @360 day no page errors
+PASS after project-detail @360 day no sideways scroll — 0
+PASS after project-detail @360 day no text wrapping one word per line
+PASS after project-detail @360 day the last content clears the tab bar — {"bar":780,"bottom":734,"ok":true}
+PASS after project-detail @360 day no overlapping text
+PASS after project-detail @360 day no page errors
+PASS after retainer-detail @360 day no sideways scroll — 0
+PASS after retainer-detail @360 day no text wrapping one word per line
+PASS after retainer-detail @360 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @360 day no overlapping text
+PASS after retainer-detail @360 day no page errors
+PASS after area-detail @360 day no sideways scroll — 0
+PASS after area-detail @360 day no text wrapping one word per line
+PASS after area-detail @360 day the last content clears the tab bar — {"bar":780,"bottom":732,"ok":true}
+PASS after area-detail @360 day no overlapping text
+PASS after area-detail @360 day no page errors
+PASS after perennials @360 day no sideways scroll — 0
+PASS after perennials @360 day no text wrapping one word per line
+PASS after perennials @360 day the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @360 day no overlapping text
+PASS after perennials @360 day no page errors
+PASS after tasks @360 day no sideways scroll — 0
+PASS after tasks @360 day no text wrapping one word per line
+PASS after tasks @360 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @360 day no overlapping text
+PASS after tasks @360 day no page errors
+PASS after inbox @360 day no sideways scroll — 0
+PASS after inbox @360 day no text wrapping one word per line
+PASS after inbox @360 day the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @360 day no overlapping text
+PASS after inbox @360 day no page errors
+PASS after review @360 day no sideways scroll — 0
+PASS after review @360 day no text wrapping one word per line
+PASS after review @360 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @360 day no overlapping text
+PASS after review @360 day no page errors
+PASS after journal @360 day no sideways scroll — 0
+PASS after journal @360 day no text wrapping one word per line
+PASS after journal @360 day the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @360 day no overlapping text
+PASS after journal @360 day no page errors
+PASS after people @360 day no sideways scroll — 0
+PASS after people @360 day no text wrapping one word per line
+PASS after people @360 day the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @360 day no overlapping text
+PASS after people @360 day no page errors
+PASS after person-detail @360 day no sideways scroll — 0
+PASS after person-detail @360 day no text wrapping one word per line
+PASS after person-detail @360 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @360 day no overlapping text
+PASS after person-detail @360 day no page errors
+PASS after library @360 day no sideways scroll — 0
+PASS after library @360 day no text wrapping one word per line
+PASS after library @360 day the last content clears the tab bar — {"bar":780,"bottom":232,"ok":true}
+PASS after library @360 day no overlapping text
+PASS after library @360 day no page errors
+PASS after herbarium @360 day no sideways scroll — 0
+PASS after herbarium @360 day no text wrapping one word per line
+PASS after herbarium @360 day the last content clears the tab bar — {"bar":780,"bottom":649,"ok":true}
+PASS after herbarium @360 day no overlapping text
+PASS after herbarium @360 day no page errors
+PASS after focus @360 day no sideways scroll — 0
+PASS after focus @360 day no text wrapping one word per line
+PASS after focus @360 day the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @360 day no overlapping text
+PASS after focus @360 day no page errors
+PASS after settings @360 day no sideways scroll — 0
+PASS after settings @360 day no text wrapping one word per line
+PASS after settings @360 day the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @360 day no overlapping text
+PASS after settings @360 day no page errors
+PASS after activity @360 day no sideways scroll — 0
+PASS after activity @360 day no text wrapping one word per line
+PASS after activity @360 day the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @360 day no overlapping text
+PASS after activity @360 day no page errors
+PASS after trash @360 day no sideways scroll — 0
+PASS after trash @360 day no text wrapping one word per line
+PASS after trash @360 day the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @360 day no overlapping text
+PASS after trash @360 day no page errors
+PASS after routines @390 day no sideways scroll — 0
+PASS after routines @390 day no text wrapping one word per line
+PASS after routines @390 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @390 day no overlapping text
+PASS after routines @390 day no page errors
+PASS after projects @390 day no sideways scroll — 0
+PASS after projects @390 day no text wrapping one word per line
+PASS after projects @390 day the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @390 day no overlapping text
+PASS after projects @390 day no page errors
+PASS after project-detail @390 day no sideways scroll — 0
+PASS after project-detail @390 day no text wrapping one word per line
+PASS after project-detail @390 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after project-detail @390 day no overlapping text
+PASS after project-detail @390 day no page errors
+PASS after retainer-detail @390 day no sideways scroll — 0
+PASS after retainer-detail @390 day no text wrapping one word per line
+PASS after retainer-detail @390 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @390 day no overlapping text
+PASS after retainer-detail @390 day no page errors
+PASS after area-detail @390 day no sideways scroll — 0
+PASS after area-detail @390 day no text wrapping one word per line
+PASS after area-detail @390 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after area-detail @390 day no overlapping text
+PASS after area-detail @390 day no page errors
+PASS after perennials @390 day no sideways scroll — 0
+PASS after perennials @390 day no text wrapping one word per line
+PASS after perennials @390 day the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @390 day no overlapping text
+PASS after perennials @390 day no page errors
+PASS after tasks @390 day no sideways scroll — 0
+PASS after tasks @390 day no text wrapping one word per line
+PASS after tasks @390 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @390 day no overlapping text
+PASS after tasks @390 day no page errors
+PASS after inbox @390 day no sideways scroll — 0
+PASS after inbox @390 day no text wrapping one word per line
+PASS after inbox @390 day the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @390 day no overlapping text
+PASS after inbox @390 day no page errors
+PASS after review @390 day no sideways scroll — 0
+PASS after review @390 day no text wrapping one word per line
+PASS after review @390 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @390 day no overlapping text
+PASS after review @390 day no page errors
+PASS after journal @390 day no sideways scroll — 0
+PASS after journal @390 day no text wrapping one word per line
+PASS after journal @390 day the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @390 day no overlapping text
+PASS after journal @390 day no page errors
+PASS after people @390 day no sideways scroll — 0
+PASS after people @390 day no text wrapping one word per line
+PASS after people @390 day the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @390 day no overlapping text
+PASS after people @390 day no page errors
+PASS after person-detail @390 day no sideways scroll — 0
+PASS after person-detail @390 day no text wrapping one word per line
+PASS after person-detail @390 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @390 day no overlapping text
+PASS after person-detail @390 day no page errors
+PASS after library @390 day no sideways scroll — 0
+PASS after library @390 day no text wrapping one word per line
+PASS after library @390 day the last content clears the tab bar — {"bar":780,"bottom":232,"ok":true}
+PASS after library @390 day no overlapping text
+PASS after library @390 day no page errors
+PASS after herbarium @390 day no sideways scroll — 0
+PASS after herbarium @390 day no text wrapping one word per line
+PASS after herbarium @390 day the last content clears the tab bar — {"bar":780,"bottom":620,"ok":true}
+PASS after herbarium @390 day no overlapping text
+PASS after herbarium @390 day no page errors
+PASS after focus @390 day no sideways scroll — 0
+PASS after focus @390 day no text wrapping one word per line
+PASS after focus @390 day the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @390 day no overlapping text
+PASS after focus @390 day no page errors
+PASS after settings @390 day no sideways scroll — 0
+PASS after settings @390 day no text wrapping one word per line
+PASS after settings @390 day the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @390 day no overlapping text
+PASS after settings @390 day no page errors
+PASS after activity @390 day no sideways scroll — 0
+PASS after activity @390 day no text wrapping one word per line
+PASS after activity @390 day the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @390 day no overlapping text
+PASS after activity @390 day no page errors
+PASS after trash @390 day no sideways scroll — 0
+PASS after trash @390 day no text wrapping one word per line
+PASS after trash @390 day the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @390 day no overlapping text
+PASS after trash @390 day no page errors
+PASS after routines @430 day no sideways scroll — 0
+PASS after routines @430 day no text wrapping one word per line
+PASS after routines @430 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @430 day no overlapping text
+PASS after routines @430 day no page errors
+PASS after projects @430 day no sideways scroll — 0
+PASS after projects @430 day no text wrapping one word per line
+PASS after projects @430 day the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @430 day no overlapping text
+PASS after projects @430 day no page errors
+PASS after project-detail @430 day no sideways scroll — 0
+PASS after project-detail @430 day no text wrapping one word per line
+PASS after project-detail @430 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after project-detail @430 day no overlapping text
+PASS after project-detail @430 day no page errors
+PASS after retainer-detail @430 day no sideways scroll — 0
+PASS after retainer-detail @430 day no text wrapping one word per line
+PASS after retainer-detail @430 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @430 day no overlapping text
+PASS after retainer-detail @430 day no page errors
+PASS after area-detail @430 day no sideways scroll — 0
+PASS after area-detail @430 day no text wrapping one word per line
+PASS after area-detail @430 day the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after area-detail @430 day no overlapping text
+PASS after area-detail @430 day no page errors
+PASS after perennials @430 day no sideways scroll — 0
+PASS after perennials @430 day no text wrapping one word per line
+PASS after perennials @430 day the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @430 day no overlapping text
+PASS after perennials @430 day no page errors
+PASS after tasks @430 day no sideways scroll — 0
+PASS after tasks @430 day no text wrapping one word per line
+PASS after tasks @430 day the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @430 day no overlapping text
+PASS after tasks @430 day no page errors
+PASS after inbox @430 day no sideways scroll — 0
+PASS after inbox @430 day no text wrapping one word per line
+PASS after inbox @430 day the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @430 day no overlapping text
+PASS after inbox @430 day no page errors
+PASS after review @430 day no sideways scroll — 0
+PASS after review @430 day no text wrapping one word per line
+PASS after review @430 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @430 day no overlapping text
+PASS after review @430 day no page errors
+PASS after journal @430 day no sideways scroll — 0
+PASS after journal @430 day no text wrapping one word per line
+PASS after journal @430 day the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @430 day no overlapping text
+PASS after journal @430 day no page errors
+PASS after people @430 day no sideways scroll — 0
+PASS after people @430 day no text wrapping one word per line
+PASS after people @430 day the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @430 day no overlapping text
+PASS after people @430 day no page errors
+PASS after person-detail @430 day no sideways scroll — 0
+PASS after person-detail @430 day no text wrapping one word per line
+PASS after person-detail @430 day the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @430 day no overlapping text
+PASS after person-detail @430 day no page errors
+PASS after library @430 day no sideways scroll — 0
+PASS after library @430 day no text wrapping one word per line
+PASS after library @430 day the last content clears the tab bar — {"bar":780,"bottom":212,"ok":true}
+PASS after library @430 day no overlapping text
+PASS after library @430 day no page errors
+PASS after herbarium @430 day no sideways scroll — 0
+PASS after herbarium @430 day no text wrapping one word per line
+PASS after herbarium @430 day the last content clears the tab bar — {"bar":780,"bottom":620,"ok":true}
+PASS after herbarium @430 day no overlapping text
+PASS after herbarium @430 day no page errors
+PASS after focus @430 day no sideways scroll — 0
+PASS after focus @430 day no text wrapping one word per line
+PASS after focus @430 day the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @430 day no overlapping text
+PASS after focus @430 day no page errors
+PASS after settings @430 day no sideways scroll — 0
+PASS after settings @430 day no text wrapping one word per line
+PASS after settings @430 day the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @430 day no overlapping text
+PASS after settings @430 day no page errors
+PASS after activity @430 day no sideways scroll — 0
+PASS after activity @430 day no text wrapping one word per line
+PASS after activity @430 day the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @430 day no overlapping text
+PASS after activity @430 day no page errors
+PASS after trash @430 day no sideways scroll — 0
+PASS after trash @430 day no text wrapping one word per line
+PASS after trash @430 day the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @430 day no overlapping text
+PASS after trash @430 day no page errors
+PASS after routines @360 night no sideways scroll — 0
+PASS after routines @360 night no text wrapping one word per line
+PASS after routines @360 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @360 night no overlapping text
+PASS after routines @360 night no page errors
+PASS after projects @360 night no sideways scroll — 0
+PASS after projects @360 night no text wrapping one word per line
+PASS after projects @360 night the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @360 night no overlapping text
+PASS after projects @360 night no page errors
+PASS after project-detail @360 night no sideways scroll — 0
+PASS after project-detail @360 night no text wrapping one word per line
+PASS after project-detail @360 night the last content clears the tab bar — {"bar":780,"bottom":734,"ok":true}
+PASS after project-detail @360 night no overlapping text
+PASS after project-detail @360 night no page errors
+PASS after retainer-detail @360 night no sideways scroll — 0
+PASS after retainer-detail @360 night no text wrapping one word per line
+PASS after retainer-detail @360 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @360 night no overlapping text
+PASS after retainer-detail @360 night no page errors
+PASS after area-detail @360 night no sideways scroll — 0
+PASS after area-detail @360 night no text wrapping one word per line
+PASS after area-detail @360 night the last content clears the tab bar — {"bar":780,"bottom":732,"ok":true}
+PASS after area-detail @360 night no overlapping text
+PASS after area-detail @360 night no page errors
+PASS after perennials @360 night no sideways scroll — 0
+PASS after perennials @360 night no text wrapping one word per line
+PASS after perennials @360 night the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @360 night no overlapping text
+PASS after perennials @360 night no page errors
+PASS after tasks @360 night no sideways scroll — 0
+PASS after tasks @360 night no text wrapping one word per line
+PASS after tasks @360 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @360 night no overlapping text
+PASS after tasks @360 night no page errors
+PASS after inbox @360 night no sideways scroll — 0
+PASS after inbox @360 night no text wrapping one word per line
+PASS after inbox @360 night the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @360 night no overlapping text
+PASS after inbox @360 night no page errors
+PASS after review @360 night no sideways scroll — 0
+PASS after review @360 night no text wrapping one word per line
+PASS after review @360 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @360 night no overlapping text
+PASS after review @360 night no page errors
+PASS after journal @360 night no sideways scroll — 0
+PASS after journal @360 night no text wrapping one word per line
+PASS after journal @360 night the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @360 night no overlapping text
+PASS after journal @360 night no page errors
+PASS after people @360 night no sideways scroll — 0
+PASS after people @360 night no text wrapping one word per line
+PASS after people @360 night the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @360 night no overlapping text
+PASS after people @360 night no page errors
+PASS after person-detail @360 night no sideways scroll — 0
+PASS after person-detail @360 night no text wrapping one word per line
+PASS after person-detail @360 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @360 night no overlapping text
+PASS after person-detail @360 night no page errors
+PASS after library @360 night no sideways scroll — 0
+PASS after library @360 night no text wrapping one word per line
+PASS after library @360 night the last content clears the tab bar — {"bar":780,"bottom":232,"ok":true}
+PASS after library @360 night no overlapping text
+PASS after library @360 night no page errors
+PASS after herbarium @360 night no sideways scroll — 0
+PASS after herbarium @360 night no text wrapping one word per line
+PASS after herbarium @360 night the last content clears the tab bar — {"bar":780,"bottom":649,"ok":true}
+PASS after herbarium @360 night no overlapping text
+PASS after herbarium @360 night no page errors
+PASS after focus @360 night no sideways scroll — 0
+PASS after focus @360 night no text wrapping one word per line
+PASS after focus @360 night the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @360 night no overlapping text
+PASS after focus @360 night no page errors
+PASS after settings @360 night no sideways scroll — 0
+PASS after settings @360 night no text wrapping one word per line
+PASS after settings @360 night the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @360 night no overlapping text
+PASS after settings @360 night no page errors
+PASS after activity @360 night no sideways scroll — 0
+PASS after activity @360 night no text wrapping one word per line
+PASS after activity @360 night the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @360 night no overlapping text
+PASS after activity @360 night no page errors
+PASS after trash @360 night no sideways scroll — 0
+PASS after trash @360 night no text wrapping one word per line
+PASS after trash @360 night the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @360 night no overlapping text
+PASS after trash @360 night no page errors
+PASS after routines @390 night no sideways scroll — 0
+PASS after routines @390 night no text wrapping one word per line
+PASS after routines @390 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @390 night no overlapping text
+PASS after routines @390 night no page errors
+PASS after projects @390 night no sideways scroll — 0
+PASS after projects @390 night no text wrapping one word per line
+PASS after projects @390 night the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @390 night no overlapping text
+PASS after projects @390 night no page errors
+PASS after project-detail @390 night no sideways scroll — 0
+PASS after project-detail @390 night no text wrapping one word per line
+PASS after project-detail @390 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after project-detail @390 night no overlapping text
+PASS after project-detail @390 night no page errors
+PASS after retainer-detail @390 night no sideways scroll — 0
+PASS after retainer-detail @390 night no text wrapping one word per line
+PASS after retainer-detail @390 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @390 night no overlapping text
+PASS after retainer-detail @390 night no page errors
+PASS after area-detail @390 night no sideways scroll — 0
+PASS after area-detail @390 night no text wrapping one word per line
+PASS after area-detail @390 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after area-detail @390 night no overlapping text
+PASS after area-detail @390 night no page errors
+PASS after perennials @390 night no sideways scroll — 0
+PASS after perennials @390 night no text wrapping one word per line
+PASS after perennials @390 night the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @390 night no overlapping text
+PASS after perennials @390 night no page errors
+PASS after tasks @390 night no sideways scroll — 0
+PASS after tasks @390 night no text wrapping one word per line
+PASS after tasks @390 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @390 night no overlapping text
+PASS after tasks @390 night no page errors
+PASS after inbox @390 night no sideways scroll — 0
+PASS after inbox @390 night no text wrapping one word per line
+PASS after inbox @390 night the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @390 night no overlapping text
+PASS after inbox @390 night no page errors
+PASS after review @390 night no sideways scroll — 0
+PASS after review @390 night no text wrapping one word per line
+PASS after review @390 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @390 night no overlapping text
+PASS after review @390 night no page errors
+PASS after journal @390 night no sideways scroll — 0
+PASS after journal @390 night no text wrapping one word per line
+PASS after journal @390 night the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @390 night no overlapping text
+PASS after journal @390 night no page errors
+PASS after people @390 night no sideways scroll — 0
+PASS after people @390 night no text wrapping one word per line
+PASS after people @390 night the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @390 night no overlapping text
+PASS after people @390 night no page errors
+PASS after person-detail @390 night no sideways scroll — 0
+PASS after person-detail @390 night no text wrapping one word per line
+PASS after person-detail @390 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @390 night no overlapping text
+PASS after person-detail @390 night no page errors
+PASS after library @390 night no sideways scroll — 0
+PASS after library @390 night no text wrapping one word per line
+PASS after library @390 night the last content clears the tab bar — {"bar":780,"bottom":232,"ok":true}
+PASS after library @390 night no overlapping text
+PASS after library @390 night no page errors
+PASS after herbarium @390 night no sideways scroll — 0
+PASS after herbarium @390 night no text wrapping one word per line
+PASS after herbarium @390 night the last content clears the tab bar — {"bar":780,"bottom":620,"ok":true}
+PASS after herbarium @390 night no overlapping text
+PASS after herbarium @390 night no page errors
+PASS after focus @390 night no sideways scroll — 0
+PASS after focus @390 night no text wrapping one word per line
+PASS after focus @390 night the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @390 night no overlapping text
+PASS after focus @390 night no page errors
+PASS after settings @390 night no sideways scroll — 0
+PASS after settings @390 night no text wrapping one word per line
+PASS after settings @390 night the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @390 night no overlapping text
+PASS after settings @390 night no page errors
+PASS after activity @390 night no sideways scroll — 0
+PASS after activity @390 night no text wrapping one word per line
+PASS after activity @390 night the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @390 night no overlapping text
+PASS after activity @390 night no page errors
+PASS after trash @390 night no sideways scroll — 0
+PASS after trash @390 night no text wrapping one word per line
+PASS after trash @390 night the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @390 night no overlapping text
+PASS after trash @390 night no page errors
+PASS after routines @430 night no sideways scroll — 0
+PASS after routines @430 night no text wrapping one word per line
+PASS after routines @430 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after routines @430 night no overlapping text
+PASS after routines @430 night no page errors
+PASS after projects @430 night no sideways scroll — 0
+PASS after projects @430 night no text wrapping one word per line
+PASS after projects @430 night the last content clears the tab bar — {"bar":780,"bottom":468,"ok":true}
+PASS after projects @430 night no overlapping text
+PASS after projects @430 night no page errors
+PASS after project-detail @430 night no sideways scroll — 0
+PASS after project-detail @430 night no text wrapping one word per line
+PASS after project-detail @430 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after project-detail @430 night no overlapping text
+PASS after project-detail @430 night no page errors
+PASS after retainer-detail @430 night no sideways scroll — 0
+PASS after retainer-detail @430 night no text wrapping one word per line
+PASS after retainer-detail @430 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after retainer-detail @430 night no overlapping text
+PASS after retainer-detail @430 night no page errors
+PASS after area-detail @430 night no sideways scroll — 0
+PASS after area-detail @430 night no text wrapping one word per line
+PASS after area-detail @430 night the last content clears the tab bar — {"bar":780,"bottom":733,"ok":true}
+PASS after area-detail @430 night no overlapping text
+PASS after area-detail @430 night no page errors
+PASS after perennials @430 night no sideways scroll — 0
+PASS after perennials @430 night no text wrapping one word per line
+PASS after perennials @430 night the last content clears the tab bar — {"bar":780,"bottom":376,"ok":true}
+PASS after perennials @430 night no overlapping text
+PASS after perennials @430 night no page errors
+PASS after tasks @430 night no sideways scroll — 0
+PASS after tasks @430 night no text wrapping one word per line
+PASS after tasks @430 night the last content clears the tab bar — {"bar":780,"bottom":742,"ok":true}
+PASS after tasks @430 night no overlapping text
+PASS after tasks @430 night no page errors
+PASS after inbox @430 night no sideways scroll — 0
+PASS after inbox @430 night no text wrapping one word per line
+PASS after inbox @430 night the last content clears the tab bar — {"bar":780,"bottom":346,"ok":true}
+PASS after inbox @430 night no overlapping text
+PASS after inbox @430 night no page errors
+PASS after review @430 night no sideways scroll — 0
+PASS after review @430 night no text wrapping one word per line
+PASS after review @430 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after review @430 night no overlapping text
+PASS after review @430 night no page errors
+PASS after journal @430 night no sideways scroll — 0
+PASS after journal @430 night no text wrapping one word per line
+PASS after journal @430 night the last content clears the tab bar — {"bar":780,"bottom":663,"ok":true}
+PASS after journal @430 night no overlapping text
+PASS after journal @430 night no page errors
+PASS after people @430 night no sideways scroll — 0
+PASS after people @430 night no text wrapping one word per line
+PASS after people @430 night the last content clears the tab bar — {"bar":780,"bottom":461,"ok":true}
+PASS after people @430 night no overlapping text
+PASS after people @430 night no page errors
+PASS after person-detail @430 night no sideways scroll — 0
+PASS after person-detail @430 night no text wrapping one word per line
+PASS after person-detail @430 night the last content clears the tab bar — {"bar":780,"bottom":757,"ok":true}
+PASS after person-detail @430 night no overlapping text
+PASS after person-detail @430 night no page errors
+PASS after library @430 night no sideways scroll — 0
+PASS after library @430 night no text wrapping one word per line
+PASS after library @430 night the last content clears the tab bar — {"bar":780,"bottom":212,"ok":true}
+PASS after library @430 night no overlapping text
+PASS after library @430 night no page errors
+PASS after herbarium @430 night no sideways scroll — 0
+PASS after herbarium @430 night no text wrapping one word per line
+PASS after herbarium @430 night the last content clears the tab bar — {"bar":780,"bottom":620,"ok":true}
+PASS after herbarium @430 night no overlapping text
+PASS after herbarium @430 night no page errors
+PASS after focus @430 night no sideways scroll — 0
+PASS after focus @430 night no text wrapping one word per line
+PASS after focus @430 night the last content clears the tab bar — {"bar":780,"bottom":753,"ok":true}
+PASS after focus @430 night no overlapping text
+PASS after focus @430 night no page errors
+PASS after settings @430 night no sideways scroll — 0
+PASS after settings @430 night no text wrapping one word per line
+PASS after settings @430 night the last content clears the tab bar — {"bar":780,"bottom":758,"ok":true}
+PASS after settings @430 night no overlapping text
+PASS after settings @430 night no page errors
+PASS after activity @430 night no sideways scroll — 0
+PASS after activity @430 night no text wrapping one word per line
+PASS after activity @430 night the last content clears the tab bar — {"bar":780,"bottom":407,"ok":true}
+PASS after activity @430 night no overlapping text
+PASS after activity @430 night no page errors
+PASS after trash @430 night no sideways scroll — 0
+PASS after trash @430 night no text wrapping one word per line
+PASS after trash @430 night the last content clears the tab bar — {"bar":780,"bottom":322,"ok":true}
+PASS after trash @430 night no overlapping text
+PASS after trash @430 night no page errors
+PASS more-360-day every row and button is ≥ 48px (14) — []
+PASS more-360-day no label wraps
+PASS more-360-day nothing runs off the right edge
+PASS more-360-day the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-360-day no page errors
+PASS more-390-day every row and button is ≥ 48px (14) — []
+PASS more-390-day no label wraps
+PASS more-390-day nothing runs off the right edge
+PASS more-390-day the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-390-day no page errors
+PASS more-430-day every row and button is ≥ 48px (14) — []
+PASS more-430-day no label wraps
+PASS more-430-day nothing runs off the right edge
+PASS more-430-day the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-430-day no page errors
+PASS more-360-night every row and button is ≥ 48px (14) — []
+PASS more-360-night no label wraps
+PASS more-360-night nothing runs off the right edge
+PASS more-360-night the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-360-night no page errors
+PASS more-390-night every row and button is ≥ 48px (14) — []
+PASS more-390-night no label wraps
+PASS more-390-night nothing runs off the right edge
+PASS more-390-night the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-390-night no page errors
+PASS more-430-night every row and button is ≥ 48px (14) — []
+PASS more-430-night no label wraps
+PASS more-430-night nothing runs off the right edge
+PASS more-430-night the sheet is on top (Settings takes the tap at its centre) — Settings
+PASS more-430-night no page errors
+PASS routines-360-day morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-360-day morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-360-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-360-day evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-360-day evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-360-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-360-day side gutters match Today's (16px): header + cards span 16…344, text no closer — {"vine":16,"card":[16,344],"text":[16,32]}
+PASS routines-360-day no bare "archive" text link left on the rows
+PASS routines-360-day each routine row has a ⋯ button ≥ 48×48 — {"x":296,"y":506.75,"width":48,"height":48}
+PASS routines-360-day a long routine name never wraps one word per line — {"lines":2,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-360-day no page errors
+PASS routines-390-day morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-390-day morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-390-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-390-day evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-390-day evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-390-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-390-day side gutters match Today's (16px): header + cards span 16…374, text no closer — {"vine":16,"card":[16,374],"text":[16,32]}
+PASS routines-390-day no bare "archive" text link left on the rows
+PASS routines-390-day each routine row has a ⋯ button ≥ 48×48 — {"x":326,"y":506.75,"width":48,"height":48}
+PASS routines-390-day a long routine name never wraps one word per line — {"lines":2,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-390-day tapping the pin flips aria-pressed (true → false)
+PASS routines-390-day ⋯ opens the kit action sheet titled with the routine (rows: Streak trellis, Archive)
+PASS routines-390-day the sheet is on top (the Archive row takes the tap at its centre) — Archive
+PASS routines-390-day Archive → routines row written with active = false (through the outbox) — [["Stretch for ten minutes",false]]
+PASS routines-390-day …and logged routine.archived
+PASS routines-390-day …the row leaves the list
+PASS routines-390-day …toast "Routine archived" with Undo — ["Routine archived"]
+PASS routines-390-day Undo → written back active = true, the row returns — [["Stretch for ten minutes",true]]
+PASS routines-390-day …and logged routine.restored
+PASS routines-390-day no page errors
+PASS routines-430-day morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-430-day morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-430-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-430-day evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-430-day evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-430-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-430-day side gutters match Today's (16px): header + cards span 16…414, text no closer — {"vine":16,"card":[16,414],"text":[16,32]}
+PASS routines-430-day no bare "archive" text link left on the rows
+PASS routines-430-day each routine row has a ⋯ button ≥ 48×48 — {"x":366,"y":506.75,"width":48,"height":48}
+PASS routines-430-day a long routine name never wraps one word per line — {"lines":1,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-430-day no page errors
+PASS routines-360-night morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-360-night morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-360-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-360-night evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-360-night evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-360-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-360-night side gutters match Today's (16px): header + cards span 16…344, text no closer — {"vine":16,"card":[16,344],"text":[16,32]}
+PASS routines-360-night no bare "archive" text link left on the rows
+PASS routines-360-night each routine row has a ⋯ button ≥ 48×48 — {"x":296,"y":506.75,"width":48,"height":48}
+PASS routines-360-night a long routine name never wraps one word per line — {"lines":2,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-360-night no page errors
+PASS routines-390-night morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-390-night morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-390-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-390-night evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-390-night evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-390-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-390-night side gutters match Today's (16px): header + cards span 16…374, text no closer — {"vine":16,"card":[16,374],"text":[16,32]}
+PASS routines-390-night no bare "archive" text link left on the rows
+PASS routines-390-night each routine row has a ⋯ button ≥ 48×48 — {"x":326,"y":506.75,"width":48,"height":48}
+PASS routines-390-night a long routine name never wraps one word per line — {"lines":2,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-390-night tapping the pin flips aria-pressed (true → false)
+PASS routines-390-night ⋯ opens the kit action sheet titled with the routine (rows: Streak trellis, Archive)
+PASS routines-390-night the sheet is on top (the Archive row takes the tap at its centre) — Archive
+PASS routines-390-night Archive → routines row written with active = false (through the outbox) — [["Stretch for ten minutes",false]]
+PASS routines-390-night …and logged routine.archived
+PASS routines-390-night …the row leaves the list
+PASS routines-390-night …toast "Routine archived" with Undo — ["Routine archived"]
+PASS routines-390-night Undo → written back active = true, the row returns — [["Stretch for ten minutes",true]]
+PASS routines-390-night …and logged routine.restored
+PASS routines-390-night no page errors
+PASS routines-430-night morning card title on one line ("Morning ritual") — {"lines":1,"words":2,"text":"Morning ritual"}
+PASS routines-430-night morning card subtitle on one line ("PLAN THE DAY") — {"lines":1,"words":3,"text":"PLAN THE DAY"}
+PASS routines-430-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-430-night evening card title on one line ("Evening ritual") — {"lines":1,"words":2,"text":"Evening ritual"}
+PASS routines-430-night evening card subtitle on one line ("CLOSE ITS LOOPS") — {"lines":1,"words":3,"text":"CLOSE ITS LOOPS"}
+PASS routines-430-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed — {"text":"","w":48,"h":48,"title":"Unpin from Today","pressed":"true"}
+PASS routines-430-night side gutters match Today's (16px): header + cards span 16…414, text no closer — {"vine":16,"card":[16,414],"text":[16,32]}
+PASS routines-430-night no bare "archive" text link left on the rows
+PASS routines-430-night each routine row has a ⋯ button ≥ 48×48 — {"x":366,"y":506.75,"width":48,"height":48}
+PASS routines-430-night a long routine name never wraps one word per line — {"lines":1,"words":8,"text":"Phone on the charger, out of the bedroom"}
+PASS routines-430-night no page errors
+PASS routines-desktop-day the ⋯ is visible at rest (not hover-only)
+PASS routines-desktop-day the pin keeps its "pinned" label on a computer
+PASS routines-desktop-day ⋯ → the context menu with Archive
+PASS routines-desktop-day Archive writes active = false + Undo toast
+PASS routines-desktop-day no page errors
+PASS routines-desktop-night the ⋯ is visible at rest (not hover-only)
+PASS routines-desktop-night the pin keeps its "pinned" label on a computer
+PASS routines-desktop-night ⋯ → the context menu with Archive
+PASS routines-desktop-night Archive writes active = false + Undo toast
+PASS routines-desktop-night no page errors
+PASS capture-day centre glyph = the desktop Capture button's plus (not the mic) — <path d="M12 5v14M5 12h14"></path>
+PASS capture-day aria-label unchanged: "Capture — tap to type, hold to talk"
+PASS capture-day centre button ≥ 48×48 — {"x":167,"y":784,"width":56,"height":56}
+PASS capture-day hold → recording (hold-to-talk kept)
+PASS capture-day …while recording the button shows the mic — <rect x="9" y="3.5" width="6" height="11" rx="3"></rect><pat
+PASS capture-day release → the voice sheet files the take
+PASS capture-day …and the button is back to the plus
+PASS capture-day tap → the capture sheet, field focused
+PASS capture-day first-opens hint shown on a first open
+PASS capture-day keyboard down → the sheet sits on the bottom edge (no gap under it) — {"x":0,"y":637,"width":390,"height":207}
+PASS capture-day …covering the tab bar (the sheet takes a tap where the tab bar is)
+PASS capture-day keyboard up (visualViewport 300px shorter) → the sheet's bottom rides it at 544 — {"x":0,"y":337,"width":390,"height":207}
+PASS capture-day keyboard down again → back on the bottom edge — {"x":0,"y":637,"width":390,"height":207}
+PASS capture-day WebView resized for the keyboard (Android shell) → the sheet sits on the new bottom, no double gap — {"x":0,"y":337,"width":390,"height":207}
+PASS capture-day …keyboard gone → back on the bottom edge — {"x":0,"y":637,"width":390,"height":207}
+PASS capture-day Android strips painted the sheet's colour while it's up (#fbf6e9) — ["#fbf6e9",true]
+PASS capture-day …and the page's again once it closes (#efe9db) — ["#efe9db",true]
+PASS capture-day no page errors
+PASS capture-night centre glyph = the desktop Capture button's plus (not the mic) — <path d="M12 5v14M5 12h14"></path>
+PASS capture-night aria-label unchanged: "Capture — tap to type, hold to talk"
+PASS capture-night centre button ≥ 48×48 — {"x":167,"y":784,"width":56,"height":56}
+PASS capture-night hold → recording (hold-to-talk kept)
+PASS capture-night …while recording the button shows the mic — <rect x="9" y="3.5" width="6" height="11" rx="3"></rect><pat
+PASS capture-night release → the voice sheet files the take
+PASS capture-night …and the button is back to the plus
+PASS capture-night tap → the capture sheet, field focused
+PASS capture-night first-opens hint gone after 3 opens
+PASS capture-night keyboard down → the sheet sits on the bottom edge (no gap under it) — {"x":0,"y":667,"width":390,"height":177}
+PASS capture-night …covering the tab bar (the sheet takes a tap where the tab bar is)
+PASS capture-night keyboard up (visualViewport 300px shorter) → the sheet's bottom rides it at 544 — {"x":0,"y":367,"width":390,"height":177}
+PASS capture-night keyboard down again → back on the bottom edge — {"x":0,"y":667,"width":390,"height":177}
+PASS capture-night WebView resized for the keyboard (Android shell) → the sheet sits on the new bottom, no double gap — {"x":0,"y":367,"width":390,"height":177}
+PASS capture-night …keyboard gone → back on the bottom edge — {"x":0,"y":667,"width":390,"height":177}
+PASS capture-night Android strips painted the sheet's colour while it's up (#262233) — ["#262233",false]
+PASS capture-night …and the page's again once it closes (#211d30) — ["#211d30",false]
+PASS capture-night no page errors
+PASS toast-day Inbox → Scan paper → "A quick look" (full screen)
+PASS toast-day the toast clears ✕ and Rotate — {"toast":{"x":12,"y":703,"width":366,"height":48},"close":{"x":4,"y":4,"width":48,"height":48},"rotate":{"x":338,"y":4,"width":48,"height":48}}
+PASS toast-day …and the bottom buttons (Add page · Read) — [{"x":16,"y":772,"width":148.828125,"height":52},{"x":174.828125,"y":772,"width":199.171875,"height":52}]
+PASS toast-day …docked 8px above the bottom bar — {"toastBottom":751,"foot":759}
+PASS toast-day Rotate takes the tap while the toast is up — transform: rotate(0deg); → transform: rotate(90deg);
+PASS toast-day full-screen modal without a bottom bar → toast at the tab-bar dock, off the header — {"t2":{"x":12,"y":724,"width":366,"height":48},"tabDock":772}
+PASS toast-day an action sheet (no footer) still docks the toast at the top, clear of its rows — {"x":12,"y":8,"width":366,"height":48}
+PASS toast-day the Plan-my-day sheet (full, with footer): toast 8px above its footer, clear of ✕ — {"t4":{"x":12,"y":673,"width":366,"height":48},"rfoot":{"x":0,"y":729,"width":390,"height":115},"rclose":{"x":4,"y":76,"width":48,"height":48}}
+PASS toast-day no page errors
+PASS toast-night Inbox → Scan paper → "A quick look" (full screen)
+PASS toast-night the toast clears ✕ and Rotate — {"toast":{"x":12,"y":703,"width":366,"height":48},"close":{"x":4,"y":4,"width":48,"height":48},"rotate":{"x":338,"y":4,"width":48,"height":48}}
+PASS toast-night …and the bottom buttons (Add page · Read) — [{"x":16,"y":772,"width":148.828125,"height":52},{"x":174.828125,"y":772,"width":199.171875,"height":52}]
+PASS toast-night …docked 8px above the bottom bar — {"toastBottom":751,"foot":759}
+PASS toast-night Rotate takes the tap while the toast is up — transform: rotate(0deg); → transform: rotate(90deg);
+PASS toast-night full-screen modal without a bottom bar → toast at the tab-bar dock, off the header — {"t2":{"x":12,"y":724,"width":366,"height":48},"tabDock":772}
+PASS toast-night an action sheet (no footer) still docks the toast at the top, clear of its rows — {"x":12,"y":8,"width":366,"height":48}
+PASS toast-night the Plan-my-day sheet (full, with footer): toast 8px above its footer, clear of ✕ — {"t4":{"x":12,"y":673,"width":366,"height":48},"rfoot":{"x":0,"y":729,"width":390,"height":115},"rclose":{"x":4,"y":76,"width":48,"height":48}}
+PASS toast-night no page errors
+
+718/718 passed

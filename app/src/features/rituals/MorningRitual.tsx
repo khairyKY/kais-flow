@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useTasks, completeTaskWithUndo, createTask, deleteTasksWithUndo, rescheduleDue, setSomeday, toggleTop3 } from '../tasks/api'
+import { useTasks, completeTaskWithUndo, createTask, currentTop3, deleteTasksWithUndo, rescheduleDue, setSomeday, toggleTop3, writeTop3Order } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
-import { useGoalStore } from '../today/goalStore'
 import { useRowGrammar } from '../tasks/useRowGrammar'
 import { RowMenuButton } from '../tasks/SwipeRow'
 import { formatDuration } from '../tasks/taskDisplay'
@@ -18,6 +17,7 @@ import { busyOnDay, fromMin, toMin } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { toastAction } from '../../lib/undo'
+import { playSound } from '../../lib/sounds'
 import { logRitualFinished, logRitualStep, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, morningPreselection, top3Diff } from './loopDay'
 import {
@@ -80,7 +80,6 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const { data: stepsToday } = useRitualStepsToday()
-  const setGoal = useGoalStore((s) => s.setGoal)
   const seeds = useSeedsFor(loopDayKey(now))
   const [draft, setDraft, clearDraft] = useDraft<PlanDraft>('plan', loopDayKey(now), () => ({ carry: [], picks: null, chosen: {} }))
   const finished = useRef(false)
@@ -187,6 +186,19 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     const e = carry.find((x) => x.id === t.id)
     if (e && r.picks.includes(t.id) && e.choice !== 'today') choose(e, t, 'today')
   }
+  // Kai 2026-10-07: "give me a button for making something the goal of the day" — here the goal is
+  // the first pick (ruling 4), so Make goal moves a pick to the front; an unpicked row joins first,
+  // and into a full three only through the same swap toast (the last pick makes room).
+  function makeGoal(t: Task) {
+    const lead = (d: PlanDraft, keep: number) => ({ picks: [t.id, ...(d.picks ?? selection).filter((id) => id !== t.id).slice(0, keep)] })
+    if (!selection.includes(t.id) && selection.length >= 3) {
+      toastAction(`Top 3 is full — swap out “${byId.get(selection[selection.length - 1])?.title ?? 'the last pick'}”?`, 'Swap', () => setDraft((d) => lead(d, 2)))
+      return
+    }
+    setDraft((d) => lead(d, 3))
+    const e = carry.find((x) => x.id === t.id)
+    if (e && e.choice !== 'today') choose(e, t, 'today') // ruling 3: picking a carried row implies Today
+  }
   function setChosen(id: string, c: Chosen) {
     setDraft((d) => ({ chosen: { ...d.chosen, [id]: c } }))
   }
@@ -196,26 +208,38 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     if (!r.full) setDraft({ picks: r.picks })
   }
 
-  // "Start the day" (6 intro): the picks become the Top 3 (the first one the goal), every pick with
-  // a time (suggested or set) goes on the calendar, every section counts as walked, and the ritual
-  // is finished.
+  // "Start the day" (6 intro): the picks become the Top 3 in pick order (the first one the goal, on
+  // every device — tasks.top3_rank), every pick with a time (suggested or set) goes on the calendar,
+  // every section counts as walked, and the ritual is finished.
   function start(close: () => void) {
     const { unstar, star } = top3Diff(selection, tasks)
     unstar.forEach(toggleTop3)
     star.forEach(toggleTop3)
-    setGoal(selection[0] ?? null)
+    const picks = selection.flatMap((id) => byId.get(id) ?? [])
+    writeTop3Order([...picks, ...currentTop3().filter((t) => !selection.includes(t.id))]) // a goal finished earlier today goes after
+
     for (const s of toPlace(slots)) {
       const t = byId.get(s.id)
       if (t) scheduleTask(t, cairoToIso(today, fromMin(s.start)), cairoToIso(today, fromMin(s.end)))
     }
     for (const step of PLAN_STEPS) if (!stepsToday?.morning.has(step) && !loggedHere.current.has(step)) logRitualStep('morning', step)
     logRitualFinished('morning', [...PLAN_STEPS])
+    playSound('ritual_done')
     finished.current = true
     close()
   }
 
+  // The first pick reads "✶ Goal"; every other pick offers "☆ Make goal" right there.
+  const goalMeta = (t: Task, i: number) =>
+    i === 0 ? (
+      <Meta key="g" tone="var(--acc-gold)">✶ Goal</Meta>
+    ) : i > 0 ? (
+      <button key="g" type="button" className="rt-make-goal" onClick={(e) => { e.stopPropagation(); makeGoal(t) }}>
+        ☆ Make goal
+      </button>
+    ) : null
   const pickMeta = (t: Task, i: number) => [
-    i === 0 && <Meta key="g" tone="var(--acc-gold)">✶ Goal</Meta>,
+    goalMeta(t, i),
     seedIds.has(t.id) && (
       <Meta key="s" tone="var(--acc-sage-text)">
         <Icon name="today" size={16} />
@@ -245,9 +269,10 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               onStar={() => togglePick(t)}
               projects={projects}
               domains={domains}
-              actions={{ tomorrow: () => choose(e, t, 'tomorrow'), delete: () => drop(t), someday: () => choose(e, t, 'someday') }}
+              actions={{ tomorrow: () => choose(e, t, 'tomorrow'), delete: () => drop(t), someday: () => choose(e, t, 'someday'), goal: () => makeGoal(t) }}
+              isGoal={i === 0}
               meta={[
-                i === 0 && <Meta key="g" tone="var(--acc-gold)">✶ Goal</Meta>,
+                goalMeta(t, i),
                 carryMeta(e.due, now) && <Meta key="o" tone={carryMeta(e.due, now)!.startsWith('Overdue') ? 'var(--sig-overdue)' : undefined}>{carryMeta(e.due, now)}</Meta>,
                 t.duration_min != null && <Meta key="m">{formatDuration(t.duration_min)}</Meta>,
               ]}
@@ -300,7 +325,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
       )}
       {listed.map((t) => (
         // A carried row found by the search is the Carry-over row's twin — its own DOM id.
-        <PlanRow key={t.id} rowId={carried.has(t.id) ? `rt-found-${t.id}` : undefined} task={t} picked={selection.includes(t.id)} onStar={() => togglePick(t)} projects={projects} domains={domains} meta={pickMeta(t, pickIndex(t.id))} />
+        <PlanRow key={t.id} rowId={carried.has(t.id) ? `rt-found-${t.id}` : undefined} task={t} picked={selection.includes(t.id)} onStar={() => togglePick(t)} projects={projects} domains={domains} meta={pickMeta(t, pickIndex(t.id))} isGoal={pickIndex(t.id) === 0} actions={{ goal: () => makeGoal(t) }} />
       ))}
       {found?.length === 0 && <div className="rt-hint">No open task matches “{query.trim()}”.</div>}
       {!found && pool.length > candidates.length && (
@@ -389,7 +414,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
 /** A kit task row in the plan: [check][title + meta][star][⋯], the row grammar (swipe right =
  * Tomorrow, left = Drop/Delete, ⋯), and the star = this plan's pick (ruling 3–4). */
-function PlanRow({ task, rowId, picked, onStar, meta, below, projects, domains, actions }: {
+function PlanRow({ task, rowId, picked, onStar, meta, below, projects, domains, actions, isGoal }: {
   task: Task
   rowId?: string
   picked: boolean
@@ -398,9 +423,11 @@ function PlanRow({ task, rowId, picked, onStar, meta, below, projects, domains, 
   below?: ReactNode
   projects: Project[]
   domains: Domain[]
-  actions?: { tomorrow?: () => void; delete?: () => void; someday?: () => void }
+  actions?: { tomorrow?: () => void; delete?: () => void; someday?: () => void; goal?: () => void }
+  /** This draft's first pick — its menu has no Make goal. */
+  isGoal?: boolean
 }) {
-  const g = useRowGrammar(task, { projects, domains, actions: { top3: onStar, ...actions } })
+  const g = useRowGrammar(task, { projects, domains, goal: isGoal, actions: { top3: onStar, ...actions } })
   return (
     <KitRow
       task={task}

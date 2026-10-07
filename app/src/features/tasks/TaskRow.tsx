@@ -9,7 +9,6 @@ import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import { checkAction } from './completion'
 import { scheduleToday } from '../../lib/dateShortcuts'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { Checkbox, Chip } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
@@ -115,7 +114,6 @@ export function TaskRow({
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const openTask = useOpenTask()
-  const [schedulePos, setSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [checking, setChecking] = useState(false)
   const motionOn = useMotionEnabled()
 
@@ -153,7 +151,7 @@ export function TaskRow({
 
   // J-3 (K-d, 2026-09-24): right-click never changes the selection. The menu acts on this row, or
   // on the whole selection when this row is part of it (bulk).
-  const grammar = useRowGrammar(task, { projects, domains, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
+  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
 
   // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
   // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks
@@ -231,12 +229,7 @@ export function TaskRow({
         style={{ ...rowStyle, margin: '0 -10px' }}
         contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 10px' }}
         {...grammar.swipeProps}
-        overlay={
-          <>
-            {grammar.menuNode}
-            {schedulePos && <ScheduleMenu position={schedulePos} title={task.title} onClose={() => setSchedulePos(null)} onSchedule={(iso) => rescheduleDue(task, iso)} />}
-          </>
-        }
+        overlay={grammar.menuNode}
       >
         {grammar.selecting ? <SelectCircle on={!!selected} title={task.title} /> : <Checkbox checked={false} size={18} onChange={handleCheck} label={task.title} />}
         <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
@@ -257,10 +250,10 @@ export function TaskRow({
         </span>
         <span
           className="tr-someday-hover"
-          onClick={(e) => setSchedulePos({ x: e.clientX, y: e.clientY })}
+          onClick={(e) => grammar.openPlan({ x: e.clientX, y: e.clientY })}
           style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
-          Schedule ▾
+          Plan ▾
         </span>
         {more}
       </SwipeRow>
@@ -271,6 +264,7 @@ export function TaskRow({
   return (
     <SwipeRow
       id={`task-${task.id}`}
+      data-tour="task-row"
       // Motion 4a (WB-1): `overflow: hidden` (the swipe layers need it) clips the hover
       // shadow, so this variant reads the lift as travel only.
       className={`task-row kf-lift${checking ? ' tr-checking' : ''}`}

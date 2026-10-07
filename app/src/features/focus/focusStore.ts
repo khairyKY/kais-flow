@@ -119,7 +119,10 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     const { isRunning, mode, pomodoroStartIso, stopwatchSeconds } = get()
     if (!isRunning) {
       const now = new Date()
-      if (mode === 'pomodoro' && !pomodoroStartIso) set({ pomodoroStartIso: now.toISOString() })
+      if (mode === 'pomodoro' && !pomodoroStartIso) {
+        set({ pomodoroStartIso: now.toISOString() })
+        playSound('focus_start') // a fresh round, not a resume
+      }
       if (mode === 'stopwatch' && stopwatchSeconds === 0) {
         set({
           stopwatchStartIso: now.toISOString(),
@@ -167,7 +170,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
       // in the build, so the round-end chime was silent no matter what. It now goes through the
       // synthesised sound engine. Called unconditionally on purpose: playSound owns the master
       // toggle, the per-sound toggle, volume and quiet hours, so a check here would double-gate.
-      playSound('distant_chime')
+      playSound('focus_end')
 
       const long = s.currentRound >= s.settings.roundsBeforeLongBreak
       const toGarden = long && s.settings.gardenViewOnLongBreaks

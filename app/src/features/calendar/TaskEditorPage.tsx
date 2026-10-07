@@ -103,8 +103,10 @@ export function TaskEditorPage() {
   const subtasksDone = subtasks.filter((t) => t.status === 'done').length
   const { saveTitle, saveNotes } = draft
 
-  function handleDueChange(date: string, time: string) {
-    rescheduleDue(task!, date ? localToIso(date, time || '09:00') : null)
+  // Kai 2026-10-07 (a task given a time is on the calendar): setting the time places it there; a new
+  // date keeps a task that's on the calendar on it (at its due time); otherwise a date is just a date.
+  function handleDueChange(date: string, time: string, timed = !!linkedEvent) {
+    rescheduleDue(task!, date ? localToIso(date, time || '09:00') : null, timed)
   }
 
   function handleProjectOrArea(value: string) {
@@ -331,7 +333,7 @@ export function TaskEditorPage() {
               </div>
               <div>
                 <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due time</FLabel>
-                <TimeInput value={dueTime} onChange={(v) => handleDueChange(dueDate || localDateKey(new Date()), v)} />
+                <TimeInput value={dueTime} onChange={(v) => handleDueChange(dueDate || localDateKey(new Date()), v, true)} />
               </div>
             </div>
             <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Duration</FLabel>

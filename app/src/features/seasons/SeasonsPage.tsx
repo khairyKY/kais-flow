@@ -124,8 +124,8 @@ function EffectsToggleDemo() {
     <div style={{ background: 'var(--paper-linen)' }}>
       <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 26px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span>Kai's Flow</span><span>·</span><span>{dateLabel}</span><span>·</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Synced<span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc-sage)' }} /></span>
+          {/* The app's topbar at rest (Kai 2026-10-07): no sync status unless something is slow, offline or not saved. */}
+          <span>Kai's Flow</span><span>·</span><span>{dateLabel}</span>
           <SeasonTopbarEcho />
         </div>
         <div>{appZone()}</div>

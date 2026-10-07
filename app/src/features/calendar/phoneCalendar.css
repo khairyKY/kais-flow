@@ -64,6 +64,10 @@
 .pc-chip.is-skel { width: 132px; border: none; box-shadow: none; background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
 .pc-chip-t { font-size: 14px; color: var(--ink-body); }
 .pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-chip-d.is-late { color: var(--acc-terra-ink); }
+/* Kai 2026-10-07: Overdue · Today · Inbox above the chips (the desktop rail's sections), 48 tall. */
+.pc-segs { flex: none; display: flex; padding: var(--sp-1) var(--gutter-phone) 0; overflow-x: auto; scrollbar-width: none; }
+.pc-segs::-webkit-scrollbar { display: none; }
 
 /* ── The grid: 64px hours, a 60px hour gutter, dashed hour lines. ── */
 .pc-grid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
@@ -106,11 +110,17 @@
   position: sticky; top: 0; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; max-height: 100%; padding: 0 10px; overflow: hidden;
 }
 .pc-block-body.is-stacked { flex-wrap: wrap; align-content: flex-start; row-gap: 0; padding: 6px 10px; }
-.pc-block-body.is-stacked .pc-name { flex: 1 1 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 18px; }
+.pc-block-body.is-stacked .pc-name { flex: 1 1 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: var(--pc-lines, 2); -webkit-box-orient: vertical; line-height: 18px; }
 .pc-block-body.is-stacked .pc-time { flex-basis: 100%; }
+.pc-block-body.is-stacked .pc-check { align-self: flex-start; }
+/* Under 25 minutes (drawn at least 24 tall): one tight line, title + time, nothing clipped. */
+.pc-block.is-compact .pc-block-body { gap: 6px; padding: 0 6px; }
+.pc-block.is-compact .pc-name { line-height: 18px; }
 .pc-check { flex: none; display: inline-flex; }
 .pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc-time { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */
+.pc-block.is-noted .pc-time { color: var(--acc-terra-ink); }
 .pc-block.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
@@ -169,6 +179,8 @@
 
 .pc-bs-head { margin: 0 0 var(--sp-3); }
 .pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }
+/* The title is a field (Kai 2026-10-07: the sheet read as read-only) — the quick-create field's chrome. */
+.pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }
 .pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
 .pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
 .pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }

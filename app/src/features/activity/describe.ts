@@ -143,10 +143,14 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
         ? line(named(name, (q) => `Brought ${q} back from Someday`, 'Brought a task back from Someday'))
         : line(named(name, (q) => `Moved ${q} to Someday`, 'Moved a task to Someday'))
     case 'task.moved': {
+      // "Move to…" (Kai 2026-10-07): a project, an area, a domain, or none of them.
       const projectId = str(payload, 'project_id')
-      const project = projectId ? names.project(projectId) : undefined
-      if (!projectId) return line(named(name, (q) => `Took ${q} out of its project`, 'Took a task out of its project'))
-      return line(named(name, (q) => (project ? `Moved ${q} into ${project}` : `Moved ${q} to another project`), project ? `Moved a task into ${project}` : 'Moved a task to another project'))
+      const areaId = str(payload, 'area_id')
+      const domainId = str(payload, 'domain_id')
+      const where = projectId ? names.project(projectId) : areaId ? names.area(areaId) : domainId ? names.domain(domainId) : undefined
+      if (!projectId && !areaId && !domainId) return line(named(name, (q) => `Took ${q} out of its project`, 'Took a task out of its project'))
+      const other = projectId ? 'another project' : areaId ? 'another area' : 'another domain'
+      return line(named(name, (q) => (where ? `Moved ${q} into ${where}` : `Moved ${q} to ${other}`), where ? `Moved a task into ${where}` : `Moved a task to ${other}`))
     }
     case 'task.starred':
       return line(named(name, (q) => `Added ${q} to the Top 3`, 'Added a task to the Top 3'))
@@ -245,6 +249,8 @@ function describeRoutine(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(name, (q) => `Unchecked ${q}`, 'Unchecked a routine'))
     case 'routine.archived':
       return line(named(name, (q) => `Archived the routine ${q}`, 'Archived a routine'))
+    case 'routine.restored':
+      return line(named(name, (q) => `Brought back the routine ${q}`, 'Brought back a routine'))
     default:
       return line(named(name, (q) => `Updated the routine ${q}`, 'Updated a routine'))
   }
@@ -394,6 +400,12 @@ function describeArea(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
     case 'area.merged': {
       const into = names.area(str(payload, 'into'))
       return line(named(name, (q) => (into ? `Merged ${q} into ${into}` : `Merged ${q} into another area`), 'Merged two areas'))
+    }
+    case 'area.reparented': {
+      const domainId = str(payload, 'domain_id')
+      const domain = domainId ? names.domain(domainId) : undefined
+      if (!domainId) return line(named(name, (q) => `Took the area ${q} out of its domain`, 'Took an area out of its domain'))
+      return line(named(name, (q) => (domain ? `Moved the area ${q} into ${domain}` : `Moved the area ${q} to another domain`), 'Moved an area to another domain'))
     }
     case 'area.converted': {
       const projectId = str(payload, 'new_project_id')

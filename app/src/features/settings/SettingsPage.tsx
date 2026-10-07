@@ -12,11 +12,12 @@ import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
 import { UpdateNotes } from '../whats-new/WhatsNew'
+import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
-import { readSoundCatalog, writeSoundCatalog, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, type SoundId } from '../../lib/sounds'
+import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
@@ -32,6 +33,8 @@ import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
+import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
+import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed node-for-node onto real data.
@@ -71,12 +74,13 @@ function SCard({ children, style, tapeTint }: { children: ReactNode; style?: CSS
   )
 }
 
-function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
+function Toggle({ on, onToggle, label }: { on: boolean; onToggle?: () => void; label?: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      aria-label={label}
       onClick={onToggle}
       disabled={!onToggle}
       style={{ width: 34, height: 20, borderRadius: 999, background: on ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', border: 'none', cursor: onToggle ? 'pointer' : 'default', padding: 0 }}
@@ -86,7 +90,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle?: () => void }) {
   )
 }
 
-function Seg<T extends string | number>({ value, onChange, options, fill = false }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; fill?: boolean }) {
+function Seg<T extends string | number>({ value, onChange, options, fill = false, minHeight }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; fill?: boolean; minHeight?: number }) {
   // `fill`: span the row and share it equally (phone Interface size — five options must fit even at 175%).
   return (
     <div style={{ display: fill ? 'flex' : 'inline-flex', width: fill ? '100%' : undefined, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
@@ -99,7 +103,7 @@ function Seg<T extends string | number>({ value, onChange, options, fill = false
             onClick={() => onChange(o.value)}
             aria-pressed={on}
             style={{
-              padding: fill ? '6px 0' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, borderRadius: 5, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', font: 'inherit',
+              padding: fill ? '6px 2px' : '6px 13px', flex: fill ? '1 1 0' : undefined, minWidth: 0, minHeight, borderRadius: 5, fontSize: 12, lineHeight: 1.2, whiteSpace: fill ? 'normal' : 'nowrap', // a filled row wraps a long label instead of overlapping its neighbour (Weekend at 150%) border: 'none', cursor: 'pointer', font: 'inherit',
               background: on ? 'var(--paper-parchment)' : 'none',
               boxShadow: on ? 'var(--shadow-crisp)' : 'none',
               color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
@@ -226,16 +230,16 @@ function useThemeMode() {
   return { mode, setMode: setMode_, theme }
 }
 
-// ── Sound catalog — local preference, no audio pipeline shipped yet (out of a reskin wave's
-// scope); toggles persist so the eventual player has real state to read. ──
-const SOUND_CATALOG = [
-  { id: 'paper_rustle', label: 'Paper rustle', help: 'Completing a task', defaultOn: true },
-  { id: 'petal_fall', label: 'Petal fall', help: 'A bloom moment (project / streak milestone)', defaultOn: true },
-  { id: 'distant_chime', label: 'Distant chime', help: 'A ritual begins', defaultOn: false },
-  { id: 'birdsong', label: 'Birdsong', help: 'First open of the morning', defaultOn: false },
-  { id: 'rain_patter', label: 'Rain patter', help: 'Gentle rain / rainy weather', defaultOn: true },
-  { id: 'pencil_scratch', label: 'Pencil scratch', help: 'Saving a journal line', defaultOn: false },
-] as const
+// ── Sound (v2, Kai 2026-10-07): one row per event that really plays, in the order a day meets them. ──
+const SOUND_ROWS: { id: SoundEvent; label: string; help: string }[] = [
+  { id: 'complete', label: 'Task done', help: 'a soft tock as you check one off' },
+  { id: 'complete_big', label: 'Goal done', help: 'the Goal of the day, or the last of your Top 3' },
+  { id: 'capture', label: 'Captured', help: 'saved from the capture bar' },
+  { id: 'focus_start', label: 'Focus begins', help: 'a fresh round starts' },
+  { id: 'focus_end', label: 'Focus ends', help: 'the round is over, heard across the room' },
+  { id: 'ritual_done', label: 'Ritual', help: 'Start the day · Goodnight' },
+  { id: 'undo', label: 'Undo', help: 'a tiny step back' },
+]
 
 
 // (the old local sound store lived here — superseded by lib/sounds.ts)
@@ -323,10 +327,11 @@ function AppearanceCard() {
 
 // Kai 2026-10-03: the view the calendar opens on, synced (app_settings.calendar_default_view) so
 // the computer and the phone agree. Until one is picked the row shows this device's own default.
-function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefaultView }) {
+function CalendarViewSeg({ platformDefault, fill }: { platformDefault: CalendarDefaultView; fill?: boolean }) {
   const view = useCalendarDefaultView(platformDefault)
   return (
     <Seg<CalendarDefaultView>
+      fill={fill}
       value={view ?? platformDefault}
       onChange={(v) => updateAppSetting('calendar_default_view', v)}
       options={[
@@ -338,18 +343,95 @@ function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefault
   )
 }
 
-function CalendarCard() {
+function CalendarCard({ phone = false }: { phone?: boolean }) {
   return (
-    <SCard tapeTint="color-mix(in oklch, var(--acc-lavender) 40%, transparent)">
+    <SCard tapeTint="color-mix(in oklch, var(--acc-lavender) 40%, transparent)" style={phone ? { boxShadow: 'var(--shadow-crisp)' } : undefined}>
       <div style={{ ...flabel, marginBottom: 4 }}>Calendar</div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, padding: '12px 0 2px' }}>
         <div>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Opens on</div>
           <div style={fhelp}>on every device · the toolbar still switches it any time</div>
         </div>
-        <CalendarViewSeg platformDefault="week" />
+        {/* phone-polish: beside its label the three views ran past the card at 360 — fill wraps it to its own line. */}
+        <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} fill={phone} />
       </div>
+      <WeekendSetting phone={phone} />
+      <PlanGlossary />
     </SCard>
+  )
+}
+
+// Kai 2026-10-07: "My weekend is Friday and Saturday… Don't force people to be someone they're not."
+// app_settings.weekend_days (lib/weekend) — what the Plan menu's "This weekend" lands on.
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+function WeekendSetting({ phone }: { phone: boolean }) {
+  const { data } = useAppSettings()
+  const days = parseWeekend(data?.weekend_days)
+  const preset = weekendPreset(days)
+  const [customOpen, setCustomOpen] = useState(false)
+  const shown = customOpen ? 'custom' : preset
+  const set = (next: number[]) => updateAppSetting('weekend_days', [...next].sort((a, b) => a - b))
+  const h = phone ? 48 : undefined // phone targets ≥ 48px
+  return (
+    <div style={{ padding: '14px 0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Weekend</div>
+          <div style={fhelp}>“This weekend” lands on its first day · {weekendLabel(days)}</div>
+        </div>
+        {/* Its own full-width line everywhere: beside the label, four options ran past the card at 150%. */}
+        <div style={{ width: '100%' }}>
+          <Seg<string>
+            fill
+            minHeight={h}
+            value={shown}
+            onChange={(v) => {
+              setCustomOpen(v === 'custom')
+              const p = WEEKEND_PRESETS.find((x) => x.key === v)
+              if (p) set([...p.days])
+            }}
+            options={[...WEEKEND_PRESETS.map((p) => ({ value: p.key as string, label: p.label })), { value: 'custom', label: 'Custom' }]}
+          />
+        </div>
+      </div>
+      {shown === 'custom' && (
+        // One row of seven: on a 390 phone the card has ~310px, so each day is ~44 wide and 48 tall.
+        <div role="group" aria-label="Weekend days" style={{ display: phone ? 'grid' : 'flex', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, marginTop: 10 }}>
+          {WEEKDAY_SHORT.map((label, d) => {
+            const on = days.includes(d)
+            return (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={on}
+                onClick={() => set(on ? days.filter((x) => x !== d) : [...days, d])}
+                style={{ minWidth: phone ? 0 : 40, minHeight: h ?? 32, padding: phone ? 0 : '0 6px', borderRadius: 6, font: 'inherit', fontSize: 12, cursor: 'pointer', border: '1px solid var(--line-card)', background: on ? 'var(--block-lavender)' : 'var(--paper-bone)', color: on ? 'var(--acc-lavender-text)' : 'var(--ink-muted)', fontWeight: on ? 600 : 400 }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** "What the plan shortcuts mean" — the Plan menu's options in a sentence each (tasks/planMath). */
+function PlanGlossary() {
+  const { data } = useAppSettings()
+  return (
+    <div style={{ padding: '16px 0 2px' }}>
+      <div style={{ fontSize: 14, color: 'var(--ink-body)', marginBottom: 6 }}>What the plan shortcuts mean</div>
+      <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
+        {planGlossary(parseWeekend(data?.weekend_days)).map((g) => (
+          <div key={g.label} style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--ink-muted)' }}>
+            <dt style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{g.label}</dt>
+            <dd style={{ margin: 0 }}>{g.means}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   )
 }
 
@@ -396,6 +478,14 @@ function AppUpdateCard() {
         {!available && r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
       </div>
       <div style={fhelp}>{current}{built ? ` · built ${built}` : ''}</div>
+      {/* Tour & help (Tour and Help Guide.dc.html, "Also in Settings → App"): the notes again. */}
+      <button type="button" onClick={restartTour} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 56, marginTop: 14, padding: '6px 0', border: 'none', borderTop: '1px dashed var(--line-dashed)', borderBottom: '1px dashed var(--line-dashed)', background: 'none', font: 'inherit', textAlign: 'start', cursor: 'pointer' }}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: 'var(--acc-terra-ink)' }}>Show me around again</span>
+          <span style={{ display: 'block', marginTop: 2, fontSize: 13, color: 'var(--ink-muted)' }}>Replays the notes on Today and clears seen hints</span>
+        </span>
+        <Icon name="chevright" size={20} style={{ color: 'var(--ink-muted)' }} />
+      </button>
       <UpdateNotes running={running} />
     </SCard>
   )
@@ -1116,20 +1206,42 @@ function IntegrationsPage() {
   )
 }
 
-// Settings.dc.html 3a — master row with the whisper↔full meter, six sounds each with a
-// working preview, quiet hours. Kai un-cut Sounds on 2026-07-26; the voices are synthesised
-// in lib/sounds.ts (no audio files — $0 and weightless).
+/** The round ▶ every sound row and pack card uses. */
+function PlayButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', background: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+    >
+      <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
+    </button>
+  )
+}
+
+// Settings.dc.html 3a: master row with the whisper↔full meter, quiet hours. Sounds v2 (Kai
+// 2026-10-07, "I hate the current sounds"): a pack picker (kalimba / felt / glass, each with ▶ to
+// hear its phrase) and one row per event that actually plays. Synthesised in lib/sounds.ts.
 export function SoundCatalogCard() {
-  const [sounds, setSounds] = useState(readSoundCatalog)
+  const [events, setEvents] = useState(readSoundEvents)
+  const [pack, setPack] = useState(readSoundPack)
   const [volume, setVolume] = useState(readVolume)
   const [quiet, setQuiet] = useState(readQuietHours)
+  const mobile = useIsMobile()
   const masterOn = volume > 0
 
-  function toggleSound(id: SoundId, on: boolean) {
-    const next = { ...sounds, [id]: on }
-    setSounds(next)
-    writeSoundCatalog(next)
+  function toggleEvent(id: SoundEvent, on: boolean) {
+    const next = { ...events, [id]: on }
+    setEvents(next)
+    writeSoundEvents(next)
     if (on) previewSound(id) // turning one on should let you hear what you just agreed to
+  }
+  function choosePack(p: SoundPack) {
+    setPack(p)
+    writeSoundPack(p)
+    previewSound('complete_big', p)
   }
   function setVol(v: number) {
     setVolume(v)
@@ -1142,7 +1254,7 @@ export function SoundCatalogCard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 'none' }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Sound</div>
-          <div style={fhelp}>quiet, papery, never musical</div>
+          <div style={fhelp}>soft, warm, a little musical</div>
         </div>
         {/* The design's whisper↔full meter: three bars that fill with the volume. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginLeft: 'auto' }}>
@@ -1155,7 +1267,7 @@ export function SoundCatalogCard() {
                 aria-label={`Volume ${i + 1} of 3`}
                 onClick={() => {
                   setVol(step)
-                  previewSound('paper_rustle')
+                  previewSound('complete')
                 }}
                 style={{
                   width: 5, height: 6 + i * 5, padding: 0, border: 'none', borderRadius: 1, cursor: 'pointer',
@@ -1165,33 +1277,48 @@ export function SoundCatalogCard() {
             ))}
           </span>
           <span style={{ ...flabel, fontSize: 'var(--fs-meta)' }}>full</span>
-          <Toggle on={masterOn} onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
+          <Toggle on={masterOn} label="Sound" onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
         </div>
       </div>
-      {SOUND_CATALOG.map((s) => {
-        const on = sounds[s.id as SoundId] ?? s.defaultOn
+      <div role="radiogroup" aria-label="Sound pack" style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: 8, padding: '12px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+        {SOUND_PACKS.map((p) => {
+          const on = p === pack
+          return (
+            // The whole card picks the pack; its ▶ only auditions it.
+            <div key={p} data-sound-pack={p} style={{ position: 'relative', borderRadius: 7, border: `1px solid ${on ? 'var(--acc-sage)' : 'var(--line-card)'}`, background: on ? 'var(--paper-bone)' : 'none' }}>
+              <button type="button" role="radio" aria-checked={on} onClick={() => choosePack(p)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <div style={{ fontSize: 14, color: 'var(--ink-body)', minHeight: 24, paddingRight: 30 }}>
+                  {PACKS[p].label}
+                  {on && <span style={{ color: 'var(--acc-sage)', marginLeft: 6 }}>✓</span>}
+                </div>
+                <div style={{ ...fhelp, marginTop: 3 }}>{PACKS[p].blurb}</div>
+              </button>
+              <span style={{ position: 'absolute', top: 8, right: 8 }}>
+                <PlayButton label={`Hear ${PACKS[p].label}`} onClick={() => previewSound('complete_big', p)} />
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      {SOUND_ROWS.map((s) => {
+        const on = events[s.id]
         return (
-          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: masterOn && on ? 1 : 0.6 }}>
-            <button
-              type="button"
-              aria-label={`Preview ${s.label}`}
-              title={`Preview ${s.label}`}
-              onClick={() => previewSound(s.id as SoundId)}
-              style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-solid)', background: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
-            >
-              <svg width="9" height="10" viewBox="0 0 12 14"><path d="M1.5 1.2 11 7l-9.5 5.8V1.2Z" fill="var(--ink-muted)" /></svg>
-            </button>
-            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)', width: 120, flex: 'none' }}>{s.label}</span>
-            <span style={{ ...flabel, fontSize: 'var(--fs-meta)', flex: 1 }}>{s.help}</span>
-            <Toggle on={on} onToggle={() => toggleSound(s.id as SoundId, !on)} />
+          <div key={s.id} data-sound-event={s.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 0', borderBottom: '1px dashed var(--line-dashed)', opacity: masterOn && on ? 1 : 0.6 }}>
+            <PlayButton label={`Preview ${s.label}`} onClick={() => previewSound(s.id)} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-body)' }}>{s.label}</div>
+              <div style={{ ...flabel, fontSize: 'var(--fs-meta)', marginTop: 2 }}>{s.help}</div>
+            </div>
+            <Toggle on={on} label={s.label} onToggle={() => toggleEvent(s.id, !on)} />
           </div>
         )
       })}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--ink-hairline)" /></svg>
-        <span style={{ ...fhelp, marginTop: 0, flex: 1 }}>The garden is silent after you close it.</span>
+        <span style={{ ...fhelp, marginTop: 0, flex: 1 }}>The garden is silent after you close it. Quiet hours and paused notifications hush it too.</span>
         <Toggle
           on={quiet}
+          label="Silent after you close the garden"
           onToggle={() => {
             setQuiet(!quiet)
             writeQuietHours(!quiet)
@@ -1315,10 +1442,11 @@ function MobileSettings() {
   ]
 
   return (
-    <div style={{ padding: '8px 4px 0' }}>
+    // Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 4 of its own.
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--shadow-drop-sm)' }} />
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</div>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--ink-body)' }}>Settings</h1>
       </div>
 
       <SCard style={{ marginTop: 16, boxShadow: 'var(--shadow-crisp)' }}>
@@ -1336,11 +1464,17 @@ function MobileSettings() {
           <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Paper texture</span>
           <HairlineSlider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} style={{ flex: 1, maxWidth: 160 }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
-          <span style={{ fontSize: 13.5, color: 'var(--ink-body)', flex: 'none' }}>Calendar opens on</span>
-          <CalendarViewSeg platformDefault="day" />
-        </div>
       </SCard>
+
+      {/* Calendar: Opens on (it sat under Appearance until the Weekend joined it, 2026-10-07). */}
+      <div id="settings-Calendar" style={{ marginTop: 12 }}>
+        <CalendarCard phone />
+      </div>
+
+      {/* Sounds v2: the phone plays them too, so it gets the same card (it had none). */}
+      <div id="settings-Sound" style={{ marginTop: 12 }}>
+        <SoundCatalogCard />
+      </div>
 
       <div style={{ marginTop: 12 }}>
         <TimezoneCard />

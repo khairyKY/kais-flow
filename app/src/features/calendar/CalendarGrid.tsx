@@ -9,6 +9,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
@@ -63,7 +64,10 @@ interface CalendarGridProps {
   onEventClick: (id: string) => void
   /** Punch 34: double-click a task-linked block → straight to the task editor. */
   onEventDoubleClick?: (id: string) => void
-  onExternalDrop: (taskId: string, start: string, allDay: boolean) => void
+  /** A rail card dropped on the grid: a task (`data-task-id`) or an inbox item (`data-inbox-id`). */
+  onExternalDrop: (from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) => void
+  /** Kai 2026-10-07: an overdue block's "Replan" (a task block that ended before today, not done). */
+  onReplan?: (eventId: string, x: number, y: number) => void
   /** Punch 33: a block dragged off the grid onto this element unschedules. Returns true when
    * handled — false (or a non-task block) gets the §7 invalid-drop soft-no instead. */
   railRef?: React.RefObject<HTMLElement | null>
@@ -181,6 +185,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onEventClick,
   onEventDoubleClick,
   onExternalDrop,
+  onReplan,
   railRef,
   onDragToRail,
   hour24,
@@ -271,7 +276,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     gotoDate: (date) => {
       const api = fcRef.current?.getApi()
       if (!api) return
-      api.gotoDate(date)
+      // Already on screen (a block just planned this week): only the hours scroll to it.
+      if (date < api.view.activeStart || date >= api.view.activeEnd) api.gotoDate(date)
       api.scrollToTime(scrollTimeNear(date, scrollLeadMinutes))
     },
     // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
@@ -304,6 +310,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     // it's also in the FC key because slot geometry is measured once per mount.
     <div
       ref={wrapRef}
+      data-tour="calendar"
       className={narrow ? 'kf-cal-narrow' : undefined}
       onContextMenu={handleGridContextMenu}
       style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
@@ -437,7 +444,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Temporal (§5): ran-over (task not done, end passed) is the one terra exception and
         // outranks plain past-dimming; in-progress carries the elapsed wash.
         const ranOver = isTaskish && !!e.taskId && !e.taskDone && endMs < now && !e.allDay
-        if (ranOver) classes.push('kf-ranover')
+        // Kai 2026-10-07: one that ended before today is overdue — muted, "Overdue · Replan" (the
+        // rail's Overdue holds the same task). Ran over earlier today keeps the terra exception.
+        const overdue = ranOver && cairoDateKey(new Date(endMs - 1)) < cairoDateKey(new Date(now))
+        if (overdue) classes.push('kf-overdue')
+        else if (ranOver) classes.push('kf-ranover')
         else if (endMs < now) classes.push('kf-past')
         else if (startMs <= now) classes.push('kf-inprog')
         // Semantic (§4): completed / conflict are the two states the data can express today
@@ -468,6 +479,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfStart: startMs,
           kfEnd: endMs,
           kfRanOver: ranOver,
+          kfOverdue: overdue,
           kfConflict: conflicted,
           kfPending: pendingIds?.includes(e.id) ?? false,
           kfFailed: failedIds?.includes(e.id) ?? false,
@@ -484,7 +496,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       eventContent={(arg) => {
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
-          kfRanOver: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
+          kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
           kfOv: boolean; kfMore: string[] | null; kfPinned: boolean
         }
         const done = !!p.kfTaskDone
@@ -497,8 +509,29 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const endMs = arg.event.end?.getTime() ?? p.kfEnd
 
         // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
-        let timeText = arg.timeText
-        if (p.kfRanOver) {
+        let timeText: React.ReactNode = arg.timeText
+        if (p.kfOverdue && !arg.isMirror) {
+          // dragGuard: a click here opens the Plan menu instead of starting a drag or the details.
+          timeText = (
+            <>
+              <span className="kf-ev-overdue-word">Overdue · </span>
+              <span
+                className="kf-ev-replan"
+                role="button"
+                aria-label={`Replan ${arg.event.title}`}
+                ref={(el) => {
+                  dragGuard(() => {
+                    if (!el) return
+                    const r = el.getBoundingClientRect()
+                    onReplan?.(arg.event.id, r.left, r.bottom)
+                  })(el)
+                }}
+              >
+                Replan
+              </span>
+            </>
+          )
+        } else if (p.kfRanOver) {
           timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}`
         } else if (!done && p.kfStart <= now && now < p.kfEnd) {
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
@@ -512,8 +545,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
         }
         // §7 outbox suffixes ride the time row
-        if (p.kfPending) timeText = `${timeText || ''} · saving ◌`
-        if (p.kfFailed) timeText = `${timeText || ''} · retry`
+        if (p.kfPending) timeText = <>{timeText} · saving ◌</>
+        if (p.kfFailed) timeText = <>{timeText} · retry</>
 
         // Month view has no shingle — its pills never trade the title for "+N more".
         const more = arg.view.type !== 'dayGridMonth' && !arg.isMirror ? p.kfMore : null
@@ -549,7 +582,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             : 0
 
         return (
-          <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
+          <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
             {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
             {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
@@ -571,7 +604,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                 <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
               )}
               {pinnedMore ? (
-                <div className="fc-event-time">{timeText ? `${timeText} · ` : ''}{moreLink}</div>
+                <div className="fc-event-time">{timeText ? <>{timeText} · </> : ''}{moreLink}</div>
               ) : (
                 timeText && <div className="fc-event-time">{timeText}</div>
               )}
@@ -679,9 +712,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         }
       }}
       drop={(info: DropArg) => {
-        const taskId = info.draggedEl.dataset.taskId
-        if (!taskId || !info.date) return
-        onExternalDrop(taskId, info.date.toISOString(), info.allDay)
+        const { taskId, inboxId } = info.draggedEl.dataset
+        if (!(taskId || inboxId) || !info.date) return
+        onExternalDrop({ taskId, inboxId }, info.date.toISOString(), info.allDay)
       }}
     />
     {stackMore && (

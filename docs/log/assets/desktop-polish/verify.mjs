@@ -128,13 +128,13 @@ for (const theme of ['day', 'night']) {
       const cal = page.locator('#settings-Calendar')
       await cal.scrollIntoViewIfNeeded()
       await sleep(300)
-      check(`${N('settings')} Calendar → Opens on shows Week (desktop default) when unset`, (await cal.locator('button[aria-pressed="true"]').innerText()) === 'Week')
+      check(`${N('settings')} Calendar → Opens on shows Week (desktop default) when unset`, (await cal.locator('button[aria-pressed="true"]').first().innerText()) === 'Week')
       const from = state.writes.length
       await cal.getByRole('button', { name: '3 days' }).click()
       await sleep(500)
       const w = writesTo(state, 'app_settings', from)
       check(`${N('settings')} picking 3 days writes calendar_default_view = '3day'`, w.length === 1 && w[0].calendar_default_view === '3day', JSON.stringify(w.map((x) => x.calendar_default_view)))
-      check(`${N('settings')} and the row shows it`, (await cal.locator('button[aria-pressed="true"]').innerText()) === '3 days')
+      check(`${N('settings')} and the row shows it`, (await cal.locator('button[aria-pressed="true"]').first().innerText()) === '3 days')
       await shot(page, N('settings-calendar'))
     }
     check(`${N('settings')} @${scale * 100}% no page errors`, errors.length === 0, errors.join(' | '))
@@ -257,14 +257,15 @@ for (const theme of ['day', 'night']) {
     const areaRow = page.locator('.kf-lift', { hasText: 'Health' }).first()
     await areaRow.click({ button: 'right' })
     await sleep(300)
-    // projects-fixes (Kai 2026-10-06) added "Change type…" to both menus (docs/log/assets/projects-fixes).
-    check(`${N('projects')} right-click an area → Open · Rename · Change type… · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Change type… · Delete')
+    // projects-fixes (Kai 2026-10-06) added "Change type…" to both menus (docs/log/assets/projects-fixes);
+    // tasks-noise (Kai 2026-10-07) added "Domain…" (docs/log/assets/tasks-noise).
+    check(`${N('projects')} right-click an area → Open · Rename · Domain… · Change type… · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Domain… · Change type… · Delete')
     await shot(page, N('projects-area-menu'))
     await page.keyboard.press('Escape')
     await sleep(200)
     await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
     await sleep(300)
-    check(`${N('projects')} right-click a project → Open · Rename · Change type… · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Change type… · Finish & press · Delete')
+    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Domain… · Change type… · Finish & press · Delete')
     await page.keyboard.press('Escape')
     await sleep(200)
     const prevented = await page.evaluate(() => {

@@ -26,7 +26,7 @@ import {
   isThisMonth,
   renameProject,
 } from './api'
-import { useAreas, renameArea } from '../areas/api'
+import { useAreas, renameArea, reparentArea } from '../areas/api'
 import { RenameField } from '../../components/RenameField'
 import { NumberField } from '../../components/NumberField'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -39,16 +39,18 @@ import {
   completeTaskWithUndo,
   undoCompletion,
   createTask,
-  setSomeday,
-  setProject,
-  rescheduleDue,
+  moveTasksWithUndo,
+  rescheduleTasksWithUndo,
+  somedayTasksWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
+import { PlanMenu } from '../tasks/PlanMenu'
 import { BulkBar } from '../../components/BulkBar'
-import { ScheduleMenu } from '../../components/ScheduleMenu'
-import { ProjectPicker } from '../../components/ProjectPicker'
+import { MovePicker } from '../tasks/MovePicker'
+import type { MoveTarget } from '../tasks/move'
+import { useSelectAllKey } from '../../components/useListKeys'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
@@ -226,23 +228,20 @@ export function ProjectDetailPage() {
     clearSelection()
   }
   const bulkSomeday = () => {
-    const batch = selectedTasks
-    batch.forEach((t) => setSomeday(t, true))
-    toastUndo(`${plural(batch.length)} parked for someday.`, () => batch.forEach((t) => setSomeday(t, false)))
+    somedayTasksWithUndo(selectedTasks)
     clearSelection()
   }
-  const bulkSchedule = (iso: string) => {
-    const batch = selectedTasks
-    batch.forEach((t) => rescheduleDue(t, iso))
-    toastUndo(`${plural(batch.length)} scheduled.`, () => batch.forEach((t) => rescheduleDue(t, t.due_at)))
+  const bulkSchedule = (iso: string, timed?: boolean) => {
+    rescheduleTasksWithUndo(selectedTasks, iso, { timed })
     clearSelection()
   }
-  const bulkMove = (projectId: string | null, domainId: string | null) => {
-    const batch = selectedTasks
-    batch.forEach((t) => setProject(t, projectId, domainId))
-    toastUndo(`${plural(batch.length)} moved.`, () => batch.forEach((t) => setProject(t, t.project_id, t.domain_id)))
+  const bulkMove = (to: MoveTarget) => {
+    moveTasksWithUndo(selectedTasks, to)
     clearSelection()
   }
+  // Kai 2026-10-07: Ctrl/Cmd+A selects this page's open tasks too (it only worked on Tasks/Today/Inbox).
+  // `id` is a project or an area, never both, so one filter serves both pages.
+  useSelectAllKey(() => setSelected(new Set(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)).map((t) => t.id))), !bulkSchedulePos && !bulkProjectPos)
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
   const bulkDelete = () => {
     deleteTasksWithUndo(selectedTasks)
@@ -268,8 +267,10 @@ export function ProjectDetailPage() {
           onClear={clearSelection}
         />
       )}
-      {bulkSchedulePos && <ScheduleMenu position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} onSchedule={(iso) => bulkSchedule(iso)} onSomeday={bulkSomeday} />}
-      {bulkProjectPos && <ProjectPicker position={bulkProjectPos} projects={projects} domains={domains} currentProjectId={null} onSelect={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {bulkSchedulePos && selectedTasks.length > 0 && (
+        <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
+      )}
+      {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
     </>
   )
 
@@ -572,18 +573,18 @@ export function ProjectDetailPage() {
             <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 22, opacity: 0.45 }} title="p100" />
           </div>
 
-          <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: '30px 36px 36px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px 16px 24px' : '30px 36px 36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
               <BackLink to="/projects">All projects</BackLink>
               <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
                 {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: isMobile ? 'wrap' : undefined, gap: '8px 13px', marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
-              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: 'right' }}>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: isMobile ? '1 1 calc(100% - 28px)' : 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
+              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: isMobile ? 'left' : 'right', marginLeft: isMobile ? 28 : undefined }}>
                 target<br />
                 <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
                   {project.target_date ? new Date(project.target_date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' }) : 'no date'}
@@ -615,10 +616,10 @@ export function ProjectDetailPage() {
             <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
             <Select
               value={project.domain_id ?? ''}
-              onChange={(v) => reparentProject(project, v || null)}
+              onChange={(v) => reparentProject(project, v || null, domains.find((d) => d.id === v)?.name)}
               options={[{ value: '', label: '— no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
               ariaLabel="Project domain"
-              style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }}
+              style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}
             />
 
             {/* Hours + Milestones */}
@@ -657,9 +658,9 @@ export function ProjectDetailPage() {
                           style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
                         />
                       ) : (
-                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1 }}>{m.title}</span>
+                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
                       )}
-                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
+                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>weight {m.weight}</span>
                       <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
                       <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
                     </div>
@@ -771,6 +772,7 @@ export function ProjectDetailPage() {
                   style={{
                     padding: '4px 10px',
                     fontSize: 11,
+                    whiteSpace: 'nowrap',
                     cursor: 'pointer',
                     borderRadius: 5,
                     background: logMode === 'work' ? 'var(--paper-parchment)' : 'transparent',
@@ -788,6 +790,7 @@ export function ProjectDetailPage() {
                   style={{
                     padding: '4px 10px',
                     fontSize: 11,
+                    whiteSpace: 'nowrap',
                     cursor: 'pointer',
                     borderRadius: 5,
                     background: logMode === 'update' ? 'var(--paper-parchment)' : 'transparent',
@@ -945,27 +948,37 @@ export function ProjectDetailPage() {
       <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
-        <div style={{ padding: '30px 40px 36px', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: isMobile ? '20px 16px 24px' : '30px 40px 36px', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
             <BackLink to="/projects">All projects</BackLink>
             <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
               {domain?.name || 'Personal'} · ongoing since {new Date(area.created_at).toLocaleDateString('en-US', { month: 'short' })}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: isMobile ? 'wrap' : undefined, gap: '8px 14px', marginTop: 20 }}>
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: isMobile ? '1 1 calc(100% - 29px)' : 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}</h1>
             </div>
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3 }}>
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3, marginLeft: isMobile ? 29 : undefined }}>
               area, not a project
             </span>
           </div>
 
+          {/* Kai 2026-10-07: an area's domain, set or changed here (its tasks follow; Undo in the toast) — the project page's own field. */}
+          <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+          <Select
+            value={area.domain_id ?? ''}
+            onChange={(v) => reparentArea(area, v || null, domains.find((d) => d.id === v)?.name ?? '')}
+            options={[{ value: '', label: '— no domain' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+            ariaLabel="Area domain"
+            style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}
+          />
+
           {/* Cadence health cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 22 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '1fr 1fr', gap: 14, marginTop: 22 }}>
             <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
               <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>

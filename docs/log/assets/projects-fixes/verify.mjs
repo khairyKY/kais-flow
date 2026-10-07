@@ -132,9 +132,9 @@ for (const theme of ['day', 'night']) {
     const row = page.locator(`[id="task-${id('1', 1)}"]`)
     await rightClick(row)
     await sleep(400)
-    // A real hand: rest on "Move to project…", then head diagonally down-right into the list —
+    // A real hand: rest on "Move to…" (tasks-noise 2026-10-07: was "Move to project…"), then head diagonally down-right into the list —
     // across Priority / Repeat, which used to swap the list for theirs.
-    const mv = await page.getByRole('menuitem', { name: /Move to project/ }).boundingBox()
+    const mv = await page.getByRole('menuitem', { name: /^Move to…/ }).boundingBox()
     await page.mouse.move(mv.x + 24, mv.y + mv.height / 2)
     await sleep(450)
     const target = page.getByRole('menu').getByText('Retainer Co', { exact: true })
@@ -153,7 +153,7 @@ for (const theme of ['day', 'night']) {
     const both = page.locator(`[id="task-${id('1', 4)}"]`)
     await rightClick(both)
     await sleep(300)
-    await page.getByRole('menuitem', { name: /Move to project/ }).click()
+    await page.getByRole('menuitem', { name: /^Move to…/ }).click()
     await sleep(400)
     const from2 = state.writes.length
     await page.getByRole('menu').getByText('Retainer Co', { exact: true }).click()
@@ -164,18 +164,18 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
   }
   if (want('1')) {
-    // Phone: ⋯ → Move to project… → the sheet
+    // Phone: ⋯ → Move to… → the sheet
     const { ctx, page, errors, state } = await open(`/projects/${SITE.id}`, { theme, view: PHONE })
     await page.getByRole('button', { name: 'More actions for "Call the tyre supplier"' }).click()
     await sleep(500)
-    await page.getByRole('button', { name: /Move to project/ }).click()
+    await page.getByRole('button', { name: /^Move to…/ }).click()
     await sleep(600)
     await shot(page, N('1-move-phone-sheet'))
     const from = state.writes.length
     await page.getByRole('button', { name: /Retainer Co/ }).click()
     await sleep(700)
     const w = writesTo(state, 'tasks', from)
-    check(`${N('move')} phone ⋯ → Move to project… → Retainer Co writes it`, w.length === 1 && w[0].project_id === RETAINER.id, JSON.stringify(w))
+    check(`${N('move')} phone ⋯ → Move to… → Retainer Co writes it`, w.length === 1 && w[0].project_id === RETAINER.id, JSON.stringify(w))
     check(`${N('move')} phone no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
@@ -454,7 +454,7 @@ for (const theme of ['day', 'night']) {
     if (view) {
       await shot(page, N('6-weight-phone'))
       const plus = await page.getByRole('button', { name: 'More Milestone weight' }).boundingBox()
-      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].some((el) => el.scrollLeft > 0))
+      const shifted = await page.evaluate(() => [...document.querySelectorAll('*')].filter((el) => el.scrollLeft > 0).map((el) => `${el.tagName}.${String(el.className).slice(0, 40)}[${el.getAttribute('aria-label') ?? ''}] ${el.scrollLeft}`).join(' | ') || false)
       check(`${N('number')} phone: the milestone row fits the card (−/+ in reach, nothing scrolled sideways)`, plus && plus.x + plus.width <= 390 && !shifted, JSON.stringify({ plus, shifted }))
     }
     check(`${N('number')} ${v}: no page errors`, errors.length === 0, errors.join(' | '))

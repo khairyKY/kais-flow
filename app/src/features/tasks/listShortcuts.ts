@@ -19,7 +19,7 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['2'], action: 'tomorrow', label: 'Schedule tomorrow' },
   { keys: ['3'], action: 'nextWeek', label: 'Schedule next week' },
   { keys: ['t'], action: 'top3', label: 'Toggle Top 3' },
-  { keys: ['p'], action: 'project', label: 'Move to project…' },
+  { keys: ['p'], action: 'project', label: 'Move to…' },
   { keys: ['#'], action: 'delete', label: 'Delete' },
 ]
 

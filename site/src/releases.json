@@ -1,5 +1,26 @@
 [
   {
+    "v": "v1.0.23",
+    "date": "2026-10-07",
+    "title": "Plan, replan, and a calmer day",
+    "highlights": [
+      "Plan or Replan any task: Next free slot (you confirm it), Tomorrow first thing, and your own weekend days",
+      "Make any task the goal of the day and put your Top 3 in your order, the same on your phone and computer",
+      "The calendar's side rail shows Overdue, Today and Inbox, and a time (even one typed in a capture) puts a task on the calendar",
+      "Move tasks into a domain, an area or a project, Ctrl+A works on every list, and the sync line stays quiet",
+      "New sounds (Felt by default, or Kalimba and Glass), and a short tour with a searchable Guide",
+      "Phone polish: a + capture button, tidier Routines, readable short calendar blocks"
+    ],
+    "icons": [
+      "tomorrow",
+      "star",
+      "calendar",
+      "keyboard",
+      "book",
+      "sprout"
+    ],
+    "art": "hydrangea-medium"
+  },  {
     "v": "v1.0.22",
     "date": "2026-10-07",
     "title": "Capture that types, and fills itself in",

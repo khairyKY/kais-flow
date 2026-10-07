@@ -97,6 +97,7 @@ function Shell({ icon, caption, captionTone = 'time', title, meta, body, bar, ac
     <section
       aria-label="Your day"
       data-day-card
+      data-tour="plan"
       style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 16px 9px' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
@@ -195,7 +196,7 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
 
 function RitualShell({ glyph, caption, title, meta, pct, action, children }: { glyph: ReactNode; caption: string; title: string; meta: string[]; pct?: number; action?: ReactNode; children?: ReactNode }) {
   return (
-    <section aria-label="Your day" data-day-card className="tp-ritual">
+    <section aria-label="Your day" data-day-card data-tour="plan" className="tp-ritual">
       <span className="tp-glyph">{glyph}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="tp-caption">{caption}</div>

@@ -5,7 +5,7 @@ import { useEscapeStack } from '../lib/overlayStack'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
-import { FlowerIcon, ProjectsGlyph } from './icons/NavGlyphs'
+import { FlowerIcon, GuideGlyph, ProjectsGlyph } from './icons/NavGlyphs'
 import './kit.css'
 
 // Pixel contract: MK Tab Bar.dc.html + DS-CHANGELOG §3 "Tab bar" (2026-09-28 refresh — replaces the
@@ -17,7 +17,7 @@ import './kit.css'
 const A = '/ds/assets'
 
 /** One tab. Exported so /design-system can show each state signed-out. */
-export function TabItem({ label, icon, tint, active, badge = 0, to, onClick }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void }) {
+export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tour }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void; tour?: string }) {
   const motionOn = useMotionEnabled()
   const inner = (
     <>
@@ -31,7 +31,7 @@ export function TabItem({ label, icon, tint, active, badge = 0, to, onClick }: {
   const name = badge > 0 ? `${label}, ${badge} waiting` : undefined
   if (!to) {
     return (
-      <button type="button" className="kf-tab" data-active={active || undefined} aria-label={name} aria-haspopup="dialog" onClick={onClick}>
+      <button type="button" className="kf-tab" data-active={active || undefined} data-tour={tour} aria-label={name} aria-haspopup="dialog" onClick={onClick}>
         {inner}
       </button>
     )
@@ -74,6 +74,8 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
   { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 20 },
   { to: '/people', label: 'People', dot: '--acc-clover' },
+  // Tour & help 14i: the Guide waits in More, beside Settings.
+  { to: '/guide', label: 'Guide', glyph: <GuideGlyph size={18} /> },
   { to: '/settings', label: 'Settings', dot: '--acc-sage' },
   { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
   { to: '/activity', label: 'Activity', dot: '--acc-gold' },
@@ -104,7 +106,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               key={item.to}
               to={item.to}
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
@@ -117,10 +119,11 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
             </Link>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-          <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
-          <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
-          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
+        {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
+        <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)' }}>
+          <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
+          <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
+          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
         </div>
       </div>
     </div>
@@ -146,7 +149,7 @@ export function MobileTabBar({ pendingInbox, onSearch, onChat, onSignOut }: { pe
           <CaptureButton />
         </div>
         <TabItem to="/calendar" label="Calendar" icon="calendar" tint="var(--block-lavender)" active={pathname === '/calendar'} />
-        <TabItem label="More" icon="more" tint="var(--block-buttercream)" active={moreOpen || onMorePage} onClick={() => setMoreOpen(true)} />
+        <TabItem label="More" icon="more" tint="var(--block-buttercream)" active={moreOpen || onMorePage} onClick={() => setMoreOpen(true)} tour="more" />
       </nav>
 
       {moreOpen && (

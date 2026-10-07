@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
+import { toastUndo } from '../../lib/undo'
+import { playSound } from '../../lib/sounds'
 import { challengeDays, localDateKey } from './streaks'
 import { fetchAll } from '../../lib/fetchAll'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
@@ -93,9 +95,16 @@ export function createChallenge(
   return routine
 }
 
+/** Archives with an Undo toast (the row's ⋯ menu; no confirm — the toast is the way back). */
 export function archiveRoutine(routine: Routine): void {
-  writeRow('routines', { ...routine, active: false })
-  logActivity('routine.archived', 'routine', routine.id, {})
+  writeRow('routines', { ...routine, active: false, updated_at: nowIso() })
+  logActivity('routine.archived', 'routine', routine.id, { name: routine.name })
+  toastUndo('Routine archived', () => restoreRoutine(routine))
+}
+
+export function restoreRoutine(routine: Routine): void {
+  writeRow('routines', { ...routine, active: true, updated_at: nowIso() })
+  logActivity('routine.restored', 'routine', routine.id, { name: routine.name })
 }
 
 /** Toggles today's completion for a routine (idempotent upsert/delete on the unique (routine_id, date)). */
@@ -108,6 +117,7 @@ export function toggleCompletion(routine: Routine, date: Date = new Date()): voi
     writeRow('routine_completions', existing, 'delete')
     logActivity('routine.unchecked', 'routine', routine.id, { date: dateKey })
   } else {
+    playSound('complete') // a routine checked in sounds like a task checked off
     const completion: RoutineCompletion = {
       id: crypto.randomUUID(),
       routine_id: routine.id,

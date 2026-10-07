@@ -36,7 +36,8 @@ export interface DatePickerProps {
    * 'day': "YYYY-MM-DD" in and out, no time. */
   mode?: 'iso' | 'day'
   value: string | null
-  onPick: (value: string, durationMin?: number) => void
+  /** `timed`: the time sheet chose the time (a date alone lands at 09:00 and isn't). */
+  onPick: (value: string, durationMin?: number, timed?: boolean) => void
   onClose: () => void
   /** Today · Tomorrow · This weekend · Next week (those after `max` drop out). */
   quick?: boolean
@@ -89,7 +90,7 @@ export function DatePicker(p: DatePickerProps) {
     const out = mode === 'day' ? d : atDay(d, t ?? '09:00')
     const min = dur != null && dur !== duration ? dur : undefined
     const same = value != null && (mode === 'day' ? out === value : Date.parse(out) === Date.parse(value))
-    if (!same || min !== undefined) onPick(out, min) // Done on an unchanged value writes nothing
+    if (!same || min !== undefined) onPick(out, min, mode === 'iso' && t != null) // Done on an unchanged value writes nothing
   }
   const done = () => {
     if (stage === 'time') emit(day ?? today, time)
@@ -234,13 +235,14 @@ export function DatePicker(p: DatePickerProps) {
 }
 
 /** The desktop dialect: a kf-overlay-card popover at `position`, clamped to the viewport; outside
- * click and Esc close it; focus starts on the day cell and goes back where it came from. */
-function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, focusKey, children }: {
+ * click and Esc close it; focus starts on the day cell and goes back where it came from. The Plan
+ * menu (features/tasks/PlanMenu) draws its list in it too. */
+export function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, focusKey, children }: {
   title: ReactNode
   position?: { x: number; y: number }
   trigger?: RefObject<HTMLElement | null>
   onClose: () => void
-  footer: ReactNode
+  footer?: ReactNode
   focusKey: string | null
   children: ReactNode
 }) {
@@ -300,7 +302,7 @@ function Popover({ title, position = { x: 0, y: 0 }, trigger, onClose, footer, f
       >
         <div id={titleId} className="kf-pk-pop-head">{title}</div>
         <div className="kf-pk-pop-body">{children}</div>
-        <div className="kf-pk-pop-foot">{footer}</div>
+        {footer != null && <div className="kf-pk-pop-foot">{footer}</div>}
       </div>
     </Float>
   )

@@ -51,6 +51,14 @@ const cairo = (iso) => {
   return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`
 }
 const TOMORROW = cairo(new Date(Date.now() + 86_400_000).toISOString()).slice(0, 10)
+/** The UTC instant of a Cairo wall clock on `day` (the offset read from the tz database for that day). */
+const cairoIso = (day, hhmm) => {
+  const noon = new Date(`${day}T12:00:00Z`)
+  const off = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', timeZoneName: 'longOffset' }).formatToParts(noon).find((p) => p.type === 'timeZoneName').value.replace('GMT', '') || '+00:00'
+  return new Date(`${day}T${hhmm}:00${off}`).toISOString()
+}
+// capture-block: a line the local parse finds no time in, but the AI reads one ("before sunrise" → 05:00).
+AI['crypto session before sunrise'] = { kind: 'task', title: 'Crypto session', due_at: cairoIso(TOMORROW, '05:00'), has_time: true, confidence: 0.9 }
 
 const browser = await chromium.launch({
   executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -121,8 +129,11 @@ async function open(route, o = {}) {
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
-  await sleep(1200) // the shell warms the capture bar once the page is idle
+  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 90_000 })
+  // The shell warms the capture bar once the page is idle (its chunk loads, it mounts closed); the
+  // gesture checks start from that state. A busy machine can take a while to get there.
+  await page.waitForFunction(() => performance.getEntriesByType('resource').some((e) => e.name.includes('CommandBar')), null, { timeout: 20_000 }).catch(() => {})
+  await sleep(1200)
   const cdp = view.hasTouch ? await ctx.newCDPSession(page) : null
   return { ctx, page, cdp, errors, state }
 }
@@ -191,7 +202,8 @@ for (const theme of ['day', 'night']) {
     const box = await sheet(page).boundingBox()
     check(`${name} the sheet sits at the bottom of the screen (not the old overlay at the top)`, box && Math.abs(box.y + box.height - 844) <= 2 && box.y > 400, JSON.stringify(box))
     check(`${name} first-run hint "Tap to type · hold to talk" ${theme === 'night' ? 'gone after 3 opens' : 'on a first open'}`, theme === 'night' ? (await page.locator('.kf-capture-hint').count()) === 0 : (await page.locator('.kf-capture-hint').innerText()).toUpperCase() === 'TAP TO TYPE · HOLD TO TALK')
-    check(`${name} centre button keeps the mic glyph; its name says tap to type, hold to talk`, (await captureBtn(page).getAttribute('aria-label')).startsWith('Capture — tap to type, hold to talk'))
+    // phone-polish (2026-10-07): the glyph is the plus now, not the mic (docs/log/assets/phone-polish proves it)
+    check(`${name} centre button: its name says tap to type, hold to talk`, (await captureBtn(page).getAttribute('aria-label')).startsWith('Capture — tap to type, hold to talk'))
     await page.keyboard.type('Email Priya the slides tomorrow 9am #website')
     await keyboard(page, 300)
     await sleep(400)
@@ -204,7 +216,9 @@ for (const theme of ['day', 'night']) {
     await page.keyboard.press('Enter')
     await sleep(600)
     const t = writes(env.state, 'tasks', w0)
-    check(`${name} Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website`, t.length === 1 && t[0].title === 'Email Priya the slides' && cairo(t[0].due_at) === `${TOMORROW} 09:00` && t[0].project_id === PROJECTS[0].id, JSON.stringify(t.map((x) => [x.title, x.due_at && cairo(x.due_at)])))
+    check(`${name} Enter files it like the command bar: a task, title stripped, due tomorrow 09:00 Cairo, in Website`, t.length >= 1 && t.every((x) => x.id === t[0].id) && t[0].title === 'Email Priya the slides' && cairo(t[0].due_at) === `${TOMORROW} 09:00` && t[0].project_id === PROJECTS[0].id, JSON.stringify(t.map((x) => [x.title, x.due_at && cairo(x.due_at)])))
+    const b = writes(env.state, 'calendar_events', w0)
+    check(`${name} …a typed time is a calendar block: tomorrow 09:00–09:30 (capture-block)`, b.length === 1 && b[0].task_id === t[0].id && b[0].starts_at === t[0].due_at && cairo(b[0].ends_at) === `${TOMORROW} 09:30`, JSON.stringify(b.map((x) => [x.task_id === t[0]?.id, cairo(x.starts_at), cairo(x.ends_at)])))
     check(`${name} …and the sheet closes`, (await sheet(page).count()) === 0)
     await keyboard(page, 0)
     basics(env, name)
@@ -244,6 +258,9 @@ for (const theme of ['day', 'night']) {
   check(`${name} mic → the capture sheet steps aside, the voice sheet is listening`, (await sheet(page).count()) === 0 && (await voice.getAttribute('data-voice-phase')) === 'recording' && (await voice.innerText()).toUpperCase().includes('LISTENING'), await voice.innerText().catch(() => ''))
   await shot(page, name)
   const w0 = state.writes.length
+  // Stop & file is enabled once the mic is live (the fake device can be slow on a busy machine).
+  await waitFor(() => voice.getByRole('button', { name: 'Stop & file' }).isEnabled().catch(() => false), 8000)
+  await sleep(800)
   await tap(env, voice.getByRole('button', { name: 'Stop & file' }), 300)
   await waitFor(async () => writes(state, 'tasks', w0).length > 0)
   const t = writes(state, 'tasks', w0)
@@ -293,6 +310,9 @@ for (const theme of ['day', 'night']) {
   await ctx.setOffline(true)
   env.state.transcribe = 'fail' // Playwright's routes still answer offline; a real offline fetch fails
   const voice = page.locator('[role="dialog"][aria-label="Voice capture"]')
+  // Stop & file is enabled once the mic is live (the fake device can be slow on a busy machine).
+  await waitFor(() => voice.getByRole('button', { name: 'Stop & file' }).isEnabled().catch(() => false), 8000)
+  await sleep(800)
   await tap(env, voice.getByRole('button', { name: 'Stop & file' }), 300)
   await waitFor(async () => (await voice.getAttribute('data-voice-phase').catch(() => null)) === 'kept')
   check(`${name} offline → the recording is kept ("You're offline…", Save to Inbox untranscribed)`, (await voice.getAttribute('data-voice-phase').catch(() => null)) === 'kept' && (await voice.innerText()).includes('You’re offline') && (await voice.getByRole('button', { name: 'Save to Inbox untranscribed' }).count()) === 1, await voice.innerText({ timeout: 2000 }).catch(() => 'no voice sheet'))
@@ -347,7 +367,9 @@ for (const theme of ['day', 'night']) {
   await page.keyboard.press('Enter')
   await sleep(500)
   const t = writes(state, 'tasks', w0)
-  check(`${name} Enter files it: a task due tomorrow 15:00 Cairo`, t.length === 1 && t[0].title === 'Call the bank about the mortgage' && cairo(t[0].due_at) === `${TOMORROW} 15:00`, JSON.stringify(t.map((x) => [x.title, x.due_at && cairo(x.due_at)])))
+  check(`${name} Enter files it: a task due tomorrow 15:00 Cairo`, t.length >= 1 && t.every((x) => x.id === t[0].id) && t[0].title === 'Call the bank about the mortgage' && cairo(t[0].due_at) === `${TOMORROW} 15:00`, JSON.stringify(t.map((x) => [x.title, x.due_at && cairo(x.due_at)])))
+  const b = writes(state, 'calendar_events', w0)
+  check(`${name} …and on the calendar: a 15:00–15:30 block`, b.length === 1 && b[0].task_id === t[0].id && cairo(b[0].starts_at) === `${TOMORROW} 15:00` && cairo(b[0].ends_at) === `${TOMORROW} 15:30`, JSON.stringify(b.map((x) => [cairo(x.starts_at), cairo(x.ends_at)])))
   basics(env, name)
   await env.ctx.close()
 }
@@ -404,16 +426,18 @@ const tomorrow3pm = (t) => cairo(t.due_at) === `${TOMORROW} 15:00`
   const w0 = state.writes.length
   await page.keyboard.press('Enter')
   await sleep(250)
+  // (the outbox may send the create and the block's scheduled_start as one row or two: read them all)
   const first = writes(state, 'tasks', w0)
-  check(`${name} Enter → the task is written at once from the local parse, before the AI answers`, first.length === 1 && tomorrow3pm(first[0]) && first[0].priority === null && state.parseCalls.length === 1 && state.parsedAt === 0, JSON.stringify(first.map((t) => [t.title, t.priority])))
-  await waitFor(async () => writes(state, 'tasks', w0).length >= 2)
-  const [, filled] = writes(state, 'tasks', w0)
+  check(`${name} Enter → the task is written at once from the local parse, before the AI answers`, first.length >= 1 && first.every((t) => t.id === first[0].id && t.priority === null) && tomorrow3pm(first[0]) && state.parseCalls.length === 1 && state.parsedAt === 0, JSON.stringify(first.map((t) => [t.title, t.priority])))
+  await waitFor(async () => writes(state, 'tasks', w0).some((t) => t.priority === 1))
+  const filled = writes(state, 'tasks', w0).find((t) => t.priority === 1)
   check(`${name} …then the AI fills only the empties: priority 1 from "asap", the details as notes, a tidied title; the typed date stands`, filled && filled.id === first[0].id && filled.priority === 1 && filled.notes === 'Bring the payslips' && filled.title === 'Call the bank' && tomorrow3pm(filled), JSON.stringify(filled && [filled.title, filled.priority, filled.notes]))
   check(`${name} "✦ Filled by AI: priority, notes" with Undo`, (await toasts(page)).includes('✦ Filled by AI: priority, notes'), JSON.stringify(await toasts(page)))
   await shot(page, name)
+  const w1 = state.writes.length
   await page.locator('.kf-toast', { hasText: '✦ Filled by AI' }).getByRole('button', { name: 'Undo' }).click()
   await sleep(300)
-  const undone = writes(state, 'tasks', w0)[2]
+  const undone = writes(state, 'tasks', w1).at(-1)
   check(`${name} Undo → back to what was typed (priority, notes, title), date untouched`, undone && undone.id === first[0].id && undone.priority === null && undone.notes === null && undone.title === first[0].title && tomorrow3pm(undone), JSON.stringify(undone && [undone.title, undone.priority, undone.notes]))
   basics(env, name)
   await env.ctx.close()
@@ -474,6 +498,78 @@ const tomorrow3pm = (t) => cairo(t.due_at) === `${TOMORROW} 15:00`
   const t = writes(state, 'tasks', w0)
   check(`${name} back online → the queued task syncs as typed (nothing lost)`, t.length >= 1 && t[0].title === 'Call the bank asap' && tomorrow3pm(t[0]) && t[0].priority === null, JSON.stringify(t.map((x) => [x.title, x.priority])))
   basics({ errors: env.errors.filter((e) => !/fetch|network/i.test(e)) }, name)
+  await env.ctx.close()
+}
+
+// ═════ capture-block (Kai 2026-10-07, the 4am complaint): a capture given a TIME lands on the calendar ═════
+{
+  const name = 'block-4am'
+  const env = await open('/calendar', { view: desktop })
+  const { page, state } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await page.keyboard.type('crypto session 4am')
+  check(`${name} the chip shows the typed time`, /· 4:00\sAM$/.test((await page.locator('.kf-overlay-card').innerText()).split('\n').find((l) => l.toUpperCase().includes('4:00')) ?? ''), await page.locator('.kf-overlay-card').innerText())
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  await sleep(700)
+  const t = writes(state, 'tasks', w0)
+  const b = writes(state, 'calendar_events', w0)
+  const at4 = t[0] && cairo(t[0].due_at)
+  check(`${name} "crypto session 4am" → a task due 04:00 AND a 04:00–04:30 block on the calendar`, t.length >= 1 && at4?.endsWith('04:00') && b.length === 1 && b[0].task_id === t[0].id && b[0].type === 'task' && b[0].starts_at === t[0].due_at && cairo(b[0].ends_at).endsWith('04:30'), JSON.stringify({ due: at4, blocks: b.map((x) => [cairo(x.starts_at), cairo(x.ends_at)]) }))
+  check(`${name} …the task row carries the block (scheduled_start)`, t.some((x) => x.scheduled_start === b[0]?.starts_at), JSON.stringify(t.map((x) => x.scheduled_start)))
+  await sleep(300)
+  const day = at4?.slice(0, 10)
+  const col = page.locator(`td.fc-timegrid-col[data-date="${day}"]`)
+  if (await col.count()) {
+    const ev = col.locator('.fc-event', { hasText: 'crypto session' })
+    check(`${name} …and the calendar draws it in ${day}'s column`, (await ev.count()) === 1)
+    await ev.scrollIntoViewIfNeeded().catch(() => {})
+  } else check(`${name} …(${day} is outside the grid's current range — the write above is the proof)`, true, 'skipped')
+  await shot(page, name)
+  basics(env, name)
+  await env.ctx.close()
+}
+{
+  const name = 'block-date-alone'
+  const env = await open('/today', { view: desktop })
+  const { page, state } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await page.keyboard.type('call Omar tomorrow')
+  const chip = (await page.locator('.kf-overlay-card').innerText()).split('\n').map((l) => l.trim()).find((l) => /^tomorrow/i.test(l))
+  check(`${name} a date alone: the chip says just "Tomorrow" (no clock — no block coming)`, chip?.toUpperCase() === 'TOMORROW', chip)
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  await sleep(700)
+  const t = writes(state, 'tasks', w0)
+  check(`${name} "call Omar tomorrow" → a task due tomorrow, nothing on the calendar`, t.length >= 1 && cairo(t[0].due_at).startsWith(TOMORROW) && writes(state, 'calendar_events', w0).length === 0, JSON.stringify({ due: t[0] && cairo(t[0].due_at), blocks: writes(state, 'calendar_events', w0).length }))
+  basics(env, name)
+  await env.ctx.close()
+}
+{
+  const name = 'block-ai-time'
+  const env = await open('/today', { view: desktop, aiDelay: 300 })
+  const { page, state } = env
+  await page.keyboard.press('Control+k')
+  await sleep(300)
+  await page.keyboard.type('crypto session before sunrise !')
+  const w0 = state.writes.length
+  await page.keyboard.press('Enter')
+  await sleep(150)
+  check(`${name} no typed time: the task is written with no block`, writes(state, 'tasks', w0).length >= 1 && writes(state, 'calendar_events', w0).length === 0)
+  await waitFor(async () => writes(state, 'calendar_events', w0).length >= 1)
+  const b = writes(state, 'calendar_events', w0)
+  const t = writes(state, 'tasks', w0)
+  check(`${name} the AI reads a time (has_time) → it fills the date AND puts a 05:00–05:30 block on the calendar`, b.length === 1 && b[0].task_id === t[0].id && cairo(b[0].starts_at) === `${TOMORROW} 05:00` && cairo(b[0].ends_at) === `${TOMORROW} 05:30` && (await toasts(page)).includes('✦ Filled by AI: date'), JSON.stringify({ blocks: b.map((x) => [cairo(x.starts_at), cairo(x.ends_at)]), toasts: await toasts(page) }))
+  await shot(page, name)
+  const w1 = state.writes.length
+  await page.locator('.kf-toast', { hasText: '✦ Filled by AI' }).getByRole('button', { name: 'Undo' }).click()
+  await sleep(500)
+  const gone = writes(state, 'calendar_events', w1)
+  const back = writes(state, 'tasks', w1).at(-1)
+  check(`${name} Undo → the block it made comes off the calendar and the date goes back to none`, gone.some((x) => x.id === b[0].id && x.deleted_at) && back && back.due_at === null && back.priority === 3, JSON.stringify({ gone: gone.map((x) => !!x.deleted_at), due: back?.due_at, priority: back?.priority }))
+  basics(env, name)
   await env.ctx.close()
 }
 

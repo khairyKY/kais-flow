@@ -56,6 +56,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [summary, setSummary] = useState<string[] | null>(null)
   const closeRef = useRef<() => void>(onClose)
+  const rollUndo = useRef(new Map<string, () => void>())
 
   const byId = new Map(tasks.map((t) => [t.id, t]))
   const touched = new Set([...Object.keys(draft.rolled), ...draft.doneHere])
@@ -97,11 +98,16 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   }
   function roll(list: Task[]) {
     const fresh = list.filter((t) => !isRolled(t) && t.status === 'todo')
-    fresh.forEach((t) => rescheduleDue(t, scheduleTomorrow()))
+    fresh.forEach((t) => rollUndo.current.set(t.id, rescheduleDue(t, scheduleTomorrow())))
     setDraft((d) => ({ seen, rolled: { ...d.rolled, ...Object.fromEntries(fresh.map((t) => [t.id, t.due_at])) } }))
   }
   function unroll(t: Task) {
-    rescheduleDue(t, draft.rolled[t.id] ?? null)
+    // The roll's own Undo puts a calendar block it took off back too; after a reload (the draft
+    // survives, the closure doesn't) the due date alone goes back.
+    const undo = rollUndo.current.get(t.id)
+    rollUndo.current.delete(t.id)
+    if (undo) undo()
+    else rescheduleDue(t, draft.rolled[t.id] ?? null)
     setDraft((d) => {
       const rolled = { ...d.rolled }
       delete rolled[t.id]
@@ -134,7 +140,6 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   function saveLine(): boolean {
     const text = draft.line.trim()
     if (!text) return false
-    playSound('pencil_scratch')
     const prior = draft.saved
     const entry = upsertJournalEntry(prior ? { id: prior.id, created_at: prior.created_at, entry_date: day, body: text } : { entry_date: day, body: text }, !prior)
     // S8 (polish-f1): the event says a line was written, never what it says.
@@ -166,6 +171,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     const steps = SHUT_STEPS.filter((s) => s !== 'line' || wroteLine)
     steps.forEach(logStep)
     logRitualFinished('evening', steps)
+    playSound('ritual_done') // before the garden closes: closing it is what silences it
     // Settings 3a: "The garden is silent after you close it." Quiet hours lift at the date turn.
     closeTheGarden(localDateKey(new Date()))
     setSummary([...stats, `${stars.length} seeded`])

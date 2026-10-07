@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
 import { usePrefersReducedMotion } from '../lib/motion'
 import { uiZoom } from '../lib/uiScale'
+import { holdShellChrome } from '../lib/platform'
 
 // ── MK Bottom Sheet (DS-CHANGELOG §3): --paper-parchment, top radius --sheet-radius, --shadow-sheet;
 // handle 32×4 (--ink-hairline) in a 120×48 hit that drags; detents medium 60% / full 100% − 48
@@ -142,6 +143,8 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
   const z = uiZoom() // screen px → layout px under the root UI zoom
 
   useMainScrollLock()
+  // Android shell: the gesture-bar strip under the page takes the sheet's colour while it's up.
+  useEffect(() => (sheetRef.current ? holdShellChrome(sheetRef.current) : undefined), [])
 
   const requestClose = useCallback(() => {
     const focused = document.activeElement

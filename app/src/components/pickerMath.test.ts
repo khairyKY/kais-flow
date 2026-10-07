@@ -215,3 +215,18 @@ describe('time rows, busy blocks and free slots', () => {
     expect([15, 30, 45, 60, 90, 120].map(durationLabel)).toEqual(['15m', '30m', '45m', '1h', '1h30', '2h'])
   })
 })
+
+describe('quickPicks — This weekend is the user’s weekend', () => {
+  const wed = new Date('2026-10-07T10:00:00+03:00')
+  const weekend = (days: number[], now = wed) => quickPicks(now, true, days).find((p) => p.key === 'weekend')
+  it('Sat + Sun → Saturday; Fri + Sat → Friday; Sun only → Sunday; none → no pick', () => {
+    expect(weekend([0, 6])?.day).toBe('2026-10-10')
+    expect(weekend([5, 6])?.day).toBe('2026-10-09')
+    expect(weekend([0])?.day).toBe('2026-10-11')
+    expect(weekend([])).toBeUndefined()
+    expect(quickPicks(wed, true, []).map((p) => p.key)).toEqual(['today', 'tomorrow', 'nextweek'])
+  })
+  it('still one pick per day: Fri + Sat on a Thursday is just Tomorrow', () => {
+    expect(quickPicks(new Date('2026-10-08T10:00:00+03:00'), true, [5, 6]).map((p) => p.key)).toEqual(['today', 'tomorrow', 'nextweek'])
+  })
+})

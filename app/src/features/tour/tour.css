@@ -1,0 +1,233 @@
+/* Tour & help — design-export/Tour and Help.dc.html (14a–14f, 14h) + Desktop (14g). The note is the
+   kit's taped paper card; the dim is 24% and never takes a tap (pointer-events: none) — only the
+   card does. Sizes are the export's; logical properties keep it RTL-ready. */
+
+.kf-tour { position: fixed; inset: 0; z-index: 950; pointer-events: none; }
+.kf-tour-dim { position: fixed; inset: 0; background: var(--tour-dim); animation: kfFadeIn 210ms var(--ease-out); }
+.kf-tour-spot {
+  position: fixed;
+  box-shadow: 0 0 0 200vmax var(--tour-dim);
+  outline: 1.5px dashed var(--acc-terra);
+  outline-offset: 4px;
+  animation: kfFadeIn 210ms var(--ease-out);
+}
+:root { --tour-dim: rgba(42, 36, 32, 0.24); }
+:root[data-theme='night'] { --tour-dim: rgba(8, 7, 10, 0.4); }
+
+.kf-tour-stem { position: fixed; width: 0; border-inline-start: 1.5px dashed var(--acc-terra); }
+.kf-tour-stem::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: -4.75px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acc-terra);
+}
+.kf-tour-stem[data-dot='top']::after { top: -4px; }
+.kf-tour-stem[data-dot='bottom']::after { bottom: -4px; }
+
+.kf-tour-note {
+  position: fixed;
+  pointer-events: auto;
+  box-sizing: border-box;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: 3px;
+  box-shadow: var(--shadow-popover);
+  padding-block: 16px 6px;
+  padding-inline: 16px 12px;
+  color: var(--ink-body);
+  font-family: var(--font-ui);
+  animation: kfOverlayIn 210ms var(--ease-out);
+}
+.kf-tour-tape {
+  position: absolute;
+  top: -8px;
+  inset-inline-start: 28px;
+  width: 56px;
+  height: 16px;
+  background: rgba(138, 154, 126, 0.45);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);
+  border-radius: 1px;
+  transform: rotate(-4deg);
+  box-shadow: var(--shadow-crisp);
+}
+.kf-tour-img {
+  position: absolute;
+  top: -20px;
+  inset-inline-end: 10px;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: var(--shadow-drop-sm);
+}
+.kf-tour-bloom { position: fixed; width: 120px; height: 120px; object-fit: contain; filter: var(--shadow-drop-sm); z-index: 1; }
+.kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc-sage-text); }
+.kf-tour-line {
+  margin-top: 6px;
+  padding-inline-end: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-hand);
+  font-size: 27px;
+  line-height: 1.12;
+  color: var(--ink-body);
+  text-wrap: pretty;
+}
+.kf-tour-key {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink-body);
+  background: var(--paper-bone);
+  border: 1px solid var(--line-card);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  box-shadow: var(--shadow-crisp);
+}
+.kf-tour-sub { margin-top: 6px; font-size: 14px; line-height: 1.45; color: var(--ink-muted); text-wrap: pretty; }
+.kf-tour-foot { margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+.kf-tour-dots { display: flex; align-items: center; gap: 6px; padding-inline-start: 2px; }
+.kf-tour-dots > span { width: 8px; height: 8px; border-radius: 999px; box-sizing: border-box; border: 1.5px solid var(--line-control); }
+.kf-tour-dots > span[data-state='done'] { border: none; background: var(--acc-sage-text); }
+.kf-tour-dots > span[data-state='now'] { width: 18px; border: none; background: var(--acc-terra-ink); }
+.kf-tour-skip {
+  height: 48px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-tour-skip:active { background: var(--pressed-overlay); }
+.kf-tour-next {
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-tour-next > span {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  background: var(--acc-terra-ink);
+  color: var(--on-terra);
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow-cta);
+  white-space: nowrap;
+}
+.kf-tour-next:active > span { transform: scale(0.97); }
+.kf-tour-skip:focus-visible, .kf-tour-next:focus-visible > span { outline: none; box-shadow: var(--focus-ring); }
+
+/* 14c — the ghost swipe: the row's copy slides right (Tomorrow), back, left (Delete), back, every
+   5.2 s; a fingertip rides it. */
+@keyframes kfGhostRow { 0%, 10% { transform: translateX(0); } 24%, 32% { transform: translateX(104px); } 44%, 52% { transform: translateX(0); } 66%, 74% { transform: translateX(-104px); } 86%, 100% { transform: translateX(0); } }
+@keyframes kfGhostTap { 0%, 6% { opacity: 0; transform: scale(1.3); } 10% { opacity: 1; transform: scale(1); } 32% { opacity: 1; } 38% { opacity: 0; } 48% { opacity: 0; transform: scale(1.3); } 52% { opacity: 1; transform: scale(1); } 74% { opacity: 1; } 80%, 100% { opacity: 0; } }
+.kf-tour-ghost { position: fixed; overflow: hidden; pointer-events: none; }
+.kf-tour-under { position: absolute; inset: 0; display: flex; }
+.kf-tour-under > span { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.kf-tour-under > .is-right { background: var(--swipe-right-bg); color: var(--swipe-right-ink); padding-inline-start: 18px; }
+.kf-tour-under > .is-left { background: var(--swipe-left-bg); color: var(--swipe-left-ink); justify-content: flex-end; padding-inline-end: 18px; }
+.kf-tour-ghost-row { position: absolute; inset: 0; animation: kfGhostRow 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.kf-tour-ghost-copy { position: absolute; inset: 0; overflow: hidden; }
+.kf-tour-ghost-tp { margin: 0 !important; padding: 0 !important; }
+.kf-tour-finger {
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: rgba(42, 36, 32, 0.16);
+  box-shadow: 0 0 0 2px rgba(251, 246, 233, 0.85), 0 2px 6px rgba(42, 36, 32, 0.2);
+  opacity: 0;
+  animation: kfGhostTap 5.2s ease infinite;
+}
+.kf-tour-arrow {
+  position: fixed;
+  width: 72px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  box-shadow: var(--shadow-crisp);
+  color: var(--acc-terra-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kf-tour-ghost-row, .kf-tour-finger { animation: none; }
+}
+
+/* 14h — a hint: gold paper, a seedling, one Caveat line, ×; a caret points at the thing. */
+.kf-hint {
+  position: fixed;
+  z-index: 940;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding-inline-start: 12px;
+  background: var(--paper-goal);
+  border: 1px solid var(--line-goal);
+  border-radius: 3px;
+  box-shadow: var(--shadow-card);
+  transform: rotate(-0.4deg);
+  animation: kfOverlayIn 210ms var(--ease-out);
+}
+.kf-hint-caret {
+  position: absolute;
+  top: -6px;
+  width: 11px;
+  height: 11px;
+  background: var(--paper-goal);
+  border-left: 1px solid var(--line-goal);
+  border-top: 1px solid var(--line-goal);
+  transform: rotate(45deg);
+}
+.kf-hint:not([data-below]) .kf-hint-caret { top: auto; bottom: -6px; transform: rotate(225deg); }
+.kf-hint > img { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-family: var(--font-hand); font-size: 21px; line-height: 1.15; color: var(--ink-body); text-wrap: pretty; }
+.kf-hint-x {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-hint-x:active { background: var(--pressed-overlay); }
+.kf-hint-x:focus-visible { outline: none; box-shadow: var(--focus-ring); }

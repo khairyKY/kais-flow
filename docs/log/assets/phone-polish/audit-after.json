@@ -1,0 +1,3024 @@
+[
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 43
+  },
+  "gutterL": 16,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 260×37",
+   "INPUT 90×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 96×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 260×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 35,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 734,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 260×37",
+   "INPUT 90×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 96×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 260×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 105×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 732,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 61,
+  "gutterR": 61,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 272×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -101,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 304×22",
+   "INPUT 304×22",
+   "INPUT 304×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 164×37",
+   "Add fact 72×32",
+   "INPUT 227×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 284×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 232,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 69,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 649,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 53×36",
+   "110 53×36",
+   "125 53×36",
+   "150 53×36",
+   "175 53×36",
+   "Day 91×36",
+   "3 days 91×36",
+   "Week 91×36",
+   "Use this device’s zone (Afri 286×32",
+   "Search time zones 286×38",
+   "New domain 226×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 326×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 141×44",
+   "Delete after reading 141×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 360,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 43
+  },
+  "gutterL": 16,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 290×37",
+   "INPUT 120×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 126×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 206×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 35,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 290×37",
+   "INPUT 120×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 126×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 206×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 116×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 36,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 70,
+  "gutterR": 70,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 302×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -71,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 334×22",
+   "INPUT 334×22",
+   "INPUT 334×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 194×37",
+   "Add fact 72×32",
+   "INPUT 176×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 314×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 232,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 36,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 620,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 59×36",
+   "110 59×36",
+   "125 59×36",
+   "150 59×36",
+   "175 59×36",
+   "Day 101×36",
+   "3 days 101×36",
+   "Week 101×36",
+   "Use this device’s zone (Afri 316×32",
+   "Search time zones 316×38",
+   "New domain 256×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 356×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 156×44",
+   "Delete after reading 156×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 390,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 43
+  },
+  "gutterL": 16,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 330×37",
+   "INPUT 160×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 166×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 246×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Monthly bookkeeping 273×36",
+   "Project domain 330×37",
+   "INPUT 160×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 166×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 246×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 130×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 62,
+  "gutterR": 62,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 342×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 32,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 374×22",
+   "INPUT 374×22",
+   "INPUT 374×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 195×37",
+   "Add fact 72×32",
+   "INPUT 216×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 354×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 212,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 76,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 620,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 67×36",
+   "110 67×36",
+   "125 67×36",
+   "150 67×36",
+   "175 67×36",
+   "Day 114×36",
+   "3 days 114×36",
+   "Week 114×36",
+   "Use this device’s zone (Afri 356×32",
+   "Search time zones 356×38",
+   "New domain 296×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 396×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 176×44",
+   "Delete after reading 176×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "day",
+  "width": 430,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 43
+  },
+  "gutterL": 16,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 260×37",
+   "INPUT 90×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 96×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 260×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 35,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 734,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 260×37",
+   "INPUT 90×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 96×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 260×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 105×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 732,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 61,
+  "gutterR": 61,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 272×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -101,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 304×22",
+   "INPUT 304×22",
+   "INPUT 304×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 164×37",
+   "Add fact 72×32",
+   "INPUT 227×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 284×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 232,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 69,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 649,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 53×36",
+   "110 53×36",
+   "125 53×36",
+   "150 53×36",
+   "175 53×36",
+   "Day 91×36",
+   "3 days 91×36",
+   "Week 91×36",
+   "Use this device’s zone (Afri 286×32",
+   "Search time zones 286×38",
+   "New domain 226×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 326×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 141×44",
+   "Delete after reading 141×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 360,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "+ Plant the first one 153×40"
+  ],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 36
+  },
+  "gutterL": 36,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 290×37",
+   "INPUT 120×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 126×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 206×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 35,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 290×37",
+   "INPUT 120×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 126×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 206×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 42,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 116×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 36,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 70,
+  "gutterR": 70,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 302×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -71,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 334×22",
+   "INPUT 334×22",
+   "INPUT 334×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 194×37",
+   "Add fact 72×32",
+   "INPUT 176×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 314×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 232,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 36,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 620,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 59×36",
+   "110 59×36",
+   "125 59×36",
+   "150 59×36",
+   "175 59×36",
+   "Day 101×36",
+   "3 days 101×36",
+   "Week 101×36",
+   "Use this device’s zone (Afri 316×32",
+   "Search time zones 316×38",
+   "New domain 256×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 356×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 156×44",
+   "Delete after reading 156×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 390,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "routines",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Daily rituals",
+   "size": "26px",
+   "serif": true,
+   "left": 40
+  },
+  "gutterL": 16,
+  "gutterR": 32,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "projects",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Projects",
+   "size": "26px",
+   "serif": true,
+   "left": 43
+  },
+  "gutterL": 16,
+  "gutterR": 34,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 468,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "project-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Project domain 330×37",
+   "INPUT 160×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 166×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 246×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "Delete work: 34×42",
+   "CHANGE TYPE… · PROJECT 177×18"
+  ],
+  "header": {
+   "text": "Kai's Flow — the phone polish ",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "retainer-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Monthly bookkeeping 273×36",
+   "Project domain 330×37",
+   "INPUT 160×19",
+   "Less Milestone weight 46×46",
+   "Milestone weight 33×25",
+   "More Milestone weight 46×46",
+   "Add 43×29",
+   "INPUT 166×19",
+   "Checklist item type 75×27",
+   "Add 43×29",
+   "INPUT 246×37",
+   "INPUT 75×37",
+   "Date this work happened: Wed 109×37",
+   "Log 50×34",
+   "CHANGE TYPE… · RETAINER 185×18"
+  ],
+  "header": {
+   "text": "Monthly bookkeeping",
+   "size": "26px",
+   "serif": true,
+   "left": 95
+  },
+  "gutterL": 67,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "area-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Rename Health & training 216×36",
+   "CHANGE TYPE… · AREA 130×36"
+  ],
+  "header": {
+   "text": "Health & training",
+   "size": "26px",
+   "serif": true,
+   "left": 62
+  },
+  "gutterL": 33,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 733,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "perennials",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Open Tasks → 121×40"
+  ],
+  "header": null,
+  "gutterL": 62,
+  "gutterR": 62,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 376,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "tasks",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Today1 52×34",
+   "Overdue0 65×34",
+   "Upcoming0 75×34",
+   "Someday0 70×34",
+   "Done1 45×34",
+   "All5 27×34",
+   "↻ REPEATING 90×18",
+   "Sort order 151×42",
+   "INPUT 342×21"
+  ],
+  "header": {
+   "text": "Tasks",
+   "size": "26px",
+   "serif": true,
+   "left": 67
+  },
+  "gutterL": 16,
+  "gutterR": -31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 742,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "inbox",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Waiting1 59×31",
+   "Dismissed0 73×31"
+  ],
+  "header": {
+   "text": "One waiting",
+   "size": "26px",
+   "serif": true,
+   "left": 64
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 346,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "review",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "SORT THEM → 109×28",
+   "Mark Shaheen swept 146×35"
+  ],
+  "header": {
+   "text": "The sweep",
+   "size": "26px",
+   "serif": true,
+   "left": 39
+  },
+  "gutterL": 32,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "journal",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 374×22",
+   "INPUT 374×22",
+   "INPUT 374×22"
+  ],
+  "header": {
+   "text": "Wednesday, Oct 7",
+   "size": "26px",
+   "serif": true,
+   "left": 41
+  },
+  "gutterL": 16,
+  "gutterR": 33,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 663,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "people",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "People",
+   "size": "26px",
+   "serif": true,
+   "left": 58
+  },
+  "gutterL": 16,
+  "gutterR": 18,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 461,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "person-detail",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 195×37",
+   "Add fact 72×32",
+   "INPUT 216×37",
+   "Log 48×32"
+  ],
+  "header": {
+   "text": "Priya Raman",
+   "size": "26px",
+   "serif": true,
+   "left": 84
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 757,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "library",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "INPUT 354×18"
+  ],
+  "header": {
+   "text": "Library",
+   "size": "26px",
+   "serif": true,
+   "left": 38
+  },
+  "gutterL": 29,
+  "gutterR": 29,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 212,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "herbarium",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "see the garden as it was → 144×19"
+  ],
+  "header": {
+   "text": "The Herbarium",
+   "size": "26px",
+   "serif": true,
+   "left": 16
+  },
+  "gutterL": 16,
+  "gutterR": 76,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 620,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "focus",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": null,
+  "gutterL": 16,
+  "gutterR": 48,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 753,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "settings",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [
+   "Light 62×36",
+   "Dark 58×36",
+   "Auto 58×36",
+   "100 67×36",
+   "110 67×36",
+   "125 67×36",
+   "150 67×36",
+   "175 67×36",
+   "Day 114×36",
+   "3 days 114×36",
+   "Week 114×36",
+   "Use this device’s zone (Afri 356×32",
+   "Search time zones 356×38",
+   "New domain 296×38",
+   "Add 52×38",
+   "Rename Shaheen 51×16",
+   "Trash 1 resting › 396×46",
+   "Send a test notification 174×37",
+   "BUTTON 34×20",
+   "Morning digest time 84×36",
+   "BUTTON 34×20",
+   "Evening nudge time 84×36",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "BUTTON 34×20",
+   "Quiet from 84×36",
+   "Quiet until 84×36",
+   "BUTTON 34×20",
+   "Subscribe this device 144×37",
+   "Keep for 7 days 176×44",
+   "Delete after reading 176×44",
+   "Read & write 116×36",
+   "Read only 94×36"
+  ],
+  "header": {
+   "text": "Settings",
+   "size": "26px",
+   "serif": true,
+   "left": 51
+  },
+  "gutterL": 16,
+  "gutterR": 31,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 758,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "activity",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Activity",
+   "size": "26px",
+   "serif": true,
+   "left": 61
+  },
+  "gutterL": 16,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 407,
+   "ok": true
+  },
+  "errors": []
+ },
+ {
+  "theme": "night",
+  "width": 430,
+  "key": "trash",
+  "hscroll": 0,
+  "oneWord": [],
+  "small": [],
+  "header": {
+   "text": "Trash",
+   "size": "26px",
+   "serif": true,
+   "left": 72
+  },
+  "gutterL": 26,
+  "gutterR": 16,
+  "overlaps": [],
+  "clear": {
+   "bar": 780,
+   "bottom": 322,
+   "ok": true
+  },
+  "errors": []
+ }
+]

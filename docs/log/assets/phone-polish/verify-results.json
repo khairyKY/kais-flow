@@ -1,0 +1,3592 @@
+[
+ {
+  "name": "after routines @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":734,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":732,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":232,\"ok\":true}"
+ },
+ {
+  "name": "after library @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":649,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @360 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @360 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":232,\"ok\":true}"
+ },
+ {
+  "name": "after library @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":620,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @390 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @390 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":212,\"ok\":true}"
+ },
+ {
+  "name": "after library @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":620,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 day no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @430 day no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 day the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @430 day no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":734,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":732,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":232,\"ok\":true}"
+ },
+ {
+  "name": "after library @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":649,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @360 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @360 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @360 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":232,\"ok\":true}"
+ },
+ {
+  "name": "after library @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":620,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @390 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @390 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @390 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after routines @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after routines @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after routines @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after projects @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":468,\"ok\":true}"
+ },
+ {
+  "name": "after projects @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after projects @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after project-detail @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after project-detail @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after project-detail @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after retainer-detail @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after retainer-detail @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after retainer-detail @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after area-detail @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":733,\"ok\":true}"
+ },
+ {
+  "name": "after area-detail @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after area-detail @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after perennials @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":376,\"ok\":true}"
+ },
+ {
+  "name": "after perennials @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after perennials @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after tasks @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":742,\"ok\":true}"
+ },
+ {
+  "name": "after tasks @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after tasks @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after inbox @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":346,\"ok\":true}"
+ },
+ {
+  "name": "after inbox @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after inbox @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after review @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after review @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after review @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after journal @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":663,\"ok\":true}"
+ },
+ {
+  "name": "after journal @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after journal @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after people @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":461,\"ok\":true}"
+ },
+ {
+  "name": "after people @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after people @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after person-detail @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":757,\"ok\":true}"
+ },
+ {
+  "name": "after person-detail @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after person-detail @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after library @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":212,\"ok\":true}"
+ },
+ {
+  "name": "after library @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after library @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after herbarium @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":620,\"ok\":true}"
+ },
+ {
+  "name": "after herbarium @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after herbarium @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after focus @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":753,\"ok\":true}"
+ },
+ {
+  "name": "after focus @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after focus @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after settings @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":758,\"ok\":true}"
+ },
+ {
+  "name": "after settings @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after settings @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after activity @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":407,\"ok\":true}"
+ },
+ {
+  "name": "after activity @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after activity @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 night no sideways scroll",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "after trash @430 night no text wrapping one word per line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 night the last content clears the tab bar",
+  "ok": true,
+  "detail": "{\"bar\":780,\"bottom\":322,\"ok\":true}"
+ },
+ {
+  "name": "after trash @430 night no overlapping text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after trash @430 night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-day every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-360-day no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-day nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-day the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-360-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-day every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-390-day no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-day nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-day the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-390-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-day every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-430-day no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-day nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-day the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-430-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-night every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-360-night no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-night nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-360-night the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-360-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-night every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-390-night no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-night nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-390-night the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-390-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-night every row and button is ≥ 48px (14)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "more-430-night no label wraps",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-night nothing runs off the right edge",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "more-430-night the sheet is on top (Settings takes the tap at its centre)",
+  "ok": true,
+  "detail": "Settings"
+ },
+ {
+  "name": "more-430-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-360-day morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-360-day morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-360-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-360-day evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-360-day evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-360-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-360-day side gutters match Today's (16px): header + cards span 16…344, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,344],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-360-day no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-360-day each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":296,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-360-day a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":2,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-360-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-390-day morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-390-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-390-day evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-390-day evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-390-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-390-day side gutters match Today's (16px): header + cards span 16…374, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,374],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-390-day no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":326,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-390-day a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":2,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-390-day tapping the pin flips aria-pressed (true → false)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day ⋯ opens the kit action sheet titled with the routine (rows: Streak trellis, Archive)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day the sheet is on top (the Archive row takes the tap at its centre)",
+  "ok": true,
+  "detail": "Archive"
+ },
+ {
+  "name": "routines-390-day Archive → routines row written with active = false (through the outbox)",
+  "ok": true,
+  "detail": "[[\"Stretch for ten minutes\",false]]"
+ },
+ {
+  "name": "routines-390-day …and logged routine.archived",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day …the row leaves the list",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day …toast \"Routine archived\" with Undo",
+  "ok": true,
+  "detail": "[\"Routine archived\"]"
+ },
+ {
+  "name": "routines-390-day Undo → written back active = true, the row returns",
+  "ok": true,
+  "detail": "[[\"Stretch for ten minutes\",true]]"
+ },
+ {
+  "name": "routines-390-day …and logged routine.restored",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-430-day morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-430-day morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-430-day morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-430-day evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-430-day evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-430-day evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-430-day side gutters match Today's (16px): header + cards span 16…414, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,414],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-430-day no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-430-day each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":366,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-430-day a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-430-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-360-night morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-360-night morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-360-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-360-night evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-360-night evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-360-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-360-night side gutters match Today's (16px): header + cards span 16…344, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,344],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-360-night no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-360-night each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":296,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-360-night a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":2,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-360-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-390-night morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-390-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-390-night evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-390-night evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-390-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-390-night side gutters match Today's (16px): header + cards span 16…374, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,374],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-390-night no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":326,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-390-night a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":2,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-390-night tapping the pin flips aria-pressed (true → false)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night ⋯ opens the kit action sheet titled with the routine (rows: Streak trellis, Archive)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night the sheet is on top (the Archive row takes the tap at its centre)",
+  "ok": true,
+  "detail": "Archive"
+ },
+ {
+  "name": "routines-390-night Archive → routines row written with active = false (through the outbox)",
+  "ok": true,
+  "detail": "[[\"Stretch for ten minutes\",false]]"
+ },
+ {
+  "name": "routines-390-night …and logged routine.archived",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night …the row leaves the list",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night …toast \"Routine archived\" with Undo",
+  "ok": true,
+  "detail": "[\"Routine archived\"]"
+ },
+ {
+  "name": "routines-390-night Undo → written back active = true, the row returns",
+  "ok": true,
+  "detail": "[[\"Stretch for ten minutes\",true]]"
+ },
+ {
+  "name": "routines-390-night …and logged routine.restored",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-390-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-430-night morning card title on one line (\"Morning ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Morning ritual\"}"
+ },
+ {
+  "name": "routines-430-night morning card subtitle on one line (\"PLAN THE DAY\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"PLAN THE DAY\"}"
+ },
+ {
+  "name": "routines-430-night morning pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-430-night evening card title on one line (\"Evening ritual\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":2,\"text\":\"Evening ritual\"}"
+ },
+ {
+  "name": "routines-430-night evening card subtitle on one line (\"CLOSE ITS LOOPS\")",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":3,\"text\":\"CLOSE ITS LOOPS\"}"
+ },
+ {
+  "name": "routines-430-night evening pin is icon-only, ≥ 48×48, named + titled + aria-pressed",
+  "ok": true,
+  "detail": "{\"text\":\"\",\"w\":48,\"h\":48,\"title\":\"Unpin from Today\",\"pressed\":\"true\"}"
+ },
+ {
+  "name": "routines-430-night side gutters match Today's (16px): header + cards span 16…414, text no closer",
+  "ok": true,
+  "detail": "{\"vine\":16,\"card\":[16,414],\"text\":[16,32]}"
+ },
+ {
+  "name": "routines-430-night no bare \"archive\" text link left on the rows",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-430-night each routine row has a ⋯ button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":366,\"y\":506.75,\"width\":48,\"height\":48}"
+ },
+ {
+  "name": "routines-430-night a long routine name never wraps one word per line",
+  "ok": true,
+  "detail": "{\"lines\":1,\"words\":8,\"text\":\"Phone on the charger, out of the bedroom\"}"
+ },
+ {
+  "name": "routines-430-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-day the ⋯ is visible at rest (not hover-only)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-day the pin keeps its \"pinned\" label on a computer",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-day ⋯ → the context menu with Archive",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-day Archive writes active = false + Undo toast",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-night the ⋯ is visible at rest (not hover-only)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-night the pin keeps its \"pinned\" label on a computer",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-night ⋯ → the context menu with Archive",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-night Archive writes active = false + Undo toast",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "routines-desktop-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day centre glyph = the desktop Capture button's plus (not the mic)",
+  "ok": true,
+  "detail": "<path d=\"M12 5v14M5 12h14\"></path>"
+ },
+ {
+  "name": "capture-day aria-label unchanged: \"Capture — tap to type, hold to talk\"",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day centre button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":167,\"y\":784,\"width\":56,\"height\":56}"
+ },
+ {
+  "name": "capture-day hold → recording (hold-to-talk kept)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day …while recording the button shows the mic",
+  "ok": true,
+  "detail": "<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"></rect><pat"
+ },
+ {
+  "name": "capture-day release → the voice sheet files the take",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day …and the button is back to the plus",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day tap → the capture sheet, field focused",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day first-opens hint shown on a first open",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day keyboard down → the sheet sits on the bottom edge (no gap under it)",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":637,\"width\":390,\"height\":207}"
+ },
+ {
+  "name": "capture-day …covering the tab bar (the sheet takes a tap where the tab bar is)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-day keyboard up (visualViewport 300px shorter) → the sheet's bottom rides it at 544",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":337,\"width\":390,\"height\":207}"
+ },
+ {
+  "name": "capture-day keyboard down again → back on the bottom edge",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":637,\"width\":390,\"height\":207}"
+ },
+ {
+  "name": "capture-day WebView resized for the keyboard (Android shell) → the sheet sits on the new bottom, no double gap",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":337,\"width\":390,\"height\":207}"
+ },
+ {
+  "name": "capture-day …keyboard gone → back on the bottom edge",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":637,\"width\":390,\"height\":207}"
+ },
+ {
+  "name": "capture-day Android strips painted the sheet's colour while it's up (#fbf6e9)",
+  "ok": true,
+  "detail": "[\"#fbf6e9\",true]"
+ },
+ {
+  "name": "capture-day …and the page's again once it closes (#efe9db)",
+  "ok": true,
+  "detail": "[\"#efe9db\",true]"
+ },
+ {
+  "name": "capture-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night centre glyph = the desktop Capture button's plus (not the mic)",
+  "ok": true,
+  "detail": "<path d=\"M12 5v14M5 12h14\"></path>"
+ },
+ {
+  "name": "capture-night aria-label unchanged: \"Capture — tap to type, hold to talk\"",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night centre button ≥ 48×48",
+  "ok": true,
+  "detail": "{\"x\":167,\"y\":784,\"width\":56,\"height\":56}"
+ },
+ {
+  "name": "capture-night hold → recording (hold-to-talk kept)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night …while recording the button shows the mic",
+  "ok": true,
+  "detail": "<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"></rect><pat"
+ },
+ {
+  "name": "capture-night release → the voice sheet files the take",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night …and the button is back to the plus",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night tap → the capture sheet, field focused",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night first-opens hint gone after 3 opens",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night keyboard down → the sheet sits on the bottom edge (no gap under it)",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":667,\"width\":390,\"height\":177}"
+ },
+ {
+  "name": "capture-night …covering the tab bar (the sheet takes a tap where the tab bar is)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "capture-night keyboard up (visualViewport 300px shorter) → the sheet's bottom rides it at 544",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":367,\"width\":390,\"height\":177}"
+ },
+ {
+  "name": "capture-night keyboard down again → back on the bottom edge",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":667,\"width\":390,\"height\":177}"
+ },
+ {
+  "name": "capture-night WebView resized for the keyboard (Android shell) → the sheet sits on the new bottom, no double gap",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":367,\"width\":390,\"height\":177}"
+ },
+ {
+  "name": "capture-night …keyboard gone → back on the bottom edge",
+  "ok": true,
+  "detail": "{\"x\":0,\"y\":667,\"width\":390,\"height\":177}"
+ },
+ {
+  "name": "capture-night Android strips painted the sheet's colour while it's up (#262233)",
+  "ok": true,
+  "detail": "[\"#262233\",false]"
+ },
+ {
+  "name": "capture-night …and the page's again once it closes (#211d30)",
+  "ok": true,
+  "detail": "[\"#211d30\",false]"
+ },
+ {
+  "name": "capture-night no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "toast-day Inbox → Scan paper → \"A quick look\" (full screen)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "toast-day the toast clears ✕ and Rotate",
+  "ok": true,
+  "detail": "{\"toast\":{\"x\":12,\"y\":703,\"width\":366,\"height\":48},\"close\":{\"x\":4,\"y\":4,\"width\":48,\"height\":48},\"rotate\":{\"x\":338,\"y\":4,\"width\":48,\"height\":48}}"
+ },
+ {
+  "name": "toast-day …and the bottom buttons (Add page · Read)",
+  "ok": true,
+  "detail": "[{\"x\":16,\"y\":772,\"width\":148.828125,\"height\":52},{\"x\":174.828125,\"y\":772,\"width\":199.171875,\"height\":52}]"
+ },
+ {
+  "name": "toast-day …docked 8px above the bottom bar",
+  "ok": true,
+  "detail": "{\"toastBottom\":751,\"foot\":759}"
+ },
+ {
+  "name": "toast-day Rotate takes the tap while the toast is up",
+  "ok": true,
+  "detail": "transform: rotate(0deg); → transform: rotate(90deg);"
+ },
+ {
+  "name": "toast-day full-screen modal without a bottom bar → toast at the tab-bar dock, off the header",
+  "ok": true,
+  "detail": "{\"t2\":{\"x\":12,\"y\":724,\"width\":366,\"height\":48},\"tabDock\":772}"
+ },
+ {
+  "name": "toast-day an action sheet (no footer) still docks the toast at the top, clear of its rows",
+  "ok": true,
+  "detail": "{\"x\":12,\"y\":8,\"width\":366,\"height\":48}"
+ },
+ {
+  "name": "toast-day the Plan-my-day sheet (full, with footer): toast 8px above its footer, clear of ✕",
+  "ok": true,
+  "detail": "{\"t4\":{\"x\":12,\"y\":673,\"width\":366,\"height\":48},\"rfoot\":{\"x\":0,\"y\":729,\"width\":390,\"height\":115},\"rclose\":{\"x\":4,\"y\":76,\"width\":48,\"height\":48}}"
+ },
+ {
+  "name": "toast-day no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "toast-night Inbox → Scan paper → \"A quick look\" (full screen)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "toast-night the toast clears ✕ and Rotate",
+  "ok": true,
+  "detail": "{\"toast\":{\"x\":12,\"y\":703,\"width\":366,\"height\":48},\"close\":{\"x\":4,\"y\":4,\"width\":48,\"height\":48},\"rotate\":{\"x\":338,\"y\":4,\"width\":48,\"height\":48}}"
+ },
+ {
+  "name": "toast-night …and the bottom buttons (Add page · Read)",
+  "ok": true,
+  "detail": "[{\"x\":16,\"y\":772,\"width\":148.828125,\"height\":52},{\"x\":174.828125,\"y\":772,\"width\":199.171875,\"height\":52}]"
+ },
+ {
+  "name": "toast-night …docked 8px above the bottom bar",
+  "ok": true,
+  "detail": "{\"toastBottom\":751,\"foot\":759}"
+ },
+ {
+  "name": "toast-night Rotate takes the tap while the toast is up",
+  "ok": true,
+  "detail": "transform: rotate(0deg); → transform: rotate(90deg);"
+ },
+ {
+  "name": "toast-night full-screen modal without a bottom bar → toast at the tab-bar dock, off the header",
+  "ok": true,
+  "detail": "{\"t2\":{\"x\":12,\"y\":724,\"width\":366,\"height\":48},\"tabDock\":772}"
+ },
+ {
+  "name": "toast-night an action sheet (no footer) still docks the toast at the top, clear of its rows",
+  "ok": true,
+  "detail": "{\"x\":12,\"y\":8,\"width\":366,\"height\":48}"
+ },
+ {
+  "name": "toast-night the Plan-my-day sheet (full, with footer): toast 8px above its footer, clear of ✕",
+  "ok": true,
+  "detail": "{\"t4\":{\"x\":12,\"y\":673,\"width\":366,\"height\":48},\"rfoot\":{\"x\":0,\"y\":729,\"width\":390,\"height\":115},\"rclose\":{\"x\":4,\"y\":76,\"width\":48,\"height\":48}}"
+ },
+ {
+  "name": "toast-night no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]

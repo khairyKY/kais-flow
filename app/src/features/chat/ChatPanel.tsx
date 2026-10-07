@@ -4,6 +4,15 @@ import { useOpenSearchHit } from '../search/api'
 import { AI_ALLOWANCE_USED_UP } from '../capture/aiAllowance'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
+import { Icon } from '../../components/Icon'
+import type { IconName } from '../../components/icons/kf'
+import './chat.css'
+
+const STARTERS: [IconName, string][] = [
+  ['sprout', 'What’s on today?'],
+  ['delete', 'What should I drop?'],
+  ['tomorrow', 'How do I move a task to tomorrow?'],
+]
 
 interface DisplayMessage {
   role: 'user' | 'assistant'
@@ -31,10 +40,10 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     })
   }
 
-  async function send() {
-    const text = input.trim()
+  async function send(preset?: string) {
+    const text = (preset ?? input).trim()
     if (!text || busy) return
-    setInput('')
+    if (preset == null) setInput('')
     const history: DisplayMessage[] = [...messages, { role: 'user', content: text }]
     setMessages([...history, { role: 'assistant', content: '' }])
     setBusy(true)
@@ -103,9 +112,20 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
 
       <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
-          <p style={{ fontSize: 13.5, color: 'var(--ink-faint)', margin: 0, lineHeight: 1.5 }}>
-            Ask about anything you've captured — "what did I capture about the pricing project last week?"
-          </p>
+          // Tour & help 14l: the empty chat offers three starters — two about the day, one about the
+          // app. A tap sends it.
+          <div className="kf-chat-empty">
+            <img src="/ds/assets/clover/awake.png" alt="" />
+            <div className="kf-chat-empty-line">Ask anything about your day.</div>
+            <div className="kf-chat-empty-sub">It knows your tasks, calendar and routines.</div>
+            <div className="kf-chat-empty-label">Try one</div>
+            {STARTERS.map(([icon, q]) => (
+              <button key={q} type="button" className="kf-chat-starter" onClick={() => void send(q)}>
+                <Icon name={icon} size={18} />
+                <span>{q}</span>
+              </button>
+            ))}
+          </div>
         )}
         {messages.map((m, i) => {
           const streaming = busy && i === messages.length - 1
@@ -168,7 +188,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask your system…"
+          placeholder="Ask about your day…"
           disabled={busy}
           style={{
             flex: 1,

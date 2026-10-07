@@ -4,15 +4,40 @@ import { appZone } from '../../lib/appZone'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
+import { playSound } from '../../lib/sounds'
 import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
 import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
 import { SAVED_UNTRANSCRIBED, UNTRANSCRIBED_VOICE_NOTE } from './voiceCopy'
 import { CONFIDENCE_THRESHOLD, aiFill, taskFromParse, type AiFields, type KnownPlaces } from './aiFill'
-import type { Domain, Project, InboxItem, Task } from '../../lib/types'
+import { placeTask } from '../calendar/api'
+import type { CalendarEvent, Domain, Project, InboxItem, Task } from '../../lib/types'
 
 function nowIso(): string {
   return new Date().toISOString()
+}
+
+const plusMinutes = (iso: string, min: number) => new Date(Date.parse(iso) + min * 60_000).toISOString()
+
+/**
+ * Kai's rule (calendar/replan.ts, as in Akiflow): a task given a TIME is on the calendar; a date
+ * alone isn't. So a capture with a time — typed ("crypto session 4am"), filled in or filed by the AI
+ * (`has_time`) — also gets its block: at that time, as long as its estimate or 30 minutes, through
+ * calendar-rail's placeTask (one block per task, never a second). Returns the block's Undo, or null
+ * when nothing went on the calendar.
+ */
+export function blockIfTimed(task: Task, timed: boolean): (() => void) | null {
+  if (!timed || !task.due_at) return null
+  return placeTask(task, task.due_at, plusMinutes(task.due_at, task.duration_min || 30)).undo
+}
+
+/** A length the AI read stretches the default-length block this capture just made — one block, at
+ * the task's time, still 30 minutes (anything else was placed or resized by hand: left alone). */
+function stretchCaptureBlock(task: Task, minutes: number): (() => void) | null {
+  const own = (queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []).filter((e) => e.task_id === task.id && !e.deleted_at)
+  const b = own.length === 1 ? own[0] : null
+  if (!b || b.all_day || b.starts_at !== task.due_at || Date.parse(b.ends_at) - Date.parse(b.starts_at) !== 30 * 60_000) return null
+  return placeTask(task, b.starts_at, plusMinutes(b.starts_at, minutes)).undo
 }
 
 /** The live (not trashed) projects and domains this device knows — what the AI may place a capture in. */
@@ -108,6 +133,7 @@ export async function captureWithAI(
   transcript: string | null = null,
   overrides: CaptureOverrides = {},
 ): Promise<void> {
+  playSound('capture') // before any await, so it lands inside the tap that captured
   if (!navigator.onLine) {
     const item = newInboxItem(rawText, kind, transcript, null, { needs_parse: true, ...overridesPayload(overrides) })
     writeRow('inbox_items', item)
@@ -132,10 +158,12 @@ export async function captureWithAI(
     // Everything it read — priority from the wording, the description as notes — with a typed
     // `!` / `30m` still beating its own reading.
     const task = createTask(taskFromParse(parse, knownPlaces(), overrides))
+    const unblock = blockIfTimed(task, parse.has_time === true)
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
     useToastStore.getState().push({
       message: `Added "${task.title}"`,
       onUndo: () => {
+        unblock?.()
         writeRow('tasks', task, 'delete')
         logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
         const item = newInboxItem(rawText, kind, transcript, parse)
@@ -178,11 +206,16 @@ export async function enrichTypedTask(created: Task, rawText: string): Promise<v
   if (!filled.length) return
   const keys = Object.keys(patch) as (keyof AiFields)[]
   const before = Object.fromEntries(keys.map((k) => [k, current[k]])) as Partial<AiFields>
-  writeRow('tasks', { ...current, ...patch, updated_at: nowIso() })
+  const next = { ...current, ...patch, updated_at: nowIso() }
+  writeRow('tasks', next)
+  // The calendar follows what it read: a time puts the task on the calendar; a length stretches
+  // the 30-minute block the typed time just made. Undo takes that back too.
+  const unblock = patch.due_at ? blockIfTimed(next, ai.has_time === true) : patch.duration_min ? stretchCaptureBlock(next, patch.duration_min) : null
   logActivity('capture.ai_filled', 'task', current.id, { fields: filled })
   useToastStore.getState().push({
     message: `✦ Filled by AI: ${filled.join(', ')}`,
     onUndo: () => {
+      unblock?.()
       const latest = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === current.id) ?? { ...current, ...patch }
       const back = Object.fromEntries(keys.filter((k) => latest[k] === patch[k]).map((k) => [k, before[k]]))
       writeRow('tasks', { ...latest, ...back, updated_at: nowIso() })
@@ -206,11 +239,13 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
     return
   }
   const task = createTask(taskFromParse(ai, knownPlaces()))
+  const unblock = blockIfTimed(task, ai.has_time === true)
   writeRow('inbox_items', { ...read, status: 'filed', filed_task_id: task.id })
   logActivity('capture.autofiled', 'task', task.id, { confidence: ai.confidence, source: 'typed' })
   useToastStore.getState().push({
     message: `✦ Filed by AI: “${task.title}”`,
     onUndo: () => {
+      unblock?.()
       writeRow('tasks', task, 'delete')
       logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
       writeRow('inbox_items', { ...read, status: 'pending', filed_task_id: null, updated_at: nowIso() })
@@ -271,6 +306,7 @@ async function parseQueued(): Promise<void> {
       if (parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
         const over = rest as { priority_override?: number | null; duration_override?: number | null }
         const task = createTask(taskFromParse(parse, knownPlaces(), { priority: over.priority_override, durationMin: over.duration_override }))
+        blockIfTimed(task, parse.has_time === true)
         writeRow('inbox_items', {
           ...item,
           status: 'filed',

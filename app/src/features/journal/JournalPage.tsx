@@ -495,7 +495,8 @@ export function JournalPage() {
         `}</style>
         <div className="grain" style={{ borderRadius: 0, pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 5 }} />
         
-        <div style={{ flex: 1, padding: '16px 20px 80px', position: 'relative', zIndex: 10 }}>
+        {/* Kai's phone review: the shell's 16px gutter is the page's, not 16 + 20 of its own. */}
+        <div style={{ flex: 1, padding: '0 0 80px', position: 'relative', zIndex: 10 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />

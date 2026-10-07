@@ -44,15 +44,17 @@ const CSS = `
 
 /** Selection mode's bars (DS-CHANGELOG §3 "Selection mode", MK Selection). On a phone: an app bar
  * (✕ · "N selected" · Select all) over the top bar, and a bulk bar that replaces the tab bar —
- * Done · Tomorrow · Pick date · Project · Delete. On desktop: the floating pill, same actions.
+ * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Project · Delete. On desktop:
+ * the floating pill, same actions.
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
 export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
   const actions: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void; menu?: boolean; destructive?: boolean }[] = [
     { label: 'Done', icon: 'check', run: onComplete },
     { label: 'Tomorrow', icon: 'tomorrow', run: onTomorrow },
-    { label: 'Pick date', icon: 'pickdate', run: onSchedule, menu: true },
-    { label: isMobile ? 'Project' : 'Move', icon: 'project', run: onMoveToProject, menu: true },
+    { label: 'Plan', icon: 'pickdate', run: onSchedule, menu: true },
+    // "Move to…" a project, an area or a domain (features/tasks/MovePicker) — "Move" on both.
+    { label: 'Move', icon: 'project', run: onMoveToProject, menu: true },
     { label: 'Delete', icon: 'delete', run: onDelete, destructive: true },
   ]
 

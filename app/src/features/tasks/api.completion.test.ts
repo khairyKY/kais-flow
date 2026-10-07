@@ -22,7 +22,8 @@ vi.mock('../../lib/outbox', () => ({
 vi.mock('../../lib/activity', () => ({
   logActivity: (type: string, _entity: string, id: string) => activity.push({ type, id }),
 }))
-vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn() }))
+// rescheduleDue's blocks follow it (calendar/replan) — no calendar here, so nothing to move.
+vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn(), replanTaskBlocks: () => () => {} }))
 
 const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } = await import('./api')
 const { scheduleTomorrow } = await import('../../lib/dateShortcuts')
