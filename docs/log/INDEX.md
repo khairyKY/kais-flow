@@ -69,3 +69,4 @@
 - 2026-10-07 01:40 · handoff · What's new: site/src/releases.json = one notes source (site /whats-new/, app sheet + toasts, Settings → App, GitHub Release body) — `2026-10-07-0140-whats-new-handoff.md`
 - 2026-10-07 04:12 · handoff · capture-type: tap = type on phone + desktop (focus inside the gesture), then the AI fills typed captures (explicit tokens win, Undo) — `2026-10-07-0412-capture-type-handoff.md`
 - 2026-10-07 05:00 · release · v1.0.22 capture that types and fills itself in + What's new; merged harness 1461/1461; rollback 71675dd — `2026-10-07-0500-local-release-v1.0.22-capture.md`
+- 2026-10-07 16:45 · handoff · Tour & help: first-run garden notes (phone 5 + closing, desktop 5), one-line hints once each, the Guide (11 articles, 53 crops / 381 KB), chat starters, the ? sheet on paper; migration 0058 help_seen; harness 123/123 — `2026-10-07-1645-tour-handoff.md`
