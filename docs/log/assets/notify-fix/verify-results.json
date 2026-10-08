@@ -1,0 +1,132 @@
+[
+  {
+    "name": "Windows: a due reminder → notify_local, worded at the real clock, with its project",
+    "ok": true,
+    "detail": "[{\"title\":\"Call the tyre supplier · in 8 min\",\"body\":\"08:50 · Car\",\"actions\":[[\"done\",\"Done\"],[\"tomorrow\",\"Tomorrow\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"task_reminder\\\",\\\"taskIds\\\":[\\\"10000000-0000-4000-8000-000000000005\\\"],\\\"url\\\":\\\"/tasks?focus=10000000-0000-4000-8000-000000000005\\\"}\"}]"
+  },
+  {
+    "name": "Windows: a trashed task never reminds",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier · in 8 min\"]"
+  },
+  {
+    "name": "Windows: the payload carries the task for Done/Tomorrow",
+    "ok": true,
+    "detail": "{\"kind\":\"task_reminder\",\"taskIds\":[\"10000000-0000-4000-8000-000000000005\"],\"url\":\"/tasks?focus=10000000-0000-4000-8000-000000000005\"}"
+  },
+  {
+    "name": "Windows: …and only once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Windows reminder: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Windows rituals: nothing before 08:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Windows rituals: the 08:00 digest → \"Good morning — 3 to tend today\" · Plan my day · Open, silent",
+    "ok": true,
+    "detail": "{\"title\":\"Good morning — 3 to tend today\",\"body\":\"✶ GCI homework 1 — NumPy, then Do GCI lecture 2’s survey and Skim OS lectures 1 + 2.\",\"actions\":[[\"plan\",\"Plan my day\"],[\"open\",\"Open\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"morning_digest\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/today\\\"}\"}"
+  },
+  {
+    "name": "Windows rituals: the nudge at the user’s own time → \"The garden’s ready to close\" · Shut down",
+    "ok": true,
+    "detail": "{\"title\":\"The garden’s ready to close\",\"body\":\"0 done · 1 left\",\"actions\":[[\"shutdown\",\"Shut down\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"evening_nudge\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/today?ritual=evening\\\"}\"}"
+  },
+  {
+    "name": "Windows rituals: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Windows: paused → no reminder toast",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "Windows: Task reminder off → no reminder toast",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "Test (Windows): nothing in the way",
+    "ok": true,
+    "detail": "[\"Nothing in the way on this device.\"]"
+  },
+  {
+    "name": "Test (Windows): notify_local with the test notice, not a push",
+    "ok": true,
+    "detail": "{\"title\":\"Kai’s Flow\",\"body\":\"Test notification — this device can show them.\",\"actions\":[],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"test\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/settings\\\"}\"}"
+  },
+  {
+    "name": "Test (Windows): points at Windows Settings if nothing shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (Windows): no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (Windows): paused · quiet hours · kinds off, in plain words",
+    "ok": true,
+    "detail": "[\"Notifications are paused until 23:41.\",\"Quiet hours are on — notifications come without a sound.\",\"Turned off: Task reminder, Evening nudge.\"]"
+  },
+  {
+    "name": "Test (Windows): the test still goes while paused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Web: no local reminder from the tab (the push is the one)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Web: the service worker shows the pushed reminder with Done · Tomorrow",
+    "ok": true,
+    "detail": "{\"title\":\"Call the tyre supplier · in 10 min\",\"body\":\"08:50 · Car\",\"icon\":\"/icon-192.png\",\"badge\":\"/badge-96.png\",\"tag\":\"reminder-x\",\"renotify\":true,\"silent\":false,\"actions\":[{\"action\":\"done\",\"title\":\"Done\"},{\"action\":\"tomorrow\",\"title\":\"Tomorrow\"}],\"data\":{\"kind\":\"task_reminder\",\"url\":\"/tasks?focus=x\",\"taskIds\":[\"x\"]}}"
+  },
+  {
+    "name": "Web reminder: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (web, allowed, this browser not subscribed): says so",
+    "ok": true,
+    "detail": "[\"This device isn’t subscribed — tap “Subscribe this device” first.\"]"
+  },
+  {
+    "name": "Test (web): notify {kind:\"test\"} → \"Sent to 1 device.\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (web): no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (web, never asked, no devices): \"the test will ask\" + not subscribed",
+    "ok": true,
+    "detail": "[\"Notifications aren’t allowed yet — the test will ask.\",\"This device isn’t subscribed — tap “Subscribe this device” first.\"]"
+  },
+  {
+    "name": "Test (web, no devices): nothing sent, and it says why",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Test (web, denied): \"Permission denied\"",
+    "ok": true,
+    "detail": "[\"Permission denied — allow notifications for this site in the browser’s site settings.\",\"This device isn’t subscribed — tap “Subscribe this device” first.\"]"
+  }
+]
