@@ -1,10 +1,12 @@
 import type { Notice } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native } from '../tray/native'
+import { isCapacitorShell } from '../../lib/platform'
 
-/** A notification from the app itself (focus done; reminders while the Windows app runs), in the same
- * words and with the same buttons as a pushed one. Windows: a toast (tray.rs notify_local). A browser
- * or installed PWA: through the service worker, so its buttons work like a push's (sw-push.js) —
- * when notifications are allowed and a worker is registered; otherwise nothing. */
+/** A notification from the app itself (focus done; the test; on Windows the reminders and rituals it
+ * plans, plan.ts), in the same words and with the same buttons as a pushed one. Windows: a toast
+ * (tray.rs notify_local). Android: the OS's own notification (android.ts). A browser or installed
+ * PWA: through the service worker, so its buttons work like a push's (sw-push.js) — when
+ * notifications are allowed and a worker is registered; otherwise nothing. */
 export async function showLocal(n: Notice): Promise<void> {
   if (isTauri()) {
     await native('notify_local', {
@@ -16,6 +18,7 @@ export async function showLocal(n: Notice): Promise<void> {
     })
     return
   }
+  if (isCapacitorShell()) return (await import('./android')).showAndroid(n)
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !navigator.serviceWorker) return
   const registration = await navigator.serviceWorker.getRegistration()
   await registration?.showNotification(n.title, {

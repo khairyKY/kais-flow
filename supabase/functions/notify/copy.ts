@@ -211,7 +211,7 @@ export function testNotice(): Notice {
   return {
     kind: 'test',
     title: 'Kai’s Flow',
-    body: 'Test notification — push is wired up correctly.',
+    body: 'Test notification — this device can show them.',
     tag: 'test',
     actions: [],
     url: '/settings',

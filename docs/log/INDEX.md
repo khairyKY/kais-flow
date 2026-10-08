@@ -75,3 +75,4 @@
 - 2026-10-07 22:57 · handoff · "From a while ago" settles: Plan/Done/Let it go/Make it a task, Not now says how long, asks after two put-offs; 0059 drops the +20 Later boost, snooze on the row — `2026-10-07-2257-resurface-handoff.md`
 - 2026-10-08 01:30 · release · v1.0.24 MCP boots (rrule default import) + v1.0.25 From a while ago settles (0059) + project page clip; merged harness green — `2026-10-08-0130-local-release-v1.0.24-25.md`
 - 2026-10-08 16:10 · handoff · Android home-screen widgets: 34 designs as 32 picker entries + 6 states, day/night; RemoteViews + snapshot/tick queue; emulator gallery + real Launcher3 tick — `2026-10-08-1610-widgets-handoff.md` (branch claude/widgets)
+- 2026-10-08 20:05 · handoff · notify-fix: no push in the Windows/Android shells was the root cause; Windows sweep now plans reminders + rituals, Android schedules with the OS (local notifications), the test button names what's in the way — `2026-10-08-2005-notify-fix-handoff.md`

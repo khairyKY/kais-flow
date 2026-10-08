@@ -20,7 +20,7 @@ export interface RitualSettings {
 }
 
 export const TICK_MIN = 15
-const DEFAULT_AT: Record<RitualKind, number> = { morning_digest: 8 * 60, evening_nudge: 21 * 60 } // 08:00 / 21:00, the 0045 column defaults
+export const DEFAULT_AT: Record<RitualKind, number> = { morning_digest: 8 * 60, evening_nudge: 21 * 60 } // 08:00 / 21:00, the 0045 column defaults
 
 /** The default zone (no settings row, or a zone Intl doesn't know). notify passes each user's own
  * — `userZone(s.timezone)` — to everything below and to copy.ts. */

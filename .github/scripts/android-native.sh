@@ -19,6 +19,12 @@ cp -r native/android/debug/. android/app/src/debug/
 # Voice capture: the WebView asks for the mic through the shell, which needs these declared.
 sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
 grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
+# Reminders on time (notify-fix, 2026-10-08): @capacitor/local-notifications declares POST_NOTIFICATIONS
+# and SCHEDULE_EXACT_ALARM, but Android 14 denies the latter by default; USE_EXACT_ALARM (a reminders
+# app's own permission, granted at install) lets a reminder fire on the minute even in Doze. The app
+# falls back to inexact alarms without it. ic_stat_kf (res/drawable-nodpi) is the status-bar K.
+sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />#' "$manifest"
+grep -q USE_EXACT_ALARM "$manifest" || { echo "::error::USE_EXACT_ALARM was not added to the manifest"; exit 1; }
 # The share sheet: shared text opens the app (MainActivity.onNewIntent → /share). text/*
 # covers text/plain. Images wait for Paper capture, so no image/* yet.
 sed -i 's#</activity>#    <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="text/*" />\n            </intent-filter>\n\n        &#' "$manifest"

@@ -5,8 +5,9 @@ import {
   useMyPushSubscriptions,
   subscribeThisDevice,
   unsubscribeThisDevice,
-  sendTestNotification,
 } from '../notifications/api'
+import { testThisDevice, useDeviceState } from '../notifications/device'
+import { blockers } from '../notifications/plan'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView, type CalendarDefaultView } from '../../lib/settings'
 import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate } from '../../lib/appUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
@@ -27,8 +28,7 @@ import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { KindGlyph } from '../notifications/KindGlyph'
 import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
-import { showLocal } from '../notifications/local'
-import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions/notify/copy.ts'
+import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
@@ -619,8 +619,11 @@ function NotificationsCard() {
   }, [tauri])
   const supported = isPushSupported()
   const thisDeviceLabel = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 60) : ''
-  const subscribed = subs.some((d) => d.device_label === thisDeviceLabel)
+  const [device, recheck] = useDeviceState(subs)
+  // This browser's own endpoint when it has one (a browser update changes the label, not the endpoint).
+  const subscribed = device?.subscribed || subs.some((d) => d.device_label === thisDeviceLabel)
   if (!s) return null
+  const inTheWay = device ? blockers(device, s, new Date(), appZone()) : []
   const quietOn = s.quiet_hours_on !== false
 
   async function handleSubscribe() {
@@ -639,6 +642,7 @@ function NotificationsCard() {
       setMessage("That didn't take — check the connection and try again.")
     } finally {
       setBusy(false)
+      recheck()
     }
   }
 
@@ -646,17 +650,13 @@ function NotificationsCard() {
     setBusy(true)
     setMessage(null)
     try {
-      if (tauri) {
-        await showLocal(testNotice()) // the Windows app has no push; its toasts are its own
-        setMessage('Sent — it should be in the corner of the screen.')
-      } else {
-        const result = await sendTestNotification()
-        setMessage(`Sent to ${result.sent} device${result.sent === 1 ? '' : 's'}${result.pruned ? ` · ${result.pruned} old one${result.pruned === 1 ? '' : 's'} cleared` : ''}.`)
-      }
+      // The same way a real reminder reaches this device: a Windows toast, Android's own, or a push.
+      setMessage(await testThisDevice(subs))
     } catch {
       setMessage("The test didn't go out — try again in a moment.")
     } finally {
       setBusy(false)
+      recheck()
     }
   }
 
@@ -674,6 +674,11 @@ function NotificationsCard() {
           <Icon name="bell" size={15} /> Send a test notification
         </button>
       </div>
+      {device && (
+        <ul aria-label="What’s in the way on this device" data-kf-notify-status style={{ ...fhelp, margin: '8px 0 0', paddingLeft: 18 }}>
+          {inTheWay.length ? inTheWay.map((line) => <li key={line}>{line}</li>) : <li>Nothing in the way on this device.</li>}
+        </ul>
+      )}
 
       {sub('Kinds')}
       {KIND_IDS.map((kind) => {
@@ -733,6 +738,11 @@ function NotificationsCard() {
           <NotificationRow glyph={<span style={{ width: 30 }} />} label="Start with Windows" help="Opens quietly to the tray">
             <Toggle on={!!autostart} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
           </NotificationRow>
+        </>
+      ) : device?.channel === 'android' ? (
+        <>
+          {sub('This phone')}
+          <p style={{ ...fhelp, margin: '8px 0 0' }}>Reminders, the digest, the nudge and focus rounds are set on the phone itself, from what it last synced — open the app now and then so new ones reach it.</p>
         </>
       ) : (
         <>
