@@ -159,7 +159,7 @@ const SCREENS = {
   'settings-glossary': { route: '/settings', act: async (p) => { await p.locator('#settings-Calendar').scrollIntoViewIfNeeded(); await click(p, p.getByRole('button', { name: /What do these mean/ })) } },
   today: { route: '/today', at: '10:40' },
   tasks: { route: '/tasks' },
-  'tasks-board': { route: '/tasks', act: async (p, s) => { if (!phone(s)) await click(p, p.getByRole('button', { name: /^Board$/ })) } },
+  'tasks-upcoming': { route: '/tasks', act: async (p) => { await click(p, p.locator('.app-main-content').getByText('Upcoming', { exact: true })) } },
   inbox: { route: '/inbox' },
   'cal-day': { route: '/calendar', at: '10:40', act: async (p, s) => { if (!phone(s)) await key(p, 'd'); await sleep(500) } },
   'cal-3day': { route: '/calendar', at: '10:40', act: async (p) => { await key(p, '3'); await sleep(500) } },
@@ -179,8 +179,8 @@ const SCREENS = {
   chat: { route: '/today', at: '10:40', act: async (p, s) => { if (phone(s)) { await click(p, p.locator('.kf-tab[aria-label="More"]')); await click(p, p.getByRole('button', { name: 'Chat', exact: true })) } else { await key(p, 'Control+j'); await sleep(800) } } },
   capture: { route: '/today', at: '10:40', act: async (p, s) => { if (phone(s)) await click(p, p.locator('.kf-capture')); else await key(p, 'Control+k'); await sleep(700) } },
   'task-sheet': { route: '/tasks', act: async (p, s) => { if (phone(s)) await click(p, p.getByText('Send the Q3 numbers to Priya')); else { await p.goto(`${BASE}/tasks/${TASKS[1].id}`, { waitUntil: 'networkidle' }); await sleep(900) } } },
-  plan: { route: '/today', at: '07:40', act: async (p) => { await click(p, p.locator('.tp-ritual').getByRole('button', { name: /^(Plan|Resume)$/ })) } },
-  shutdown: { route: '/today', at: '21:40', act: async (p) => { await click(p, p.locator('.tp-ritual').getByRole('button', { name: /^(Shut down|Resume)$/ })) } },
+  plan: { route: '/today', at: '07:40', act: async (p) => { await click(p, p.locator('.tp-ritual, .app-main-content').getByRole('button', { name: /^(Plan|Begin|Resume)$/ })) } },
+  shutdown: { route: '/today', at: '21:40', act: async (p) => { await click(p, p.locator('.tp-ritual, .app-main-content').getByRole('button', { name: /^(Shut down|Begin|Resume)$/ })) } },
   'whats-new': { route: '/today', at: '10:40', seen: 'v1.0.20', act: async (p) => { await click(p, p.locator('.kf-toast-act', { hasText: 'What’s new' })) } },
 }
 
