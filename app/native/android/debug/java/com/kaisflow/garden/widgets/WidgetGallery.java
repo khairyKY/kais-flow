@@ -80,7 +80,7 @@ public class WidgetGallery extends Activity {
             .put(block("b4", "", "Gym", t(18, 0), t(19, 0), "hydrangea", false)));
         JSONArray days = new JSONArray();
         int[] counts = {2, 5, 3, 1, 0, 2, 0};
-        for (int i = 0; i < 7; i++) days.put(new JSONObject().put("day", String.format("2026-10-%02d", 6 + i)).put("n", counts[i]));
+        for (int i = 0; i < 7; i++) days.put(new JSONObject().put("day", String.format("2026-10-%02d", 5 + i)).put("n", counts[i]));
         s.put("week", days);
         s.put("countdown", new JSONObject().put("title", "Midterm").put("at", at(16, 9, 0)).put("id", "c1").put("route", "/today"));
         s.put("focus", new JSONObject().put("state", "running").put("endsAt", now + (18 * 60 + 42) * 1000L).put("roundMin", 30).put("taskId", "g1").put("title", "Crypto — heavy session"));

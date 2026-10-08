@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W13 Ask (4×1): the chat with the question typed; the chip sends a starter -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="12dp" android:paddingEnd="12dp">
+        <TextView android:id="@+id/ask" style="@style/KfW.Title" android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:background="@drawable/kfw_pill_bone" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:text="Ask about your day…" android:textColor="@color/kfw_ink_faint" android:textSize="14sp" />
+        <TextView android:id="@+id/chip" style="@style/KfW.Title" android:layout_height="44dp" android:layout_marginStart="8dp" android:background="@drawable/kfw_pill_line" android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="What should I drop?" android:textColor="@color/kfw_lavender_text" android:textSize="13sp" />
+    </LinearLayout>
+</FrameLayout>

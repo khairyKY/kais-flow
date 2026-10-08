@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W19 Focus · idle (2×2): the coiled fern, the round's length, Start on the goal -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
+        <TextView style="@style/KfW.Cap" android:text="Focus" />
+        <FrameLayout style="@style/KfW.Fill">
+            <ImageView android:layout_width="wrap_content" android:layout_height="56dp" android:layout_gravity="center" android:adjustViewBounds="true" android:src="@drawable/kfw_art_fern_coil" android:importantForAccessibility="no" />
+        </FrameLayout>
+        <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:gravity="center" android:textColor="@color/kfw_ink_muted" android:textSize="13sp" />
+        <TextView android:id="@+id/start" style="@style/KfW.Btn.Cta" android:layout_gravity="center_horizontal" android:layout_marginTop="8dp" android:drawableStart="@drawable/kfw_ic_focus" android:text="Start" />
+    </LinearLayout>
+</FrameLayout>

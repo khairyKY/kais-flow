@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W28 Slipping (2×2): what hasn't been touched in a while, in the gold of "needs attention" -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root" android:background="@drawable/kfw_card_slip">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
+        <TextView style="@style/KfW.Cap" android:textColor="@color/kfw_gold" android:text="Slipping" />
+        <LinearLayout android:id="@+id/rows" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <TextView android:id="@+id/foot" style="@style/KfW.Meta" />
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W25 Inbox (2×2): the hydrangea fills with the count; Sort them opens triage -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView style="@style/KfW.Cap" android:layout_width="0dp" android:layout_weight="1" android:text="Inbox" />
+            <ImageView style="@style/KfW.Icon" android:src="@drawable/kfw_ic_inbox" />
+        </LinearLayout>
+        <LinearLayout style="@style/KfW.Fill" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="70dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_hydrangea_medium" android:importantForAccessibility="no" />
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:orientation="vertical">
+                <TextView android:id="@+id/count" style="@style/KfW.Serif.Bold" android:textSize="36sp" />
+                <TextView style="@style/KfW.Meta" android:text="to sort" />
+            </LinearLayout>
+        </LinearLayout>
+        <TextView android:id="@+id/sort" style="@style/KfW.Btn" android:drawableStart="@drawable/kfw_ic_review" android:text="Sort them" />
+    </LinearLayout>
+</FrameLayout>
