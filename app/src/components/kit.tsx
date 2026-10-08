@@ -290,6 +290,32 @@ export function Star({ on, onChange, label, disabled, style }: { on: boolean; on
   )
 }
 
+// ── Toggle + Segmented — DS-CHANGELOG §3, shared (UI pass 2026-10-08: Settings drew its own
+// 34 × 20 switch on --acc-sage, 2.8:1, and a segmented control whose buttons kept the browser's
+// border). Toggle: off = bone track, 1.5px --line-control edge and thumb; on = --check-fill track,
+// parchment thumb; phone 52 × 32 in a 48 hit. Segmented: pill, 1px --line-control, selected
+// --block-sage + --acc-sage-text 600; natural width, wraps rather than overflow; phone segments 48.
+// Styles in kit.css. ──
+export function Toggle({ on, onToggle, label, disabled }: { on: boolean; onToggle?: () => void; label?: string; disabled?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={onToggle} disabled={disabled || !onToggle} className="kf-toggle">
+      <span className="kf-toggle-thumb" aria-hidden="true" />
+    </button>
+  )
+}
+
+export function Segmented<T extends string | number>({ value, onChange, options, label, className }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; label?: string; className?: string }) {
+  return (
+    <div className={`kf-seg${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
+      {options.map((o) => (
+        <button key={o.value} type="button" className="kf-seg-btn" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── BackLink — every page's "← Tasks" / "← Projects" breadcrumb (was hand-styled
 // per file: no padding, no hover feedback, tiny hit target). One atom, a real
 // hit target (.kf-hit, same rule the sidebar's small glyphs use), a hover tint,

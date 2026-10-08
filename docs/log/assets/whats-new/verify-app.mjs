@@ -244,7 +244,7 @@ for (const [view, vname] of [[DESKTOP, 'desktop'], [PHONE, 'phone']]) {
     const tag = `${vname} ${theme}`
     // the daily check already ran today and already told about v1.0.22 — Settings still checks, quietly
     const { ctx, page, net, errors } = await device({ view, theme, route: '/settings', web: NEXT, gh: NEWER, memory: { seen: CUR.v, notified: NEXT, checkedAt: Date.now() } })
-    const card = page.locator('div', { has: page.getByRole('button', { name: /Check for updates|Checking/ }) }).filter({ hasText: 'App · Kai' }).last()
+    const card = page.locator('#settings-App') // UI pass: the card is titled “App” now (was “App · Kai's Flow”)
     await card.scrollIntoViewIfNeeded()
     const text = await card.innerText()
     check(`${tag}: opening Settings ran the check (version.json + GitHub), with no repeat toast`, net.versionJson === 1 && net.github === 1 && !(await toasts(page)).some((x) => x.endsWith('is out')), JSON.stringify(net))
@@ -272,7 +272,7 @@ for (const [view, vname] of [[DESKTOP, 'desktop'], [PHONE, 'phone']]) {
 {
   // up to date: the card says so, and only “What’s new in your version” shows
   const { ctx, page } = await device({ route: '/settings', stamp: true, gh: SAME, memory: { seen: CUR.v, checkedAt: Date.now() } })
-  const card = page.locator('div', { has: page.getByRole('button', { name: /Check for updates|Checking/ }) }).filter({ hasText: 'App · Kai' }).last()
+  const card = page.locator('#settings-App') // UI pass: the card is titled “App” now (was “App · Kai's Flow”)
   const text = await card.innerText()
   check('up to date: “You’re on the latest (v1.0.21)”, no “Coming in”', text.includes(`You're on the latest (${CUR.v})`) && !text.includes('Coming in'), text.split('\n').slice(0, 3).join(' | '))
   // a first Settings visit that finds the new version toasts it (once)
