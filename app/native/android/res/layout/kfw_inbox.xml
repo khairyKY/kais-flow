@@ -11,7 +11,7 @@
             <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="70dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_hydrangea_medium" android:importantForAccessibility="no" />
             <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:orientation="vertical">
                 <TextView android:id="@+id/count" style="@style/KfW.Serif.Bold" android:textSize="36sp" />
-                <TextView style="@style/KfW.Meta" android:text="to sort" />
+                <TextView style="@style/KfW.Meta" android:ellipsize="none" android:text="to sort" />
             </LinearLayout>
         </LinearLayout>
         <TextView android:id="@+id/sort" style="@style/KfW.Btn" android:drawableStart="@drawable/kfw_ic_review" android:text="Sort them" />

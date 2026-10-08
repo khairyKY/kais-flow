@@ -3,8 +3,8 @@ into app/native/android/res/ (CI copies that over the generated project). Run fr
 
     python design-integration/render_widget_res.py
 
-- fonts: Source Serif 4, Inter Tight, Courier Prime, Caveat (all SIL OFL 1.1, from @fontsource;
-  the OFL travels in each font's name table) — woff → ttf, Latin subset as the app ships it.
+- no fonts: a launcher inflates widgets in a restricted context, where TextView ignores an app's
+  font resources — the widgets use the phone's serif / serif-monospace / cursive instead.
 - icons: the kit's stroke icons (src/components/icons/kf) → VectorDrawables, white, tinted per view.
 - art: the garden PNGs the widgets show, scaled to ~3× their widget size (WebP).
 - grain + tape: the paper grain tile and the goal card's tape (RemoteViews can't blend or rotate).
@@ -15,30 +15,12 @@ import random
 import re
 from pathlib import Path
 
-from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / 'app/native/android/res'
-FONTS = ROOT / 'app/node_modules/@fontsource'
 ICONS = ROOT / 'app/src/components/icons/kf'
 ART = ROOT / 'app/public/ds/assets'
-
-# ── fonts ──
-font_dir = RES / 'font'
-font_dir.mkdir(parents=True, exist_ok=True)
-for out, src in {
-    'kfw_serif': 'source-serif-4/files/source-serif-4-latin-500-normal.woff',
-    'kfw_serif_semibold': 'source-serif-4/files/source-serif-4-latin-600-normal.woff',
-    'kfw_serif_italic': 'source-serif-4/files/source-serif-4-latin-400-italic.woff',
-    'kfw_ui': 'inter-tight/files/inter-tight-latin-400-normal.woff',
-    'kfw_ui_medium': 'inter-tight/files/inter-tight-latin-500-normal.woff',
-    'kfw_mono': 'courier-prime/files/courier-prime-latin-400-normal.woff',
-    'kfw_hand': 'caveat/files/caveat-latin-400-normal.woff',
-}.items():
-    f = TTFont(FONTS / src)
-    f.flavor = None
-    f.save(font_dir / f'{out}.ttf')
 
 # ── icons: SVG (stroke, 24 box) → VectorDrawable ──
 def rect_path(x, y, w, h, r):

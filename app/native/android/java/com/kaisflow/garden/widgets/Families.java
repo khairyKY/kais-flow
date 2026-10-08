@@ -57,7 +57,7 @@ final class Families {
 
     private static RemoteViews capture(Context c, int cols) {
         if (cols <= 1) return tap(c, R.layout.kfw_capture_seal, "/today?kfAction=capture");
-        if (cols <= 3) return tap(c, R.layout.kfw_capture_pill, "/today?kfAction=capture");
+        if (cols <= 2) return tap(c, R.layout.kfw_capture_pill, "/today?kfAction=capture");
         RemoteViews v = tap(c, R.layout.kfw_capture_bar, "/today?kfAction=capture");
         v.setOnClickPendingIntent(R.id.type, open(c, "/today?kfAction=capture"));
         v.setOnClickPendingIntent(R.id.mic, open(c, "/today?kfAction=voice"));
@@ -277,7 +277,7 @@ final class Families {
         if (list.length() == 0) {
             return Render.state(c, "Routines", 0, R.drawable.kfw_art_vine_sprouting, 56, null, "No routines today", null, null, open(c, "/routines"));
         }
-        boolean wide = cols >= 4;
+        boolean wide = cols >= 3;
         boolean newDay = s.newDay(now);
         RemoteViews v = Render.views(c, R.layout.kfw_routines);
         int done = 0;

@@ -55,7 +55,7 @@
     </style>
     <!-- cap(): mono 11, tracked 0.16em, uppercase, faint. -->
     <style name="KfW.Cap" parent="KfW.Text">
-        <item name="android:fontFamily">@font/kfw_mono</item>
+        <item name="android:fontFamily">serif-monospace</item>
         <item name="android:textSize">11sp</item>
         <item name="android:letterSpacing">0.16</item>
         <item name="android:textAllCaps">true</item>
@@ -63,28 +63,29 @@
     </style>
     <!-- meta(): mono 12, tracked 0.04em, faint. -->
     <style name="KfW.Meta" parent="KfW.Text">
-        <item name="android:fontFamily">@font/kfw_mono</item>
+        <item name="android:fontFamily">serif-monospace</item>
         <item name="android:textSize">12sp</item>
         <item name="android:letterSpacing">0.04</item>
         <item name="android:textColor">@color/kfw_ink_faint</item>
     </style>
     <!-- serif(): Source Serif 500, −0.01em, line-height 1.2. -->
     <style name="KfW.Serif" parent="KfW.Text">
-        <item name="android:fontFamily">@font/kfw_serif</item>
+        <item name="android:fontFamily">serif</item>
         <item name="android:textSize">17sp</item>
         <item name="android:letterSpacing">-0.01</item>
     </style>
     <style name="KfW.Serif.Bold">
-        <item name="android:fontFamily">@font/kfw_serif_semibold</item>
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textStyle">bold</item>
     </style>
     <!-- clip(): the UI face, one line, ellipsis. -->
     <style name="KfW.Title" parent="KfW.Text">
-        <item name="android:fontFamily">@font/kfw_ui</item>
+        <item name="android:fontFamily">sans-serif</item>
         <item name="android:textSize">15sp</item>
     </style>
     <!-- hand(): Caveat. -->
     <style name="KfW.Hand" parent="KfW.Text">
-        <item name="android:fontFamily">@font/kfw_hand</item>
+        <item name="android:fontFamily">cursive</item>
         <item name="android:textSize">19sp</item>
         <item name="android:textColor">@color/kfw_ink_hand</item>
     </style>
@@ -96,7 +97,7 @@
         <item name="android:paddingEnd">14dp</item>
         <item name="android:gravity">center</item>
         <item name="android:background">@drawable/kfw_pill_bone</item>
-        <item name="android:fontFamily">@font/kfw_ui_medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">13sp</item>
         <item name="android:drawablePadding">6dp</item>
         <item name="android:drawableTint">@color/kfw_ink</item>

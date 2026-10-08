@@ -34,7 +34,7 @@ final class Render {
         if (!s.signedIn() && needsData(kind)) return signedOut(c);
         switch (kind) {
             case "goal": return goal(c, rows, s, now);
-            case "top": return cols <= 3 ? topSmall(c, s, now) : rows >= 3 ? topPage(c, s, now) : topWide(c, s, now);
+            case "top": return cols <= 2 ? topSmall(c, s, now) : rows >= 3 ? topPage(c, s, now) : topWide(c, cols, s, now);
             case "now": return now(c, s, now);
             case "next": return next(c, s, now);
             case "progress": return progress(c, s, now);
@@ -44,10 +44,17 @@ final class Render {
 
     // ── shared pieces ──
 
+    private static final java.util.Set<Integer> LISTS = new java.util.HashSet<>(java.util.Arrays.asList(
+        R.layout.kfw_top_small, R.layout.kfw_top_wide, R.layout.kfw_top_page, R.layout.kfw_agenda, R.layout.kfw_agenda_week,
+        R.layout.kfw_routines, R.layout.kfw_overdue, R.layout.kfw_slipping));
+
     static RemoteViews views(Context c, int layout) {
         RemoteViews v = new RemoteViews(c.getPackageName(), layout);
         // The grain is clipped to the card's corners only from Android 12 (clipToOutline); before, none.
         if (Build.VERSION.SDK_INT < 31) v.setViewVisibility(R.id.grain, View.GONE);
+        // A launcher may reapply an update onto the views it already has: lists start empty again.
+        if (LISTS.contains(layout)) v.removeAllViews(R.id.rows);
+        if (layout == R.layout.kfw_agenda_week || layout == R.layout.kfw_week) v.removeAllViews(R.id.days);
         return v;
     }
 
@@ -313,14 +320,14 @@ final class Render {
     }
 
     /** W4 Today · Top 3 (4×2). */
-    private static RemoteViews topWide(Context c, Snap s, long now) {
+    private static RemoteViews topWide(Context c, int cols, Snap s, long now) {
         List<JSONObject> top = top3(s, now);
         int done = doneCount(top);
         if (top.isEmpty()) return nothingYet(c, "Top 3", "Nothing starred yet");
         if (done == top.size()) return allDone(c, s, now, top.size());
         RemoteViews v = views(c, R.layout.kfw_top_wide);
         v.setTextViewText(R.id.date, s.fmt("EEEE, MMM d", now));
-        v.setTextViewText(R.id.count, "Day " + dayN(s, now) + " · Top 3 · " + done + "/" + top.size());
+        v.setTextViewText(R.id.count, (cols >= 4 ? "Day " + dayN(s, now) + " · Top 3 · " : "") + done + "/" + top.size()); // 3 columns: the count alone
         JSONObject g = s.obj("goal");
         int from = 0;
         if (g != null) {

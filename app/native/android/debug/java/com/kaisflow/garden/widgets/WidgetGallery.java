@@ -104,6 +104,44 @@ public class WidgetGallery extends Activity {
         return s;
     }
 
+    /** The sample day moved to today (same clock times), written just now. */
+    static JSONObject today(JSONObject s) throws JSONException {
+        long now = System.currentTimeMillis();
+        Calendar c = Calendar.getInstance(CAIRO);
+        c.setTimeInMillis(now);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        long delta = c.getTimeInMillis() - at(7, 0, 0);
+        shift(s, delta);
+        Snap snap = new Snap(s);
+        s.put("at", now).put("day", snap.day(now));
+        s.getJSONObject("focus").put("endsAt", now + (18 * 60 + 42) * 1000L);
+        JSONArray w = s.getJSONArray("week");
+        for (int i = 0; i < w.length(); i++) {
+            JSONObject d = w.getJSONObject(i);
+            d.put("day", snap.day(at(5 + i, 12, 0) + delta));
+        }
+        return s;
+    }
+
+    static void shift(Object o, long delta) throws JSONException {
+        if (o instanceof JSONArray) {
+            JSONArray a = (JSONArray) o;
+            for (int i = 0; i < a.length(); i++) shift(a.get(i), delta);
+        } else if (o instanceof JSONObject) {
+            JSONObject j = (JSONObject) o;
+            for (java.util.Iterator<String> k = j.keys(); k.hasNext(); ) {
+                String key = k.next();
+                Object v = j.get(key);
+                if ((key.equals("start") || key.equals("end") || key.equals("finishAt")) && v instanceof Number) j.put(key, ((Number) v).longValue() + delta);
+                else if (key.equals("at") && v instanceof Number && j.has("title")) j.put(key, ((Number) v).longValue() + delta);
+                else shift(v, delta);
+            }
+        }
+    }
+
     static final class Spec {
         final String name, kind;
         final int cols, rows;
@@ -229,6 +267,30 @@ public class WidgetGallery extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        // Real home-screen checks on an emulator: `--es seed 1` writes the sample day (moved to today)
+        // as the widgets' snapshot; `--es pin W04` asks the launcher to add that widget.
+        String pin = getIntent().getStringExtra("pin");
+        if (getIntent().hasExtra("seed")) {
+            try {
+                Snap.store(this, today(sample()).toString());
+            } catch (JSONException e) {
+                Log.e(TAG, "FAIL seed", e);
+            }
+            KfWidget.updateAll(this);
+            Log.i(TAG, "seeded");
+            finish();
+            return;
+        }
+        if (pin != null) {
+            try {
+                android.appwidget.AppWidgetManager.getInstance(this).requestPinAppWidget(new android.content.ComponentName(this, Class.forName("com.kaisflow.garden.widgets.KfWidget$" + pin)), null, null);
+                Log.i(TAG, "pin requested " + pin);
+            } catch (ClassNotFoundException e) {
+                Log.e(TAG, "FAIL pin " + pin, e);
+            }
+            finish();
+            return;
+        }
         try {
             selfCheck();
         } catch (Exception e) {

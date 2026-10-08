@@ -71,6 +71,8 @@ sleep 5
 adb exec-out screencap -p > shots/4-share-warm.png
 adb logcat -d -s KaisFlowShare:I > shots/share.txt
 adb logcat -d -v time | grep -iE 'AndroidRuntime|FATAL|has died|died|KaisFlowShare|kaisflow|chromium|Console|Capacitor|ActivityTaskManager' | tail -150 > shots/share-logcat.txt
+# The home-screen widgets: every picker entry is registered with the system (32, Phone Widgets.dc.html).
+adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.KfWidget\$W[0-9]*" | sort -u > shots/widgets.txt
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
@@ -81,3 +83,4 @@ case "$resumed" in *"$pkg"*) echo 'FAIL: Back on the sign-in page left the app i
 grep -q "$pkg/" shots/share-targets.txt || { echo 'FAIL: the app is not offered in the share sheet for text'; exit 1; }
 grep -q 'load /share?text=hello[[:space:]]*$' shots/share.txt || { echo 'FAIL: a share into the closed app did not load /share'; exit 1; }
 grep -q 'page /share?text=hello%20again&title=a%20page' shots/share.txt || { echo 'FAIL: a share into the open app did not navigate the page'; exit 1; }
+[ "$(wc -l < shots/widgets.txt)" -ge 32 ] || { echo "FAIL: expected 32 widget providers, found $(wc -l < shots/widgets.txt)"; cat shots/widgets.txt; exit 1; }

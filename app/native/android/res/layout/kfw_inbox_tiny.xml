@@ -4,6 +4,6 @@
     <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
     <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="8dp">
         <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_gravity="center" android:adjustViewBounds="true" android:src="@drawable/kfw_art_hydrangea_light" android:contentDescription="Inbox" />
-        <TextView android:id="@+id/count" style="@style/KfW.Text" android:layout_height="22dp" android:layout_gravity="top|end" android:layout_marginTop="2dp" android:layout_marginEnd="2dp" android:background="@drawable/kfw_badge" android:fontFamily="@font/kfw_ui_medium" android:gravity="center" android:minWidth="22dp" android:paddingStart="6dp" android:paddingEnd="6dp" android:textColor="@color/kfw_badge_ink" android:textSize="12sp" />
+        <TextView android:id="@+id/count" style="@style/KfW.Text" android:layout_height="22dp" android:layout_gravity="top|end" android:layout_marginTop="2dp" android:layout_marginEnd="2dp" android:background="@drawable/kfw_badge" android:fontFamily="sans-serif-medium" android:gravity="center" android:minWidth="22dp" android:paddingStart="6dp" android:paddingEnd="6dp" android:textColor="@color/kfw_badge_ink" android:textSize="12sp" />
     </FrameLayout>
 </FrameLayout>

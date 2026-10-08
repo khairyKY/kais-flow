@@ -74,3 +74,4 @@
 - 2026-10-07 16:45 · handoff · Tour & help: first-run garden notes (phone 5 + closing, desktop 5), one-line hints once each, the Guide (11 articles, 53 crops / 381 KB), chat starters, the ? sheet on paper; migration 0058 help_seen; harness 123/123 — `2026-10-07-1645-tour-handoff.md`
 - 2026-10-07 22:57 · handoff · "From a while ago" settles: Plan/Done/Let it go/Make it a task, Not now says how long, asks after two put-offs; 0059 drops the +20 Later boost, snooze on the row — `2026-10-07-2257-resurface-handoff.md`
 - 2026-10-08 01:30 · release · v1.0.24 MCP boots (rrule default import) + v1.0.25 From a while ago settles (0059) + project page clip; merged harness green — `2026-10-08-0130-local-release-v1.0.24-25.md`
+- 2026-10-08 16:10 · handoff · Android home-screen widgets: 34 designs as 32 picker entries + 6 states, day/night; RemoteViews + snapshot/tick queue; emulator gallery + real Launcher3 tick — `2026-10-08-1610-widgets-handoff.md` (branch claude/widgets)
