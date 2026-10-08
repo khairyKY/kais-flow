@@ -191,7 +191,7 @@ export function TaskRow({
         >
           ✓
         </span>
-        <span onClick={openDetail} style={{ flex: 1, fontSize: 15, color: 'var(--ink-hairline)', textDecoration: 'line-through', cursor: 'pointer' }}><EmojiText text={task.title} /></span>
+        <span onClick={openDetail} style={{ flex: 1, fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through', cursor: 'pointer' }}><EmojiText text={task.title} /></span>
         {justCompleted ? (
           // deviation(2026-07-19 X3): hand notes ride --ink-muted so night matches Night.dc (#c9c0d8)
           <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>just now ✿</span>
@@ -204,7 +204,7 @@ export function TaskRow({
               </span>
             )}
             {task.completed_at && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                 {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
             )}

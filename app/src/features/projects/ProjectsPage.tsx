@@ -51,7 +51,7 @@ const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: '
 const mchipLast: React.CSSProperties = { ...mchip, width: 96, textAlign: 'right' }
 const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
 // Section count on the right of the rule (`<span style="color:var(--ink-hairline)">2</span>`).
-const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', color: 'var(--ink-hairline)' }}>{n}</span>
+const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', color: 'var(--ink-faint)' }}>{n}</span>
 
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
@@ -506,7 +506,7 @@ export function ProjectsPage() {
         placeholder="Domain"
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: '9.5px',
+          fontSize: 'var(--fs-meta)',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           color: 'var(--ink-muted)',
@@ -550,7 +550,7 @@ export function ProjectsPage() {
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 10 }}>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
               {activeCount} active · {totalCount} total
             </span>
             <button
@@ -708,7 +708,7 @@ export function ProjectsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
                       <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
-                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{domainProjects.length}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{domainProjects.length}</span>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -749,7 +749,7 @@ export function ProjectsPage() {
                               </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
-                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
                                   {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
                                 </div>
                               </div>
@@ -832,7 +832,7 @@ export function ProjectsPage() {
                   <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
                     <span>{year}</span>
                     <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                    <span style={{ color: 'var(--ink-hairline)' }}>{yearProjs.length}</span>
+                    <span style={{ color: 'var(--ink-faint)' }}>{yearProjs.length}</span>
                   </div>
                   {yearProjs.map((p) => {
                     const stat = projectStats[p.id] ?? EMPTY_STAT
@@ -867,7 +867,7 @@ export function ProjectsPage() {
               <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
                 Open the Herbarium — {archivedProjects.length} pressed specimens →
               </Link>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Archived projects stay searchable · restore any time
               </span>
               <span style={{ flex: 1 }}></span>

@@ -320,7 +320,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {!allDay && (
           <>
             <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
-            <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
+            <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>–</span>
             <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
             {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
           </>
@@ -347,7 +347,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
                 happened to click — "It shouldn't be hard coded based on where I clicked."
                 It's the same state either way, so just let every kind edit it. */}
             <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />
-            <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>–</span>
+            <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>–</span>
             <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} />
             {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
           </div>
@@ -467,7 +467,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {holdsTask ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px' }}>
             <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}>{holdsTask.title}</span>
-            <span onClick={() => { setHoldsTaskId(null); setHoldsQuery('') }} style={{ color: 'var(--ink-hairline)', fontSize: 13, cursor: 'pointer' }}>✕</span>
+            <span onClick={() => { setHoldsTaskId(null); setHoldsQuery('') }} style={{ color: 'var(--ink-faint)', fontSize: 13, cursor: 'pointer' }}>✕</span>
           </div>
         ) : (
           <div style={{ position: 'relative' }}>
@@ -507,7 +507,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         {expanded ? (
           <button type="button" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
         ) : (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>esc</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>esc</span>
         )}
         <button
           type="button"

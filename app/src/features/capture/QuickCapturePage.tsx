@@ -363,7 +363,7 @@ export function QuickCapturePage() {
                     <span
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '8.5px',
+                        fontSize: 'var(--fs-meta)',
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
                         color: 'rgba(240,235,221,0.45)',

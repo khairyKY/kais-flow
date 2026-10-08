@@ -409,3 +409,18 @@ button.kf-chip {
     font-size: 14px;
   }
 }
+
+/* ── Help line — UI pass (2026-10-08): a sentence of help under a field or setting is the UI face at
+   13, --ink-muted, sentence case (its first letter raised, so lower-case copy still reads right).
+   Mono caps stay for labels and metadata. ── */
+.kf-help {
+  margin-top: 5px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+.kf-help::first-letter {
+  text-transform: uppercase;
+}

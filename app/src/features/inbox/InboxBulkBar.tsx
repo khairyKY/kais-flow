@@ -41,7 +41,7 @@ function Action({ color, onClick, children }: { color?: string; onClick: (e: Rea
   )
 }
 
-const caret = <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
+const caret = <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
 
 export function InboxBulkBar({ count, onFileTo, onSnooze, onDismiss, onRestore, onClear }: InboxBulkBarProps) {
   return (

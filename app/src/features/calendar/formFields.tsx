@@ -20,7 +20,8 @@ export function FLabel({ children, style }: { children: ReactNode; style?: CSSPr
 
 export function FHelp({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 5, ...style }}>
+    // UI pass (2026-10-08): help is a sentence in the UI face (13, muted), not mono — mono is for labels and metadata.
+    <div className="kf-help" style={style}>
       {children}
     </div>
   )
@@ -135,7 +136,7 @@ export function ColorDots({ value, onChange, size = 22 }: { value: string | null
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 'var(--fs-meta)',
-              color: 'var(--ink-hairline)',
+              color: 'var(--ink-faint)',
             }}
           >
             {!c.value ? '—' : ''}

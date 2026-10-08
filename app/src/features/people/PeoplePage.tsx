@@ -210,9 +210,9 @@ export function PeoplePage() {
                   <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
                   </div>
-                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
+                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
                 </div>
               )
             })}
@@ -256,7 +256,7 @@ export function PeoplePage() {
         [data-theme='night'] .grain { mix-blend-mode: overlay; opacity: 0.25; }
         .chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
         .flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
-        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-hairline); }
+        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
         .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
         .slabel .r { flex: 1; height: 1px; border-bottom: 1px dashed var(--line-dashed); }
         .av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--ink-body); flex: none; }
@@ -341,7 +341,7 @@ export function PeoplePage() {
           <div className="slabel" style={{ margin: '26px 0 4px' }}>
             <span>{domain?.name || 'Uncategorized'}</span>
             <span className="r" />
-            <span style={{ color: 'var(--ink-hairline)' }}>{groupPeople.length}</span>
+            <span style={{ color: 'var(--ink-faint)' }}>{groupPeople.length}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {groupPeople.map((p, idx) => {

@@ -383,7 +383,7 @@ export function InboxPage() {
                   {/* WB-4 punch 9: no hardcoded sample repo here — each row names its own (payload.repo). */}
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{githubItems.length} open</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{githubItems.length} open</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {githubItems.map((item) => (
@@ -404,7 +404,7 @@ export function InboxPage() {
             )}
 
             {!isMobile && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {/* J-17: each key is a keycap (the `?` overlay's chip), not a bold letter. */}
                 {([[['E'], 'file'], [['D'], 'dismiss'], [['S'], 'snooze'], [['↑', '↓'], 'move'], [['⏎'], 'open']] as const).map(([keys, label]) => (
                   <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -469,7 +469,7 @@ function tabStyle(active: boolean, isMobile: boolean): React.CSSProperties {
     cursor: 'pointer',
   }
 }
-const tabCountStyle: React.CSSProperties = { marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }
+const tabCountStyle: React.CSSProperties = { marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }
 function tabUnderline(color: string): React.CSSProperties {
   return { position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: color, borderRadius: 2 }
 }
@@ -668,7 +668,7 @@ function TriageCard({
             title into a word-per-line column. 1c gives the text the card's full width; the
             caption moves to the end of the chip row below. */}
         {!compact && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>
             <SourceLabel item={item} label={KIND_LABEL[item.kind]} /> · {formatCaptured(item.created_at)}
           </span>
         )}
@@ -691,7 +691,7 @@ function TriageCard({
           ) : (
             <span style={{ fontSize: size.meta, color: 'var(--ink-muted)', fontStyle: 'italic' }}>no AI read on this one — file it yourself</span>
           )}
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
             <SourceLabel item={item} label={KIND_LABEL[item.kind]} /> · {formatCaptured(item.created_at)}
           </span>
         </div>
@@ -784,7 +784,7 @@ function GithubRow({ item, compact, highlighted, selected, selectionActive, onTo
   const issueUrl = githubUrl(payload?.url)
   const ref = `${payload?.repo ?? ''}${payload?.number ? `#${payload.number}` : ''}`
   const labels = (payload?.labels ?? []).filter((l): l is string => typeof l === 'string' && l !== '')
-  const meta = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' } as const
+  const meta = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' } as const
   // The issue's own age; rows stored before it was kept fall back to when they arrived.
   const age = daysAgo(payload?.created_at ?? item.created_at)
   return (
@@ -924,12 +924,12 @@ function DismissedRow({ item, selected, selectionActive, onToggleSelect }: { ite
       style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '12px 10px', margin: '0 -10px', borderRadius: 7, borderBottom: '1px dashed var(--line-dashed)', background: selected ? 'color-mix(in oklch, var(--acc-sage) 8%, transparent)' : undefined, boxShadow: selected ? 'inset 2px 0 0 var(--acc-sage)' : undefined }}
     >
       {onToggleSelect && <SelectBox selected={selected} active={selectionActive} onToggle={onToggleSelect} marginTop={0} />}
-      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 11, flex: 'none' }}>✕</span>
+      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 11, flex: 'none' }}>✕</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{item.raw_text}</div>
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 11 }}>
           <KindChip kind={item.kind} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>dismissed {dismissedAgo(item.updated_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>dismissed {dismissedAgo(item.updated_at)}</span>
         </div>
       </div>
       <Button type="button" variant="secondary" onClick={() => restoreInboxItem(item)} style={{ fontSize: 11.5, padding: '6px 13px', color: 'var(--acc-terra)' }}>
@@ -949,7 +949,7 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
           style={{ width: SWIPE_MAX, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'color-mix(in srgb, var(--acc-moss) 94%, transparent)', pointerEvents: swipe.x > 0 ? 'auto' : 'none', cursor: 'pointer' }}
         >
           <RestoreIcon color="var(--paper-parchment)" />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Restore</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Restore</span>
         </div>
       </div>
       <div
@@ -957,10 +957,10 @@ function DismissedRowMobile({ item }: { item: InboxItem }) {
         {...swipe.handlers}
         style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined, background: 'var(--paper-linen)', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 6px', boxShadow: swipe.x > 0 ? '-9px 0 12px rgba(var(--kf-shadow-rgb, 60,52,38),0.14)' : undefined }}
       >
-        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)', flex: 'none' }}>✕</span>
+        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)', flex: 'none' }}>✕</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.35 }}>{item.raw_text}</div>
-          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>{KIND_LABEL[item.kind]} · {dismissedAgo(item.updated_at)}</div>
+          <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{KIND_LABEL[item.kind]} · {dismissedAgo(item.updated_at)}</div>
         </div>
       </div>
     </div>

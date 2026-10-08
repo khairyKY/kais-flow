@@ -153,7 +153,7 @@ export function PersonDetailPage() {
       <style>{`
         .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
         .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
-        .fhelp{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;color:var(--ink-hairline)}
+        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
         .fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
         .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
         .slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
@@ -182,7 +182,7 @@ export function PersonDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 22 }}>
         <span className="av" style={{ width: 52, height: 52, fontSize: 21, background: getAvatarBgColor(person.name) }}>{person.name.charAt(0)}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · last touch {lastTouchLabel}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · last touch {lastTouchLabel}</div>
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.1, color: 'var(--ink-body)' }}>{person.name}</h1>
         </div>
         <img src={getCloverAsset(lastTouchDays)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
@@ -234,7 +234,7 @@ export function PersonDetailPage() {
           onClick={() => factValueRef.current?.focus()}
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 2px', cursor: 'pointer' }}
         >
-          <span style={{ width: 15, textAlign: 'center', color: 'var(--ink-hairline)', fontSize: 14, flex: 'none' }}>+</span>
+          <span style={{ width: 15, textAlign: 'center', color: 'var(--ink-faint)', fontSize: 14, flex: 'none' }}>+</span>
           <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Add a moment… label · date · repeats yearly</span>
         </div>
       </div>
@@ -258,7 +258,7 @@ export function PersonDetailPage() {
             <select value={newFactType} onChange={(e) => setNewFactType(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
               <option value="Interest">Interest</option><option value="Birthday">Birthday</option><option value="Note">Note</option><option value="Family">Family</option>
             </select>
-            {newFactType} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
+            {newFactType} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
           </span>
           <span style={{ flex: 1, minWidth: 160 }}>
             <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
@@ -279,7 +279,7 @@ export function PersonDetailPage() {
           <select value={logChannel} onChange={(e) => setLogChannel(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
             <option value="in person">In person</option><option value="call">Call</option><option value="text">Text</option><option value="email">Email</option>
           </select>
-          {logChannel === 'in person' ? 'In person' : logChannel.charAt(0).toUpperCase() + logChannel.slice(1)} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
+          {logChannel === 'in person' ? 'In person' : logChannel.charAt(0).toUpperCase() + logChannel.slice(1)} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
         </span>
         <span style={{ flex: 1, minWidth: 160 }}>
           <input type="text" placeholder="what did you talk about?" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: logSummary ? 'normal' : 'italic', outline: 'none' }} />
@@ -288,7 +288,7 @@ export function PersonDetailPage() {
           <select value={logDate} onChange={(e) => setLogDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
             <option value="today">today</option><option value="yesterday">yesterday</option><option value="1w ago">1w ago</option>
           </select>
-          {logDate} <span style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>
+          {logDate} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
         </span>
         <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Log</button>
       </form>

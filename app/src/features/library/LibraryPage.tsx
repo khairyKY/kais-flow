@@ -264,7 +264,7 @@ export function LibraryPage() {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
             letter-spacing: 0.06em;
-            color: var(--ink-hairline);
+            color: var(--ink-faint);
           }
           .trow {
             display: flex;
@@ -317,7 +317,7 @@ export function LibraryPage() {
 
               {/* Search Bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 11px', marginBottom: 14 }}>
-                <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-hairline)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-faint)' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
                     <circle cx="11" cy="11" r="6.4"></circle>
                     <path d="M19.5 19.5 16 16"></path>
@@ -535,7 +535,7 @@ export function LibraryPage() {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
           letter-spacing: 0.06em;
-          color: var(--ink-hairline);
+          color: var(--ink-faint);
         }
         .trow {
           display: flex;
@@ -563,7 +563,7 @@ export function LibraryPage() {
 
         {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 11px', marginBottom: 14 }}>
-          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-hairline)' }}>
+          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-faint)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
               <circle cx="11" cy="11" r="6.4"></circle>
               <path d="M19.5 19.5 16 16"></path>
@@ -587,7 +587,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Daily pages
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{dailyPagesCount}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{dailyPagesCount}</span>
         </div>
 
         <div className="flabel" style={{ padding: '0 6px', margin: '12px 0 5px' }}>Shelf</div>
@@ -615,7 +615,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Notes
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{notes.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{notes.length}</span>
         </div>
 
         {/* Category: Quotes */}
@@ -641,7 +641,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Quotes
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{quotes.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{quotes.length}</span>
         </div>
 
         {/* Category: Books */}
@@ -667,7 +667,7 @@ export function LibraryPage() {
             </svg>
           </span>
           Books
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{books.length}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{books.length}</span>
         </div>
 
         {/* Recent items list */}

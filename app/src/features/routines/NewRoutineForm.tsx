@@ -8,6 +8,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { TimeField } from '../calendar/TimeField'
+import { Toggle } from '../../components/kit'
 import { NumberField } from '../../components/NumberField'
 import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeMode } from './newRoutine'
 
@@ -163,7 +164,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         <div style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: isMobile ? '2px 12px' : '2px 13px' }}>
           {steps.map((step, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', width: isMobile ? 12 : 14, flex: 'none' }}>{i + 1}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: isMobile ? 12 : 14, flex: 'none' }}>{i + 1}</span>
               <input
                 autoFocus={step === '' && i === steps.length - 1}
                 value={step}
@@ -171,7 +172,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
                 placeholder="Neck & shoulder rolls"
                 style={{ flex: 1, font: 'inherit', fontSize: isMobile ? 13.5 : 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
               />
-              <span onClick={() => setSteps((cur) => cur.filter((_, j) => j !== i))} style={{ color: 'var(--ink-hairline)', fontSize: 11, cursor: 'pointer' }}>✕</span>
+              <span onClick={() => setSteps((cur) => cur.filter((_, j) => j !== i))} style={{ color: 'var(--ink-faint)', fontSize: 11, cursor: 'pointer' }}>✕</span>
             </div>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0' }}>
@@ -233,7 +234,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 3 }}>a gentle push notification</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>a gentle push notification</div>
         </div>
         {reminderOn && (
           <TimeField
@@ -242,14 +243,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
             style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
           />
         )}
-        <span
-          role="switch"
-          aria-checked={reminderOn}
-          onClick={() => setReminderOn((v) => !v)}
-          style={{ width: 38, height: 22, borderRadius: 999, background: reminderOn ? 'var(--acc-moss)' : 'var(--line-card)', position: 'relative', flex: 'none', cursor: 'pointer' }}
-        >
-          <span style={{ position: 'absolute', top: 2, left: reminderOn ? 18 : 2, width: 18, height: 18, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 120ms ease' }} />
-        </span>
+        <Toggle on={reminderOn} label="Remind me" onToggle={() => setReminderOn((v) => !v)} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 14, marginTop: 16 }}>

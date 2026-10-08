@@ -276,7 +276,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domai
 
 // `.fhelp` — Review.dc.html's small mono helper text
 function FHelp({ children }: { children: ReactNode }) {
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>{children}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>
 }
 
 /** "touched Tue" for fresh rows, "quiet N days" past a week — from the newest updated_at
@@ -496,7 +496,7 @@ function DomainCard({
         <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>up next</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>up next</span>
       </div>
     )
   }
@@ -549,7 +549,7 @@ function RightRail({
             <div key={`${row.entity_type}-${row.entity_id}`} id={`slipping-${row.entity_type}:${row.entity_id}`} style={{ marginTop: 8, background: 'color-mix(in srgb, var(--acc-terra) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-terra) 25%, transparent)', borderRadius: 3, padding: '12px 14px' }}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{Math.floor(row.days_since)} days untouched</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{Math.floor(row.days_since)} days untouched</span>
                 <button type="button" onClick={() => onReview(row)} style={{ border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', padding: 0 }}>
                   reviewed
                 </button>
@@ -584,12 +584,12 @@ function RightRail({
         <div style={{ marginTop: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>{bloomsThisWeek}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>tasks done</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>tasks done</span>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>
               {Math.round(hoursThisWeek)}<span style={{ fontSize: 15, color: 'var(--ink-faint)' }}>h</span>
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
         </div>
         <div className="kf-ink" style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.8deg)' }}>no numbers to chase — just look once, honestly, then close the week</div>
       </div>
@@ -602,7 +602,7 @@ function RailLabel({ label, color, count }: { label: string; color?: string; cou
     <div style={{ display: 'flex', alignItems: 'center', gap: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
       <span style={{ color: color ?? 'var(--ink-faint)' }}>{label}</span>
       <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-      {count != null && <span style={{ color: 'var(--ink-hairline)' }}>{count}</span>}
+      {count != null && <span style={{ color: 'var(--ink-faint)' }}>{count}</span>}
     </div>
   )
 }
@@ -694,7 +694,7 @@ function SeasonSoFar({
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{h.name}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                    {Math.round(h.thisWeek)}H {h.thisWeek !== h.lastWeek && <span style={{ color: h.thisWeek > h.lastWeek ? 'var(--acc-sage-text)' : 'var(--ink-hairline)' }}>({h.thisWeek > h.lastWeek ? '+' : ''}{Math.round(h.thisWeek - h.lastWeek)})</span>}
+                    {Math.round(h.thisWeek)}H {h.thisWeek !== h.lastWeek && <span style={{ color: h.thisWeek > h.lastWeek ? 'var(--acc-sage-text)' : 'var(--ink-faint)' }}>({h.thisWeek > h.lastWeek ? '+' : ''}{Math.round(h.thisWeek - h.lastWeek)})</span>}
                   </span>
                 </div>
                 <div style={{ position: 'relative', height: 9 }}>
@@ -720,7 +720,7 @@ function SeasonSoFar({
             </svg>
             <img src={`${A}/cherry/half-right.png`} alt="" style={{ position: 'absolute', right: -2, top: Math.max(-8, lastPoint.y - 30), height: 38, filter: 'var(--shadow-drop-sm)' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 0 22px', fontFamily: 'var(--font-mono)', fontSize: 7.5, letterSpacing: '0.04em', color: 'var(--ink-hairline)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 0 22px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.04em', color: 'var(--ink-faint)' }}>
             {weeks.map((w, i) => (
               <span key={w.label} style={i === weeks.length - 1 ? { color: 'var(--acc-terra)' } : undefined}>{w.label}</span>
             ))}

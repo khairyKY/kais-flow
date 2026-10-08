@@ -167,7 +167,7 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
       >
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: color(t), flex: 'none' }} />
         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><EmojiText text={t.name} /></span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', flex: 'none' }}>{on ? '✓' : KIND[t.kind]}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{on ? '✓' : KIND[t.kind]}</span>
       </button>
     )
   }
@@ -182,7 +182,7 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
         style={{ position: 'fixed', top: Math.max(12, top), left: Math.max(8, left), zIndex: 1000, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-popover)', borderRadius: 5, padding: 6, width: 240, maxHeight: height, display: 'flex', flexDirection: 'column' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 10px', margin: '2px 2px 6px' }}>
-          <span style={{ color: 'var(--ink-hairline)', fontSize: 12, flex: 'none' }}>⌕</span>
+          <span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>
           <input
             autoFocus
             value={query}

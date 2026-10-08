@@ -101,7 +101,7 @@
 .fc .fc-timegrid-slot-label-cushion {
   font-family: var(--font-mono);
   font-size: calc(9px * var(--s-text));
-  color: var(--ink-hairline);
+  color: var(--ink-faint);
   width: calc(58px * var(--s));
   box-sizing: border-box;
   text-align: right;
@@ -248,7 +248,7 @@
 }
 .fc .fc-timegrid-event .kf-ev-row.kf-done .fc-event-title {
   text-decoration: line-through;
-  color: var(--ink-hairline);
+  color: var(--ink-faint);
 }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
@@ -270,7 +270,7 @@
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
 /* All-day row */
-.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-hairline); }
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-faint); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
 /* §6 all-day chip: 20px pill in the band above the grid — no grip, no time row */
 .fc .fc-daygrid-event {
