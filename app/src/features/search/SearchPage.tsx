@@ -75,7 +75,7 @@ function Chip({ label, count, on, onClick }: { label: string; count: number; on:
       onClick={onClick}
       style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : 'none', color: on ? 'var(--paper-linen)' : 'var(--ink-muted)', border: `1px solid ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}
     >
-      {label} <b style={{ fontWeight: 400, color: on ? 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' : 'var(--ink-hairline)' }}>{count}</b>
+      {label} <b style={{ fontWeight: 400, color: on ? 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' : 'var(--ink-faint)' }}>{count}</b>
     </button>
   )
 }
@@ -192,7 +192,7 @@ export function SearchPage() {
           placeholder="Search the garden…"
           style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
         />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>esc clears</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc clears</span>
       </div>
 
       {/* One count line, and none while resting — a search that didn't answer knows no count. */}

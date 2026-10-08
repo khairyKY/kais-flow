@@ -114,7 +114,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
         <button key={a.label} type="button" className={`kf-bulk-act${a.destructive ? ' is-destructive' : ''}`} onClick={a.run}>
           <Icon name={a.icon} size={16} />
           {a.label}
-          {a.menu && <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>▾</span>}
+          {a.menu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>}
         </button>
       ))}
       <button type="button" className="kf-bulk-act" title="Clear selection (Esc)" aria-label="Clear selection" onClick={onClear} style={{ width: 28, height: 28, padding: 0, marginLeft: 4, justifyContent: 'center', background: 'var(--paper-bone)' }}>

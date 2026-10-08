@@ -61,7 +61,7 @@ export function DayCard({ day, inboxCount, overdueCount, onOpenRitual }: DayCard
             <Caption>Tomorrow's seeds</Caption>
             <div style={{ marginTop: 3, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>
               {seeds.map((t, i) => (
-                <span key={t.id}>{i > 0 && <span style={{ color: 'var(--ink-hairline)' }}> · </span>}<EmojiText text={t.title} /></span>
+                <span key={t.id}>{i > 0 && <span style={{ color: 'var(--ink-faint)' }}> · </span>}<EmojiText text={t.title} /></span>
               ))}
             </div>
           </div>
@@ -140,7 +140,7 @@ function RitualLinks({ morning, evening, onOpen }: { morning: RitualState; eveni
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {ritualProgress(morning)}</button>
-      <span aria-hidden style={{ color: 'var(--ink-hairline)', fontSize: 'var(--fs-meta)' }}>·</span>
+      <span aria-hidden style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>·</span>
       <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {ritualProgress(evening)}</button>
     </div>
   )

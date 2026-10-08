@@ -55,7 +55,7 @@ const headerStyle = {
   fontSize: 'var(--fs-meta)',
   letterSpacing: '0.16em',
   textTransform: 'uppercase' as const,
-  color: 'var(--ink-hairline)',
+  color: 'var(--ink-faint)',
   padding: '4px 10px 6px',
 }
 
@@ -173,7 +173,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
         >
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
           <span style={{ flex: 1 }}>{p.label}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
             {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
           </span>
         </button>

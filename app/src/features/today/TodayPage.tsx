@@ -500,7 +500,7 @@ export function TodayPage() {
           </span>
           <span
             onClick={() => handleDismissBday(person.id)}
-            style={{ fontSize: '12px', color: 'var(--ink-hairline)', cursor: 'pointer', flex: 'none', paddingLeft: 2 }}
+            style={{ fontSize: '12px', color: 'var(--ink-faint)', cursor: 'pointer', flex: 'none', paddingLeft: 2 }}
           >
             ✕
           </span>
@@ -790,7 +790,7 @@ export function TodayPage() {
       )}
       {routineGroups.map((g) => (
         <div key={g.key}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', margin: '2px 0 5px' }}>{g.label}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '2px 0 5px' }}>{g.label}</div>
           {g.items.map((r) => (
             <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
           ))}
@@ -1428,7 +1428,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const tail = !g.selecting && (
     <>
       {!done && (
-        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--ink-hairline)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
+        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
           {task.top3 ? '★' : '☆'}
         </span>
       )}
@@ -1608,7 +1608,7 @@ function MoreForToday({ summary, phone, label = 'More for today', storageKey = M
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {label}{summary && <span style={{ color: 'var(--ink-hairline)' }}> · {summary}</span>}
+            {label}{summary && <span style={{ color: 'var(--ink-faint)' }}> · {summary}</span>}
           </span>
           <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
           <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>

@@ -576,7 +576,7 @@ export function ProjectDetailPage() {
           <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px 16px 24px' : '30px 36px 36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
               <BackLink to="/projects">All projects</BackLink>
-              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
                 {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -629,7 +629,7 @@ export function ProjectDetailPage() {
               <div>
                 <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>
-                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 4 }}>
+                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>
                   logged across {pTimeEntries.length} sessions
                 </div>
               </div>
@@ -850,7 +850,7 @@ export function ProjectDetailPage() {
                 const dateLabel = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
                 return (
                   <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                    <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-hairline)', fontSize: 11 }}>{dateLabel}</span>
+                    <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
                         <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
@@ -951,7 +951,7 @@ export function ProjectDetailPage() {
         <div style={{ padding: isMobile ? '20px 16px 24px' : '30px 40px 36px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
             <BackLink to="/projects">All projects</BackLink>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
               {domain?.name || 'Personal'} · ongoing since {new Date(area.created_at).toLocaleDateString('en-US', { month: 'short' })}
             </span>
           </div>
@@ -1011,7 +1011,7 @@ export function ProjectDetailPage() {
                   )
                 })}
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 8 }}>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
                 tended {tendedCount} of the last 5 weeks
               </div>
             </div>
@@ -1024,8 +1024,8 @@ export function ProjectDetailPage() {
                 </span>
                 <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>tasks closed</span>
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 11 }}>no target — areas just keep going</div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', marginTop: 6 }}>{openTasks.length} open right now</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 11 }}>no target — areas just keep going</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 6 }}>{openTasks.length} open right now</div>
             </div>
           </div>
 
@@ -1099,7 +1099,7 @@ export function ProjectDetailPage() {
               const dateLabel = new Date(log.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
               return (
                 <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                  <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-hairline)', fontSize: 11 }}>{dateLabel}</span>
+                  <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
                   <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                     {log.event_type === 'task.completed' ? "Completed a task" : "Updated area"}
                   </span>

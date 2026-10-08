@@ -4,6 +4,7 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
+import { Button } from '../../components/kit'
 import type { IconName } from '../../components/icons/kf'
 import { RenameField } from '../../components/RenameField'
 import type { Domain } from '../../lib/types'
@@ -193,18 +194,20 @@ export function DomainsSettings() {
           onChange={(e) => setName(e.target.value)}
           placeholder="New domain…"
           aria-label="New domain"
-          style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
+          className="st-field"
+          style={{ flex: 1, minWidth: 0 }}
         />
-        <button type="submit" disabled={!name.trim()} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, cursor: name.trim() ? 'pointer' : 'default', opacity: name.trim() ? 1 : 0.5 }}>
+        {/* UI pass: a secondary button — a terra one here was a second CTA beside the page's own. */}
+        <Button type="submit" variant="secondary" disabled={!name.trim()}>
           Add
-        </button>
+        </Button>
       </form>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {domains.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No domains yet — Work, Home, Health…</div>}
         <DomainList domains={domains} meta={meta} rowStyle={{ padding: '6px 4px' }} />
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 10, lineHeight: 1.6 }}>
-        click a name to rename · ⋯ or right-click for colour, merge, delete · delete rests in Trash (Undo) and what was in it stays, without a domain · merge moves everything into the domain you pick
+      <div className="st-help" style={{ marginTop: 10 }}>
+        Click a name to rename it · ⋯ or right-click to recolour, merge or delete (deleting keeps what was in it)
       </div>
     </>
   )

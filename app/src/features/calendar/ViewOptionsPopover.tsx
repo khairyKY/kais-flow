@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Toggle as KitToggle } from '../../components/kit'
 import { uiZoom } from '../../lib/uiScale'
 import { useEscapeStack } from '../../lib/overlayStack'
 
@@ -70,41 +71,12 @@ function segCellStyle(on: boolean, pad = '5px 11px'): React.CSSProperties {
   }
 }
 
-/** Contract toggle grammar: ON = moss track, knob left 18 · OFF = line-card track, knob left 2. */
+/** A labelled row around the kit Toggle (UI pass: one switch look across the app). */
 function Toggle({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {
   return (
     <div style={{ ...rowStyle, padding: '8px 10px' }}>
       <span style={labelStyle}>{label}</span>
-      <span
-        role="switch"
-        aria-checked={on}
-        aria-label={label}
-        onClick={onToggle}
-        style={{
-          width: 38,
-          height: 22,
-          borderRadius: 999,
-          background: on ? 'var(--acc-moss)' : 'var(--line-card)',
-          position: 'relative',
-          flex: 'none',
-          cursor: 'pointer',
-          transition: 'background 140ms var(--ease-out)',
-        }}
-      >
-        <span
-          style={{
-            position: 'absolute',
-            top: 2,
-            left: on ? 18 : 2,
-            width: 18,
-            height: 18,
-            borderRadius: '50%',
-            background: 'var(--paper-parchment)',
-            boxShadow: 'var(--shadow-crisp)',
-            transition: 'left 140ms var(--ease-out)',
-          }}
-        />
-      </span>
+      <KitToggle on={on} label={label} onToggle={onToggle} />
     </div>
   )
 }
@@ -169,7 +141,7 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
         userSelect: 'none',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '6px 10px 8px' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '6px 10px 8px' }}>
         View options
       </div>
 

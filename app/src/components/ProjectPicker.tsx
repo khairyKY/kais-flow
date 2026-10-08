@@ -166,7 +166,7 @@ function ProjectPopover({ position, projects, domains, currentProjectId, onSelec
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 10px', margin: '2px 2px 6px' }}>
-        <span style={{ color: 'var(--ink-hairline)', fontSize: 12, flex: 'none' }}>⌕</span>
+        <span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>
         <input
           autoFocus
           value={query}

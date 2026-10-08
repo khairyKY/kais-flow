@@ -259,7 +259,7 @@ export function ActivityPage() {
     .anotice { display:flex; gap:6px; flex-wrap:wrap; margin-top:-8px; }
     .anotice button { font:inherit; font-size:12.5px; font-weight:600; color:var(--ink-body); background:var(--paper-parchment); border:1px solid var(--line-control); border-radius:3px; padding:5px 10px; cursor:pointer; }
     .anotice button:hover { background:var(--paper-bone); }
-    .fhelp { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; color:var(--ink-hairline); }
+    .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
     .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
     .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
   `
@@ -289,7 +289,7 @@ export function ActivityPage() {
           {!isMobile && <span className="fhelp" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>{formatTime(entry.created_at)}</span>}
         </span>
         <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
-          <span className="chip" style={{ fontSize: isMobile ? 8 : 9.5, padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
+          <span className="chip" style={{ fontSize: 'var(--fs-meta)', padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
           {/* 12j: a sent notice keeps its body line on the phone too ("09:50 · Car"). */}
           <span className="fhelp">{isMobile ? [formatTime(entry.created_at), entry.info.notice ? entry.info.details : ''].filter(Boolean).join(' · ') : entry.info.details}</span>
         </span>
@@ -339,7 +339,7 @@ export function ActivityPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0 12px' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>{group.length}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{group.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
@@ -404,7 +404,7 @@ export function ActivityPage() {
                 <div className="slabel" style={{ margin: '24px 0 16px' }}>
                   <span style={{ color: 'var(--ink-body)' }}>{formatDateHeader(dateKey)}</span>
                   <span className="r" />
-                  <span style={{ color: 'var(--ink-hairline)' }}>{plural(group.length, 'event')}</span>
+                  <span style={{ color: 'var(--ink-faint)' }}>{plural(group.length, 'event')}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
@@ -415,7 +415,7 @@ export function ActivityPage() {
               {rawEntries.length >= limit ? (
                 <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
               ) : (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>End of ledger</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>End of ledger</span>
               )}
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do — just a trail behind you ✿</span>

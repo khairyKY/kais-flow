@@ -294,7 +294,7 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-nav-label" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-hairline)', padding: '12px 12px 5px' }}>
+    <div className="app-nav-label" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '12px 12px 5px' }}>
       {children}
     </div>
   )
@@ -424,7 +424,7 @@ function TopBar() {
         <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
         </div>
       ))}
     </div>
