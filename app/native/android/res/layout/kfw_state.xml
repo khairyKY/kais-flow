@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The list widgets' states (Phone Widgets.dc.html, States): S1 All done (cherry bloom, one Caveat
+     line), S2 Nothing yet (seedling and the way in), S4 Signed out (the intact seal and one button),
+     S6 Inbox zero (the empty hydrangea) — and the other widgets' empty faces in the same grammar. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
+        <TextView android:id="@+id/cap" style="@style/KfW.Cap" />
+        <LinearLayout android:id="@+id/open" style="@style/KfW.Fill" android:gravity="center" android:orientation="vertical">
+            <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="56dp" android:adjustViewBounds="true" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/hand" style="@style/KfW.Hand" android:layout_marginTop="6dp" android:textSize="20sp" android:visibility="gone" />
+            <TextView android:id="@+id/line" style="@style/KfW.Title" android:layout_marginTop="6dp" android:gravity="center" android:textColor="@color/kfw_ink_muted" android:textSize="13sp" android:visibility="gone" />
+            <TextView android:id="@+id/btn_mid" style="@style/KfW.Btn.Cta" android:layout_marginTop="8dp" android:visibility="gone" />
+        </LinearLayout>
+        <TextView android:id="@+id/foot" style="@style/KfW.Meta" android:visibility="gone" />
+        <TextView android:id="@+id/btn" style="@style/KfW.Btn.Cta" android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

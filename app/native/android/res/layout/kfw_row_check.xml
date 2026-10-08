@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- rowC(): the box, the title, its time -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/row" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+    <ImageView android:id="@+id/box" style="@style/KfW.Box" android:contentDescription="Tick" />
+    <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="1dp" android:textSize="14sp" />
+    <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="10dp" android:visibility="gone" />
+</LinearLayout>

@@ -67,22 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           npx cap add android # creates android/ from capacitor.config.ts, then syncs dist/ + plugins into it
-          main=android/app/src/main
-          # Our activity (the bar strips take the page's colour), launch theme, clover icons.
-          test -f "$main/java/com/kaisflow/garden/MainActivity.java" || { echo "::error::generated MainActivity.java not found"; find "$main/java" -name '*.java'; exit 1; }
-          cp native/android/MainActivity.java "$main/java/com/kaisflow/garden/MainActivity.java"
-          cp -r native/android/res/. "$main/res/"
-          # Voice capture: the WebView asks for the mic through the shell, which needs these declared.
-          manifest="$main/AndroidManifest.xml"
-          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />#' "$manifest"
-          grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added to the manifest"; exit 1; }
-          grep -n 'uses-permission' "$manifest"
-          # The share sheet: shared text opens the app (MainActivity.onNewIntent → /share). text/*
-          # covers text/plain. Images wait for Paper capture, so no image/* yet.
-          sed -i 's#</activity>#    <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="text/*" />\n            </intent-filter>\n\n        &#' "$manifest"
-          grep -q 'android.intent.action.SEND' "$manifest" || { echo "::error::the SEND intent filter was not added to the manifest"; exit 1; }
-          sed -n '/<activity/,/<\/activity>/p' "$manifest"
-          grep -n 'app_name' "$main/res/values/strings.xml"
+          bash ../.github/scripts/android-native.sh # our activity, the home-screen widgets, the manifest additions
 
       # versionCode uses Tauri's formula (major·1000000 + minor·1000 + patch), so a release APK still
       # counts as newer than the Tauri-built ones before it. Branch builds are 0.0.0-dev, code 1.

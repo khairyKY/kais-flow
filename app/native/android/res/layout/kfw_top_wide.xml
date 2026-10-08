@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W4 Today · Top 3 (4×2): date, the taped goal card, the two other picks with their start times -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/date" style="@style/KfW.Serif" android:textSize="18sp" />
+            <TextView android:id="@+id/count" style="@style/KfW.Cap" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="8dp" android:gravity="end" />
+            <include layout="@layout/kfw_stale_stamp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="10dp" android:orientation="horizontal">
+            <FrameLayout android:id="@+id/goal_card" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.15">
+                <LinearLayout android:id="@+id/open" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/kfw_goal_inner" android:orientation="vertical" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="10dp" android:paddingBottom="2dp">
+                    <TextView style="@style/KfW.Cap" android:textColor="@color/kfw_gold" android:text="✶ Goal" />
+                    <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_width="match_parent" android:layout_marginTop="5dp" android:textSize="16sp" android:maxLines="2" />
+                    <FrameLayout style="@style/KfW.Fill" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+                        <ImageView android:id="@+id/box" style="@style/KfW.Box" android:layout_height="28dp" android:layout_marginStart="-11dp" android:src="@drawable/kfw_box_gold" android:contentDescription="Tick the goal" />
+                        <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="3dp" android:textColor="@color/kfw_gold" />
+                    </LinearLayout>
+                </LinearLayout>
+                <ImageView android:layout_width="wrap_content" android:layout_height="17dp" android:layout_gravity="top|start" android:layout_marginStart="44dp" android:layout_marginTop="-6dp" android:adjustViewBounds="true" android:src="@drawable/kfw_tape" android:importantForAccessibility="no" />
+            </FrameLayout>
+            <LinearLayout android:id="@+id/rows" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="12dp" android:gravity="center_vertical" android:orientation="vertical" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

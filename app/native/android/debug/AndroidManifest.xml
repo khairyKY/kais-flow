@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only (android-native.sh copies this to src/debug): the widget gallery, which draws
+     every widget with a sample day, in Day and Night, to PNGs for review.
+     adb shell am start -n com.kaisflow.garden/.widgets.WidgetGallery -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name="com.kaisflow.garden.widgets.WidgetGallery" android:exported="true" android:theme="@style/AppTheme.NoActionBar" />
+    </application>
+</manifest>

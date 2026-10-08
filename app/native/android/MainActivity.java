@@ -9,12 +9,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.kaisflow.garden.widgets.WidgetActions;
+import com.kaisflow.garden.widgets.WidgetBridge;
 import org.json.JSONObject;
 
 /**
@@ -34,12 +37,14 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(Shell.class);
+        registerPlugin(WidgetBridge.class); // window.KaisFlowWidgets: the home-screen widgets' snapshot and ticks
         // A restored activity, or a launch from Recents after the process died, replays the intent
         // that first opened it: drop a share's text so it isn't captured a second time.
         Intent launch = getIntent();
         if (launch != null && (savedInstanceState != null || (launch.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0)) {
             launch.removeExtra(Intent.EXTRA_TEXT);
             launch.removeExtra(Intent.EXTRA_SUBJECT);
+            launch.removeExtra(WidgetActions.EXTRA_PATH); // nor a widget's tap run twice
         }
         super.onCreate(savedInstanceState); // BridgeActivity hands the launch intent to onNewIntent below
         // Until the page reports its own colour: paper, or night paper when the phone is dark
@@ -59,6 +64,11 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (bridge != null && intent != null && intent.hasExtra(WidgetActions.EXTRA_PATH)) {
+            openFromWidget(intent.getStringExtra(WidgetActions.EXTRA_PATH));
+            intent.removeExtra(WidgetActions.EXTRA_PATH); // a restore from Recents doesn't replay it
+            return;
+        }
         if (bridge == null || intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return;
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         CharSequence title = intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT);
@@ -75,6 +85,33 @@ public class MainActivity extends BridgeActivity {
                 boolean inPage = "true".equals(handled);
                 Log.i("KaisFlowShare", (inPage ? "page " : "load ") + path);
                 if (!inPage) webView.loadUrl(url.toString());
+            }
+        );
+    }
+
+    /**
+     * A tap on a home-screen widget (widgets/KfWidget.open): a route, maybe with `?kfAction=` (Capture,
+     * talk, Paper, Ask, Start focus, Plan, Shut down…). An open page runs it in place
+     * (`window.__kfWidgetOpen`, features/widgets/bridge.ts); a page not up yet loads the route, where
+     * the notification actions' `kfAction` reader runs it. Capture wants the keyboard up: a focus()
+     * from script doesn't raise it in a WebView, so the shell asks for it.
+     */
+    private void openFromWidget(String path) {
+        if (path == null || !path.startsWith("/")) return;
+        WebView webView = bridge.getWebView();
+        webView.evaluateJavascript(
+            "typeof __kfWidgetOpen === 'function' && __kfWidgetOpen(" + JSONObject.quote(path) + ")",
+            (handled) -> {
+                boolean inPage = "true".equals(handled);
+                Log.i("KfWidget", (inPage ? "page " : "load ") + path);
+                if (!inPage) webView.loadUrl(Uri.parse(bridge.getLocalUrl()).buildUpon().encodedPath("").build() + path);
+                if (path.contains("kfAction=capture")) {
+                    webView.postDelayed(() -> {
+                        webView.requestFocus();
+                        InputMethodManager imm = getSystemService(InputMethodManager.class);
+                        if (imm != null) imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                    }, inPage ? 250 : 1500);
+                }
             }
         );
     }

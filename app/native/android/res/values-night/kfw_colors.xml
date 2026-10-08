@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Night Garden tokens (src/styles/tokens/colors.dark.css) for the home-screen widgets. -->
+<resources>
+    <color name="kfw_parchment">#262233</color>
+    <color name="kfw_goal">#322B22</color>
+    <color name="kfw_bone">#2E2942</color>
+    <color name="kfw_line_card">#1FF0EBDD</color>
+    <color name="kfw_line_goal">#73E4C36B</color>
+    <color name="kfw_line_control">#7A748A</color>
+    <color name="kfw_line_dashed">#29F0EBDD</color>
+    <color name="kfw_ink">#F0EBDD</color>
+    <color name="kfw_ink_muted">#C9C0D8</color>
+    <color name="kfw_ink_faint">#9A94AC</color>
+    <color name="kfw_ink_hand">#B3ABC4</color>
+    <color name="kfw_gold">#E4C36B</color>
+    <color name="kfw_terra">#E29473</color>
+    <color name="kfw_terra_ink">#E29473</color>
+    <color name="kfw_on_terra">#211D30</color>
+    <color name="kfw_sage">#A8C09A</color>
+    <color name="kfw_sage_text">#C6D8BA</color>
+    <color name="kfw_lavender_text">#D8D2E8</color>
+    <color name="kfw_lavender_deep">#C9C0D8</color>
+    <color name="kfw_buttercream_text">#DCCFA0</color>
+    <color name="kfw_blossom">#E9BFC5</color>
+    <color name="kfw_blossom_petal">#B3E9BFC5</color>
+    <color name="kfw_blossom_text">#E9BFC5</color>
+    <color name="kfw_hydrangea_deep">#C2D8E0</color>
+    <color name="kfw_moss">#8FB098</color>
+    <color name="kfw_block_lavender">#38C0B7E0</color>
+    <color name="kfw_block_sage">#2EA8C498</color>
+    <color name="kfw_block_blossom">#2EE9BFC5</color>
+    <color name="kfw_block_hydrangea">#2EA9C5D3</color>
+    <color name="kfw_check_border">#A6A8C09A</color>
+    <color name="kfw_check_fill">#A8C09A</color>
+    <color name="kfw_check_bg">#14A8C09A</color>
+    <color name="kfw_overdue">#E29473</color>
+    <color name="kfw_streak">#E4C36B</color>
+    <color name="kfw_offline">#A9C5D3</color>
+    <color name="kfw_badge_bg">#E29473</color>
+    <color name="kfw_badge_ink">#211D30</color>
+    <color name="kfw_skeleton">#14F0EBDD</color>
+    <color name="kfw_tape">#61E4C36B</color>
+</resources>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widgets (Phone Widgets.dc.html, design-integration/render_widgets.mjs): the
+     generator's helpers as styles — card(), cap(), meta(), serif(), hand(), clip(), btn(), round(). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="KfW" />
+
+    <!-- card(): paper, 22dp corners, a 1dp line; the grain sits under the content. -->
+    <style name="KfW.Root">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@drawable/kfw_card</item>
+        <item name="android:clipToOutline" tools:targetApi="31">true</item>
+    </style>
+    <style name="KfW.Grain">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:src">@drawable/kfw_grain_tile</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+    <style name="KfW.Body">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+    </style>
+    <!-- The 2×2 cards' padding: 14px 14px 12px. -->
+    <style name="KfW.Body.Square">
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+    <!-- One-row widgets: centred vertically. -->
+    <style name="KfW.Body.Slim">
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+    </style>
+
+    <!-- Text -->
+    <style name="KfW.Text">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/kfw_ink</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <!-- cap(): mono 11, tracked 0.16em, uppercase, faint. -->
+    <style name="KfW.Cap" parent="KfW.Text">
+        <item name="android:fontFamily">@font/kfw_mono</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.16</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/kfw_ink_faint</item>
+    </style>
+    <!-- meta(): mono 12, tracked 0.04em, faint. -->
+    <style name="KfW.Meta" parent="KfW.Text">
+        <item name="android:fontFamily">@font/kfw_mono</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/kfw_ink_faint</item>
+    </style>
+    <!-- serif(): Source Serif 500, −0.01em, line-height 1.2. -->
+    <style name="KfW.Serif" parent="KfW.Text">
+        <item name="android:fontFamily">@font/kfw_serif</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+    <style name="KfW.Serif.Bold">
+        <item name="android:fontFamily">@font/kfw_serif_semibold</item>
+    </style>
+    <!-- clip(): the UI face, one line, ellipsis. -->
+    <style name="KfW.Title" parent="KfW.Text">
+        <item name="android:fontFamily">@font/kfw_ui</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+    <!-- hand(): Caveat. -->
+    <style name="KfW.Hand" parent="KfW.Text">
+        <item name="android:fontFamily">@font/kfw_hand</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:textColor">@color/kfw_ink_hand</item>
+    </style>
+
+    <!-- btn(): a 36dp pill — bone with a control line, or terra (the one action). -->
+    <style name="KfW.Btn" parent="KfW.Text">
+        <item name="android:layout_height">36dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/kfw_pill_bone</item>
+        <item name="android:fontFamily">@font/kfw_ui_medium</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:drawableTint">@color/kfw_ink</item>
+    </style>
+    <style name="KfW.Btn.Cta">
+        <item name="android:background">@drawable/kfw_pill_terra</item>
+        <item name="android:textColor">@color/kfw_on_terra</item>
+        <item name="android:drawableTint">@color/kfw_on_terra</item>
+    </style>
+    <!-- round(): a 44dp circle with the icon at 42%. -->
+    <style name="KfW.Round">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:padding">12.8dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:background">@drawable/kfw_circle_bone</item>
+        <item name="android:tint">@color/kfw_ink</item>
+    </style>
+    <style name="KfW.Round.Cta">
+        <item name="android:background">@drawable/kfw_circle_terra</item>
+        <item name="android:tint">@color/kfw_on_terra</item>
+    </style>
+    <!-- An 18dp kit icon in ink. -->
+    <style name="KfW.Icon">
+        <item name="android:layout_width">16dp</item>
+        <item name="android:layout_height">16dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/kfw_ink</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+    <!-- A checkbox: the 22dp box in a 44 × 36dp hit. -->
+    <style name="KfW.Box">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:src">@drawable/kfw_box</item>
+    </style>
+    <!-- dash: the dashed hairline between rows. -->
+    <style name="KfW.Dash">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:layout_marginEnd">2dp</item>
+        <item name="android:background">@drawable/kfw_dash</item>
+    </style>
+    <style name="KfW.Fill">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+</resources>

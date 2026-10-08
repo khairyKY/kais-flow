@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W3 Top 3 · small (2×2): goal first, then the picks; S3 Offline / stale adds the stamp and foot -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView style="@style/KfW.Cap" android:layout_width="0dp" android:layout_weight="1" android:text="Top 3" />
+            <TextView android:id="@+id/count" style="@style/KfW.Cap" android:textColor="@color/kfw_sage_text" />
+            <include layout="@layout/kfw_stale_stamp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/rows" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="vertical" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <TextView android:id="@+id/stale_foot" style="@style/KfW.Meta" android:textColor="@color/kfw_offline" android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>
