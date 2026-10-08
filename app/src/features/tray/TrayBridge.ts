@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { create } from 'zustand'
-import { deliver, focusDoneNotice, inQuietHours, isPaused, reminderNotice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
 import { useSyncStatus } from '../../components/syncQueue'
@@ -14,15 +14,18 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, showLocal } from '../notifications/local'
+import { localPlan, type Planned } from '../notifications/plan'
+import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
-import { dueReminders, focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
+import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
 import type { AppSettings, Project, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
 // says so when nobody is looking, and the flyout's focus mirror is served. In the Windows app also:
-// the K's state and menu rows, the menu's actions (window.__kfTray), and reminders while it runs.
+// the K's state and menu rows, the menu's actions (window.__kfTray), and the reminders and rituals
+// while it runs. In the Android app: the OS's notification schedule (notifications/android.ts).
 
 /** "Something needs you": a reminder fired here and nobody has looked since. */
 const useNeedsYou = create<{ on: boolean }>(() => ({ on: false }))
@@ -38,25 +41,49 @@ function reminded(): string[] {
   }
 }
 
-/** The Windows app's own reminder sweep (WebView2 has no Web Push): every 30s, what came due.
- * False while tasks haven't loaded yet — the window it covers waits for them. */
-function sweepReminders(from: Date, now: Date): boolean {
+/** What this device would notify in (from, to], from what it holds (notifications/plan.ts); null
+ * while tasks haven't loaded yet. */
+function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   const tasks = queryClient.getQueryData<Task[]>(['tasks'])
-  if (!tasks) return false
+  if (!tasks) return null
+  const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
+  return localPlan({ tasks, projects, prefs: prefs(), from, to, now, zone: appZone() })
+}
+
+/** The Windows app's own sweep (WebView2 has no Web Push): every 30s, the reminders and rituals
+ * that came due. False while tasks haven't loaded yet — the window it covers waits for them. */
+function sweepDue(from: Date, now: Date): boolean {
+  const plan = planFor(from, now, now)
+  if (!plan) return false
   const seen = reminded()
-  const due = dueReminders(tasks, from, now).filter((t) => !seen.includes(`${t.id}@${t.reminder_at}`))
+  const due = plan.filter((p) => !seen.includes(p.key))
   if (due.length === 0) return true
   try {
-    localStorage.setItem(REMINDED_KEY, JSON.stringify([...seen, ...due.map((t) => `${t.id}@${t.reminder_at}`)].slice(-100)))
+    localStorage.setItem(REMINDED_KEY, JSON.stringify([...seen, ...due.map((p) => p.key)].slice(-100)))
   } catch {
-    /* worst case a reminder repeats after a restart */
+    /* worst case one repeats after a restart */
   }
-  useNeedsYou.setState({ on: true })
-  const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
-  const rows = due.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
-  const notice = deliver(reminderNotice(rows, prefs(), now, appZone()), prefs(), now, appZone())
-  if (notice) void showLocal(notice)
+  if (due.some((p) => p.notice.kind === 'task_reminder')) useNeedsYou.setState({ on: true })
+  for (const p of due) void showLocal(p.notice)
   return true
+}
+
+/** The Android app: hands the next few days to the OS (notifications/android.ts) — and, while a
+ * focus round runs with the app in the background, its "minutes tended" at the round's end. */
+const ANDROID_DAYS = 3
+function scheduleOnAndroid(): void {
+  const now = new Date()
+  const plan = planFor(now, new Date(now.getTime() + ANDROID_DAYS * 86_400_000), now)
+  if (!plan) return
+  const f = useFocusStore.getState()
+  if (document.visibilityState === 'hidden' && f.isRunning && f.mode === 'pomodoro') {
+    const at = new Date(now.getTime() + f.secondsLeft * 1000)
+    const task = f.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === f.activeTask!.id)?.title ?? null : null
+    const breakMin = f.currentRound >= f.settings.roundsBeforeLongBreak ? f.settings.longBreakMin : f.settings.shortBreakMin
+    const notice = deliver(focusDoneNotice(f.settings.focusRoundMin, task, breakMin, prefs()), prefs(), at, appZone())
+    if (notice) plan.push({ key: notice.tag, at, notice })
+  }
+  void import('../notifications/android').then((m) => m.scheduleAndroid(plan))
 }
 
 /** "25 minutes tended ✿" when a round runs out — unless someone is looking at the app. */
@@ -123,7 +150,7 @@ export function TrayBridge(): null {
     let from = new Date(Date.now() - 10 * 60_000)
     const sweep = () => {
       const now = new Date()
-      if (sweepReminders(from, now)) from = now
+      if (sweepDue(from, now)) from = now
     }
     sweep()
     const id = window.setInterval(sweep, 30_000)
@@ -133,6 +160,33 @@ export function TrayBridge(): null {
       window.clearInterval(id)
     }
   }, [tauri, navigate])
+
+  // ── the Android app only: keep the OS's schedule in step with the data ──
+  const android = isCapacitorShell()
+  useEffect(() => {
+    if (!android) return
+    void import('../notifications/android').then((m) => m.androidPermission(true)).then(scheduleOnAndroid) // Android 13+ asks once
+    let timer = 0
+    const soon = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(scheduleOnAndroid, 1500)
+    }
+    const watched = new Set(['tasks', 'projects', 'app_settings'])
+    const offCache = queryClient.getQueryCache().subscribe((e) => {
+      if (e.type === 'updated' && watched.has(String(e.query.queryKey[0]))) soon()
+    })
+    const offFocus = useFocusStore.subscribe((s, prev) => {
+      if (s.isRunning !== prev.isRunning || s.mode !== prev.mode) soon()
+    })
+    // Straight away: going to the background is the moment a running round's end gets scheduled.
+    document.addEventListener('visibilitychange', scheduleOnAndroid)
+    return () => {
+      window.clearTimeout(timer)
+      offCache()
+      offFocus()
+      document.removeEventListener('visibilitychange', scheduleOnAndroid)
+    }
+  }, [android])
 
   const { data: settings } = useAppSettings()
   const now = useMinuteNow()

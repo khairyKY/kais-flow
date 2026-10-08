@@ -130,6 +130,7 @@ async function buildPayload(
       .select('id, title, due_at, project:projects(name)')
       .eq('user_id', userId)
       .eq('status', 'todo')
+      .is('deleted_at', null) // a task in Trash never reminds
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
@@ -248,6 +249,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       .from('tasks')
       .select('user_id')
       .eq('status', 'todo')
+      .is('deleted_at', null) // a task in Trash never reminds
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
