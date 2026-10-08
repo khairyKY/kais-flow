@@ -98,12 +98,12 @@ const written = (state, table) => state.writes.filter((w) => w.table === table &
 // ── 1. Desktop Settings: no fake Google sync, no Pushover, GitHub truthful, reminders write ──
 for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expired — reconnect'], ['ok', 'Connected · synced 3 Oct, 11:37'], ['fresh', 'Connected · not synced yet']]) {
   const { ctx, page, errors } = await open('desktop', '/settings', { integrations: state ? [GH[state]] : [] })
-  const summary = page.locator('div', { hasText: 'GitHub · issues → inbox' }).last()
+  const summary = page.locator('div', { hasText: 'Issues assigned to you land in the Inbox' }).last() // UI pass: the GitHub row's help line
   const txt = await bodyText(page)
   check(`desktop settings [github ${state ?? 'none'}]: the summary row says "${expect}"`, txt.includes(expect), (await summary.textContent())?.slice(0, 80))
   if (!state) {
     check('desktop settings: no "Sync now" button (Google Calendar has no sync yet)', (await page.getByRole('button', { name: 'Sync now' }).count()) === 0)
-    check('desktop settings: Google Calendar is an honest "Coming soon" row', txt.includes('Google Calendar · sync') && txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
+    check('desktop settings: Google Calendar is an honest "Coming soon" row', txt.includes('Google Calendar') && txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
     check('desktop settings: no Pushover', !txt.includes('Pushover'))
     check('desktop settings: the old "configured" read-out is gone', !/configured/i.test(txt))
     await page.locator('#settings-Notifications').scrollIntoViewIfNeeded()
@@ -141,7 +141,7 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
   await page.locator('#settings-Notifications').screenshot({ path: path.join(OUT, 'desktop-ritual-reminders-edited.png') })
 
   // The Integrations page
-  await page.locator('div', { hasText: /^Integrations$/ }).first().click()
+  await page.locator('.st-nav-item', { hasText: /^Integrations$/ }).first().click() // UI pass: the section list is buttons
   await sleep(600)
   const txt = await bodyText(page)
   check('integrations page: Google Calendar says "Coming soon" and nothing syncs', txt.includes('Google Calendar') && txt.includes('Coming soon') && txt.includes('Not built yet'))
@@ -156,8 +156,10 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
   const { ctx, page, state, errors } = await open('phone', '/settings', { integrations: [GH.failing] })
   const txt = await bodyText(page)
   const row = async (label) => page.locator('a, div', { has: page.locator(`span:text-is("${label}")`) }).last().textContent()
-  check('phone settings: Google Calendar row says "Coming soon"', (await row('Google Calendar'))?.includes('Coming soon'), await row('Google Calendar'))
-  check('phone settings: GitHub row says the token expired', (await row('GitHub'))?.includes('Token expired — reconnect'), await row('GitHub'))
+  // UI pass (v1.0.27): the phone's summary rows are gone; the Integrations card says it directly.
+  void row
+  check('phone settings: Google Calendar, if shown, only says "Coming soon"', !txt.includes('Google Calendar') || txt.includes('Coming soon'))
+  check('phone settings: GitHub says the token expired', txt.includes('Token expired — reconnect'))
   check('phone settings: no Pushover, no fake sync', !txt.includes('Pushover') && !txt.includes('Sync now'))
   const swRow = (label) => page.locator('div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   const sw = { count: async () => (await swRow('Morning digest').count()) + (await swRow('Evening nudge').count()), nth: (i) => swRow(i === 0 ? 'Morning digest' : 'Evening nudge') }

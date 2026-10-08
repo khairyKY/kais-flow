@@ -259,7 +259,7 @@ for (const [view, theme, tauri] of [[DESKTOP, 'day', true], [PHONE, 'night', fal
   const { ctx, state, errors, open } = await app({ subs: [{ id: 's1', user_id: UID, endpoint: 'https://fcm.googleapis.com/x', keys: {}, device_label: 'Pixel', created_at: FIRST }] }, { theme, tauri })
   const page = await open('/settings', view)
   const card = page.locator('#settings-Notifications, div:has(> div > div > div:text-is("Notifications"))').first()
-  await page.getByText('Send a test notification').scrollIntoViewIfNeeded()
+  await page.getByRole('button', { name: 'Send a test notification' }).scrollIntoViewIfNeeded()
   const row = (label) => page.locator('div').filter({ has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last()
   const toggle = async (label) => {
     await row(label).locator('[role="switch"]').click()
@@ -274,7 +274,7 @@ for (const [view, theme, tauri] of [[DESKTOP, 'day', true], [PHONE, 'night', fal
   const from = await page.getByLabel('Quiet from').inputValue().catch(() => '')
   const until = await page.getByLabel('Quiet until').inputValue().catch(() => '')
   check(`12i ${tag} quiet hours from–to read 22:30 to 07:00 (the time field's 12-hour face)`, /^10:30\s?PM$/i.test(from) && /^0?7:00\s?AM$/i.test(until), `${from} → ${until}`)
-  await page.getByText('Send a test notification').click()
+  await page.getByRole('button', { name: 'Send a test notification' }).click()
   await sleep(600)
   if (tauri) {
     const t = (await calls(page, 'notify_local')).at(-1)?.args

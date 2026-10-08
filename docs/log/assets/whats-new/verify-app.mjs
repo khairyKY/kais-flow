@@ -273,6 +273,7 @@ for (const [view, vname] of [[DESKTOP, 'desktop'], [PHONE, 'phone']]) {
   // up to date: the card says so, and only “What’s new in your version” shows
   const { ctx, page } = await device({ route: '/settings', stamp: true, gh: SAME, memory: { seen: CUR.v, checkedAt: Date.now() } })
   const card = page.locator('#settings-App') // UI pass: the card is titled “App” now (was “App · Kai's Flow”)
+  await card.getByText(/on the latest/).waitFor({ timeout: 8000 }).catch(() => {}) // the check on opening finishes after first paint
   const text = await card.innerText()
   check('up to date: “You’re on the latest (v1.0.21)”, no “Coming in”', text.includes(`You're on the latest (${CUR.v})`) && !text.includes('Coming in'), text.split('\n').slice(0, 3).join(' | '))
   // a first Settings visit that finds the new version toasts it (once)
