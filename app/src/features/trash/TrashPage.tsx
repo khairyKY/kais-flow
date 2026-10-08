@@ -144,7 +144,7 @@ export function TrashPage() {
         <div className="trow">
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item.deleted_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <div style={{ position: 'relative' }}>
               <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>

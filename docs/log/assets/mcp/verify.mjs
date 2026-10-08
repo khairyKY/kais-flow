@@ -91,7 +91,8 @@ const shotAt = async (page, locator, name) => {
 }
 const toasts = (page) => page.locator('.kf-toast-msg').allInnerTexts()
 const clip = (page) => page.evaluate(() => navigator.clipboard.readText())
-const card = (page) => page.getByText('AI assistants (MCP)', { exact: true }).locator('xpath=..')
+// UI pass (2026-10-08): the title is the card's <h2> now, so the card is its <section>, not its parent.
+const card = (page) => page.getByText('AI assistants (MCP)', { exact: true }).locator('xpath=ancestor::section[1]')
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
 const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
 
@@ -103,7 +104,7 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
   check('desktop: "AI assistants" section on Integrations', await page.getByText('AI assistants', { exact: true }).isVisible())
   await card(page).scrollIntoViewIfNeeded()
   const before = await card(page).innerText()
-  check('desktop: card says not set up yet', before.includes('not set up yet'))
+  check('desktop: card says not set up yet', /not set up yet/i.test(before))
   check('desktop: card shows the server address', before.includes(MCP_URL))
   await card(page).getByRole('button', { name: 'Copy server address' }).click()
   await sleep(400)
@@ -155,7 +156,7 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
   const del = state.writes.find((w) => w.table === 'mcp_keys' && w.method === 'DELETE')
   check('desktop: Turn off deletes the key row', !!del && del.query.includes(`id=eq.${KEY_ROW.id}`), del?.query)
   const after = await card(page).innerText()
-  check('desktop: back to not set up, snippets back to the placeholder', after.includes('not set up yet') && !KEY_RE.test(after), after.split('\n').slice(0, 4).join(' / '))
+  check('desktop: back to not set up, snippets back to the placeholder', /not set up yet/i.test(after) && !KEY_RE.test(after), after.split('\n').slice(0, 4).join(' / '))
   check('desktop: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
@@ -167,7 +168,7 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
   await sleep(700)
   await card(page).scrollIntoViewIfNeeded()
   const text = await card(page).innerText()
-  check('existing key: made / scope / last used, dates on the Tokyo clock', text.includes('key made 4 Oct · read & write · last used 6 Oct'), text.split('\n').find((l) => l.startsWith('key made')))
+  check('existing key: made / scope / last used, dates on the Tokyo clock', /key made 4 Oct · read & write · last used 6 Oct/i.test(text), text.split('\n').find((l) => l.startsWith('key made')))
   check('existing key: New key and Turn off offered', (await card(page).getByRole('button', { name: 'New key' }).isVisible()) && (await card(page).getByRole('button', { name: 'Turn off' }).isVisible()))
   check('existing key: no key text on screen', !KEY_RE.test(text))
   await card(page).getByText('Connect an assistant').click()

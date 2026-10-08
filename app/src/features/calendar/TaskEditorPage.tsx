@@ -17,7 +17,7 @@ import { localDateKey } from '../routines/streaks'
 import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { Select } from '../../components/Select'
 import { useIsMobile } from '../../components/BottomSheet'
-import { BackLink, Checkbox, KeyCombo } from '../../components/kit'
+import { BackLink, Checkbox, KeyCombo, Toggle } from '../../components/kit'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
@@ -146,7 +146,7 @@ export function TaskEditorPage() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <BackLink to="/tasks">Tasks</BackLink>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Created {new Date(task.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
           {task.updated_at !== task.created_at && ` · edited ${new Date(task.updated_at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`}
         </span>
@@ -181,7 +181,7 @@ export function TaskEditorPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
             style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
           />
-          <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>click title to edit · saves on blur</div>
+          <div className="kf-help" style={{ marginTop: 6 }}>click the title to edit · saves when you leave it</div>
         </div>
         <img src={`/ds/assets/cherry/${stage}.png`} alt="" style={{ height: 52, flex: 'none', filter: 'var(--shadow-drop-sm)', marginTop: 2 }} />
         <button
@@ -238,7 +238,7 @@ export function TaskEditorPage() {
                     placeholder="Add a subtask…"
                     style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', background: 'none', border: 'none', outline: 'none', padding: 0 }}
                   />
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>enter to add</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>enter to add</span>
                 </div>
               </div>
             </>
@@ -295,7 +295,7 @@ export function TaskEditorPage() {
             {/* washi tape — Editor.dc.html 1a:382 */}
             <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
-            <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Project or area</FLabel>
+            <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Project or area</FLabel>
             <Select
               value={project?.id ?? area?.id ?? ''}
               onChange={handleProjectOrArea}
@@ -328,11 +328,11 @@ export function TaskEditorPage() {
             <div style={{ ...FLabelInline, marginBottom: 12 }}>Schedule</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
-                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due date</FLabel>
+                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Due date</FLabel>
                 <DateInput value={dueDate} title="Due date" onChange={(v) => handleDueChange(v, dueTime || '09:00')} />
               </div>
               <div>
-                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-hairline)' }}>Due time</FLabel>
+                <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Due time</FLabel>
                 <TimeInput value={dueTime} onChange={(v) => handleDueChange(dueDate || localDateKey(new Date()), v, true)} />
               </div>
             </div>
@@ -356,15 +356,7 @@ export function TaskEditorPage() {
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>
                 <FHelp style={{ marginTop: 2 }}>rests in the fern · leaves every list</FHelp>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={task.someday}
-                onClick={() => setSomeday(task, !task.someday)}
-                style={{ width: 34, height: 20, borderRadius: 999, background: task.someday ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                <span style={{ position: 'absolute', top: 2, left: task.someday ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 150ms' }} />
-              </button>
+              <Toggle on={task.someday} label="Someday" onToggle={() => setSomeday(task, !task.someday)} />
             </div>
           </div>
 

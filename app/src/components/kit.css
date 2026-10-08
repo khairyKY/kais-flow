@@ -297,3 +297,130 @@ button.kf-chip {
     inset: -15px;
   }
 }
+
+/* ── Toggle — DS §3. Desktop 36 × 20; phone 52 × 32 in a 48 hit (below). ── */
+.kf-toggle {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--line-control);
+  background: var(--paper-bone);
+  cursor: pointer;
+  transition: background-color var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
+}
+.kf-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line-control);
+  transform: translateY(-50%);
+  transition: left var(--dur-quick) var(--ease-out), width var(--dur-quick) var(--ease-out), height var(--dur-quick) var(--ease-out);
+}
+.kf-toggle[aria-checked='true'] {
+  background: var(--check-fill);
+  border-color: var(--check-fill);
+}
+.kf-toggle[aria-checked='true'] .kf-toggle-thumb {
+  left: calc(100% - 16px);
+  width: 14px;
+  height: 14px;
+  background: var(--paper-parchment);
+}
+.kf-toggle:focus-visible,
+.kf-seg-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.kf-toggle:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* ── Segmented — DS §3. Natural width; wraps instead of running off a narrow card. ── */
+.kf-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line-control);
+  border-radius: 18px;
+  background: var(--paper-bone);
+}
+.kf-seg-btn {
+  flex: 1 0 auto;
+  min-height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-seg-btn[aria-pressed='true'] {
+  background: var(--block-sage);
+  color: var(--acc-sage-text);
+  font-weight: 600;
+}
+.kf-seg-btn:not([aria-pressed='true']):active {
+  background: var(--pressed-overlay);
+}
+
+@media (max-width: 767px) {
+  .kf-toggle {
+    width: 52px;
+    height: 32px;
+    border-width: 2px;
+  }
+  .kf-toggle-thumb {
+    left: 6px;
+    width: 16px;
+    height: 16px;
+  }
+  .kf-toggle[aria-checked='true'] .kf-toggle-thumb {
+    left: calc(100% - 28px);
+    width: 24px;
+    height: 24px;
+  }
+  .kf-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -8px -2px;
+  }
+  .kf-seg {
+    border-radius: 26px;
+  }
+  .kf-seg-btn {
+    min-height: var(--touch-min);
+    padding: 0 10px;
+    font-size: 14px;
+  }
+}
+
+/* ── Help line — UI pass (2026-10-08): a sentence of help under a field or setting is the UI face at
+   13, --ink-muted, sentence case (its first letter raised, so lower-case copy still reads right).
+   Mono caps stay for labels and metadata. ── */
+.kf-help {
+  margin-top: 5px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+.kf-help::first-letter {
+  text-transform: uppercase;
+}

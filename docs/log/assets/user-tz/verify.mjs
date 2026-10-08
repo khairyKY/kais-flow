@@ -177,7 +177,7 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   check(`${name} sidebar reads "Personal · New York"`, /personal · new york/i.test(await text(page.locator('.app-sidebar-header'))), await text(page.locator('.app-sidebar-header')))
   const card = page.locator('#settings-Timezone')
   await card.scrollIntoViewIfNeeded()
-  check(`${name} current · America/New_York · GMT-4`, /current · America\/New_York · GMT-4/.test(await text(card)), await text(card))
+  check(`${name} the card reads America/New_York · GMT-4 (UI pass: its row label, was “current · …”)`, /America\/New_York · GMT-4/.test(await text(card)), await text(card))
   check(`${name} no "Use this device's zone" when the device is already there`, (await card.getByRole('button', { name: /Use this device/ }).count()) === 0)
   await card.getByRole('searchbox', { name: 'Search time zones' }).fill('tokyo')
   await sleep(300)

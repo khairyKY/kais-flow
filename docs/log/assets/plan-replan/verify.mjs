@@ -385,7 +385,19 @@ if (want('settings')) {
       await sleep(300)
       const segs = card.getByRole('button', { name: /^(Fri \+ Sat|Sat \+ Sun|Sun only|Custom)$/ })
       check(`${name} Weekend: Fri + Sat · Sat + Sun · Sun only · Custom, Sat + Sun on by default`, (await segs.count()) === 4 && (await card.getByRole('button', { name: 'Sat + Sun' }).getAttribute('aria-pressed')) === 'true')
-      check(`${name} "What the plan shortcuts mean" lists each option`, /What the plan shortcuts mean/.test(await card.innerText()) && /Next free slot\s+ASAP/.test(await card.innerText()) && /Tomorrow, first thing\s+tomorrow at 09:00/.test(await card.innerText()))
+      // UI pass (2026-10-08): the glossary left the card — "What do these mean?" opens it (the Plan
+      // menu's popover on a computer, a sheet on a phone), so it is read there.
+      const glossary = async () => {
+        await (cdp ? tap(cdp, card.getByRole('button', { name: 'What do these mean?' })) : card.getByRole('button', { name: 'What do these mean?' }).click())
+        await settle()
+        const dlg = page.getByRole('dialog').filter({ hasText: 'Plan shortcuts' }).last()
+        const t = await dlg.innerText().catch(() => '')
+        await page.keyboard.press('Escape')
+        await settle()
+        return t
+      }
+      const g0 = await glossary()
+      check(`${name} "What do these mean?" opens the plan shortcuts, each option explained; not inline in the card`, /Next free slot\s+ASAP/.test(g0) && /Tomorrow, first thing\s+tomorrow at 09:00/i.test(g0) && !/Next free slot\s+ASAP/.test(await card.innerText()), g0.slice(0, 80))
       if (label === 'phone') {
         const hs = await segs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
         check(`${name} the presets are ≥ 48 tall`, hs.every((h) => h >= 48), JSON.stringify(hs))
@@ -396,7 +408,7 @@ if (want('settings')) {
       await settle()
       const w = state.writes.filter((x) => x.table === 'app_settings').at(-1)?.row
       check(`${name} Fri + Sat → weekend_days [5,6]`, JSON.stringify(w?.weekend_days) === '[5,6]', JSON.stringify(w?.weekend_days))
-      check(`${name} the glossary follows: "first day of your weekend (Fri + Sat)"`, /\(Fri \+ Sat\)/.test(await card.innerText()))
+      check(`${name} the glossary follows: "first day of your weekend (Fri + Sat)"`, /\(Fri \+ Sat\)/.test(await glossary()))
       await click(card.getByRole('button', { name: 'Custom' }))
       await settle()
       const days = card.getByRole('group', { name: 'Weekend days' }).getByRole('button')

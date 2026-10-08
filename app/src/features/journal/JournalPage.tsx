@@ -551,7 +551,7 @@ export function JournalPage() {
                 {/* Polish G: at a 125% interface size (the phone default until F2b) a 390px phone lays this card out
                     ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
                     stay whole; the save state takes its own line only when it doesn't fit. */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-hairline)', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
                   <span>🎤 Talk</span>
@@ -745,7 +745,7 @@ export function JournalPage() {
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>
                   {/* Until the list arrives a day isn't "empty", only unknown: the line keeps its
                       height and says nothing (Polish G). */}
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>
                     {known ? entryForDate?.mood || (hasEntry ? 'kept' : 'empty') : ' '}
                   </div>
                 </div>
@@ -819,7 +819,7 @@ export function JournalPage() {
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
               <span
                 onClick={() => setPromptIndex((prev) => (prev + 1) % PROMPTS.length)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)', cursor: 'pointer', userSelect: 'none' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}
               >
                 ↻ another
               </span>
@@ -839,8 +839,8 @@ export function JournalPage() {
                 {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
                     so the card carries the day's "＋ New entry", as 1b's footer does. */}
                 <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>🎤 Talk it out</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>＋ Photo</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>🎤 Talk it out</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>＋ Photo</span>
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>

@@ -115,7 +115,7 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
 
 // The tools' triggers (Sort, Label): mono meta, no box — the click-cycler look J-12 kept.
 const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }
-const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-hairline)', lineHeight: 1 }}>▾</span>
+const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
 function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
@@ -145,7 +145,7 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
       }}
     >
       {label}
-      <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: active === key ? underline : 'var(--ink-hairline)' }}>{count}</span>
+      <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: active === key ? underline : 'var(--ink-faint)' }}>{count}</span>
       {active === key && <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: underline, borderRadius: 2 }} />}
     </Link>
   )
@@ -398,7 +398,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
         {doneEarlier.length > 0 && (
           <>
             <div onClick={() => setExpanded((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 22, padding: '9px 2px', cursor: 'pointer' }}>
-              <span style={{ color: 'var(--ink-hairline)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>
+              <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
               <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 22, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
@@ -412,7 +412,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
         )}
       </div>
 
-      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>
+      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <span>Completed items fade after 30 days — nothing is deleted</span>
         <span onClick={() => setExpanded(false)} style={{ marginLeft: 'auto', color: 'var(--acc-terra)', cursor: 'pointer' }}>Clear view</span>
       </div>
@@ -746,8 +746,8 @@ export function TasksPage() {
         )}
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
-          <div className="tr-mobile-only" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-hairline)', marginTop: 8 }}>
-            swipe → tomorrow · swipe ← delete · hold to select
+          <div className="tr-mobile-only kf-help" style={{ marginTop: 8 }}>
+            Swipe → tomorrow · swipe ← delete · hold to select
           </div>
         )}
 

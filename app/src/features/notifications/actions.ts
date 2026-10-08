@@ -5,6 +5,7 @@ import { completeTaskWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { useFocusStore } from '../focus/focusStore'
 import { BUNDLED_VERSION, openWhatsNew } from '../../lib/whatsNew'
 import { native } from '../tray/native'
+import { isCapacitorShell } from '../../lib/platform'
 import type { Task } from '../../lib/types'
 
 // What a notification's buttons do (Tray and Notifications.dc.html 12k), wherever they were pressed:
@@ -100,7 +101,7 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
 }
 
 /** Mounted once in the app shell: notification buttons reach this window from the service worker,
- * a Windows toast, or the address a fresh window was opened at. */
+ * a Windows toast, an Android notification, or the address a fresh window was opened at. */
 export function installNotificationActions(navigate: (to: string) => void): () => void {
   const run = (a: NotificationAction) => void runNotificationAction(a, navigate)
   const fromUrl = actionFromSearch(location.search)
@@ -114,7 +115,15 @@ export function installNotificationActions(navigate: (to: string) => void): () =
   navigator.serviceWorker?.addEventListener('message', onMessage)
   const w = window as unknown as { __kfNotifyAction?: (action: string, payload: Omit<NotificationAction, 'action'>) => void }
   w.__kfNotifyAction = (action, payload) => run({ ...payload, action })
+  let offAndroid: (() => void) | undefined
+  let gone = false
+  if (isCapacitorShell())
+    void import('./android').then((m) => {
+      if (!gone) offAndroid = m.onAndroidAction((action, payload) => run({ ...payload, action }))
+    })
   return () => {
+    gone = true
+    offAndroid?.()
     navigator.serviceWorker?.removeEventListener('message', onMessage)
     delete w.__kfNotifyAction
   }

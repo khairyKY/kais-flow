@@ -367,7 +367,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
               <span key={i} className="kf-waveform-bar" style={motion ? undefined : { animation: 'none' }} />
             ))
           ) : (
-            <span style={{ fontSize: 13, color: 'var(--ink-hairline)', fontStyle: 'italic' }}>—</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>—</span>
           )}
         </div>
 

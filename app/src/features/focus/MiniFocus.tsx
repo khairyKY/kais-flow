@@ -59,7 +59,7 @@ export function MiniFocus({ task }: { task: Task }) {
             fontWeight: 600,
             lineHeight: 1,
             // A session running on a *different* task shouldn't look like it's timing this one.
-            color: isThisTask || !activeTask ? 'var(--ink-body)' : 'var(--ink-hairline)',
+            color: isThisTask || !activeTask ? 'var(--ink-body)' : 'var(--ink-faint)',
           }}
         >
           {mmss(mode === 'stopwatch' ? stopwatchSeconds : secondsLeft)}
@@ -85,7 +85,7 @@ export function MiniFocus({ task }: { task: Task }) {
         </button>
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-hairline)', marginTop: 8 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 8 }}>
         round {currentRound} of {settings.roundsBeforeLongBreak}
         {activeTask && !isThisTask && ' · running on another task'}
       </div>

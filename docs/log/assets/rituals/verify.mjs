@@ -129,10 +129,13 @@ const DESKTOP = { viewport: { width: 1280, height: 800 } }
 /** Opens /today at `at` (Cairo) with scene `s`; writes land in `state.rows` and `state.writes`. */
 async function open(s, theme, view = PHONE) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess]) => {
+  await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('sb-127-auth-token', sess)
-  }, [theme, JSON.stringify(session)])
+    // UI pass (2026-10-08): the one-time "Updated to vX" toast stays out of the way (it sat over 6d's
+    // third time pill whenever the run was slow enough) — the task-sheet harness's recipe.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
+  }, [theme, JSON.stringify(session), UID])
   const state = { rows: tables(s), writes: [] }
   let seq = 0
   await ctx.route('http://127.0.0.1:9/**', async (r) => {

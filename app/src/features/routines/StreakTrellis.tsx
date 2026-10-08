@@ -88,7 +88,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }}>last {DAYS} days</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last {DAYS} days</span>
               <span onClick={onClose} style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer' }}>✕</span>
             </div>
           </div>
@@ -131,7 +131,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
 
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${DAYS}, 1fr)`, marginTop: 2, borderTop: '1px dashed var(--line-dashed)', paddingTop: 7 }}>
             {days.map((d) => (
-              <span key={d.key} title={d.key} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 7.5, color: tickColor(d), fontWeight: d.state === 'broke' ? 700 : 400 }}>
+              <span key={d.key} title={d.key} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: tickColor(d), fontWeight: d.state === 'broke' ? 700 : 400 }}>
                 {dayOfMonth(d.key)}
               </span>
             ))}
