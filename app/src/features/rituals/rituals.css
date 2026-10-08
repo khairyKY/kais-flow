@@ -62,7 +62,9 @@
 .rt-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }
 .rt-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .rt-meta { margin-top: var(--sp-1); display: flex; flex-wrap: wrap; column-gap: var(--sp-3); row-gap: 2px; font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-.rt-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rt-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 100%; }
+/* UI pass: a long project name wraps inside the body instead of running under the row's Tomorrow button. */
+.rt-meta > span:has(.rt-dot) { white-space: normal; }
 .rt-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 /* Kai 2026-10-07: a pick's "☆ Make goal" — meta-sized, with a 48px hit (the negative margins keep the line). */
 .rt-make-goal { position: relative; z-index: 1; font: inherit; letter-spacing: inherit; white-space: nowrap; color: var(--acc-gold); background: none; border: none;
