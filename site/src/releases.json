@@ -1,5 +1,22 @@
 [
   {
+    "v": "v1.0.27",
+    "date": "2026-10-08",
+    "title": "Notifications that arrive, and a calmer look",
+    "highlights": [
+      "Notifications reach the Windows app and the Android phone: reminders, the morning digest and the evening nudge",
+      "A Send a test notification button shows exactly what is in the way on this device",
+      "Settings redesigned: one tidy row for every setting, two columns on wide screens",
+      "Easier to read everywhere: stronger faint text and no more tiny labels"
+    ],
+    "icons": [
+      "clock",
+      "check",
+      "sun",
+      "moon"
+    ],
+    "art": "clover-awake"
+  },  {
     "v": "v1.0.26",
     "date": "2026-10-08",
     "title": "The garden on your home screen",
