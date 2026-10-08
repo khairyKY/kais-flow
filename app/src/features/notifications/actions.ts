@@ -19,6 +19,8 @@ export interface NotificationAction {
   url?: string
   /** 'whats-new': the version the toast was about. */
   version?: string
+  /** A home-screen widget's text (Ask's chip). */
+  text?: string | null
 }
 
 /** The action a fresh window was opened for (sw-push.js kfActionUrl), or null. */
@@ -26,7 +28,8 @@ export function actionFromSearch(search: string): NotificationAction | null {
   const q = new URLSearchParams(search)
   const action = q.get('kfAction')
   if (!action) return null
-  return { action, taskIds: (q.get('kfTasks') ?? '').split(',').filter(Boolean) }
+  const text = q.get('kfText')
+  return { action, taskIds: (q.get('kfTasks') ?? '').split(',').filter(Boolean), ...(text ? { text } : {}) }
 }
 
 /** The same address without the action params, so a reload doesn't run it twice. */
@@ -34,6 +37,7 @@ export function withoutAction(path: string, search: string): string {
   const q = new URLSearchParams(search)
   q.delete('kfAction')
   q.delete('kfTasks')
+  q.delete('kfText')
   const rest = q.toString()
   return rest ? `${path}?${rest}` : path
 }
@@ -78,6 +82,17 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
       // The Windows "vX is out" toast's button (features/whats-new): bring the window forward, open the sheet.
       void native('tray_open')
       openWhatsNew(a.version ?? BUNDLED_VERSION)
+      return
+    case 'capture':
+    case 'voice':
+    case 'paper':
+    case 'ask':
+    case 'focus-start':
+    case 'replan':
+    case 'journal':
+    case 'journal-voice':
+      // The Android home-screen widgets' taps (features/widgets/bridge.ts), loaded when one comes.
+      ;(await import('../widgets/bridge')).runWidgetAction(a.action, a, navigate)
       return
     default:
       navigate(a.url ?? '/today')

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { widgetsSignedOut } from '../widgets/native'
 import type { Session } from '@supabase/supabase-js'
 import { del } from 'idb-keyval'
 import { supabase } from '../../lib/supabase'
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.clear()
         void del('kais-flow-query-cache')
         forgetRecovery()
+        widgetsSignedOut() // the home-screen widgets forget the day (S4)
       }
       // J-11: /reset only offers the new-password form to a session that arrived this way.
       if (event === 'PASSWORD_RECOVERY') rememberRecovery()

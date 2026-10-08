@@ -204,9 +204,36 @@ public class WidgetGallery extends Activity {
         return 76 * cells + 16 * (cells - 1);
     }
 
+    /** Snap's tick rules (the one pure piece of the native side): a tick is drawn once, everywhere it shows. */
+    static void selfCheck() throws JSONException {
+        JSONObject s = sample();
+        JSONObject op = new JSONObject().put("t", "task").put("id", "g1");
+        Snap.apply(s, op);
+        Snap.apply(s, op); // the app's next snapshot gets the still-queued tick folded in again: no double count
+        check(s.getJSONObject("goal").getBoolean("done"), "goal ticked");
+        check(s.getJSONArray("blocks").getJSONObject(1).getBoolean("done"), "its block ticked");
+        check(s.getJSONObject("progress").getInt("done") == 4, "progress counted once");
+        Snap.apply(s, new JSONObject().put("t", "routine").put("id", "r2"));
+        check(s.getJSONArray("routines").getJSONObject(1).getBoolean("done"), "routine ticked");
+        Snap.apply(s, new JSONObject().put("t", "focus-done").put("id", "p1"));
+        check(s.getJSONObject("focus").getString("state").equals("idle"), "focus stopped");
+        check(s.getJSONArray("picks").getJSONObject(0).getBoolean("done"), "focus task done");
+        check(KfWidget.colsFor(76) == 1 && KfWidget.colsFor(168) == 2 && KfWidget.colsFor(352) == 4 && KfWidget.rowsFor(110) == 1 && KfWidget.rowsFor(230) == 2 && KfWidget.rowsFor(470) == 4, "size classes");
+        Log.i(TAG, "selfcheck ok");
+    }
+
+    static void check(boolean ok, String what) {
+        if (!ok) throw new IllegalStateException("selfcheck: " + what);
+    }
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        try {
+            selfCheck();
+        } catch (Exception e) {
+            Log.e(TAG, "FAIL selfcheck", e);
+        }
         File dir = new File(getExternalFilesDir(null), "widgets");
         dir.mkdirs();
         int ok = 0;

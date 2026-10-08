@@ -17,6 +17,7 @@ import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
 import { FlowerIcon, FocusGlyph, GuideGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { widgetsAvailable } from '../features/widgets/native'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
 // first page is idle (capture-type, see captureWarm below). ⌘K's listener lives in the shell's
@@ -29,6 +30,8 @@ const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ de
 const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => ({ default: m.TaskSheet })))
 // Notification buttons, focus-done notices, the tray flyout's focus mirror and (Windows) the tray.
 const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => ({ default: m.TrayBridge })))
+// The Android app's home-screen widgets (features/widgets): their snapshot, ticks and taps.
+const WidgetBridge = lazy(() => import('../features/widgets/WidgetBridge').then((m) => ({ default: m.WidgetBridge })))
 // Tour & help: the garden notes after onboarding and the one-line hints (its own chunk).
 const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
 
@@ -846,6 +849,11 @@ export function AppLayout() {
       <Suspense fallback={null}>
         <TrayBridge />
       </Suspense>
+      {widgetsAvailable() && (
+        <Suspense fallback={null}>
+          <WidgetBridge />
+        </Suspense>
+      )}
       <Suspense fallback={null}>
         <TourHost />
       </Suspense>

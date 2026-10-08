@@ -94,7 +94,7 @@ public final class Snap {
         if (t.equals("focus-stop") || t.equals("focus-done")) {
             JSONObject f = s.optJSONObject("focus");
             if (f != null) {
-                if (t.equals("focus-done")) id = f.optString("taskId", "");
+                if (t.equals("focus-done") && (id.isEmpty() || id.equals("round"))) id = f.optString("taskId", "");
                 f.put("state", "idle");
                 f.put("endsAt", 0);
             }
