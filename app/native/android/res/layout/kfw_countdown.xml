@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W17 Countdown (2×1): days until a deadline or event -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/cap" style="@style/KfW.Cap" android:layout_width="match_parent" />
+            <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_marginTop="2dp" />
+        </LinearLayout>
+        <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="8dp" />
+    </LinearLayout>
+</FrameLayout>

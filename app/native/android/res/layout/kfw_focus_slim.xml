@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W20 Focus · slim (2×1): a mini ring and the task while it runs -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="12dp" android:paddingEnd="12dp">
+        <FrameLayout android:layout_width="48dp" android:layout_height="48dp">
+            <ProgressBar android:id="@+id/ring" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:max="1000" android:progressDrawable="@drawable/kfw_ring_small" />
+            <TextView android:id="@+id/mins" style="@style/KfW.Text" android:layout_gravity="center" android:fontFamily="sans-serif-medium" android:fontFeatureSettings="tnum" android:textSize="11sp" />
+        </FrameLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:orientation="vertical">
+            <TextView android:id="@+id/cap" style="@style/KfW.Cap" android:textColor="@color/kfw_sage_text" android:text="Focusing" />
+            <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:layout_marginTop="2dp" android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -5,6 +5,7 @@ import { AI_ALLOWANCE_USED_UP } from '../capture/aiAllowance'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
 import type { Citation } from '../../lib/types'
 import { Icon } from '../../components/Icon'
+import { takeChatStarter } from '../widgets/native'
 import type { IconName } from '../../components/icons/kf'
 import './chat.css'
 
@@ -22,7 +23,7 @@ interface DisplayMessage {
 
 export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [messages, setMessages] = useState<DisplayMessage[]>([])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => takeChatStarter() ?? '') // the Ask widget's chip types its question
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const openHit = useOpenSearchHit()

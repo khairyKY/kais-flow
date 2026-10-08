@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W16 Week strip (4×1): seven days; up to three dots each; today is the inked chip -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/days" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="8dp" />
+</FrameLayout>

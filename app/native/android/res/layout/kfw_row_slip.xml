@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A Slipping row: the title and how long it has been quiet, in gold -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/row" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingBottom="7dp">
+    <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:textSize="14sp" />
+    <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="12dp" android:textColor="@color/kfw_gold" />
+</LinearLayout>

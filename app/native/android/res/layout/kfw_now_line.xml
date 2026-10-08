@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The now line in terra, across the blocks (agenda) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="7dp" android:layout_marginTop="-3dp" android:layout_marginBottom="-4dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="48dp">
+    <ImageView android:layout_width="7dp" android:layout_height="7dp" android:src="@drawable/kfw_dot_terra" android:importantForAccessibility="no" />
+    <ImageView android:layout_width="0dp" android:layout_height="1.5dp" android:layout_weight="1" android:scaleType="fitXY" android:src="@drawable/kfw_line_terra" android:importantForAccessibility="no" />
+</LinearLayout>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W1 Goal of the day · slim (4×1): the one gold strip -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root" android:background="@drawable/kfw_card_goal">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="7dp" android:paddingEnd="18dp">
+        <ImageView android:id="@+id/box" style="@style/KfW.Box" android:src="@drawable/kfw_box_gold" android:contentDescription="Tick the goal" />
+        <LinearLayout android:id="@+id/open" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="1dp" android:orientation="vertical">
+            <TextView android:id="@+id/cap" style="@style/KfW.Cap" android:textColor="@color/kfw_gold" android:text="✶ Goal of the day" />
+            <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_width="match_parent" android:layout_marginTop="3dp" android:textSize="16sp" />
+        </LinearLayout>
+        <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="12dp" android:textColor="@color/kfw_gold" />
+    </LinearLayout>
+</FrameLayout>

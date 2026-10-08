@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W29 Plan my day / W30 Shut down (4×2): one widget, two faces — the morning one until the day is
+     planned, the evening one from 17:00 until it is closed -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="16dp" android:paddingEnd="16dp">
+        <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="74dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_daisy_morning" android:importantForAccessibility="no" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
+            <TextView android:id="@+id/cap" style="@style/KfW.Cap" android:layout_width="match_parent" android:textColor="@color/kfw_buttercream_text" />
+            <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_width="match_parent" android:layout_marginTop="4dp" android:textSize="21sp" />
+            <TextView android:id="@+id/meta" style="@style/KfW.Meta" android:layout_width="match_parent" android:maxLines="2" />
+        </LinearLayout>
+        <TextView android:id="@+id/go" style="@style/KfW.Btn.Cta" android:layout_marginStart="14dp" />
+    </LinearLayout>
+</FrameLayout>

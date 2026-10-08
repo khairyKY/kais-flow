@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One day of the Week strip: a 42×56 chip — the weekday, the date, up to three dots; today on bone -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/cell" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1">
+    <LinearLayout android:id="@+id/chip" android:layout_width="42dp" android:layout_height="56dp" android:layout_gravity="center" android:gravity="center" android:orientation="vertical">
+        <TextView android:id="@+id/dow" style="@style/KfW.Cap" android:letterSpacing="0" android:textSize="10sp" />
+        <TextView android:id="@+id/num" style="@style/KfW.Title" android:layout_marginTop="2dp" android:textSize="15sp" />
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="4dp" android:layout_marginTop="2dp" android:orientation="horizontal">
+            <ImageView android:id="@+id/dot1" android:layout_width="4dp" android:layout_height="4dp" android:src="@drawable/kfw_dot4" android:importantForAccessibility="no" />
+            <ImageView android:id="@+id/dot2" android:layout_width="4dp" android:layout_height="4dp" android:layout_marginStart="2dp" android:src="@drawable/kfw_dot4" android:importantForAccessibility="no" />
+            <ImageView android:id="@+id/dot3" android:layout_width="4dp" android:layout_height="4dp" android:layout_marginStart="2dp" android:src="@drawable/kfw_dot4" android:importantForAccessibility="no" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

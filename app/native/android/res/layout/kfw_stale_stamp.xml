@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- S3 Offline / stale: the offline mark and when the widget's day was last fresh -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/stale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:gravity="center_vertical" android:orientation="horizontal" android:visibility="gone">
+    <ImageView style="@style/KfW.Icon" android:layout_width="13dp" android:layout_height="13dp" android:src="@drawable/kfw_ic_offline" android:tint="@color/kfw_offline" />
+    <TextView android:id="@+id/stale_at" style="@style/KfW.Meta" android:layout_marginStart="4dp" android:textColor="@color/kfw_offline" />
+</LinearLayout>

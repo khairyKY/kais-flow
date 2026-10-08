@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W2 Goal of the day · card (2×2): taped gold card with the four-leaf clover -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root" android:background="@drawable/kfw_card_goal">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body" android:paddingTop="16dp" android:paddingBottom="10dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:orientation="horizontal">
+            <TextView style="@style/KfW.Cap" android:layout_width="0dp" android:layout_weight="1" android:textColor="@color/kfw_gold" android:text="✶ Goal" />
+            <ImageView android:layout_width="wrap_content" android:layout_height="34dp" android:layout_marginTop="-6dp" android:layout_marginEnd="-4dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_clover_four_leaf" android:importantForAccessibility="no" />
+        </LinearLayout>
+        <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_width="match_parent" android:layout_marginTop="4dp" android:textSize="19sp" android:maxLines="3" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:id="@+id/box" style="@style/KfW.Box" android:layout_marginStart="-11dp" android:src="@drawable/kfw_box_gold" android:contentDescription="Tick the goal" />
+            <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_marginStart="3dp" android:textColor="@color/kfw_gold" />
+        </LinearLayout>
+    </LinearLayout>
+    <ImageView android:layout_width="wrap_content" android:layout_height="17dp" android:layout_gravity="top|center_horizontal" android:layout_marginTop="-4dp" android:adjustViewBounds="true" android:src="@drawable/kfw_tape" android:importantForAccessibility="no" />
+</FrameLayout>
