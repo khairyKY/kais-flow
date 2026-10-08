@@ -30,6 +30,8 @@ import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
 import { showLocal } from '../notifications/local'
 import { QUIET_FROM, QUIET_TO, testNotice } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
+import { widgetsAvailable } from '../widgets/native'
+import { useHideTitles } from '../widgets/bridge'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
@@ -608,6 +610,9 @@ function NotificationsCard() {
   const [message, setMessage] = useState<string | null>(null)
   const tauri = isTauri()
   const [trayShown, setTrayShown] = useState(readTrayShown)
+  const widgets = widgetsAvailable() // the Android app's home-screen widgets
+  const hideTitles = useHideTitles((h) => h.on)
+  const setHideTitles = useHideTitles((h) => h.set)
   const [autostart, setAutostart] = useState<boolean | null>(null)
   useEffect(() => {
     if (tauri) void native<boolean>('autostart_get').then((on) => setAutostart(!!on))
@@ -707,6 +712,11 @@ function NotificationsCard() {
       <NotificationRow glyph={<span style={{ width: 30, display: 'flex', justifyContent: 'center', color: 'var(--ink-muted)' }}><Icon name="lock" size={18} /></span>} label="Show task names on the lock screen" help="Off: “Kai’s Flow · A reminder”">
         <Toggle on={s.lock_screen_names === true} onToggle={() => updateAppSetting('lock_screen_names', !s.lock_screen_names)} />
       </NotificationRow>
+      {widgets && (
+        <NotificationRow glyph={<span style={{ width: 30 }} />} label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2” instead of the names — this phone only">
+          <Toggle on={hideTitles} onToggle={() => setHideTitles(!hideTitles)} />
+        </NotificationRow>
+      )}
 
       {tauri ? (
         <>

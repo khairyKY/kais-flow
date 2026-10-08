@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W15 Agenda + week: 4×4 (agenda) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="250dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="368dp"
+    android:maxResizeHeight="368dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/kfw_loading"
+    android:previewImage="@drawable/kfw_preview_w15"
+    android:description="@string/kfw_desc_15"
+    android:widgetCategory="home_screen" />

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today 4×2's picks: the box, the title over its start time -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/row" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingTop="4dp" android:paddingBottom="4dp">
+    <ImageView android:id="@+id/box" style="@style/KfW.Box" android:layout_height="32dp" android:contentDescription="Tick" />
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="1dp" android:orientation="vertical">
+        <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:textSize="14sp" />
+        <TextView android:id="@+id/time" style="@style/KfW.Meta" />
+    </LinearLayout>
+</LinearLayout>

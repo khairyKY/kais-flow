@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W01 Goal of the day · slim: 4×1 (goal) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="368dp"
+    android:maxResizeHeight="184dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/kfw_loading"
+    android:previewImage="@drawable/kfw_preview_w01"
+    android:description="@string/kfw_desc_01"
+    android:widgetCategory="home_screen" />

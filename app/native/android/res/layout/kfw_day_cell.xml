@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One day of Agenda + week's strip: the weekday, the date (today inked), a dot if it has things -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/cell" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center_horizontal" android:orientation="vertical">
+    <TextView android:id="@+id/dow" style="@style/KfW.Cap" android:letterSpacing="0" />
+    <TextView android:id="@+id/num" style="@style/KfW.Title" android:layout_width="32dp" android:layout_height="32dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="14sp" />
+    <ImageView android:id="@+id/dot" android:layout_width="4dp" android:layout_height="4dp" android:layout_marginTop="4dp" android:src="@drawable/kfw_dot4" android:importantForAccessibility="no" />
+</LinearLayout>

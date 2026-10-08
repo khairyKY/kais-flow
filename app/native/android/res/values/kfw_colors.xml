@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widgets (Phone Widgets.dc.html): the app's Day tokens (src/styles/tokens/colors.css).
+     values-night/ holds the Night Garden ones, so the widgets follow the system dark mode. -->
+<resources>
+    <color name="kfw_parchment">#FBF6E9</color>
+    <color name="kfw_goal">#F8EFD3</color>
+    <color name="kfw_bone">#F6F0E1</color>
+    <color name="kfw_line_card">#E0D8C2</color>
+    <color name="kfw_line_goal">#DCC48E</color>
+    <color name="kfw_line_control">#88816E</color>
+    <color name="kfw_line_dashed">#D5CDB5</color>
+    <color name="kfw_ink">#2A2420</color>
+    <color name="kfw_ink_muted">#5F5849</color>
+    <color name="kfw_ink_faint">#6A6354</color>
+    <color name="kfw_ink_hand">#6C6557</color>
+    <color name="kfw_gold">#7F6428</color>
+    <color name="kfw_terra">#B5654A</color>
+    <color name="kfw_terra_ink">#9C5139</color>
+    <color name="kfw_on_terra">#FBF6E9</color>
+    <color name="kfw_sage">#8A9A7E</color>
+    <color name="kfw_sage_text">#4D6650</color>
+    <color name="kfw_lavender_text">#5A5170</color>
+    <color name="kfw_lavender_deep">#6A5988</color>
+    <color name="kfw_buttercream_text">#716431</color>
+    <color name="kfw_blossom">#D4A8B0</color>
+    <color name="kfw_blossom_petal">#B3D4A8B0</color>
+    <color name="kfw_blossom_text">#8A4A58</color>
+    <color name="kfw_hydrangea_deep">#4D6A75</color>
+    <color name="kfw_moss">#7A946E</color>
+    <color name="kfw_block_lavender">#33A8A0BE</color>
+    <color name="kfw_block_sage">#338A9A7E</color>
+    <color name="kfw_block_blossom">#38D4A8B0</color>
+    <color name="kfw_block_hydrangea">#389AB4BE</color>
+    <color name="kfw_check_border">#88816E</color>
+    <color name="kfw_check_fill">#4D6650</color>
+    <color name="kfw_check_bg">#F6F0E1</color>
+    <color name="kfw_overdue">#9C5139</color>
+    <color name="kfw_streak">#B5654A</color>
+    <color name="kfw_offline">#4D6A75</color>
+    <color name="kfw_badge_bg">#9C5139</color>
+    <color name="kfw_badge_ink">#FBF6E9</color>
+    <color name="kfw_skeleton">#122A2420</color>
+    <color name="kfw_tape">#617F6428</color>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W32 From a while ago (4×2): a resurfaced note or line, once a day -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body" android:paddingBottom="12dp">
+        <TextView android:id="@+id/cap" style="@style/KfW.Cap" android:layout_width="match_parent" />
+        <TextView android:id="@+id/title" style="@style/KfW.Text" android:layout_width="match_parent" android:layout_marginTop="8dp" android:fontFamily="serif" android:textStyle="italic" android:letterSpacing="-0.01" android:maxLines="3" android:textSize="17sp" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/meta" style="@style/KfW.Meta" android:layout_width="0dp" android:layout_weight="1" />
+            <TextView style="@style/KfW.Cap" android:textColor="@color/kfw_lavender_text" android:text="Open ›" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

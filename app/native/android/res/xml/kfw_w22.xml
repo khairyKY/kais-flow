@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W22 Routines · week: 4×2 (routines) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="368dp"
+    android:maxResizeHeight="276dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/kfw_loading"
+    android:previewImage="@drawable/kfw_preview_w22"
+    android:description="@string/kfw_desc_22"
+    android:widgetCategory="home_screen" />

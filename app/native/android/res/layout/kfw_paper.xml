@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W12 Paper capture (1×1): one tap to photograph handwritten notes -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center_horizontal" android:orientation="vertical">
+        <ImageView android:layout_width="wrap_content" android:layout_height="34dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_envelope_front" android:contentDescription="Paper capture" />
+        <TextView style="@style/KfW.Cap" android:layout_marginTop="2dp" android:textColor="@color/kfw_ink_muted" android:textSize="9sp" android:text="Paper" />
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W9 Capture seal (1×1): the terra ＋ -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
+    <ImageView android:id="@+id/seal" style="@style/KfW.Round.Cta" android:layout_width="52dp" android:layout_height="52dp" android:layout_gravity="center" android:padding="15dp" android:src="@drawable/kfw_ic_plus" android:contentDescription="Capture" />
+</FrameLayout>

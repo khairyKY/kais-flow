@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W26 Inbox · tiny: 1×1 (inbox) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="1"
+    android:targetCellHeight="1"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="184dp"
+    android:maxResizeHeight="184dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/kfw_loading"
+    android:previewImage="@drawable/kfw_preview_w26"
+    android:description="@string/kfw_desc_26"
+    android:widgetCategory="home_screen" />

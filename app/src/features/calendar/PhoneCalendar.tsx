@@ -72,7 +72,8 @@ export function PhoneCalendar() {
     setOpenedOnDefault(true)
     if (defaultView !== view) setView(defaultView)
   }
-  const [anchor, setAnchor] = useState(today)
+  // /calendar?date=YYYY-MM-DD (a day tapped on the week widgets) opens on that day.
+  const [anchor, setAnchor] = useState(() => new URLSearchParams(location.search).get('date')?.match(/^\d{4}-\d{2}-\d{2}$/)?.[0] ?? today)
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)
   // /calendar?event=<id> (a search hit, Kai 2026-10-06): its day, its sheet, the block in view.

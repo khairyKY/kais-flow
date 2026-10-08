@@ -164,6 +164,8 @@ export function TodayPage() {
     if (!ritualParam) return
     if (ritualParam === 'morning') setMorningOpen(true)
     if (ritualParam === 'evening') setEveningOpen(true)
+    // The Overdue widget's Replan all: the overdue fold's Plan list, mid-screen.
+    if (ritualParam === 'replan') setReplanAt({ x: window.innerWidth / 2, y: window.innerHeight / 3 })
     setSearchParams((p) => (p.delete('ritual'), p), { replace: true })
   }, [ritualParam, setSearchParams])
   const [celebrate, setCelebrate] = useState(false)
