@@ -90,17 +90,20 @@ async function open(route, o = {}) {
 const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png`) })
 const toasts = (page) => page.locator('.kf-toast-msg').allInnerTexts()
 const clip = (page) => page.evaluate(() => navigator.clipboard.readText())
-const rowValue = async (page) => (await page.getByText('Capture API', { exact: true }).locator('xpath=..').innerText()).replace('Capture API', '').trim()
-const card = (page) => page.getByText('External capture endpoint', { exact: true }).locator('xpath=..')
+// UI pass (2026-10-08): the phone's read-out rows (Capture API · On / Not set up) repeated what the
+// cards below them say, so they went; the state is read off the card itself. The card's title is
+// its <h2>, so the card is the <section> around it.
+const card = (page) => page.getByText('External capture endpoint', { exact: true }).locator('xpath=ancestor::section[1]')
+const rowValue = async (page) => (/not set up yet/i.test(await card(page).innerText()) ? 'Not set up' : 'On')
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
 
 // ── 1. Phone Settings: the row and the card, from no key to a key and back ──
 {
   const { ctx, page, errors, state } = await open('/settings')
-  check('phone: Capture API row reads the real state (no key)', (await rowValue(page)) === 'Not set up', await rowValue(page))
+  check('phone: the capture card reads the real state (no key)', (await rowValue(page)) === 'Not set up', await rowValue(page))
   await card(page).scrollIntoViewIfNeeded()
   check('phone: capture card is on the Settings page', await page.getByText('External capture endpoint', { exact: true }).isVisible())
-  check('phone: card says not set up yet', await card(page).getByText('not set up yet').isVisible())
+  check('phone: card says not set up yet', await card(page).getByText(/not set up yet/i).isVisible())
   await shot(page, 'phone-1-no-key')
 
   await card(page).getByRole('button', { name: 'Create key' }).click()
@@ -111,7 +114,7 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
   const hash = Array.isArray(up?.body) ? up.body[0]?.key_hash : up?.body?.key_hash
   check('phone: only the key\'s SHA-256 is saved', hash === sha256(key), hash)
   check('phone: the key never appears in any request address', !state.urls.some((u) => key && u.includes(key)))
-  check('phone: Capture API row turns On', (await rowValue(page)) === 'On', await rowValue(page))
+  check('phone: the card shows the key (on)', (await rowValue(page)) === 'On', await rowValue(page))
   check('phone: New key / Turn off offered', (await card(page).getByRole('button', { name: 'New key' }).isVisible()) && (await card(page).getByRole('button', { name: 'Turn off' }).isVisible()))
   await card(page).getByRole('button', { name: 'Copy key' }).click()
   await sleep(500)
@@ -138,7 +141,7 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
   await sleep(900)
   const del = state.writes.find((w) => w.table === 'capture_keys' && w.method === 'DELETE')
   check('phone: Turn off deletes the key row', !!del && del.query.includes(`id=eq.${KEY_ROW.id}`), del?.query)
-  check('phone: row back to Not set up', (await rowValue(page)) === 'Not set up', await rowValue(page))
+  check('phone: card back to not set up', (await rowValue(page)) === 'Not set up', await rowValue(page))
   check('phone: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }

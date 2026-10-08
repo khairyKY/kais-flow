@@ -182,7 +182,7 @@ export function PersonDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 22 }}>
         <span className="av" style={{ width: 52, height: 52, fontSize: 21, background: getAvatarBgColor(person.name) }}>{person.name.charAt(0)}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · last touch {lastTouchLabel}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · <span style={{ whiteSpace: 'nowrap' }}>last touch {lastTouchLabel}</span></div>
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.1, color: 'var(--ink-body)' }}>{person.name}</h1>
         </div>
         <img src={getCloverAsset(lastTouchDays)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />

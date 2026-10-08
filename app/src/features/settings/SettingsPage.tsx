@@ -575,12 +575,16 @@ function NotificationsCard() {
   const glyph = (name: 'moon' | 'lock') => <Icon name={name} size={18} />
 
   return (
-    <SCard id="settings-Notifications" title="Notifications" sub={`Calm by default — any kind can go quiet. On ${zoneCity(appZone())} time.`}>
-      <Row label="Send a test" help="See how one looks on this device">
+    <SCard
+      id="settings-Notifications"
+      title="Notifications"
+      sub={`Calm by default. Each kind can be turned off; silent ones never make a sound. Times are ${zoneCity(appZone())} time.`}
+      aside={
         <Button variant="secondary" onClick={handleTest} disabled={busy} icon={<Icon name="bell" size={16} />}>
           Send a test notification
         </Button>
-      </Row>
+      }
+    >
 
       {sub('Kinds')}
       {KIND_IDS.map((kind) => {
@@ -611,7 +615,7 @@ function NotificationsCard() {
         <TimeField value={(s.quiet_to ?? QUIET_TO).slice(0, 5)} ariaLabel="Quiet until" onChange={(v) => v && updateAppSetting('quiet_to', v)} style={timeStyle(quietOn)} />
         <Toggle on={quietOn} label="Quiet hours" onToggle={() => updateAppSetting('quiet_hours_on', !quietOn)} />
       </NotificationRow>
-      <NotificationRow glyph={glyph('lock')} label="Task names on the lock screen" help="Off: “Kai’s Flow · A reminder”">
+      <NotificationRow glyph={glyph('lock')} label="Show task names on the lock screen" help="Off: “Kai’s Flow · A reminder”">
         <Toggle on={s.lock_screen_names === true} label="Show task names on the lock screen" onToggle={() => updateAppSetting('lock_screen_names', !s.lock_screen_names)} />
       </NotificationRow>
       {widgets && (
