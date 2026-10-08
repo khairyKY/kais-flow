@@ -1,5 +1,20 @@
 [
   {
+    "v": "v1.0.26",
+    "date": "2026-10-08",
+    "title": "The garden on your home screen",
+    "highlights": [
+      "34 home-screen widgets for Android: Today, Top 3 and the goal, capture, calendar, focus, routines, Inbox, Overdue, rituals and more",
+      "Tick tasks and routines, stop or finish focus, and capture without opening the app",
+      "Every widget follows your phone's dark mode, and a setting hides task names on the home screen"
+    ],
+    "icons": [
+      "android",
+      "check",
+      "lock"
+    ],
+    "art": "wisteria-p40"
+  },  {
     "v": "v1.0.25",
     "date": "2026-10-07",
     "title": "From a while ago, settled",
