@@ -229,7 +229,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   await main.clock.runFor(31_000) // the next 30-second sweep, with tasks loaded
   await sleep(500)
   const toast = (await calls(main, 'notify_local')).find((c) => c.args?.title?.startsWith('Call the tyre'))?.args
-  check('12e a reminder due while the app runs → its toast, Done · Tomorrow', toast?.title === 'Call the tyre supplier · in 9 min' && toast?.body === '08:50' && JSON.stringify(toast?.actions) === JSON.stringify([['done', 'Done'], ['tomorrow', 'Tomorrow']]), JSON.stringify(toast))
+  check('12e a reminder due while the app runs → its toast, Done · Tomorrow', /^Call the tyre supplier · in [89] min$/.test(toast?.title ?? '') && toast?.body === '08:50' && JSON.stringify(toast?.actions) === JSON.stringify([['done', 'Done'], ['tomorrow', 'Tomorrow']]), JSON.stringify(toast))
   check('12a … and the K gets the needs-you dot', (await calls(main, 'tray_set')).at(-1)?.args?.state === 'needs', JSON.stringify((await calls(main, 'tray_set')).at(-1)?.args))
   await main.evaluate(() => window.__kfNotifyAction('tomorrow', JSON.parse(JSON.stringify({ kind: 'task_reminder', taskIds: ['10000000-0000-4000-8000-000000000005'] }))))
   await sleep(600)

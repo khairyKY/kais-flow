@@ -12,6 +12,7 @@ import { goalIdOf } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
+import { useProjects } from '../projects/api'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, showLocal } from '../notifications/local'
 import { localPlan, type Planned } from '../notifications/plan'
@@ -45,7 +46,8 @@ function reminded(): string[] {
  * while tasks haven't loaded yet. */
 function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   const tasks = queryClient.getQueryData<Task[]>(['tasks'])
-  if (!tasks) return null
+  // Projects still loading: wait one sweep, so "09:50 · Car" doesn't go out as "09:50".
+  if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending') return null
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
   return localPlan({ tasks, projects, prefs: prefs(), from, to, now, zone: appZone() })
 }
@@ -127,6 +129,7 @@ function useSystemDark(): boolean {
  * tick re-renders only this, never the shell. */
 export function TrayBridge(): null {
   const navigate = useNavigate()
+  useProjects() // a notice names its task's project ("09:50 · Car"), whatever page is open
   useEffect(() => installNotificationActions(navigate), [navigate])
   useEffect(() => watchFocusDone(), [])
   useEffect(() => serveFocus(), [])
