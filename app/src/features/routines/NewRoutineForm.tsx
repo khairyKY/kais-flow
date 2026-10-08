@@ -134,7 +134,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
       <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingBottom: 18, borderBottom: '1px dashed var(--line-dashed)' }}>
         <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: isMobile ? 34 : 40, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 8.5 : 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>New routine</h1>
         </div>
         {!isMobile && (
@@ -158,7 +158,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
 
       <div style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 7 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 8.5 : 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isMobile ? 'Steps' : 'Steps · what it’s made of'}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isMobile ? 'Steps' : 'Steps · what it’s made of'}</span>
           {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>checked off one by one, or all at once ✿</span>}
         </div>
         <div style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: isMobile ? '2px 12px' : '2px 13px' }}>
@@ -177,7 +177,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0' }}>
             <span style={{ width: isMobile ? 12 : 14, flex: 'none' }} />
-            <span onClick={() => setSteps((cur) => [...cur, ''])} style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ Add a step</span>
+            <span onClick={() => setSteps((cur) => [...cur, ''])} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ Add a step</span>
           </div>
         </div>
       </div>

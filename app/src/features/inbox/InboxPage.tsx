@@ -278,7 +278,7 @@ export function InboxPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
         <img src={`${A}/hydrangea/${hydrangea.src}.png`} alt="" style={{ height: isMobile ? 40 : 54, filter: 'var(--shadow-drop-sm)' }} />
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10.5, letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
             Inbox{isMobile ? '' : ' · universal triage'}
           </div>
           <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -300,7 +300,7 @@ export function InboxPage() {
     <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
       <img src={`${A}/hydrangea/medium.png`} alt="" style={{ height: isMobile ? 40 : 52, filter: 'var(--shadow-drop-sm) saturate(0.55)', opacity: 0.8 }} />
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10.5, letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Inbox · {dismissedItems.length} dismissed
         </div>
         <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 34, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -348,7 +348,7 @@ export function InboxPage() {
             {focusId && !bannerDismissed && aiItems.some((i) => i.id === focusId) && (
               <div style={deepLinkBannerStyle(isMobile)}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
                   jumped here from Search — the ringed card below is your match
                 </span>
                 <span onClick={() => setBannerDismissed(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer' }}>✕</span>
@@ -381,7 +381,7 @@ export function InboxPage() {
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: isMobile ? '22px 0 10px' : '30px 0 10px' }}>
                   {/* WB-4 punch 9: no hardcoded sample repo here — each row names its own (payload.repo). */}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>
                   <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{githubItems.length} open</span>
                 </div>

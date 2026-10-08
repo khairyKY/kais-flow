@@ -289,7 +289,7 @@ export function ActivityPage() {
           {!isMobile && <span className="fhelp" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>{formatTime(entry.created_at)}</span>}
         </span>
         <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
-          <span className="chip" style={{ fontSize: isMobile ? 8 : 9.5, padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
+          <span className="chip" style={{ fontSize: 'var(--fs-meta)', padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
           {/* 12j: a sent notice keeps its body line on the phone too ("09:50 · Car"). */}
           <span className="fhelp">{isMobile ? [formatTime(entry.created_at), entry.info.notice ? entry.info.details : ''].filter(Boolean).join(' · ') : entry.info.details}</span>
         </span>
