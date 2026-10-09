@@ -1,5 +1,16 @@
 [
   {
+    "v": "v1.0.28",
+    "date": "2026-10-09",
+    "title": "AI assistants load their tools",
+    "highlights": [
+      "Claude Code and other new AI assistants now load Kai's Flow's tools: the tool list carries the cache hints the newest protocol requires"
+    ],
+    "icons": [
+      "chat"
+    ],
+    "art": "clover-awake"
+  },  {
     "v": "v1.0.27",
     "date": "2026-10-08",
     "title": "Notifications that arrive, and a calmer look",
