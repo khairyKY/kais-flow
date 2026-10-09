@@ -291,6 +291,16 @@ describe('MCP: the 2026-07-28 (stateless) protocol', () => {
     expect(named.status).toBe(200)
   })
 
+  it('tools/list carries the 2026-07-28 cache hints (ttlMs + private cacheScope); other methods do not', async () => {
+    const d = deps(fakeStore())
+    const list = await (await handleMcp(modern('tools/list', {}, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' }), d)).json()
+    expect(list.result.ttlMs).toBe(300_000)
+    expect(list.result.cacheScope).toBe('private')
+    expect(list.result.tools.length).toBeGreaterThan(0)
+    const call = await (await handleMcp(modern('tools/call', { name: 'projects', arguments: {} }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': 'projects' }), d)).json()
+    expect(call.result.ttlMs).toBeUndefined()
+  })
+
   it('server/discover lists both eras', async () => {
     const res = await handleMcp(modern('server/discover', {}, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'server/discover' }), deps(fakeStore()))
     const body = await res.json()

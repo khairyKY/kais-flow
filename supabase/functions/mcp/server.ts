@@ -194,6 +194,9 @@ export async function handleMcp(req: Request, deps: Deps): Promise<Response> {
     // Modern: an unknown method is a 404 with the JSON-RPC body (so it isn't mistaken for a missing endpoint).
     return json(modern && done.error.code === -32601 ? 404 : 200, rpcError(id, done.error))
   }
-  const result = modern ? { resultType: 'complete', ...done.result, _meta: { 'io.modelcontextprotocol/serverInfo': SERVER_INFO } } : done.result
+  // 2026-07-28 requires cache hints on tools/list; without them Claude Code drops the whole list
+  // ("tools fetch failed", found 2026-10-09). Private: the list depends on this key's scope.
+  const cache = modern && method === 'tools/list' ? { ttlMs: 300_000, cacheScope: 'private' as const } : {}
+  const result = modern ? { resultType: 'complete', ...done.result, ...cache, _meta: { 'io.modelcontextprotocol/serverInfo': SERVER_INFO } } : done.result
   return json(200, { jsonrpc: '2.0', id, result })
 }
