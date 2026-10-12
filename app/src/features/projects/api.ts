@@ -186,6 +186,15 @@ export function renameProjectMilestone(project: Project, milestoneId: string, ti
   logActivity('project.milestone_renamed', 'project', project.id, { milestone_id: milestoneId, title })
 }
 
+export function reweighProjectMilestone(project: Project, milestoneId: string, weight: number): void {
+  if (!project.milestones) return
+  setProjectMilestones(
+    project,
+    project.milestones.map((m) => (m.id === milestoneId ? { ...m, weight } : m))
+  )
+  logActivity('project.milestone_reweighted', 'project', project.id, { milestone_id: milestoneId, weight })
+}
+
 export function removeProjectMilestone(project: Project, milestoneId: string): void {
   if (!project.milestones) return
   setProjectMilestones(
@@ -231,6 +240,14 @@ export function toggleProjectChecklistItem(project: Project, itemId: string): vo
       { item_id: itemId, title: toggled.title }
     )
   }
+}
+
+/** Renames the checklist line only — a task-linked item's task keeps its own title. */
+export function renameProjectChecklistItem(project: Project, itemId: string, title: string): void {
+  if (!project.checklist) return
+  const checklist = project.checklist.map((item) => (item.id === itemId ? { ...item, title } : item))
+  writeRow('projects', { ...project, checklist, updated_at: nowIso() })
+  logActivity('project.checklist_item_renamed', 'project', project.id, { item_id: itemId, title })
 }
 
 export function removeProjectChecklistItem(project: Project, itemId: string): void {

@@ -362,8 +362,12 @@ function describeProject(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(item, (q) => `Reopened the milestone ${q}`, 'Reopened a milestone'), onProject)
     case 'project.milestone_renamed':
       return line(named(item, (q) => `Renamed a milestone to ${q}`, 'Renamed a milestone'), onProject)
+    case 'project.milestone_reweighted':
+      return line('Changed a milestone’s weight', onProject)
     case 'project.milestone_removed':
       return line('Removed a milestone', onProject)
+    case 'project.checklist_item_renamed':
+      return line(named(item, (q) => `Renamed a checklist item to ${q}`, 'Renamed a checklist item'), onProject)
     case 'project.checklist_item_added':
       return line(named(item, (q) => `Added ${q} to the checklist`, 'Added a checklist item'), onProject)
     case 'project.checklist_item_completed':

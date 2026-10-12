@@ -17,16 +17,22 @@ import {
   toggleProjectMilestone,
   removeProjectMilestone,
   renameProjectMilestone,
+  reweighProjectMilestone,
   setProjectMilestones,
   addProjectChecklistItem,
   toggleProjectChecklistItem,
+  renameProjectChecklistItem,
   removeProjectChecklistItem,
   logTimeEntry,
   useTimeEntries,
   isThisMonth,
   renameProject,
+  updateProjectTargetDate,
+  updateProjectEngagement,
 } from './api'
-import { useAreas, renameArea, reparentArea } from '../areas/api'
+import { useAreas, renameArea, reparentArea, recolorArea } from '../areas/api'
+import { formatDuration, parseDuration } from './duration'
+import type { TimeEntry } from '../../lib/types'
 import { RenameField } from '../../components/RenameField'
 import { NumberField } from '../../components/NumberField'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -112,6 +118,12 @@ export function ProjectDetailPage() {
   const [renamingTitle, setRenamingTitle] = useState(false)
   // The status-update / work log row whose note is being edited in place.
   const [editingLog, setEditingLog] = useState<string | null>(null)
+  // Kai 2026-10-12 (edit after create): a work entry's duration, a milestone's weight, a checklist
+  // line's title and the engagement line, each edited in place like the title and the log notes.
+  const [editingDuration, setEditingDuration] = useState<string | null>(null)
+  const [weighingMilestone, setWeighingMilestone] = useState<string | null>(null)
+  const [renamingChecklist, setRenamingChecklist] = useState<string | null>(null)
+  const [editingEngagement, setEditingEngagement] = useState(false)
   // Kai 2026-10-06: change its type from inside the page — the new thing's page opens; Undo comes back.
   const [typeMenuAt, setTypeMenuAt] = useState<{ x: number; y: number } | null>(null)
   const changeType = useChangeType({
@@ -334,20 +346,6 @@ export function ProjectDetailPage() {
     )
   }
 
-  // Parse duration string like "1h30m" into minutes
-  function parseDuration(d: string): number {
-    const hoursMatch = d.match(/(\d+)h/)
-    const minsMatch = d.match(/(\d+)m/)
-    let total = 0
-    if (hoursMatch) total += parseInt(hoursMatch[1]) * 60
-    if (minsMatch) total += parseInt(minsMatch[1])
-    if (!hoursMatch && !minsMatch) {
-      const plainNum = parseInt(d)
-      if (!isNaN(plainNum)) total = plainNum
-    }
-    return total || 60 // Default to 60m if parsing fails
-  }
-
   const handleToggleMilestone = (milestoneId: string) => {
     if (!project || !project.milestones) return
     const m = project.milestones.find((x) => x.id === milestoneId)
@@ -454,7 +452,7 @@ export function ProjectDetailPage() {
     const startedAt = localToIso(workDate, localTimeKey(now))
 
     if (logMode === 'work') {
-      const dur = parseDuration(workDuration)
+      const dur = parseDuration(workDuration) ?? 60 // unreadable → an hour, as before
       const entry = logTimeEntry(project?.id || null, null, workNote.trim(), dur, startedAt)
       queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
         const newLog = {
@@ -491,6 +489,13 @@ export function ProjectDetailPage() {
     writeRow('time_entries', { ...entry, note })
     logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, note })
   }
+  /** A work entry's duration or day (Kai 2026-10-12). A new day keeps the entry's time of day. */
+  const editWork = (entryId: string, fields: Partial<Pick<TimeEntry, 'duration_min' | 'started_at'>>) => {
+    const entry = pTimeEntries.find((e) => e.id === entryId)
+    if (!entry) return
+    writeRow('time_entries', { ...entry, ...fields })
+    logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, ...fields })
+  }
   const deleteLog = (log: { id: string; type: 'work' | 'update' }) => {
     if (log.type === 'update') {
       logUpdateEvent(UPDATE_EVENTS.deleted, { update_id: log.id })
@@ -517,6 +522,29 @@ export function ProjectDetailPage() {
     '#7a4a52',
     '#8b8471',
   ]
+  // The project page's colour swatches — the area page uses the same row (Kai 2026-10-12).
+  const colorRow = (current: string | null | undefined, pick: (c: string) => void) => (
+    <>
+      <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
+      <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+        {colorPalette.map((c) => (
+          <span
+            key={c}
+            onClick={() => pick(c)}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: c,
+              cursor: 'pointer',
+              outline: current === c ? '1.5px solid var(--paper-linen)' : 'none',
+              boxShadow: current === c ? `0 0 0 3px ${c}` : 'none',
+            }}
+          />
+        ))}
+      </div>
+    </>
+  )
 
   // ============================================
   // PROJECT DETAIL RENDER
@@ -577,7 +605,23 @@ export function ProjectDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
               <BackLink to="/projects">All projects</BackLink>
               <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
-                {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                {/* The engagement / client line: click to edit, like the title. */}
+                {editingEngagement ? (
+                  <RenameField
+                    value={project.engagement_model ?? ''}
+                    ariaLabel="Engagement model or client"
+                    style={{ width: 160, margin: '-3px 4px -3px 0' }}
+                    onDone={(next) => {
+                      setEditingEngagement(false)
+                      if (next && next !== project.engagement_model) updateProjectEngagement(project, next)
+                    }}
+                  />
+                ) : (
+                  <span role="button" tabIndex={0} title="Edit engagement" onClick={() => setEditingEngagement(true)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingEngagement(true) } }} style={{ cursor: 'text' }}>
+                    {project.engagement_model || 'Standard'}
+                  </span>
+                )}{' '}
+                · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
             </div>
 
@@ -585,32 +629,20 @@ export function ProjectDetailPage() {
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
               <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: isMobile ? '1 1 calc(100% - 28px)' : 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
               <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: isMobile ? 'left' : 'right', marginLeft: isMobile ? 28 : undefined }}>
-                target<br />
-                <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
-                  {project.target_date ? new Date(project.target_date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' }) : 'no date'}
-                </span>
+                {project.type === 'retainer' ? 'renews' : 'target'}<br />
+                {/* Kai 2026-10-12: set or change it here — the app's date picker, Clear in its footer. */}
+                <DateField
+                  value={project.target_date?.slice(0, 10) ?? ''}
+                  onChange={(v) => updateProjectTargetDate(project, v || null)}
+                  title={project.type === 'retainer' ? 'Renews' : 'Target date'}
+                  placeholder="no date"
+                  style={{ font: 'inherit', fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none', background: 'none', border: 'none', padding: 0, minHeight: isMobile ? 44 : undefined }}
+                />
               </span>
             </div>
 
             {/* Color picker */}
-            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
-            <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-              {colorPalette.map((c) => (
-                <span
-                  key={c}
-                  onClick={() => updateProjectColor(project, c)}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: c,
-                    cursor: 'pointer',
-                    outline: project.color === c ? '1.5px solid var(--paper-linen)' : 'none',
-                    boxShadow: project.color === c ? `0 0 0 3px ${c}` : 'none',
-                  }}
-                />
-              ))}
-            </div>
+            {colorRow(project.color, (c) => updateProjectColor(project, c))}
 
             {/* Domain — R4-17: reparent an existing project (the API had this all along) */}
             <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
@@ -660,7 +692,19 @@ export function ProjectDetailPage() {
                       ) : (
                         <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
                       )}
-                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>weight {m.weight}</span>
+                      {/* Kai 2026-10-12: the weight changes after it's added — tap it for the −/+ field; each step saves. */}
+                      {weighingMilestone === m.id ? (
+                        <span
+                          ref={(el) => { if (el && !el.contains(document.activeElement)) el.querySelector('input')?.focus() }}
+                          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setWeighingMilestone(null) }}
+                          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setWeighingMilestone(null) }}
+                          style={{ display: 'inline-flex' }}
+                        >
+                          <NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />
+                        </span>
+                      ) : (
+                        <span role="button" tabIndex={0} title="Change weight" onClick={() => setWeighingMilestone(m.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(m.id) } }} className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', cursor: 'pointer' }}>weight {m.weight}</span>
+                      )}
                       <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
                       <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
                     </div>
@@ -728,7 +772,22 @@ export function ProjectDetailPage() {
               {(project.checklist ?? []).map((item) => (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                   <Checkbox checked={item.completed} onChange={() => toggleProjectChecklistItem(project, item.id)} size={15} />
-                  <span style={{ fontSize: 13, color: item.completed ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>{item.title}</span>
+                  {/* Kai 2026-10-12: rename in place, like a milestone or a log note. */}
+                  {renamingChecklist === item.id ? (
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
+                      <RenameField
+                        value={item.title}
+                        ariaLabel="Checklist item"
+                        style={{ margin: '-3px 0' }}
+                        onDone={(next) => {
+                          setRenamingChecklist(null)
+                          if (next && next !== item.title) renameProjectChecklistItem(project, item.id, next)
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 13, color: item.completed ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: item.completed ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
+                  )}
                   <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                     {item.type}
                   </span>
@@ -850,7 +909,20 @@ export function ProjectDetailPage() {
                 const dateLabel = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
                 return (
                   <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                    <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
+                    {log.type === 'work' ? (
+                      // Kai 2026-10-12: a work entry's day changes here (its time of day stays); not the future.
+                      <DateField
+                        value={localDateKey(new Date(log.date))}
+                        max={localDateKey(new Date())}
+                        clearable={false}
+                        onChange={(v) => { if (v && v <= localDateKey(new Date())) editWork(log.id, { started_at: localToIso(v, localTimeKey(new Date(log.date))) }) }}
+                        title="Worked on"
+                        ariaLabel="Date this work happened"
+                        style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0 0', whiteSpace: 'normal' }}
+                      />
+                    ) : (
+                      <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
+                    )}
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
                         <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
@@ -874,12 +946,26 @@ export function ProjectDetailPage() {
                         </span>
                       )}
                     </span>
-                    {log.type === 'work' && log.duration && (
-                      <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
+                    {/* Kai 2026-10-12: tap the duration to change it ("1h30m", "45m", "90"). */}
+                    {log.type === 'work' && log.duration && (editingDuration === log.id ? (
+                      <span style={{ width: 70, flex: 'none', fontSize: 12 }}>
+                        <RenameField
+                          value={formatDuration(log.duration)}
+                          ariaLabel="Duration"
+                          style={{ margin: '-3px 0' }}
+                          onDone={(next) => {
+                            setEditingDuration(null)
+                            const min = next ? parseDuration(next) : null
+                            if (min && min !== log.duration) editWork(log.id, { duration_min: min })
+                          }}
+                        />
+                      </span>
+                    ) : (
+                      <span role="button" tabIndex={0} title="Change duration" onClick={() => setEditingDuration(log.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingDuration(log.id) } }} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>
                         {Math.floor(log.duration / 60) > 0 ? `${Math.floor(log.duration / 60)}h ` : ''}
                         {log.duration % 60 > 0 ? `${log.duration % 60}m` : ''}
                       </span>
-                    )}
+                    ))}
                     {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
                     <button type="button" className="kf-hit" onClick={() => deleteLog(log)} title="Delete" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8, flex: 'none' }}>✕</button>
                   </div>
@@ -966,6 +1052,9 @@ export function ProjectDetailPage() {
               area, not a project
             </span>
           </div>
+
+          {/* Kai 2026-10-12: an area's colour, changed here — the project page's swatches. */}
+          {colorRow(area.color, (c) => recolorArea(area, c))}
 
           {/* Kai 2026-10-07: an area's domain, set or changed here (its tasks follow; Undo in the toast) — the project page's own field. */}
           <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
