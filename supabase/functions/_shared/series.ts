@@ -51,6 +51,18 @@ export function fromFloating(wall: number, zone: string): number {
   return wall - offset(wall - offset(wall))
 }
 
+/** RRULE's UTC stamp: "20261018T235959Z". */
+export const ruleStamp = (ms: number): string => new Date(ms).toISOString().replace(/\.\d{3}/, '').replace(/[-:]/g, '')
+
+/** The rule as rrule must run it here. UNTIL is a real UTC instant (RFC 5545 for a zoned start — what
+ * Google sends, what the Repeat editor and a split write); the rule runs in floating wall time, so a
+ * timed row's UNTIL moves onto that clock. A date-only UNTIL, and an all-day row's, already is. */
+export function floatingRule(rule: string, zone: string, allDay: boolean): string {
+  if (allDay) return rule
+  return rule.replace(/(^|;)UNTIL=(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/i, (_, sep, y, mo, d, h, mi, s) =>
+    `${sep}UNTIL=${ruleStamp(toFloating(Date.UTC(+y, +mo - 1, +d, +h, +mi, +s), zone))}`)
+}
+
 /** Occurrence id: the series row's id + the occurrence's start. */
 export const occurrenceId = (rowId: string, startIso: string): string => `${rowId}::${startIso}`
 
@@ -83,7 +95,7 @@ export function expandSeries<E extends SeriesRow>(rows: readonly E[], from: Date
     const dtstart = new Date(r.all_day ? start : toFloating(start, zone))
     let starts: Date[]
     try {
-      starts = between(r.recurrence_rule, dtstart, new Date(lo - dur - DAY), new Date(hi + DAY))
+      starts = between(floatingRule(r.recurrence_rule, zone, r.all_day), dtstart, new Date(lo - dur - DAY), new Date(hi + DAY))
     } catch {
       out.push(r)
       continue

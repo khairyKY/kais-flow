@@ -2,7 +2,7 @@ import { RRule } from 'rrule'
 import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent } from '../../lib/types'
-import { expandSeries, fromFloating, rowIdOf, toFloating, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
+import { expandSeries, floatingRule, fromFloating, rowIdOf, ruleStamp, toFloating, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
 import { zoneToIso } from './eventTime'
 
 // ── Repeating events, the app half (migration 0061; the expansion itself is the shared
@@ -92,9 +92,6 @@ export function withRuleParts(rule: string, set: Record<string, string | null>):
 
 const rulePart = (rule: string, key: string) => ruleParts(rule).find((p) => partKey(p) === key)?.split('=')[1]
 
-/** RRULE's UNTIL form of a floating time: "20261018T235959Z". */
-const untilStamp = (floating: number) => new Date(floating).toISOString().replace(/\.\d{3}/, '').replace(/[-:]/g, '')
-
 /** An instant of `row` on the clock its rule runs in (series.ts in _shared: floating wall time; an
  * all-day row's stored date is already that). */
 const floatingOf = (row: Pick<CalendarEvent, 'all_day'>, at: string, zone: string) => (row.all_day ? Date.parse(at) : toFloating(Date.parse(at), zone))
@@ -124,7 +121,7 @@ export function splitSeries(
   const dtstart = new Date(floatingOf(row, row.starts_at, zone))
   let earlier: Date[]
   try {
-    earlier = between(rule, dtstart, dtstart, new Date(floatingOf(row, occ.starts_at, zone) - 1))
+    earlier = between(floatingRule(rule, zone, row.all_day), dtstart, dtstart, new Date(floatingOf(row, occ.starts_at, zone) - 1))
   } catch {
     return null
   }
@@ -137,7 +134,8 @@ export function splitSeries(
   return {
     head: {
       ...base,
-      recurrence_rule: withRuleParts(rule, { COUNT: null, UNTIL: untilStamp(floatingOf(row, occ.starts_at, zone) - 1000) }),
+      // UNTIL is UTC (RFC 5545; _shared/series floatingRule reads it on the wall clock): a second before.
+      recurrence_rule: withRuleParts(rule, { COUNT: null, UNTIL: ruleStamp(at - 1000) }),
       recurrence_exdates: exdates.filter((x) => Date.parse(x) < at),
       updated_at: now,
     },

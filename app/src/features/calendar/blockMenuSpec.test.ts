@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
-import { besideBlock, blockMenuSpec, eventRepeatRules, isUntitled, onWeekend, repeatChoice, repeatLabel, WEEKDAYS_RULE } from './blockMenuSpec'
+import { besideBlock, blockMenuSpec, isUntitled, repeatLabel } from './blockMenuSpec'
 
 const block = (over: Partial<CalendarEvent> = {}): CalendarEvent => ({
   id: 'b1', title: 'Deep work — Forecasting', starts_at: '2026-07-29T06:00:00.000Z', ends_at: '2026-07-29T08:00:00.000Z', all_day: false,
@@ -69,21 +69,8 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   it('repeat labels follow the task menu’s words', () => {
     expect(repeatLabel(null)).toBe('Does not repeat')
     expect(repeatLabel('FREQ=MONTHLY')).toBe('Repeats monthly')
-    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,WE')).toBe('Repeats custom')
-    expect(repeatLabel(WEEKDAYS_RULE)).toBe('Repeats every weekday')
-  })
-
-  it('Every weekday is offered on a weekday block only (the clicked Saturday would vanish from a Mon–Fri series)', () => {
-    setAppZone('Africa/Cairo')
-    expect(eventRepeatRules(false).map(repeatChoice)).toEqual(['Does not repeat', 'Daily', 'Weekly', 'Monthly', 'Every weekday'])
-    expect(eventRepeatRules(true)).not.toContain(WEEKDAYS_RULE)
-    // Sat 01 Aug 2026 23:30 Cairo is 20:30Z — still Saturday on the user's clock, whatever the device says
-    expect(onWeekend(block({ starts_at: '2026-08-01T20:30:00.000Z' }))).toBe(true)
-    // Sun 02 Aug 00:30 Cairo is Sat 21:30Z
-    expect(onWeekend(block({ starts_at: '2026-08-01T21:30:00.000Z' }))).toBe(true)
-    // Mon 03 Aug 00:30 Cairo is Sun 21:30Z — a weekday for the user
-    expect(onWeekend(block({ starts_at: '2026-08-02T21:30:00.000Z' }))).toBe(false)
-    // an all-day block is its date
-    expect(onWeekend(block({ all_day: true, starts_at: '2026-08-03T00:00:00.000Z' }))).toBe(false)
+    // a custom rule (the shared Repeat editor) reads in words
+    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,WE')).toBe('Every week on Monday, Wednesday')
+    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')).toBe('Every weekday')
   })
 })

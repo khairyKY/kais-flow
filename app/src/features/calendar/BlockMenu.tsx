@@ -16,7 +16,8 @@ import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, blockMenuSpec, eventRepeatRules, isUntitled, onWeekend, repeatChoice, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, blockMenuSpec, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
 
@@ -170,6 +171,13 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
   const span = eventSpan(event)
   const len = span.end - span.start
 
+  // Repeat: from a later occurrence the series splits there (calendar/api).
+  const repeat = { value: event.recurrence_rule ?? null, start: event.starts_at, meta: event.title }
+  const setRepeat = (r: string | null) => {
+    if ((event.recurrence_rule ?? null) !== r) setEventRepeat(event, r)
+  }
+  const [customAt, setCustomAt] = useState<{ x: number; y: number } | null>(null)
+
   const remove = (run: () => void) => {
     gone.current = true
     run()
@@ -226,13 +234,10 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
           <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={event.project_id ?? null} onSelect={(id) => { if (id !== (event.project_id ?? null)) updateEvent(event, { project_id: id }); closeAll() }} onClose={back} />
         )
       case 'repeat':
+        // The one Repeat picker (tasks/RepeatMenu): the presets, and Custom… — the rule editor, which
+        // takes this popover's place (a submenu can't hold it).
         return ({ position: at, onClose: back, closeAll }) => (
-          <ContextMenu
-            position={at}
-            onClose={back}
-            label="Repeat"
-            items={choices(eventRepeatRules(onWeekend(event)).map((r) => ({ label: repeatChoice(r), on: (event.recurrence_rule ?? null) === r, run: () => { if ((event.recurrence_rule ?? null) !== r) setEventRepeat(event, r) } })), closeAll)}
-          />
+          <RepeatMenu {...repeat} position={at} onClose={back} onChange={(r) => { setRepeat(r); closeAll() }} onCustom={() => setCustomAt(at)} />
         )
       case 'link':
         return ({ position: at, onClose: back, closeAll }) => (
@@ -318,6 +323,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     submenu: submenu(e.key),
   })
 
+  if (customAt) return <RepeatEditor {...repeat} position={customAt} onClose={onClose} onChange={setRepeat} />
   return (
     <ContextMenu
       position={position}

@@ -20,7 +20,8 @@ import { completeTaskWithUndo, createTask, uncompleteTask, useTasks } from '../t
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent, type BlockRef } from './api'
-import { blockMenuSpec, eventRepeatRules, isUntitled, onWeekend, repeatChoice, type BlockMenuKey } from './blockMenuSpec'
+import { blockMenuSpec, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
@@ -351,16 +352,19 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
         />
       )}
       {picker === 'repeat' && (
-        <ActionSheet
-          title="Repeat"
+        // The one Repeat picker (tasks/RepeatMenu) — the presets and the Custom… rule editor.
+        <RepeatMenu
+          value={event.recurrence_rule ?? null}
+          start={event.starts_at}
           meta={event.title}
+          position={{ x: 0, y: 0 }}
           onClose={() => setPicker(null)}
-          items={eventRepeatRules(onWeekend(event)).map((r) =>
-            choice(repeatChoice(r), (event.recurrence_rule ?? null) === r, () => {
-              const ref = setEventRepeat(event, r)
-              if (ref) onRebind?.(ref)
-            }),
-          )}
+          onChange={(r) => {
+            if (r === (event.recurrence_rule ?? null)) return
+            const ref = setEventRepeat(event, r)
+            if (ref) onRebind?.(ref)
+            saved()
+          }}
         />
       )}
       {picker === 'more' && (
