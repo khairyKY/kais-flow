@@ -17,7 +17,7 @@ import { Icon } from '../../components/Icon'
 import { useIsMobile } from '../../components/BottomSheet'
 import { Skeleton, ErrorCard } from '../../components/States'
 import { useDayRollover } from '../calendar/useDayRollover'
-import type { Routine, RoutineCompletion } from '../../lib/types'
+import type { Routine, RoutineCompletion, RoutinePlant } from '../../lib/types'
 
 // ── Routines — pixel contract Routines.dc.html #1a (desktop, lines 379-586) and #1b (iPhone,
 // lines 588-642): the rituals-by-time list + "the garden" streak grid. #2a/#2b (New routine)
@@ -203,16 +203,23 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
   )
 }
 
+// Night rim light per species — Night.dc.html's accents: vine/fern moss (1d), cherry blossom (1b),
+// daisy lavender (1c), clover (1e). Night-only tokens (colors.dark.css).
+const RIM: Record<RoutinePlant, string> = { vine: '--rim-moss', fern: '--rim-moss', cherry: '--rim-blossom', daisy: '--rim-lavender', clover: '--rim-clover' }
+
 function GardenCard({ routine, completions, compact }: { routine: Routine; completions: RoutineCompletion[]; compact: boolean }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
   const stage = vineStage(current)
   const sub = status !== 'growing' ? ZERO_CARD_LABEL[status] : `${STAGE_LABEL[stage]} · ${current}d`
+  const plant = plantOf(routine)
+  // Night 1d: a frosted panel, the plant a silhouette lit at the rim in its own accent. The night-only
+  // tokens fall back to the day values, so day renders as before.
   return (
-    <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: compact ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+    <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--frost-bg, var(--paper-parchment))', border: '1px solid var(--frost-line, var(--line-card))', borderRadius: 3, boxShadow: compact ? 'var(--shadow-frost, var(--shadow-crisp))' : 'var(--shadow-frost, var(--shadow-card))', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
         {/* its own species (0067) at the streak's stage */}
-        <img src={plantSrc(plantOf(routine), current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: 'var(--shadow-drop-sm)', opacity: stage === 'bare' ? 0.85 : 1 }} />
+        <img src={plantSrc(plant, current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: `var(${RIM[plant]}, var(--shadow-drop-sm))`, opacity: stage === 'bare' ? 0.85 : 1 }} />
       </div>
       <div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
@@ -309,7 +316,7 @@ export function RoutinesPage() {
       <div style={{ minWidth: 0, padding: isMobile ? 0 : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
         <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 0 : 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
-            <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
               <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Daily rituals</h1>

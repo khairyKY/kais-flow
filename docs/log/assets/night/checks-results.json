@@ -1,0 +1,395 @@
+[
+  {
+    "name": "desktop day: no moonflower, no fireflies",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night: moonflower shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night: 2 fireflies",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop night Today: ≤2 continuous animations (DS ambient budget)",
+    "ok": true,
+    "detail": "kfFlyPulse@kf-fly, kfFlyDrift@kf-fly, kfFlyPulse@kf-fly is-small, kfFlyDrift@kf-fly is-small"
+  },
+  {
+    "name": "desktop fireflies animate transform/opacity only",
+    "ok": true,
+    "detail": "opacity,transform"
+  },
+  {
+    "name": "desktop tab hidden: fireflies paused",
+    "ok": true,
+    "detail": "paused,paused,paused,paused"
+  },
+  {
+    "name": "desktop tab visible again: fireflies running",
+    "ok": true,
+    "detail": "running,running,running,running"
+  },
+  {
+    "name": "desktop night Today no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop reduced-motion: fireflies held still (no animation, shown at rest)",
+    "ok": true,
+    "detail": "2 flies, 0 animations, opacity 0.4"
+  },
+  {
+    "name": "desktop reduced-motion: no continuous animation anywhere on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop animations-off: fireflies held still (no animation, shown at rest)",
+    "ok": true,
+    "detail": "2 flies, 0 animations, opacity 0.4"
+  },
+  {
+    "name": "desktop animations-off: no continuous animation anywhere on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /tasks: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /tasks: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /calendar: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /calendar: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /inbox: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /inbox: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /routines: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /routines: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /settings: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night /settings: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no moonflower, no fireflies",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: moonflower shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: 1 firefly",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "phone night Today: ≤2 continuous animations (DS ambient budget)",
+    "ok": true,
+    "detail": "kfFlyPulse@kf-fly, kfFlyDrift@kf-fly"
+  },
+  {
+    "name": "phone fireflies animate transform/opacity only",
+    "ok": true,
+    "detail": "opacity,transform"
+  },
+  {
+    "name": "phone tab hidden: fireflies paused",
+    "ok": true,
+    "detail": "paused,paused"
+  },
+  {
+    "name": "phone tab visible again: fireflies running",
+    "ok": true,
+    "detail": "running,running"
+  },
+  {
+    "name": "phone night Today no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone reduced-motion: fireflies held still (no animation, shown at rest)",
+    "ok": true,
+    "detail": "1 flies, 0 animations, opacity 0.4"
+  },
+  {
+    "name": "phone reduced-motion: no continuous animation anywhere on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone animations-off: fireflies held still (no animation, shown at rest)",
+    "ok": true,
+    "detail": "1 flies, 0 animations, opacity 0.4"
+  },
+  {
+    "name": "phone animations-off: no continuous animation anywhere on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /tasks: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /tasks: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /calendar: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /calendar: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /inbox: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /inbox: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /routines: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /routines: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /settings: no fireflies, no moonflower",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night /settings: no continuous ambient animation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "contrast: 406 text runs on the night surfaces, all AA",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scroll day /today: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/180 frames >25ms · p95 18ms · worst 18.6ms · scrollable 291px",
+    "stats": {
+      "longs": [],
+      "frames": 180,
+      "over25": 0,
+      "p95": 18,
+      "max": 18.6,
+      "label": "day",
+      "route": "today"
+    }
+  },
+  {
+    "name": "scroll night /today: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/178 frames >25ms · p95 18ms · worst 18.3ms · scrollable 291px",
+    "stats": {
+      "longs": [],
+      "frames": 178,
+      "over25": 0,
+      "p95": 18,
+      "max": 18.3,
+      "label": "night",
+      "route": "today"
+    }
+  },
+  {
+    "name": "scroll night+blur /today: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/185 frames >25ms · p95 18ms · worst 18.4ms · scrollable 291px",
+    "stats": {
+      "longs": [],
+      "frames": 185,
+      "over25": 0,
+      "p95": 18,
+      "max": 18.4,
+      "label": "night+blur",
+      "route": "today"
+    }
+  },
+  {
+    "name": "scroll day /settings: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 1/185 frames >25ms · p95 18ms · worst 34.3ms · scrollable 4575px",
+    "stats": {
+      "longs": [],
+      "frames": 185,
+      "over25": 1,
+      "p95": 18,
+      "max": 34.3,
+      "label": "day",
+      "route": "settings"
+    }
+  },
+  {
+    "name": "scroll night /settings: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/176 frames >25ms · p95 17.8ms · worst 18.1ms · scrollable 4575px",
+    "stats": {
+      "longs": [],
+      "frames": 176,
+      "over25": 0,
+      "p95": 17.8,
+      "max": 18.1,
+      "label": "night",
+      "route": "settings"
+    }
+  },
+  {
+    "name": "scroll night+blur /settings: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/176 frames >25ms · p95 17.7ms · worst 18.1ms · scrollable 4575px",
+    "stats": {
+      "longs": [],
+      "frames": 176,
+      "over25": 0,
+      "p95": 17.7,
+      "max": 18.1,
+      "label": "night+blur",
+      "route": "settings"
+    }
+  },
+  {
+    "name": "scroll day /routines: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/174 frames >25ms · p95 17.7ms · worst 18.1ms · scrollable 540px",
+    "stats": {
+      "longs": [],
+      "frames": 174,
+      "over25": 0,
+      "p95": 17.7,
+      "max": 18.1,
+      "label": "day",
+      "route": "routines"
+    }
+  },
+  {
+    "name": "scroll night /routines: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/172 frames >25ms · p95 17.6ms · worst 18.3ms · scrollable 540px",
+    "stats": {
+      "longs": [],
+      "frames": 172,
+      "over25": 0,
+      "p95": 17.6,
+      "max": 18.3,
+      "label": "night",
+      "route": "routines"
+    }
+  },
+  {
+    "name": "scroll night+blur /routines: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/172 frames >25ms · p95 17.7ms · worst 18.1ms · scrollable 540px",
+    "stats": {
+      "longs": [],
+      "frames": 172,
+      "over25": 0,
+      "p95": 17.7,
+      "max": 18.1,
+      "label": "night+blur",
+      "route": "routines"
+    }
+  },
+  {
+    "name": "scroll day /calendar: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/187 frames >25ms · p95 18ms · worst 21ms · scrollable 1620px",
+    "stats": {
+      "longs": [],
+      "frames": 187,
+      "over25": 0,
+      "p95": 18,
+      "max": 21,
+      "label": "day",
+      "route": "calendar"
+    }
+  },
+  {
+    "name": "scroll night /calendar: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/178 frames >25ms · p95 18ms · worst 18.6ms · scrollable 1620px",
+    "stats": {
+      "longs": [],
+      "frames": 178,
+      "over25": 0,
+      "p95": 18,
+      "max": 18.6,
+      "label": "night",
+      "route": "calendar"
+    }
+  },
+  {
+    "name": "scroll night+blur /calendar: no long tasks",
+    "ok": true,
+    "detail": "0 long tasks [] · 0/175 frames >25ms · p95 17.8ms · worst 18.3ms · scrollable 1620px",
+    "stats": {
+      "longs": [],
+      "frames": 175,
+      "over25": 0,
+      "p95": 17.8,
+      "max": 18.3,
+      "label": "night+blur",
+      "route": "calendar"
+    }
+  }
+]
