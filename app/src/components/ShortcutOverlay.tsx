@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router'
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
-import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS } from '../lib/shortcuts'
-import type { ShortcutEntry } from '../lib/pageShortcutsStore'
+import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS, LIST_EXTRAS, LIST_NAV, SELECTION_NOTE, keyCap } from '../lib/shortcuts'
+import { usePageShortcutsStore, type ShortcutEntry } from '../lib/pageShortcutsStore'
 import { restartTour } from '../features/tour/help'
 // J-17: the keycap lives in the shared kit now — this overlay was its only user before.
 import { KeyChip } from './kit'
 import { Icon } from './Icon'
 
-function Category({ title, entries }: { title: string; entries: ShortcutEntry[] }) {
+function Category({ title, entries, note }: { title: string; entries: ShortcutEntry[]; note?: string }) {
   return (
     <>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>
@@ -26,20 +26,29 @@ function Category({ title, entries }: { title: string; entries: ShortcutEntry[] 
           <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{entry.label}</span>
         </div>
       ))}
+      {note && <div className="kf-help" style={{ marginTop: 6 }}>{note}</div>}
     </>
   )
 }
 
 const link = { background: 'none', border: 'none', padding: '6px 0', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-lavender-deep)', cursor: 'pointer' } as const
 
-/** The whole keymap, always — a fixed 3-column reference (Anywhere, On a task, Inbox triage +
- * Command bar), regardless of which page is mounted underneath. Each category's data is static
- * (lib/shortcuts.ts: only keys that work). Tour & help 14k-3 gives it the paper treatment: a solid
- * taped sheet with a fern, a ×, and the way back to the tour and the Guide. */
+/** The whole keymap — a 3-column reference (Anywhere, On a task, Inbox triage + Command bar). "On a
+ * task" is what the list page underneath registered (useListKeys → pageShortcutsStore: the keys it
+ * really dispatches on, so the sheet can't drift from them), plus the keys every task list has; with
+ * no list page mounted it falls back to the static Tasks list (lib/shortcuts.ts). Tour & help 14k-3
+ * gives it the paper treatment: a solid taped sheet with a fern, a ×, and the way back to the tour
+ * and the Guide. */
 export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   useEscapeStack(open, onClose)
   useBodyScrollLock(open)
   const navigate = useNavigate()
+  const page = usePageShortcutsStore()
+  const lists = page.section === 'Lists'
+  const taskKeys = page.section
+    ? [LIST_NAV, ...page.entries.map((e) => ({ ...e, keys: e.keys.map(keyCap) })), ...(lists ? LIST_EXTRAS : [])]
+    : [...TASK_LIST_SHORTCUTS, ...LIST_EXTRAS]
+  const taskTitle = page.section && !lists ? `On a task · ${page.section}` : 'On a task'
 
   if (!open) return null
 
@@ -84,7 +93,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
             <Category title="Anywhere" entries={GLOBAL_SHORTCUTS} />
           </div>
           <div>
-            <Category title="On a task" entries={TASK_LIST_SHORTCUTS} />
+            <Category title={taskTitle} entries={taskKeys} note={!page.section || lists ? SELECTION_NOTE : undefined} />
           </div>
           <div>
             <Category title="Inbox triage" entries={INBOX_SHORTCUTS} />
