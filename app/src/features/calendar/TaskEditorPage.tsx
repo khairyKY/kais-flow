@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
-import { useTasks, rescheduleDue, setLabels, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
+import { useTasks, rescheduleDue, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
 import { useTaskDraft } from '../tasks/useTaskDraft'
 import { PhotoSource, SubtaskList, TaskMoreMenu, anchorUnder, useTaskControls } from '../tasks/TaskFields'
 import { remindChip, repeatLabel, dayWord } from '../tasks/taskSheetMath'
@@ -87,7 +87,6 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   const { title, notes, saveTitle, saveNotes } = draft
   const controls = useTaskControls(task)
   const { actions, open, place, edit } = controls
-  const [labelInput, setLabelInput] = useState('')
   const [more, setMore] = useState<{ x: number; y: number } | null>(null)
 
   // Editor.dc.html 1a shows a ⌘⏎ hint next to Save — wire it so the hint is true.
@@ -118,12 +117,6 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   // date keeps a task that's on the calendar on it (at its due time); otherwise a date is just a date.
   function handleDueChange(date: string, time: string, timed = !!linkedEvent) {
     rescheduleDue(task, date ? zoneToIso(date, time || '09:00', zone) : null, timed)
-  }
-
-  function addLabel() {
-    const l = labelInput.trim()
-    if (l && !task.labels.includes(l)) setLabels(task, [...task.labels, l])
-    setLabelInput('')
   }
 
   function handleDelete() {
@@ -243,7 +236,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)', flexWrap: 'wrap', gap: 12 }}>
             <div>
               {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. */}
-              <button type="button" onClick={handleDelete} style={{ ...LINK, letterSpacing: '0.1em', color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Delete task</button>
+              <button type="button" onClick={handleDelete} style={{ ...LINK, letterSpacing: 'var(--ls-mono-tight)', color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Delete task</button>
               <FHelp>to Trash, with its calendar block · Undo</FHelp>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -270,22 +263,17 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             <Field label="Project or area" value={place ? <EmojiText text={place} /> : '—'} onOpen={(e) => open('project', e)} />
             <FHelp>a task lives in a project or an area, not both</FHelp>
             <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Labels</FLabel>
+            {/* The shared Label picker (tasks/LabelPicker — the L key's, the sheet's and the popover's): every
+                chip opens it, where a tap adds or takes a label off and a new one can be made. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {task.labels.map((l) => (
-                <span key={l} style={chipStyle}>
-                  *{l}{' '}
-                  <button type="button" aria-label={`Remove label ${l}`} onClick={() => setLabels(task, task.labels.filter((x) => x !== l))} style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, color: 'inherit', font: 'inherit' }}>✕</button>
-                </span>
+                <button key={l} type="button" aria-label={`Labels: ${l}`} aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, cursor: 'pointer' }}>
+                  *{l}
+                </button>
               ))}
-              <input
-                value={labelInput}
-                aria-label="Add a label"
-                onChange={(e) => setLabelInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLabel() } }}
-                onBlur={addLabel}
-                placeholder="+ label"
-                style={{ ...chipStyle, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', background: 'none', width: 70, outline: 'none' }}
-              />
+              <button type="button" aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', background: 'none', cursor: 'pointer' }}>
+                + label
+              </button>
             </div>
           </div>
 
@@ -358,7 +346,7 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
       aria-label={label}
       aria-haspopup="menu"
       onClick={onOpen}
-      style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 13, padding: '8px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', color: 'var(--text-primary)' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-body-s)', padding: '8px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', color: 'var(--text-primary)' }}
     >
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
       <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
@@ -367,8 +355,8 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
 }
 
 const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase' }
-const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }
+const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase' }
+const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
 
 const chipStyle = {
   fontFamily: 'var(--font-mono)',

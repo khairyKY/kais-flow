@@ -81,21 +81,96 @@ describe('a weekly series', () => {
     expect(new Set(shown().map((e) => e.title))).toEqual(new Set(['Team standup']))
   })
 
-  it('a new time of day / length from the popover moves every week, with one Undo', () => {
-    api.retimeEventWithUndo(occ(WEEK2), { day: '2026-10-19', start: 540, end: 570 }, { day: '2026-10-19', start: 600, end: 660 })
+  it('a new time of day / length from the FIRST occurrence moves every week, with one Undo', () => {
+    api.retimeEventWithUndo(occ(ROW.starts_at), { day: '2026-10-12', start: 540, end: 570 }, { day: '2026-10-12', start: 600, end: 660 })
+    expect(rows()).toHaveLength(1)
     expect(shown().map((e) => e.starts_at)).toEqual(['2026-10-12T07:00:00.000Z', '2026-10-19T07:00:00.000Z', '2026-10-26T07:00:00.000Z', '2026-11-02T08:00:00.000Z'])
     expect(shown().every((e) => Date.parse(e.ends_at) - Date.parse(e.starts_at) === 3_600_000)).toBe(true)
     toasts.at(-1)!.undo()
     expect(rows()[0].starts_at).toBe(ROW.starts_at)
   })
 
-  it('Repeat: a one-off starts repeating; Does not repeat from an occurrence keeps that block where it is', () => {
+  it('…from a LATER occurrence the earlier weeks keep their time: the series splits there, one Undo joins it back', () => {
+    const ref = api.retimeEventWithUndo(occ(WEEK2), { day: '2026-10-19', start: 540, end: 570 }, { day: '2026-10-19', start: 600, end: 660 })
+    expect(shown().map((e) => e.starts_at)).toEqual(['2026-10-12T06:00:00.000Z', '2026-10-19T07:00:00.000Z', '2026-10-26T07:00:00.000Z', '2026-11-02T08:00:00.000Z'])
+    expect(rows()).toHaveLength(2)
+    // the sheet kept open over the block finds it again
+    expect(shown().find((e) => e.id === ref?.id)?.starts_at).toBe('2026-10-19T07:00:00.000Z')
+    expect(toasts.at(-1)!.message).toMatch(/· from Mon 19( Oct)?$/)
+    toasts.at(-1)!.undo()
+    expect(rows()).toHaveLength(1)
+    expect(rows()[0]).toEqual(ROW)
+    expect(written.every((w) => !w.id.includes('::'))).toBe(true)
+  })
+
+  it('Repeat: a one-off starts repeating; from the first occurrence the series changes in place', () => {
     cache.set('calendar_events', [{ ...ROW, recurrence_rule: null }])
     api.setEventRepeat(rows()[0], 'FREQ=DAILY')
     expect(shown().length).toBeGreaterThan(20)
+    toasts.at(-1)!.undo()
+    expect(rows()[0].recurrence_rule).toBeNull()
     cache.set('calendar_events', [{ ...ROW }])
-    api.setEventRepeat(occ(WEEK2), null)
-    expect(shown().map((e) => [e.id, e.starts_at])).toEqual([['standup', WEEK2]])
+    api.setEventRepeat(occ(ROW.starts_at), 'FREQ=DAILY')
+    expect(rows()).toHaveLength(1)
+    expect(shown()[1].starts_at).toBe('2026-10-13T06:00:00.000Z')
+  })
+
+  it('Repeat changed from a LATER occurrence keeps the earlier ones (Google split); one Undo restores both', () => {
+    const ref = api.setEventRepeat(occ(WEEK2), 'FREQ=DAILY')
+    const s = shown().map((e) => e.starts_at)
+    expect(s.slice(0, 3)).toEqual(['2026-10-12T06:00:00.000Z', WEEK2, '2026-10-20T06:00:00.000Z'])
+    expect(s).not.toContain('2026-10-13T06:00:00.000Z') // nothing daily before the clicked week
+    expect(shown().find((e) => e.id === ref?.id)?.starts_at).toBe(WEEK2)
+    toasts.at(-1)!.undo()
+    expect(rows()).toEqual([ROW])
+    expect(shown().map((e) => e.starts_at)).toEqual(['2026-10-12T06:00:00.000Z', WEEK2, '2026-10-26T06:00:00.000Z', '2026-11-02T07:00:00.000Z'])
+  })
+
+  it('Does not repeat from a later occurrence: the earlier weeks stay, the clicked block stays as a one-off, the later ones go', () => {
+    const ref = api.setEventRepeat(occ(WEEK2), null)
+    expect(shown().map((e) => e.starts_at)).toEqual(['2026-10-12T06:00:00.000Z', WEEK2])
+    expect(ref?.id).toBe(rows().find((r) => !r.recurrence_rule)!.id)
+    toasts.at(-1)!.undo()
+    expect(shown()).toHaveLength(4)
+  })
+
+  it('Every weekday on a SATURDAY one-off: the block stays put (a one-off of the series), the series starts Monday; one Undo', () => {
+    // Sat 17 Oct 09:00 Cairo
+    const SAT = '2026-10-17T06:00:00.000Z'
+    cache.set('calendar_events', [{ ...ROW, starts_at: SAT, ends_at: '2026-10-17T06:30:00.000Z', recurrence_rule: null }])
+    const ref = api.setEventRepeat(rows()[0], 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')
+    const s = shown().map((e) => e.starts_at)
+    expect(s.slice(0, 3)).toEqual([SAT, '2026-10-19T06:00:00.000Z', '2026-10-20T06:00:00.000Z'])
+    expect(s.filter((x) => new Date(x).getUTCDay() === 6)).toEqual([SAT]) // no other Saturday
+    const keep = rows().find((r) => !r.recurrence_rule)!
+    expect(keep).toMatchObject({ starts_at: SAT, series_id: 'standup' })
+    expect(ref).toEqual({ id: keep.id, start: SAT })
+    expect(toasts.at(-1)!.message).toMatch(/· from Mon 19( Oct)?$/)
+    toasts.at(-1)!.undo()
+    expect(rows()).toEqual([{ ...ROW, starts_at: SAT, ends_at: '2026-10-17T06:30:00.000Z', recurrence_rule: null }])
+    expect(written.every((w) => !w.id.includes('::'))).toBe(true)
+  })
+
+  it('…from a later Saturday occurrence of a weekly series: the earlier weeks stay, Saturday stays, weekdays from Monday; one Undo restores the one row', () => {
+    const SAT0 = '2026-10-10T06:00:00.000Z'
+    const weekly = { ...ROW, starts_at: SAT0, ends_at: '2026-10-10T06:30:00.000Z' }
+    cache.set('calendar_events', [weekly])
+    const sat = shown().find((e) => e.starts_at === '2026-10-17T06:00:00.000Z')!
+    api.setEventRepeat(sat, 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')
+    const s = shown().map((e) => e.starts_at)
+    // the window opens on the 12th: the Saturday weekly before it is the head's; then the 17th (kept), Mon 19…
+    expect(s.slice(0, 3)).toEqual(['2026-10-17T06:00:00.000Z', '2026-10-19T06:00:00.000Z', '2026-10-20T06:00:00.000Z'])
+    expect(rows()).toHaveLength(3)
+    expect(rows().find((r) => r.id === 'standup')!.recurrence_rule).toMatch(/^FREQ=WEEKLY;UNTIL=/)
+    toasts.at(-1)!.undo()
+    expect(rows()).toEqual([weekly])
+  })
+
+  it('Every weekday from a Monday one-off', () => {
+    cache.set('calendar_events', [{ ...ROW, recurrence_rule: null }])
+    api.setEventRepeat(rows()[0], 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')
+    const days = shown().slice(0, 7).map((e) => new Date(e.starts_at).getUTCDay())
+    expect(days).toEqual([1, 2, 3, 4, 5, 1, 2])
   })
 
   it('task blocks never repeat; Link a task skips a repeat', () => {

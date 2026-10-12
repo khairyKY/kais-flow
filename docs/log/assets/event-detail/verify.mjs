@@ -357,13 +357,17 @@ if (want('b3')) {
   await undo(page, 'Deleted all · Standup')
   await settle(state)
   check('b3 Undo: the whole week back', !row(state, STANDUP).deleted_at && (await page.locator(`.fc-event[data-kf-id^="${eid(STANDUP)}::"]`).count()) === 7)
-  // A row edit on an occurrence changes every day.
-  const h0 = (await fc(page, occId(STANDUP, '08:00', 17)).boundingBox()).height
+  // cal-wave2 (conductor decision 2026-10-12, which supersedes "every day" here): a new length from a
+  // LATER occurrence splits the series there — Friday on is 1h, Monday–Thursday keep 30 minutes.
+  const sat = () => page.locator(`.fc-event[data-kf-id$="::${iso('08:00', 17)}"]`).first()
+  const h0 = (await sat().boundingBox()).height
+  const thu0 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height
   await openBlock(page, occId(STANDUP, '08:00', 16))
   await pick(page, '08:00 – 08:30', 'Standard', 'Duration')
   await settle(state)
-  const h1 = (await fc(page, occId(STANDUP, '08:00', 17)).boundingBox()).height
-  check('b3 Duration on one occurrence: the series is 1h, every day (Saturday’s block doubles too)', row(state, STANDUP).ends_at === iso('09:00') && h1 > h0 * 1.8, `${h0} → ${h1}`)
+  const h1 = (await sat().boundingBox()).height
+  const thu1 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height
+  check('b3 Duration on a later occurrence: from it on the series is 1h (Saturday doubles), the earlier days keep 30 minutes (the split)', /UNTIL=/.test(row(state, STANDUP).recurrence_rule) && h1 > h0 * 1.8 && Math.abs(thu1 - thu0) < 1, `sat ${h0} → ${h1}, thu ${thu0} → ${thu1}`)
   check('b3 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }

@@ -6,6 +6,7 @@ import { appZone } from '../../lib/appZone'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { durationLabel, fromMin } from '../../components/pickerMath'
 import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
+import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
 export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete'
@@ -63,8 +64,11 @@ export function blockDate(e: Pick<CalendarEvent, 'starts_at' | 'all_day'>): stri
   return new Date(e.starts_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: e.all_day ? 'UTC' : appZone() })
 }
 
+/** The Repeat row: "Repeats weekly" for the presets, the rule in words for a custom one ("Every
+ * weekday", "Every month on the 2nd Tuesday") — the task sheet's words (tasks/taskSheetMath). */
 export function repeatLabel(rule: string | null | undefined): string {
-  return rule ? `Repeats ${(REPEAT_LABELS[rule] ?? 'custom').toLowerCase()}` : 'Does not repeat'
+  if (!rule) return 'Does not repeat'
+  return REPEAT_LABELS[rule] ? `Repeats ${REPEAT_LABELS[rule].toLowerCase()}` : ruleWords(rule)
 }
 
 export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): BlockMenuEntry[] {

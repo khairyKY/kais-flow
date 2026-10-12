@@ -64,9 +64,10 @@ begin
   if n <> 10 then raise exception '% tasks — want 10 (a roll moves rows, never copies them)', n; end if;
 
   -- untouched
-  select count(*) into n from tasks t join snapshot b using (id)
-  where t.id not in ('00000000-0000-4000-8000-00000000b001', '00000000-0000-4000-8000-00000000b002')
-    and t.due_at is distinct from b.due_at;
+  -- (alias x, not t: inside this block `t` is the record variable above, and PL/pgSQL reads t.id as it)
+  select count(*) into n from tasks x join snapshot b using (id)
+  where x.id not in ('00000000-0000-4000-8000-00000000b001', '00000000-0000-4000-8000-00000000b002')
+    and x.due_at is distinct from b.due_at;
   if n <> 0 then raise exception '% task(s) moved that should have stayed (done/later/undated/recurring/someday/trashed/other projects)', n; end if;
 
   -- the checklist ticks clear, as before; the activity row counts the roll
