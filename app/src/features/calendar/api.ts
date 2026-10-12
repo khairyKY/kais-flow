@@ -12,7 +12,7 @@ import { useAppZone } from '../../lib/appZone'
 import { dayHint, fromMin } from '../../components/pickerMath'
 import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
-import { detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
+import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { repeatLabel } from './blockMenuSpec'
 
@@ -323,15 +323,35 @@ export function setEventRepeat(event: CalendarEvent, rule: string | null): Block
   const row = event.seriesId ? seriesOf(event) : event
   if (!row || row.task_id) return null
   const ref = (r: CalendarEvent) => ({ id: rule ? occurrenceId(r.id, new Date(r.starts_at).toISOString()) : r.id, start: r.starts_at })
+  const today = cairoDateKey(new Date())
+  const from = (iso: string) => ` · from ${dayHint(cairoDateKey(new Date(iso)), today)}`
+  /** A rule that skips the block's own day (Saturday + "every weekday"): the block stays as a one-off
+   * and the series starts on the rule's first day (series.alignToRule, conductor 2026-10-13). */
+  const align = (series: CalendarEvent) => {
+    const a = alignToRule(series, crypto.randomUUID(), nowIso())
+    if (!a) return null
+    writeRow('calendar_events', a.series)
+    writeRow('calendar_events', a.keep)
+    logActivity('calendar_event.created', 'calendar_event', a.keep.id, { title: a.keep.title, type: a.keep.type, series_id: a.series.id })
+    return a
+  }
   const split = event.seriesId ? splitAt(row, event, (tail) => rerule(tail, tail, rule)) : undefined
   if (split) {
-    toastUndo(`${repeatLabel(rule)} · from ${dayHint(cairoDateKey(new Date(event.starts_at)), cairoDateKey(new Date()))}`, split.undo)
-    return ref(split.tail)
+    const a = align(split.tail)
+    toastUndo(`${repeatLabel(rule)}${from(a?.series.starts_at ?? event.starts_at)}`, () => {
+      split.undo()
+      if (a) writeRow('calendar_events', a.keep, 'delete')
+    })
+    return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(split.tail)
   }
   const next = rerule(row, event, rule)
   writeRow('calendar_events', next)
-  toastUndo(repeatLabel(rule), () => writeRow('calendar_events', row))
-  return ref(next)
+  const a = align(next)
+  toastUndo(`${repeatLabel(rule)}${a ? from(a.series.starts_at) : ''}`, () => {
+    writeRow('calendar_events', row)
+    if (a) writeRow('calendar_events', a.keep, 'delete')
+  })
+  return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(next)
 }
 
 /** "Link a task…": a plain one-off block takes the task (its block now — the task is scheduled

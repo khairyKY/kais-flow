@@ -19,8 +19,10 @@ export const PLAN_SORTS: { value: PlanSort; label: string }[] = [
   { value: 'title', label: 'A–Z' },
 ]
 
-/** "Unscheduled": open tasks with no time on the calendar today or later, Someday aside. Today and
- * Overdue are the rail's own lists (replan.railBuckets); All is those plus every other such task. */
+/** "Unscheduled" (conductor 2026-10-13): every open task — not done, not cancelled, not trashed, not
+ * Someday — with no block on the calendar today or later (a block it missed on an earlier day doesn't
+ * count: it is unscheduled again, in Overdue). Today and Overdue are the rail's own lists
+ * (replan.railBuckets); All is those plus every other such task, each once. */
 export function planningTasks(tasks: readonly Task[], events: readonly CalendarEvent[], now: Date, tab: PlanTab): RailTask[] {
   const { overdue, today } = railBuckets(tasks, events, now)
   if (tab === 'overdue') return overdue
@@ -93,9 +95,10 @@ export function blockedOn(events: readonly CalendarEvent[], day: string): number
 
 /** The strip's free stretches on `day` worth planting into: the gaps between busy blocks inside
  * 08:00–20:00 (pickerMath.freeSlots — from now on, today; a past day has none) of at least `min`
- * minutes, as instants, with their "2h free" label. deviation(2026-10-13): 4a also marks a gap
- * before the now-line; a gap in the past can't be planted into, so it isn't marked. */
-export function freeGaps(events: readonly CalendarEvent[], day: string, now: Date, min = 90): { start: string; end: string; label: string; minutes: number }[] {
+ * minutes — an hour by default, so a one-hour task's slot shows (conductor 2026-10-13) — as instants,
+ * with their "2h free" label. deviation(2026-10-13): 4a also marks a gap before the now-line; a gap in
+ * the past can't be planted into, so it isn't marked. */
+export function freeGaps(events: readonly CalendarEvent[], day: string, now: Date, min = 60): { start: string; end: string; label: string; minutes: number }[] {
   return freeSlots(busyOnDay(events, day), day, now, 15, 48)
     .filter((s) => s.end - s.start >= min)
     .map((s) => ({ start: at(day, s.start), end: at(day, s.end), label: `${minutesLabel(s.end - s.start)} free`, minutes: s.end - s.start }))

@@ -41,6 +41,30 @@ describe('planningTasks — All · Today · Overdue', () => {
     expect(ids(overdue)).toEqual(['github'])
     expect(overdue[0].late).toBe(3)
   })
+  it('All is exactly: open (not done, not cancelled, not trashed), not Someday, no block today or later — each once', () => {
+    const rows = planningTasks(
+      [
+        task('open'),
+        task('missed'),
+        task('later-today'),
+        task('tomorrow'),
+        task('done', { status: 'done' }),
+        task('cancelled', { status: 'cancelled' }),
+        task('trashed', { deleted_at: cairo(DAY, '08:00') }),
+        task('someday', { someday: true }),
+        task('due-today', { due_at: cairo(DAY, '09:00') }),
+      ],
+      [
+        block('b1', 'missed', '2026-07-08', '10:00', '11:00'),
+        block('b2', 'later-today', DAY, '17:00', '18:00'),
+        block('b3', 'tomorrow', '2026-07-11', '10:00', '11:00'),
+        block('b4', 'done', '2026-07-11', '10:00', '11:00', { deleted_at: cairo(DAY, '08:00') }),
+      ],
+      NOW,
+      'all',
+    )
+    expect(ids(rows)).toEqual(['missed', 'due-today', 'open'])
+  })
   it('a task whose only block was missed yesterday is unscheduled again (overdue)', () => {
     const rows = planningTasks([task('crypto')], [block('b', 'crypto', '2026-07-09', '15:00', '16:30')], NOW, 'all')
     expect(rows.map((r) => [r.task.id, r.late, r.block?.id])).toEqual([['crypto', 1, 'b']])
@@ -88,17 +112,23 @@ describe('4a groups and totals', () => {
 })
 
 describe('the strip: free gaps and the footer line', () => {
-  it('gaps of 90 minutes or more inside 08:00–20:00, from now on today: "2h free"', () => {
+  it('gaps of an hour or more inside 08:00–20:00, from now on today: "2h free" (conductor 2026-10-13: 60, not 90)', () => {
     expect(freeGaps(EVENTS, DAY, NOW).map((g) => [g.label, g.start, g.end])).toEqual([
       ['2h free', cairo(DAY, '11:00'), cairo(DAY, '13:00')],
-      // 13:45–15:00 is 75 minutes: not marked
+      // 13:45–15:00 is 75 minutes: a one-hour task fits, so it shows
+      ['1h 15m free', cairo(DAY, '13:45'), cairo(DAY, '15:00')],
       ['4h free', cairo(DAY, '16:00'), cairo(DAY, '20:00')],
     ])
   })
+  it('exactly an hour shows; 45 minutes does not', () => {
+    // from 10:00: 12:00–13:00 is an hour, 19:15–20:00 is 45 minutes
+    const day = [block('a', null, DAY, '10:00', '12:00'), block('b', null, DAY, '13:00', '19:15')]
+    expect(freeGaps(day, DAY, NOW).map((g) => g.label)).toEqual(['1h free'])
+  })
   it('the part of a gap behind the clock is not free', () => {
     expect(freeGaps(EVENTS, DAY, new Date(cairo(DAY, '11:30')))[0]).toMatchObject({ label: '1h 30m free', start: cairo(DAY, '11:30') })
-    // at 12:00 only an hour is left before 13:00: not marked
-    expect(freeGaps(EVENTS, DAY, new Date(cairo(DAY, '12:00'))).map((g) => g.label)).toEqual(['4h free'])
+    // at 12:15 only 45 minutes are left before 13:00: not marked
+    expect(freeGaps(EVENTS, DAY, new Date(cairo(DAY, '12:15'))).map((g) => g.label)).toEqual(['1h 15m free', '4h free'])
   })
   it('another day is free from 08:00; a past day has none', () => {
     expect(freeGaps([], '2026-07-11', NOW).map((g) => g.label)).toEqual(['12h free'])

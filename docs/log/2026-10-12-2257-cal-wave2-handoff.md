@@ -179,3 +179,26 @@ tracking / radius tokens only, `--ink-faint` for text.
   Google moves the block). Keep, or move the block to the first matching day?
 - Title / colour / project edits on a later occurrence still change the whole series (no prompt).
   Want Google's "This event / This and following / All events" question there too?
+
+## Addendum (2026-10-13) — the conductor's answers, implemented
+
+After the merge into `claude/kai-bugs-1012` (147ddbf4), on this branch:
+
+1. **"All" in planning mode** = every open task (not done, not cancelled, not trashed), not Someday,
+   with no block on the calendar today or later — each once. A block missed on an earlier day doesn't
+   count (the task is unscheduled again and shows in Overdue). It already did this; now pinned by a
+   test (`planningMode.test.ts`).
+2. **Free-gap boxes from 60 minutes** (was 90): a one-hour task's slot shows ("1h 15m free" now
+   marks 13:45–15:00 in the 4a day). Tests: an hour shows, 45 minutes doesn't.
+3. **A rule that skips the block's own day** (Saturday + Mon–Fri, a Wednesday + "2nd Tuesday"…): the
+   block no longer vanishes. `series.alignToRule`: the block stays where it is as a one-off of the
+   series (a detached copy, `series_id` → the series, as a moved occurrence is) and the series
+   starts at the rule's first start after it; one Undo restores both (one-off → its row back;
+   from a later occurrence → the split's original row back too). Toast "Every week on … · from Mon
+   13". Tests: pure (Cairo, LA, Tokyo; all-day; the editor's Nth weekday) and through the real api;
+   browser `r2` (a Saturday block → Custom… ▸ Mon–Fri: Saturday kept, Monday on, one Undo).
+4. Title / colour / project edits stay series-wide (unchanged).
+
+Gate: 1967 tests ×4 TZ; lint 0 errors; build; ds:check 0 NEW in features/calendar; harness
+`cal-wave2/verify.mjs` **83/83**, `event-detail/verify.mjs` **68/68**. The open questions above
+are answered by this addendum.
