@@ -3,7 +3,7 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
 import type { Area, Domain, Project, Task } from '../../lib/types'
-import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, reopenTaskWithUndo, rescheduleDue, rescheduleTasksWithUndo, setPriority, setRecurrence, setReminder, setSomeday, toggleTop3 } from './api'
+import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, reopenTaskWithUndo, rescheduleDue, rescheduleTasksWithUndo, setPriority, setRecurrence, setReminder, somedayTasksWithUndo, toggleTop3 } from './api'
 import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
 import { dueChip } from './taskSheetMath'
@@ -22,7 +22,7 @@ export function taskActions(task: Task): TaskMenuActions {
     // `timed`: Pick date & time… set a time, which puts the task on the calendar (calendar/replan).
     schedule: (iso, timed) => rescheduleTasksWithUndo([task], iso, { timed, message: `Planned · ${dueChip(iso, new Date())}` }),
     clearDate: () => toastUndo('Date taken off', rescheduleDue(task, null)),
-    someday: () => setSomeday(task, true),
+    someday: () => somedayTasksWithUndo([task]), // Undo like every other plan move
     move: (to) => moveTasksWithUndo([task], to),
     priority: (p) => setPriority(task, p),
     repeat: (rule) => setRecurrence(task, rule),

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { writeRow } from '../../lib/outbox'
 import type { Task } from '../../lib/types'
-import { createTask, renameTask } from './api'
+import { createTask, renameTask, setNotes as saveTaskNotes } from './api'
 
 export type DraftField = 'title' | 'notes' | 'subtasks'
 
@@ -38,13 +37,13 @@ export function useTaskDraft(task: Task | undefined, onSaved?: (field: DraftFiel
     },
     saveNotes() {
       if (!task || (notes || null) === (task.notes || null)) return
-      writeRow('tasks', { ...task, notes: notes || null })
+      saveTaskNotes(task, notes || null)
       onSaved?.('notes')
     },
     addSubtask() {
       const t = subtask.trim()
       if (!task || !t) return
-      createTask({ title: t, parentTaskId: task.id, projectId: task.project_id, domainId: task.domain_id })
+      createTask({ title: t, parentTaskId: task.id, projectId: task.project_id, areaId: task.area_id ?? null, domainId: task.domain_id })
       setSubtask('')
       onSaved?.('subtasks')
     },
