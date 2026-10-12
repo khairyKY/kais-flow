@@ -1,0 +1,417 @@
+[
+  {
+    "name": "n1 the date line, then TASKS (Top 3 first, goal ✶), HABITS, NOTES, the night lines",
+    "ok": true,
+    "detail": "MON · 12 OCT / woke __ · slept __ / TASKS / ✶ / GCI homework 1 — NumPy / Do GCI lecture 2’s survey / Reply to Omar / Buy milk / Water the plants / HABITS / Qur’an / rep / move / read / NOTES / + / what happened / − / what got in the way / → / tomorrow’s three / ♡ / one true line / Day 83 · written by hand ✿"
+  },
+  {
+    "name": "n1 not on the page: tomorrow’s task, an overdue one; never prayer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 \"Day 83 · written by hand\" in Caveat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 A5 proportions (148:210)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 reading size: items ≥ 18px, line height ≥ 1.5",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 real ☐ boxes, five tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 Copy as text: toast \"Copied — paste it anywhere\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 Copy as text: the exact text handed to the clipboard",
+    "ok": true,
+    "detail": "\"MON · 12 OCT   woke __ · slept __\\n\\nTASKS\\n☐ ✶ GCI homework 1 — NumPy\\n☐ Do GCI lecture 2’s survey\\n☐ Reply to Omar\\n☐ Buy milk\\n☐ Water the plants\\n\\nHABITS\\n☐ Qur’an   ☐ rep   ☐ move   ☐ read\\n\\nNOTES\\n\\n+  what happened\\n−  what got in the way\\n→  tomorrow’s three\\n♡  one true line\""
+  },
+  {
+    "name": "n1 …and what the system clipboard holds (line ends aside)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 the page wears \"✎ on paper\" for the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 no writes from reading or copying",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "n1 no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "n1 no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n2 the page stays day parchment at night (#FBF6E9)",
+    "ok": true,
+    "detail": "rgb(251, 246, 233)"
+  },
+  {
+    "name": "n2 the chrome around it is night",
+    "ok": true,
+    "detail": "rgb(33, 29, 48)"
+  },
+  {
+    "name": "n2 no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "n2 no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n3 ?day=tomorrow in the address",
+    "ok": true,
+    "detail": "http://localhost:5252/notebook?day=tomorrow"
+  },
+  {
+    "name": "n3 TUE · 13 OCT; the seed \"Call the dentist\" leads, goal ✶; today’s tasks gone",
+    "ok": true,
+    "detail": "TUE · 13 OCT / woke __ · slept __ / TASKS / ✶ / Call the dentist / HABITS / Qur’an / rep / move / read / NOTES / + / what happened / − / what got in the way / → / tomorrow’s three / ♡ / one true line / Day 84 · written by hand ✿"
+  },
+  {
+    "name": "n3 Tuesday’s habits (rep runs Mon–Wed + Sat)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n3 no \"Plan first?\" for tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n4 the size menu: A5 · A6 · Letter",
+    "ok": true,
+    "detail": "[\"A5 · last used\",\"A6\",\"Letter\"]"
+  },
+  {
+    "name": "n4 A6: one @page rule, window.print called once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n4 printing stamps the day too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n4 print media: only the page (the app hidden), no flourish, no paper fill or shadow",
+    "ok": true,
+    "detail": "{\"root\":\"block\",\"app\":\"none\",\"flourish\":\"none\",\"bg\":\"rgba(0, 0, 0, 0)\",\"shadow\":\"none\"}"
+  },
+  {
+    "name": "n4 a PDF prints (A5, the @page size)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n5 the editor beside the page: presets (Kai’s page lit), checkbox style, six blocks",
+    "ok": true,
+    "detail": "[\"KAI’S PAGE\"]"
+  },
+  {
+    "name": "n5 Bullet journal: the long date, TOP 3 with •, the plan with ○ and aligned times",
+    "ok": true,
+    "detail": "Monday, 12 October / TOP 3 / • / ✶ / GCI homework 1 — NumPy / • / Do GCI lecture 2’s survey / PLAN / ○ / 09:00–10:30 / Judge test / ○ / 18:00–19:00 / Gym / TASKS / • / Reply to Omar / • / Buy milk / • / Water the plants / HABITS / • / Qur’an / • / rep / • / move / • / read / NOTES / – / – / – / – / – / – / – / – / Day 83 · written by hand ✿"
+  },
+  {
+    "name": "n5 the plan’s times sit in one column",
+    "ok": true,
+    "detail": "[837,837]"
+  },
+  {
+    "name": "n5 saved through the outbox: app_settings.notebook_layout (bullet marks)",
+    "ok": true,
+    "detail": "{\"marks\":\"bullet\",\"blocks\":[{\"id\":\"header\",\"on\":true},{\"id\":\"top3\",\"on\":true},{\"id\":\"tasks\",\"on\":true},{\"id\":\"habits\",\"on\":true},{\"id\":\"notes\",\"on\":true},{\"id\":\"night\",\"on\":false}],\"header\":{\"long\":true,\"sleep\":false},\"top3\":{\"plan\":true,\"clock\":\"24h\"},\"habits\":{\"row\":false},\"tasks\":{\"cap\":10},\"notes\":{\"lines\":8}}"
+  },
+  {
+    "name": "n5 Habits off; Notes moved one place up (now right after Tasks)",
+    "ok": true,
+    "detail": "Monday, 12 October / TOP 3 / • / ✶ / GCI homework 1 — NumPy / • / Do GCI lecture 2’s survey / PLAN / ○ / 09:00–10:30 / Judge test / ○ / 18:00–19:00 / Gym / TASKS / • / Reply to Omar / • / Buy milk / • / Water the plants / NOTES / – / – / – / – / – / – / – / – / Day 83 · written by hand ✿"
+  },
+  {
+    "name": "n5 a changed preset is no preset (no chip lit)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n5 after a reload on a fresh device: the same layout from the server",
+    "ok": true,
+    "detail": "header:1 top3:1 tasks:1 notes:1 habits:0 night:0 | Monday, 12 October / TOP 3 / • / ✶ / GCI homework 1 — NumPy / • / Do GCI lecture 2’s survey / PLAN / ○ / 09:00–10:30 / Judge test / ○ / 18:00–19:00 / Gym / TASK"
+  },
+  {
+    "name": "n6 day a full-height sheet titled Notebook page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 day footer: Bring back your ticks + Copy as text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 day touch targets ≥ 44px",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "n6 day the page is light paper",
+    "ok": true,
+    "detail": "rgb(251, 246, 233)"
+  },
+  {
+    "name": "n6 the editor opens inside the sheet, the page below it (live preview)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "n6 day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 ✕ closes the sheet back to Today (opened directly, no history)",
+    "ok": true,
+    "detail": "http://localhost:5252/today"
+  },
+  {
+    "name": "n6 night a full-height sheet titled Notebook page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 night footer: Bring back your ticks + Copy as text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 night touch targets ≥ 44px",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "n6 night the page is light paper",
+    "ok": true,
+    "detail": "rgb(251, 246, 233)"
+  },
+  {
+    "name": "n6 night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "n6 night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6 night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n11 \"Not planned yet · Plan first?\" above a page that still works (tasks, habits, notes)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n11 Plan first? → Today with Plan my day open",
+    "ok": true,
+    "detail": "http://localhost:5252/today"
+  },
+  {
+    "name": "n7 desktop after Start the day: \"The day has a shape.\" · Write it in your notebook (secondary) beside Done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n7 desktop → /notebook",
+    "ok": true,
+    "detail": "http://localhost:5252/notebook"
+  },
+  {
+    "name": "n7 phone after Start the day: \"The day has a shape.\" · Write it in your notebook (secondary) beside Done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n7 phone → /notebook",
+    "ok": true,
+    "detail": "http://localhost:5252/notebook"
+  },
+  {
+    "name": "n8 ⌘K offers \"Jump · Notebook page\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n8 → /notebook",
+    "ok": true,
+    "detail": "http://localhost:5252/notebook"
+  },
+  {
+    "name": "n9 the summary offers \"Write tomorrow’s page\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n9 → /notebook?day=tomorrow",
+    "ok": true,
+    "detail": "http://localhost:5252/notebook?day=tomorrow"
+  },
+  {
+    "name": "n10 phone the camera opens (capture=environment)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 phone \"4 ticked on paper → mark done?\" · Matched to Monday’s page",
+    "ok": true,
+    "detail": "Bring back your ticks / 4 ticked on paper → mark done? / MATCHED TO MONDAY’S PAGE / GCI homework 1 — NumPy / ☑ ✶ GCI HOMEWORK 1 / Do GCI lecture 2’s survey / ☑ GCI LECTURE 2 SURVEY / Reply to Omar / ☑"
+  },
+  {
+    "name": "n10 phone the four: the goal (abbreviated), the survey, Omar (misspelt), the plants",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 phone \"1 still open on paper · left as they are\"; \"New on the page · 1\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 phone unticking one → \"Mark 3 done\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 phone three tasks done (through the outbox), the plants left open",
+    "ok": true,
+    "detail": "[\"Do GCI lecture 2’s survey\",\"GCI homework 1 — NumPy\",\"Reply to Omar\"]"
+  },
+  {
+    "name": "n10 phone one toast with Undo: \"3 done — ticked on paper\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 phone then the new scribble alone, as a proposed item",
+    "ok": true,
+    "detail": "From your page · 1 thing / 1 PAGE · READ 21:30 / Swipe left to drop a line. / → call Omar back re Thursday / Task"
+  },
+  {
+    "name": "n10 phone the Undo is on screen, not under the sheet",
+    "ok": true,
+    "detail": "kf-toast-act Undo"
+  },
+  {
+    "name": "n10 phone Undo reopens the three",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n10 phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop the camera opens (capture=environment)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop \"4 ticked on paper → mark done?\" · Matched to Monday’s page",
+    "ok": true,
+    "detail": "Bring back your ticks / 4 ticked on paper → mark done? / MATCHED TO MONDAY’S PAGE / GCI homework 1 — NumPy / ☑ ✶ GCI HOMEWORK 1 / Do GCI lecture 2’s survey / ☑ GCI LECTURE 2 SURVEY / Reply to Omar / ☑"
+  },
+  {
+    "name": "n10 desktop the four: the goal (abbreviated), the survey, Omar (misspelt), the plants",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop \"1 still open on paper · left as they are\"; \"New on the page · 1\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop unticking one → \"Mark 3 done\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop three tasks done (through the outbox), the plants left open",
+    "ok": true,
+    "detail": "[\"Do GCI lecture 2’s survey\",\"GCI homework 1 — NumPy\",\"Reply to Omar\"]"
+  },
+  {
+    "name": "n10 desktop one toast with Undo: \"3 done — ticked on paper\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n10 desktop then the new scribble alone, as a proposed item",
+    "ok": true,
+    "detail": "From your page · 1 thing / 1 PAGE · READ 21:30 / Use ⊞ to drop a line. / → call Omar back re Thursday / Task / Inbox only / Add all 1"
+  },
+  {
+    "name": "n10 desktop the Undo is on screen, not under the sheet",
+    "ok": true,
+    "detail": "kf-toast-act Undo"
+  },
+  {
+    "name": "n10 desktop Undo reopens the three",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n10 desktop no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
