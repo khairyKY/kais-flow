@@ -501,6 +501,8 @@ function describeLibrary(e: ActivityLogEntry): ActivityLine {
       return str(payload, 'status') === 'finished'
         ? line('Finished a book')
         : line('Read on in a book', typeof payload?.current_page === 'number' ? `page ${payload.current_page}` : '')
+    case 'book.updated':
+      return line(named(title, (q) => `Updated the book ${q}`, 'Updated a book'))
     case 'book.deleted':
       return line('Took a book off the shelf')
     case 'note.created':
