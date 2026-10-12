@@ -1,0 +1,582 @@
+[
+  {
+    "name": "d1-plan-0800-day desktop at the 125% default",
+    "ok": true,
+    "detail": "1.25"
+  },
+  {
+    "name": "d1-plan-0800-day one date: the H1 only, no \"Today\" eyebrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day summary \"1 of 6 done · next up Deep work — Forecasting at 09:00\"",
+    "ok": true,
+    "detail": "1 of 6 done · next up Deep work — Forecasting at 09:00"
+  },
+  {
+    "name": "d1-plan-0800-day no terrarium band",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day typed \"Add a task…\" pill with the mic",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day \"Today's three · 1h 30m planned\"",
+    "ok": true,
+    "detail": "1h 30m planned"
+  },
+  {
+    "name": "d1-plan-0800-day no stars on the Top 3 rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day \"Also open · 7\" — three rows, then \"Show 4 more →\"",
+    "ok": true,
+    "detail": "Show 4 more →"
+  },
+  {
+    "name": "d1-plan-0800-day Show more opens the rest in place (remembered as the old fold was)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day Overdue keeps its own fold with Replan all (Kai 2026-10-07)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day card head = Plan your day + Begin (the Day card loop)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day the ribbon draws today's 4 blocks, the next two listed with Calendar →",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day rail Rituals: Morning open with its 4 steps, Evening · from 17:00 folded",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day Routines stay in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day Worth a look · 1 of 2 — not the goal's own project (rule 7)",
+    "ok": true,
+    "detail": "WORTH A LOOK\n1 of 2\nGarden club\nuntouched for 11 days\nPlan a step\nSnooze a week"
+  },
+  {
+    "name": "d1-plan-0800-day \"1 of 2\" steps to the next nudge",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day the notebook button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-plan-0800-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d1-plan-0800-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-day Now · 09:00–11:00 · Deep work — Forecasting · 1h 20m left · Start focus",
+    "ok": true,
+    "detail": "NOW · 09:00–11:00\nDeep work — Forecasting\n1h 20m left\nStart focus\n8\n10\n12\n14\n16\n18\n20\n11:30\nCall the bank about the mortgage\n13:00\nSync with Omar\nCalendar →"
+  },
+  {
+    "name": "d2-running-0940-day the running block outlined on the ribbon, a now line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-day Up next skips the card's block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d2-running-0940-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3-idle-1118-day idle: no head (no Next count-down), the ribbon + next two stay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3-idle-1118-day the bank call leads Up next with its checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3-idle-1118-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d3-idle-1118-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4-over-1220-day Now · 20 min over (amber)",
+    "ok": true,
+    "detail": "NOW · 20 MIN OVER"
+  },
+  {
+    "name": "d4-over-1220-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d4-over-1220-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6-idle-1410-day idle: no head (no \"Free\" card), the next two are 15:00 Review the portfolio site",
+    "ok": true,
+    "detail": "15:00\nReview the portfolio site\nCalendar →"
+  },
+  {
+    "name": "d6-idle-1410-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d6-idle-1410-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8-shutdown-1900-day card head = Shut down the day; Evening opens in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8-shutdown-1900-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d8-shutdown-1900-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d9-closed-2110-day card head = Day closed ✿",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d9-closed-2110-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d9-closed-2110-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-night Now · 09:00–11:00 · Deep work — Forecasting · 1h 20m left · Start focus",
+    "ok": true,
+    "detail": "NOW · 09:00–11:00\nDeep work — Forecasting\n1h 20m left\nStart focus\n8\n10\n12\n14\n16\n18\n20\n11:30\nCall the bank about the mortgage\n13:00\nSync with Omar\nCalendar →"
+  },
+  {
+    "name": "d2-running-0940-night the running block outlined on the ribbon, a now line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-night Up next skips the card's block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-running-0940-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d2-running-0940-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4-over-1220-night Now · 20 min over (amber)",
+    "ok": true,
+    "detail": "NOW · 20 MIN OVER"
+  },
+  {
+    "name": "d4-over-1220-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d4-over-1220-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8-shutdown-1900-night card head = Shut down the day; Evening opens in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8-shutdown-1900-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "d8-shutdown-1900-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 Just done: \"Done · 12:20\", struck, Undo",
+    "ok": true,
+    "detail": "DONE · 12:20\nCall the bank about the mortgage\nUndo\n8\n10\n12\n14\n16\n18\n20\n13:00\nSync with Omar\n15:00\nReview the portfolio site\nCalendar →"
+  },
+  {
+    "name": "d5 the task was completed (REST)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 …then it goes: nothing runs, the card has no head",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 Start focus lands on /focus",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 Paused · since 09:43 — the goal, \"left in the round\", Resume focus",
+    "ok": true,
+    "detail": "PAUSED · SINCE 09:43\nDeliver the MVP of the forecasting app\n22 min left in the round\nResume focus\n8\n10\n12\n14\n16\n18\n20\n11:30\nCall the bank about the mortgage\n13:00\nSync with Omar\nCalendar →"
+  },
+  {
+    "name": "d7 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 Ctrl+click on the goal card selects it (bulk bar · 1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f2 the right-click menu acts on the selection: \"Plan… (2)\", \"Delete (2)\"",
+    "ok": true,
+    "detail": "Tomorrow (2) | 2 | Plan… (2) | ▸ | Move to… (2) | ▸ | Priority | ▸ | Repeat | ▸ | Remind | ▸ | Remove from Top 3 | T | Deselect | ⌃ | click | Delete (2) | #"
+  },
+  {
+    "name": "f2 …Remove from Top 3 takes both out (the page's bulk onTop3)",
+    "ok": true,
+    "detail": "Plan & implement the forecasting logic:false, Create official emails for Shaheen:false"
+  },
+  {
+    "name": "f2 …Delete (2) bins both",
+    "ok": true,
+    "detail": "POST tasks, POST activity_log, POST tasks, POST activity_log"
+  },
+  {
+    "name": "f3 an Up next event opens /calendar?event=<id>",
+    "ok": true,
+    "detail": "http://localhost:5258/calendar?event=e0000000-0000-4000-8000-000000000003"
+  },
+  {
+    "name": "f4 N on Today → the capture bar (New task), not the Notebook",
+    "ok": true,
+    "detail": "http://localhost:5258/today"
+  },
+  {
+    "name": "f4 Shift+N on Today → /notebook?day=today",
+    "ok": true,
+    "detail": "http://localhost:5258/notebook?day=today"
+  },
+  {
+    "name": "f5 \"Add a task…\" opens the capture bar, cursor in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-plan-0800-day ritual card, no slip (Next/Free give way to Plan)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-plan-0800-day the notebook icon beside search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-plan-0800-day progress hairline \"1 of 6 done\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-plan-0800-day an event row's ⋯ → Open in calendar · Delete",
+    "ok": true,
+    "detail": "Deep work — Forecasting | Open in calendar | Delete"
+  },
+  {
+    "name": "p1-plan-0800-day …Open in calendar → /calendar?event=<id>",
+    "ok": true,
+    "detail": "http://localhost:5258/calendar?event=e0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "p1-plan-0800-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p1-plan-0800-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2-running-0940-day NOW · UNTIL 11:00, ring 1H20M",
+    "ok": true,
+    "detail": "NOW · UNTIL 11:00"
+  },
+  {
+    "name": "p2-running-0940-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p2-running-0940-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3-idle-1118-day nothing runs → no slip (Kai: only while something runs), no ritual card mid-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3-idle-1118-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p3-idle-1118-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4-over-1220-day NOW · 20M OVER, amber ring +20",
+    "ok": true,
+    "detail": "NOW · 20M OVER"
+  },
+  {
+    "name": "p4-over-1220-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p4-over-1220-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p6-idle-1410-day a free gap → no slip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p6-idle-1410-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p6-idle-1410-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p8-over-capacity-1600-day the Today line turns amber with \"… OVER\"",
+    "ok": true,
+    "detail": "Day 12 · ~12h left · you'll finish ~04:10\n10H OVER"
+  },
+  {
+    "name": "p8-over-capacity-1600-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p8-over-capacity-1600-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2-running-0940-night NOW · UNTIL 11:00, ring 1H20M",
+    "ok": true,
+    "detail": "NOW · UNTIL 11:00"
+  },
+  {
+    "name": "p2-running-0940-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p2-running-0940-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4-over-1220-night NOW · 20M OVER, amber ring +20",
+    "ok": true,
+    "detail": "NOW · 20M OVER"
+  },
+  {
+    "name": "p4-over-1220-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p4-over-1220-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p8-over-capacity-1600-night the Today line turns amber with \"… OVER\"",
+    "ok": true,
+    "detail": "Day 12 · ~12h left · you'll finish ~04:10\n10H OVER"
+  },
+  {
+    "name": "p8-over-capacity-1600-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p8-over-capacity-1600-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 Just done: DONE · 12:20, struck, ↶ Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 …then the slip goes (nothing runs)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p7 PAUSED · SINCE 11:02, hairline ring frozen at 23M",
+    "ok": true,
+    "detail": "23M\nPAUSED · SINCE 11:02\nDeliver the MVP of the forecasting app"
+  },
+  {
+    "name": "p7 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-review-day desktop: the rail's \"Weekly review\" row shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-review-day …it opens /weekly-review",
+    "ok": true,
+    "detail": "http://localhost:5258/weekly-review"
+  },
+  {
+    "name": "r1-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-review-day phone: the Weekly review card shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-review-day phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-week-closed desktop: the rail's \"Weekly review\" row is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-week-closed no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-week-closed phone: the Weekly review card is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-week-closed phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-not-review-day desktop: the rail's \"Weekly review\" row is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-not-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-not-review-day phone: the Weekly review card is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-not-review-day phone no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
