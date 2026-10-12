@@ -1,0 +1,292 @@
+[
+  {
+    "name": "p1 [day] a click on a row opens the popover beside it (under, or over when there's no room) — never on it",
+    "ok": true,
+    "detail": "{\"x\":352.5,\"y\":394.3125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":35.5625,\"width\":375,\"height\":351.875}"
+  },
+  {
+    "name": "p1 [day] it draws the task's fields (notes, chips, Delete · Open full)",
+    "ok": true,
+    "detail": "TODAY · 15:00 | 30M | FORECASTING | P2 | WEEKLY | 30M BEFORE | DEEP-WORK | DELETE | OPEN FULL ↗"
+  },
+  {
+    "name": "p2 the Priority chip writes at once, popover stays open",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 the title commits on Enter",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 a second Enter expands to /tasks/:id",
+    "ok": true,
+    "detail": "http://localhost:5249/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "p4 a click outside closes it, and the notes are written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p6 \"Open full ↗\" expands to the editor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [night] a click on a row opens the popover beside it (under, or over when there's no room) — never on it",
+    "ok": true,
+    "detail": "{\"x\":352.5,\"y\":717.3125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":358.5625,\"width\":375,\"height\":351.875}"
+  },
+  {
+    "name": "p1 [night] it draws the task's fields (notes, chips, Delete · Open full)",
+    "ok": true,
+    "detail": "TODAY · 15:00 | 30M | FORECASTING | P2 | WEEKLY | 30M BEFORE | DEEP-WORK | DELETE | OPEN FULL ↗"
+  },
+  {
+    "name": "p [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 [day] Reminder and Repeat show values set elsewhere",
+    "ok": true,
+    "detail": "30m before\n▾ / ↻ Weekly\n▾"
+  },
+  {
+    "name": "e2 a priority control writes priority",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e3 durations run 15m–2h and None",
+    "ok": true,
+    "detail": "none,15m,30m,45m,1h,1h30,2h"
+  },
+  {
+    "name": "e3 None clears the duration",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e4 Move to… lists domains and areas (and a new project)",
+    "ok": true,
+    "detail": "⌕ | CAREER | Career | DOMAIN | Forecasting | ✓ | PERSONAL | Personal | DOMAIN | Health | AREA | None | UNFILED"
+  },
+  {
+    "name": "e4 an area carries its domain (placeTask)",
+    "ok": true,
+    "detail": "{\"area\":\"a0000000-0000-4000-8000-0000000000a1\",\"domain\":\"d0000000-0000-4000-8000-000000000002\",\"project\":null}"
+  },
+  {
+    "name": "e5 ⋯ has Make goal · Duplicate · Copy link · Delete",
+    "ok": true,
+    "detail": "Make goal of the day | Duplicate | Copy link | Delete"
+  },
+  {
+    "name": "e6 Plan ▾ is the Plan list (Next free slot, This weekend)",
+    "ok": true,
+    "detail": "Plan | PLAN & IMPLEMENT FORECASTING LOGIC | Today | today, keeps its 15:00 | MON 12 · 15:00 | Next free slot | ASAP: the first free gap that fits — you confirm | TODAY 10:00–10:30 | Tomorrow, first thing | the start of your day | TUE 13 · 09:00 | This weekend | the first day of your weekend (Sat + Sun) | SAT 17 · 09:00 | Next week | Monday of next week | MON 19 · 09:00 | Pick date & time… | any day — and a time, if you want one | Someday | no date — parked until you pull it up | No date | takes the date off"
+  },
+  {
+    "name": "e7 a subtask renames from its ⋯",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e7 a tap on a subtask opens it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e7 right-click → Delete sends it to Trash, with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 [night] Reminder and Repeat show values set elsewhere",
+    "ok": true,
+    "detail": "30m before\n▾ / ↻ Weekly\n▾"
+  },
+  {
+    "name": "e [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 Custom… opens the rule editor (not a dead end)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 the summary reads the rule",
+    "ok": true,
+    "detail": "Custom repeat | EVERY | − | + | weeks | Days | Weeks | Months | ON | MON | TUE | WED | THU | FRI | SAT | SUN | ENDS | Never | On a date | After | ↻ EVERY 2 WEEKS ON MONDAY, WEDNESDAY | Cancel | Done"
+  },
+  {
+    "name": "r1 Done writes the RRULE",
+    "ok": true,
+    "detail": "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE"
+  },
+  {
+    "name": "r1 the field shows it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 the row menu’s Custom… writes too (daily, 10 times)",
+    "ok": true,
+    "detail": "FREQ=DAILY;COUNT=10"
+  },
+  {
+    "name": "r no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3 phone: ⋯ → Repeat → Custom… sheet writes the rule",
+    "ok": true,
+    "detail": "FREQ=WEEKLY;BYDAY=MO,FR"
+  },
+  {
+    "name": "r3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b0 [day] the phone tab strip has This Week and This Month",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [day] the phone bulk bar has Top 3",
+    "ok": true,
+    "detail": "Done\nTomorrow\nPlan\nMove\nTop 3\nDelete"
+  },
+  {
+    "name": "b1 it stars the selection, one Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b0 This Week opens ?list=week",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b0 [night] the phone tab strip has This Week and This Month",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [night] the phone bulk bar has Top 3",
+    "ok": true,
+    "detail": "Done\nTomorrow\nPlan\nMove\nTop 3\nDelete"
+  },
+  {
+    "name": "b [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [day] a tap opens the phone sheet (not the popover) with its chips and subtasks",
+    "ok": true,
+    "detail": "TODAY · 15:00 | 30M | FORECASTING | P2 | WEEKLY | 30M BEFORE | DEEP-WORK | NEXT · MON 19 OCT 15:00 · THEN MON 26 | SUBTASKS · 1/2 | Pull Q2 actuals | Draft the cohort model | 45M | SCHEDULE ON CALENDAR | Today 10:00 | 10:30 | 11:00 | Free before 15:00 · tap one to place it | Focus · 25:00 | CREATED "
+  },
+  {
+    "name": "s2 a chip picker still writes from the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 a tap on a subtask opens its own sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [night] a tap opens the phone sheet (not the popover) with its chips and subtasks",
+    "ok": true,
+    "detail": "TODAY · 15:00 | 30M | FORECASTING | P2 | WEEKLY | 30M BEFORE | DEEP-WORK | NEXT · MON 19 OCT 15:00 · THEN MON 26 | SUBTASKS · 1/2 | Pull Q2 actuals | Draft the cohort model | 45M | SCHEDULE ON CALENDAR | Today 10:00 | 10:30 | 11:00 | Free before 15:00 · tap one to place it | Focus · 25:00 | CREATED "
+  },
+  {
+    "name": "s [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "q1 title, date + time on the user clock, #project, !!, *label",
+    "ok": true,
+    "detail": "{\"id\":\"25df8be0-b181-496f-95cb-453f14d3760b\",\"project_id\":\"b0000000-0000-4000-8000-000000000001\",\"domain_id\":\"d0000000-0000-4000-8000-000000000001\",\"title\":\"submit the report\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-13T12:00:00.000Z\",\"scheduled_start\":\"2026-10-13T12:00:00.000Z\",\"scheduled_end\":\"2026-10-13T12:30:00.000Z\",\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[\"calls\"],\"priority\":2,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-12T07:00:04.717Z\",\"updated_at\":\"2026-10-12T07:00:04.717Z\"}"
+  },
+  {
+    "name": "q1 a typed time puts it on the calendar (as the command bar does)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "q no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 domain filter chips show on desktop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 Overdue days count the user day",
+    "ok": true,
+    "detail": "Renew passport\nOVERDUE 2D\n☆"
+  },
+  {
+    "name": "d3 ctrl-click selects (bulk bar up, with Top 3)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 a click on empty space clears the selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 the cheatsheet shows the page keys + Space, Ctrl+A, Alt+↑/↓, the selection note",
+    "ok": true,
+    "detail": "Shortcuts | the quick paths through the garden | ANYWHERE | ⌘/Ctrl | K | Command bar | ⌘/Ctrl | / | Search | ⌘/Ctrl | J | Chat | n | New task | ? | This cheatsheet | Esc | Close overlay | ON A TASK | j | k | Move focus | x | Toggle select | e | Space | Complete | ↵ | Open detail | 1 | Schedule today | 2 | Schedule tomorrow | 3 | Schedule next week | t | Toggle Top 3 | p | Move to… | # | Delete | ⌘"
+  },
+  {
+    "name": "d5 Done tab keys: j then e reopens the focused done row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
