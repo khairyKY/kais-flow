@@ -23,6 +23,12 @@ export interface SwipeActions {
   delete?: () => void
   /** The left action's word — "Delete" unless the row says otherwise ("Drop"). */
   deleteLabel?: string
+  /** The left action's glyph — the bin unless the row says otherwise (the Inbox's Dismiss). */
+  deleteIcon?: IconName
+  /** The right action's word and glyph — Tomorrow unless the row says otherwise (the Inbox's
+   * Dismissed rows: swipe right = Restore, Inbox.dc.html 2b). */
+  tomorrowLabel?: string
+  tomorrowIcon?: IconName
 }
 
 // One row open at a time: opening (or starting to drag) a row closes the last one.
@@ -178,13 +184,13 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         <div className="kf-swipe-bg is-right">
           {past ? (
             <div className="kf-swipe-commit">
-              <Icon name="tomorrow" size={24} />
-              <span className="kf-swipe-commit-label">Tomorrow</span>
+              <Icon name={actions.tomorrowIcon ?? 'tomorrow'} size={24} />
+              <span className="kf-swipe-commit-label">{actions.tomorrowLabel ?? 'Tomorrow'}</span>
               <span className="kf-swipe-hint">{tomorrowHint}</span>
             </div>
           ) : (
             <>
-              {act('tomorrow', 'Tomorrow', () => actions.tomorrow?.())}
+              {act(actions.tomorrowIcon ?? 'tomorrow', actions.tomorrowLabel ?? 'Tomorrow', () => actions.tomorrow?.())}
               {/* Kai 2026-10-07: the Plan list (every date option), not just the calendar. */}
               {actions.pickDate && act('pickdate', 'Plan', (el) => actions.pickDate?.(at(el)))}
               {/* Opens "Move to…" (a project, an area or a domain), so it reads Move like the bulk bar. */}
@@ -196,7 +202,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       {x < 0 && actions && (
         <div className="kf-swipe-bg is-left">
           <button type="button" className="kf-swipe-act is-delete" onClick={(e) => { e.stopPropagation(); actions.delete?.() }}>
-            <Icon name="delete" size={24} />
+            <Icon name={actions.deleteIcon ?? 'delete'} size={24} />
             <span>{actions.deleteLabel ?? 'Delete'}</span>
           </button>
         </div>
