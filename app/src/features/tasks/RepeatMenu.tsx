@@ -79,7 +79,7 @@ const UNITS: { value: RepeatUnit; label: string }[] = [
   { value: 'week', label: 'Weeks' },
   { value: 'month', label: 'Months' },
 ]
-const LABEL = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' } as const
+const LABEL = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' } as const
 const ROW = { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 } as const
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -106,7 +106,7 @@ export function RepeatEditor({ value, onChange, position, onClose, start, meta }
     <div style={{ paddingBottom: 4 }}>
       <Field label="Every">
         <NumberField value={spec.every} min={1} max={99} ariaLabel="Repeat every" onChange={(every) => set({ every })} />
-        <span style={{ fontSize: 14, color: 'var(--ink-body)', minWidth: 52 }}>{unitWord}</span>
+        <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', minWidth: 52 }}>{unitWord}</span>
         <Segmented value={spec.unit} onChange={(unit) => set({ unit })} options={UNITS} label="Repeat unit" />
       </Field>
       {spec.unit === 'week' && (
@@ -128,7 +128,7 @@ export function RepeatEditor({ value, onChange, position, onClose, start, meta }
           />
           {m.by === 'day' ? (
             <>
-              <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>day</span>
+              <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>day</span>
               <NumberField value={m.day} min={1} max={31} ariaLabel="Day of the month" onChange={(day) => set({ monthly: { by: 'day', day } })} />
             </>
           ) : (
@@ -153,12 +153,12 @@ export function RepeatEditor({ value, onChange, position, onClose, start, meta }
           label="Ends"
         />
         {spec.ends.by === 'date' && (
-          <DateField value={spec.ends.date} clearable={false} title="Ends on" onChange={(date) => date && set({ ends: { by: 'date', date } })} style={{ font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 6, padding: '6px 10px' }} />
+          <DateField value={spec.ends.date} clearable={false} title="Ends on" onChange={(date) => date && set({ ends: { by: 'date', date } })} style={{ font: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 6, padding: '6px 10px' }} />
         )}
         {spec.ends.by === 'count' && (
           <>
             <NumberField value={spec.ends.count} min={1} max={999} ariaLabel="Times" onChange={(count) => set({ ends: { by: 'count', count } })} />
-            <span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{spec.ends.count === 1 ? 'time' : 'times'}</span>
+            <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>{spec.ends.count === 1 ? 'time' : 'times'}</span>
           </>
         )}
       </Field>
@@ -173,7 +173,7 @@ export function RepeatEditor({ value, onChange, position, onClose, start, meta }
   if (isMobile) {
     return (
       <BottomSheet
-        title={<>Custom repeat{meta && <div style={{ ...LABEL, fontSize: 12, marginTop: 3, textTransform: 'uppercase' }}>{meta}</div>}</>}
+        title={<>Custom repeat{meta && <div style={{ ...LABEL, marginTop: 3 }}>{meta}</div>}</>}
         onClose={onClose}
         footer={(close) => (
           <Button style={{ flex: 1 }} onClick={() => { onChange(rule); close() }}>Done</Button>

@@ -423,7 +423,8 @@ for (const theme of ['day', 'night']) {
     const name = `desktop-${key}-${theme}`
     const { ctx, page, errors } = await open(key, theme, desktop)
     await shot(page, name)
-    check(`${name} desktop layout (no phone page, shell strip shown)`, (await count(page, '.tp')) === 0 && (await page.locator('.app-topbar').isVisible()) && (await page.getByRole('heading', { name: 'Sunday, September 27' }).count()) === 1)
+    // today-shell (Today 2a: "Date said three times … Now it's only the H1"): no shell top bar on a computer's Today.
+    check(`${name} desktop layout (no phone page, no shell top bar)`, (await count(page, '.tp')) === 0 && (await page.locator('.app-topbar').count()) === 0 && (await page.getByRole('heading', { name: 'Sunday, September 27' }).count()) === 1)
     const up = await page.locator('[id^="upnext-"]').evaluateAll((els) => els.map((e) => e.id.replace('upnext-', '')))
     // fix-today (Today 2a): desktop lists the next two under the Now card's ribbon (the running one is the card).
     check(`${name} Up next skips the Top 3 block, keeps the rest`, JSON.stringify(up) === JSON.stringify(key === '2a' ? [E(1), E(3)] : [E(3), E(4)]), JSON.stringify(up))

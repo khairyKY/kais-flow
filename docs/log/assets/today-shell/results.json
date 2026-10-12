@@ -1,0 +1,442 @@
+[
+  {
+    "name": "s-today-day top bar gone (2a / 3a)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-day sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-today-day Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-day Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-today-day the app icon beside the wordmark",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-today-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-day top bar gone (2a / 3a)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-day sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-inbox-day Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-day Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-inbox-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-inbox-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-day top bar kept (the page's frame)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-day the top bar: owner · date, no sync words on a computer (they're on the Settings row)",
+    "ok": true,
+    "detail": "DEMO'S FLOW · MON 12 OCT\n·\nCAIRO\nAFRICA/CAIRO"
+  },
+  {
+    "name": "s-tasks-day sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-tasks-day Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-day Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-tasks-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-tasks-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-day top bar kept (the page's frame)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-day the top bar: owner · date, no sync words on a computer (they're on the Settings row)",
+    "ok": true,
+    "detail": "DEMO'S FLOW · MON 12 OCT\n·\nCAIRO\nAFRICA/CAIRO"
+  },
+  {
+    "name": "s-calendar-day sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-calendar-day Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-day Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-calendar-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-calendar-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-night top bar gone (2a / 3a)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-night sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-today-night Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-night Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-today-night the app icon beside the wordmark",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-today-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-today-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-night top bar gone (2a / 3a)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-night sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-inbox-night Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-inbox-night Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-inbox-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-inbox-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-night top bar kept (the page's frame)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-night the top bar: owner · date, no sync words on a computer (they're on the Settings row)",
+    "ok": true,
+    "detail": "DEMO'S FLOW · MON 12 OCT\n·\nCAIRO\nAFRICA/CAIRO"
+  },
+  {
+    "name": "s-tasks-night sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-tasks-night Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tasks-night Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-tasks-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-tasks-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-night top bar kept (the page's frame)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-night the top bar: owner · date, no sync words on a computer (they're on the Settings row)",
+    "ok": true,
+    "detail": "DEMO'S FLOW · MON 12 OCT\n·\nCAIRO\nAFRICA/CAIRO"
+  },
+  {
+    "name": "s-calendar-night sidebar foot: \"1-day streak / best 1 · day 12\", in view",
+    "ok": true,
+    "detail": "{\"text\":\"1-day streak / best 1 · day 12\",\"inView\":true}"
+  },
+  {
+    "name": "s-calendar-night Settings row: ● synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-calendar-night Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)",
+    "ok": true,
+    "detail": "Today:in Inbox1:in Calendar:in Tasks:in Projects:in Routines:out Focus:out Review:out Journal:out Library:out People:out Activity:out Trash:out"
+  },
+  {
+    "name": "s-calendar-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "s-calendar-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-tall Settings row reads \"Settings … ● synced\"",
+    "ok": true,
+    "detail": "Settings\nsynced"
+  },
+  {
+    "name": "s-tall no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-offline the Settings row says \"offline\", hollow dot",
+    "ok": true,
+    "detail": "offline"
+  },
+  {
+    "name": "s-offline …its popover opens above the row, inside the window",
+    "ok": true,
+    "detail": "{\"x\":17.5,\"y\":931.125,\"width\":375,\"height\":56.375}"
+  },
+  {
+    "name": "s-offline …\"All caught up.\" (nothing queued)",
+    "ok": true,
+    "detail": "All caught up."
+  },
+  {
+    "name": "s-offline no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-collapsed the sync dot sits on the gear row, inside the 64px rail",
+    "ok": true,
+    "detail": "{\"dot\":{\"x\":49,\"y\":711.25,\"width\":7.5,\"height\":7.5},\"gear\":{\"x\":17.5,\"y\":706.25,\"width\":44,\"height\":36.25}}"
+  },
+  {
+    "name": "s-collapsed the label is hidden, the streak folds away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-collapsed no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone Tasks: the shell top bar shows (owner · date)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone …offline, the strip says so",
+    "ok": true,
+    "detail": "DEMO'S FLOW · MON 12 OCT\n·\nOFFLINE"
+  },
+  {
+    "name": "s-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k the pill's keycap reads N (2a)",
+    "ok": true,
+    "detail": "N"
+  },
+  {
+    "name": "k the cheatsheet: \"n New task\" (Anywhere) and \"⇧ N Notebook page\" (Today's section)",
+    "ok": true,
+    "detail": "Shortcuts | the quick paths through the garden | ANYWHERE | ⌘/Ctrl | K | Command bar | ⌘/Ctrl | / | Search | ⌘/Ctrl | J | Chat | n | New task | ? | This cheatsheet | Esc | Close overlay | ON A TASK | j | k | Move focus | x | Toggle select | e | Space | Complete | ↵ | Open detail | 1 | Schedule today | 2 | Schedule tomorrow | 3 | Schedule next week | t | Toggle Top 3 | p | Move to… | l | Labels… | # | Delete | ⇧ | N | Notebook page | ⌘/Ctrl | A | Select all | ⌥/Alt | ↑/↓ | Reorder Top 3 (Today) | With a selection, keys act on all selected. | INBOX TRIAGE | ↑/↓ | j/k | Move focus | e | File with"
+  },
+  {
+    "name": "k N on Today → the capture bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k Shift+N on Today → /notebook?day=today",
+    "ok": true,
+    "detail": "http://localhost:5258/notebook?day=today"
+  },
+  {
+    "name": "k N on Tasks → the capture bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l L on a focused row → the Label picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l …Enter creates \"errand\" on that task",
+    "ok": true,
+    "detail": "[[\"Deliver the MVP of the forecasting app\",[\"errand\"]]]"
+  },
+  {
+    "name": "l L with two rows selected → one picker for both",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l …\"calls\" goes on both selected tasks",
+    "ok": true,
+    "detail": "[[\"Plan & implement the forecasting logic\",[\"calls\"]],[\"Create official emails for Shaheen\",[\"calls\"]]]"
+  },
+  {
+    "name": "l the cheatsheet lists \"l Labels…\" in Today's section",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w Plan a step (Garden club) → the capture bar on \"#Garden \", caret after it, still on Today",
+    "ok": true,
+    "detail": "{\"value\":\"#Garden \",\"caret\":8,\"focused\":true}"
+  },
+  {
+    "name": "w …Enter files the step into that project",
+    "ok": true,
+    "detail": "{\"title\":\"Sketch the beds\",\"project_id\":\"b0000000-0000-4000-8000-000000000004\"}"
+  },
+  {
+    "name": "w Snooze a week → toast \"Snoozed a week\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w …not \"Marked reviewed\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b the bulk bar has Top 3",
+    "ok": true,
+    "detail": "2 SELECTED\nDone\nTomorrow\nPlan\n▾\nMove\n▾\nTop 3\nDelete"
+  },
+  {
+    "name": "b …two picks selected → Top 3 takes both out, the selection clears",
+    "ok": true,
+    "detail": "Plan & implement the forecasting logic:false, Create official emails for Shaheen:false"
+  },
+  {
+    "name": "b …with an Undo toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b …an open row selected → Top 3 puts it in",
+    "ok": true,
+    "detail": "[BUG] Deactivating a vendor store:true"
+  },
+  {
+    "name": "b no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -57,6 +57,9 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     ...(ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
+    // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in
+    // the task sheet's chips, and its action sheet stays as MK Action Sheet draws it.
+    ...(ctx.desktop ? [{ key: 'labels', label: 'Labels', sub: true } as const] : []),
     { key: 'repeat', label: 'Repeat', hint: task.recurrence_rule ? (REPEAT_LABELS[task.recurrence_rule] ?? 'Custom') : 'Never', sub: true },
     { key: 'remind', label: 'Remind', hint: task.reminder_at ? cairoTimeKey(new Date(task.reminder_at)) : 'Off', sub: true },
     { key: 'top3', label: task.top3 ? 'Remove from Top 3' : 'Add to Top 3' },

@@ -42,6 +42,7 @@ import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/ap
 import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
+import { LabelManager } from '../tasks/LabelManager'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import './settings.css'
 
@@ -1288,9 +1289,14 @@ export function SoundCatalogCard() {
  * page's Organize card) — no longer only from Tasks, create-only. */
 function OrganizeCard() {
   return (
-    <SCard id="settings-Organize" title="Organize" sub="Domains — the big buckets your projects, areas and tasks sit in" padded>
-      <DomainsSettings />
-    </SCard>
+    <>
+      <SCard id="settings-Organize" title="Organize" sub="Domains — the big buckets your projects, areas and tasks sit in" padded>
+        <DomainsSettings />
+      </SCard>
+      {/* Overlays.dc.html "Labels · manage · settings": labels cut across every domain — rename,
+          recolour, delete (tasks/LabelManager), drawn as its own panel; Settings' card look. */}
+      <LabelManager id="settings-Labels" style={{ borderRadius: 'var(--radius-sharp)', boxShadow: 'var(--shadow-card)' }} />
+    </>
   )
 }
 

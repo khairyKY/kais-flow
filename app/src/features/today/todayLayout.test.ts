@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
+import { firstCreatedAt } from './journey'
+import { claimDayComplete, DAY_DONE_KEY } from './dayComplete'
+import { setAppZone } from '../../lib/appZone'
 import type { Task } from '../../lib/types'
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-27 (EEST) — the design's sample day.
@@ -247,4 +250,39 @@ describe('workloadLine — header by state (Today Phone 2a–2i)', () => {
   it('2d shut down', () => expect(line({ phase: 'shutdown', top3: { picked: 3, done: 2 }, focusedMin: 130 })).toBe('Day 84 · 2 of 3 done · 2h 10m focused'))
   it('2e day closed', () => expect(line({ phase: 'closed', doneToday: 4, focusedMin: 130 })).toBe('Day 84 · 4 done · 2h 10m focused'))
   it('nothing timed and nothing left to measure', () => expect(line({ top3: { picked: 0, done: 0 }, doneToday: 2 })).toBe('Day 84 · 2 done'))
+})
+
+describe('projectTag — Plan a step files into that project', () => {
+  const projects = [{ id: 'p1', name: 'Shaheen website' }, { id: 'p2', name: 'Forecasting App' }, { id: 'p3', name: 'App store listing' }]
+  it("the name's first word when it lands on the project", () => expect(projectTag(projects[1], projects)).toBe('#Forecasting'))
+  it("skips a word an earlier project's name also holds", () => {
+    // "app" is in "Forecasting App" (listed first), so #App would file into the wrong project.
+    expect(projectTag(projects[2], projects)).toBe('#store')
+  })
+})
+
+describe('journey — Day 1 is the first record', () => {
+  it('firstCreatedAt: the earliest across every list; none → null', () => {
+    expect(firstCreatedAt([{ created_at: '2026-07-09T10:00:00Z' }], [], [{ created_at: '2026-07-06T06:00:00Z' }])).toBe('2026-07-06T06:00:00Z')
+    expect(firstCreatedAt([], [])).toBeNull()
+  })
+})
+
+describe("claimDayComplete — once per the user's day", () => {
+  const store = new Map<string, string>()
+  beforeEach(() => {
+    store.clear()
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) })
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    setAppZone('Africa/Cairo')
+  })
+  it("keys on the user's zone, whatever the device's", () => {
+    setAppZone('Pacific/Kiritimati') // UTC+14: 12:00Z on the 13th is already the 14th there
+    const noon = new Date(Date.UTC(2026, 9, 13, 12))
+    expect(claimDayComplete(noon)).toBe(true)
+    expect(store.get(DAY_DONE_KEY)).toBe('2026-10-14')
+    expect(claimDayComplete(new Date(Date.UTC(2026, 9, 13, 13)))).toBe(false) // same user day
+  })
 })
