@@ -151,6 +151,12 @@ export function createInteraction(
   return finalInteraction
 }
 
+/** An interaction's summary or day, edited on the person's page (Kai 2026-10-12). */
+export function updateInteraction(interaction: Interaction, fields: Partial<Pick<Interaction, 'summary' | 'occurred_at'>>): void {
+  writeRow('interactions', { ...interaction, ...fields, updated_at: nowIso() })
+  logActivity('people.interaction_edited', 'people', interaction.person_id, { summary: fields.summary ?? interaction.summary })
+}
+
 export function deleteInteraction(interactionId: string): void {
   writeRow('interactions', { id: interactionId } as Interaction, 'delete')
   logActivity('people.interaction_deleted', 'people', interactionId)

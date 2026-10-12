@@ -47,6 +47,12 @@ export function updateBookProgress(book: Book, currentPage: number, status?: Boo
   logActivity('book.progress_updated', 'book', book.id, { current_page: currentPage, status: finalStatus })
 }
 
+/** Saves a book's edited details (title, author, pages, year — see bookFromForm). */
+export function updateBook(book: Book): void {
+  writeRow('books', { ...book, updated_at: new Date().toISOString() })
+  logActivity('book.updated', 'book', book.id, { title: book.title })
+}
+
 export function deleteBook(id: string): void {
   const fakeRow = { id } as Book
   writeRow('books', fakeRow, 'delete')

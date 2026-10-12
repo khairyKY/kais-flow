@@ -293,6 +293,8 @@ function describePeople(e: ActivityLogEntry, names: ActivityNames): ActivityLine
     case 'people.interaction_logged':
       // entity_id is the person; the summary is what happened between you.
       return line(named(names.person(id) ?? '', (q) => `Logged an interaction with ${q}`, 'Logged an interaction'), str(payload, 'summary'))
+    case 'people.interaction_edited':
+      return line(named(names.person(id) ?? '', (q) => `Edited an interaction with ${q}`, 'Edited an interaction'), str(payload, 'summary'))
     case 'people.interaction_deleted':
       // entity_id is the interaction itself, which no longer exists — nowhere to go.
       return line('Removed an interaction', '', null)
@@ -362,8 +364,12 @@ function describeProject(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(item, (q) => `Reopened the milestone ${q}`, 'Reopened a milestone'), onProject)
     case 'project.milestone_renamed':
       return line(named(item, (q) => `Renamed a milestone to ${q}`, 'Renamed a milestone'), onProject)
+    case 'project.milestone_reweighted':
+      return line('Changed a milestone’s weight', onProject)
     case 'project.milestone_removed':
       return line('Removed a milestone', onProject)
+    case 'project.checklist_item_renamed':
+      return line(named(item, (q) => `Renamed a checklist item to ${q}`, 'Renamed a checklist item'), onProject)
     case 'project.checklist_item_added':
       return line(named(item, (q) => `Added ${q} to the checklist`, 'Added a checklist item'), onProject)
     case 'project.checklist_item_completed':
@@ -501,6 +507,8 @@ function describeLibrary(e: ActivityLogEntry): ActivityLine {
       return str(payload, 'status') === 'finished'
         ? line('Finished a book')
         : line('Read on in a book', typeof payload?.current_page === 'number' ? `page ${payload.current_page}` : '')
+    case 'book.updated':
+      return line(named(title, (q) => `Updated the book ${q}`, 'Updated a book'))
     case 'book.deleted':
       return line('Took a book off the shelf')
     case 'note.created':

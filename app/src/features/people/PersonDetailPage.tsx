@@ -1,6 +1,10 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, deleteInteraction, getDaysUntilBirthday } from './api'
+import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, updateInteraction, deleteInteraction, getDaysUntilBirthday } from './api'
+import { RenameField } from '../../components/RenameField'
+import { DateField } from '../../components/DatePicker'
+import { localDateKey } from '../routines/streaks'
+import { localTimeKey, localToIso } from '../calendar/eventTime'
 import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { BackLink, Button } from '../../components/kit'
@@ -85,6 +89,8 @@ export function PersonDetailPage() {
   const [logChannel, setLogChannel] = useState('in person')
   const [logSummary, setLogSummary] = useState('')
   const [logDate, setLogDate] = useState('today')
+  // Kai 2026-10-12: an interaction's summary is edited in place (its day through the date picker).
+  const [editingInteraction, setEditingInteraction] = useState<string | null>(null)
 
   // Edit person
   const [editing, setEditing] = useState(false)
@@ -295,15 +301,37 @@ export function PersonDetailPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {personInteractions.map((i, idx) => {
-          const dateStr = new Date(i.occurred_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
           const s = i.summary.toLowerCase()
           const channel = s.includes('call') || s.includes('phone') ? 'call' : s.includes('dinner') || s.includes('met ') || s.includes('in person') ? 'in person' : 'text'
           const chipStyle = channel === 'in person' ? { background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' } : { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }
           return (
             <div key={i.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 2px', borderBottom: idx < personInteractions.length - 1 ? '1px dashed var(--line-dashed)' : 'none' }}>
-              <span className="fhelp" style={{ width: 74, flex: 'none', paddingTop: 3 }}>{dateStr}</span>
+              {/* The day opens the app's date picker (not the future); the time of day stays. */}
+              <DateField
+                value={localDateKey(new Date(i.occurred_at))}
+                max={localDateKey(new Date())}
+                clearable={false}
+                onChange={(v) => { if (v && v <= localDateKey(new Date())) updateInteraction(i, { occurred_at: localToIso(v, localTimeKey(new Date(i.occurred_at))) }) }}
+                title="When"
+                ariaLabel="Date of this interaction"
+                style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', whiteSpace: 'normal' }}
+              />
               <span className="chip" style={{ ...chipStyle, flex: 'none' }}>{channel}</span>
-              <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>{i.summary}</span>
+              {editingInteraction === i.id ? (
+                <span style={{ fontSize: '13.5px', lineHeight: 1.5, flex: 1, minWidth: 0 }}>
+                  <RenameField
+                    value={i.summary}
+                    ariaLabel="Edit interaction"
+                    style={{ margin: '-3px 0' }}
+                    onDone={(next) => {
+                      setEditingInteraction(null)
+                      if (next && next !== i.summary) updateInteraction(i, { summary: next })
+                    }}
+                  />
+                </span>
+              ) : (
+                <span role="button" tabIndex={0} title="Edit" onClick={() => setEditingInteraction(i.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingInteraction(i.id) } }} style={{ fontSize: '13.5px', color: 'var(--ink-body)', lineHeight: 1.5, flex: 1, cursor: 'text' }}>{i.summary}</span>
+              )}
               <span onClick={() => { deleteInteraction(i.id); void refetchInteractions() }} style={{ fontSize: 11, color: 'var(--ink-faint)', cursor: 'pointer', paddingLeft: 6 }}>✕</span>
             </div>
           )

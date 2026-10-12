@@ -5,12 +5,15 @@ import {
   useBooks,
   createBook,
   updateBookProgress,
+  updateBook,
   deleteBook,
   useNotes,
   createNote,
+  updateNote,
   deleteNote,
   useQuotes,
   createQuote,
+  updateQuote,
   deleteQuote,
   useCommentaries,
   createCommentary
@@ -18,6 +21,9 @@ import {
 import { useJournalEntries } from '../journal/api'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
+import { LibraryEditForm } from './LibraryEditForm'
+import { bookFromForm, parseTags } from './edits'
+import type { Book, Note, Quote } from '../../lib/types'
 
 /** The three desktop panes (shelf 230 + list 220 + a readable reader) need this much of the page.
  * At 150% interface size a 1280px window leaves the page ~611 CSS px (the root zoom shrinks it,
@@ -116,6 +122,69 @@ export function LibraryPage() {
   )
 
   const [newThoughtText, setNewThoughtText] = useState('')
+
+  // Edit-after-create (Kai 2026-10-12): the id of the book / note / quote whose inline edit card
+  // is open. Keyed by id, so moving to another item closes it.
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const closeEdit = () => setEditingId(null)
+  const editChip = (id: string) => (
+    <span onClick={() => setEditingId((cur) => (cur === id ? null : id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>edit</span>
+  )
+  const bookEditForm = (b: Book) => (
+    <LibraryEditForm
+      key={b.id}
+      title="Edit book"
+      fields={[
+        { key: 'title', label: 'Title', value: b.title },
+        { key: 'author', label: 'Author', value: b.author ?? '' },
+        { key: 'pages', label: 'Total pages', value: String(b.total_pages) },
+        { key: 'year', label: 'Year', value: b.published_year ? String(b.published_year) : '' },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        const next = bookFromForm(b, { title: v.title, author: v.author, pages: v.pages, year: v.year })
+        if (!next) return
+        updateBook(next)
+        closeEdit()
+      }}
+    />
+  )
+  const noteEditForm = (n: Note) => (
+    <LibraryEditForm
+      key={n.id}
+      title="Edit note"
+      fields={[
+        { key: 'title', label: 'Title (optional)', value: n.title ?? '' },
+        { key: 'body', label: 'Note', value: n.body, multiline: true },
+        { key: 'tags', label: 'Tags (comma separated)', value: n.tags.join(', ') },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        if (!v.body.trim()) return
+        updateNote(n, { title: v.title.trim() || null, body: v.body.trim(), tags: parseTags(v.tags) })
+        closeEdit()
+      }}
+    />
+  )
+  const quoteEditForm = (q: Quote) => (
+    <LibraryEditForm
+      key={q.id}
+      title="Edit quote"
+      fields={[
+        { key: 'text', label: 'Quote', value: q.text, multiline: true },
+        { key: 'author', label: 'Author', value: q.author ?? '' },
+        { key: 'source', label: 'Source', value: q.source ?? '' },
+        { key: 'page', label: 'Page', value: q.page ?? '' },
+        { key: 'tags', label: 'Tags (comma separated)', value: q.tags.join(', ') },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        if (!v.text.trim()) return
+        updateQuote(q, { text: v.text.trim(), author: v.author.trim() || null, source: v.source.trim() || null, page: v.page.trim() || null, tags: parseTags(v.tags) })
+        closeEdit()
+      }}
+    />
+  )
 
   // Filter shelf items by search
   const filteredQuotes = useMemo(() => {
@@ -422,7 +491,9 @@ export function LibraryPage() {
                   <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
                     <span onClick={() => setShowLogSession((v) => !v)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>log session</span>
                     <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>finish</span>
+                    {editChip(activeBook.id)}
                   </div>
+                  {editingId === activeBook.id && bookEditForm(activeBook)}
 
                   {showLogSession && (
                     <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
@@ -460,8 +531,15 @@ export function LibraryPage() {
                     <span className="fhelp">Note</span>
                     <span className="fhelp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
-                  <h2 style={{ fontFamily: 'var(--font-display)', margin: '10px 0 6px', fontSize: '18px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
-                  <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                  {editingId === activeNote.id ? (
+                    noteEditForm(activeNote)
+                  ) : (
+                    <>
+                      <h2 style={{ fontFamily: 'var(--font-display)', margin: '10px 0 6px', fontSize: '18px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
+                      <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>{editChip(activeNote.id)}</div>
+                    </>
+                  )}
 
                   {/* Commentary */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
@@ -485,8 +563,15 @@ export function LibraryPage() {
                     <span className="fhelp">Quote</span>
                     <span className="fhelp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLeft: 12 }}>"{activeQuote.text}"</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>
+                  {editingId === activeQuote.id ? (
+                    quoteEditForm(activeQuote)
+                  ) : (
+                    <>
+                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLeft: 12 }}>"{activeQuote.text}"</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>{editChip(activeQuote.id)}</div>
+                    </>
+                  )}
 
                   {/* Commentary */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
@@ -892,9 +977,12 @@ export function LibraryPage() {
                       <span onClick={() => setShowAddQuote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ quote</span>
                       <span onClick={() => setShowAddNote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ note</span>
                       <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>mark finished</span>
+                      {editChip(activeBook.id)}
                     </div>
                   </div>
                 </div>
+
+                {editingId === activeBook.id && bookEditForm(activeBook)}
 
                 {/* Inline Log page session form */}
                 {showLogSession && (
@@ -1038,17 +1126,24 @@ export function LibraryPage() {
                     <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
-                      <h2 style={{ fontFamily: 'var(--font-display)', margin: '0 0 10px', fontSize: '22px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
-                      <div style={{ fontSize: '15px', lineHeight: 1.6, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                      {editingId === activeNote.id ? (
+                        noteEditForm(activeNote)
+                      ) : (
+                        <>
+                          <h2 style={{ fontFamily: 'var(--font-display)', margin: '0 0 10px', fontSize: '22px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
+                          <div style={{ fontSize: '15px', lineHeight: 1.6, color: 'var(--ink-body)' }}>{activeNote.body}</div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
-                        {activeNote.book_id && (
-                          <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>Related Book</span>
-                        )}
-                        {activeNote.tags.map((tag) => (
-                          <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
-                        ))}
-                      </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+                            {activeNote.book_id && (
+                              <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>Related Book</span>
+                            )}
+                            {activeNote.tags.map((tag) => (
+                              <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
+                            ))}
+                            {editChip(activeNote.id)}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Commentary */}
@@ -1096,18 +1191,26 @@ export function LibraryPage() {
                     <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
-                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 27, lineHeight: 1.45, color: 'var(--ink-body)' }}>
-                        "{activeQuote.text}"
-                      </div>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>
-                          {activeQuote.source} {activeQuote.author && `— ${activeQuote.author}`} {activeQuote.page && `· p. ${activeQuote.page}`}
-                        </span>
-                        {activeQuote.tags.map((tag) => (
-                          <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
-                        ))}
-                      </div>
+                      {editingId === activeQuote.id ? (
+                        quoteEditForm(activeQuote)
+                      ) : (
+                        <>
+                          <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 27, lineHeight: 1.45, color: 'var(--ink-body)' }}>
+                            "{activeQuote.text}"
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>
+                              {activeQuote.source} {activeQuote.author && `— ${activeQuote.author}`} {activeQuote.page && `· p. ${activeQuote.page}`}
+                            </span>
+                            {activeQuote.tags.map((tag) => (
+                              <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
+                            ))}
+                            {editChip(activeQuote.id)}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* WB-4 punch 8 + 9: the export's "Chat flagged this…" banner was deleted, not
