@@ -21,9 +21,7 @@ const { closeTheGarden, isQuiet, readSoundEvents, writeSoundEvents, readSoundPac
 // The synthesis needs a real AudioContext (node has none); docs/log/assets/sounds/verify.mjs
 // renders and measures every voice in Chrome. What's pinned here: the catalog, the v1 → v2
 // migration, the pack choice, and the gating — a sound must never play when it was turned off.
-function dateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+const { loopDayKey } = await import('../features/rituals/loopDay')
 
 describe('catalog', () => {
   beforeEach(() => localStorage.clear())
@@ -145,14 +143,21 @@ describe('quiet', () => {
 
   it('starts when the garden closes and lifts the next day', () => {
     expect(isQuiet()).toBe(false)
-    closeTheGarden(dateKey(new Date()))
+    closeTheGarden(loopDayKey(new Date()))
     expect(isQuiet()).toBe(true)
     const tomorrow = new Date(Date.now() + 86_400_000)
     expect(isQuiet(tomorrow)).toBe(false)
   })
 
+  it('a garden closed at 00:30 stays quiet until 04:00, then lifts (the loop day, not midnight)', () => {
+    const at = (h: number, m = 0) => new Date(Date.UTC(2026, 9, 13, h - 3, m)) // Cairo is UTC+3 in October
+    closeTheGarden(loopDayKey(at(0, 30)))
+    expect(isQuiet(at(2))).toBe(true)
+    expect(isQuiet(at(5))).toBe(false)
+  })
+
   it('can be switched off entirely', () => {
-    closeTheGarden(dateKey(new Date()))
+    closeTheGarden(loopDayKey(new Date()))
     writeQuietHours(false)
     expect(isQuiet()).toBe(false)
   })
@@ -186,7 +191,7 @@ describe('playSound gating', () => {
     expect(calls).toEqual([])
   })
   it('stays silent after the garden closes', () => {
-    closeTheGarden(dateKey(new Date(clock + 1000)))
+    closeTheGarden(loopDayKey(new Date(clock + 1000)))
     play('focus_end')
     expect(calls).toEqual([])
   })
@@ -206,7 +211,7 @@ describe('playSound gating', () => {
   it('previews ignore the toggles and quiet, in the pack asked for', () => {
     let pack = ''
     s.player.play = (e, p) => void (calls.push(e), (pack = p))
-    closeTheGarden(dateKey(new Date()))
+    closeTheGarden(loopDayKey(new Date()))
     s.previewSound('undo', 'glass')
     expect(calls).toEqual(['undo'])
     expect(pack).toBe('glass')

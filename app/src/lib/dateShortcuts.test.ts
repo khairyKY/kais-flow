@@ -5,6 +5,7 @@ import {
   cairoWallTimeToIso,
   daysUntilNextMonday,
   scheduleNextWeek,
+  scheduleThisEvening,
   scheduleThisWeek,
   scheduleToday,
   scheduleTomorrow,
@@ -171,5 +172,13 @@ describe('Cairo wall-clock helpers', () => {
     expect(cairoWallTimeToIso(2026, 9, 26, 10, 0)).toBe('2026-09-26T07:00:00.000Z')
     expect(cairoWallTimeToIso(2026, 11, 5, 10, 0)).toBe('2026-11-05T08:00:00.000Z')
     expect(cairoWallTimeToIso(2026, 9, 27, 0, 30)).toBe('2026-09-26T21:30:00.000Z')
+  })
+})
+
+// Snooze's This evening used the device clock (2026-10-12 review).
+describe('this evening', () => {
+  it('18:00 on the user’s clock today, or tomorrow’s once it has passed', () => {
+    expect(scheduleThisEvening(new Date('2026-07-08T14:00:00+03:00'))).toBe('2026-07-08T15:00:00.000Z')
+    expect(scheduleThisEvening(new Date('2026-07-08T19:00:00+03:00'))).toBe('2026-07-09T15:00:00.000Z')
   })
 })

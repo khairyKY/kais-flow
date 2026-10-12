@@ -58,6 +58,9 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+/** toastUndo runs an Undo on the next microtask (lib/undo.ts) — let it land before asserting. */
+const undoRan = () => new Promise((r) => setTimeout(r, 0))
+
 describe('captureWithAI when the parse allowance is used up', () => {
   it('still lands the capture in the Inbox, unparsed, and says the AI step was skipped', async () => {
     invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(json(429, { error: 'daily_limit' })) })
@@ -210,6 +213,7 @@ describe('enrichTypedTask (a typed capture with structure)', () => {
     const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
     expect(toast.message).toBe('✦ Filled by AI: priority, notes')
     toast.onUndo()
+    await undoRan()
     expect(writeRow.mock.calls[1][1]).toMatchObject({ id: 't1', priority: null, notes: null, title: 'Call the bank asap about the mortgage', due_at: '2026-10-08T12:00:00.000Z' })
   })
 
@@ -244,6 +248,7 @@ describe('enrichTypedInboxItem (a plain typed line, already in the Inbox)', () =
     const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
     expect(toast.message).toBe('✦ Filed by AI: “Call mum about Sunday”')
     toast.onUndo()
+    await undoRan()
     expect(writeRow).toHaveBeenCalledWith('tasks', { id: 't9', title: 'Call mum about Sunday' }, 'delete')
     expect(writeRow).toHaveBeenLastCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'pending', filed_task_id: null }))
   })
@@ -281,6 +286,7 @@ describe('a timed capture lands on the calendar', () => {
     const toast = push.mock.calls[0][0] as { message: string; onUndo: () => void }
     expect(toast.message).toBe('✦ Filled by AI: date')
     toast.onUndo()
+    await undoRan()
     expect(unplace).toHaveBeenCalledTimes(1)
     expect(writeRow).toHaveBeenLastCalledWith('tasks', expect.objectContaining({ id: 't4', due_at: null }))
   })
@@ -306,6 +312,7 @@ describe('a timed capture lands on the calendar', () => {
     await enrichTypedInboxItem({ id: 'i4', status: 'pending', raw_text: 'x' } as never, 'crypto session 4am tomorrow')
     expect(placeTask).toHaveBeenCalledWith(expect.objectContaining({ id: 't4' }), at4, '2026-10-08T01:30:00.000Z')
     ;(push.mock.calls[0][0] as { onUndo: () => void }).onUndo()
+    await undoRan()
     expect(unplace.mock.invocationCallOrder[0]).toBeLessThan(writeRow.mock.invocationCallOrder[writeRow.mock.calls.findIndex((c) => c[2] === 'delete')])
   })
 

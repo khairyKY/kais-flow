@@ -14,7 +14,6 @@ import { playSound, closeTheGarden } from '../../lib/sounds'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastAction, toastUndo } from '../../lib/undo'
-import { localDateKey } from '../routines/streaks'
 import { logRitualFinished, logRitualStep, setSeed, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, seedTargetDate } from './loopDay'
 import { SHUT_STEPS, closeDay, daysBetween, headerDate, rolledMeta, seedDayName, span, swapIn, sweepRows, tomorrowSuggestions, withPick } from './ritualLogic'
@@ -173,7 +172,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     logRitualFinished('evening', steps)
     playSound('ritual_done') // before the garden closes: closing it is what silences it
     // Settings 3a: "The garden is silent after you close it." Quiet hours lift at the date turn.
-    closeTheGarden(localDateKey(new Date()))
+    closeTheGarden(loopDayKey(new Date()))
     setSummary([...stats, `${stars.length} seeded`])
     clearDraft()
   }
