@@ -7,7 +7,9 @@ import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { computeStreak, completionRate, computeTrellisDays, localDateKey, routineStartKey } from '../routines/streaks'
+import { computeStreak, completionRate, computeTrellisDays, routineStartKey } from '../routines/streaks'
+import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { appZone } from '../../lib/appZone'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { logActivity } from '../../lib/activity'
@@ -24,16 +26,19 @@ import type { Area, CalendarEvent, Domain, Project, Routine, RoutineCompletion, 
 
 const A = '/ds/assets'
 
-function startOfWeek(d: Date): Date {
-  const s = new Date(d)
-  s.setHours(0, 0, 0, 0)
-  s.setDate(s.getDate() - s.getDay())
-  return s
+// The review week runs Sunday 00:00 → Sunday 00:00 on the user's clock (2026-10-12 review: it
+// used the device's, so a phone in another zone swept a different week than the laptop).
+function midnightOf(key: string, plusDays = 0): Date {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(zoneWallTimeToIso(appZone(), y, m, d + plusDays))
 }
+export function startOfWeek(now: Date): Date {
+  const key = cairoDateKey(now)
+  return midnightOf(key, -new Date(`${key}T00:00:00Z`).getUTCDay())
+}
+/** `n` days after a midnight on the user's clock — wall-clock days, so a DST week is still 7 days. */
 function addDays(d: Date, n: number): Date {
-  const c = new Date(d)
-  c.setDate(c.getDate() + n)
-  return c
+  return midnightOf(cairoDateKey(d), n)
 }
 // "Hours" throughout this page means time actually blocked on the calendar (the same real
 // proxy the Closing Ritual's sun dial uses) — completed-task duration_min is too sparse
@@ -81,7 +86,7 @@ export function WeeklyReviewPage() {
   const weekStart = startOfWeek(new Date())
   const weekEnd = addDays(weekStart, 7)
   const lastWeekStart = addDays(weekStart, -7)
-  const weekKey = localDateKey(weekStart)
+  const weekKey = cairoDateKey(weekStart)
 
   // Punch item 45: sweep state persists — read this week's events back from the activity
   // spine, and layer the session's own sweeps/verdicts on top (outbox writes land async).
@@ -160,28 +165,28 @@ export function WeeklyReviewPage() {
             ))}
           </div>
 
-          {!isMobile && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>
-              <button
-                type="button"
-                disabled={!allSwept}
-                onClick={() => logActivity('review.week_closed', 'review', weekStart.toISOString(), {})}
-                style={{
-                  border: '1px solid var(--line-solid)',
-                  background: allSwept ? 'var(--acc-terra)' : 'var(--paper-bone)',
-                  color: allSwept ? 'var(--paper-parchment)' : 'var(--ink-faint)',
-                  font: 'inherit',
-                  fontSize: 13,
-                  padding: '10px 20px',
-                  borderRadius: 999,
-                  cursor: allSwept ? 'pointer' : 'default',
-                }}
-              >
-                {allSwept ? 'Close the week ✓' : `Close the week · ${sweptAt.size}/${domains.length}`}
-              </button>
-            </div>
-          )}
+          {/* The phone had no way to close the week (2026-10-12 parity review). */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'flex-end' : 'space-between', marginTop: isMobile ? 20 : 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
+            {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>}
+            <button
+              type="button"
+              disabled={!allSwept}
+              onClick={() => logActivity('review.week_closed', 'review', weekStart.toISOString(), {})}
+              style={{
+                border: '1px solid var(--line-solid)',
+                background: allSwept ? 'var(--acc-terra)' : 'var(--paper-bone)',
+                color: allSwept ? 'var(--paper-parchment)' : 'var(--ink-faint)',
+                font: 'inherit',
+                fontSize: 13,
+                padding: '10px 20px',
+                minHeight: isMobile ? 44 : undefined,
+                borderRadius: 999,
+                cursor: allSwept ? 'pointer' : 'default',
+              }}
+            >
+              {allSwept ? 'Close the week ✓' : `Close the week · ${sweptAt.size}/${domains.length}`}
+            </button>
+          </div>
 
           <button
             type="button"
@@ -217,9 +222,8 @@ export function WeeklyReviewPage() {
           )}
         </div>
 
-        {!isMobile && (
-          <RightRail slipping={slipping} onReview={markReviewed} routines={activeRoutines} completions={completions} bloomsThisWeek={bloomsThisWeek} hoursThisWeek={hoursThisWeek} />
-        )}
+        {/* Below the sweep on a phone: slipping, routines, blooms and hours were desktop-only. */}
+        <RightRail slipping={slipping} onReview={markReviewed} routines={activeRoutines} completions={completions} bloomsThisWeek={bloomsThisWeek} hoursThisWeek={hoursThisWeek} />
       </div>
     </div>
   )
@@ -284,7 +288,7 @@ function FHelp({ children }: { children: ReactNode }) {
 function touchedLabel(rowTasks: Task[], fallbackIso: string): string {
   const last = [fallbackIso, ...rowTasks.map((t) => t.updated_at)].sort().at(-1)!
   const days = Math.max(0, Math.floor((Date.now() - new Date(last).getTime()) / 86_400_000))
-  if (days < 7) return `touched ${new Date(last).toLocaleDateString('en-US', { weekday: 'short' })}`
+  if (days < 7) return `touched ${new Date(last).toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })}`
   return `quiet ${days} days`
 }
 
@@ -451,7 +455,7 @@ function DomainCard({
   )
 
   if (state === 'swept') {
-    const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
+    const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: appZone() }) : ''
     return (
       <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, opacity: reopened ? 1 : 0.85 }}>
         {/* J-27: the summary row itself is the toggle — same look as before, plus a ▾/▴ hint. */}
