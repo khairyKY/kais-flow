@@ -1,7 +1,7 @@
 name: Release
 
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
-#   gate → cron-key check → backup → database → edge functions → app (merge into master) → live check
+#   gate + rehearsal → cron-key check → backup → database → edge functions → app (merge into master) → live check
 #   → GitHub Release (tag + notes) → Android APK + Windows installer attached to it.
 # Nothing touches production until the gate is green and the merge into master is proven to be
 # exactly the tested tree. Trigger: push a `v*` tag or a `claude/ship-v*` branch at the release's
@@ -33,9 +33,17 @@ jobs:
   gate:
     uses: ./.github/workflows/ci.yml
 
+  # rehearsal.yml: every migration from scratch + the harness suites + deno check, and the pending
+  # migrations applied to a copy of production's schema. A migration that fails there never reaches
+  # `db push` (the 2026-09-26 release stopped half-applied at 0034).
+  rehearse:
+    uses: ./.github/workflows/rehearsal.yml
+    secrets:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
   deploy:
     name: Deploy
-    needs: gate
+    needs: [gate, rehearse]
     if: github.actor == github.repository_owner
     runs-on: ubuntu-latest
     permissions:

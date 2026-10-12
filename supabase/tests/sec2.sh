@@ -31,7 +31,7 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 DENO=${DENO:-deno}
 export DENO_NO_UPDATE_CHECK=1
 
-STATUS=$(cd "$ROOT" && npx supabase status -o env 2>/dev/null)
+STATUS=$(cd "$ROOT" && ${SUPABASE:-npx supabase} status -o env 2>/dev/null)  # SUPABASE: a CLI already on PATH (CI)
 val() { printf '%s\n' "$STATUS" | sed -n "s/^$1=\"\(.*\)\"$/\1/p" | head -1; }
 API_URL=$(val API_URL)
 ANON_KEY=$(val ANON_KEY)
