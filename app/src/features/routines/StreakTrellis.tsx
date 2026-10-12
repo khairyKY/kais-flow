@@ -1,6 +1,7 @@
 import { useEscapeStack } from '../../lib/overlayStack'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, streakOfGoal, trellisCaption, type TrellisDay } from './streaks'
+import { PLANTS, plantOf, plantSrc } from './plant'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
@@ -50,18 +51,23 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
   // "it rained — the vine held on" caption shows (streaks.ts rainHeld / trellisCaption).
   const held = rainHeld(current, rainedDates)
   const story = trellisCaption(days, current, status)
+  // Routines 2: the routine's own species (0067) heads the trellis at its stage, marks the days it
+  // grew (the vine presses its leaves; the others their flowering drawing) and names the caption.
+  const plant = plantOf(routine)
+  const noun = PLANTS[plant].label.toLowerCase()
+  const grewMark = (i: number) => (plant === 'vine' ? `${A}/vine/${i % 2 === 0 ? 'leaf-right' : 'leaf-left'}.png` : plantSrc(plant, 7))
   // Never tended: the New routine form's own "Its plant" hint (#2a), not "the vine kept growing"
   // for a vine that hasn't started. Snapped before this window: the export's "Bare · start again".
   const caption =
     story.kind === 'rained'
-      ? `it rained ${weekdayName(story.key)} — the vine held on.`
+      ? `it rained ${weekdayName(story.key)} — the ${noun} held on.`
       : story.kind === 'broke'
-        ? `it broke ${weekdayName(story.key)} — the vine started over.`
+        ? `it broke ${weekdayName(story.key)} — the ${noun} started over.`
         : story.kind === 'new'
           ? 'starts bare, grows with the streak ✿'
           : story.kind === 'bare'
             ? 'bare for now — start again ✿'
-            : 'no missed days in the last 14 — the vine kept growing ✿'
+            : `no missed days in the last 14 — the ${noun} kept growing ✿`
 
   function tickColor(d: TrellisDay): string {
     if (d.state === 'broke') return 'var(--acc-terra)'
@@ -73,7 +79,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
         <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src={`${A}/vine/flowering.png`} alt="" style={{ height: 42, filter: 'var(--shadow-drop-sm)' }} />
+              <img src={plantSrc(plant, current)} alt="" style={{ height: 42, filter: 'var(--shadow-drop-sm)' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 3 }}>
@@ -90,7 +96,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last {DAYS} days</span>
               {!isMobile && (
-                <button type="button" aria-label="Close" className="kf-hit" onClick={onClose} style={{ width: 26, height: 26, padding: 0, font: 'inherit', borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                <button type="button" aria-label="Close" className="kf-hit" onClick={onClose} style={{ width: 26, height: 26, padding: 0, font: 'inherit', borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 'var(--fs-caption)', cursor: 'pointer' }}>✕</button>
               )}
             </div>
           </div>
@@ -105,7 +111,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
               if (d.state === 'grew') {
                 const right = i % 2 === 0
                 const rotate = right ? 2 + (i % 3) : -2 - (i % 3)
-                return <img key={d.key} src={`${A}/vine/${right ? 'leaf-right' : 'leaf-left'}.png`} alt="" title={d.key} style={{ position: 'absolute', left: at(x), top: y, height: 23, transform: `rotate(${rotate}deg)` }} />
+                return <img key={d.key} src={grewMark(i)} alt="" title={d.key} style={{ position: 'absolute', left: at(x), top: y, height: 23, transform: `rotate(${rotate}deg)` }} />
               }
               if (d.state === 'rained') {
                 return (
@@ -143,7 +149,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px 14px', marginTop: 16 }}>
             <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={`${A}/vine/leaf-right.png`} alt="" style={{ height: 12 }} />grew</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={grewMark(0)} alt="" style={{ height: 12 }} />grew</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><DropletIcon size={8} />rained, held</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 <svg width={14} height={8} viewBox="0 0 22 10"><path d="M1 5q3 1 5 4" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /><path d="M21 4q-3 0 -5 3" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /></svg>

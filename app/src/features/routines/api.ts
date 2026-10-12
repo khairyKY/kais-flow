@@ -7,7 +7,7 @@ import { toastUndo } from '../../lib/undo'
 import { playSound } from '../../lib/sounds'
 import { challengeDays, localDateKey } from './streaks'
 import { fetchAll } from '../../lib/fetchAll'
-import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
+import type { Cadence, Routine, RoutineCompletion, RoutinePlant } from '../../lib/types'
 
 export function useRoutines() {
   return useQuery({
@@ -44,6 +44,8 @@ export function createRoutine(
   clockTime: string | null = null,
   steps: string[] = [],
   domainId: string | null = null,
+  plant: RoutinePlant = 'vine',
+  stepMinutes: (number | null)[] = [],
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
@@ -55,7 +57,9 @@ export function createRoutine(
     challenge_end: null,
     active: true,
     steps,
+    step_minutes: stepMinutes,
     domain_id: domainId,
+    plant,
     created_at: nowIso(),
     updated_at: nowIso(),
   }
@@ -73,6 +77,8 @@ export function createChallenge(
   clockTime: string | null = null,
   steps: string[] = [],
   domainId: string | null = null,
+  plant: RoutinePlant = 'vine',
+  stepMinutes: (number | null)[] = [],
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
@@ -84,7 +90,9 @@ export function createChallenge(
     challenge_end: endDate,
     active: true,
     steps,
+    step_minutes: stepMinutes,
     domain_id: domainId,
+    plant,
     // The form's "N day streak" is the streak goal too (0046): the row reads "12 / 30".
     goal_days: challengeDays(startDate, endDate),
     created_at: nowIso(),
