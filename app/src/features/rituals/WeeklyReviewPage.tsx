@@ -151,7 +151,7 @@ export function WeeklyReviewPage() {
 
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
             {domains.length === 0 && (
-              <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>
+              <p style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)' }}>
                 No domains yet — the sweep walks your domains one by one. <Link to="/settings" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
               </p>
             )}
@@ -176,9 +176,9 @@ export function WeeklyReviewPage() {
           {/* The phone had no way to close the week (2026-10-12 parity review). */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'flex-end' : 'space-between', marginTop: isMobile ? 20 : 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
             {/* The design's "sweep all three" was its sample count — say the real one. */}
-            {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{domains.length === 1 ? 'sweep it' : `sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
+            {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{domains.length === 1 ? 'sweep it' : `sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
             {closedAt ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
                 Week closed ✿ · {new Date(closedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })}
               </span>
             ) : (
