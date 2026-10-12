@@ -45,3 +45,5 @@ P5 done (chat/resurfacing extend to each new content type as it lands). Run sub-
 
 ## Notes / deviations
 _(filled during execution — including the 7e audit results)_
+
+- **2026-10-12 — 7a journal media (branch `claude/journal-media`, Kai: "+ Photo" and "Talk it out" did nothing).** Talk it out opens the shared voice sheet (Groq via `transcribe`) and appends the words to the day's latest entry as a paragraph, also accumulating `transcript`. **Deviation:** the audio itself is not kept (7a's accept line says "transcript + audio") — storing audio would eat the 1 GB budget; a take that fails to transcribe stays in the sheet (Try again / Save to Inbox / Discard) as everywhere else. + Photo: Paper's `preparePage` (≤1600px, ~250 KB JPEG) → private `journal` bucket (migration 0060) → `media_paths`; thumbnails + tap to view + remove. Handoff: `docs/log/2026-10-12-1749-journal-media-handoff.md`.

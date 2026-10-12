@@ -1,0 +1,248 @@
+// Journal "Talk it out" + "＋ Photo" (Kai 2026-10-12: neither did anything) on the REAL /journal page,
+// signed in against a MOCKED backend — the resurface/plan-replan recipe: the dev server runs with
+// VITE_SUPABASE_URL=http://127.0.0.1:9, a made-up session sits in localStorage, and Playwright answers
+// REST, Storage and the `transcribe` function. Chrome's fake mic feeds the voice sheet.
+//   node verify.mjs <outDir> [baseUrl] [playwright-core path]
+import fs from 'node:fs'
+import path from 'node:path'
+import zlib from 'node:zlib'
+import { pathToFileURL } from 'node:url'
+
+const OUT = process.argv[2]
+const BASE = process.argv[3] ?? 'http://localhost:5244'
+const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const { chromium } = await import(pathToFileURL(PW).href)
+fs.mkdirSync(OUT, { recursive: true })
+const results = []
+const check = (name, ok, detail = '') => {
+  results.push({ name, ok: !!ok, detail: String(detail) })
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail !== '' ? ' — ' + detail : ''}`)
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+async function until(ok, ms = 8000) {
+  for (const t0 = Date.now(); Date.now() - t0 < ms; await sleep(100)) if (await ok()) return true
+  return ok()
+}
+
+// ── a 400×300 PNG (a sage block), built by hand so the harness needs no image files ──
+function png(w, h, [r, g, b], grain = 0) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    return c >>> 0
+  })
+  const crc = (buf) => {
+    let c = 0xffffffff
+    for (const x of buf) c = crcTable[(c ^ x) & 0xff] ^ (c >>> 8)
+    return (c ^ 0xffffffff) >>> 0
+  }
+  const chunk = (type, data) => {
+    const len = Buffer.alloc(4)
+    len.writeUInt32BE(data.length)
+    const td = Buffer.concat([Buffer.from(type), data])
+    const c = Buffer.alloc(4)
+    c.writeUInt32BE(crc(td))
+    return Buffer.concat([len, td, c])
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8
+  ihdr[9] = 2
+  const raw = Buffer.alloc((w * 3 + 1) * h)
+  // `grain`: a gradient plus noise, closer to a phone photo than a flat block (the size check).
+  const n = () => (grain ? Math.floor(Math.random() * grain) : 0)
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const k = grain ? (x + y) / (w + h) : 0
+      raw.set([(r + k * 80 + n()) & 255, (g - k * 60 + n()) & 255, (b + n()) & 255], y * (w * 3 + 1) + 1 + x * 3)
+    }
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))])
+}
+const PHOTO = png(400, 300, [140, 170, 120])
+const BIG = png(4000, 3000, [120, 150, 110], 24) // 12 MP with grain: the ≤500KB check
+
+// ── session ──
+const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
+const UID = '00000000-0000-4000-8000-00000000d3e0'
+const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', exp: 4102444800 })}.x`
+const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'demo@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' }
+const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, user }
+const NOW = new Date(Date.UTC(2026, 9, 12, 7, 0)) // Mon 12 Oct 2026, 10:00 Cairo
+const ENTRY = '20000000-0000-4000-8000-000000000001'
+const SETTINGS = { user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
+const HEARD = 'Walked by the river and the heron was back.'
+
+const browser = await chromium.launch({
+  executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  headless: true,
+  args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+})
+const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
+const DESKTOP = { viewport: { width: 1280, height: 800 } }
+
+async function open(theme, view, { uploadFails = false } = {}) {
+  const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', permissions: ['microphone'] })
+  await ctx.addInitScript(([t, sess, uid]) => {
+    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('sb-127-auth-token', sess)
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
+    localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox']))
+  }, [theme, JSON.stringify(session), UID])
+  const state = {
+    rows: {
+      app_settings: [{ ...SETTINGS }],
+      journal_entries: [{ id: ENTRY, user_id: UID, body: 'Slow morning.', entry_date: '2026-10-12', mood: null, transcript: null, media_paths: [], gratitude: [], deleted_at: null, created_at: '2026-10-12T05:30:00.000Z', updated_at: '2026-10-12T05:30:00.000Z' }],
+    },
+    writes: [],
+    uploads: [],
+    removed: [],
+  }
+  await ctx.route('http://127.0.0.1:9/**', async (r) => {
+    const req = r.request()
+    const url = new URL(req.url())
+    const p = url.pathname
+    if (p.startsWith('/auth/v1/user')) return r.fulfill({ json: user })
+    if (p === '/functions/v1/transcribe') return r.fulfill({ json: { text: HEARD } })
+    if (p.startsWith('/storage/v1/object/sign/journal/')) return r.fulfill({ status: 200, contentType: 'image/png', body: PHOTO })
+    if (p === '/storage/v1/object/sign/journal') {
+      const { paths } = JSON.parse(req.postData() ?? '{}')
+      return r.fulfill({ json: paths.map((x) => ({ error: null, path: x, signedURL: `/object/sign/journal/${x}?token=t` })) })
+    }
+    if (p.startsWith('/storage/v1/object/journal/') && req.method() === 'POST') {
+      if (uploadFails) return r.abort('internetdisconnected')
+      const key = p.replace('/storage/v1/object/journal/', '')
+      // storage-js sends a Blob as multipart: the part's own type, and the JPEG's magic bytes inside.
+      const body = req.postDataBuffer() ?? Buffer.alloc(0)
+      state.uploads.push({ key, jpeg: body.includes(Buffer.from([0xff, 0xd8, 0xff])) && /content-type: image\/jpeg/i.test(body.toString('latin1')), bytes: body.length })
+      return r.fulfill({ json: { Key: `journal/${key}`, Id: 'x' } })
+    }
+    if (p === '/storage/v1/object/journal' && req.method() === 'DELETE') {
+      state.removed.push(...(JSON.parse(req.postData() ?? '{}').prefixes ?? []))
+      return r.fulfill({ json: [] })
+    }
+    const table = p.replace('/rest/v1/', '')
+    if (req.method() === 'POST' || req.method() === 'PATCH') {
+      let body = []
+      try {
+        body = JSON.parse(req.postData() ?? '[]')
+      } catch {}
+      for (const row of [body].flat()) {
+        const list = (state.rows[table] ??= [])
+        const i = list.findIndex((x) => x.id === row.id)
+        const full = { ...(i >= 0 ? list[i] : null), ...row }
+        if (i >= 0) list[i] = full
+        else list.push(full)
+        state.writes.push({ table, row: full })
+      }
+      return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
+    }
+    if (req.method() === 'DELETE') return r.fulfill({ status: 204, body: '' })
+    if (req.method() !== 'GET' && req.method() !== 'HEAD') return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
+    const one = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object')
+    const rows = state.rows[table] ?? []
+    if (one) return rows.length ? r.fulfill({ json: rows[0] }) : r.fulfill({ status: 406, json: { code: 'PGRST116', message: 'no rows' } })
+    return r.fulfill({ json: rows, headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
+  })
+  const page = await ctx.newPage()
+  await page.clock.install({ time: NOW })
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  page.on('console', (m) => m.type() === 'error' && !m.text().startsWith("WebSocket connection to 'ws://127.0.0.1:9/") && !m.text().includes('ERR_INTERNET_DISCONNECTED') && !m.text().includes('Failed to load resource') && errors.push(`console: ${m.text()}`))
+  await page.goto(`${BASE}/journal`, { waitUntil: 'networkidle' })
+  await page.getByText('Slow morning.').or(page.locator('textarea').first()).first().waitFor({ timeout: 10000 }).catch(() => {})
+  await sleep(800)
+  return { ctx, page, errors, state }
+}
+
+const lastEntry = (state) => state.writes.filter((w) => w.table === 'journal_entries' && w.row.id === ENTRY).at(-1)?.row
+const toasts = (page) => page.locator('.kf-toast-msg').allInnerTexts()
+const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: false })
+async function pickPhoto(page, label, buffer = PHOTO) {
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 5000 }), page.getByRole('button', { name: label, exact: true }).click()])
+  await chooser.setFiles({ name: 'river.png', mimeType: 'image/png', buffer })
+}
+
+for (const [label, view, width, talk] of [['phone', PHONE, 390, '🎤 Talk'], ['desk', DESKTOP, 1280, '🎤 Talk it out']]) {
+  for (const theme of ['day', 'night']) {
+    const name = `${label}-${theme}`
+    const { ctx, page, errors, state } = await open(theme, view)
+
+    // ── affordances are real buttons, terra like ＋ New entry ──
+    const talkBtn = page.getByRole('button', { name: talk, exact: true })
+    const photoBtn = page.getByRole('button', { name: '＋ Photo', exact: true })
+    check(`${name} Talk + Photo are buttons`, (await talkBtn.count()) === 1 && (await photoBtn.count()) === 1)
+    const [c1, c2] = await Promise.all([talkBtn.evaluate((e) => getComputedStyle(e).color), photoBtn.evaluate((e) => getComputedStyle(e).color)])
+    check(`${name} affordances not hairline grey (terra)`, c1 === c2 && c1 !== 'rgba(0, 0, 0, 0)', c1)
+    await shot(page, `${name}-1-footer`)
+
+    // ── Talk it out → transcript appended + stored ──
+    await talkBtn.click()
+    await page.getByRole('dialog', { name: 'Voice capture' }).waitFor({ timeout: 5000 }).catch(() => {})
+    await sleep(1500)
+    await page.getByRole('button', { name: 'Stop & file' }).click().catch(() => {})
+    const talked = await until(() => lastEntry(state)?.transcript === HEARD)
+    check(`${name} Talk it out → transcript saved`, talked, JSON.stringify(lastEntry(state)?.transcript))
+    check(`${name} Talk it out → body gains a paragraph`, lastEntry(state)?.body === `Slow morning.\n\n${HEARD}`, JSON.stringify(lastEntry(state)?.body))
+    check(`${name} Talk it out → shows in the textarea`, await until(async () => (await page.locator('textarea').first().inputValue()).includes(HEARD)))
+    check(`${name} Talk it out → no Inbox filing`, !state.writes.some((w) => w.table === 'inbox_items'))
+
+    // ── ＋ Photo → upload to journal/<uid>/<entry>/…jpg, path on the entry, thumbnail ──
+    await pickPhoto(page, '＋ Photo')
+    const uploaded = await until(() => state.uploads.length === 1)
+    const up = state.uploads[0]
+    check(`${name} photo uploaded to the journal bucket under the owner`, uploaded && new RegExp(`^${UID}/${ENTRY}/[0-9a-f-]{36}\\.jpg$`).test(up?.key ?? ''), up?.key)
+    check(`${name} photo re-encoded as JPEG ≤500KB (sent a PNG)`, up?.jpeg && up.bytes > 0 && up.bytes <= 500 * 1024, `jpeg=${up?.jpeg} ${up?.bytes}B`)
+    check(`${name} media_paths carries the path`, await until(() => JSON.stringify(lastEntry(state)?.media_paths) === JSON.stringify([up?.key])), JSON.stringify(lastEntry(state)?.media_paths))
+    check(`${name} body kept through the photo write`, lastEntry(state)?.body === `Slow morning.\n\n${HEARD}`)
+    const thumb = page.locator('a[aria-label="Open photo"] img')
+    check(`${name} thumbnail shows`, await until(async () => (await thumb.count()) === 1 && (await thumb.evaluate((i) => i.complete && i.naturalWidth > 0))))
+    await thumb.scrollIntoViewIfNeeded().catch(() => {})
+    await shot(page, `${name}-2-photo`)
+
+    // ── remove → confirm → object deleted + path dropped ──
+    await page.getByRole('button', { name: 'Remove photo' }).click()
+    await page.getByRole('button', { name: 'Remove', exact: true }).click()
+    check(`${name} remove deletes the object`, await until(() => state.removed.includes(up?.key)), JSON.stringify(state.removed))
+    check(`${name} remove drops the path`, await until(() => (lastEntry(state)?.media_paths ?? ['x']).length === 0))
+    check(`${name} thumbnail gone`, await until(async () => (await thumb.count()) === 0))
+
+    if (name === 'desk-day') {
+      await pickPhoto(page, '＋ Photo', BIG)
+      const got = await until(() => state.uploads.length === 2, 20000)
+      const big = state.uploads[1]
+      check(`${name} a ${(BIG.length / 1048576).toFixed(1)} MB 12 MP photo uploads ≤500KB`, got && big.jpeg && big.bytes <= 500 * 1024, `${big?.bytes}B`)
+    }
+
+    const wide = await page.evaluate(() => document.documentElement.scrollWidth)
+    check(`${name} no horizontal scroll at ${width}`, wide <= width, wide)
+    check(`${name} no page or console errors`, errors.length === 0, errors.slice(0, 3).join(' | '))
+    await ctx.close()
+  }
+
+  // ── offline: the upload fails, the words stay, a clear toast ──
+  {
+    const name = `${label}-offline`
+    const { ctx, page, state } = await open('day', view, { uploadFails: true })
+    await page.locator('textarea').first().fill('Slow morning. Still typing')
+    await pickPhoto(page, '＋ Photo')
+    const said = await until(async () => (await toasts(page)).some((t) => /your words are saved/.test(t)))
+    check(`${name} failed upload → clear toast`, said, JSON.stringify(await toasts(page)))
+    check(`${name} typing kept`, (await page.locator('textarea').first().inputValue()) === 'Slow morning. Still typing')
+    check(`${name} body saved anyway`, await until(() => lastEntry(state)?.body === 'Slow morning. Still typing'))
+    check(`${name} no media path written`, !state.writes.some((w) => w.table === 'journal_entries' && (w.row.media_paths ?? []).length))
+    await shot(page, `${name}-toast`)
+    // Truly offline: the toast says so.
+    await ctx.setOffline(true)
+    await pickPhoto(page, '＋ Photo')
+    const offline = await until(async () => (await toasts(page)).some((t) => /Photos need a connection/.test(t)))
+    check(`${name} offline → "needs a connection" toast`, offline, JSON.stringify(await toasts(page)))
+    await ctx.close()
+  }
+}
+
+await browser.close()
+fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2))
+const failed = results.filter((r) => !r.ok)
+console.log(`\n${results.length - failed.length}/${results.length} passed`)
+process.exit(failed.length ? 1 : 0)
