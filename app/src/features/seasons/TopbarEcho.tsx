@@ -1,5 +1,4 @@
-import { useCairoWeather } from '../../lib/seasons'
-import { DEFAULT_ZONE, useAppZone, zoneCity } from '../../lib/appZone'
+import { useAppZone, zoneCity } from '../../lib/appZone'
 
 // ── Pixel contract: design-export/Seasons.dc.html 1c — the segment appended to the topbar
 // after the Synced dot: "· Cairo · 34° clear". Season is real (the clock); weather is a live
@@ -13,12 +12,12 @@ import { DEFAULT_ZONE, useAppZone, zoneCity } from '../../lib/appZone'
 // `import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'` at the top of AppLayout.tsx.
 // This is the only change TopBar() needs; nothing else in AppLayout moves. ──
 export function SeasonTopbarEcho() {
+  // The weather half ("· 34° clear") was cut 2026-10-12: it was Cairo's for everyone (lib/seasons).
   const zone = useAppZone()
-  const { data: weather } = useCairoWeather(zone === DEFAULT_ZONE)
   return (
     <>
       <span>·</span>
-      <span style={{ color: 'var(--ink-muted)' }}>{zoneCity(zone)}{weather && zone === DEFAULT_ZONE ? ` · ${weather.tempC}° ${weather.condition}` : ''}</span>
+      <span style={{ color: 'var(--ink-muted)' }}>{zoneCity(zone)}</span>
     </>
   )
 }

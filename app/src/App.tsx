@@ -57,20 +57,15 @@ pageLoaders.push(() => import('./features/tasks/TaskSheet'))
 // The Windows tray's flyout window (src-tauri tray.rs) — its own route, outside the shell, never warmed.
 const TrayFlyout = lazy(() => import('./features/tray/TrayFlyout').then((m) => ({ default: m.TrayFlyout })))
 
-// Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
-// (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,
-// Kai" on sample dates) and the §04 kit reference (/design-system, no auth). Only the dev server
-// registers them. A production build never calls this, so the routes and their code are dropped
-// and those addresses reach the not-found page. (/share, the real share target, is not a gallery.)
+// Punch 65: design galleries are for building, not for using — the §04 kit reference
+// (/design-system, no auth). Only the dev server registers it; a production build drops the route
+// and its code. Kai 2026-10-12 ("fix or cut"): the W8 quick-capture phone mock (/capture) and the
+// season-state sheet (/seasons) were cut — git keeps them. (/share, the real share target, is not
+// a gallery.)
 function designGalleryRoutes(): { public: RouteObject[]; shell: RouteObject[] } {
-  const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
-  const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
   return {
     public: [{ path: '/design-system', element: <KitReference />, errorElement: <RouteErrorPage bare /> }],
-    shell: [
-      { path: 'capture', element: <QuickCapturePage /> },
-      { path: 'seasons', element: <SeasonsPage /> },
-    ],
+    shell: [],
   }
 }
 const galleries = import.meta.env.DEV ? designGalleryRoutes() : { public: [], shell: [] }
