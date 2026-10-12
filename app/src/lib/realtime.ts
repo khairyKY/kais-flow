@@ -6,6 +6,7 @@ import { useAuth } from '../features/auth/AuthProvider'
 const SYNCED_TABLES = [
   'domains',
   'projects',
+  'areas',
   'tasks',
   'inbox_items',
   'calendar_events',
@@ -13,11 +14,12 @@ const SYNCED_TABLES = [
   'routines',
   'routine_completions',
   'resurfaced_log',
+  'time_entries',
 ] as const
 
 // Tables carrying `deleted_at` that the Trash page (features/trash/api.ts) unions over —
 // any change to them can move rows in/out of the trash list.
-const TRASHED_TABLES = new Set(['tasks', 'inbox_items', 'calendar_events', 'journal_entries'])
+const TRASHED_TABLES = new Set(['tasks', 'inbox_items', 'calendar_events', 'journal_entries', 'projects', 'areas', 'domains'])
 
 /** Subscribes to realtime changes on every synced table and invalidates the matching query cache.
  * Scale (free tier: 200 concurrent connections, 2M messages/month): only this user's rows

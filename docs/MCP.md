@@ -77,7 +77,7 @@ Anything that speaks remote MCP over Streamable HTTP with a custom header (Curso
 | `projects` | Your projects (ids for `list_tasks` / `add_task`) | |
 | `add_task` | A new task: title, optional due, project, Top 3, notes | ✓ |
 | `complete_task` | Ticks an open task off; a repeating task gets its next occurrence | ✓ |
-| `move_to_tomorrow` | Due tomorrow 09:00 — the app's "Tomorrow" | ✓ |
+| `move_to_tomorrow` | Due tomorrow 09:00 — the app's "Tomorrow"; the reminder keeps its lead, a block on another day comes off the calendar | ✓ |
 | `add_to_inbox` | A note (and link) into your Inbox to sort later, like a quick capture | ✓ |
 
 Same rules as the app:
@@ -85,9 +85,18 @@ Same rules as the app:
 - **Your clock.** Every time an assistant sees or sends is wall-clock in your time zone
   (Settings → Timezone; Cairo when unset), and every result names it. A date without a time
   (`2026-10-08`) means 09:00 that day; `2026-10-08T15:30` means 15:30 on your clock.
-- **Today** is the Today list's rules: Top 3 picks, then anything due or scheduled today, then anything
-  dated before today (someday tasks only when starred).
-- **Top 3** holds 3 open picks — a fourth is refused with a message the assistant can pass on.
+- **Today** is the Today list's rules: Top 3 picks (the goal of the day first — `top3_rank`), then anything
+  due or scheduled today, then anything dated before today. Someday tasks never (since 2026-10-12; they
+  used to show when starred).
+- **Top 3** is today's (the app's `features/tasks/top3Rule.ts`, restated in
+  `supabase/functions/_shared/today.ts`): a pick counts while it is undated or dated today or earlier, and
+  never when it's someday, in Trash, done or cancelled. It holds 3 such picks — a fourth is refused with a
+  message the assistant can pass on. `add_task` with `top3: true` and a later due date brings the task to
+  today at its own time (as starring does in the app); `move_to_tomorrow` gives a pick's place up.
+- **Tomorrow** moves the rest the way the app does: a reminder keeps its lead time (re-armed when it lands
+  in the future — `lib/carryReminder.ts`), a calendar block already on tomorrow stays and any block on
+  another day comes off the calendar (soft-deleted, so Trash can bring it back —
+  `features/calendar/replan.ts`), logged as `calendar_event.deleted`.
 - **Every change is logged** like one made in the app (`task.created`, `task.completed`,
   `task.rescheduled`, `inbox.captured`, `task.starred`), with `source: "mcp"`, so Slipping, streaks and
   the digests count it. Changes show up in the open app through realtime.

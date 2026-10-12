@@ -20,7 +20,7 @@ import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
-import type { AppSettings, Project, Task } from '../../lib/types'
+import type { AppSettings, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
@@ -49,7 +49,7 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   // Projects still loading: wait one sweep, so "09:50 · Car" doesn't go out as "09:50".
   if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending') return null
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
-  return localPlan({ tasks, projects, prefs: prefs(), from, to, now, zone: appZone() })
+  return localPlan({ tasks, projects, routines: queryClient.getQueryData<Routine[]>(['routines']), completions: queryClient.getQueryData<RoutineCompletion[]>(['routine_completions']), prefs: prefs(), from, to, now, zone: appZone() })
 }
 
 /** The Windows app's own sweep (WebView2 has no Web Push): every 30s, the reminders and rituals
@@ -174,7 +174,7 @@ export function TrayBridge(): null {
       window.clearTimeout(timer)
       timer = window.setTimeout(scheduleOnAndroid, 1500)
     }
-    const watched = new Set(['tasks', 'projects', 'app_settings'])
+    const watched = new Set(['tasks', 'projects', 'app_settings', 'routines', 'routine_completions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
       if (e.type === 'updated' && watched.has(String(e.query.queryKey[0]))) soon()
     })

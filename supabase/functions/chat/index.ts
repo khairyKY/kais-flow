@@ -6,6 +6,7 @@ import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch } from '../_shared/retrieval.ts'
 import { userZone } from '../_shared/zone.ts'
+import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -54,16 +55,20 @@ Deno.serve(async (req) => {
     }
 
     const hits = await hybridSearch(supabase, lastUser.content, 20)
-    const { data: top3 } = await supabase.from('tasks').select('title').eq('top3', true).eq('status', 'todo')
     const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
     // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit —
     // the user's today, on their own clock (app_settings.timezone; RLS returns only their row).
     const { data: settings } = await supabase.from('app_settings').select('timezone').maybeSingle()
     const tz = userZone((settings as { timezone?: string | null } | null)?.timezone)
     const now = new Date()
+    // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one; goal first.
+    const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+      .eq('top3', true).eq('status', 'todo').eq('someday', false).is('deleted_at', null)
+    const top3 = todaysTop3((picks ?? []) as (Top3Row & { id: string; title: string })[], now, tz)
+    const top3Ids = new Set(top3.map((t) => t.id))
     const until = dayStart(now, tz, 2).toISOString()
     const [{ data: openTasks }, { data: events }, { count: inboxPending }] = await Promise.all([
-      supabase.from('tasks').select('title, due_at, scheduled_start, top3')
+      supabase.from('tasks').select('id, title, due_at, scheduled_start')
         .eq('status', 'todo').is('deleted_at', null)
         .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
       supabase.from('calendar_events').select('title, starts_at, ends_at, all_day')
@@ -74,9 +79,9 @@ Deno.serve(async (req) => {
     const prompt = systemPrompt({
       now,
       hits,
-      top3: top3 ?? [],
+      top3,
       slipping: slipping ?? [],
-      snapshot: snapshotText(now, openTasks ?? [], events ?? [], inboxPending ?? 0, tz),
+      snapshot: snapshotText(now, (openTasks ?? []).map((t) => ({ ...t, top3: top3Ids.has(t.id) })), events ?? [], inboxPending ?? 0, tz),
     })
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

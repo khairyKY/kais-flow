@@ -4,7 +4,7 @@
 //
 // pg_cron calls notify every TICK_MIN minutes with `scheduled: true` (migration 0045); a user's
 // reminder is due on the first tick at or after their time, i.e. when it falls in (tick - 15, tick].
-import { DEFAULT_ZONE } from '../_shared/zone.ts'
+import { DEFAULT_ZONE, dayWindow } from '../_shared/zone.ts'
 
 export type RitualKind = 'morning_digest' | 'evening_nudge'
 
@@ -26,12 +26,11 @@ export const DEFAULT_AT: Record<RitualKind, number> = { morning_digest: 8 * 60, 
  * — `userZone(s.timezone)` — to everything below and to copy.ts. */
 export const RITUAL_ZONE = DEFAULT_ZONE
 
-/** Today on `zone`'s wall clock, as UTC instants [start, end) — the evening nudge's "today".
- * ponytail: midnight = now minus the wall-clock time of day; on a DST-change day it's an hour off. */
+/** Today on `zone`'s wall clock, as UTC instants [start, end) — the evening nudge's "today". A DST-change
+ * day is 23 or 25 hours long (_shared/zone.ts dayWindow). */
 export function dayBounds(now: Date, zone: string = RITUAL_ZONE): { start: string; end: string } {
-  const t = now.getTime()
-  const start = t - wallMinutes(now, zone) * 60_000 - (t % 60_000)
-  return { start: new Date(start).toISOString(), end: new Date(start + 86_400_000).toISOString() }
+  const { start, end } = dayWindow(now, zone)
+  return { start: start.toISOString(), end: end.toISOString() }
 }
 
 /** Minutes since midnight on `zone`'s wall clock. Intl knows DST, so 08:00 stays 08:00 all year

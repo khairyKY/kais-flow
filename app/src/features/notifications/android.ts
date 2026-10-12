@@ -17,7 +17,7 @@ const CHANNELS = [
   { id: 'quiet', name: 'Quiet', importance: 2, description: 'Without a sound: the morning digest, and everything in quiet hours' },
 ] as const
 
-const CHANNEL_OF: Partial<Record<Notice['kind'], string>> = { task_reminder: 'reminders', morning_digest: 'rituals', evening_nudge: 'rituals', focus_done: 'focus' }
+const CHANNEL_OF: Partial<Record<Notice['kind'], string>> = { task_reminder: 'reminders', routine: 'reminders', morning_digest: 'rituals', evening_nudge: 'rituals', focus_done: 'focus' }
 
 export function channelFor(n: Notice): string {
   return n.silent ? 'quiet' : (CHANNEL_OF[n.kind] ?? 'reminders')

@@ -14,7 +14,8 @@
 //
 // Auth is the user's AI access key (`Authorization: Bearer kf_ai_…`, migration 0051), checked on
 // every request; see docs/MCP.md for why a key and not OAuth.
-import { TOOLS, runTool, userZone, type Store, type ToolDef } from './tools.ts'
+import { userZone } from '../_shared/zone.ts'
+import { TOOLS, runTool, type Store, type ToolDef } from './tools.ts'
 
 export const MODERN_VERSIONS = ['2026-07-28'] as const
 export const LEGACY_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'] as const
