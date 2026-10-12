@@ -193,6 +193,7 @@ export interface AppSettings {
   evening_nudge_at?: string
   /** Settings → Notifications (migration 0048) — read by notify through notify/copy.ts `deliver`. */
   task_reminder_on?: boolean
+  routine_on?: boolean
   focus_done_on?: boolean
   quiet_hours_on?: boolean
   quiet_from?: string

@@ -8,6 +8,7 @@ import {
   kindOn,
   nudgeNotice,
   reminderNotice,
+  routineNotice,
   testNotice,
 } from '../../../../supabase/functions/notify/copy.ts'
 
@@ -59,6 +60,25 @@ describe('the other kinds', () => {
     expect(digestNotice([], {})).toMatchObject({ title: 'Good morning', body: 'Nothing picked yet — plan the day.' })
   })
 
+  it('morning digest: "N overdue" in place of the old hourly push — a count, never a name', () => {
+    expect(digestNotice(['GCI homework', 'Survey'], NAMES, 4).body).toBe('✶ GCI homework, then Survey. 4 overdue.')
+    expect(digestNotice(['GCI homework'], {}, 1).body).toBe('Unlock to see them. 1 overdue.')
+    expect(digestNotice([], {}, 2)).toMatchObject({ title: 'Good morning', body: 'Nothing picked yet — plan the day. 2 overdue.' })
+    expect(digestNotice(['a'], NAMES, 0).body).toBe('✶ a.')
+  })
+
+  it('routine reminder: "Stretch — 07:30" · Open; several at once are one; private without names', () => {
+    const stretch = { id: 'r1', name: 'Stretch', clock_time: '07:30:00' }
+    const n = routineNotice([stretch], NAMES)
+    expect(n).toMatchObject({ kind: 'routine', title: 'Stretch — 07:30', body: '', tag: 'routine-r1', url: '/routines', silent: false })
+    expect(n.actions).toEqual([{ action: 'open', title: 'Open' }])
+    expect(routineNotice([stretch], {})).toMatchObject({ title: 'A routine — 07:30', body: 'Unlock to see it' })
+    const two = [stretch, { id: 'r2', name: 'Journal', clock_time: '07:30' }]
+    expect(routineNotice(two, NAMES)).toMatchObject({ title: '2 routines — 07:30', body: 'Stretch · Journal', tag: 'routines' })
+    expect(routineNotice(two, {}).body).toBe('Unlock to see them')
+    expect(JSON.stringify(routineNotice(two, {}))).not.toContain('Stretch')
+  })
+
   it('evening nudge and focus done', () => {
     expect(nudgeNotice(4, 2)).toMatchObject({ title: 'The garden’s ready to close', body: '4 done · 2 left', url: '/today?ritual=evening' })
     const f = focusDoneNotice(25, 'GCI homework 1 — NumPy', 5, NAMES)
@@ -73,7 +93,8 @@ describe('who gets one', () => {
     expect(kindOn('task_reminder', null)).toBe(true)
     expect(kindOn('task_reminder', { task_reminder_on: false })).toBe(false)
     expect(kindOn('morning_digest', { morning_digest_on: false })).toBe(false)
-    expect(kindOn('overdue', { task_reminder_on: false })).toBe(true)
+    expect(kindOn('routine', { routine_on: false })).toBe(false)
+    expect(kindOn('test', { task_reminder_on: false })).toBe(true) // no switch: always on
   })
 
   it('quiet hours: 22:30–07:00 Cairo by default, across midnight, any server zone', () => {

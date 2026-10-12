@@ -5,7 +5,7 @@
 // runs it under the app's vitest (the ritual.ts pattern).
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 
-export type NoticeKind = 'task_reminder' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'overdue' | 'test'
+export type NoticeKind = 'task_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'test'
 
 export interface NoticeAction {
   action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep'
@@ -32,6 +32,8 @@ export interface Notice {
 /** The app_settings columns notify reads (0045 + 0048). Absent/null = the column default. */
 export interface NoticePrefs {
   task_reminder_on?: boolean | null
+  /** Routine reminders (0062). */
+  routine_on?: boolean | null
   morning_digest_on?: boolean | null
   evening_nudge_on?: boolean | null
   focus_done_on?: boolean | null
@@ -49,6 +51,7 @@ export const QUIET_TO = '07:00'
 
 const TOGGLE: Partial<Record<NoticeKind, keyof NoticePrefs>> = {
   task_reminder: 'task_reminder_on',
+  routine: 'routine_on',
   morning_digest: 'morning_digest_on',
   evening_nudge: 'evening_nudge_on',
   focus_done: 'focus_done_on',
@@ -140,14 +143,17 @@ export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | 
 }
 
 /** Morning digest: "Good morning — 3 to tend today" / "✶ GCI homework 1 — NumPy, then the lecture 2
- * survey and Skim OS lectures 1 + 2." · Plan my day · Open. Silent by default. */
-export function digestNotice(top3: readonly string[], p: NoticePrefs | null | undefined): Notice {
+ * survey and Skim OS lectures 1 + 2." · Plan my day · Open. Silent by default. `top3` = today's picks,
+ * goal first (_shared/today.ts); `overdue` (2026-10-12, in place of the old hourly "Overdue" push) adds
+ * "4 overdue." — a count, never a name. */
+export function digestNotice(top3: readonly string[], p: NoticePrefs | null | undefined, overdue = 0): Notice {
   const [goal, ...rest] = top3
-  const body = !goal
+  const said = !goal
     ? 'Nothing picked yet — plan the day.'
     : showNames(p)
       ? `✶ ${goal}${rest.length ? `, then ${rest.join(' and ')}` : ''}.`
       : 'Unlock to see them'
+  const body = overdue > 0 ? `${said.endsWith('.') ? said : `${said}.`} ${overdue} overdue.` : said
   return {
     kind: 'morning_digest',
     title: goal ? `Good morning — ${top3.length} to tend today` : 'Good morning',
@@ -194,15 +200,28 @@ export function focusDoneNotice(minutes: number, task: string | null, breakMin: 
   }
 }
 
-export function overdueNotice(count: number): Notice {
+export interface ReminderRoutineCopy {
+  id: string
+  name: string
+  /** 'HH:MM' or Postgres's 'HH:MM:SS'. */
+  clock_time: string
+}
+
+/** Routine reminder (0062): "Stretch — 07:30" · Open. Several at once are one notice ("2 routines —
+ * 07:30" / "Stretch · Journal"). Private (lock-screen names off): "A routine — 07:30". */
+export function routineNotice(routines: readonly ReminderRoutineCopy[], p: NoticePrefs | null | undefined): Notice {
+  const names = showNames(p)
+  const at = routines[0].clock_time.slice(0, 5)
+  const one = routines.length === 1
+  const shown = routines.slice(0, 3).map((r) => r.name).join(' · ') + (routines.length > 3 ? ` · +${routines.length - 3} more` : '')
   return {
-    kind: 'overdue',
-    title: 'Overdue',
-    body: `${count} ${count === 1 ? 'task is' : 'tasks are'} past due`,
-    tag: 'overdue',
+    kind: 'routine',
+    title: `${one ? (names ? routines[0].name : 'A routine') : `${routines.length} routines`} — ${at}`,
+    body: one ? (names ? '' : 'Unlock to see it') : names ? shown : 'Unlock to see them',
+    tag: one ? `routine-${routines[0].id}` : 'routines',
     actions: [{ action: 'open', title: 'Open' }],
-    url: '/tasks',
-    silent: true,
+    url: '/routines',
+    silent: false,
     taskIds: [],
   }
 }

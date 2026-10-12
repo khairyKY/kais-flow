@@ -1,4 +1,4 @@
-// P4: Web Push sender — digests, evening nudges, task reminders, overdue alerts. Invoked by pg_cron
+// P4: Web Push sender — digests, evening nudges, task and routine reminders. Invoked by pg_cron
 // (via pg_net) on a schedule, and by a manual "send test" button in Settings.
 //
 // Tray & notifications (2026-10-04): every payload is a `Notice` from copy.ts — the drawn title,
@@ -21,8 +21,10 @@ import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
 import { dayBounds, ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
-import { userZone } from '../_shared/zone.ts'
-import { deliver, digestNotice, nudgeNotice, overdueNotice, reminderNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { routinesDueAt, type ReminderRoutine } from './routine.ts'
+import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
+import { todaysTop3, type Top3Row } from '../_shared/today.ts'
+import { deliver, digestNotice, nudgeNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -30,8 +32,10 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const VAPID_KEYS_JSON = Deno.env.get('VAPID_KEYS')!
 const CONTACT_EMAIL = Deno.env.get('VAPID_CONTACT_EMAIL') ?? 'mailto:example@example.com'
 
-type NotifyKind = 'morning_digest' | 'evening_nudge' | 'overdue' | 'task_reminder' | 'test'
-const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'overdue', 'task_reminder', 'test']
+// 'overdue' is gone (2026-10-12): an hourly push nobody could turn off. Migration 0062 unschedules its
+// cron job; the morning digest says "N overdue" instead.
+type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'routine' | 'test'
+const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'routine', 'test']
 
 /** One user's app_settings row as notify reads it (select('*'), so a function deployed before
  * migration 0048 still runs: the missing columns read as their defaults). */
@@ -96,17 +100,31 @@ async function buildPayload(
   const zone = userZone(prefs?.timezone)
 
   if (kind === 'morning_digest') {
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('title')
-      .eq('user_id', userId)
-      .eq('top3', true)
-      .eq('status', 'todo')
-      .is('deleted_at', null)
-      .order('created_at')
-    const top3 = (tasks ?? []).map((t) => t.title as string)
-    const n = digestNotice(top3, prefs)
-    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, digestNotice(top3, NAMES))
+    // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one, the
+    // goal (top3_rank 1) first. Overdue: open, not someday, dated before the user's today.
+    const todayStart = dayWindow(clock.now, zone).start.toISOString()
+    const [picks, late] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+        .eq('user_id', userId)
+        .eq('top3', true)
+        .eq('status', 'todo')
+        .eq('someday', false)
+        .is('deleted_at', null),
+      supabase
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'todo')
+        .eq('someday', false)
+        .is('deleted_at', null)
+        .or(`due_at.lt.${todayStart},and(due_at.is.null,scheduled_start.lt.${todayStart})`),
+    ])
+    if (picks.error || late.error) throw picks.error ?? late.error
+    const top3 = todaysTop3((picks.data ?? []) as (Top3Row & { title: string })[], clock.now, zone).map((t) => t.title)
+    const n = digestNotice(top3, prefs, late.count ?? 0)
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, digestNotice(top3, NAMES, late.count ?? 0))
     return n
   }
 
@@ -115,7 +133,7 @@ async function buildPayload(
     const day = dayBounds(clock.now, zone)
     const [done, left] = await Promise.all([
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', day.start).lt('completed_at', day.end),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').is('deleted_at', null).lt('due_at', day.end),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).is('deleted_at', null).lt('due_at', day.end),
     ])
     if (done.error || left.error) throw done.error ?? left.error
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
@@ -154,15 +172,31 @@ async function buildPayload(
     return reminderNotice(tasks, prefs, clock.now, zone)
   }
 
-  // overdue
-  const { data: overdue } = await supabase
-    .from('tasks')
-    .select('id')
+  // routine: the reminders whose time is on this tick, on the days their cadence has, not yet checked
+  // off today (notify/routine.ts). Logged to the history like the digest — only when it goes out.
+  const { data: routines, error } = await supabase
+    .from('routines')
+    .select('id, name, clock_time, cadence, active')
     .eq('user_id', userId)
-    .eq('status', 'todo')
-    .lt('due_at', clock.nowIso)
-  if (!overdue || overdue.length === 0) return null
-  return overdueNotice(overdue.length)
+    .eq('active', true)
+    .not('clock_time', 'is', null)
+  if (error) throw error
+  // Most ticks nothing is due; only then are the check-offs read (yesterday's too: a 23:58 reminder
+  // sent on the 00:00 tick belongs to yesterday).
+  const onTick = routinesDueAt((routines ?? []) as ReminderRoutine[], [], clock.now, zone)
+  if (onTick.length === 0) return null
+  const { data: done, error: doneError } = await supabase
+    .from('routine_completions')
+    .select('routine_id, completed_on')
+    .eq('user_id', userId)
+    .in('routine_id', onTick.map((r) => r.id))
+    .gte('completed_on', dateKey(new Date(clock.now.getTime() - 86_400_000), zone))
+  if (doneError) throw doneError
+  const due = routinesDueAt(onTick, done ?? [], clock.now, zone) as (ReminderRoutine & { clock_time: string })[]
+  if (due.length === 0) return null
+  const n = routineNotice(due, prefs)
+  if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, routineNotice(due, NAMES))
+  return n
 }
 
 let appServerPromise: Promise<webpush.ApplicationServer> | null = null
@@ -254,6 +288,15 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
     for (const row of dueOwners ?? []) userIds.add(row.user_id as string)
+  }
+  // routine: only the push users who have a routine with a reminder time at all.
+  if (kind === 'routine') {
+    // ponytail: one read of every reminding routine's owner (PostgREST caps it at 1000 rows); a
+    // per-tick window query needs each user's zone in SQL — add it past a few hundred such users.
+    const { data: owners, error } = await supabase.from('routines').select('user_id').eq('active', true).not('clock_time', 'is', null)
+    if (error) throw error
+    const reminding = new Set((owners ?? []).map((r) => r.user_id as string))
+    for (const id of userIds) if (!reminding.has(id)) userIds.delete(id)
   }
 
   // Settings › Notifications (app_settings, 0045 + 0048). A failed read sends nothing: better one

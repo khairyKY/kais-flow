@@ -1,5 +1,5 @@
 import type { ActivityLogEntry } from '../../lib/types'
-import { digestNotice, nudgeNotice, reminderNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import { digestNotice, nudgeNotice, reminderNotice, routineNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
 import type { KindId } from '../notifications/kinds'
 
@@ -587,10 +587,10 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
     case 'onboarding':
       return { text: 'Planted your garden', details: 'the welcome, done', category: 'garden', icon: 'seedling', href: null }
     case 'notify': {
-      // notify.morning_digest / notify.evening_nudge: the notice as it was sent, with its buttons.
-      const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : 'morning_digest'
-      const sent = kind === 'morning_digest' ? digestNotice([], {}) : nudgeNotice(0, 0)
-      return { text: str(e.payload, 'title') || sent.title, details: str(e.payload, 'body'), category: 'notifications', icon: 'notice', href: '/today', notice: { kind, actions: sent.actions, taskIds: [] } }
+      // notify.morning_digest / notify.evening_nudge / notify.routine: the notice as it was sent, with its buttons.
+      const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : type === 'notify.routine' ? 'routine' : 'morning_digest'
+      const sent = kind === 'morning_digest' ? digestNotice([], {}) : kind === 'routine' ? routineNotice([{ id: '', name: '', clock_time: '' }], {}) : nudgeNotice(0, 0)
+      return { text: str(e.payload, 'title') || sent.title, details: str(e.payload, 'body'), category: 'notifications', icon: 'notice', href: kind === 'routine' ? '/routines' : '/today', notice: { kind, actions: sent.actions, taskIds: [] } }
     }
     default: {
       // Anything newer than this map: say it plainly rather than print the raw event name.
