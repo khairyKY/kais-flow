@@ -1,0 +1,12 @@
+PASS routines.plant text not null default vine {"column_default":"'vine'::text","is_nullable":"NO","data_type":"text"}
+PASS routines planted before 0067 grow the vine ["vine","vine"]
+PASS their steps are untouched 
+PASS accepts vine 
+PASS accepts cherry 
+PASS accepts fern 
+PASS accepts clover 
+PASS accepts daisy 
+PASS rejects a species the picker does not list new row for relation "routines" violates check constraint "routines_plant_check"
+PASS rejects null null value in column "plant" of relation "routines" violates not-null constraint
+PASS mixed steps (strings + {text, minutes}) store and read back in order {"steps":[{"text":"Neck rolls","minutes":2},"Hamstrings",{"text":"Breathe","minutes":5}],"plant":"fern"}
+PASS one named check after running twice 
