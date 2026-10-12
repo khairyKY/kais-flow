@@ -2,22 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
-import { createTask } from '../tasks/api'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { captureText } from '../inbox/api'
-import { blockIfTimed, captureWithAI, enrichTypedInboxItem, enrichTypedTask, transcribeAudio } from '../capture/api'
+import { enrichTypedInboxItem, transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
 import { useAuth } from '../auth/AuthProvider'
-import { hasStructure, parseCommand, stripPriorityAndDuration } from './parseCommand'
+import { hasStructure, parseCommand } from './parseCommand'
+import { addTypedTask } from './quickAdd'
 import { formatDueChip } from './dueChip'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { playSound } from '../../lib/sounds'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
-import { Chip, KeyChip, KeyCombo } from '../../components/kit'
+import { Chip, KeyChip } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { pickPhotos, usePaperStore } from '../paper/paperStore'
 import { imageFiles } from '../paper/image'
@@ -89,7 +89,6 @@ export function CommandBar() {
   const setOpen = useCommandBarStore((s) => s.setOpen)
   const mobile = useIsMobile()
   const [text, setText] = useState('')
-  const [aiBusy, setAiBusy] = useState(false)
   const [jumpSelected, setJumpSelected] = useState(false)
   const [hint, setHint] = useState(false)
   const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing'>('off')
@@ -155,36 +154,18 @@ export function CommandBar() {
     // Written at once from the local parse (never waits on the network); then the AI's read fills in
     // whatever the typed tokens left empty, or decides where a plain line belongs (Kai 2026-10-07:
     // "every property is extracted… let the AI understand the intent and decide").
+    // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture": the AI fills every typed
+    // capture after it lands anyway). Each landing says where it went — no silent landings.
     if (hasStructure(parsed)) {
-      const task = createTask({
-        title: parsed.title || trimmed,
-        domainId: parsed.domainId,
-        projectId: parsed.projectId,
-        dueAt: parsed.dueAt,
-        durationMin: parsed.durationMin,
-        priority: parsed.priority,
-        labels: parsed.labels,
-      })
-      // A typed time ("crypto session 4am") puts it on the calendar as a block; a date alone doesn't.
-      blockIfTimed(task, parsed.dueTimed)
-      void enrichTypedTask(task, trimmed)
+      // The same rule as Tasks' quick add (./quickAdd): a typed time puts it on the calendar as a
+      // block, a date alone doesn't; "Added to Tomorrow · Shaheen" with Undo; the AI fills the rest.
+      addTypedTask(parsed, trimmed, parsed.projectMatch ?? parsed.domainMatch)
     } else {
       void enrichTypedInboxItem(captureText(trimmed), trimmed)
+      useToastStore.getState().push({ message: 'Added to Inbox' })
     }
     setText('')
     close()
-  }
-
-  function submitWithAI(close: () => void) {
-    const trimmed = text.trim()
-    if (!trimmed || aiBusy) return
-    // Strip just the local `!`/`30m` tokens before the AI sees the text — date/#tag parsing
-    // stays the AI's own job, so only these two get resolved client-side here.
-    const { text: stripped, priority, durationMin } = stripPriorityAndDuration(trimmed)
-    setAiBusy(true)
-    setText('')
-    close()
-    void captureWithAI(stripped || trimmed, 'text', null, { priority, durationMin }).finally(() => setAiBusy(false))
   }
 
   // ── The mic ──
@@ -298,9 +279,6 @@ export function CommandBar() {
         } else if (e.key === 'Enter' && jumpSelected && jumpView) {
           e.preventDefault()
           jumpTo(jumpView)
-        } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-          e.preventDefault()
-          submitWithAI(close)
         } else if (e.key === 'Enter') {
           submit(close)
         }
@@ -522,9 +500,9 @@ export function CommandBar() {
               </div>
             )}
 
-            {/* Polish F2b (J-17): the same keys as the `?` overlay's Command bar rows (↵ quick add,
-                ⌘ ↵ AI capture), drawn as keycaps instead of "Enter = …" text. While dictating, the
-                row says what the mic is doing instead. */}
+            {/* Polish F2b (J-17): the same key as the `?` overlay's Command bar row (↵ quick add), drawn
+                as a keycap instead of "Enter = …" text — Enter is the one capture path (Kai 2026-10-12).
+                While dictating, the row says what the mic is doing instead. */}
             <div aria-live="polite" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               {dictation === 'listening' ? (
                 <>
@@ -535,8 +513,6 @@ export function CommandBar() {
               ) : (
                 <>
                   <KeyChip text="↵" size="sm" /> quick add
-                  <span aria-hidden="true">·</span>
-                  <KeyCombo keys={['⌘', '↵']} size="sm" /> AI capture
                 </>
               )}
             </div>

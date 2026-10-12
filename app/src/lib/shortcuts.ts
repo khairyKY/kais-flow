@@ -57,8 +57,8 @@ export const keyCap = (key: string): string => (key === ' ' ? 'Space' : key === 
 
 /** Command bar's own inline capture syntax — static so the cheatsheet's Command bar section always renders. */
 export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
+  // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture" — the AI fills every capture after it lands).
   { keys: ['↵'], label: 'Quick add' },
-  { keys: ['⌘/Ctrl', '↵'], label: 'AI capture' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },

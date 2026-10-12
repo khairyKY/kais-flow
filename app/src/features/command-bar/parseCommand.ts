@@ -47,8 +47,8 @@ export interface PriorityDurationTokens {
 
 /** Extracts and strips just the local `!`/`!!`/`!!!` priority flag and `30m`/`1h`/`1h30m`
  * duration syntax — the two tokens with no AI-side equivalent worth waiting on. Shared by the
- * full `parseCommand` pipeline below and the command bar's Ctrl+Enter AI-capture path, which
- * strips these locally but leaves date/tag parsing to the AI parse itself. */
+ * full `parseCommand` pipeline below and the AI capture paths (voice, Quick Capture), which strip
+ * these locally but leave date/tag parsing to the AI parse itself. */
 export function stripPriorityAndDuration(input: string): PriorityDurationTokens {
   let text = input
 

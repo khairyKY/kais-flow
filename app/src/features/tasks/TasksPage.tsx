@@ -10,7 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -18,8 +18,8 @@ import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
 import { labelOptions } from './taskDisplay'
-import { parseCommand, quickAddTask } from '../command-bar/parseCommand'
-import { blockIfTimed } from '../capture/api'
+import { parseCommand } from '../command-bar/parseCommand'
+import { addTypedTask } from '../command-bar/quickAdd'
 import { useListKeys } from '../../components/useListKeys'
 import { MovePicker } from './MovePicker'
 import { placeKey, type MoveTarget } from './move'
@@ -828,12 +828,13 @@ export function TasksPage() {
             onSubmit={(e) => {
               e.preventDefault()
               if (title.trim()) {
-                // The command bar's own instant parse (no AI): a date and time on the user's clock,
-                // #project, !priority, 30m, *labels. A typed time puts it on the calendar, as there.
+                // The command bar's one capture rule (command-bar/quickAdd): the instant local parse — a
+                // date and time on the user's clock, #project, !priority, 30m, *labels — lands it now (a
+                // typed time on the calendar too), a toast says where it went, the AI fills gaps after.
+                // Here it is always a task (it's the Tasks page); a line naming no day on Today is today's.
                 const parsed = parseCommand(title, domains, projects, { zone: 'cairo' })
-                const input = quickAddTask(parsed, title.trim())
-                const task = createTask({ ...input, dueAt: input.dueAt ?? (activeTab === 'today' ? now.toISOString() : null) })
-                blockIfTimed(task, parsed.dueTimed)
+                const place = parsed.projectMatch ?? parsed.domainMatch
+                addTypedTask(parsed, title.trim(), place, activeTab === 'today' ? now.toISOString() : null)
                 seedPlant(e.currentTarget, motion) // Motion 5f — the seed drops out of the quick-add
               }
               setTitle('')
