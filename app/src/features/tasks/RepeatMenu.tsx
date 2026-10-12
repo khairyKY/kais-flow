@@ -64,6 +64,7 @@ export function RepeatMenu({ onCustom, ...p }: RepeatProps & {
   return (
     <ContextMenu
       position={p.position}
+      label="Repeat"
       onClose={() => !toCustom.current && p.onClose()}
       items={[
         ...items.map((o) => ({ label: o.on ? `${o.label} ✓` : o.label, onClick: o.run })),
