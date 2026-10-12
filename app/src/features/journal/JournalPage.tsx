@@ -11,6 +11,7 @@ import { toastUndo } from '../../lib/undo'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { Button } from '../../components/kit'
 import { ActionSheet } from '../../components/ActionSheet'
+import { useIsMobile } from '../../components/BottomSheet'
 import { DateField } from '../../components/DatePicker'
 import { addDays } from '../../components/pickerMath'
 import { useDayRollover } from '../calendar/useDayRollover'
@@ -51,18 +52,6 @@ function EntryPhotos({ paths, onRemove }: { paths: string[]; onRemove: (path: st
       ))}
     </div>
   )
-}
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
 }
 
 const PROMPTS = [
@@ -534,7 +523,7 @@ export function JournalPage() {
             className="kf-hit"
             aria-label={`Delete ${entryTime(entry.created_at)} entry`}
             onClick={() => removeEntry(entry)}
-            style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.12em', textTransform: 'uppercase', userSelect: 'none' }}
+            style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', userSelect: 'none' }}
           >
             Delete
           </button>
@@ -584,15 +573,15 @@ export function JournalPage() {
             style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, borderRadius: 3 }}
           />
           <div style={{ display: 'flex', gap: 6, marginTop: 4, justifyContent: 'flex-end' }}>
-            <button onClick={() => setShowAddCommentary(false)} style={{ ...hit, border: 'none', background: 'transparent', font: 'inherit', fontSize: '10.5px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleAddCommentary} style={{ ...hit, border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '10.5px', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
+            <button onClick={() => setShowAddCommentary(false)} style={{ ...hit, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleAddCommentary} style={{ ...hit, border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-meta-l)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
           </div>
         </div>
       ) : (
         <button
           type="button"
           onClick={() => setShowAddCommentary(true)}
-          style={{ ...footLink, ...hit, display: 'block', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', userSelect: 'none' }}
+          style={{ ...footLink, ...hit, display: 'block', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', userSelect: 'none' }}
         >
           ＋ add a thought
         </button>
@@ -672,16 +661,17 @@ export function JournalPage() {
 
           {/* The desktop's "This week" days, the phone's way: ‹ a day back · jump to any day · a day on › */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10 }}>
-            <button type="button" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 22, color: 'var(--ink-muted)' }}>‹</button>
+            <button type="button" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 'var(--fs-display-l)', color: 'var(--ink-muted)' }}>‹</button>
             <DateField
               value={selectedDate}
               onChange={(v) => v && setSelectedDate(v)}
               title="Go to day"
               max={todayStr}
               clearable={false}
-              style={{ minHeight: 44, padding: '0 12px', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 8 }}
+              style={{ minHeight: 44, padding: '0 12px', font: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 8 }}
             />
-            <button type="button" aria-label="Next day" disabled={selectedDate >= todayStr} onClick={() => setSelectedDate(addDays(selectedDate, 1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 22, color: selectedDate >= todayStr ? 'var(--ink-hairline)' : 'var(--ink-muted)', cursor: selectedDate >= todayStr ? 'default' : 'pointer' }}>›</button>
+            {/* ds-ok: the disabled › is an icon glyph on a disabled control (non-text, 3:1 is enough); --ink-faint would read as enabled */}
+            <button type="button" aria-label="Next day" disabled={selectedDate >= todayStr} onClick={() => setSelectedDate(addDays(selectedDate, 1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 'var(--fs-display-l)', color: selectedDate >= todayStr ? 'var(--ink-hairline)' : 'var(--ink-muted)', cursor: selectedDate >= todayStr ? 'default' : 'pointer' }}>›</button>
           </div>
 
           {/* Segmented Tab */}
@@ -716,10 +706,10 @@ export function JournalPage() {
 
               {/* Prompt — "↻" is the desktop's "↻ another" */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 20 }}>
-                <div className={motion ? 'kf-ink' : undefined} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', lineHeight: 1.4 }}>
+                <div className={motion ? 'kf-ink' : undefined} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)', lineHeight: 1.4 }}>
                   {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
                 </div>
-                {!firstPage && <button type="button" aria-label="Another prompt" onClick={nextPrompt} style={{ ...footLink, flex: 'none', minWidth: 44, minHeight: 44, marginTop: -10, fontSize: 18, color: 'var(--ink-faint)' }}>↻</button>}
+                {!firstPage && <button type="button" aria-label="Another prompt" onClick={nextPrompt} style={{ ...footLink, flex: 'none', minWidth: 44, minHeight: 44, marginTop: -10, fontSize: 'var(--fs-lead)', color: 'var(--ink-faint)' }}>↻</button>}
               </div>
 
               {/* Writing Card */}
@@ -781,7 +771,7 @@ export function JournalPage() {
                       value={val}
                       onChange={(e) => handleGratitudeChange(idx + 1, e.target.value)}
                       placeholder={idx === 2 ? "Add a third..." : `Something you are grateful for...`}
-                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '14.5px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}
+                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-body)', color: val ? 'var(--ink-body)' : 'var(--ink-faint)', outline: 'none', padding: 0 }}
                     />
                   </div>
                 ))}
@@ -1073,7 +1063,7 @@ export function JournalPage() {
                       value={val}
                       onChange={(e) => handleGratitudeChange(idx + 1, e.target.value)}
                       placeholder={idx === 2 ? "Add a third..." : `Something you are grateful for...`}
-                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '15px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}
+                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-body)', color: val ? 'var(--ink-body)' : 'var(--ink-faint)', outline: 'none', padding: 0 }}
                     />
                   </div>
                 ))}
@@ -1153,8 +1143,8 @@ export function JournalPage() {
                 (growth stages never lie, punch 10). */}
             <img src={`/ds/assets/fern/${keptDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(keptDays)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up this month</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(keptDays)}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up this month</div>
             </div>
           </div>
         </section>
