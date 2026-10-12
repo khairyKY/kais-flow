@@ -1,20 +1,21 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { BackLink } from '../../components/kit'
+import { Skeleton, ErrorCard } from '../../components/States'
 import {
   useBooks,
   createBook,
   updateBookProgress,
   updateBook,
-  deleteBook,
+  removeBookWithUndo,
   useNotes,
   createNote,
   updateNote,
-  deleteNote,
+  removeNoteWithUndo,
   useQuotes,
   createQuote,
   updateQuote,
-  deleteQuote,
+  removeQuoteWithUndo,
   useCommentaries,
   createCommentary
 } from './api'
@@ -61,9 +62,12 @@ export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Queries
-  const { data: books = [] } = useBooks()
-  const { data: notes = [] } = useNotes()
-  const { data: quotes = [] } = useQuotes()
+  const booksQ = useBooks()
+  const notesQ = useNotes()
+  const quotesQ = useQuotes()
+  const { data: books = [] } = booksQ
+  const { data: notes = [] } = notesQ
+  const { data: quotes = [] } = quotesQ
   const { data: journalEntries = [] } = useJournalEntries()
   const dailyPagesCount = journalEntries.filter((e) => !e.deleted_at).length
 
@@ -307,6 +311,28 @@ export function LibraryPage() {
   const motion = useMotionEnabled()
   const hasSelection = !!(selectedNoteId || selectedQuoteId || selectedBookId)
 
+  // Never "No books found" / "The shelf is bare" while the shelf is still loading or didn't load:
+  // a skeleton until all three lists are in, a Retry card when one failed with nothing cached.
+  const shelfQs = [booksQ, notesQ, quotesQ]
+  const shelfFailed = shelfQs.some((q) => q.isError && q.data === undefined)
+  if (shelfFailed || shelfQs.some((q) => q.isPending)) {
+    return (
+      <div style={{ padding: isMobile ? 0 : '26px 16px' }}>
+        {shelfFailed ? <ErrorCard message="Couldn't load the library." onRetry={() => shelfQs.forEach((q) => void q.refetch())} /> : <Skeleton rows={4} />}
+      </div>
+    )
+  }
+
+  /** "Remove …" = Undo toast, no confirm (Flow Audit §4). A real button, 44px tall on a phone. */
+  const removeButton = (label: string, onClick: () => void) => (
+    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+      {label}
+    </button>
+  )
+  const removeBook = (b: Book) => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) }
+  const removeNote = (n: Note) => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) }
+  const removeQuote = (q: Quote) => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) }
+
   if (isMobile) {
     return (
       <div style={{ width: '100%', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -522,6 +548,7 @@ export function LibraryPage() {
                       <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 2 }}>{n.body}</div>
                     </div>
                   ))}
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove book', () => removeBook(activeBook))}</div>
                 </div>
               )}
 
@@ -554,6 +581,7 @@ export function LibraryPage() {
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
                   </div>
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove note', () => removeNote(activeNote))}</div>
                 </div>
               )}
 
@@ -586,6 +614,7 @@ export function LibraryPage() {
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
                   </div>
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove quote', () => removeQuote(activeQuote))}</div>
                 </div>
               )}
             </div>
@@ -1098,7 +1127,7 @@ export function LibraryPage() {
                 ))}
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-                  <span onClick={() => { deleteBook(activeBook.id); setSearchParams({ tab: 'books' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove book…</span>
+                  {removeButton('Remove book', () => removeBook(activeBook))}
                   <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>finish it and the frond unfurls flat ✿</span>
                 </div>
               </div>
@@ -1174,7 +1203,7 @@ export function LibraryPage() {
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
-                      <span onClick={() => { deleteNote(activeNote.id); setSearchParams({ tab: 'notes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove note…</span>
+                      {removeButton('Remove note', () => removeNote(activeNote))}
                       <span className="fhelp">append-only — old thoughts stay as they were written</span>
                     </div>
                   </div>
@@ -1246,7 +1275,7 @@ export function LibraryPage() {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
-                      <span onClick={() => { deleteQuote(activeQuote.id); setSearchParams({ tab: 'quotes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove quote…</span>
+                      {removeButton('Remove quote', () => removeQuote(activeQuote))}
                       <span className="fhelp">append-only — old thoughts stay as they were written</span>
                     </div>
                   </div>

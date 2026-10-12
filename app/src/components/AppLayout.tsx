@@ -93,9 +93,9 @@ const CULTIVATE: NavItem[] = [
   { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
   // Journal is back per D-1 (Kai, 2026-07-26): one daily page, many timestamped entries.
   { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
-  // [K-26] 2026-07-26 (punch 65): Library is PARKED to v2 entirely — nav row out, route stays
-  // URL-only so nothing is lost when it returns (same treatment as Journal below).
-  // { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
+  // [K-26] 2026-07-26 (punch 65) parked the Library; fix-grammar (2026-10-12) brings its row back
+  // beside Journal — it was reachable only through Journal or the URL. Same row as before the park.
+  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
   { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'color-mix(in srgb, var(--acc-clover) 45%, transparent)' },
   // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
   { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'color-mix(in srgb, var(--acc-gold) 45%, transparent)' },
