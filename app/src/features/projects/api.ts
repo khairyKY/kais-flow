@@ -107,6 +107,12 @@ export function restoreProject(project: Project): void {
   logActivity('project.restored', 'project', project.id, {})
 }
 
+/** The Finished list's restore (desktop and phone): back to active, "Restored · Undo" files it away again. */
+export function restoreProjectWithUndo(project: Project): void {
+  restoreProject(project)
+  toastUndo('Restored', () => archiveProject(project))
+}
+
 /** Kai 2026-10-03 (Projects ⋯ / right-click → Delete): to Trash, no confirm, "Moved to Trash ·
  * Undo". Its tasks keep their project_id while it rests there, so Undo or Trash → Restore puts
  * everything back; only composting it (30 days) lets them go, to no project (migration 0044). */
@@ -248,6 +254,11 @@ export function renameProjectChecklistItem(project: Project, itemId: string, tit
   const checklist = project.checklist.map((item) => (item.id === itemId ? { ...item, title } : item))
   writeRow('projects', { ...project, checklist, updated_at: nowIso() })
   logActivity('project.checklist_item_renamed', 'project', project.id, { item_id: itemId, title })
+}
+
+/** The checklist's Undo writer, like setProjectMilestones: the exact prior array, same outbox path. */
+export function setProjectChecklist(project: Project, checklist: NonNullable<Project['checklist']>): void {
+  writeRow('projects', { ...project, checklist, updated_at: nowIso() })
 }
 
 export function removeProjectChecklistItem(project: Project, itemId: string): void {
