@@ -303,7 +303,7 @@ export function LibraryPage() {
 
   // Book progress math
   const progressPercent = useMemo(() => {
-    if (!activeBook) return 0
+    if (!activeBook || !(activeBook.total_pages > 0)) return 0 // no page count: 0%, never NaN%
     return Math.round((activeBook.current_page / activeBook.total_pages) * 100)
   }, [activeBook])
 
@@ -1212,7 +1212,8 @@ export function LibraryPage() {
                   /* Quote Reader Mode */
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="fhelp">Quotes Shelf / from {activeQuote.source || 'commonplace'}</span>
+                      {/* Only a source that's stored — no invented "commonplace" (Kai 2026-10-12: Library shows true data). */}
+                      <span className="fhelp">Quotes Shelf{activeQuote.source ? ` / from ${activeQuote.source}` : ''}</span>
                       {/* WB-4 punch 9: "· resurfaced twice" was a design literal — no resurface
                           count is stored for a quote. The kept-date beside it is real. */}
                       <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
