@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, cadenceFor, draftToRoutineFields, formChanged, routineToForm, type RoutineFormState } from './newRoutine'
+import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, cadenceFor, draftToRoutineFields, formChanged, moveItem, parseMinutes, readSteps, routineToForm, stepsTotal, writeSteps, type RoutineFormState } from './newRoutine'
 import type { Routine } from '../../lib/types'
 
 // Polish B (audit-newuser, "Create routine"): typing only a name used to save the export's
@@ -53,6 +53,7 @@ describe('Edit routine form', () => {
     steps: ['Neck rolls', 'Hamstrings'],
     domain_id: 'd1',
     goal_days: null,
+    plant: 'vine',
     created_at: '2026-10-01T00:00:00Z',
     updated_at: '2026-10-01T00:00:00Z',
   }
@@ -65,10 +66,11 @@ describe('Edit routine form', () => {
       customWeekdays: [1, 3, 5],
       reminderOn: true,
       reminderTime: '21:30',
-      steps: ['Neck rolls', 'Hamstrings'],
+      steps: [{ text: 'Neck rolls' }, { text: 'Hamstrings' }],
       domainId: 'd1',
       isChallenge: false,
       challengeDays: 30,
+      plant: 'vine',
     })
   })
 
@@ -82,7 +84,7 @@ describe('Edit routine form', () => {
   })
 
   it('applies edits and keeps id, active and created_at', () => {
-    const form = { ...routineToForm(base), name: ' Long stretch ', timeMode: 'morning' as const, repeatMode: 'daily' as const, reminderOn: false, steps: ['Neck rolls', '  '], domainId: '' }
+    const form = { ...routineToForm(base), name: ' Long stretch ', timeMode: 'morning' as const, repeatMode: 'daily' as const, reminderOn: false, steps: [{ text: 'Neck rolls' }, { text: '  ', minutes: 4 }], domainId: '' }
     expect(applyRoutineForm(base, form, '2026-10-12', 'NOW')).toEqual({
       ...base,
       name: 'Long stretch',
@@ -123,14 +125,15 @@ describe('Edit routine form', () => {
 
 // The outside-click rule (Flow Audit): a form with unsaved changes ignores a click outside it.
 describe('formChanged', () => {
-  const start: RoutineFormState = { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: false, challengeDays: 30 }
+  const start: RoutineFormState = { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: false, challengeDays: 30, plant: 'vine' }
   it('a form as it opened is clean, whatever order its fields were built in', () => {
     const { name, steps, ...rest } = start
     expect(formChanged({ steps, ...rest, name }, start)).toBe(false)
   })
   it('typing, a step, a weekday or a toggle makes it dirty', () => {
     expect(formChanged({ ...start, name: 'S' }, start)).toBe(true)
-    expect(formChanged({ ...start, steps: [''] }, start)).toBe(true)
+    expect(formChanged({ ...start, steps: [{ text: '' }] }, start)).toBe(true)
+    expect(formChanged({ ...start, plant: 'fern' }, start)).toBe(true)
     expect(formChanged({ ...start, customWeekdays: [1] }, start)).toBe(true)
     expect(formChanged({ ...start, reminderOn: true }, start)).toBe(true)
   })
@@ -140,5 +143,65 @@ describe('the challenge end day', () => {
   it('is pure day-key math — across a month end and the DST switch, on any device zone', () => {
     expect(addDays('2026-10-03', 29)).toBe('2026-11-01')
     expect(addDays('2026-10-29', 1)).toBe('2026-10-30')
+  })
+})
+
+// Routines 2 (2a/2b): a step carries its minutes, the list its total, and the order is the user's.
+describe('routine steps with minutes', () => {
+  it('old string steps still read, as steps with no minutes; junk is dropped', () => {
+    expect(readSteps(['Neck rolls', { text: 'Hips', minutes: 3 }, { text: 'Breathe', minutes: 0 }, null as never, { minutes: 2 } as never])).toEqual([
+      { text: 'Neck rolls' },
+      { text: 'Hips', minutes: 3 },
+      { text: 'Breathe' },
+    ])
+    expect(readSteps(undefined)).toEqual([])
+  })
+
+  it('a step without minutes is stored as the old bare string; blank steps are dropped', () => {
+    expect(writeSteps([{ text: ' Neck rolls ' }, { text: 'Hips', minutes: 3 }, { text: '   ', minutes: 5 }])).toEqual(['Neck rolls', { text: 'Hips', minutes: 3 }])
+  })
+
+  it('round-trips through the edit form unchanged', () => {
+    const stored = ['Neck rolls', { text: 'Hips', minutes: 3 }]
+    expect(writeSteps(readSteps(stored))).toEqual(stored)
+  })
+
+  it("adds up 2a's total, ignoring steps with no minutes", () => {
+    expect(stepsTotal([{ text: 'a', minutes: 2 }, { text: 'b', minutes: 3 }, { text: 'c' }, { text: 'd', minutes: 5 }])).toBe(10)
+    expect(stepsTotal([{ text: 'a' }])).toBe(0)
+  })
+
+  it('the minutes chip keeps digits only; empty or 0 means no minutes; at most 999', () => {
+    expect(parseMinutes('12')).toBe(12)
+    expect(parseMinutes('5 min')).toBe(5)
+    expect(parseMinutes('')).toBeUndefined()
+    expect(parseMinutes('0')).toBeUndefined()
+    expect(parseMinutes('12345')).toBe(123)
+  })
+
+  it('moves a step to a new place (drag, Move up / down, ↑/↓); out of range changes nothing', () => {
+    expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a'])
+    expect(moveItem(['a', 'b', 'c'], 2, 1)).toEqual(['a', 'c', 'b'])
+    expect(moveItem(['a', 'b', 'c'], 0, -1)).toEqual(['a', 'b', 'c'])
+    expect(moveItem(['a', 'b', 'c'], 2, 3)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('a reordered, timed step list saves in its new order', () => {
+    const r = { id: 'r1', name: 'Stretch', time_of_day: null, clock_time: null, cadence: { weekdays: [0, 1, 2, 3, 4, 5, 6] }, challenge_start: null, challenge_end: null, active: true, steps: ['a', 'b'], created_at: 'T', updated_at: 'T' }
+    const form = routineToForm(r)
+    const next = applyRoutineForm(r, { ...form, steps: moveItem([...form.steps, { text: 'c', minutes: 5 }], 2, 0) }, '2026-10-13', 'NOW')
+    expect(next?.steps).toEqual([{ text: 'c', minutes: 5 }, 'a', 'b'])
+  })
+})
+
+describe('the routine plant (0067)', () => {
+  const r = { id: 'r1', name: 'Stretch', time_of_day: null, clock_time: null, cadence: { weekdays: [1] }, challenge_start: null, challenge_end: null, active: true, created_at: 'T', updated_at: 'T' }
+  it('a row from before 0067 grew the vine, and saves it as vine', () => {
+    expect(routineToForm(r).plant).toBe('vine')
+    expect(applyRoutineForm(r, routineToForm(r), '2026-10-13', 'NOW')?.plant).toBe('vine')
+  })
+  it('the picked species is saved', () => {
+    expect(applyRoutineForm(r, { ...routineToForm(r), plant: 'clover' }, '2026-10-13', 'NOW')?.plant).toBe('clover')
+    expect(routineToForm({ ...r, plant: 'daisy' }).plant).toBe('daisy')
   })
 })

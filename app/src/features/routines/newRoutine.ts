@@ -1,7 +1,8 @@
-import type { Cadence, Routine } from '../../lib/types'
+import type { Cadence, Routine, RoutinePlant, RoutineStep } from '../../lib/types'
 import { challengeDays } from './streaks'
 import { addDays } from '../../components/pickerMath'
 import { NAMED_TIMES } from './routineGrouping'
+import { plantOf } from './plant'
 
 // The New routine form's state → the fields createRoutine/createChallenge take. Kept out of the
 // view so the defaults can't quietly drift back to Routines.dc.html #2a's *filled sample*
@@ -65,10 +66,63 @@ export function draftToRoutineFields(draft: NewRoutineDraft): NewRoutineFields |
 
 /** Everything the form holds, not just what draftToRoutineFields reads. */
 export interface RoutineFormState extends NewRoutineDraft {
-  steps: string[]
+  steps: StepDraft[]
   domainId: string
   isChallenge: boolean
   challengeDays: number
+  plant: RoutinePlant
+}
+
+// ── Steps (0028 + 2a's minutes). A stored step is a bare string (no minutes — every step before
+// 2026-10-13) or { text, minutes }; the form and the row fold only ever see StepDraft. ──
+
+export interface StepDraft {
+  text: string
+  minutes?: number
+}
+
+/** A routine's stored steps as drafts: old string steps read as steps with no minutes. */
+export function readSteps(steps: readonly RoutineStep[] | null | undefined): StepDraft[] {
+  return (steps ?? []).flatMap((s) => {
+    if (typeof s === 'string') return [{ text: s }]
+    if (!s || typeof s.text !== 'string') return []
+    const minutes = cleanMinutes(s.minutes)
+    return [minutes ? { text: s.text, minutes } : { text: s.text }]
+  })
+}
+
+/** The form's steps as stored: trimmed, blank ones dropped. A step without minutes stays a bare
+ * string, so a build from before minutes (an Android/desktop app not yet updated) still reads it. */
+export function writeSteps(steps: readonly StepDraft[]): RoutineStep[] {
+  return steps.flatMap((s) => {
+    const text = s.text.trim()
+    if (!text) return []
+    const minutes = cleanMinutes(s.minutes)
+    return [minutes ? { text, minutes } : text]
+  })
+}
+
+/** 2a's "10 min total": the steps' minutes added up (0 when none has any). */
+export function stepsTotal(steps: readonly StepDraft[]): number {
+  return steps.reduce((sum, s) => sum + (cleanMinutes(s.minutes) ?? 0), 0)
+}
+
+/** What the minutes chip holds after a keystroke: digits only, empty = no minutes, at most 999. */
+export function parseMinutes(typed: string): number | undefined {
+  return cleanMinutes(Number(typed.replace(/\D/g, '').slice(0, 3)))
+}
+
+function cleanMinutes(n: unknown): number | undefined {
+  return typeof n === 'number' && Number.isFinite(n) && n >= 1 ? Math.min(999, Math.round(n)) : undefined
+}
+
+/** `list` with the item at `from` moved to `to` (a drag, Move up / down, ↑/↓). Out of range = unchanged. */
+export function moveItem<T>(list: readonly T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return [...list]
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
 }
 
 /** `key` + n calendar days (pure day-key math — no device clock, no DST). */
@@ -99,10 +153,11 @@ export function routineToForm(r: Routine): RoutineFormState {
     ...repeatOf(r.cadence?.weekdays ?? []),
     reminderOn: !!r.clock_time,
     reminderTime: r.clock_time ?? NEW_ROUTINE_DEFAULTS.reminderTime,
-    steps: r.steps ?? [],
+    steps: readSteps(r.steps),
     domainId: r.domain_id ?? '',
     isChallenge: span != null || r.goal_days != null,
     challengeDays: r.goal_days ?? span ?? 30,
+    plant: plantOf(r),
   }
 }
 
@@ -121,11 +176,12 @@ export function applyRoutineForm(r: Routine, form: RoutineFormState, todayKey: s
     time_of_day: keepCustomTime ? r.time_of_day : fields.timeOfDay,
     cadence: fields.cadence,
     clock_time: fields.clockTime,
-    steps: form.steps.map((s) => s.trim()).filter(Boolean),
+    steps: writeSteps(form.steps),
     domain_id: form.domainId || null,
     challenge_start: start,
     challenge_end: start ? addDays(start, form.challengeDays - 1) : null,
     goal_days: challenge ? form.challengeDays : null,
+    plant: form.plant,
     updated_at: nowIso,
   }
 }

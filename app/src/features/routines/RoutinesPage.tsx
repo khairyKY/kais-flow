@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
 import { challengeDays, computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, streakOfGoal, todayTally, type StreakStatus } from './streaks'
 import { vineStage } from '../../lib/growthStages'
+import { plantOf, plantSrc } from './plant'
+import { readSteps, stepsTotal } from './newRoutine'
 import { groupRoutinesByTime } from './routineGrouping'
 import { NewRoutineForm } from './NewRoutineForm'
 import { StreakTrellis } from './StreakTrellis'
@@ -66,8 +68,10 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
   // Flow Audit §5: a routine's steps were written and only ever read back into the edit form.
-  // They fold out under the row you check it from — read-only; editing stays in the form.
-  const steps = (routine.steps ?? []).filter((s) => s.trim())
+  // They fold out under the row you check it from — read-only; editing stays in the form. Routines 2:
+  // each with its minutes, and the toggle carries 2a's total ("3 steps · 10 min").
+  const steps = readSteps(routine.steps).filter((s) => s.text.trim())
+  const total = stepsTotal(steps)
   const [showSteps, setShowSteps] = useState(false)
 
   function toggle() {
@@ -127,17 +131,23 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
           className="kf-hit"
           aria-expanded={showSteps}
           onClick={() => setShowSteps((v) => !v)}
-          style={{ flex: 'none', padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ flex: 'none', padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
-          {steps.length} {steps.length === 1 ? 'step' : 'steps'} {showSteps ? '▾' : '▸'}
+          {steps.length} {steps.length === 1 ? 'step' : 'steps'}
+          {total > 0 && ` · ${total} min`} {showSteps ? '▾' : '▸'}
         </button>
       )}
     </>
   )
   const stepsFold = showSteps && (
-    <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', listStyle: 'decimal', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+    <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', listStyle: 'decimal', fontSize: 'var(--fs-body-s)', lineHeight: 1.6, color: 'var(--ink-muted)' }}>
       {steps.map((s, i) => (
-        <li key={i}>{s}</li>
+        <li key={i}>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <span style={{ flex: 1, minWidth: 0 }}>{s.text}</span>
+            {s.minutes != null && <span style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{isMobile ? `${s.minutes}m` : `${s.minutes} min`}</span>}
+          </span>
+        </li>
       ))}
     </ol>
   )
@@ -201,7 +211,8 @@ function GardenCard({ routine, completions, compact }: { routine: Routine; compl
   return (
     <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: compact ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        <img src={`${A}/vine/${stage}.png`} alt="" style={{ maxHeight: compact ? 52 : 74, filter: 'var(--shadow-drop-sm)', opacity: stage === 'bare' ? 0.85 : 1 }} />
+        {/* its own species (0067) at the streak's stage */}
+        <img src={plantSrc(plantOf(routine), current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: 'var(--shadow-drop-sm)', opacity: stage === 'bare' ? 0.85 : 1 }} />
       </div>
       <div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
@@ -256,7 +267,7 @@ export function RoutinesPage() {
       <button
         type="button"
         onClick={() => setFormOpen({ challenge: true })}
-        style={{ marginTop: activeChallenge ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+        style={{ marginTop: activeChallenge ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
       >
         ＋ Start a challenge
       </button>

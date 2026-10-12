@@ -151,15 +151,24 @@ export interface Routine {
   challenge_start: string | null
   challenge_end: string | null
   active: boolean
-  /** Steps checklist (migration 0028): ordered labels, Routines.dc.html "what it's made of". */
-  steps?: string[]
+  /** Steps checklist (migration 0028), in order — Routines.dc.html "what it's made of". A bare string
+   * is a step with no minutes (every step before 2026-10-13); `{ text, minutes }` carries 2a's "2 min".
+   * Read through features/routines/newRoutine.ts `readSteps`, never directly. */
+  steps?: RoutineStep[]
   /** Domain this routine tends (migration 0028), per the New Routine form's Domain picker. */
   domain_id?: string | null
   /** The streak goal in days (migration 0046), null = none: the streak reads "12 / 30". */
   goal_days?: number | null
+  /** Its plant (migration 0067, Routines.dc.html 2a "Its plant"); absent on a row cached before it = 'vine'. */
+  plant?: RoutinePlant
   created_at: string
   updated_at: string
 }
+
+export type RoutineStep = string | { text: string; minutes?: number }
+
+/** The species 2a's picker lists — `routines.plant`'s check (0067). */
+export type RoutinePlant = 'vine' | 'cherry' | 'fern' | 'clover' | 'daisy'
 
 export interface RoutineCompletion {
   id: string
