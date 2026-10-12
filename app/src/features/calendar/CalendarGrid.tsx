@@ -10,7 +10,9 @@ import { Icon } from '../../components/Icon'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
-import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { addDays } from '../../components/pickerMath'
+import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
@@ -153,6 +155,18 @@ function paintColor(el: HTMLElement, color: string | null | undefined): void {
   s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${color} 65%, transparent)`)
 }
 
+/** Calendar 3e: a multi-day span is drawn as one all-day piece per day (`<id>§<day>`); every
+ * click, menu and lookup acts on the block itself. */
+const SEG = '§'
+const blockIdOf = (ev: { id: string; extendedProps: Record<string, unknown> }): string => (ev.extendedProps.kfSegOf as string | undefined) ?? ev.id
+
+/** Date keys from `first` to `last`, inclusive (at most `max`). */
+function dayRange(first: string, last: string, max = 62): string[] {
+  const out: string[] = []
+  for (let d = first; d <= last && out.length < max; d = addDays(d, 1)) out.push(d)
+  return out
+}
+
 function flashSnap(el: HTMLElement): void {
   el.classList.add('kf-snap-flash')
   window.setTimeout(() => el.classList.remove('kf-snap-flash'), 250)
@@ -278,6 +292,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     return () => ro.disconnect()
   }, [])
   const narrow = initialView !== 'dayGridMonth' && isNarrow(gridWidth, visibleDays)
+  // Calendar 3e: the dates on screen (the user's zone), so a multi-day span is cut into the pieces
+  // that show. Null until FullCalendar reports its first range.
+  const [shownDays, setShownDays] = useState<string[] | null>(null)
+  const spanOf = (e: CalendarGridEvent) => ({ starts_at: e.start, ends_at: e.end, all_day: !!e.allDay })
+  const isSpan = (e: CalendarGridEvent) => isMultiDaySpan(spanOf(e), zone)
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
   const stopHoverRef = useRef<(() => void) | null>(null)
@@ -327,7 +346,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   // J-13 — §6 overlap geometry, decided here and drawn by CalendarGrid.css (FC's own shingle
   // overprinted titles). All-day chips live in the band above the grid and never collide.
   const overlap = layoutOverlaps(
-    events.filter((e) => !e.allDay).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
+    events.filter((e) => !e.allDay && !isSpan(e)).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
     pinnedId,
   )
   const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24, timeZone: zone })
@@ -416,6 +435,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       headerToolbar={hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
       datesSet={(arg: DatesSetArg) => {
         onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
+        const days = dayRange(zoneDateKey(arg.view.activeStart, zone), zoneDateKey(new Date(arg.view.activeEnd.getTime() - 1), zone))
+        setShownDays((cur) => (cur && cur.join() === days.join() ? cur : days))
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
       }}
       height="100%"
@@ -490,7 +511,25 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       unselectCancel=".kf-quickcreate"
       editable
       droppable
-      events={events.map((e) => {
+      events={events.flatMap<Record<string, unknown>>((e) => {
+        // Calendar 3e "multi-day span": in the all-day band, one piece per day on screen — only the
+        // outer corners round, the open edges read « / », the title on the first piece. A piece is
+        // not dragged or resized (the block menu moves it); clicks act on the block.
+        if (isSpan(e)) {
+          const { first, last } = spanDays(spanOf(e), zone)
+          const kind = e.type !== 'event' ? 'kf-kind-task' : 'kf-kind-event'
+          const marks = [pendingIds?.includes(e.id) && 'kf-pending', failedIds?.includes(e.id) && 'kf-failed', e.taskDone && 'kf-done'].filter((c): c is string => !!c)
+          return bandSegments({ ...spanOf(e), title: e.title }, shownDays ?? dayRange(first, last), zone, (ms) => clockTime(ms)).map((seg, i): Record<string, unknown> => ({
+            id: `${e.id}${SEG}${seg.day}`,
+            title: seg.label,
+            start: seg.day,
+            end: addDays(seg.day, 1),
+            allDay: true,
+            editable: false,
+            classNames: ['fc-event-type-' + e.type, kind, 'kf-seg', `kf-seg-${seg.shape}`, ...(i === 0 ? ['kf-seg-titled'] : []), ...marks],
+            extendedProps: { kfColor: e.color ?? null, kfSegOf: e.id, kfTitle: e.title },
+          }))
+        }
         // ── CALENDAR.md §0: one block, five independent axes, composed as classes. ──
         const startMs = new Date(e.start).getTime()
         const endMs = new Date(e.end).getTime()
@@ -559,6 +598,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
       // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
       eventContent={(arg) => {
+        // Calendar 3e: a span's day piece reads its own label ("Offsite »", "« »", "« ends 3 PM").
+        if (arg.event.extendedProps.kfSegOf) {
+          return (
+            <div className="kf-ev-row" title={String(arg.event.extendedProps.kfTitle ?? '')}>
+              <div className="kf-ev-text"><div className="fc-event-title"><EmojiText text={arg.event.title} /></div></div>
+            </div>
+          )
+        }
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
@@ -609,6 +656,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           const mins = Math.round((endMs - startMs) / 60_000)
           timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
         }
+        // Calendar 3e "spans midnight": a piece cut at 00:00 names the far end at the cut (⌄ 1:30 AM /
+        // ⌃ from 11 PM) instead of a time row; FullCalendar squares the cut corners (CalendarGrid.css).
+        const cut = !arg.isMirror && !arg.event.allDay && arg.view.type !== 'dayGridMonth'
+        const cutInto = cut && !arg.isEnd ? '⌄ ' + clockTime(endMs) : null
+        const cutFrom = cut && !arg.isStart ? '⌃ from ' + clockTime(startMs) : null
+        if (cutInto || cutFrom) timeText = null
         // §7 outbox suffixes ride the time row
         if (p.kfPending) timeText = <>{timeText} · saving ◌</>
         if (p.kfFailed) timeText = <>{timeText} · retry</>
@@ -652,6 +705,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
             {badge === 'repeat' && <span className="kf-ev-badge kf-ev-repeat" title="Repeats"><Icon name="repeat" size={10} label="Repeats" /></span>}
+            {cutFrom && <span className="fc-event-time kf-ev-cut kf-ev-cut-from">{cutFrom}</span>}
+            {cutInto && <span className="fc-event-time kf-ev-cut kf-ev-cut-into">{cutInto}</span>}
             {p.kfTaskId && !arg.isMirror && (
               <span
                 className={`kf-ev-check${done ? ' kf-on' : ''}`}
@@ -681,26 +736,26 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       eventDidMount={(info) => {
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
-        info.el.dataset.kfId = info.event.id
+        info.el.dataset.kfId = blockIdOf(info.event)
         paintColor(info.el, (info.event.extendedProps as { kfColor?: string | null })?.kfColor)
 
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
         if (onEventDoubleClick) {
-          info.el.addEventListener('dblclick', () => onEventDoubleClick(info.event.id))
+          info.el.addEventListener('dblclick', () => onEventDoubleClick(blockIdOf(info.event)))
         }
 
         if (!onEventContextMenu) return
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault()
-          onEventContextMenu(info.event.id, e.clientX, e.clientY)
+          onEventContextMenu(blockIdOf(info.event), e.clientX, e.clientY)
         })
       }}
       select={(info) => {
         const jsEvent = info.jsEvent as MouseEvent | null
         onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2 })
       }}
-      eventClick={(info: EventClickArg) => onEventClick(info.event.id)}
+      eventClick={(info: EventClickArg) => onEventClick(blockIdOf(info.event))}
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
       // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
       eventDragStart={(info) => {

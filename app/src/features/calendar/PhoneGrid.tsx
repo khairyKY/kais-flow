@@ -11,6 +11,8 @@ import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
 import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
+import { appZone } from '../../lib/appZone'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
 // look, radius 3), the MK Now line. Our own, not FullCalendar — the touch design needs a hold that
@@ -280,7 +282,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const panes = sliding ? [-1, 0, 1] : [0]
   const inset = multi ? { l: 2, r: 2 } : { l: 4, r: 16 }
 
-  function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string }) {
+  /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
+  const clock = (ms: number) => cairoTimeKey(new Date(ms))
+  function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string }, cut: { from: boolean; into: boolean } = { from: false, into: false }) {
     const lifted = lift?.id === ev.id ? lift : null
     const s = lifted ? lifted.draft : { start, end }
     const h = Math.max(MIN_BLOCK_PX, minToPx(s.end - s.start))
@@ -293,7 +297,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     // Title, then time on its own line, from 56px — task blocks too since Kai 2026-10-07 ("Crypto —
     // heavy sessio…" on one line of a 1h30 block, the rest empty); under that, one row.
     const stacked = h >= 56
-    const time = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : rangeText(s.start, s.end))
+    const cutFrom = !lifted && cut.from
+    const cutInto = !lifted && cut.into
+    const time = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : cutFrom || cutInto ? '' : rangeText(s.start, s.end))
+    // room for the cut's own line under / over the title (a sliver keeps just its title)
+    const cutRoom = h >= 48
     // A move into another column (3 days / week) slides the same node over, so the finger never loses it.
     const colShift = lifted ? days.indexOf(lifted.draft.day) - days.indexOf(lifted.orig.day) : 0
     const style = {
@@ -308,7 +316,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     return (
       <div
         key={ev.id}
-        className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}`}
+        className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
         data-id={ev.id}
         data-tour="calendar-block"
         style={{ ...style, '--pc-lines': titleLines(h) } as CSSProperties}
@@ -321,7 +329,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             </span>
           )}
           <span className="pc-name"><EmojiText text={ev.title} /></span>
-          {(!multi || stacked) && (
+          {(!multi || stacked) && time && (
             <span className="pc-time">
               {/* C10: one occurrence of a repeating event */}
               {ev.recurrence_rule && <Icon name="repeat" size={11} label="Repeats" style={{ display: 'inline-block', verticalAlign: '-1px', marginRight: 4 }} />}
@@ -330,6 +338,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           )}
           {pending.has(ev.id) && <span className="pc-pending" role="img" aria-label="Pending sync" />}
         </div>
+        {cutRoom && cutFrom && <span className="pc-cut is-from" aria-hidden>⌃ from {clock(evStart)}</span>}
+        {cutRoom && cutInto && <span className="pc-cut is-into" aria-hidden>⌄ {clock(evEnd)}</span>}
         {lifted && (
           <>
             <span className="pc-handle is-top" data-pc-handle="top" aria-hidden><i /></span>
@@ -367,7 +377,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               : slot?.kind === 'stack'
                 ? { left: `calc(${inset.l}px + ${slot.lane} * 0.22 * ${full})`, width: `calc(0.56 * ${full})` }
                 : { left: `${inset.l}px`, width: `calc${full}` }
-          return block(b.event, b.start, b.end, geo)
+          return block(b.event, b.start, b.end, geo, b)
         })}
         {/* At most three drawn at once; the rest collapse into "+N" at the top-right of the stack. */}
         {blocks.map((b) => {
@@ -389,6 +399,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const showNow = days.includes(today)
   // All-day events (the grid draws none): one chip row over the hours, only when the shown days hold one.
   const allDay = allDayOn(events, days)
+  const zone = appZone()
   const bubble = lift && (lift.mode ?? 'move')
   return (
     <div className="pc-grid">
@@ -401,11 +412,16 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       )}
       {allDay.length > 0 && (
         <div className="pc-allday">
-          {allDay.map((e) => (
-            <button key={e.id} type="button" className="pc-allday-chip" style={{ '--pc-fill': look(e).fill } as CSSProperties} onClick={() => onTapBlock(e)}>
-              <EmojiText text={e.title} />
-            </button>
-          ))}
+          {allDay.map((e) => {
+            // Calendar 3e: a multi-day span's chip reads « / » where it runs past the days shown.
+            const span = isMultiDaySpan(e, zone) ? spanDays(e, zone) : null
+            const cls = `pc-allday-chip${span && span.first < days[0] ? ' is-from' : ''}${span && span.last > days[days.length - 1] ? ' is-into' : ''}`
+            return (
+              <button key={e.id} type="button" className={cls} style={{ '--pc-fill': look(e).fill } as CSSProperties} onClick={() => onTapBlock(e)}>
+                <EmojiText text={span ? bandChipLabel(e, days, zone, clock) : e.title} />
+              </button>
+            )
+          })}
         </div>
       )}
       <div

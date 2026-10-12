@@ -54,6 +54,19 @@ describe('blocks: spans, clipping, the 15-minute drag', () => {
     expect(dayBlocks([late], '2026-09-28').map((b) => [b.start, b.end])).toEqual([[0, 60]])
     expect(dayBlocks([ev('09:00', '10:00', 27, { all_day: true }), ev('10:00', '11:00', 27, { deleted_at: iso('08:00') })], '2026-09-27')).toEqual([])
   })
+  it('Calendar 3e: a piece cut at midnight knows its open edges; a day-long block goes to the all-day row', () => {
+    const late = ev('23:00', '01:00', 27, { ends_at: iso('01:00', 28) })
+    expect(dayBlocks([late], '2026-09-27').map((b) => [b.from, b.into])).toEqual([[false, true]])
+    expect(dayBlocks([late], '2026-09-28').map((b) => [b.from, b.into])).toEqual([[true, false]])
+    // ending exactly at midnight is not a cut
+    const toMidnight = ev('22:00', '00:00', 27, { ends_at: iso('00:00', 28) })
+    expect(dayBlocks([toMidnight], '2026-09-27').map((b) => [b.end, b.into])).toEqual([[1440, false]])
+    expect(dayBlocks([toMidnight], '2026-09-28')).toEqual([])
+    const offsite = ev('09:00', '15:00', 27, { ends_at: iso('15:00', 29) })
+    expect(dayBlocks([offsite], '2026-09-28')).toEqual([])
+    expect(allDayOn([offsite], ['2026-09-28'])).toEqual([offsite])
+    expect(allDayOn([offsite], ['2026-09-30'])).toEqual([])
+  })
   const tyre = { day: '2026-09-27', start: 900, end: 930 }
   it('a move keeps the length and snaps to 15 minutes (16px)', () => {
     expect(dragSpan(tyre, 'move', pxToMin(80))).toEqual({ day: '2026-09-27', start: 975, end: 1005 }) // +75 → 16:15

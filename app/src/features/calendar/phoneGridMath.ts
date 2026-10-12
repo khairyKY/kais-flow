@@ -8,6 +8,8 @@ import { addDays, busyOnDay, dayHint, durationLabel, freeSlots, fromMin, toMin }
 import { suggestTimes } from '../tasks/taskSheetMath'
 import { FLICK_VELOCITY, SWIPE_COMMIT } from '../tasks/swipe'
 import { cairoTimeKey, cairoToIso } from './eventTime'
+import { isMultiDaySpan, spanDays } from './daySpans'
+import { appZone } from '../../lib/appZone'
 
 export const HOUR_PX = 64
 export const SNAP_MIN = 15
@@ -75,25 +77,40 @@ export function spanIso(s: Span): { starts_at: string; ends_at: string } {
   return { starts_at: at(s.start), ends_at: at(s.end) }
 }
 
-/** The timed, live events drawn on Cairo day `day`, clipped to it (over midnight: from 00:00 / to 24:00). */
-export function dayBlocks<E extends CalendarEvent>(events: readonly E[], day: string): { event: E; start: number; end: number }[] {
-  const out: { event: E; start: number; end: number }[] = []
+/** One day's piece of a timed block on the grid. Calendar 3e "spans midnight": `from` — it began the
+ * day before (its top is cut at 00:00); `into` — it runs on past this day's midnight. */
+export interface DayBlock<E> {
+  event: E
+  start: number
+  end: number
+  from: boolean
+  into: boolean
+}
+
+/** The timed, live events drawn on day `day` (the user's zone), clipped to it (over midnight: from
+ * 00:00 / to 24:00). A block a day or longer is a multi-day span — the all-day row's (allDayOn). */
+export function dayBlocks<E extends CalendarEvent>(events: readonly E[], day: string, zone: string = appZone()): DayBlock<E>[] {
+  const out: DayBlock<E>[] = []
   for (const e of events) {
-    if (e.deleted_at || e.all_day) continue
-    const sd = cairoDateKey(new Date(e.starts_at))
-    const ed = cairoDateKey(new Date(e.ends_at))
-    if (sd > day || ed < day) continue
-    const start = sd < day ? 0 : toMin(cairoTimeKey(new Date(e.starts_at)))
-    const end = ed > day ? DAY_MIN : toMin(cairoTimeKey(new Date(e.ends_at)))
-    if (end > start) out.push({ event: e, start, end })
+    if (e.deleted_at || e.all_day || isMultiDaySpan(e, zone)) continue
+    const { first, last } = spanDays(e, zone)
+    if (first > day || last < day) continue
+    const start = first < day ? 0 : toMin(cairoTimeKey(new Date(e.starts_at)))
+    const end = cairoDateKey(new Date(e.ends_at)) > day ? DAY_MIN : toMin(cairoTimeKey(new Date(e.ends_at)))
+    if (end > start) out.push({ event: e, start, end, from: first < day, into: last > day })
   }
   return out
 }
 
-/** All-day events on any of `days`. Their dates are calendar dates in no zone (QuickCreate and a synced
- * all-day event store T00:00Z, the end exclusive), so they are read as dates, not instants. */
-export function allDayOn<E extends CalendarEvent>(events: readonly E[], days: readonly string[]): E[] {
-  return events.filter((e) => e.all_day && !e.deleted_at && days.some((d) => e.starts_at.slice(0, 10) <= d && d < e.ends_at.slice(0, 10)))
+/** The all-day row's blocks on any of `days`: all-day events — dates in no zone (QuickCreate and a
+ * synced all-day event store T00:00Z, the end exclusive), read as dates, not instants — and timed
+ * multi-day spans (Calendar 3e), read on the user's zone. */
+export function allDayOn<E extends CalendarEvent>(events: readonly E[], days: readonly string[], zone: string = appZone()): E[] {
+  return events.filter((e) => {
+    if (e.deleted_at || !(e.all_day || isMultiDaySpan(e, zone))) return false
+    const { first, last } = spanDays(e, zone)
+    return days.some((d) => first <= d && d <= last)
+  })
 }
 
 export type DragMode = 'move' | 'top' | 'bottom'
