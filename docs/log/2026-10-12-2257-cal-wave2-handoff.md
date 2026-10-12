@@ -138,9 +138,9 @@ tracking / radius tokens only, `--ink-faint` for text.
   same harness), so it isn't this branch's; c1 drove the deleted details panel (superseded, per the
   event-detail handoff).
 - **Side-by-sides** (frame rendered from its `.dc.html` beside the app, day + night):
-  `sbs-4a-planning-1day.png`, `sbs-4b-planning-2day.png`, `sbs-3e-desktop.png`, `sbs-3e-phone.png`,
-  `sbs-1b-create-task.png`, `sbs-1c-create-event.png`, `sbs-1d-create-block.png`,
-  `sbs-1e-phone-create.png`, `sbs-7c-phone-create.png` (`sbs.mjs` makes them). 1280×800 at the 125%
+  `sbs-4a-planning-1day.jpg`, `sbs-4b-planning-2day.jpg`, `sbs-3e-desktop.jpg`, `sbs-3e-phone.jpg`,
+  `sbs-1b-create-task.jpg`, `sbs-1c-create-event.jpg`, `sbs-1d-create-block.jpg`,
+  `sbs-1e-phone-create.jpg`, `sbs-7c-phone-create.jpg` (`sbs.mjs` makes them). 1280×800 at the 125%
   default; phone 390×844.
 
 **Not verified:** a real device; Kai's real account; the MCP / chat functions against the UNTIL change

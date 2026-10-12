@@ -2,6 +2,7 @@
 // the app's screenshot of the same thing (verify.mjs writes those into this folder first).
 //   node sbs.mjs [playwright-core path]
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -32,7 +33,8 @@ async function frame(file, id) {
   await page.goto(pathToFileURL(path.join(EXPORT, file)).href, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1500)
   const el = page.locator(`[id="${id}"] .dv-card, [id="${id}"] .phone, [id="${id}"] [data-screen-label]`).first()
-  const out = path.join(HERE, `frame-${file.replace(/\W+/g, '-')}${id}.png`)
+  // The rendered frame is only an input to the side-by-side: it goes to the OS temp dir, not the repo.
+  const out = path.join(os.tmpdir(), `frame-${file.replace(/\W+/g, '-')}${id}.png`)
   await el.screenshot({ path: out })
   await page.close()
   frames.set(key, out)
@@ -54,7 +56,7 @@ for (const [file, id, shots, name] of PAIRS) {
     const h = Math.max(...[...document.querySelectorAll('figure')].map((f) => f.getBoundingClientRect().bottom)) + 24
     return { r, h }
   })
-  await page.screenshot({ path: path.join(HERE, `${name}.png`), clip: { x: 0, y: 0, width: Math.min(box.r, 3600), height: box.h } })
+  await page.screenshot({ path: path.join(HERE, `${name}.jpg`), type: 'jpeg', quality: 80, clip: { x: 0, y: 0, width: Math.min(box.r, 3600), height: box.h } })
   await page.close()
   console.log('wrote', name)
 }
