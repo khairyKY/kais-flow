@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { useToastStore } from '../../lib/toastStore'
 import { queryClient } from '../../lib/queryClient'
 import { carryTasksToDomain } from '../tasks/api'
 import type { Project, TimeEntry } from '../../lib/types'
@@ -105,6 +106,18 @@ export function restoreProject(project: Project): void {
   const updated = { ...project, status: 'active', updated_at: nowIso() }
   writeRow('projects', updated)
   logActivity('project.restored', 'project', project.id, {})
+}
+
+/** Finish / Archive = one tap + Undo (product audit 2026-10-12, Flow Audit §4). The pressing
+ * ceremony is offered afterwards — `press` rides the same toast as "Press it ✿" (and the Herbarium
+ * shelf offers it too) — never a step in the way of filing the project. */
+export function finishProjectWithUndo(project: Project, press?: () => void): void {
+  archiveProject(project)
+  toastUndo(`Finished · ${project.name}`, () => restoreProject(project))
+  if (!press) return
+  // ToastHost draws an action beside Undo; toastUndo itself takes none, so it's set on that toast.
+  const t = useToastStore.getState().toasts.at(-1)
+  if (t) useToastStore.setState((s) => ({ toasts: s.toasts.map((x) => (x.id === t.id ? { ...x, action: { label: 'Press it ✿', run: press } } : x)) }))
 }
 
 /** The Finished list's restore (desktop and phone): back to active, "Restored · Undo" files it away again. */

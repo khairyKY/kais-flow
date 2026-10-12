@@ -82,7 +82,8 @@ export function PerennialsPage() {
 
   // Repeating tasks due today or in the next six days, on the user's calendar.
   const dueThisWeekCount = activeSeries.filter((t) => {
-    if (!t.due_at) return false
+    // A paused series makes no new copies (tasks/ skips paused rows), so it is not "due".
+    if (!t.due_at || t.paused) return false
     const days = daysFromToday(t.due_at)
     return days >= 0 && days < 7
   }).length
@@ -211,7 +212,7 @@ export function PerennialsPage() {
         <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
           <TaskRow task={t} border={false} />
           <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
-            {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
+            {formatRecurrenceRule(t.recurrence_rule || '')} · {t.paused ? 'paused · ' : ''}{formatLastCompleted(lastDone)}
           </div>
         </div>
         {isMobile && <span style={{ flex: 1 }} />}

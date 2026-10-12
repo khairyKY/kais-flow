@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useProjects, useTimeEntries, archiveProject, restoreProject } from '../projects/api'
+import { useProjects, useTimeEntries, finishProjectWithUndo } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { writeRow } from '../../lib/outbox'
 import { toastUndo } from '../../lib/undo'
@@ -74,16 +74,18 @@ export function HerbariumPage() {
 
   // X2 (Motion 3b): esc obeys immediately on both overlays
   useEscapeStack(!!selectedSpecimen, () => { setSelectedSpecimen(null); setIsEditingLine(false) })
-  // Esc closes the press the same way Skip does: Kai already confirmed the archive on the project
-  // page, so escaping the ceremony must not quietly drop it. The toast's Undo is the way back.
-  useEscapeStack(!!pressingProject, () => finishPressing(null))
+  // The press is optional (product audit 2026-10-12): the project was filed before it opened, so Esc —
+  // like skip — just leaves it.
+  useEscapeStack(!!pressingProject, () => setPressingProject(null))
 
   useEffect(() => {
     const pressParam = searchParams.get('press')
     if (pressParam) {
       const p = projects.find((x) => x.id === pressParam)
       if (p) {
-        setPressingProject(p); setCeremonyBeat(1); setCeremonyLine('')
+        // An old link to a live project: file it first (one tap + Undo), then the optional press.
+        if (p.status !== 'archived') finishProjectWithUndo(p)
+        setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '')
         searchParams.delete('press'); setSearchParams(searchParams)
       }
     }
@@ -148,20 +150,17 @@ export function HerbariumPage() {
     queryClient.invalidateQueries({ queryKey: ['projects'] })
   }
 
-  // Punch 51: the ceremony *is* the archive. The project is still live through all three beats —
-  // the write happens here, when the press closes. `line = null` (Skip, or Esc) archives without
-  // writing a field-guide line; the card falls back to "Pressed specimen." rather than inventing
-  // a sentence in Kai's voice.
+  // Product audit 2026-10-12: Finish / Archive is one tap + Undo (projects/api finishProjectWithUndo);
+  // this ceremony comes after, optional. Closing it — skip, Esc, Back — loses nothing; "Press it"
+  // only writes the field-guide line (Undo puts the old one back). No line, nothing written: the card
+  // falls back to "Pressed specimen." rather than inventing a sentence in Kai's voice.
   const finishPressing = (line: string | null) => {
     if (!pressingProject) return
-    const before = pressingProject
-    archiveProject(line ? { ...before, completion_summary: line } : before)
+    const before = projects.find((x) => x.id === pressingProject.id) ?? pressingProject
     setPressingProject(null)
-    queryClient.invalidateQueries({ queryKey: ['projects'] })
-    toastUndo(`"${before.name}" pressed into the Herbarium`, () => {
-      restoreProject(before) // `before` still carries the pre-press summary, so undo restores both
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    })
+    if (!line || line === (before.completion_summary ?? '')) return
+    writeRow('projects', { ...before, completion_summary: line })
+    toastUndo(`"${before.name}" pressed into the Herbarium`, () => writeRow('projects', before))
   }
 
   const styles = `
@@ -209,7 +208,13 @@ export function HerbariumPage() {
                   </div>
                 ) : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>"{p.completion_summary || 'No summary line written.'}"</div>}
               </div>
-              {!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer', alignSelf: 'flex-end' }}>Edit the line…</span>}
+              {!isEditingLine && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 8 }}>
+                  {/* The shelf's way into the optional ceremony (the Finish toast offers it too). */}
+                  <button type="button" className="kf-hit" onClick={() => { setSelectedSpecimen(null); setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '') }} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 11.5, color: 'var(--acc-terra)', cursor: 'pointer' }}>Press it ✿</button>
+                  <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Edit the line…</span>
+                </div>
+              )}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
@@ -263,7 +268,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</span>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -282,7 +287,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</span>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -297,7 +302,7 @@ export function HerbariumPage() {
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
-                <span onClick={() => finishPressing(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</span>
+                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
                 <button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
               </div>
             </div>

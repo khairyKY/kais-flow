@@ -26,6 +26,7 @@ import {
   renameProjectChecklistItem,
   removeProjectChecklistItem,
   setProjectChecklist,
+  finishProjectWithUndo,
   logTimeEntry,
   useTimeEntries,
   isThisMonth,
@@ -58,6 +59,7 @@ import {
   moveToTomorrowWithUndo,
   toggleTop3,
   toggleTop3ManyWithUndo,
+  toggleTaskWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { PlanMenu } from '../tasks/PlanMenu'
@@ -844,9 +846,15 @@ export function ProjectDetailPage() {
             </SectionLabel>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {(project.checklist ?? []).map((item) => (
+              {(project.checklist ?? []).map((item) => {
+                // A task-linked line IS its task (product audit 2026-10-12): it reads done when the task is
+                // done anywhere, and ticking it completes / reopens the task (with Undo). A line whose task
+                // is gone falls back to its own tick.
+                const linked = item.task_id ? tasks.find((t) => t.id === item.task_id) : undefined
+                const done = linked ? linked.status === 'done' : item.completed
+                return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                  <Checkbox checked={item.completed} onChange={() => toggleProjectChecklistItem(project, item.id)} size={15} />
+                  <Checkbox checked={done} label={item.title} onChange={() => (linked ? toggleTaskWithUndo(linked) : toggleProjectChecklistItem(project, item.id))} size={15} />
                   {/* Kai 2026-10-12: rename in place, like a milestone or a log note. */}
                   {renamingChecklist === item.id ? (
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
@@ -861,14 +869,15 @@ export function ProjectDetailPage() {
                       />
                     </span>
                   ) : (
-                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 13, color: item.completed ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: item.completed ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
+                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
                   )}
                   <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                     {item.type}
                   </span>
                   <button type="button" className="kf-hit" onClick={() => removeChecklistItem(item.id)} title="Remove" aria-label={`Remove checklist item ${item.title}`} style={removeBtn}>✕</button>
                 </div>
-              ))}
+                )
+              })}
 
               {/* Add checklist item */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 2px' }}>
@@ -1050,17 +1059,19 @@ export function ProjectDetailPage() {
 
             {/* Archive / Change type action footer */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span
-                role="button"
-                tabIndex={0}
-                // No confirm (Flow Audit §4, like the Projects list's "Finish & press"). Punch 51: do NOT
-                // archive here — the pressing ceremony archives when it finishes, with its own Undo.
-                onClick={() => navigate(`/herbarium?press=${project.id}`)}
-                onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/herbarium?press=${project.id}`) }}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+              {/* One tap + Undo (product audit 2026-10-12): archived now, back to the list; the toast offers
+                  "Press it ✿" — the pressing ceremony is optional, never a step in the way. */}
+              <button
+                type="button"
+                className="kf-hit"
+                onClick={() => {
+                  finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`))
+                  navigate('/projects')
+                }}
+                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
-                Archive project…
-              </span>
+                Archive project
+              </button>
               {typeLink}
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
