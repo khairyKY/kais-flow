@@ -41,6 +41,7 @@ import { useLingering } from '../../components/syncQueue'
 import { BulkBar } from '../../components/BulkBar'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
 import { MovePicker } from '../tasks/MovePicker'
+import { LabelPicker } from '../tasks/LabelPicker'
 import { placeKey, type MoveTarget } from '../tasks/move'
 import { ContextMenu } from '../../components/ContextMenu'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -335,6 +336,8 @@ export function TodayPage() {
   // "Task list" — same row-menu pattern as TasksPage now, so both surfaces match the overlay.
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
+  // L (Overlays.dc.html "Label picker · keyboard L"), as on Tasks: the focused row, or every selected one.
+  const [kbLabelIds, setKbLabelIds] = useState<string[] | null>(null)
   const openTask = useOpenTask()
   const navigate = useNavigate()
   const listBindings = [...buildListBindings({
@@ -345,6 +348,7 @@ export function TodayPage() {
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
+    labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
   }, {
@@ -354,10 +358,11 @@ export function TodayPage() {
     tomorrow: () => bulkTomorrow(),
     nextWeek: () => bulkSchedule(scheduleNextWeek()),
     top3: () => bulkTop3(),
+    labels: (ts) => setKbLabelIds(ts.map((t) => t.id)),
     delete: () => bulkDelete(),
   }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }]
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !replanAt,
+    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
@@ -602,6 +607,7 @@ export function TodayPage() {
       {kbProjectTask && (
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
+      {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
 
       {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
       {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}
