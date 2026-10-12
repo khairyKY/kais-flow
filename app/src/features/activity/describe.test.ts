@@ -152,7 +152,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['ritual.step_completed', 'ritual', { ritual: 'morning', step: 'overdue', date: '2026-09-26' }],
   ['calendar_event.created', 'calendar_event', { title: 'x', type: 'event' }], ['calendar_event.deleted', 'calendar_event', {}], ['calendar_event.restored', 'calendar_event', {}],
   ['people.created', 'people', { name: 'x' }], ['people.updated', 'people', { name: 'x' }], ['people.deleted', 'people', {}],
-  ['people.interaction_logged', 'people', { summary: 'x' }], ['people.interaction_deleted', 'people', {}],
+  ['people.interaction_logged', 'people', { summary: 'x' }], ['people.interaction_edited', 'people', { summary: 'x' }], ['people.interaction_deleted', 'people', {}],
   ['journal.created', 'journal_entry', { entry_date: '2026-09-26' }], ['journal.updated', 'journal_entry', { entry_date: '2026-09-26' }],
   ['journal.deleted', 'journal_entry', {}], ['journal.restored', 'journal_entry', {}], ['journal.line_added', 'ritual', { date: '2026-09-26' }],
   ['project.created', 'project', { name: 'x', domain_id: null, type: 'standard' }], ['project.renamed', 'project', { name: 'x' }], ['project.reparented', 'project', { domain_id: RANDOM }],

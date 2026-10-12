@@ -293,6 +293,8 @@ function describePeople(e: ActivityLogEntry, names: ActivityNames): ActivityLine
     case 'people.interaction_logged':
       // entity_id is the person; the summary is what happened between you.
       return line(named(names.person(id) ?? '', (q) => `Logged an interaction with ${q}`, 'Logged an interaction'), str(payload, 'summary'))
+    case 'people.interaction_edited':
+      return line(named(names.person(id) ?? '', (q) => `Edited an interaction with ${q}`, 'Edited an interaction'), str(payload, 'summary'))
     case 'people.interaction_deleted':
       // entity_id is the interaction itself, which no longer exists — nowhere to go.
       return line('Removed an interaction', '', null)
