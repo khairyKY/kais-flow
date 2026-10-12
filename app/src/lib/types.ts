@@ -223,9 +223,9 @@ export interface SlippingRow {
   days_since: number
 }
 
-// Widened by migration 0031 (punch 49). Additive: the first two are what search_hybrid returned
-// before, and still all it returns until `supabase db push` runs.
-export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry'
+// Widened by migration 0031 (punch 49), 0054 (area) and 0064 (the Library: book, note, quote).
+// Additive: a type the live search_hybrid doesn't return yet simply never arrives.
+export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry' | 'book' | 'note' | 'quote'
 
 export interface SearchHit {
   entity_type: SearchEntityType
