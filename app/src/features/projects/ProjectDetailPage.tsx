@@ -917,7 +917,7 @@ export function ProjectDetailPage() {
                         clearable={false}
                         onChange={(v) => { if (v && v <= localDateKey(new Date())) editWork(log.id, { started_at: localToIso(v, localTimeKey(new Date(log.date))) }) }}
                         title="Worked on"
-                        ariaLabel="Date this work happened"
+                        ariaLabel="Day of this work entry"
                         style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0 0', whiteSpace: 'normal' }}
                       />
                     ) : (
