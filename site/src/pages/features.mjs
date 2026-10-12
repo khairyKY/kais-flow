@@ -4,13 +4,13 @@ import { APP_URL } from '../data.mjs'
 
 // The seven pillars (+ Paper people on the hub). [slug, icon, tone, name, line, link text]
 const PILLARS = [
-  ['plan-and-today', 'sprout', 't-sage', 'Plan & Today', 'Plan my day, a Top 3 with one goal, the NOW slip, and Up next.', 'Plan & Today'],
+  ['plan-and-today', 'sprout', 't-sage', 'Plan & Today', 'Plan my day, a Top 3 with one goal, the NOW slip, Up next, and Plan… on any task.', 'Plan & Today'],
   ['calendar', 'calendar', 't-lav', 'Calendar', 'Your own calendar: time blocks, 15-minute steps, a touch calendar on the phone.', 'Calendar'],
   ['capture', 'mic', 't-terra', 'Capture', 'Tap to type, hold to talk, share from any app, or send a link.', 'Capture'],
   ['rituals', 'routine', 't-sage', 'Rituals & routines', 'Plan my day, Shut down, routines that fold by time of day, streaks.', 'Rituals'],
   ['journal', 'journal', 't-butter', 'Journal & herbarium', 'A line a day, and finished projects pressed into a herbarium.', 'Journal'],
   ['people', 'people', 't-blossom', 'People', 'Birthdays, and notes on the people you care about.', 'People'],
-  ['apps', 'globe', 't-hyd', 'Apps', 'Web, Android and Windows. Works offline and syncs.', 'Apps'],
+  ['apps', 'globe', 't-hyd', 'Apps', 'Web, Android and Windows: widgets, a tray icon, notifications, offline, and your own clock.', 'Apps'],
 ]
 
 const hub = {
@@ -21,7 +21,7 @@ const hub = {
   body: `<section class="sec first"><div class="wrap">
   ${head2({ eyebrow: 'Features', title: 'Everything that’s in the journal', lead: 'Seven parts, each small. Start anywhere.', h: 'h1' })}
   <div class="fgrid">${PILLARS.map(([slug, ic, tone, name, line, more]) => `<div class="fcell"><span class="dot ${tone}">${icon(ic)}</span><div class="fcell-t"><h2 class="h3">${name}</h2></div><p>${line}</p><a class="go" href="/features/${slug}/">${more} →</a></div>`).join('')}
-    <div class="fcell"><span class="dot t-butter">${icon('notebook')}</span><div class="fcell-t"><h2 class="h3">Paper people</h2>${soon()}</div><p>The Notebook page and Paper capture, for people who write things down.</p><a class="go" href="/paper/">Paper →</a></div>
+    <div class="fcell"><span class="dot t-butter">${icon('notebook')}</span><div class="fcell-t"><h2 class="h3">Paper people</h2></div><p>Paper capture turns a photo of your notes into tasks. The Notebook page is being built.</p><a class="go" href="/paper/">Paper →</a></div>
   </div>
 </div></section>`,
 }
@@ -94,6 +94,10 @@ const growth = `<div class="card lt grow-lg" role="img" aria-label="A routine’
   <div class="lt-grow"><div>${img('clover-seedling', '', { w: 56, style: 'height:56px' })}<span class="eyebrow faint">Day 1</span></div><div>${img('clover-awake', '', { w: 76, style: 'height:76px' })}<span class="eyebrow faint">Day 5</span></div><div>${img('clover-four_leaf', '', { w: 100, style: 'height:100px' })}<span class="eyebrow faint">Day 12</span></div></div>
   <span class="goal">12 / 30</span></div>`
 const swipe = `<div class="card lt lt-swipe wide" role="img" aria-label="A task row swiped right to show Tomorrow underneath"><div class="lt-under">${icon('tomorrow', 22)}Tomorrow</div><div class="lt-row"><span class="box"></span>Water the plants</div></div>`
+// Where the app has no drawn screen, the garden's own art stands in (never a made-up screen).
+const art = (name, alt, w = 150) => img(name, alt, { w })
+const daisies = `<div class="card lt grow-lg" role="img" aria-label="Three daisies on your own clock: opening at 07:00, open at 13:00, closing at 21:30">
+  <div class="lt-grow even">${[['daisy-morning', '07:00', 64], ['daisy-midday', '13:00', 84], ['daisy-evening', '21:30', 72]].map(([a, t, h]) => `<div>${img(a, '', { w: h, style: `height:${h}px` })}<span class="eyebrow faint">${t}</span></div>`).join('')}</div></div>`
 
 const pillars = [
   pillarPage({
@@ -105,6 +109,8 @@ const pillars = [
       { eyebrow: 'Plan my day', title: 'Three minutes with your tea', text: 'Plan my day walks you through the morning. Pick your Top 3 from everything you have, star one as the goal, and each one gets a suggested time on your calendar.', steps: ['Search all your tasks and pick in place.', 'Star one as the goal of the day.', 'Keep the suggested times, or move them.'], art: screen('plan', 'Plan my day: three picks with suggested times', { s: 0.62 }) },
       { eyebrow: 'Today', title: 'What now, what’s next', text: 'Today is one page. While something is running it sits on a small taped slip with a countdown, the NOW slip. Your Top 3 sit under it, and Up next shows what comes after.', art: screen('today', 'Today: the NOW slip with a countdown, then the Top 3', { s: 0.62 }), flip: true },
       { eyebrow: 'When plans change', title: 'Tomorrow is one swipe away', text: 'Swipe a task right and it moves to 09:00 tomorrow. Swipe left and it goes to the Trash, with Undo. Hold a row to select several at once, or use ⋯ for everything else.', art: swipe },
+      { eyebrow: 'Plan or Replan', title: 'Find it a time', text: 'Plan… on any task looks at your real calendar: the next free slot (it asks before it moves anything), tomorrow first thing, this weekend on your own weekend days, next week, or a date you pick. A time puts the task on the calendar.', steps: ['Make any task the goal of the day.', 'Put your Top 3 in your own order — the same on your phone and your computer.'], art: art('hydrangea-light', 'A pale hydrangea head', 170), flip: true },
+      { eyebrow: 'From a while ago', title: 'Old things, settled kindly', text: 'Now and then Today brings back something you saved weeks ago, and says what it is and how old. Tap it to open it. Every button settles it: Plan, Done, Let it go, or Not now — with the real wait shown. Put something off twice and it asks once: keep it, or let it go?', art: art('fern-unfurl1', 'A fern frond unfurling', 130) },
     ],
     after: callout({ ic: 'routine', title: 'Shut down closes the day', chip: '', text: 'In the evening, tick off what’s done, move what isn’t, and pick tomorrow’s three.', href: '/features/rituals/', more: 'Rituals & routines' }),
   }),
@@ -116,6 +122,7 @@ const pillars = [
     sections: [
       { eyebrow: 'Time blocks', title: 'Give a task its hour', text: 'Drag a task onto the calendar. Pull the bottom edge to make it longer. Everything snaps to 15 minutes, so the day stays tidy.', steps: ['Drag a task onto a time.', 'Pull its edge to resize — it snaps every 15 minutes.', 'Its reminder moves with it.'], art: snap },
       { eyebrow: 'On the phone', title: 'Made for thumbs', text: 'Swipe between days. Hold a block to lift it, drop it somewhere else. Grab the handle to resize. Nothing needs two hands.', art: screen('calendar-phone', 'The phone calendar for Saturday 3 October, with a block being moved to 11:45', { s: 0.6 }), flip: true },
+      { eyebrow: 'The side rail', title: 'Everything waiting, beside the week', text: 'On a computer, a rail next to the calendar holds what’s overdue, what’s for today, and your Inbox. Drag a card onto a time: a task’s block moves there, and an Inbox note is filed and blocked in one go, with one Undo.', steps: ['Plan ▾ on any card offers the next free slot or tomorrow first thing.', 'A time you type in a capture — “Friday 5pm” — puts it on the calendar too.'], art: art('cherry-bud', 'A cherry bud about to open', 120) },
     ],
     after: callout({ title: 'Google Calendar sync', text: 'Your Google events beside your blocks, and the blocks you plan sent back, so your other calendar stays true.', href: '/field-notes/', more: 'Follow it in Field notes' }),
   }),
@@ -125,13 +132,15 @@ const pillars = [
     description: 'Capture in two taps: type it, say it, share it from any Android app, or send it to your private capture link from Shortcuts, Tasker, a bookmarklet or curl.',
     shot: `<div class="shot duo">${tape('blossom', 3)}${screen('voice', 'Voice capture listening: “Call Omar Friday at 5 about the lab groups”')}${screen('today', 'Today, where the new task lands with its date')}</div>`,
     sections: [
-      { eyebrow: 'Tap or hold', title: 'Type it or say it', text: 'Tap the button and type; dates like “Friday 5pm” are picked out as you write. Hold the button and talk instead, and your words become the same kind of note.', steps: ['Tap and type, or hold and talk.', '“Call Omar Friday 5pm” lands with its date.', 'On a computer, ⌘/Ctrl + Enter lets the AI file it for you.'], art: screen('voice', 'Voice capture listening on a phone', { s: 0.6 }) },
+      { eyebrow: 'Tap or hold', title: 'Type it or say it', text: 'Tap Capture and type — on a phone the keyboard comes up with the sheet; on a computer it’s the Capture button or ⌘/Ctrl K. Write it the way you’d say it: the date, time, priority, length and notes are picked out for you. Or hold the button and talk.', steps: ['Tap and type, or hold and talk.', '“Call Omar Friday 5pm” lands with its date.', 'Whatever the AI filled in shows in a note with Undo, and what you typed yourself always wins.'], art: screen('voice', 'Voice capture listening on a phone', { s: 0.6 }) },
       { eyebrow: 'From anywhere', title: 'Share from any app', text: 'On Android, Kai’s Flow is in the share sheet: share a page or some text and it lands in your Inbox. Everywhere else there’s your capture link, one private address that Shortcuts, Tasker, a bookmarklet or curl can send to.', steps: ['<a href="/guides/capture-from-anywhere/">Set up the capture link</a> — two minutes.'], art: shareSheet, flip: true },
       { eyebrow: 'The Inbox', title: 'Sort it later', text: 'Everything waits in the Inbox until you file it: a task with a date, a note, or nothing at all. GitHub issues assigned to you arrive here too.', art: inbox },
     ],
     after: `<section class="sec"><div class="wrap duo-callouts">
   <div class="card callout"><span class="dot">${icon('mail')}</span><div><h3>Email → Inbox${soon()}</h3><p>Forward an email to your own address and it becomes a task.</p></div></div>
   <div class="card callout"><span class="dot">${icon('camera')}</span><div><h3>Paper capture</h3><p>A photo of your handwritten notes becomes tasks, events and notes — Arabic too. <a href="/paper/">For paper people →</a></p></div></div>
+  <div class="card callout"><span class="dot">${icon('android')}</span><div><h3>From your home screen</h3><p>On Android, a capture widget opens straight to the keyboard. On Windows, the tray’s flyout has quick capture. <a href="/features/apps/">The apps →</a></p></div></div>
+  <div class="card callout"><span class="dot">${icon('chat')}</span><div><h3>From your AI assistant</h3><p>Connect Claude or another assistant, and “add call the bank for Thursday” lands on your list. <a href="/guides/connect-an-ai-assistant/">Connect one →</a></p></div></div>
 </div></section>`,
   }),
   pillarPage({
@@ -140,9 +149,10 @@ const pillars = [
     description: 'Plan my day in the morning, Shut down in the evening, and routines grouped by time of day with streaks that forgive a missed day.',
     shot: `<div class="shot duo">${tape('gold', 3)}${screen('plan', 'Plan my day in the morning')}${screen('shutdown', 'Shut down at 21:30: four done, two left to move')}</div>`,
     sections: [
-      { eyebrow: 'Morning', title: 'Plan my day', text: 'About three minutes: choose your Top 3, star the goal, and give each one a time. <a href="/features/plan-and-today/">More about Plan & Today →</a>', art: screen('plan', 'Plan my day on a phone', { s: 0.6 }) },
-      { eyebrow: 'Evening', title: 'Shut down', text: 'From five in the evening, Shut down offers to close the day: tick what’s done, move what isn’t, and pick tomorrow’s three. Then the garden closes for the night.', art: screen('shutdown', 'Shut down on a phone: done tasks ticked, the rest moving to tomorrow', { s: 0.6 }), flip: true },
+      { eyebrow: 'Morning', title: 'Plan my day', text: 'About three minutes: choose your Top 3, star the goal, and give each one a time. A morning digest can remind you, at the hour you choose. <a href="/features/plan-and-today/">More about Plan & Today →</a>', art: screen('plan', 'Plan my day on a phone', { s: 0.6 }) },
+      { eyebrow: 'Evening', title: 'Shut down', text: 'From five in the evening, Shut down offers to close the day: tick what’s done, move what isn’t, and pick tomorrow’s three. An evening nudge can call you to it. Then the garden closes for the night.', art: screen('shutdown', 'Shut down on a phone: done tasks ticked, the rest moving to tomorrow', { s: 0.6 }), flip: true },
       { eyebrow: 'Routines', title: 'Habits that fold by time of day', text: 'Routines sit under Morning, Afternoon, Evening and Anytime, so you only see what fits the hour. Each one keeps a streak that forgives one missed day a month, and you can give it a goal.', steps: ['Group a routine by the time you do it.', 'Keep it going and its sprout grows.', 'Set a goal — say, 30 days — and watch the count.'], art: growth },
+      { eyebrow: 'Sounds', title: 'Small sounds, in one key', text: 'A soft note when you tick something off, a short chord when you start or close the day, a chime when a focus round ends. Three sets to choose from: Felt (the default), Kalimba and Glass.', steps: ['Pick a set and a volume, or switch sound off, in Settings → Sound.', 'They go quiet after Shut down until morning, and in quiet hours.'], art: art('cherry-half-right', 'A cherry blossom half open', 150), flip: true },
     ],
   }),
   pillarPage({
@@ -170,15 +180,18 @@ const pillars = [
   pillarPage({
     slug: 'apps', title: 'One garden, three doors',
     lead: 'The web app, an Android app and a Windows app — the same days in all three, synced.',
-    description: 'Kai’s Flow runs on the web (installable, works offline), as an Android app and as a Windows app. Free on every platform.',
+    description: 'Kai’s Flow runs on the web (installable, works offline), as an Android app with home-screen widgets, and as a Windows app with a tray icon. Notifications on all three, on your own clock. Free everywhere.',
     shot: `<div style="margin-top:44px">${getIt({ big: true })}</div>`,
     sections: [
       { eyebrow: 'Web', title: 'Open it anywhere', text: 'It runs in any modern browser. Install it from the address bar in Chrome or Edge, or with Share → Add to Home Screen in Safari on an iPhone, and it gets its own window and works offline.', art: screen('today', 'Today, as the web app shows it on a phone', { s: 0.56 }) },
-      { eyebrow: 'Android', title: 'In your pocket', text: 'The touch calendar, the swipes, the share sheet and capture keys. Updates come as a new APK: Settings → App → Check for updates finds the latest one.', steps: ['<a href="/guides/install-android/">Install on Android</a> — about a minute.'], art: screen('calendar-phone', 'The touch calendar on Android', { s: 0.56 }), flip: true },
-      { eyebrow: 'Windows', title: 'On your desk', text: 'A small installer that installs just for you, no admin password. It opens in its own window, with the same right-click menu and keyboard shortcuts as the web.', steps: ['<a href="/guides/install-windows/">Install on Windows</a>.', '<a href="/guides/keyboard-shortcuts/">The keyboard shortcuts</a>.'], art: `<div class="mini"><div class="mini-d dark"><span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div></div></div>` },
+      { eyebrow: 'Android', title: 'In your pocket', text: 'The touch calendar, the swipes, the share sheet, widgets and notifications. Updates come as a new APK: Settings → App → Check for updates finds the latest one.', steps: ['<a href="/guides/install-android/">Install on Android</a> — about a minute.'], art: screen('calendar-phone', 'The touch calendar on Android', { s: 0.56 }), flip: true },
+      { eyebrow: 'Widgets', title: 'The garden on your home screen', text: '34 Android widgets: Today, the Top 3 and the goal, capture, the calendar, focus, routines and streaks, the Inbox and Overdue, and the rituals. Tick tasks and routines, and stop or finish a focus round, right on the widget; capture opens straight to the keyboard.', steps: ['On most phones: hold an empty spot on the home screen → Widgets → Kai’s Flow.', 'They follow your phone’s dark mode. Settings → Notifications can hide task names on the home screen.'], art: art('wisteria-p40', 'A short spray of wisteria', 150) },
+      { eyebrow: 'Windows', title: 'On your desk', text: 'A small installer that installs just for you, no admin password. It opens in its own window, with the same right-click menu and keyboard shortcuts as the web. A K sits by the clock: click it for a little flyout with what’s on now and next, your Top 3, quick capture and focus, or right-click it for a menu. Close the window and it waits there.', steps: ['<a href="/guides/install-windows/">Install on Windows</a>.', '<a href="/guides/keyboard-shortcuts/">The keyboard shortcuts</a>.'], art: `<div class="mini"><div class="mini-d dark"><span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div></div></div>`, flip: true },
+      { eyebrow: 'Notifications', title: 'Reminders that arrive', text: 'Reminders, the morning digest and the evening nudge reach the Windows app, your Android phone, and the web app once you allow notifications. A reminder carries Done and Tomorrow, so you can answer it where it lands. Quiet hours keep the night quiet, and task names stay off the lock screen until you choose.', steps: ['Settings → Notifications → Send a test notification shows what’s in the way on this device.'], art: art('clover-awake', 'A small clover, awake', 140) },
       { eyebrow: 'Offline', title: 'Works without a signal', text: 'Changes you make offline wait in a queue on your device and sync when you’re back. Your journal and notes about people aren’t kept on the device.', art: img('fern-unfurl1', 'A fern frond unfurling', { w: 120 }), flip: true },
+      { eyebrow: 'Your own clock', title: 'Wherever you are', text: 'Today, reminders, the morning digest — and what an AI assistant sees — follow your own time zone. The app offers your device’s zone once; change it any time in Settings → Time zone.', art: daisies },
     ],
-    after: callout({ ic: 'windows', title: 'A tray icon and notifications on Windows', text: 'Since v1.0.20: the K by the clock opens a little flyout — now, next, your Top 3, quick capture and focus — and reminders arrive with Done and Tomorrow buttons.', href: '/field-notes/', more: 'Field notes' }),
+    after: callout({ ic: 'chat', title: 'Your AI assistant, too', chip: '', text: 'Claude Desktop, Claude Code or any MCP client can read your tasks, projects and calendar — and add or tick off tasks only if you allow it. Your journal and people are never shared.', href: '/guides/connect-an-ai-assistant/', more: 'Connect one' }),
   }),
 ]
 

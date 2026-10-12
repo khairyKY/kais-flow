@@ -19,11 +19,12 @@ export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, e
 export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}.apk`
 export const exeUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}-windows-setup.exe`
 
-// What's growing — Now / Next / Later. Now = what builders are working on this month.
+// What's growing — Now / Next / Later. Now = what builders are working on this month (October 2026);
+// Next / Later = the open items in docs/ROADMAP.md. Shipped things leave for Field notes.
 export const ROADMAP = {
-  now: ['This website'],
-  next: ['The Notebook page', 'The ticks loop', 'A short tour and a guide inside the app', 'More themes', 'Google Calendar sync', 'Email → Inbox'],
-  later: ['A Telegram bot', 'Notifications in the Android app', 'Smart lists', 'An iPhone app <i>(if it ever stops costing money)</i>'],
+  now: ['Events that repeat, and a new menu for calendar events', 'The Notebook page and the ticks loop', 'Today and the Inbox, redrawn from Kai’s reviewed designs', 'Talk it out and photos in the journal'],
+  next: ['Google Calendar sync', 'Smart lists'],
+  later: ['Email → Inbox', 'More themes', 'An iPhone app <i>(if it ever stops costing money)</i>'],
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
