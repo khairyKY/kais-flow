@@ -7,7 +7,7 @@ related: 2026-10-12-1839-local-decision-unbuilt-designs.md (Labels un-parked); d
 
 # labels: handoff
 
-Branch `claude/labels` (from `origin/claude/kai-bugs-1012` @ c6d3bd18, fast-forwarded to af650557 for the ds-fix-1 merge). Pushed, not merged, no PR.
+Branch `claude/labels` (from `origin/claude/kai-bugs-1012` @ c6d3bd18, fast-forwarded to af650557 for the ds-fix-1 merge, then merged with 975a150f — ds-fix-2 + github-rules; P6 Notes kept both entries). Pushed, not merged, no PR.
 
 ## Commits
 
@@ -15,7 +15,9 @@ Branch `claude/labels` (from `origin/claude/kai-bugs-1012` @ c6d3bd18, fast-forw
 |---|---|
 | 7107f835 | The Label picker (L) and the Labels manager; migration 0069 `app_settings.label_meta`; tests; harness 73/73 |
 | e99c1ae0 | ds: RepeatMenu / TaskPopover / taskSheet.css back on tokens — 0 NEW in `features/tasks` (conductor's request) |
-| (this entry) | Handoff, INDEX line, P6 note |
+| 1b000c93 | This handoff, P6 note |
+| 29107771 | Merge of the base (ds-fix-2, github-rules) — gates re-run on the merged tree |
+| (next) | INDEX line |
 
 ## What exists now
 
@@ -65,20 +67,20 @@ Numbering: renamed from 0067 at the conductor's request (0067 = Routines `routin
 - **The editor page (`calendar/TaskEditorPage.tsx`) still has its own inline "+ label" input.** I was told not to edit `calendar/`. It already builds on `useTaskControls`, so the calendar owner's change is one line: replace the `<input … aria-label="Add a label">` (and the ✕ buttons) with chips that call `open('labels', e)`, the same way its "Project or area" field calls `open('project', e)`.
 - **Today** has no L (not my folder). It can wire `labels: (t) => …` into its `buildListBindings` with a `LabelPicker` the same way TasksPage does.
 - **BulkBar** has no Labels button. L covers the keyboard. A phone bulk path would need a bar button; that is not drawn.
-- **ds:check in `SettingsPage.tsx`:** 2 NEW `confirm-delete` hits at the capture-key and AI-key "Turn off" ConfirmCards (lines ~833 and ~930). They come from the base (already there before my edit) and sit outside the Organize section. They are real irreversible confirms ("this one can't come back"); the checker only accepts "can't be undone / permanently / for good". The card's owner can add `ds-ok: irreversible — only the hash is stored`. Everything else ds:check reports NEW is in folders I didn't touch.
+- ds:check's remaining NEW hits on the merged tree are all in folders I didn't touch (calendar, routines, today). The 2 SettingsPage confirm-delete hits I saw before the merge were fixed upstream (`ds-ok` on the key cards).
 - The old `docs/log/assets/task-sheet/verify.mjs` fills `.ts-label-add`. That step is superseded by the picker (labels/verify.mjs section s).
 
 ## Verified
 
-- `npx vitest run`: **1869 passed** (145 files) under TZ = UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo (PowerShell `$env:TZ`; offsets confirmed 0 / −180 / 420 / −540). New tests:
+- `npx vitest run`: **1881 passed** on the merged tree (1869 before the base merge; 145 files) under TZ = UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo (PowerShell `$env:TZ`; offsets confirmed 0 / −180 / 420 / −540). New tests:
   - `labels.test.ts` (16): list/counts/colours, meta sanitising, picker filtering, L-on-selection toggle + Undo, rename/merge/case-only/delete batching + one Undo, Undo keeping later edits, pre-push sends nothing, case-insensitive ＋ New
   - `listShortcuts.test.ts` (3): L binding, runAll on a selection, layouts
   - `taskMenuSpec.test.ts` (+1): desktop Labels after Priority, none on the phone
 - `npm run lint`: 0 errors (warnings only, same kinds as before). `npm run build`: OK.
-- `npm run ds:check -- --baseline scripts/ds-baseline.json`: **0 NEW in every file under `features/tasks`** (new and old), `lib/types.ts` and my SettingsPage lines. See above for the 2 base hits in SettingsPage.
+- `npm run ds:check -- --baseline scripts/ds-baseline.json`: **0 NEW in every file I touched** — all of `features/tasks` (new and old), `SettingsPage.tsx`, `lib/types.ts`.
 - Browser, real app on the mock backend, dev server from this worktree (`--mode mock`, http://localhost:5261):
-  - `docs/log/assets/labels/verify.mjs`: **73/73**, twice in a row on the final code (and once before the last CSS tweak)
-  - `docs/log/assets/fix-tasks/verify.mjs`: **70/70**, still green
+  - `docs/log/assets/labels/verify.mjs`: **73/73**, twice in a row on the merged tree (and three times before it)
+  - `docs/log/assets/fix-tasks/verify.mjs`: **70/70**, still green (before and after the merge)
 - Screenshots in `docs/log/assets/labels/` (1280×800 and 390×844, day + night):
   - k1: picker from L
   - b2: L on a selection
