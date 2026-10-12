@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createRoutine, createChallenge } from './api'
+import { createRoutine, createChallenge, updateRoutine } from './api'
 import { localDateKey } from './streaks'
 import { useDomains } from '../domains/api'
 import { Select } from '../../components/Select'
@@ -10,7 +10,8 @@ import { seedPlant } from '../../lib/seedPlant'
 import { TimeField } from '../calendar/TimeField'
 import { Toggle } from '../../components/kit'
 import { NumberField } from '../../components/NumberField'
-import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeMode } from './newRoutine'
+import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, draftToRoutineFields, routineToForm, type RepeatMode, type RoutineFormState, type TimeMode } from './newRoutine'
+import type { Routine } from '../../lib/types'
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
 // "Steps" and "Domain" are real since migration 0028 (routines.steps jsonb + domain_id).
@@ -20,7 +21,9 @@ import { NEW_ROUTINE_DEFAULTS, draftToRoutineFields, type RepeatMode, type TimeM
 // (_SHARED.md growth-stage map). "Challenge" trades the mock's bare day-count for a real
 // start/end pair: start = today, end = today + N-1.
 // Polish B (audit-newuser): the form opens neutral — Anytime · Every day · reminder off — not
-// on the mock's filled sample; see NEW_ROUTINE_DEFAULTS in newRoutine.ts. ──
+// on the mock's filled sample; see NEW_ROUTINE_DEFAULTS in newRoutine.ts.
+// Edit mode (Kai 2026-10-12): pass `routine` and the same form opens prefilled from it, titled
+// "Edit routine", and saves over the row (routineToForm / applyRoutineForm in newRoutine.ts). ──
 
 const A = '/ds/assets'
 const WEEKDAY_COLS: { day: number; label: string }[] = [
@@ -33,13 +36,7 @@ const WEEKDAY_COLS: { day: number; label: string }[] = [
   { day: 0, label: 'S' },
 ]
 
-function addDays(key: string, n: number): string {
-  const d = new Date(`${key}T00:00:00`)
-  d.setDate(d.getDate() + n)
-  return localDateKey(d)
-}
-
-export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose: () => void; initialChallenge?: boolean }) {
+export function NewRoutineForm({ onClose, initialChallenge = false, routine }: { onClose: () => void; initialChallenge?: boolean; routine?: Routine }) {
   const motion = useMotionEnabled()
   useEscapeStack(true, onClose)
   useBodyScrollLock(true)
@@ -57,23 +54,35 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
   const fieldBg = isMobile ? 'var(--paper-parchment)' : 'var(--paper-bone)'
   const fieldBgRaised = isMobile ? 'var(--paper-bone)' : 'var(--paper-parchment)'
 
-  const [name, setName] = useState('')
-  const [steps, setSteps] = useState<string[]>([])
-  const [domainId, setDomainId] = useState('')
+  const [initial] = useState<RoutineFormState>(() =>
+    routine ? routineToForm(routine) : { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: initialChallenge, challengeDays: 30 },
+  )
+  const [name, setName] = useState(initial.name)
+  const [steps, setSteps] = useState<string[]>(initial.steps)
+  const [domainId, setDomainId] = useState(initial.domainId)
   const { data: domains = [] } = useDomains()
-  const [timeMode, setTimeMode] = useState<TimeMode>(NEW_ROUTINE_DEFAULTS.timeMode)
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>(NEW_ROUTINE_DEFAULTS.repeatMode)
-  const [customWeekdays, setCustomWeekdays] = useState<number[]>(NEW_ROUTINE_DEFAULTS.customWeekdays)
-  const [reminderOn, setReminderOn] = useState(NEW_ROUTINE_DEFAULTS.reminderOn)
-  const [reminderTime, setReminderTime] = useState(NEW_ROUTINE_DEFAULTS.reminderTime)
-  const [isChallenge, setIsChallenge] = useState(initialChallenge)
-  const [challengeDays, setChallengeDays] = useState(30)
+  const [timeMode, setTimeMode] = useState<TimeMode>(initial.timeMode)
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>(initial.repeatMode)
+  const [customWeekdays, setCustomWeekdays] = useState<number[]>(initial.customWeekdays)
+  const [reminderOn, setReminderOn] = useState(initial.reminderOn)
+  const [reminderTime, setReminderTime] = useState(initial.reminderTime)
+  const [isChallenge, setIsChallenge] = useState(initial.isChallenge)
+  const [challengeDays, setChallengeDays] = useState(initial.challengeDays)
 
   function toggleWeekday(day: number) {
     setCustomWeekdays((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day].sort()))
   }
 
   function submit(from?: HTMLElement) {
+    if (routine) {
+      const form = { name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime, steps, domainId, isChallenge, challengeDays }
+      const next = applyRoutineForm(routine, form, localDateKey(new Date()), new Date().toISOString())
+      if (!next) return
+      updateRoutine(next)
+      useToastStore.getState().push({ message: 'Routine updated' })
+      onClose()
+      return
+    }
     const fields = draftToRoutineFields({ name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime })
     if (!fields) return
     seedPlant(from, motion) // Motion 5f — the seed drops out of the plant button
@@ -135,7 +144,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
         <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: isMobile ? 34 : 40, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
-          <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>New routine</h1>
+          <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}</h1>
         </div>
         {!isMobile && (
           <span onClick={onClose} style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 13, cursor: 'pointer' }}>✕</span>
@@ -303,7 +312,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false }: { onClose:
           style={{ flex: isMobile ? 1 : 'none', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: isMobile ? 14.5 : 13, padding: isMobile ? '14px' : '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
         >
           <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: isMobile ? 17 : 16 }} />
-          Plant routine
+          {routine ? 'Save routine' : 'Plant routine'}
         </button>
       </div>
     </>

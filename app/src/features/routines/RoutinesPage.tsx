@@ -71,7 +71,7 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
 // Phone rows (Kai 2026-10-07 review): the name gets the full width, its meta (clock · streak ·
 // last 7 days) a line under it — side by side at 360 the name wrapped one word per line. The check
 // and the ⋯ are 48px targets; the ⋯ replaced a bare 11px "archive" link (same grammar as task rows).
-function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void; onMenu: (at: { x: number; y: number }) => void }) {
+function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, onEdit, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void; onEdit: () => void; onMenu: (at: { x: number; y: number }) => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
 
@@ -107,7 +107,12 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
       </span>
     </button>
   )
-  const name = <span style={{ fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>{routine.name}</span>
+  // The name opens the edit form, like a task row's title opens the task (Kai 2026-10-12).
+  const name = (
+    <button type="button" onClick={onEdit} title="Edit routine" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>
+      {routine.name}
+    </button>
+  )
   const meta = (
     <>
       {routine.clock_time && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{routine.clock_time}</span>}
@@ -186,7 +191,7 @@ export function RoutinesPage() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const isMobile = useIsMobile()
-  const [formOpen, setFormOpen] = useState<null | { challenge: boolean }>(null)
+  const [formOpen, setFormOpen] = useState<null | { challenge: boolean; routine?: Routine }>(null)
   const [trellisRoutine, setTrellisRoutine] = useState<Routine | null>(null)
   const [menu, setMenu] = useState<{ routine: Routine; x: number; y: number } | null>(null)
 
@@ -340,7 +345,7 @@ export function RoutinesPage() {
               {!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}
             </div>
             {g.items.map((r) => (
-              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onMenu={(at) => setMenu({ routine: r, ...at })} />
+              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onEdit={() => setFormOpen({ challenge: false, routine: r })} onMenu={(at) => setMenu({ routine: r, ...at })} />
             ))}
           </div>
         ))}
@@ -367,13 +372,13 @@ export function RoutinesPage() {
         </div>
       )}
 
-      {formOpen && <NewRoutineForm onClose={() => setFormOpen(null)} initialChallenge={formOpen.challenge} />}
+      {formOpen && <NewRoutineForm key={formOpen.routine?.id ?? 'new'} onClose={() => setFormOpen(null)} initialChallenge={formOpen.challenge} routine={formOpen.routine} />}
       {/* R4-5b: the same guided flows Today launches, reachable here regardless of pin state */}
       {openRitual === 'morning' && <MorningRitual onClose={() => setOpenRitual(null)} />}
       {openRitual === 'evening' && <EveningRitual onClose={() => setOpenRitual(null)} />}
       {trellisRoutine && <StreakTrellis routine={trellisRoutine} completions={completions} onClose={() => setTrellisRoutine(null)} />}
-      {/* A routine row's ⋯: the kit action sheet on a phone, the context menu on a computer. No
-          edit form exists for a routine yet, so it's the trellis and Archive (Undo in the toast). */}
+      {/* A routine row's ⋯: the kit action sheet on a phone, the context menu on a computer —
+          Edit (the New routine form, prefilled), the trellis, and Archive (Undo in the toast). */}
       {menu &&
         (isMobile ? (
           <ActionSheet
@@ -381,6 +386,7 @@ export function RoutinesPage() {
             meta="Routine"
             onClose={() => setMenu(null)}
             items={[
+              { label: 'Edit', onSelect: () => setFormOpen({ challenge: false, routine: menu.routine }) },
               { label: 'Streak trellis', onSelect: () => setTrellisRoutine(menu.routine) },
               { label: 'Archive', onSelect: () => archiveRoutine(menu.routine) },
             ]}
@@ -390,6 +396,7 @@ export function RoutinesPage() {
             position={{ x: menu.x, y: menu.y }}
             onClose={() => setMenu(null)}
             items={[
+              { label: 'Edit', onClick: () => setFormOpen({ challenge: false, routine: menu.routine }) },
               { label: 'Streak trellis', onClick: () => setTrellisRoutine(menu.routine) },
               { label: 'Archive', onClick: () => archiveRoutine(menu.routine) },
             ]}

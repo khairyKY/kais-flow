@@ -95,6 +95,12 @@ export function createChallenge(
   return routine
 }
 
+/** Saves an edited routine (the edit form builds the whole row — see applyRoutineForm). */
+export function updateRoutine(routine: Routine): void {
+  writeRow('routines', routine)
+  logActivity('routine.updated', 'routine', routine.id, { name: routine.name })
+}
+
 /** Archives with an Undo toast (the row's ⋯ menu; no confirm — the toast is the way back). */
 export function archiveRoutine(routine: Routine): void {
   writeRow('routines', { ...routine, active: false, updated_at: nowIso() })
