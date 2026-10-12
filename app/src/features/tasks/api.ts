@@ -43,6 +43,8 @@ export interface CreateTaskInput {
   title: string
   domainId?: string | null
   projectId?: string | null
+  /** Since 0052 a task is in a project OR an area — pass one (tasks/move.ts has the rules). */
+  areaId?: string | null
   dueAt?: string | null
   reminderOffsetMin?: number | null
   durationMin?: number | null
@@ -79,7 +81,7 @@ export function createTask(input: CreateTaskInput): Task {
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,
     someday: false,
-    area_id: null,
+    area_id: input.areaId ?? null,
     reminder_at: reminderAt,
     reminder_sent: false,
     completed_at: null,

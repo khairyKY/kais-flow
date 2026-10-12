@@ -121,6 +121,8 @@ export function ColorDots({ value, onChange, size = 22 }: { value: string | null
             key={c.name}
             type="button"
             title={c.name}
+            aria-label={c.name}
+            aria-pressed={on}
             onClick={() => onChange(c.value)}
             style={{
               width: size,
@@ -128,8 +130,10 @@ export function ColorDots({ value, onChange, size = 22 }: { value: string | null
               borderRadius: '50%',
               border: c.value ? 'none' : '1.5px dashed var(--ink-hairline)',
               background: c.value ?? 'transparent',
-              boxShadow: on && c.value ? `0 0 0 2.5px ${c.value}` : 'none',
-              outline: on && c.value ? '2px solid var(--paper-linen)' : 'none',
+              // Kai 2026-10-12: None reads as picked too (a faint ring), so a block with no colour
+              // shows which swatch it's on.
+              boxShadow: on ? `0 0 0 2.5px ${c.value ?? 'var(--ink-faint)'}` : 'none',
+              outline: on ? '2px solid var(--paper-linen)' : 'none',
               cursor: 'pointer',
               padding: 0,
               display: 'flex',

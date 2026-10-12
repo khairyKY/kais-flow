@@ -15,6 +15,7 @@ import { createTask } from '../tasks/api'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, scheduleTask, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
+import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 
 // ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
@@ -209,6 +210,21 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
               </div>
               <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
             </div>
+            {/* Kai 2026-10-12: the grid draws a plain event's colour, so its sheet changes it — the
+                desktop panel's swatches, saved on tap. A task block wears its project's hue. */}
+            {!event.task_id && (
+              <div className="pc-bs-colors">
+                <ColorDots
+                  value={event.color ?? null}
+                  size={28}
+                  onChange={(c) => {
+                    if (c === (event.color ?? null)) return
+                    updateEvent(event, { color: c })
+                    setSavedAt(Date.now())
+                  }}
+                />
+              </div>
+            )}
             <div className="pc-bs-rows">
               <style>{ACTION_ROW_CSS}</style>
               {!event.all_day && (

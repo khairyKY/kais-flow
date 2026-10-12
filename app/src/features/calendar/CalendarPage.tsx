@@ -9,7 +9,8 @@ import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
 import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue } from '../tasks/api'
 import { useRowGrammar } from '../tasks/useRowGrammar'
-import { aiFiling, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
+import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
+import { railDropAction, scopeTarget, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
 import { nextFreeSlot, railBuckets, railMinutes, tomorrowFirst, type RailTask } from './replan'
 import { DatePicker } from '../../components/DatePicker'
@@ -130,7 +131,6 @@ const WEEKEND_DAYS = [0, 6]
 // ── The planning rail's sections and cards (Kai 2026-10-07). ──
 
 const RAIL_SECTIONS_KEY = 'kf.calRailSections'
-type RailSection = 'overdue' | 'today' | 'inbox' | 'lists'
 type PlanTarget = { kind: 'task'; r: RailTask } | { kind: 'inbox'; item: InboxItem }
 
 /** Which sections the person folded (per device). Lists starts folded. */
@@ -500,13 +500,12 @@ function DesktopCalendar() {
     setContextMenu({ items, x, y })
   }
 
-  /** Punch 33: a scheduled task block dragged back onto the rail returns to Unscheduled.
-   * Plain events have no "unscheduled" home — they get the soft-no instead (return false). */
-  function handleDragToRail(id: string): boolean {
+  /** Punch 33 + Kai 2026-10-12: a block dragged onto the rail does what the section it lands on
+   * means (railDrop.ts has the table) — Overdue, or a plain event off any section, is the soft-no. */
+  function handleDragToRail(id: string, section: string | null): boolean {
     const event = events.find((e) => e.id === id)
-    if (!event?.task_id) return false
-    unscheduleWithUndo(event)
-    return true
+    if (!event) return false
+    return eventToRail(event, railDropAction(section, !!event.task_id), scopeTarget(scope, projects, areas))
   }
 
   /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
@@ -667,6 +666,9 @@ function DesktopCalendar() {
         .cal-rail-sec-head:hover { color: var(--ink-body); }
         .cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
+        /* Kai 2026-10-12: a block dragged over a section that takes it — the grid's own drop-target
+           look (.fc-highlight). Overdue never takes one (it's computed), so it never lights. */
+        .cal-rail-sec[data-drop-over]:not([data-section="overdue"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; }
         .cal-plan-btn { margin-left: auto; flex: none; cursor: pointer; padding: 2px 7px; border: 1px solid var(--line-solid); border-radius: 999px; color: var(--ink-muted); }
         .cal-plan-btn:hover { color: var(--ink-body); border-color: var(--ink-faint); }
         .cal-plan-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
