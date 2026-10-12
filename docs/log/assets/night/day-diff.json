@@ -1,0 +1,62 @@
+[
+  {
+    "name": "day-desktop-calendar.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-desktop-inbox.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-desktop-routines.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-desktop-settings.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-desktop-tasks.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-desktop-today.png identical (1280×800)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-calendar.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-inbox.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-routines.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-settings.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-tasks.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  },
+  {
+    "name": "day-phone-today.png identical (390×844)",
+    "ok": true,
+    "detail": "0 px differ"
+  }
+]

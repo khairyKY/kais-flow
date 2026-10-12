@@ -9,6 +9,8 @@ import { resumeMeta } from '../rituals/ritualLogic'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { ritualFinished } from './dayPhase'
 import type { Day } from './useDay'
+import { useTheme } from '../../lib/theme'
+import { Moonflower } from './NightGarden'
 
 // deviation(2026-09-26 daily cycle): the Day card — ONE next move, Plan your day → Now → Shut down
 // the day → Day closed (./dayPhase). Today.dc.html 2a (2026-09-28, Kai's reviewed desktop pass) puts
@@ -81,9 +83,13 @@ function ritualHead(kind: 'plan' | 'shutdown' | 'closed', day: Day, inboxCount: 
 const SunIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><circle cx="12" cy="12" r="5" fill="var(--acc-gold-warm)" /><g stroke="var(--acc-gold-warm)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></g></svg>
 )
-const MoonIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--acc-lavender)" /></svg>
-)
+// Night.dc.html 1a/1f: after dark the evening moment's glyph is the moonflower, which only opens at night.
+const MoonIcon = () =>
+  useTheme((s) => s.theme === 'night') ? (
+    <Moonflower />
+  ) : (
+    <svg width="26" height="26" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M20 15.5A8 8 0 0 1 9 4.5a8 8 0 1 0 11 11Z" fill="var(--acc-lavender)" /></svg>
+  )
 
 // ── Today Phone ruling 2: the ritual card copies the NOW slip's anatomy — a 44 glyph · caption,
 // title, meta · one secondary action on the right — flat (no tape, no tilt), so the slip keeps its

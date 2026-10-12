@@ -1,0 +1,32 @@
+[
+  {
+    "name": "1a /today desktop night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1b /tasks desktop night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1c /calendar desktop night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1d /routines desktop night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1e /settings desktop night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1f /today phone night renders, no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

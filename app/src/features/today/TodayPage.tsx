@@ -51,6 +51,7 @@ import { useOnline } from '../../lib/useOnline'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
+import { Fireflies } from './NightGarden'
 import { cairoMinutes, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
 import { isInProgress, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
@@ -640,6 +641,7 @@ export function TodayPage() {
     const over = day.state.phase === 'now' && !empty ? overCapacity(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds) : 0
     return (
       <div className="tp">
+        <Fireflies phone />
         <PhoneBar title={dateLabelShort} morning={day.morning} evening={day.evening} onOpenRitual={openRitual} />
         {tasksPending ? (
           <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
@@ -837,6 +839,7 @@ export function TodayPage() {
     // Kai 2026-10-03: the shared page width, left-aligned like Tasks (it was 1010 centred, and
     // shrank to its content inside the flex route — index.css .kf-route > *).
     <div className="td" style={{ maxWidth: 'var(--kf-page-max)' }}>
+      <Fireflies phone={false} />
       {header}
 
       {deskCard && (
