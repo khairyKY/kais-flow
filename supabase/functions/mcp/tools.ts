@@ -21,6 +21,7 @@ import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
 export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
+import { rollAfter } from '../_shared/repeat.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -177,7 +178,9 @@ export interface ToolContext {
   zone: string
   now: Date
   /** rrule's next occurrence strictly after `from` (index.ts: npm:rrule; the test: the app's recurrence.ts). */
-  nextOccurrence: (rule: string, from: Date) => Date | null
+  /** The rule's next occurrence strictly after `after`, for a series starting at `from`, on `zone`'s wall
+   * clock — the app's features/tasks/recurrence.ts nextOccurrence. */
+  nextOccurrence: (rule: string, from: Date, zone: string, after: Date) => Date | null
   /** rrule's between() for a repeating event (index.ts: npm:rrule; the test: the app's series.ts). */
   ruleBetween: RuleBetween
 }
@@ -543,7 +546,8 @@ export const TOOLS: readonly ToolDef[] = [
       // the task done with its series silently ended.
       let next: TaskRow | null = null
       if (t.recurrence_rule && t.due_at) {
-        const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at))
+        // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
+        const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
         if (at && !(await ctx.store.openOccurrence(t.title, t.recurrence_rule, at.toISOString(), t.id))) {
           next = {
             ...t,
