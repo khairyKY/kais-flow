@@ -1,0 +1,297 @@
+[
+  {
+    "name": "12j desktop-day six notices, the three new ones among them",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier · in 10 min 09:40 NOTIFICATIONS 09:50 · Car Done Tomorrow\",\"Your page is read — 7 things 09:53 NOTIFICATIONS From “OS lecture 3”. 2 need a quick look. Review\",\"Omar’s birthday is today 08:00 NOTIFICATIONS Last spoke 12 days ago. Open Omar\",\"Good morning — 3 to tend today 07:30 NOTIFICATIONS ✶ GCI homework 1 — NumPy, then the lecture 2 survey and OS lectures 1 + 2. Plan my "
+  },
+  {
+    "name": "12j desktop-day buttons: Review · Open Omar · Open (sync)",
+    "ok": true,
+    "detail": "[\"Done Tomorrow\",\"Review\",\"Open Omar\",\"Plan my day Open\",\"Shut down\",\"Open\"]"
+  },
+  {
+    "name": "12j desktop-day glyphs: camera/hydrangea, people/blossom, offline/hydrangea",
+    "ok": true,
+    "detail": "[[\"Call the tyre suppli\",\"var(--acc-blossom) var(--acc-terra)\"],[\"Your page is read — \",\"var(--block-hydrangea) var(--acc-hydrangea-deep)\"],[\"Omar’s birthday is t\",\"var(--block-blossom) var(--acc-blossom-text)\"],[\"Good morning — 3 to \",\"var(--acc-sage) var(--acc-sage-text)\"],[\"The garden’s ready t\",\"var(--acc-lavender) var(--acc-lavender-deep)\"],[\"2 changes are waitin\",\"var(--block-hydrangea) var(--acc-hydrangea-deep)\"]]"
+  },
+  {
+    "name": "12j desktop-day Review → the Inbox with that page's results open",
+    "ok": true,
+    "detail": "http://localhost:5254/inbox"
+  },
+  {
+    "name": "12j desktop-day Open Omar → his page",
+    "ok": true,
+    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "12j desktop-day no writes from looking",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j phone-night six notices, the three new ones among them",
+    "ok": true,
+    "detail": "[\"Call the tyre supplier · in 10 min NOTIFICATIONS 09:40 · 09:50 · Car Done Tomorrow\",\"Your page is read — 7 things NOTIFICATIONS 09:53 · From “OS lecture 3”. 2 need a quick look. Review\",\"Omar’s birthday is today NOTIFICATIONS 08:00 · Last spoke 12 days ago. Open Omar\",\"Good morning — 3 to tend today NOTIFICATIONS 07:30 · ✶ GCI homework 1 — NumPy, then the lecture 2 survey and OS lectures 1 + 2. "
+  },
+  {
+    "name": "12j phone-night buttons: Review · Open Omar · Open (sync)",
+    "ok": true,
+    "detail": "[\"Done Tomorrow\",\"Review\",\"Open Omar\",\"Plan my day Open\",\"Shut down\",\"Open\"]"
+  },
+  {
+    "name": "12j phone-night glyphs: camera/hydrangea, people/blossom, offline/hydrangea",
+    "ok": true,
+    "detail": "[[\"Call the tyre suppli\",\"var(--acc-blossom) var(--acc-terra)\"],[\"Your page is read — \",\"var(--block-hydrangea) var(--acc-hydrangea-deep)\"],[\"Omar’s birthday is t\",\"var(--block-blossom) var(--acc-blossom-text)\"],[\"Good morning — 3 to \",\"var(--acc-sage) var(--acc-sage-text)\"],[\"The garden’s ready t\",\"var(--acc-lavender) var(--acc-lavender-deep)\"],[\"2 changes are waitin\",\"var(--block-hydrangea) var(--acc-hydrangea-deep)\"]]"
+  },
+  {
+    "name": "12j phone-night Review → the Inbox with that page's results open",
+    "ok": true,
+    "detail": "http://localhost:5254/inbox"
+  },
+  {
+    "name": "12j phone-night Open Omar → his page",
+    "ok": true,
+    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "12j phone-night no writes from looking",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12j phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day the three kinds have a switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Captures · silent / People · silent / Sync · silent",
+    "ok": true,
+    "detail": "[\"Paper capture ready Captures · silent\",\"Birthday People · silent\",\"Sync problem Sync · silent\"]"
+  },
+  {
+    "name": "12i desktop-day on · off · on, as drawn",
+    "ok": true,
+    "detail": "[\"true\",\"false\",\"true\"]"
+  },
+  {
+    "name": "12i desktop-day order: … Focus done, Paper capture ready, Birthday, Sync problem",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Birthday on → birthday_on true",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Paper capture ready off → paper_ready_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day Sync problem off → sync_problem_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night the three kinds have a switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Captures · silent / People · silent / Sync · silent",
+    "ok": true,
+    "detail": "[\"Paper capture ready Captures · silent\",\"Birthday People · silent\",\"Sync problem Sync · silent\"]"
+  },
+  {
+    "name": "12i phone-night on · off · on, as drawn",
+    "ok": true,
+    "detail": "[\"true\",\"false\",\"true\"]"
+  },
+  {
+    "name": "12i phone-night order: … Focus done, Paper capture ready, Birthday, Sync problem",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Birthday on → birthday_on true",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Paper capture ready off → paper_ready_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night Sync problem off → sync_problem_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i no settings row: Birthday off, the other two on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12i no settings row: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "birthday: people + interactions are read when Birthday is on (whatever page is open)",
+    "ok": true,
+    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"captures\",\"projects\",\"domains\",\"areas\",\"calendar_events\",\"activity_log\",\"slipping\",\"people\",\"resurfaced_log\",\"interactions\"]"
+  },
+  {
+    "name": "birthday: nothing before 08:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "birthday: 08:00 → \"Omar’s birthday is today\" / \"Last spoke 12 days ago.\" · Open Omar, silent",
+    "ok": true,
+    "detail": "{\"title\":\"Omar’s birthday is today\",\"body\":\"Last spoke 12 days ago.\",\"actions\":[[\"open\",\"Open Omar\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"birthday\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/people/c0000000-0000-4000-8000-000000000001\\\"}\"}"
+  },
+  {
+    "name": "birthday: once, not every sweep",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "birthday: the toast’s Open Omar lands on his page",
+    "ok": true,
+    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "birthday: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "birthday, lock-screen names off: \"A birthday\" / \"Unlock to see it\" · Open — no name in the toast",
+    "ok": true,
+    "detail": "{\"title\":\"A birthday\",\"body\":\"Unlock to see it\",\"actions\":[[\"open\",\"Open\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"birthday\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/people/c0000000-0000-4000-8000-000000000001\\\"}\"}"
+  },
+  {
+    "name": "birthday private: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "birthday off (the default): no toast, interactions not fetched for it",
+    "ok": true,
+    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"captures\",\"projects\",\"domains\",\"areas\",\"calendar_events\",\"activity_log\",\"slipping\",\"people\",\"resurfaced_log\"]"
+  },
+  {
+    "name": "paper: the read resumed here finishes → capture-image was asked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "paper: → \"Your page is read — 7 things\" / \"From “OS lecture 3”. 2 need a quick look.\" · Review, silent",
+    "ok": true,
+    "detail": "{\"title\":\"Your page is read — 7 things\",\"body\":\"From “OS lecture 3”. 2 need a quick look.\",\"actions\":[[\"review\",\"Review\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"paper_ready\\\",\\\"taskIds\\\":[\\\"e1000000-0000-4000-8000-000000000001\\\"],\\\"url\\\":\\\"/inbox\\\"}\"}"
+  },
+  {
+    "name": "paper: the in-app toast is still there too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "paper: Review (from the toast) → the Inbox with the results open",
+    "ok": true,
+    "detail": "http://localhost:5254/inbox"
+  },
+  {
+    "name": "paper: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "paper, lock-screen names off: \"A page is ready\" / \"Unlock to see it\" — no page title in it",
+    "ok": true,
+    "detail": "{\"title\":\"A page is ready\",\"body\":\"Unlock to see it\",\"actions\":[[\"review\",\"Review\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"paper_ready\\\",\\\"taskIds\\\":[\\\"e1000000-0000-4000-8000-000000000001\\\"],\\\"url\\\":\\\"/inbox\\\"}\"}"
+  },
+  {
+    "name": "paper: with someone looking, no toast (the in-app one says it)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync: not before it has lasted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync: meanwhile the K shows \"changes waiting\" (12a)",
+    "ok": true,
+    "detail": "{\"state\":\"offline\",\"dark\":false,\"focusLabel\":\"Start focus · 25:00\",\"pauseLabel\":\"Pause notifications for 1 hour\"}"
+  },
+  {
+    "name": "sync: after 5 minutes → \"1 change is waiting to sync\" / \"It’s safe on this device. We’ll keep trying.\" · Open, silent",
+    "ok": true,
+    "detail": "[{\"title\":\"1 change is waiting to sync\",\"body\":\"It’s safe on this device. We’ll keep trying.\",\"actions\":[[\"open\",\"Open\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"sync_problem\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/today\\\"}\"}]"
+  },
+  {
+    "name": "sync: once per incident",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync: back online, the change goes up and the notice reaches the history (12j), stamped when it was said",
+    "ok": true,
+    "detail": "{\"id\":\"cea11158-a68f-46b2-ae22-f7f53456a613\",\"event_type\":\"notify.sync_problem\",\"entity_type\":\"notification\",\"entity_id\":\"d6fee81e-4b5c-47a7-8b4d-8db37bf424ed\",\"payload\":{\"title\":\"1 change is waiting to sync\",\"body\":\"It’s safe on this device. We’ll keep trying.\"},\"created_at\":\"2026-10-03T07:00:01.197Z\"}"
+  },
+  {
+    "name": "sync: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sync: never while someone is looking (the topbar says it)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b flyout day: date, Top 3, capture, focus, footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b flyout day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b flyout night: date, Top 3, capture, focus, footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "12b flyout night: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

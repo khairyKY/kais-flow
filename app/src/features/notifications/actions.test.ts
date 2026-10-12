@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // What a notification's buttons do in the app (Tray and Notifications.dc.html 12k).
 const fetched: string[][] = []
 const server = { down: false }
+const unreviewed = new Set(['c-waiting'])
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: () => ({
       select: () => ({
+        eq: (_col: string, id: string) => ({ is: () => ({ maybeSingle: async () => ({ data: unreviewed.has(id) ? { id } : null, error: null }) }) }),
         in: async (_col: string, ids: string[]) => {
           fetched.push(ids)
           if (server.down) return { data: null, error: new Error('Failed to fetch') }
@@ -25,6 +27,9 @@ const moveToTomorrowWithUndo = vi.fn()
 vi.mock('../tasks/api', () => ({ completeTaskWithUndo: (t: unknown) => completeTaskWithUndo(t), moveToTomorrowWithUndo: (t: unknown) => moveToTomorrowWithUndo(t) }))
 const focus = { mode: 'break', isRunning: true, setMode: vi.fn(), togglePlay: vi.fn() }
 vi.mock('../focus/focusStore', () => ({ useFocusStore: { getState: () => focus } }))
+
+const show = vi.fn()
+vi.mock('../paper/paperStore', () => ({ usePaperStore: { getState: () => ({ show }) } }))
 
 const { actionFromSearch, runNotificationAction, withoutAction } = await import('./actions')
 
@@ -82,5 +87,22 @@ describe('notification actions', () => {
     await runNotificationAction({ action: 'keep' }, nav)
     expect(focus.setMode).toHaveBeenCalledWith('pomodoro')
     expect(focus.togglePlay).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Review (paper capture ready)', () => {
+  it('opens the Inbox, and the page’s results while it still waits for review', async () => {
+    const nav = vi.fn()
+    await runNotificationAction({ action: 'review', taskIds: ['c-waiting'] }, nav)
+    expect(nav).toHaveBeenCalledWith('/inbox')
+    expect(show).toHaveBeenCalledWith({ kind: 'results', captureId: 'c-waiting' })
+  })
+  it('a page reviewed since (or no capture): only the Inbox — its lines are never offered twice', async () => {
+    show.mockClear()
+    const nav = vi.fn()
+    await runNotificationAction({ action: 'review', taskIds: ['c-reviewed'] }, nav)
+    await runNotificationAction({ action: 'review' }, nav)
+    expect(nav.mock.calls).toEqual([['/inbox'], ['/inbox']])
+    expect(show).not.toHaveBeenCalled()
   })
 })

@@ -1,5 +1,6 @@
-// P4: Web Push sender — digests, evening nudges, task and routine reminders. Invoked by pg_cron
-// (via pg_net) on a schedule, and by a manual "send test" button in Settings.
+// P4: Web Push sender — digests, evening nudges, task and routine reminders, birthdays. Invoked by
+// pg_cron (via pg_net) on a schedule, by capture-image when a page is read to the end (paper ready),
+// and by a manual "send test" button in Settings.
 //
 // Tray & notifications (2026-10-04): every payload is a `Notice` from copy.ts — the drawn title,
 // body and actions (Tray and Notifications.dc.html 12k) that app/public/sw-push.js shows as is —
@@ -9,7 +10,8 @@
 //
 // FIX-0 / S1: two callers, two branches, and nothing is ever fanned out across users.
 //  - pg_cron (service-role key from Vault): builds each user's payload from that user's rows only
-//    and sends it to that user's devices only.
+//    and sends it to that user's devices only. capture-image (the runtime's service-role key) asks
+//    for one capture's owner only: `{kind: 'paper_ready', capture_id}`.
 //  - a signed-in user: may only send `test`, and only to their own devices.
 //  Anyone else (no token, the public anon key) gets 401.
 //
@@ -22,9 +24,10 @@ import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
 import { dayBounds, ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
 import { routinesDueAt, type ReminderRoutine } from './routine.ts'
+import { birthdayDue, birthdaysOn, type PersonFacts } from './birthday.ts'
 import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
-import { deliver, digestNotice, nudgeNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { birthdayNotice, deliver, digestNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -34,8 +37,8 @@ const CONTACT_EMAIL = Deno.env.get('VAPID_CONTACT_EMAIL') ?? 'mailto:example@exa
 
 // 'overdue' is gone (2026-10-12): an hourly push nobody could turn off. Migration 0062 unschedules its
 // cron job; the morning digest says "N overdue" instead.
-type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'routine' | 'test'
-const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'routine', 'test']
+type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'routine' | 'birthday' | 'test'
+const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'routine', 'birthday', 'test']
 
 /** One user's app_settings row as notify reads it (select('*'), so a function deployed before
  * migration 0048 still runs: the missing columns read as their defaults). */
@@ -74,15 +77,16 @@ function runClock(): RunClock {
   }
 }
 
-/** The in-app history (Activity) keeps what was sent, always with names (it's behind the lock). */
-async function logNotice(supabase: SupabaseClient, userId: string, n: Notice): Promise<void> {
+/** The in-app history (Activity) keeps what was sent, always with names (it's behind the lock).
+ * `ref`: what its button opens (paper ready: capture_id; one birthday: person_id). */
+async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, ref: Record<string, string> = {}): Promise<void> {
   await supabase.from('activity_log').insert({
     id: crypto.randomUUID(),
     user_id: userId,
     event_type: `notify.${n.kind}`,
     entity_type: 'notification',
     entity_id: crypto.randomUUID(),
-    payload: { title: n.title, body: n.body },
+    payload: { title: n.title, body: n.body, ...ref },
   })
 }
 
@@ -170,6 +174,27 @@ async function buildPayload(
       })
     }
     return reminderNotice(tasks, prefs, clock.now, zone)
+  }
+
+  if (kind === 'birthday') {
+    // 08:00 on the user's clock (runForAllUsers picks the tick): whose birthday is today, and how long
+    // since you last spoke (their newest interaction) — notify/birthday.ts.
+    const { data: people, error } = await supabase.from('people').select('id, name, facts').eq('user_id', userId)
+    if (error) throw error
+    const today = dateKey(clock.now, zone)
+    const ids = birthdaysOn((people ?? []) as PersonFacts[], [], today, zone).map((b) => b.id)
+    if (ids.length === 0) return null
+    const { data: spoke, error: spokeError } = await supabase
+      .from('interactions')
+      .select('person_id, occurred_at')
+      .eq('user_id', userId)
+      .in('person_id', ids)
+      .lt('occurred_at', dayWindow(clock.now, zone).end.toISOString())
+    if (spokeError) throw spokeError
+    const due = birthdaysOn((people ?? []) as PersonFacts[], spoke ?? [], today, zone)
+    const n = birthdayNotice(due, prefs)
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, birthdayNotice(due, NAMES), due.length === 1 ? { person_id: due[0].id } : {})
+    return n
   }
 
   // routine: the reminders whose time is on this tick, on the days their cadence has, not yet checked
@@ -317,6 +342,13 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       if (!(scheduled ? ritualDue(kind, s, clock.now, userZone(s?.timezone)) : ritualOn(kind, s))) userIds.delete(id)
     }
   }
+  // birthday: off until the user turns it on (12i), then on the tick that is 08:00 on their clock.
+  if (kind === 'birthday') {
+    for (const id of userIds) {
+      const s = prefsByUser.get(id)
+      if (!kindOn('birthday', s) || (scheduled && !birthdayDue(clock.now, userZone(s?.timezone)))) userIds.delete(id)
+    }
+  }
 
   let sent = 0
   let pruned = 0
@@ -352,6 +384,30 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     skipped_endpoints: skippedEndpoints,
     users,
   })
+}
+
+/** capture-image's call when a page is read to the end: that capture's owner only. The read may
+ * finish after the phone left (capture-image keeps it going), so the push is how a closed app hears
+ * it; the service worker drops it while a window of the app is focused (the results are on screen). */
+async function runPaperReady(req: Request, captureId: string): Promise<Response> {
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+  const clock = runClock()
+  const { data: c, error } = await supabase.from('captures').select('id, user_id, status, title, items').eq('id', captureId).maybeSingle()
+  if (error) throw error
+  if (!c || c.status !== 'done') return jsonResponse(req, { sent: 0, skipped: true })
+  const userId = c.user_id as string
+  const [settings, subs] = await Promise.all([
+    supabase.from('app_settings').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('push_subscriptions').select('id, user_id, endpoint, keys').eq('user_id', userId),
+  ])
+  if (settings.error || subs.error) throw settings.error ?? subs.error
+  const prefs = (settings.data ?? undefined) as UserPrefs | undefined
+  const capture = { id: c.id as string, title: c.title as string | null, items: (c.items ?? []) as { confidence: number }[] }
+  const payload = deliver(paperReadyNotice(capture, prefs), prefs, clock.now, userZone(prefs?.timezone))
+  if (!payload) return jsonResponse(req, { sent: 0, skipped: true })
+  await logNotice(supabase, userId, paperReadyNotice(capture, NAMES), { capture_id: capture.id })
+  const result = await sendToSubscriptions(supabase, userId, (subs.data ?? []) as Subscription[], payload)
+  return jsonResponse(req, { ...result, skipped: false })
 }
 
 /** Signed-in user path: a test push to the caller's own devices, nothing else. */
@@ -390,7 +446,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { kind, scheduled } = (await req.json()) as { kind: NotifyKind; scheduled?: boolean }
+    const { kind, scheduled, capture_id } = (await req.json()) as { kind: NotifyKind | 'paper_ready'; scheduled?: boolean; capture_id?: unknown }
 
     if (!serviceRole) {
       // Digests, nudges, reminders and sweeps are cron-only; a user may only test their own devices.
@@ -398,8 +454,12 @@ Deno.serve(async (req) => {
       return await runTestForUser(req, userId!, token)
     }
 
+    if (kind === 'paper_ready') {
+      if (typeof capture_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(capture_id)) return jsonResponse(req, { error: 'bad_request' }, 400)
+      return await runPaperReady(req, capture_id)
+    }
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
-    return await runForAllUsers(req, kind, scheduled === true)
+    return await runForAllUsers(req, kind as NotifyKind, scheduled === true)
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
     console.error('notify:', e)

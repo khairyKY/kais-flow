@@ -222,6 +222,30 @@ describe('describeActivity — the notification history (Tray and Notifications.
   })
 })
 
+describe('describeActivity — the three 12k drew last (12j): page read, birthday, sync', () => {
+  it('a page read: as sent, Review → that capture', () => {
+    const line = describeActivity(entry('notify.paper_ready', 'notification', RANDOM, { title: 'Your page is read — 7 things', body: 'From “OS lecture 3”. 2 need a quick look.', capture_id: INBOX }))
+    expect(line).toMatchObject({ text: 'Your page is read — 7 things', details: 'From “OS lecture 3”. 2 need a quick look.', category: 'notifications', icon: 'notice', href: '/inbox' })
+    expect(line.notice).toEqual({ kind: 'paper_ready', actions: [{ action: 'review', title: 'Review' }], taskIds: [INBOX] })
+  })
+
+  it('a birthday: "Open Salma" while she’s in People; gone → no button; several → Open People', () => {
+    const one = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: 'Salma’s birthday is today', body: 'Last spoke 12 days ago.', person_id: PERSON }), NAMES)
+    expect(one).toMatchObject({ text: 'Salma’s birthday is today', details: 'Last spoke 12 days ago.', category: 'notifications', href: '/people/' + PERSON })
+    expect(one.notice).toEqual({ kind: 'birthday', actions: [{ action: 'open', title: 'Open Salma' }], taskIds: [] })
+    const gone = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: 'Omar’s birthday is today', body: '', person_id: RANDOM }), NAMES)
+    expect(gone).toMatchObject({ href: null, notice: { kind: 'birthday', actions: [] } })
+    const several = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: '2 birthdays today', body: 'Omar · Salma' }), NAMES)
+    expect(several).toMatchObject({ href: '/people', notice: { actions: [{ action: 'open', title: 'Open' }] } })
+  })
+
+  it('a sync problem: as it was said, Open', () => {
+    const line = describeActivity(entry('notify.sync_problem', 'notification', RANDOM, { title: '2 changes are waiting to sync', body: 'They’re safe on this device. We’ll keep trying.' }))
+    expect(line).toMatchObject({ text: '2 changes are waiting to sync', details: 'They’re safe on this device. We’ll keep trying.', category: 'notifications', href: '/today' })
+    expect(line.notice).toEqual({ kind: 'sync_problem', actions: [{ action: 'open', title: 'Open' }], taskIds: [] })
+  })
+})
+
 describe('describeActivity — "Move to…" (2026-10-07): projects, areas and domains', () => {
   const AREA = '88888888-8888-4888-8888-888888888888'
   const DOMAIN = '99999999-9999-4999-8999-999999999999'

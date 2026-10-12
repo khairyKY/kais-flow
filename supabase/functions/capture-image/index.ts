@@ -145,6 +145,18 @@ async function read(req: Request, userId: string): Promise<Response> {
   const patch = { ...next, ...(page === 0 && pageRead.title ? { title: pageRead.title } : {}) }
   const { error: saveError } = await update(patch)
   if (saveError) throw saveError
+  // Read to the end: "Your page is read — N things" (Tray and Notifications 12k) through notify, which
+  // pushes to this user's devices and keeps it in the history — so a phone that left mid-read hears it.
+  if (patch.status === 'done' && row.status !== 'done') {
+    const told = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'paper_ready', capture_id }),
+    })
+      .then((r) => r.body?.cancel())
+      .catch((e) => console.error('capture-image: paper_ready notice', e))
+    ;(globalThis as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime?.waitUntil(told)
+  }
   return answer({ ...row, ...patch })
 }
 
