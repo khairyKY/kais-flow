@@ -205,3 +205,20 @@
 /* A multi-day span's chip: square on the side where it runs past the days shown. */
 .pc-allday-chip.is-from { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .pc-allday-chip.is-into { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+/* Editor 1e: the Top-3 star with its word, in the chip row. */
+.pc-qc-star { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-body-s); color: var(--ink-muted); }
+
+/* ── Month (phone parity): the date in the week strip's circle, a dot row under it. ── */
+.pc-month { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; padding: 0 var(--sp-2) var(--sp-2); background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
+.pc-month-nav { flex: none; display: flex; align-items: center; justify-content: space-between; }
+.pc-month-title { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.pc-month-wd { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); padding-bottom: var(--sp-1); }
+.pc-month-wd > span { text-align: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-month-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(64px, 1fr); }
+.pc-mcell { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--sp-1) 0 0; border: none; border-top: 1px dashed var(--line-dashed); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pc-mcell.is-out { opacity: 0.45; }
+.pc-mcell[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
+.pc-mcell:active .pc-day-n { background: var(--pressed-overlay); }
+.pc-mdots { display: flex; align-items: center; gap: 3px; min-height: 12px; }
+.pc-mdots > i { width: 6px; height: 6px; border-radius: 50%; background: var(--pc-dot); }
+.pc-mdots > span { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }

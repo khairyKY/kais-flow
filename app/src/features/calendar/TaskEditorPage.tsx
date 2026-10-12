@@ -243,7 +243,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)', flexWrap: 'wrap', gap: 12 }}>
             <div>
               {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. */}
-              <button type="button" onClick={handleDelete} style={{ ...LINK, letterSpacing: '0.1em', color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Delete task</button>
+              <button type="button" onClick={handleDelete} style={{ ...LINK, letterSpacing: 'var(--ls-mono-tight)', color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Delete task</button>
               <FHelp>to Trash, with its calendar block · Undo</FHelp>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -358,7 +358,7 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
       aria-label={label}
       aria-haspopup="menu"
       onClick={onOpen}
-      style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 13, padding: '8px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', color: 'var(--text-primary)' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-body-s)', padding: '8px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-input)', color: 'var(--text-primary)' }}
     >
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
       <span aria-hidden="true" style={{ fontSize: '0.8em', color: 'var(--text-tertiary)', lineHeight: 1 }}>▾</span>
@@ -367,8 +367,8 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
 }
 
 const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase' }
-const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }
+const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase' }
+const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
 
 const chipStyle = {
   fontFamily: 'var(--font-mono)',

@@ -12,7 +12,7 @@ import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue, moveToTo
 import { useRowGrammar } from '../tasks/useRowGrammar'
 import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
-import { railDropAction, scopeTarget, type RailSection } from './railDrop'
+import { railDropAction, scopeTarget, SMART_LISTS, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
 import { nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
 import { todayFor } from '../tasks/planMath'
@@ -34,6 +34,7 @@ import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
+import { isMultiDaySpan } from './daySpans'
 import { cardDragData, freeGaps } from './planningMode'
 import { addDays } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
@@ -77,13 +78,6 @@ const SCOPE_KIND_OPTIONS: { value: RailScopeKind; label: string }[] = [
   { value: 'domain', label: 'Domain' },
 ]
 
-const SMART_LIST_OPTIONS = [
-  { value: 'today', label: 'Today' },
-  { value: 'week', label: 'This Week' },
-  { value: 'month', label: 'This Month' },
-  { value: 'upcoming', label: 'Upcoming' },
-  { value: 'someday', label: 'Someday' },
-]
 
 // The grid's range is on the user's zone (CalendarGrid `timeZone`): FullCalendar hands its days'
 // midnights as instants, so they are read as that zone's dates, then drawn as dates in no zone.
@@ -117,7 +111,8 @@ function todaysLoad(events: CalendarEvent[]): { blocked: number; freeHours: numb
 
 /** Client-side conflict detection: only standalone Events get flagged. Time blocks and task-linked blocks are excluded. */
 function computeConflicts(events: CalendarEvent[]): Map<string, string[]> {
-  const eventType = events.filter((e) => e.type === 'event' && !e.all_day)
+  // A span of a day or more lives in the all-day band (Calendar 3e) — it overlaps nothing on the grid.
+  const eventType = events.filter((e) => e.type === 'event' && !e.all_day && !isMultiDaySpan(e, appZone()))
   const map = new Map<string, string[]>()
   for (let i = 0; i < eventType.length; i++) {
     for (let j = i + 1; j < eventType.length; j++) {
@@ -456,7 +451,7 @@ function DesktopCalendar() {
 
   const scopeValueOptions =
     scope.kind === 'smart'
-      ? SMART_LIST_OPTIONS
+      ? SMART_LISTS
       : scope.kind === 'project'
         ? projects.map((p) => ({ value: p.id, label: p.name }))
         : scope.kind === 'area'

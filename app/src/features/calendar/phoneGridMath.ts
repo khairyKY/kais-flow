@@ -18,8 +18,8 @@ export const minToPx = (m: number): number => (m * HOUR_PX) / 60
 export const pxToMin = (px: number): number => (px * 60) / HOUR_PX
 export const snap = (m: number): number => Math.round(m / SNAP_MIN) * SNAP_MIN
 
-export type PhoneView = 'day' | '3day' | 'week'
-const VIEW_DAYS: Record<PhoneView, number> = { day: 1, '3day': 3, week: 7 }
+export type PhoneView = 'day' | '3day' | 'week' | 'month'
+const VIEW_DAYS: Record<Exclude<PhoneView, 'month'>, number> = { day: 1, '3day': 3, week: 7 }
 
 const dayNum = (key: string) => Date.parse(`${key}T00:00:00Z`) / 86_400_000
 const fmt = (key: string, o: Intl.DateTimeFormatOptions) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', ...o })
@@ -31,14 +31,36 @@ export function weekPage(day: string, today: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i))
 }
 
-/** The days on screen: the anchor day, three from it, or the week page it sits in. */
-export function visibleDays(view: PhoneView, anchor: string, today: string): string[] {
+/** The days on screen: the anchor day, three from it, the week page it sits in, or its month's weeks. */
+export function visibleDays(view: PhoneView, anchor: string, today: string, mondayFirst = false): string[] {
+  if (view === 'month') return monthGrid(anchor, mondayFirst)
   if (view === 'week') return weekPage(anchor, today)
   return Array.from({ length: VIEW_DAYS[view] }, (_, i) => addDays(anchor, i))
 }
 
-/** How far one swipe (or a view's page) moves the anchor. */
-export const viewStep = (view: PhoneView): number => VIEW_DAYS[view]
+/** How far one swipe (or a view's page) moves the anchor (a month pages by months — monthGrid). */
+export const viewStep = (view: PhoneView): number => (view === 'month' ? 0 : VIEW_DAYS[view])
+
+// ── Month (phone parity with the desktop's M view; 3e's "month-view form" at phone size) ──
+
+/** The weeks holding `anchor`'s month, Sunday (or Monday) first: 5 or 6 rows of 7 date keys. */
+export function monthGrid(anchor: string, mondayFirst = false): string[] {
+  const first = `${anchor.slice(0, 7)}-01`
+  const dow = new Date(`${first}T12:00:00Z`).getUTCDay()
+  const back = mondayFirst ? (dow + 6) % 7 : dow
+  const [y, m] = first.split('-').map(Number)
+  const length = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return Array.from({ length: Math.ceil((back + length) / 7) * 7 }, (_, i) => addDays(first, i - back))
+}
+
+/** The first of the month `n` months from `key`'s. */
+export function addMonths(key: string, n: number): string {
+  const [y, m] = key.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10)
+}
+
+/** "October 2026" */
+export const monthTitle = (key: string): string => fmt(key, { month: 'long', year: 'numeric' })
 
 /** The header title: "Sunday, Sep 27" · "Sep 27 – 29" · "Sep 27 – Oct 3". */
 export function viewTitle(days: readonly string[]): string {

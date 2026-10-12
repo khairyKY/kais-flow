@@ -24,6 +24,15 @@ export type RailDropAction =
 
 const SECTIONS: readonly string[] = ['overdue', 'today', 'inbox', 'lists']
 
+/** The Lists section's smart lists (tasks/grouping filterByScope) — the desktop rail's and the phone strip's. */
+export const SMART_LISTS = [
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'someday', label: 'Someday' },
+]
+
 /** Section × kind → what the drop does. Overdue is a computed bucket (nothing can be put there), so
  * it always says no; rail chrome outside any section unschedules a task block as it always did. */
 export function railDropAction(section: string | null | undefined, taskBlock: boolean): RailDropAction {

@@ -572,13 +572,14 @@
 /* ── Calendar.dc.html 3e — a block crossing a day boundary (CalendarGrid + daySpans.ts) ──
    Multi-day span: one piece per day in the all-day band — "only outer corners round; open edges
    carry » / «. Title on the first visible segment only." The pieces sit 2px apart, as drawn. */
-.fc .fc-daygrid-event.kf-seg { margin-left: 1px; margin-right: 1px; }
+.fc .fc-daygrid-event.kf-seg { display: flex; margin-left: 1px; margin-right: 1px; overflow: hidden; }
+.fc .fc-daygrid-event.kf-seg .kf-ev-row, .fc .fc-daygrid-event.kf-seg .kf-ev-text { min-width: 0; flex: 1; }
 .fc .fc-daygrid-event.kf-seg .fc-event-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-daygrid-event.kf-seg-start { border-radius: var(--radius-pill) 0 0 var(--radius-pill); border-right: none; }
 .fc .fc-daygrid-event.kf-seg-middle { border-radius: 0; border-left: none; border-right: none; }
 .fc .fc-daygrid-event.kf-seg-end { border-radius: 0 var(--radius-pill) var(--radius-pill) 0; border-left: none; }
 /* the marks-only pieces ("« »", "« ends 3 PM") read in the time row's mono, quiet */
-.fc .fc-daygrid-event.kf-seg:not(.kf-seg-titled) .fc-event-title { font-family: var(--font-mono); color: var(--ink-faint); }
+.fc .fc-daygrid-event.kf-seg:not(.kf-seg-titled) .fc-event-title { font-family: var(--font-mono); font-size: 0.8em; color: var(--ink-faint); }
 /* Spans midnight: a cut edge is square, dashed, and carries "⌄ <end>" / "⌃ from <start>" (the time
    row's mono) where the block runs on. FullCalendar marks the real ends .fc-event-start / -end. */
 .fc .fc-timegrid-event:not(.fc-event-end):not(.fc-event-mirror) { border-bottom: 1px dashed var(--line-dashed); border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: calc(14px * var(--s)); }

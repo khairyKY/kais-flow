@@ -103,7 +103,6 @@ async function open(route = '/calendar', o = {}) {
     localStorage.setItem('kf.calPlanning', planning ? '1' : '0')
     localStorage.removeItem('kf.calPlanTab')
     localStorage.removeItem('kf.calPlanSort')
-    if (view) localStorage.setItem('kf.calViewOverride', view)
   }, [o.theme ?? 'day', JSON.stringify(session), !!o.planning, o.view ?? '', JSON.stringify(HINTS), UID])
   const state = { rows: tables(o.extra), writes: [] }
   if (o.settings) Object.assign(state.rows.app_settings[0], o.settings)
@@ -297,6 +296,177 @@ if (want('e1')) {
       check('e1 back on the calendar, the sidebar open again', page.url().endsWith('/calendar') && (await page.locator('.app-sidebar.collapsed').count()) === 0, page.url())
     }
     check(`e1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── E3: Calendar 3e — a multi-day span in the all-day band, a block cut at midnight (desktop + phone) ──
+if (want('e3')) {
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors } = await open('/calendar', { theme, extra: EVENTS_3E, day: 13, clock: '10:00' })
+    await page.locator(`.fc-event[data-kf-id="${eid(NIGHT)}"]`).first().scrollIntoViewIfNeeded()
+    await sleep(400)
+    const segs = await page.locator('.fc-daygrid-event.kf-seg').allInnerTexts()
+    check(`e3 ${theme}: the Offsite span is three pieces in the band — "Offsite »", "« »", "« ends 3:00 PM"`, segs.length === 3 && /^Offsite »$/.test(segs[0].trim()) && /^« »$/.test(segs[1].trim()) && /« ends 3:00 PM/.test(segs[2]), JSON.stringify(segs))
+    const shapes = await page.locator('.fc-daygrid-event.kf-seg').evaluateAll((els) => els.map((el) => getComputedStyle(el).borderTopLeftRadius + '/' + getComputedStyle(el).borderTopRightRadius))
+    check(`e3 ${theme}: only the outer corners round`, shapes[0].startsWith('0px') === false && shapes[0].endsWith('/0px') && shapes[1] === '0px/0px' && shapes[2].startsWith('0px/'), JSON.stringify(shapes))
+    check(`e3 ${theme}: the span is not also drawn in the time grid`, (await page.locator(`.fc-timegrid-event[data-kf-id="${eid(OFFSITE)}"]`).count()) === 0)
+    const cuts = await page.locator(`.fc-timegrid-event[data-kf-id="${eid(NIGHT)}"] .kf-ev-cut`).allInnerTexts()
+    check(`e3 ${theme}: the night shift is cut at midnight — "⌄ 1:30 AM" on Tue, "⌃ from 11:00 PM" on Wed`, cuts.some((c) => /⌄ 1:30 AM/.test(c)) && cuts.some((c) => /⌃ from 11:00 PM/.test(c)), JSON.stringify(cuts))
+    // A click on a span piece opens the block itself.
+    if (theme === 'day') {
+      await page.locator('.fc-daygrid-event.kf-seg').nth(1).click()
+      await sleep(500)
+      check('e3 a click on a piece opens the span\'s own block menu', /Offsite/.test(await menu(page).locator('textarea').inputValue().catch(() => '')))
+      await page.keyboard.press('Escape')
+      await sleep(300)
+    }
+    await page.mouse.move(0, 0)
+    await shot(page, `e3-desktop-${theme}`)
+    check(`e3 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+    // Phone: Tue 14 (the cut's first day) and Wed 15.
+    const ph = await open('/calendar?date=2026-07-14', { theme, extra: EVENTS_3E, day: 13, clock: '10:00', view: phone })
+    await ph.page.evaluate(() => { const el = document.querySelector('.pc-scroll'); if (el) el.scrollTop = el.scrollHeight })
+    await sleep(400)
+    const chip = await ph.page.locator('.pc-allday-chip').allInnerTexts()
+    const into = await ph.page.locator('.pc-block.is-cut-into .pc-cut').allInnerTexts()
+    check(`e3 phone ${theme}: the span's chip reads "« Offsite »" mid-way; the night shift ends "⌄ 01:30" at the cut`, chip.some((c) => /« Offsite »/.test(c)) && into.some((c) => /⌄ 01:30/.test(c)), JSON.stringify({ chip, into }))
+    await shot(ph.page, `e3-phone-${theme}`)
+    check(`e3 phone ${theme}: no page errors`, ph.errors.length === 0, ph.errors.join(' | '))
+    await ph.ctx.close()
+  }
+}
+
+// ── R1: Repeat changed from a LATER occurrence keeps the earlier ones (the split); the shared picker ──
+if (want('r1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { extra: EVENTS_3E, day: 13, clock: '10:00' })
+  // Standup is daily from Mon 13 08:30; open Wed 15's.
+  const occ = `${eid(STANDUP)}::${iso('08:30', 15)}`
+  await fc(page, occ).scrollIntoViewIfNeeded()
+  await fc(page, occ).click()
+  await menu(page).waitFor({ timeout: 4000 })
+  await sleep(300)
+  await menu(page).getByRole('menuitem', { name: /Repeats daily/ }).click()
+  await sleep(400)
+  const items = await page.locator('[role="menu"]').last().getByRole('menuitem').allInnerTexts()
+  check('r1 the Repeat submenu is the shared picker — Never · Daily ✓ · Weekly · Monthly · Custom…', /Never/.test(items[0]) && items.some((i) => /Daily ✓/.test(i)) && items.some((i) => /Custom…/.test(i)), JSON.stringify(items))
+  await shot(page, 'r1-repeat-menu')
+  let w = state.writes.length
+  await page.locator('[role="menu"]').last().getByRole('menuitem', { name: 'Weekly', exact: true }).click()
+  await settle(state)
+  const written = posts(state, 'calendar_events', w)
+  const head = written.find((e) => e.id === eid(STANDUP))
+  const tail = written.find((e) => e.id !== eid(STANDUP))
+  check('r1 Weekly from Wed 15: the series ends before it (UNTIL) and a new weekly one starts on it — Mon 13 and Tue 14 stay', /UNTIL=20260715T052959Z/.test(head?.recurrence_rule ?? '') && tail?.recurrence_rule === 'FREQ=WEEKLY' && tail?.starts_at === iso('08:30', 15), JSON.stringify({ head: head?.recurrence_rule, tail: [tail?.recurrence_rule, tail?.starts_at] }))
+  await sleep(500)
+  const shown = await page.locator(`.fc-event[data-kf-id^="${eid(STANDUP)}::"]`).count()
+  check('r1 Mon 13 and Tue 14 still show the standup', shown >= 2, shown)
+  check('r1 one Undo toast', await toastSoon(page, 'Repeats weekly · from'))
+  w = state.writes.length
+  await page.locator('.kf-toast', { hasText: 'Repeats weekly' }).getByRole('button', { name: 'Undo' }).first().click()
+  await settle(state)
+  check('r1 Undo puts the daily series back and drops the new one', posts(state, 'calendar_events', w).some((e) => e.id === eid(STANDUP) && e.recurrence_rule === 'FREQ=DAILY') && state.writes.slice(w).some((x) => x.method === 'DELETE'))
+  // Custom…: the rule editor takes the popover's place.
+  await fc(page, occ).click()
+  await menu(page).waitFor({ timeout: 4000 })
+  await menu(page).getByRole('menuitem', { name: /Repeats daily/ }).click()
+  await sleep(300)
+  await page.locator('[role="menu"]').last().getByRole('menuitem', { name: 'Custom…' }).click()
+  await sleep(500)
+  check('r1 Custom… opens the rule editor', (await page.getByText('Custom repeat').count()) >= 1)
+  await shot(page, 'r1-custom-editor')
+  check('r1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── PH: phone parity — create sheet (7c / 1e), Month, Lists, a chip's Complete / Open ──
+if (want('ph')) {
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors, state } = await open('/calendar', { theme, view: phone })
+    // Tap an empty slot at 16:00.
+    await page.evaluate(() => { const el = document.querySelector('.pc-scroll'); if (el) el.scrollTop = 64 * 15 })
+    await sleep(300)
+    const canvas = await page.locator('.pc-canvas').boundingBox()
+    const track = await page.locator('.pc-track').boundingBox()
+    await page.mouse.click(track.x + 60, canvas.y + 64 * 16 + 4)
+    await sleep(700)
+    const kinds = await page.locator('.pc-qc-top button').allInnerTexts()
+    check(`ph ${theme}: the create sheet offers Task · Event · Block`, kinds.slice(0, 3).map((k) => k.replace(/[^A-Za-z]/g, '')).join() === 'Task,Event,Block', JSON.stringify(kinds))
+    await page.locator('.pc-qc-title').fill('Pick up the new tyres !!')
+    await sleep(300)
+    const chips = await page.locator('.ts-chips').innerText()
+    check(`ph ${theme}: the task sheet's chips — P2 caught from "!!", Project, Remind, Repeat, + Label, Top-3, notes`, /P2/.test(chips) && /project/i.test(chips) && /remind/i.test(chips) && /repeat/i.test(chips) && /top-3/i.test(chips) && (await page.locator('textarea[aria-label="Notes"]').count()) === 1, chips.replace(/\n/g, ' | '))
+    await shot(page, `ph-create-task-${theme}`)
+    if (theme === 'day') {
+      // Repeat ▸ Weekly through the shared picker; then Save.
+      await page.locator('.ts-chips').getByText('Repeat', { exact: true }).click()
+      await sleep(400)
+      await page.locator('[role="dialog"]').last().getByText('Weekly', { exact: true }).click()
+      await sleep(400)
+      await page.locator('textarea[aria-label="Notes"]').fill('Ask about the warranty')
+      const w = state.writes.length
+      await page.getByRole('button', { name: 'Save' }).click()
+      await settle(state)
+      const t = posts(state, 'tasks', w).find((x) => x.title === 'Pick up the new tyres')
+      check('ph Save: the task with P2, its notes and its weekly repeat, and its block at 16:00', !!t && t.priority === 2 && t.notes === 'Ask about the warranty' && posts(state, 'tasks', w).some((x) => x.id === t.id && x.recurrence_rule === 'FREQ=WEEKLY') && posts(state, 'calendar_events', w).some((e) => e.task_id === t.id && e.starts_at === iso('16:00')), JSON.stringify(t && { p: t.priority, n: t.notes }))
+      // Block kind holds a task.
+      await page.evaluate(() => { const el = document.querySelector('.pc-scroll'); if (el) el.scrollTop = 64 * 16 })
+      await sleep(300)
+      const canvas2 = await page.locator('.pc-canvas').boundingBox()
+      await page.mouse.click(track.x + 60, canvas2.y + 64 * 18 + 4)
+      await sleep(700)
+      await page.locator('.pc-qc-top button', { hasText: 'Block' }).click()
+      await sleep(300)
+      await shot(page, 'ph-create-block-day')
+      await page.getByText('Holds a task…').click()
+      await sleep(400)
+      await page.keyboard.type('Water')
+      await sleep(300)
+      await shot(page, 'ph-holds-picker-day')
+      await page.getByText('Water the plants', { exact: true }).last().click()
+      await sleep(400)
+      const w2 = state.writes.length
+      await page.getByRole('button', { name: 'Save' }).click()
+      await settle(state)
+      check('ph Block holding a task: that task gets its block at 18:00', posts(state, 'calendar_events', w2).some((e) => e.task_id === tid(9) && e.starts_at === iso('18:00')))
+      // Month view.
+      await page.locator('.pc-title').click()
+      await sleep(400)
+      await page.locator('[role="dialog"]').last().getByText('Month', { exact: true }).click()
+      await sleep(700)
+      check('ph Month: the title reads "July 2026", a grid of whole weeks with dots on the busy days', /July 2026/.test(await page.locator('.pc-title').innerText()) && (await page.locator('.pc-mcell').count()) === 35 && (await page.locator('.pc-mcell[data-today] .pc-mdots i').count()) >= 3)
+      await shot(page, 'ph-month-day')
+      await page.locator('.pc-mcell', { hasText: '11' }).first().click()
+      await sleep(600)
+      check('ph Month: a tap opens that day', /Saturday, Jul 11/.test(await page.locator('.pc-title').innerText()))
+      // Lists segment.
+      await shot(page, 'ph-after-month-day')
+      await page.locator('.pc-segs').getByText(/^Lists/).click()
+      await sleep(400)
+      const listChips = await page.locator('.pc-uns .pc-chip').allInnerTexts()
+      check('ph Lists: the strip lists This Week (a scope chip first)', /This Week/.test(listChips[0] ?? ''), JSON.stringify(listChips.slice(0, 3)))
+      await page.locator('.pc-uns .pc-chip').first().click()
+      await sleep(400)
+      await page.locator('[role="dialog"]').last().getByText('Project…').click()
+      await sleep(700)
+      await page.locator('[role="dialog"]').last().getByText('Shaheen', { exact: true }).click()
+      await sleep(600)
+      const shaheen = await page.locator('.pc-uns .pc-chip').allInnerTexts()
+      check('ph Lists ▸ Project… ▸ Shaheen lists its unscheduled tasks', /Shaheen/.test(shaheen[0]) && shaheen.length >= 3, JSON.stringify(shaheen))
+      await shot(page, 'ph-lists-day')
+      // A chip: Complete from its sheet.
+      await page.locator('.pc-uns .pc-chip', { hasText: 'Book photographer' }).click()
+      await sleep(600)
+      const rows = await page.locator('[role="dialog"]').last().innerText()
+      check('ph a chip\'s sheet offers Complete and Open task, not only the slots', /Complete/.test(rows) && /Open task/.test(rows), rows.replace(/\n/g, ' | ').slice(0, 200))
+      await shot(page, 'ph-chip-sheet-day')
+      const w3 = state.writes.length
+      await page.locator('[role="dialog"]').last().getByText('Complete', { exact: true }).click()
+      await settle(state)
+      check('ph Complete ticks the task off (with Undo)', posts(state, 'tasks', w3).some((x) => x.id === tid(3) && x.status === 'done') && (await toastSoon(page, 'Done')), JSON.stringify(posts(state, 'tasks', w3).map((x) => [x.title, x.status])) + ' ' + (await page.locator('.kf-toast-msg').allInnerTexts()).join('|'))
+    }
+    check(`ph ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
 }
