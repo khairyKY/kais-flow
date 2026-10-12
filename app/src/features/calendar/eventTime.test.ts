@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { cairoTimeKey, cairoToIso, localTimeKey, localToIso, slotFields } from './eventTime'
-import { localDateKey } from '../routines/streaks'
 import { cairoDateKey } from '../../lib/dateShortcuts'
+
+// The DEVICE's day (routines/streaks' localDateKey is the user's day since fix-grammar).
+const localDateKey = (d: Date) => d.toLocaleDateString('en-CA')
 
 describe('localTimeKey', () => {
   it('formats local hours/minutes with padding', () => {

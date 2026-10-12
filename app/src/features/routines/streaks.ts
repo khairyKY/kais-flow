@@ -1,21 +1,19 @@
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
+import { zoneDateKey } from '../../lib/dateShortcuts'
+import { addDays, weekday } from '../../components/pickerMath'
 
-/** YYYY-MM-DD in LOCAL time — never UTC, or midnight-adjacent completions land on the wrong day. */
+/** YYYY-MM-DD of the day `d` falls on for the USER (lib/appZone: app_settings.timezone), never the
+ * device's — the key routine completions (`completed_on`), streaks and challenge starts are stored
+ * and compared on. The name is historical: it was the device's day, so a phone abroad (or a
+ * device in another zone than the user's setting) checked routines off on the wrong day. Every
+ * walk below steps over these keys with UTC day math, so a DST switch never skips or doubles a day. */
 export function localDateKey(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return zoneDateKey(d)
 }
 
-function isScheduled(d: Date, cadence: Cadence): boolean {
-  return cadence.weekdays.includes(d.getDay())
-}
-
-function addDays(d: Date, n: number): Date {
-  const copy = new Date(d)
-  copy.setDate(copy.getDate() + n)
-  return copy
+/** Whether the cadence schedules day `key` — its weekday read from the key, never a clock. */
+function isScheduled(key: string, cadence: Cadence): boolean {
+  return cadence.weekdays.includes(weekday(key))
 }
 
 export interface StreakResult {
@@ -37,15 +35,14 @@ function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date
   const rainedDates: string[] = []
   let current = 0
 
-  let cursor = new Date(today)
-  if (isScheduled(cursor, cadence) && !completed.has(localDateKey(cursor))) {
-    cursor = addDays(cursor, -1) // today not over yet — doesn't break, doesn't count
+  let key = localDateKey(today)
+  if (isScheduled(key, cadence) && !completed.has(key)) {
+    key = addDays(key, -1) // today not over yet — doesn't break, doesn't count
   }
   let steps = 0
   while (steps < MAX_LOOKBACK_DAYS) {
-    if (since && localDateKey(cursor) < since) break
-    if (isScheduled(cursor, cadence)) {
-      const key = localDateKey(cursor)
+    if (since && key < since) break
+    if (isScheduled(key, cadence)) {
       if (completed.has(key)) {
         current++
       } else {
@@ -55,7 +52,7 @@ function walkCurrentStreak(completed: Set<string>, cadence: Cadence, today: Date
         rainedDates.push(key)
       }
     }
-    cursor = addDays(cursor, -1)
+    key = addDays(key, -1)
     steps++
   }
   return { current, rainedDates }
@@ -77,13 +74,12 @@ export function computeStreak(completedDates: string[], cadence: Cadence, today:
   if (completed.size > 0 && cadence.weekdays.length > 0) {
     const earliest = Array.from(completed).sort()[0]
     const todayKey = localDateKey(today)
-    let cursor = new Date(`${earliest}T00:00:00`)
+    let key = earliest
     let run = 0
     let rainUsedByMonth = new Set<string>()
     let steps = 0
-    while (cursor <= today && steps < MAX_LOOKBACK_DAYS) {
-      if (isScheduled(cursor, cadence)) {
-        const key = localDateKey(cursor)
+    while (key <= todayKey && steps < MAX_LOOKBACK_DAYS) {
+      if (isScheduled(key, cadence)) {
         if (completed.has(key)) {
           run++
           best = Math.max(best, run)
@@ -98,7 +94,7 @@ export function computeStreak(completedDates: string[], cadence: Cadence, today:
           }
         }
       }
-      cursor = addDays(cursor, 1)
+      key = addDays(key, 1)
       steps++
     }
   }
@@ -125,10 +121,9 @@ export function routineStreak(completedDates: string[], cadence: Cadence, today:
   return { current, best, status }
 }
 
-/** A routine's first real day (local YYYY-MM-DD): the earlier of the day it was planted
+/** A routine's first real day (the user's YYYY-MM-DD): the earlier of the day it was planted
  * (`created_at`) and its oldest completion — history may predate `created_at` (a backfilled
- * check-off), and it must never be hidden. Undefined when neither is known. Uses the same
- * device-local day as every other key in this file (the Cairo-day gap is T-2's, not widened here). */
+ * check-off), and it must never be hidden. Undefined when neither is known. */
 export function routineStartKey(createdAt: string | null | undefined, completedDates: string[]): string | undefined {
   const created = createdAt ? new Date(createdAt) : null
   const createdKey = created && !Number.isNaN(created.getTime()) ? localDateKey(created) : undefined
@@ -155,7 +150,8 @@ function doneTodayIds(completions: RoutineCompletion[], today: Date): Set<string
  * active routine — a Sunday-only one on a Saturday — under a count of all of them). */
 export function routinesForToday<T extends Routine>(routines: T[], completions: RoutineCompletion[], today: Date = new Date()): T[] {
   const doneIds = doneTodayIds(completions, today)
-  return routines.filter((r) => r.active && (doneIds.has(r.id) || isScheduled(today, r.cadence)))
+  const todayKey = localDateKey(today)
+  return routines.filter((r) => r.active && (doneIds.has(r.id) || isScheduled(todayKey, r.cadence)))
 }
 
 /** The "N of M tended" count. Only active routines count, and only when today is theirs: a
@@ -172,10 +168,10 @@ function scheduledAndDone(cadence: Cadence, completedDates: string[], days: numb
   const completed = new Set(completedDates)
   let scheduled = 0
   let done = 0
+  const todayKey = localDateKey(today)
   for (let n = 0; n < days; n++) {
-    const d = addDays(today, -n)
-    if (!isScheduled(d, cadence)) continue
-    const key = localDateKey(d)
+    const key = addDays(todayKey, -n)
+    if (!isScheduled(key, cadence)) continue
     if (since && key < since) continue // the routine didn't exist yet — not a miss
     scheduled++
     if (completed.has(key)) done++
@@ -212,10 +208,10 @@ export function aggregateCompletionRate(routines: Routine[], completions: Routin
  * length. */
 export function dailyCompletionRatios(routines: Routine[], completions: RoutineCompletion[], days: number, today: Date = new Date()): number[] {
   const ratios: number[] = []
+  const todayKey = localDateKey(today)
   for (let n = days - 1; n >= 0; n--) {
-    const d = addDays(today, -n)
-    const key = localDateKey(d)
-    const scheduled = routines.filter((r) => isScheduled(d, r.cadence))
+    const key = addDays(todayKey, -n)
+    const scheduled = routines.filter((r) => isScheduled(key, r.cadence))
     if (scheduled.length === 0) {
       ratios.push(0)
       continue
@@ -250,12 +246,11 @@ export function computeTrellisDays(completedDates: string[], cadence: Cadence, d
   const completed = new Set(completedDates)
   const todayKey = localDateKey(today)
   const rainUsedByMonth = new Set<string>()
-  const start = addDays(today, -(days - 1))
+  const start = addDays(todayKey, -(days - 1))
   const out: TrellisDay[] = []
   for (let n = 0; n < days; n++) {
-    const d = addDays(start, n)
-    const key = localDateKey(d)
-    if (!isScheduled(d, cadence) || (since && key < since) || (key === todayKey && !completed.has(key))) {
+    const key = addDays(start, n)
+    if (!isScheduled(key, cadence) || (since && key < since) || (key === todayKey && !completed.has(key))) {
       out.push({ key, state: 'off' })
       continue
     }
@@ -313,7 +308,7 @@ export function streakRiskMessage(routines: Routine[], completions: RoutineCompl
   const todayKey = localDateKey(today)
   let worst: { name: string; current: number } | null = null
   for (const routine of routines) {
-    if (!isScheduled(today, routine.cadence)) continue
+    if (!isScheduled(todayKey, routine.cadence)) continue
     const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
     if (dates.includes(todayKey)) continue
     const { current } = computeStreak(dates, routine.cadence, today)

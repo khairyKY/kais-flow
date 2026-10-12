@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRoutines, useRoutineCompletions, archiveRoutine, toggleCompletion } from './api'
 import { challengeDays, computeStreak, computeTrellisDays, localDateKey, routineStartKey, routineStreak, streakOfGoal, todayTally, type StreakStatus } from './streaks'
 import { vineStage } from '../../lib/growthStages'
@@ -12,6 +12,9 @@ import { PinIcon } from '../rituals/PinIcon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
+import { useIsMobile } from '../../components/BottomSheet'
+import { Skeleton, ErrorCard } from '../../components/States'
+import { useDayRollover } from '../calendar/useDayRollover'
 import type { Routine, RoutineCompletion } from '../../lib/types'
 
 // ── Routines — pixel contract Routines.dc.html #1a (desktop, lines 379-586) and #1b (iPhone,
@@ -28,18 +31,6 @@ const STAGE_LABEL: Record<string, string> = { bare: 'Bare', sprouting: 'Sproutin
 const ZERO_ROW_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'no streak yet', lost: 'streak lost' }
 const oneLine = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as const
 const ZERO_CARD_LABEL: Record<Exclude<StreakStatus, 'growing'>, string> = { new: 'Bare · no streak yet', lost: 'Bare · start again' }
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
-}
 
 function FlameIcon({ size = 8 }: { size?: number }) {
   return (
@@ -144,9 +135,15 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     </button>
   )
 
+  // The row's menu on a right-click too (a computer), like every other row of things.
+  const onContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onMenu({ x: e.clientX, y: e.clientY })
+  }
+
   if (isMobile) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div onContextMenu={onContextMenu} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
         {check}
         <div style={{ flex: 1, minWidth: 0 }}>
           {name}
@@ -157,7 +154,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     )
   }
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+    <div onContextMenu={onContextMenu} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
       {check}
       <div style={{ flex: 1, minWidth: 0 }}>{name}</div>
       {meta}
@@ -188,9 +185,11 @@ export function RoutinesPage() {
   // where an unpinned one gets pinned back.
   const ritualPins = useRitualPins()
   const [openRitual, setOpenRitual] = useState<'morning' | 'evening' | null>(null)
-  const { data: routines = [] } = useRoutines()
+  const routinesQuery = useRoutines()
+  const { data: routines = [] } = routinesQuery
   const { data: completions = [] } = useRoutineCompletions()
   const isMobile = useIsMobile()
+  useDayRollover() // a page left open past the user's midnight re-reads "today"
   const [formOpen, setFormOpen] = useState<null | { challenge: boolean; routine?: Routine }>(null)
   const [trellisRoutine, setTrellisRoutine] = useState<Routine | null>(null)
   const [menu, setMenu] = useState<{ routine: Routine; x: number; y: number } | null>(null)
@@ -215,6 +214,31 @@ export function RoutinesPage() {
   const activeChallenge = active.find((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
 
   const heroCaption = remaining === 0 ? (active.length > 0 ? 'all tended for today ✿' : 'plant your first routine ✿') : remaining === 1 ? 'one left before the day\'s done' : `${remaining} left before the day's done`
+
+  // The challenge card + "Start a challenge" — the desktop rail's, and on a phone under the garden.
+  const challenge = (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
+        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      </div>
+      {activeChallenge && <ChallengeCard routine={activeChallenge} completions={completions} />}
+      <button
+        type="button"
+        onClick={() => setFormOpen({ challenge: true })}
+        style={{ marginTop: activeChallenge ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+      >
+        ＋ Start a challenge
+      </button>
+    </div>
+  )
+
+  // Designed states: a skeleton until the first load, a retry if it failed — not "Nothing planted".
+  const loadState = routinesQuery.isPending ? (
+    <div style={{ marginTop: 20 }}><Skeleton rows={3} /></div>
+  ) : routinesQuery.isError && routines.length === 0 ? (
+    <div style={{ marginTop: 20 }}><ErrorCard message="Couldn't load your routines." onRetry={() => void routinesQuery.refetch()} /></div>
+  ) : null
 
   const garden = (
     <div>
@@ -327,7 +351,8 @@ export function RoutinesPage() {
 
         {/* X5 States t1 — the surface's own species as sprout + one hand line; the page's
             "New routine" CTA above is the one action, so the vignette adds none. */}
-        {active.length === 0 && (
+        {loadState}
+        {!loadState && active.length === 0 && (
           <div style={{ padding: '36px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img src={`${A}/vine/bare.png`} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted yet.</div>
@@ -351,24 +376,13 @@ export function RoutinesPage() {
         ))}
 
         {isMobile && active.length > 0 && <div style={{ marginTop: 20 }}>{garden}</div>}
+        {isMobile && !loadState && <div style={{ marginTop: 22 }}>{challenge}</div>}
       </div>
 
       {!isMobile && (
         <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
           {garden}
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-            </div>
-            {activeChallenge && (
-              <ChallengeCard routine={activeChallenge} completions={completions} />
-            )}
-            <div onClick={() => setFormOpen({ challenge: true })} style={{ marginTop: activeChallenge ? 12 : 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
-              ＋ Start a challenge
-            </div>
-          </div>
+          {challenge}
         </div>
       )}
 

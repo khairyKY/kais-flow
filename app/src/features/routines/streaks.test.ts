@@ -1,18 +1,36 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { aggregateCompletionRate, challengeDays, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakOfGoal, streakRiskMessage, todayTally } from './streaks'
+import { addDays, weekday } from '../../components/pickerMath'
+import { setAppZone } from '../../lib/appZone'
+import { zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import type { Cadence, Routine, RoutineCompletion } from '../../lib/types'
 
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
 const NEVER: Cadence = { weekdays: [] }
-// Fixed "now" for the rate/sparkline/risk tests below: Wed 2026-07-08, mid-afternoon local —
-// same fixed-date convention grouping.test.ts uses.
-const NOW = new Date('2026-07-08T15:00:00')
+
+// Routine days are the USER's days (app_settings.timezone), whatever zone the device — or this
+// suite's TZ=… run — is in. The tests pin the user's zone and build instants on its clock, so
+// they mean the same thing under UTC, Africa/Cairo, America/Los_Angeles and Asia/Tokyo.
+beforeEach(() => setAppZone('Africa/Cairo'))
+afterEach(() => setAppZone('Africa/Cairo'))
+
+/** `hh:mm` on the user's (Cairo's) clock on day `key`. */
+function at(key: string, hh = 9, mm = 0): Date {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(zoneWallTimeToIso('Africa/Cairo', y, m, d, hh, mm))
+}
+
+// Fixed "now" for the rate/sparkline/risk tests below: Wed 2026-07-08, mid-afternoon on the
+// user's clock — same fixed-date convention grouping.test.ts uses.
+const TODAY = '2026-07-08'
+const NOW = at(TODAY, 15)
 
 function dayKey(offset: number): string {
-  const d = new Date(NOW)
-  d.setDate(d.getDate() + offset)
-  return localDateKey(d)
+  return addDays(TODAY, offset)
 }
+
+/** Keys `n` days before `key`, for each n. */
+const back = (key: string, ns: number[]) => ns.map((n) => addDays(key, -n))
 
 function routine(over: Partial<Routine>): Routine {
   return {
@@ -34,110 +52,110 @@ function completionsFor(routineId: string, dateKeys: string[]): RoutineCompletio
   return dateKeys.map((d) => ({ id: crypto.randomUUID(), routine_id: routineId, completed_on: d, created_at: '' }))
 }
 
-function addDays(d: Date, n: number): Date {
-  const copy = new Date(d)
-  copy.setDate(copy.getDate() + n)
-  return copy
-}
-
 describe('computeStreak', () => {
+  const D = '2026-07-10'
+  const today = at(D)
+
   it('counts a run of consecutive daily completions ending today', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [0, 1, 2, 3, 4].map((n) => localDateKey(addDays(today, -n)))
-    const { current, best } = computeStreak(dates, DAILY, today)
+    const { current, best } = computeStreak(back(D, [0, 1, 2, 3, 4]), DAILY, today)
     expect(current).toBe(5)
     expect(best).toBe(5)
   })
 
   it("doesn't break the streak if today is scheduled but not completed yet", () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [1, 2, 3].map((n) => localDateKey(addDays(today, -n))) // not today
-    const { current } = computeStreak(dates, DAILY, today)
+    const { current } = computeStreak(back(D, [1, 2, 3]), DAILY, today) // not today
     expect(current).toBe(3)
   })
 
   it('forgives one missed day per calendar month (Gentle Rain) — the run holds across it', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [0, 1, 3, 4, 5].map((n) => localDateKey(addDays(today, -n))) // gap at -2
-    const { current, best } = computeStreak(dates, DAILY, today)
+    const { current, best } = computeStreak(back(D, [0, 1, 3, 4, 5]), DAILY, today) // gap at -2
     expect(current).toBe(5) // the miss rained; 5 completed days count
     expect(best).toBe(5)
   })
 
   it('breaks on the second miss in the same calendar month', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [0, 1, 4, 5].map((n) => localDateKey(addDays(today, -n))) // misses at -2 and -3
-    const { current } = computeStreak(dates, DAILY, today)
+    const { current } = computeStreak(back(D, [0, 1, 4, 5]), DAILY, today) // misses at -2 and -3
     expect(current).toBe(2) // today + yesterday; -2 rained, -3 snapped it
   })
 
   it('computeStreak.current and computeGraceStreak.current are the same number (one algorithm)', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [0, 1, 3, 4, 5, 6, 8].map((n) => localDateKey(addDays(today, -n)))
+    const dates = back(D, [0, 1, 3, 4, 5, 6, 8])
     expect(computeStreak(dates, DAILY, today).current).toBe(computeGraceStreak(dates, DAILY, today).current)
   })
 
   it('best is never smaller than current', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const dates = [0, 1, 3, 4, 5].map((n) => localDateKey(addDays(today, -n)))
-    const { current, best } = computeStreak(dates, DAILY, today)
+    const { current, best } = computeStreak(back(D, [0, 1, 3, 4, 5]), DAILY, today)
     expect(best).toBeGreaterThanOrEqual(current)
   })
 
   it('skips non-scheduled days without breaking the streak (arbitrary off-days)', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const offDays = [addDays(today, -2).getDay(), addDays(today, -3).getDay()]
+    const offDays = [weekday(addDays(D, -2)), weekday(addDays(D, -3))]
     const cadence: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6].filter((w) => !offDays.includes(w)) }
-    const dates: string[] = []
-    for (let n = 5; n >= 0; n--) {
-      const d = addDays(today, -n)
-      if (cadence.weekdays.includes(d.getDay())) dates.push(localDateKey(d))
-    }
+    const dates = back(D, [5, 4, 3, 2, 1, 0]).filter((k) => cadence.weekdays.includes(weekday(k)))
     const { current } = computeStreak(dates, cadence, today)
-    const scheduledCount = [0, 1, 2, 3, 4, 5].filter((n) =>
-      cadence.weekdays.includes(addDays(today, -n).getDay()),
-    ).length
-    expect(current).toBe(scheduledCount)
+    expect(current).toBe(dates.length)
   })
 
   it('a missed off-cadence day does not count as a gap even if unmarked', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
-    const offDay = addDays(today, -1).getDay()
+    const offDay = weekday(addDays(D, -1))
     const cadence: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6].filter((w) => w !== offDay) }
     // complete today and the day before the off-day, but never touch the off-day itself
-    const dates = [0, 2].map((n) => localDateKey(addDays(today, -n)))
-    const { current } = computeStreak(dates, cadence, today)
+    const { current } = computeStreak(back(D, [0, 2]), cadence, today)
     expect(current).toBe(2)
   })
 
   it('handles a month boundary correctly (Jan 30/31 -> Feb 1/2)', () => {
-    const today = new Date(2026, 1, 2, 9, 0, 0) // Feb 2, 2026
-    const dates = [0, 1, 2, 3].map((n) => localDateKey(addDays(today, -n)))
-    const { current, best } = computeStreak(dates, DAILY, today)
+    const { current, best } = computeStreak(back('2026-02-02', [0, 1, 2, 3]), DAILY, at('2026-02-02'))
     expect(current).toBe(4)
     expect(best).toBe(4)
   })
 
   it('finds the best streak even when it is not the current one', () => {
-    const today = new Date(2026, 6, 20, 9, 0, 0)
-    const longRun = [15, 14, 13, 12, 11, 10, 9, 8].map((n) => localDateKey(addDays(today, -n)))
-    const recentRun = [0, 1].map((n) => localDateKey(addDays(today, -n)))
-    const { current, best } = computeStreak([...longRun, ...recentRun], DAILY, today)
+    const D20 = '2026-07-20'
+    const { current, best } = computeStreak([...back(D20, [15, 14, 13, 12, 11, 10, 9, 8]), ...back(D20, [0, 1])], DAILY, at(D20))
     expect(current).toBe(2)
     expect(best).toBe(8)
   })
 
-  it('local date keys are stable near midnight (the classic streak timezone bug)', () => {
-    const lateNight = new Date(2026, 6, 4, 23, 45, 0)
-    expect(localDateKey(lateNight)).toBe('2026-07-04')
-    const justAfterMidnight = new Date(2026, 6, 5, 0, 15, 0)
-    expect(localDateKey(justAfterMidnight)).toBe('2026-07-05')
-  })
-
   it('returns zeros for an empty history', () => {
-    const today = new Date(2026, 6, 10, 9, 0, 0)
     expect(computeStreak([], DAILY, today)).toEqual({ current: 0, best: 0 })
   })
+})
+
+// The day a routine is checked off on, and every streak walk, is the user's (app_settings
+// .timezone) — not the device's. The suite runs under four device zones; these pin the user's.
+describe("routine days are the user's days, not the device's", () => {
+  it('one instant is a different day key in different user zones (the midnight bug)', () => {
+    const instant = new Date('2026-07-04T21:30:00Z')
+    setAppZone('Africa/Cairo') // 00:30 on the 5th
+    expect(localDateKey(instant)).toBe('2026-07-05')
+    setAppZone('America/Los_Angeles') // 14:30 on the 4th
+    expect(localDateKey(instant)).toBe('2026-07-04')
+    setAppZone('Asia/Tokyo') // 06:30 on the 5th
+    expect(localDateKey(instant)).toBe('2026-07-05')
+    setAppZone('UTC')
+    expect(localDateKey(instant)).toBe('2026-07-04')
+  })
+
+  // Across both DST ends that fall in this window: Cairo's (last Thu of Oct, 2026-10-29) and the
+  // US one (2026-11-01). A walk over day keys never skips or doubles the switch day.
+  for (const zone of ['UTC', 'Africa/Cairo', 'America/Los_Angeles', 'Asia/Tokyo']) {
+    it(`a daily streak across the DST switches is the same count in ${zone}`, () => {
+      setAppZone(zone)
+      const dates = back('2026-11-03', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) // Nov 3 … Oct 25
+      const justAfterMidnight = new Date(zoneWallTimeToIso(zone, 2026, 11, 3, 0, 30))
+      const lateTheNightBefore = new Date(zoneWallTimeToIso(zone, 2026, 11, 2, 23, 30))
+      expect(localDateKey(justAfterMidnight)).toBe('2026-11-03')
+      expect(localDateKey(lateTheNightBefore)).toBe('2026-11-02')
+      expect(computeStreak(dates, DAILY, justAfterMidnight)).toEqual({ current: 10, best: 10 })
+      // the night before, "tomorrow's" check-off doesn't exist yet: Oct 25 … Nov 2
+      expect(computeStreak(dates.slice(1), DAILY, lateTheNightBefore).current).toBe(9)
+      // a weekly cadence reads its weekday from the key: Mondays Oct 26 + Nov 2
+      const mondays: Cadence = { weekdays: [1] }
+      expect(computeStreak(['2026-10-26', '2026-11-02'], mondays, justAfterMidnight).current).toBe(2)
+      expect(computeTrellisDays(dates, DAILY, 10, justAfterMidnight).map((d) => d.key)).toEqual([...dates].reverse())
+    })
+  }
 })
 
 describe('completionRate', () => {
@@ -258,9 +276,9 @@ describe('routineStreak — new vs lost', () => {
   })
 
   it('a genuinely broken streak still reads lost', () => {
-    const today = new Date(2026, 6, 20, 9, 0, 0) // Mon Jul 20
+    const today = at('2026-07-20') // Mon Jul 20
     // tended Jul 8–14 (7 days), then missed Jul 15–19: the 19th rains, the 18th snaps it
-    const dates = [12, 11, 10, 9, 8, 7, 6].map((n) => localDateKey(addDays(today, -n)))
+    const dates = back('2026-07-20', [12, 11, 10, 9, 8, 7, 6])
     const s = routineStreak(dates, DAILY, today)
     expect(s.current).toBe(0)
     expect(s.best).toBe(7)
@@ -366,7 +384,7 @@ describe('days before a routine was planted are neither misses nor rain', () => 
   })
 
   it('real misses after planting still show, and `since` never changes the current streak', () => {
-    const plantedFiveDaysAgo = addDays(NOW, -5).toISOString()
+    const plantedFiveDaysAgo = at(dayKey(-5), 15).toISOString()
     const dates = [dayKey(-5), dayKey(-4), dayKey(-2), dayKey(-1)] // missed -3
     const since = routineStartKey(plantedFiveDaysAgo, dates)
     expect(computeTrellisDays(dates, DAILY, 7, NOW, since).map((d) => d.state)).toEqual(['off', 'grew', 'grew', 'rained', 'grew', 'grew', 'off'])

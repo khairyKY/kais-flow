@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NEW_ROUTINE_DEFAULTS, applyRoutineForm, cadenceFor, draftToRoutineFields, routineToForm } from './newRoutine'
+import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, cadenceFor, draftToRoutineFields, formChanged, routineToForm, type RoutineFormState } from './newRoutine'
 import type { Routine } from '../../lib/types'
 
 // Polish B (audit-newuser, "Create routine"): typing only a name used to save the export's
@@ -118,5 +118,27 @@ describe('Edit routine form', () => {
 
   it("won't save with an empty name", () => {
     expect(applyRoutineForm(base, { ...routineToForm(base), name: ' ' }, '2026-10-12', 'NOW')).toBeNull()
+  })
+})
+
+// The outside-click rule (Flow Audit): a form with unsaved changes ignores a click outside it.
+describe('formChanged', () => {
+  const start: RoutineFormState = { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: false, challengeDays: 30 }
+  it('a form as it opened is clean, whatever order its fields were built in', () => {
+    const { name, steps, ...rest } = start
+    expect(formChanged({ steps, ...rest, name }, start)).toBe(false)
+  })
+  it('typing, a step, a weekday or a toggle makes it dirty', () => {
+    expect(formChanged({ ...start, name: 'S' }, start)).toBe(true)
+    expect(formChanged({ ...start, steps: [''] }, start)).toBe(true)
+    expect(formChanged({ ...start, customWeekdays: [1] }, start)).toBe(true)
+    expect(formChanged({ ...start, reminderOn: true }, start)).toBe(true)
+  })
+})
+
+describe('the challenge end day', () => {
+  it('is pure day-key math — across a month end and the DST switch, on any device zone', () => {
+    expect(addDays('2026-10-03', 29)).toBe('2026-11-01')
+    expect(addDays('2026-10-29', 1)).toBe('2026-10-30')
   })
 })
