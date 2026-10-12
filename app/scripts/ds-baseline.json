@@ -30,7 +30,6 @@
    "font-size-literal": {
     "<span style={{ fontSize: 13, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<span className=\"app-nav-label\" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>": 1,
-    "<div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 1 }}>": 1,
     "<span className=\"app-footer-label\" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>": 1,
     "const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }": 1,
@@ -38,20 +37,16 @@
     "font-size: 14px; color: var(--ink-body); z-index: 60;": 1,
     ".app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }": 1,
     "style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-cri": 1,
-    "<div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whi": 1,
-    "<div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>": 1,
     "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>": 1,
     "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>": 1
    },
    "letter-spacing-literal": {
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Plan</span>": 1,
     "<div className=\"app-nav-label\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '12px 12px 5": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Streak</div>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>": 1,
-    "style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra-ink)' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>": 1,
-    "<div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whi": 1,
+    "style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)": 1,
     "<div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow:": 1
    },
    "shadow-literal": {
@@ -312,14 +307,6 @@
     "<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 32, padding: '0 12px', border: '1px solid var(--sig-offline)', borderRadius: 999, fontSize: 13, color: 'var(--sig-offline)'": 1
    }
   },
-  "src/components/Stub.tsx": {
-   "font-size-literal": {
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-muted)' }}>{name}</div>": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>in cultivation</div>": 1
-   }
-  },
   "src/components/ToastHost.tsx": {
    "font-size-literal": {
     ".kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;": 1,
@@ -464,47 +451,13 @@
    "radius-off-scale": {
     ".cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }": 1,
     ".cal-rail-sec[data-drop-over]:not([data-section=\"overdue\"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); ": 1,
-    "<span style={{ width: 14, height: 14, border: '1.5px solid var(--ink-hairline)', borderRadius: 4, flex: 'none' }} />": 1,
-    "<div className={['cal-grid-card', motionOn && 'cal-motion-on'].filter(Boolean).join(' ')} style={{ flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 4": 1
+    "<span style={{ width: 14, height: 14, border: '1.5px solid var(--ink-hairline)', borderRadius: 4, flex: 'none' }} />": 1
    },
    "colour-literal": {
     "box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);": 1
    },
    "shadow-literal": {
     "box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);": 1
-   }
-  },
-  "src/features/calendar/EventDetailsPanel.tsx": {
-   "motion-property": {
-    ".edp-field, .edp-when input, .edp-when button { font: inherit; color: var(--ink-body); background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: 6px; padding: 3px 7px; cursor: ": 1
-   },
-   "colour-literal": {
-    "style={{ position: 'fixed', inset: 0, background: 'rgba(11, 10, 8, 0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'edpFadeIn 210ms var(--ease-out)' }}": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, v": 1
-   },
-   "radius-off-scale": {
-    "style={{ width: 280, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', overflow: '": 1,
-    "<div style={{ margin: '-4px 0 12px', padding: '6px 10px', background: 'var(--sig-overdue)', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color:": 1,
-    "style={{ marginTop: 12, background: 'var(--paper-event)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 11, cursor: 'pointer' }}": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ margin: '-4px 0 12px', padding: '6px 10px', background: 'var(--sig-overdue)', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color:": 1,
-    "<div className=\"edp-when\" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', t": 1,
-    "<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, background: 'color-mix(in srgb, v": 1,
-    "fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999,": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>From task</div>": 1,
-    "style={{ marginLeft: 'auto', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: busy ? 'var(--ink-body)' : 'var(--": 1,
-    "<span onClick={() => setDeleting('confirm')} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor": 1
-   },
-   "font-size-literal": {
-    "style={{ width: '100%', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, padding: '3px 7px' }}": 1,
-    "<div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 3 }}>{linkedTask.title}</div>": 1,
-    "<button type=\"button\" onClick={handleOpenTask} style={{ font: 'inherit', fontSize: 11, color: 'var(--acc-lavender-deep)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 999, ": 1,
-    "<button type=\"button\" onClick={(e) => { e.stopPropagation(); handleComplete() }} style={{ font: 'inherit', fontSize: 11, color: 'var(--ink-body)', background: 'none', border: '1px solid var(--line-sol": 1,
-    "<button type=\"button\" onClick={handleDelete} style={{ font: 'inherit', fontSize: 11, color: 'var(--text-on-accent)', background: 'var(--sig-overdue)', border: 'none', borderRadius: 999, padding: '4px ": 1,
-    "<button type=\"button\" onClick={() => setDeleting('idle')} style={{ font: 'inherit', fontSize: 11, color: 'var(--ink-muted)', background: 'none', border: '1px solid var(--line-solid)', borderRadius: 99": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', curso": 1
    }
   },
   "src/features/calendar/formFields.tsx": {
@@ -581,63 +534,6 @@
   "src/features/calendar/PhoneSheets.tsx": {
    "kit-duplicate": {
     "return createPortal(": 1
-   },
-   "font-size-literal": {
-    "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{label}</span>": 1
-   },
-   "line-height-literal": {
-    "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{label}</span>": 1
-   }
-  },
-  "src/features/calendar/PlanningBoard.tsx": {
-   "motion-property": {
-    "transition: 'background 120ms',": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-ter": 1,
-    "letterSpacing: '0.1em',": 1,
-    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Planning board</h1>": 1
-   },
-   "font-size-literal": {
-    "fontSize: 12.5,": 1,
-    "<p style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', margin: '6px 0' }}>Drop a task here.</p>": 1,
-    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--text-primary)' }}>Planning board</h1>": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>drag a petal into place</span>": 1,
-    "fontSize: 12,": 1
-   }
-  },
-  "src/features/calendar/QuickCreate.tsx": {
-   "font-size-literal": {
-    "<span style={{ fontSize: 14, fontWeight: on ? 600 : 400, color: on ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{KIND_META[k].label}</span>": 1,
-    "<div style={{ marginTop: 6, fontSize: 11.5, lineHeight: 1.4, color: on ? 'var(--ink-muted)' : 'var(--ink-faint)' }}>{KIND_META[k].desc}</div>": 1,
-    "fontSize: expanded ? 19 : 17,": 1,
-    "<span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>–</span>": 2,
-    "style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }}": 1,
-    "<Select value={reminderOffset} onChange={setReminderOffset} options={REMINDER_OPTIONS} ariaLabel=\"Reminder\" style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }} />": 1,
-    "<Select value={repeat} onChange={setRepeat} options={REPEAT_OPTIONS} ariaLabel=\"Repeat\" style={{ fontSize: 12.5, padding: '8px 10px', width: '100%' }} />": 1,
-    "style={{ width: '100%', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10": 1,
-    "<label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>": 1,
-    "<span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span> Top-3 today": 1,
-    "<label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--ink-faint)', cursor: 'pointer' }}>": 1,
-    "<label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, fontSize: 12.5, color: 'var(--ink-muted)', cursor: 'pointer' }}>": 1,
-    "<span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}>{holdsTask.title}</span>": 1,
-    "<span onClick={() => { setHoldsTaskId(null); setHoldsQuery('') }} style={{ color: 'var(--ink-faint)', fontSize: 13, cursor: 'pointer' }}>✕</span>": 1,
-    "style={{ width: '100%', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontStyle: 'italic', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius": 1,
-    "<div key={t.id} onClick={() => { setHoldsTaskId(t.id); setHoldsQuery(t.title) }} style={{ padding: '8px 10px', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed va": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>": 1,
-    "<button type=\"button\" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 13, padding: '10px 18px', ": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: expanded ? 13 : 12.5, padding: expanded ? '10px 22px' : '8px 16px', borderRadius: 9": 1
-   },
-   "letter-spacing-literal": {
-    "return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 9px', borderRadius: 999, background: bg, color }": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: durationMin === m ? 'none' : '": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar": 1,
-    "<button type=\"button\" onClick={() => setExpanded(true)} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color:": 1
-   },
-   "native-control": {
-    "<input type=\"checkbox\" checked={top3} onChange={(e) => setTop3(e.target.checked)} style={{ accentColor: 'var(--acc-terra)' }} />": 1,
-    "<input type=\"checkbox\" checked={someday} onChange={(e) => setSomedayFlag(e.target.checked)} style={{ accentColor: 'var(--acc-terra)' }} />": 1,
-    "<input type=\"checkbox\" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} style={{ accentColor: 'var(--acc-lavender)' }} />": 1
    }
   },
   "src/features/calendar/StackMorePopover.tsx": {
@@ -655,17 +551,7 @@
   "src/features/calendar/TaskEditorPage.tsx": {
    "letter-spacing-literal": {
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: task.status === 'don": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, border: '1px solid var(--line-so": 1,
-    "<a href={issueUrl} target=\"_blank\" rel=\"noopener noreferrer\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10p": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999, background: 'color-mix(in srgb, ": 1,
     "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>enter to add</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>": 1,
-    "<Link to=\"/calendar\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-lavender-deep)', textDecoration: 'none'": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>": 1,
-    "<Link to=\"/inbox\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', textDecoration: 'none' }": 1,
-    "<span onClick={handleDelete} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>De": 1,
     "const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }": 1,
     "letterSpacing: '0.08em',": 1
    },
@@ -673,21 +559,9 @@
     "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1,
     "style={{ color: 'var(--acc-terra)', fontSize: 22, flex: 'none', marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', opacity: task.top3 ? 1 : 0.3 }}": 1,
     "style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, co": 1,
-    "<span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}><EmojiText text={c.title} /></sp": 1,
-    "style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', background: 'none', border: 'none', outline: 'none', padding: 0 }}": 1,
     "<button type=\"button\" onClick={handleSave} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: ": 1,
-    "style={{ fontSize: 13, padding: '8px 10px', width: '100%' }}": 1,
-    "<Select value={reminderOffset} onChange={handleReminderChange} options={REMINDER_OPTIONS} ariaLabel=\"Reminder\" style={{ fontSize: 13, padding: '8px 10px', width: '100%' }} />": 1,
-    "<Select value={task.recurrence_rule ?? ''} onChange={(v) => setRecurrence(task, v || null)} options={REPEAT_OPTIONS} ariaLabel=\"Repeat\" style={{ fontSize: 13, padding: '8px 10px', width: '100%' }} />": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>": 1,
     "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets delet": 1
-   },
-   "radius-off-scale": {
-    "style={{ borderRadius: 4, ...(c.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}": 1,
-    "<span style={{ width: 16, height: 16, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }} />": 1
-   },
-   "hairline-text": {
-    "<span style={{ fontSize: 13.5, color: c.status === 'done' ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: c.status === 'done' ? 'line-through' : 'none' }}><EmojiText text={c.title} /></sp": 1
    },
    "colour-literal": {
     "<span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgb": 1,
@@ -747,113 +621,6 @@
   "src/features/capture/CaptureButton.tsx": {
    "kit-duplicate": {
     "createPortal(": 2
-   }
-  },
-  "src/features/capture/QuickCapturePage.tsx": {
-   "font-size-literal": {
-    "font: '600 10px var(--font-mono)',": 1,
-    "<span style={{ font: '600 14px var(--font-ui)', color: '#2a2420' }}>": 1,
-    "font: '400 12px var(--font-mono)',": 3,
-    "font: '600 10.5px var(--font-mono)',": 3,
-    "<div style={{ fontSize: '15px', color: 'rgba(240,235,221,0.75)', fontWeight: 500 }}>": 1,
-    "fontSize: '78px',": 1,
-    "fontSize: '13.5px',": 1,
-    "<div style={{ fontSize: '34px', fontWeight: 600, color: 'rgba(240,235,221,0.85)', letterSpacing: '-0.01em' }}>": 1,
-    "fontSize: '16px',": 1,
-    "fontSize: '13px',": 2,
-    "fontSize: '14px',": 3,
-    "fontSize: '12px',": 2,
-    "fontSize: '12.5px',": 1,
-    "<span style={{ fontSize: '13px', color: '#F4F1EA' }}>Saved to your inbox</span>": 1,
-    "fontSize: '11px',": 1,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>": 1,
-    "<div style={{ fontSize: '10px', color: '#f0ebdd', marginTop: '6px', fontWeight: 600 }}>": 1,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>Mail</div>": 1,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>More</div>": 1,
-    "<p className=\"dv-next\" style={{ marginTop: '26px', font: '13px/1.6 var(--font-ui)', color: '#6b6455', textAlign: 'center' }}>": 1
-   },
-   "colour-literal": {
-    "background: '#2a2420',": 2,
-    "color: '#F4F1EA',": 3,
-    "<span style={{ font: '600 14px var(--font-ui)', color: '#2a2420' }}>": 1,
-    "color: '#6b6455',": 3,
-    "background: 'rgba(42,36,32,0.1)',": 4,
-    "color: '#2a2420',": 3,
-    "style={{ background: 'linear-gradient(180deg,#3a3450 0%,#241f36 55%,#161221 100%)' }}": 3,
-    "<div style={{ fontSize: '15px', color: 'rgba(240,235,221,0.75)', fontWeight: 500 }}>": 1,
-    "color: '#f0ebdd',": 8,
-    "background: 'rgba(20,16,28,0.45)',": 1,
-    "border: '1px solid rgba(240,235,221,0.14)',": 2,
-    "background: 'rgba(122,148,110,0.3)',": 2,
-    "background: 'rgba(240,235,221,0.1)',": 3,
-    "color: 'rgba(240,235,221,0.55)',": 1,
-    "background: 'rgba(181,101,74,0.85)',": 2,
-    "background: 'rgba(240,235,221,0.12)',": 3,
-    "style={{ background: 'linear-gradient(180deg,#332c48 0%,#1d1830 100%)' }}": 2,
-    "<div style={{ fontSize: '34px', fontWeight: 600, color: 'rgba(240,235,221,0.85)', letterSpacing: '-0.01em' }}>": 1,
-    "background: 'rgba(20,16,28,0.55)',": 1,
-    "border: '1px solid rgba(240,235,221,0.16)',": 1,
-    "color: 'rgba(240,235,221,0.45)',": 2,
-    "background: typedText.trim() ? 'rgba(181,101,74,0.9)' : 'rgba(181,101,74,0.4)',": 2,
-    "background: 'rgba(28,24,40,0.92)',": 1,
-    "background: 'rgba(240,235,221,0.16)',": 4,
-    "<div className=\"kf-phone-screen\" style={{ background: '#3d3934' }}>": 1,
-    "<div style={{ height: '14px', width: '70%', background: 'rgba(42,36,32,0.2)', borderRadius: '3px' }}></div>": 1,
-    "background: 'rgba(42,36,32,0.12)',": 3,
-    "<span style={{ position: 'absolute', inset: 0, background: 'rgba(20,16,20,0.45)' }}></span>": 1,
-    "<span style={{ fontSize: '13px', color: '#F4F1EA' }}>Saved to your inbox</span>": 1,
-    "background: 'rgba(44,40,36,0.97)',": 1,
-    "background: 'rgba(240,235,221,0.25)',": 1,
-    "borderBottom: '1px solid rgba(240,235,221,0.1)',": 1,
-    "background: 'rgba(240,235,221,0.14)',": 3,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>": 1,
-    "background: 'linear-gradient(180deg,#EFE8D6,#E4DCC6)',": 2,
-    "boxShadow: '0 0 0 2px rgba(181,101,74,0.7)',": 1,
-    "<div style={{ fontSize: '10px', color: '#f0ebdd', marginTop: '6px', fontWeight: 600 }}>": 1,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>Mail</div>": 1,
-    "<div style={{ fontSize: '10px', color: 'rgba(240,235,221,0.6)', marginTop: '6px' }}>More</div>": 1,
-    "<p className=\"dv-next\" style={{ marginTop: '26px', font: '13px/1.6 var(--font-ui)', color: '#6b6455', textAlign: 'center' }}>": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: '4px',": 1,
-    "borderRadius: '5px',": 10,
-    "borderRadius: '22px',": 2,
-    "borderRadius: '7px',": 1,
-    "borderRadius: '24px 24px 0 0',": 1,
-    "borderRadius: '9px',": 1,
-    "borderRadius: '13px',": 4
-   },
-   "letter-spacing-literal": {
-    "letterSpacing: '0.08em',": 1,
-    "letterSpacing: '0.1em',": 3,
-    "letterSpacing: '0.06em',": 3,
-    "letterSpacing: '-0.02em',": 1,
-    "<div style={{ fontSize: '34px', fontWeight: 600, color: 'rgba(240,235,221,0.85)', letterSpacing: '-0.01em' }}>": 1,
-    "letterSpacing: '0.18em',": 1
-   },
-   "bold-huge": {
-    "fontSize: '78px',": 1,
-    "<div style={{ fontSize: '34px', fontWeight: 600, color: 'rgba(240,235,221,0.85)', letterSpacing: '-0.01em' }}>": 1
-   },
-   "svg-colour-literal": {
-    "stroke=\"#A8C09A\"": 3,
-    "<path d=\"M15.5 8c3-.4 4.6-2.2 5-5.2-3 .4-4.8 1.6-5.4 4.4\" fill=\"#A8C09A\" />": 2,
-    "<path d=\"M12 14c-2.2-2.4-5-2.7-7.6-1.3 1.6 2.7 3.9 3.7 6.7 3\" fill=\"#A8C09A\" />": 2,
-    "<rect x=\"9\" y=\"2.5\" width=\"6\" height=\"11.5\" rx=\"3\" fill=\"#F4F1EA\"></rect>": 1,
-    "stroke=\"#F4F1EA\"": 2,
-    "stroke=\"rgba(240,235,221,0.8)\"": 5,
-    "<path d=\"M15.5 8c3-.4 4.6-2.2 5-5.2-3 .4-4.8 1.6-5.4 4.4\" fill=\"#A8C09A\"></path>": 1,
-    "<path d=\"M12 14c-2.2-2.4-5-2.7-7.6-1.3 1.6 2.7 3.9 3.7 6.7 3\" fill=\"#A8C09A\"></path>": 1,
-    "stroke=\"#5a6b4e\"": 1,
-    "<path d=\"M15.5 8c3-.4 4.6-2.2 5-5.2-3 .4-4.8 1.6-5.4 4.4\" fill=\"#7A946E\"></path>": 1,
-    "<path d=\"M12 14c-2.2-2.4-5-2.7-7.6-1.3 1.6 2.7 3.9 3.7 6.7 3\" fill=\"#7A946E\"></path>": 1
-   },
-   "pure-black-white": {
-    "boxShadow: '0 12px 30px rgba(0,0,0,0.4)',": 1
-   },
-   "shadow-literal": {
-    "boxShadow: '0 12px 30px rgba(0,0,0,0.4)',": 1,
-    "boxShadow: '0 0 0 2px rgba(181,101,74,0.7)',": 1
    }
   },
   "src/features/capture/SharePage.tsx": {
@@ -955,7 +722,6 @@
   "src/features/focus/FocusPage.css": {
    "colour-literal": {
     "background: linear-gradient(135deg, #E8C4CC, #D4A8B0);": 2,
-    "background: #C9A55A;": 1,
     "background: #E8D9A0;": 1,
     "box-shadow: 0 0 8px 3px rgba(232, 217, 160, 0.55);": 1,
     "background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 4px, transparent 4px 8px);": 1
@@ -1062,19 +828,6 @@
    },
    "radius-off-scale": {
     "borderRadius: 4,": 1
-   },
-   "pure-black-white": {
-    "<div className=\"fp-scrim-in\" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.05)', zIndex: 100 }}>": 1
-   },
-   "motion-property": {
-    "style={{ width: 34, height: 20, borderRadius: 999, background: settings.autoStartNextRound ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition:": 1,
-    "<span style={{ position: 'absolute', top: 2, left: settings.autoStartNextRound ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-cris": 1,
-    "style={{ width: 34, height: 20, borderRadius: 999, background: settings.autoStartBreaks ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'b": 1,
-    "<span style={{ position: 'absolute', top: 2, left: settings.autoStartBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)'": 1,
-    "style={{ width: 34, height: 20, borderRadius: 999, background: settings.gardenViewOnLongBreaks ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transit": 1,
-    "<span style={{ position: 'absolute', top: 2, left: settings.gardenViewOnLongBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-": 1,
-    "style={{ width: 34, height: 20, borderRadius: 999, background: chimeOn ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }": 1,
-    "<span style={{ position: 'absolute', top: 2, left: chimeOn ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'le": 1
    }
   },
   "src/features/focus/MiniFocus.tsx": {
@@ -1151,12 +904,8 @@
    }
   },
   "src/features/herbarium/HerbariumPage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "colour-literal": {
     ".washi { position:absolute; width:52px; height:15px; background:color-mix(in oklch, var(--acc-sage) 42%, transparent); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,tra": 1,
-    "<div className=\"kf-overlay-scrim\" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: ": 2,
     "<div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>": 2
    },
    "motion-property": {
@@ -1172,7 +921,6 @@
     "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)'": 1,
     "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-m": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>": 1,
-    "<span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'p": 2,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>": 1,
@@ -1184,10 +932,7 @@
     "<span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: ": 1,
     "<div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>": 1,
     "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1p": 1,
-    "<span onClick={() => setIsEditingLine(false)} style={{ fontSize: 11.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>": 1,
-    "<span onClick={handleSaveLine} style={{ fontSize: 11.5, color: 'var(--acc-terra)', fontWeight: 600, cursor: 'pointer' }}>Save</span>": 1,
     ") : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>\"{p.completion_summary || 'No summary line written.'}\"</div>}": 1,
-    "{!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'un": 1,
     "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)'": 1,
     "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-m": 1,
     "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>": 1,
@@ -1195,7 +940,6 @@
     "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>": 1,
     "<div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>": 1,
     "<input value={ceremonyLine} onChange={(e) => setCeremonyLine(e.target.value)} placeholder=\"One line for the field guide…\" style={{ flex: 1, fontStyle: 'italic', fontFamily: 'var(--font-hand)', fontSiz": 1,
-    "<span onClick={() => finishPressing(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</span>": 1,
     "<button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, paddi": 1,
     "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project a": 1,
     "<Link to=\"/projects\" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, p": 1,
@@ -1233,7 +977,6 @@
     "font: 'inherit', fontSize: 13, padding: '9px 16px', borderRadius: 999, cursor: 'pointer',": 1,
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Drop the file{src.multiple ? 's' : ''} here, or click to pick</div>": 1,
     "<div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--ink-body)' }}>": 1,
-    "style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '6px 10px', fontSize: 12.5, color: 'var(--ink-body)', font: 'inherit' }}": 2,
     "{trouble && <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--acc-terra)' }}>{trouble}</p>}": 1,
     "<p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-muted)' }}>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{header || `column ${i + 1}`}</span>": 1,
@@ -1245,16 +988,10 @@
    },
    "native-control": {
     "<input type=\"checkbox\" checked={checked} onChange={(e) => set(e.target.checked)} />": 1,
-    "<select": 2,
     "<input type=\"checkbox\" checked={md.paragraphsToInbox} onChange={(e) => setMd({ ...md, paragraphsToInbox: e.target.checked })} />": 1
    },
    "motion-property": {
     "<div style={{ height: '100%', width: `${step.total ? Math.round((step.done / step.total) * 100) : 0}%`, background: 'var(--acc-sage)', transition: 'width 200ms' }} />": 1
-   }
-  },
-  "src/features/inbox/Inbox.css": {
-   "colour-literal": {
-    "background: radial-gradient(circle at 35% 35%, #cfe0e6, #9ab4be);": 2
    }
   },
   "src/features/inbox/InboxBulkBar.tsx": {
@@ -1267,83 +1004,11 @@
    }
   },
   "src/features/inbox/InboxPage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.2em' : '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 2,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 34, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>GitHub · recently updated</span>": 1,
-    "<div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 28, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', let": 1,
-    "<button type=\"button\" className=\"kf-hit\" onClick={() => openTask(item.filed_task_id!)} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'var(": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>": 1,
-    "<span data-no-select onClick={() => setEditing(true)} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', colo": 1,
-    "const meta = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' } as const": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>": 1,
-    "<span onClick={restoreAll} style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>": 1,
-    "<span onClick={clearNow} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Clear": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 9 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{label} · {items.le": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>dismissed {dismissedAgo(item.updated_at)}</": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--paper-parchment)' }}>Restore</span>": 1,
-    "<div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{KIND_LABEL[item.kind]} · {dis": 1
-   },
    "font-size-literal": {
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1.5deg)' }}>clear them and the hydrangea calms ✿</span>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 34, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "fontSize: isMobile ? 13.5 : 14,": 1,
     "<div style={{ marginTop: 18, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Inbox zero</div>": 1,
     "<p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>": 1,
     "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>one calm bloom ✿</div>": 1,
-    "<span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>": 1,
-    "style={{ fontSize: 12.5, padding: '7px 11px', gap: 8, border: '1px solid var(--line-card)' }}": 1,
-    "style={{ fontSize: 12.5, padding: '7px 11px', paddingLeft: projectId ? 22 : 11, gap: 8, border: '1px solid var(--line-card)' }}": 1,
-    "<Button type=\"button\" variant=\"cta\" onClick={file} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 14px' : '8px 16px' }}>": 1,
-    "<Button type=\"button\" variant=\"secondary\" onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 12px' : '8px 14px' }}>": 1,
-    "<Button type=\"button\" variant=\"ghost\" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px', ...(compact ? { marginLeft: 'auto'": 1,
-    "<div style={{ fontSize: compact ? 12.5 : 14, color: 'var(--ink-body)' }}>{item.raw_text}</div>": 1,
-    "<Button type=\"button\" variant=\"cta\" onClick={onFile} style={{ fontSize: compact ? 10.5 : 12, padding: compact ? '6px 10px' : '7px 13px' }}>File</Button>": 1,
-    "{!compact && <Button type=\"button\" variant=\"ghost\" onClick={onDismiss} style={{ fontSize: 12, padding: '7px 4px' }}>Dismiss</Button>}": 1,
-    "return <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>nothing composting right now</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: compact ? 14 : 17, color: 'var(--ink-hand, #7a745f)', marginBottom: 12 }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>": 1,
-    "<span onClick={restoreAll} style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>": 1,
-    "{compact && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)', margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}": 1,
-    "<div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 9 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{label} · {items.le": 1,
-    "<span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSiz": 1,
-    "<div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{item.raw_text}</div>": 1,
-    "<Button type=\"button\" variant=\"secondary\" onClick={() => restoreInboxItem(item)} style={{ fontSize: 11.5, padding: '6px 13px', color: 'var(--acc-terra)' }}>": 1,
-    "<div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.35 }}>{item.raw_text}</div>": 1
-   },
-   "radius-off-scale": {
-    "<span style={{ width: 15, height: 15, borderRadius: 4, background: filed ? 'var(--sig-done)' : 'var(--ink-hairline)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'non": 1,
-    "style={{ width: 15, height: 15, marginTop, flex: 'none', borderRadius: 4, border: '1.5px solid var(--acc-sage)', background: selected ? 'var(--acc-sage)' : 'transparent', display: 'inline-flex', align": 1,
-    "<div style={{ display: 'flex', alignItems: 'center', gap: compact ? 9 : 12, padding: compact ? '8px 11px' : '10px 14px', background: 'color-mix(in srgb, var(--acc-hydrangea) 10%, transparent)', border": 1,
-    "style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '12px 10px', margin: '0 -10px', borderRadius: 7, borderBottom: '1px dashed var(--line-dashed)', background: selected ? 'color-mix(in o": 1
-   },
-   "colour-literal": {
-    "<Chip tone=\"sage\" style={filed ? undefined : { background: 'rgba(107,100,85,0.14)', color: 'var(--ink-faint)' }}>": 1,
-    "<span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSiz": 1,
-    "<span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(42,36,32,0.06)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSiz": 1
-   },
-   "motion-property": {
-    "transition: 'opacity 200ms var(--ease-out), transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out)',": 1
-   },
-   "phone-tiny-text": {
-    "<Button type=\"button\" variant=\"cta\" onClick={file} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 14px' : '8px 16px' }}>": 1,
-    "<Button type=\"button\" variant=\"secondary\" onClick={(e) => setSnoozePos({ x: e.clientX, y: e.clientY })} style={{ fontSize: compact ? 11.5 : 12.5, padding: compact ? '7px 12px' : '8px 14px' }}>": 1,
-    "<Button type=\"button\" variant=\"ghost\" onClick={() => breatheOut(item.id, () => dismissInboxItem(item))} style={{ fontSize: compact ? 11.5 : 12.5, padding: '8px 6px', ...(compact ? { marginLeft: 'auto'": 1,
-    "<Button type=\"button\" variant=\"cta\" onClick={onFile} style={{ fontSize: compact ? 10.5 : 12, padding: compact ? '6px 10px' : '7px 13px' }}>File</Button>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>": 1,
-    "<span onClick={restoreAll} style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 8.5 : 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: compact ? 9 : 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{label} · {items.le": 1
-   },
-   "shadow-literal": {
-    "style={{ position: 'relative', transform: swipe.x !== 0 ? `translateX(${swipe.x}px)` : undefined, transition: swipe.x === 0 || swipe.x === SWIPE_MAX ? 'transform 200ms var(--ease-spring)' : undefined,": 1
+    "<span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>": 1
    }
   },
   "src/features/journal/JournalPage.tsx": {
@@ -1352,14 +1017,14 @@
     "<Button type=\"button\" variant=\"secondary\" onClick={onRetry} disabled={retrying} style={{ fontSize: 12, padding: '6px 14px' }}>": 1,
     "<div style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 17, lineHeight: 1.35, color: 'var(--ink-hand)', textAlign: 'center' }}>{line}</div>": 1,
     "<Button type=\"button\" variant=\"secondary\" onClick={() => void q.refetch()} disabled={q.isFetching} style={{ marginTop: 14, fontSize: 12, padding: '6px 14px' }}>": 1,
+    "<div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>": 1,
+    "style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, bord": 1,
     "<div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Untitled Note'}</div>": 1,
     "<div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>": 1,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>": 1,
-    "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>": 1,
     "{renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}": 1,
     "<div style={{ marginTop: 18, fontSize: 13.5, color: 'var(--ink-muted)' }}>Today felt —</div>": 1,
-    "style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '14.5px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, lineHeight: 1.5, color: 'var(--ink-body)', marginTop: 7 }}>": 1,
     ".jn-title { font-size: clamp(28px, 7.8cqi, 40px); text-wrap: balance; }": 1,
     "style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer',": 1,
@@ -1371,26 +1036,16 @@
     "{renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}": 1,
     "<span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>Today felt —</span>": 1,
     "<span style={{ color: 'var(--acc-blossom)', fontSize: 13 }}>✿</span>": 1,
-    "style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '15px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}": 1,
     "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)', animationDelay: '180ms' }}>": 1,
-    "<div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>": 1,
-    "style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, bord": 1,
-    "<button onClick={() => setShowAddCommentary(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '10.5px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</but": 1,
-    "<button onClick={handleAddCommentary} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '10.5px', padding: '3px 8px', borderRadius: 99": 1,
     "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, color: 'var(--ink-body)', marginTop: 7, lineHeight: 1.45, animationDelay": 1,
     "<div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, lineHeight: 1.35, color: 'var(--ink-hand)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>": 1
+    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, lineHeight: 1.35, color: 'var(--ink-hand)' }}>": 1
    },
    "line-height-literal": {
     "style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-cri": 1
    },
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "letter-spacing-literal": {
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Notes Shelf</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Quotes Shelf</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journ": 1,
@@ -1418,22 +1073,13 @@
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Three small things</span>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</span>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 10 }}>": 1,
-    "style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' ": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>On this day</span>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Kept</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>": 1
-   },
-   "confirm-delete": {
-    "<ConfirmCard": 1
+    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Kept</span>": 1
    },
    "colour-literal": {
     "<span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(9": 1,
     "<span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(9": 1
-   },
-   "hairline-text": {
-    "style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '14.5px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}": 1,
-    "style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '15px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}": 1
    },
    "motion-property": {
     "transition: color var(--dur-quick) var(--ease-natural);": 1
@@ -1451,9 +1097,6 @@
    }
   },
   "src/features/library/LibraryPage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "letter-spacing-literal": {
     "letter-spacing: 0.06em;": 4,
     "letter-spacing: 0.16em;": 2,
@@ -1461,10 +1104,7 @@
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
     "style={{ border: 'none', background: 'transparent', color: 'var(--acc-terra)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' ": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>": 1,
-    "<span onClick={() => { deleteBook(activeBook.id); setSearchParams({ tab: 'books' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppe": 1,
-    "<span onClick={() => { deleteNote(activeNote.id); setSearchParams({ tab: 'notes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'upp": 1,
-    "<span onClick={() => { deleteQuote(activeQuote.id); setSearchParams({ tab: 'quotes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: '": 1
+    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>": 1
    },
    "font-size-literal": {
     "font-size: 13.5px;": 1,
@@ -1645,9 +1285,6 @@
    }
   },
   "src/features/people/PeoplePage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "font-size-literal": {
     "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>People</h1>": 1,
     "style={{ width: 48, height: 48, border: 'none', font: 'inherit', borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', al": 1,
@@ -1660,8 +1297,6 @@
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>People · kept close</div>": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The clover patch</h1>": 1,
     "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', ": 1,
-    "<input type=\"text\" placeholder=\"Name\" value={newName} onChange={(e) => setNewName(e.target.value)} required style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', bor": 1,
-    "<select value={newDomain} onChange={(e) => setNewDomain(e.target.value)} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize:": 1,
     "<Button type=\"submit\" variant=\"cta\" style={{ padding: '8px 16px', fontSize: 12 }}>Add</Button>": 1,
     "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No one in the clover patch yet — plant the": 1,
     "<button onClick={() => setShowNewForm(true)} className=\"kf-lift\" style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSiz": 1,
@@ -1672,7 +1307,6 @@
    "letter-spacing-literal": {
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>Say hi</span>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>": 1,
-    "<span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className=\"chip\" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: ": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domain?.name || 'Uncategorized'}</span>": 1,
     ".chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; ": 1,
     ".flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }": 1,
@@ -1680,9 +1314,6 @@
     ".slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>People · kept close</div>": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The clover patch</h1>": 1
-   },
-   "native-control": {
-    "<select value={newDomain} onChange={(e) => setNewDomain(e.target.value)} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize:": 1
    }
   },
   "src/features/people/PersonDetailPage.tsx": {
@@ -1692,41 +1323,25 @@
     ".fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
     ".slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · <s": 1,
-    "style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none": 1,
-    "<span onClick={removePerson} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>De": 1
+    "style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none": 1
    },
    "font-size-literal": {
-    ".fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}": 1,
     ".av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:non": 1,
     "<div style={{ fontSize: '14.5px', color: 'var(--ink-body)' }}>{getBannerText(person.name, daysUntilBday)}</div>": 1,
     "<span onClick={() => { window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` })); openCapture() }} style={{ fontSize: '12.5px', color: 'var(--ink-": 1,
     "<span className=\"av\" style={{ width: 52, height: 52, fontSize: 21, background: getAvatarBgColor(person.name) }}>{person.name.charAt(0)}</span>": 1,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.1, color: 'var(--ink-body)' }}>{person.name}</h1>": 1,
-    "<input type=\"text\" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, paddin": 1,
-    "<select value={editDomain} onChange={(e) => setEditDomain(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, f": 1,
     "<Button type=\"submit\" variant=\"cta\" style={{ padding: '8px 16px', fontSize: 12 }}>Save</Button>": 1,
     "<span style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{f.label}</span>": 1,
-    "<span onClick={() => editFact(f)} style={{ fontSize: '11.5px', color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>edit</span>": 1,
     "<span style={{ width: 15, textAlign: 'center', color: 'var(--ink-faint)', fontSize: 14, flex: 'none' }}>+</span>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Add a moment… label · date · repeats yearly</span>": 1,
     "<span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>": 1,
-    "<span onClick={() => removeFact(f.id)} style={{ fontSize: 11.5, color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 10 }}>✕</span>": 1,
     "<input ref={factValueRef} type=\"text\" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} re": 1,
     "<button type=\"submit\" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: ": 2,
     "<input type=\"text\" placeholder=\"what did you talk about?\" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '": 1,
     "<span style={{ fontSize: '13.5px', lineHeight: 1.5, flex: 1, minWidth: 0 }}>": 1,
     "<span role=\"button\" tabIndex={0} title=\"Edit\" onClick={() => setEditingInteraction(i.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingInteraction(i.id) } }} style={{ fon": 1,
-    "<span onClick={() => { deleteInteraction(i.id); void refetchInteractions() }} style={{ fontSize: 11, color: 'var(--ink-faint)', cursor: 'pointer', paddingLeft: 6 }}>✕</span>": 1,
     "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>": 1
-   },
-   "native-control": {
-    "<select value={editDomain} onChange={(e) => setEditDomain(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, f": 1,
-    "<select value={newFactType} onChange={(e) => setNewFactType(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>": 1,
-    "<select value={logChannel} onChange={(e) => setLogChannel(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>": 1,
-    "<select value={logDate} onChange={(e) => setLogDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>": 1
-   },
-   "confirm-delete": {
-    "<ConfirmCard": 1
    }
   },
   "src/features/projects/ConfirmCard.tsx": {
@@ -1746,17 +1361,9 @@
   "src/features/projects/NewProjectModal.tsx": {
    "colour-literal": {
     "'#7a4a52',": 1,
-    "'#8b8471',": 1,
-    "<div className=\"kf-overlay-scrim\" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: ": 1
-   },
-   "radius-off-scale": {
-    "<div className=\"dv-card kf-overlay-card\" style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', po": 1,
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklc": 1,
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(-": 1,
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklc": 1
+    "'#8b8471',": 1
    },
    "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Type</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>has a finish line</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>ongoing, no end</div>": 1,
@@ -1767,27 +1374,25 @@
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Engagement Model / Client</": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Starting milestones</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>": 1
+    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>": 1,
+    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects</div>": 1
+   },
+   "radius-off-scale": {
+    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklc": 1,
+    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(-": 1,
+    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklc": 1
    },
    "font-size-literal": {
-    "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>Plant something new</h1>": 1,
-    "<span onClick={onClose} style={{ width: 28, height: 28, borderRadius: '999px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', just": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src=\"/ds/assets/wisteria/p40.png\" alt=\"\" style={{ height: 20 }} /><span style={{ fontSize: 14, fontWeight: type === 'standard' ? 600": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-buttercream)' }}></span><span style={{ fontSize: 14, fo": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-lavender-deep)' }}></span><span style={{ fontSize: 14, ": 1,
     "style={{ width: '100%', font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px', outline: '": 1,
-    "style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: '": 3,
+    "style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: '": 2,
     "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>optional — the trellis it climbs ✿</span>": 1,
     "<span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{m.title}</span>": 1,
-    "<span onClick={() => handleRemoveMilestone(index)} style={{ cursor: 'pointer', color: 'var(--acc-terra)', fontSize: 12, marginLeft: 8 }}>✕</span>": 1,
-    "style={{ flex: 1, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}": 1,
     "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1,
     "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}": 1,
-    "<button onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 18px', borderRa": 1,
-    "<button onClick={(e) => handlePlant(e.currentTarget)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px": 1
-   },
-   "native-control": {
-    "<select": 1
+    "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>Plant something new</h1>": 1
    }
   },
   "src/features/projects/PerennialsPage.tsx": {
@@ -1797,23 +1402,10 @@
    "font-size-literal": {
     "<div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 380, lineHeight: 1.45 }}>": 1,
     "<Link to=\"/tasks\" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padd": 1,
-    "<div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}><EmojiText text={t.title} /></div>": 1,
-    "<span onClick={(e) => setRuleMenu({ id: t.id, x: e.clientX, y: e.clientY })} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Edit rule</span>": 1,
-    "<span onClick={() => handleSkip(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Skip next</span>": 1,
-    "<span onClick={() => handlePauseToggle(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>": 1,
-    "<span onClick={() => setConfirmEndSeries(t.id)} style={{ fontSize: 12, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer' }}>End series</span>": 1,
-    "style={{ fontSize: 18, color: 'var(--ink-faint)', padding: '10px 12px', margin: '-10px -8px', cursor: 'pointer', userSelect: 'none' }}": 1,
-    "<span style={{ fontSize: 13, color: 'var(--ink-body)' }}>End this repeat? Past completions stay in the log.</span>": 1,
-    "<span onClick={() => setConfirmEndSeries(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', c": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-faint)' }}>": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1
    },
-   "motion-property": {
-    "transition: 'background var(--dur-quick) var(--ease-natural)',": 1
-   },
    "letter-spacing-literal": {
-    "<div className=\"mono\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>": 1,
     "<div className=\"mono\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
     "<div className=\"mono\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 4 }}>": 1
@@ -1832,11 +1424,9 @@
     "<span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color:": 1,
     "style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0": 1,
     "{log.type === 'work' && <span className=\"mchip\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', mar": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>": 1,
     "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence<": 1,
     "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This mon": 1,
-    "<span className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {openTasks.length": 1,
     "<span className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Keeps coming back</span>": 1,
     "<span className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Recent</span>": 1
    },
@@ -1849,18 +1439,12 @@
     "style={{ font: 'inherit', fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none', background: 'none', border: 'none', padding: 0, minHeight: isMobile ? 44 : undefined }}": 1,
     "style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>": 1,
-    "style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}": 1,
-    "<span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</s": 1,
     "<NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />": 1,
-    "<span onClick={() => askRemoveMilestone(m)} title=\"Delete milestone\" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>": 1,
     "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}": 2,
     "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1,
     "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}": 2,
     "style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 10px', outline: 'none', color: 'var(--ink-body)'": 2,
     "<button type=\"submit\" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>Add</button>": 2,
-    "<span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>": 1,
-    "<span role=\"button\" tabIndex={0} title=\"Rename\" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(it": 1,
-    "<span onClick={() => removeProjectChecklistItem(project, item.id)} style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>": 1,
     "style={{ fontSize: 11, padding: '4px 8px' }}": 1,
     "fontSize: 11,": 2,
     "style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8p": 1,
@@ -1877,12 +1461,7 @@
     "fontSize: 30,": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>tasks closed</span>": 1,
-    "<span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>": 1,
     "<div style={{ color: 'var(--ink-faint)', fontSize: 12.5, fontStyle: 'italic', padding: '6px 2px' }}>": 2
-   },
-   "hairline-text": {
-    "<span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</s": 1,
-    "<span role=\"button\" tabIndex={0} title=\"Rename\" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(it": 1
    },
    "radius-off-scale": {
     "<span style={{ width: 15, height: 15, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }}></span>": 2,
@@ -1910,7 +1489,6 @@
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>": 1,
     "<div className=\"slabel\" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color:": 1,
-    "<Link to=\"/herbarium\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1
    },
    "font-size-literal": {
@@ -2016,8 +1594,6 @@
   },
   "src/features/rituals/WeeklyReviewPage.tsx": {
    "font-size-literal": {
-    "{domains.length === 0 && <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No domains yet.</p>}": 1,
-    "{!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>}": 1,
     "fontSize: 13,": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The sweep</h1>": 1,
@@ -2078,53 +1654,35 @@
    }
   },
   "src/features/routines/NewRoutineForm.tsx": {
-   "kit-duplicate": {
-    "const mq = matchMedia('(max-width: 767px)')": 1
-   },
    "font-size-literal": {
     "fontSize: isMobile ? 12 : 12.5,": 1,
     "fontSize: 12.5,": 1,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}<": 1,
-    "<span onClick={onClose} style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyC": 1,
     "style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}": 1,
     "{!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>checked off one by one, or all at once ✿</span>}": 1,
-    "style={{ flex: 1, font: 'inherit', fontSize: isMobile ? 13.5 : 14, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}": 1,
-    "<span onClick={() => setSteps((cur) => cur.filter((_, j) => j !== i))} style={{ color: 'var(--ink-faint)', fontSize: 11, cursor: 'pointer' }}>✕</span>": 1,
     "fontSize: 11,": 1,
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>": 1,
     "style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}": 1,
     "<NumberField value={challengeDays} onChange={setChallengeDays} min={1} max={3650} ariaLabel=\"Challenge days\" style={{ fontSize: 14 }} inputStyle={{ border: 'none' }} />": 1,
     "<span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>": 1,
     "style={{ flex: 1, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontSize: 14, color: 'var(--ink-body)' }}": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>": 1,
-    "<button type=\"button\" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 13, padding: '10px 18px', ": 1,
-    "style={{ flex: isMobile ? 1 : 'none', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: isMobile ? 14.5 : 13, padding: isMobile ? '14px' : '10": 1
+    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>": 1
    },
    "letter-spacing-literal": {
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isMobile ? 'Steps' : 'Steps · what it’s ma": 1,
-    "<span onClick={() => setSteps((cur) => [...cur, ''])} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)'": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>a gentle push notification</div>": 1,
     "<span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cur": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', marginTop: 5 }}>Vine</div>": 1
+    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>": 1
    },
    "radius-off-scale": {
-    "<span role=\"checkbox\" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChall": 1,
-    "style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2": 1
-   },
-   "shadow-literal": {
-    "style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2": 1
+    "<span role=\"checkbox\" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChall": 1
    }
   },
   "src/features/routines/RoutinesPage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "font-size-literal": {
     "fontSize: 12,": 1,
     "<button type=\"button\" onClick={onEdit} title=\"Edit routine\" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneTod": 1,
@@ -2150,6 +1708,7 @@
    },
    "letter-spacing-literal": {
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', mar": 1,
+    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>": 1,
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>": 1,
     "<h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-bod": 1,
@@ -2158,8 +1717,6 @@
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>day streak</div>": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.16em' : '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowr": 1,
     "{!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.do": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>": 1,
-    "<div onClick={() => setFormOpen({ challenge: true })} style={{ marginTop: activeChallenge ? 12 : 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: '": 1,
     "<div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(": 1
    },
    "colour-literal": {
@@ -2176,12 +1733,6 @@
    }
   },
   "src/features/routines/StreakTrellis.tsx": {
-   "colour-literal": {
-    "<div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>": 1
-   },
-   "radius-off-scale": {
-    "style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)'": 1
-   },
    "letter-spacing-literal": {
     "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>": 1,
     "<span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-h": 1,
@@ -2190,18 +1741,18 @@
    },
    "font-size-literal": {
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakOfGoal(current, routine.goal_days)} days</span>": 1,
-    "<span onClick={onClose} style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyC": 1,
     "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>": 1
    },
    "svg-colour-literal": {
     "<path d=\"M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z\" fill=\"none\" stroke=\"#7d99a3\" strokeWidth={0.8} />": 1,
     "<circle cx={5.4} cy={13.2} r={2} fill=\"var(--star, #FDFBF4)\" opacity={0.65} />": 1,
     "<circle cx={4.6} cy={9.4} r={1.3} fill=\"var(--star, #FDFBF4)\" opacity={0.7} />": 1
-   }
-  },
-  "src/features/search/api.ts": {
+   },
    "colour-literal": {
-    "{ type: 'task', label: 'Tasks', tint: '#a1707c', dot: 'var(--acc-moss)' },": 1
+    "<div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>": 1
+   },
+   "radius-off-scale": {
+    "style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)'": 1
    }
   },
   "src/features/search/SearchOverlay.tsx": {
@@ -2223,65 +1774,12 @@
    }
   },
   "src/features/search/SearchPage.tsx": {
-   "font-size-literal": {
-    "const PILL: React.CSSProperties = { marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: ": 1,
-    "<div style={{ fontSize: 14.5, color: 'var(--ink-body)' }}>": 1,
-    "<div style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-faint)' }}>": 1,
-    "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }}>": 1,
-    "<span style={{ fontSize: 19, color: 'var(--ink-faint)' }}>⌕</span>": 1,
-    "style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: tint, whiteSpace: 'nowrap' }}>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : '": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc clears</span>": 1,
-    "<div style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1
-   },
-   "radius-off-scale": {
-    "<span style={{ width: hit.entity_type === 'task' ? 17 : 6, height: hit.entity_type === 'task' ? 17 : 6, marginTop: hit.entity_type === 'task' ? 2 : 6, borderRadius: hit.entity_type === 'task' ? 5 : '5": 1
-   },
-   "kit-duplicate": {
-    "function Chip({ label, count, on, onClick }: { label: string; count: number; on: boolean; onClick: () => void }) {": 1
-   },
    "colour-literal": {
     "<div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, var(--sky-horizon,#b9a98a), var(--sky-panel-stron": 2,
     "<div style={{ position: 'absolute', left: '50%', bottom: 30, width: 46, height: 46, marginLeft: -30, borderRadius: '50%', border: '3px solid var(--ink-faint)', background: 'rgba(244,241,234,0.35)' }} ": 1
    },
    "shadow-literal": {
     "<div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, height: 26, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 40%, var(--sky-horizon,#b9a98a), var(--sky-panel-stron": 1
-   }
-  },
-  "src/features/seasons/SeasonsPage.tsx": {
-   "letter-spacing-literal": {
-    ".se-hlabel { position: absolute; left: 14px; top: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); z-index: 6": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{date}</div>": 1,
-    "<div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 26px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontS": 1,
-    "<p style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1
-   },
-   "colour-literal": {
-    ".se-petal { position: absolute; top: -14px; background: linear-gradient(135deg,#E8C4CC,#D4A8B0); border-radius: 70% 30% 60% 40%; }": 2,
-    ".se-aleaf { position: absolute; top: -14px; width: 12px; height: 8px; background: linear-gradient(135deg,#C9A55A,#a9803f); border-radius: 80% 20% 70% 30%; }": 2,
-    ".se-wleaf { position: absolute; width: 12px; height: 8px; background: linear-gradient(135deg,#C9A55A,#a9803f); border-radius: 80% 20% 70% 30%; }": 2,
-    ".se-shimmer { position: absolute; left: 14%; right: 14%; bottom: 70px; height: 14px; background: linear-gradient(rgba(232,217,160,0),rgba(232,217,160,0.55),rgba(232,217,160,0)); transform-origin: 50% ": 2,
-    "style={{ position: 'absolute', top: s.top, left: s.left, right: s.right, width: s.size, height: s.size, background: 'radial-gradient(circle at 40% 40%,var(--star, #FDFBF4),transparent 65%)', borderRad": 1,
-    "bg=\"var(--sky-panel, #EBE5CE)\" radial=\"linear-gradient(color-mix(in srgb, var(--acc-hydrangea) 18%, transparent),transparent 60%)\"": 1,
-    "bg=\"var(--sky-panel, #ECEAE1)\" radial=\"radial-gradient(ellipse 80% 55% at 30% 0%, rgba(232,222,190,0.5), rgba(232,222,190,0) 70%)\"": 3,
-    "bg=\"var(--sky-panel, #E9DDC6)\" radial=\"linear-gradient(rgba(90,74,96,0.16), color-mix(in srgb, var(--acc-gold-warm) 12%, transparent) 70%)\"": 2
-   },
-   "font-size-literal": {
-    "<div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 24, color: 'var(--ink-body)', marginTop: 3 }}>{greeting}</div>": 1,
-    "<div style={{ fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.55 }}>": 1,
-    "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600 }}>Seasons &amp; weather</h1>": 1
-   },
-   "motion-property": {
-    "<span style={{ position: 'absolute', top: 2, left: motionOn ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'l": 1
-   },
-   "bold-huge": {
-    "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600 }}>Seasons &amp; weather</h1>": 1
-   },
-   "radius-off-scale": {
-    "<div style={{ marginTop: 16, width: '100%', maxWidth: 1240, border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden' }}>": 2,
-    "<div style={{ marginTop: 16, width: 640, maxWidth: '100%', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-panel)', overflow: 'hidden' }}>": 1
    }
   },
   "src/features/settings/settings.css": {
@@ -2470,20 +1968,6 @@
     "<span style={{ width: 16, height: 16, border: '1.5px solid var(--check-border)', borderRadius: 4, flex: 'none' }} />": 1
    }
   },
-  "src/features/today/DayCard.tsx": {
-   "font-size-literal": {
-    "const btn: CSSProperties = { fontSize: 12.5, padding: '7px 14px' }": 1,
-    "<div style={{ marginTop: 3, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>": 1,
-    "<div style={{ marginTop: 3, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)' }}>The garden's closed. See you in the morning ✿</div>": 1,
-    "<div style={{ fontSize: 14.5, color: 'var(--ink-body)', fontWeight: 500, lineHeight: 1.3, marginTop: caption ? 2 : 0 }}>{title}</div>": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, flexWr": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{child": 1,
-    "return <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontWeight: 400, letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>": 1,
-    "const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform:": 1
-   }
-  },
   "src/features/today/today.css": {
    "motion-property": {
     "transition: color var(--dur-quick) var(--ease-out);": 1
@@ -2514,42 +1998,20 @@
   "src/features/today/TodayPage.tsx": {
    "letter-spacing-literal": {
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Today</div>": 1,
-    "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 42, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{dateLabel}</h1>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The terrarium</div>": 1,
-    "<div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.7 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '2px 0 5px' }}>{g.label}</div>": 1,
-    "const linkStyle = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)', textDecoration: 'none' }": 1,
-    "<div style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, alignI": 1,
-    "{syncing && <span className=\"tp-syncing\" style={{ fontSize: 'var(--fs-meta)', letterSpacing: '0.06em' }}>Syncing</span>}": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} day": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow": 1
    },
    "font-size-literal": {
     "<div style={{ fontSize: '14px', color: 'var(--ink-body)' }}>{text}</div>": 1,
     "style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}": 1,
     "style={{ fontSize: '12px', color: 'var(--ink-faint)', cursor: 'pointer', flex: 'none', paddingLeft: 2 }}": 1,
-    "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 42, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{dateLabel}</h1>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>pressed &amp; kept, one day at a time</div>": 1,
-    "<Link to=\"/routines\" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>": 1,
     "fontSize: 17,": 1,
     "<div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>": 1,
     "<Button type=\"button\" variant=\"cta\" onClick={onPlan} style={{ marginTop: 18, fontSize: 13.5, padding: '10px 22px' }}>Plan today</Button>": 1,
     "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>All done. The garden can rest.</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>": 1,
-    "<span className=\"kf-hit\" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>": 1,
-    "<div style={{ fontSize: hollow ? 14.5 : 15, ...title }}><EmojiText text={task.title} /></div>": 1,
-    "<span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>": 1,
-    "<div style={{ flex: 1, minWidth: 0, fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>": 1,
-    "<div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>": 1,
-    "<button onClick={(e) => { e.stopPropagation(); markReviewed(row) }} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration:": 1,
     "<span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>": 1,
     "return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>": 1
    },
    "colour-literal": {
-    "<span aria-hidden style={{ position: 'absolute', top: -9, left: 44, width: 66, height: 16, background: 'color-mix(in srgb, var(--acc-sage) 36%, transparent)', backgroundImage: 'repeating-linear-gradie": 1,
     "background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',": 2,
     "<span aria-hidden style={{ position: 'absolute', left: '50%', top: -40, width: 260, height: 170, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,217,": 2,
     "<div style={{ position: 'absolute', inset: 0, border: '2.5px solid rgba(107,100,85,0.45)', borderRadius: '14px 14px 10px 10px', background: 'rgba(244,241,234,0.4)' }} />": 2,
@@ -2567,9 +2029,6 @@
     "<div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3": 1
    },
    "hairline-text": {
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3": 1,
-    "const title = { color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' } as const": 1,
-    "const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const": 1,
     "<span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>": 1
    }
   },
@@ -2607,26 +2066,18 @@
    }
   },
   "src/features/trash/TrashPage.tsx": {
-   "kit-duplicate": {
-    "function useIsMobile(): boolean {": 1
-   },
    "letter-spacing-literal": {
     ".tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7": 1,
     ".aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }": 1,
     "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedItems.length} items resting</div>": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>": 1
    },
    "radius-off-scale": {
     ".tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7": 1,
-    ".aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }": 1,
-    "<div style={{ position: 'absolute', right: 0, top: 22, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, boxShadow: 'var(--shadow-panel)', padding: '6px 0', ": 1
+    ".aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }": 1
    },
    "font-size-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>": 1,
-    "<span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect": 1,
-    "<span onClick={() => { handleRestore(item); setOpenMenuId(null) }} style={{ padding: '6px 14px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>Restore</span>": 1,
-    "<span onClick={() => { setConfirmDeleteId(item.id); setOpenMenuId(null) }} style={{ padding: '6px 14px', fontSize: 13, color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete forever</span>": 1,
     "<span onClick={() => handleRestore(item)} style={{ fontSize: 12.5, color: 'var(--ink-body)', textDecoration: 'underline', cursor: 'pointer' }}>Restore</span>": 1,
     "<span onClick={() => setConfirmDeleteId(isConfirming ? null : item.id)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer' }}>Delete forever</span>": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good — compost now?</span>": 1,
@@ -2688,17 +2139,6 @@
    },
    "motion-property": {
     "transition: isDragging": 1
-   }
-  },
-  "src/lib/seasons.ts": {
-   "colour-literal": {
-    "bg: 'var(--sky-panel, #F0EBD8)',": 1,
-    "radial: 'radial-gradient(ellipse 90% 50% at 50% 0%, rgba(216,229,205,0.55), rgba(216,229,205,0) 70%)',": 2,
-    "bg: 'var(--sky-panel, #F3EBD2)',": 1,
-    "radial: 'radial-gradient(ellipse 100% 60% at 50% 0%, rgba(232,217,160,0.6), rgba(232,217,160,0) 72%)',": 2,
-    "bg: 'var(--sky-panel, #EDE2CC)',": 1,
-    "bg: 'var(--sky-panel, #EAE8E0)',": 1,
-    "radial: 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(190,200,205,0.4), rgba(190,200,205,0) 70%)',": 2
    }
   }
  }
