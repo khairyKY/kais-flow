@@ -72,12 +72,12 @@ export interface MenuAnchor {
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
   top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
-  project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
+  tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
@@ -115,6 +115,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
       : [{ label: 'No reminder', run: () => actions.remind(null) }, { label: 'Pick a date first…', run: () => setSub('date') }],
   }
   const run: Record<TaskMenuKey, () => void> = {
+    tomorrow: actions.tomorrow,
     plan: () => setSub('date'),
     unschedule: () => actions.unschedule?.(),
     project: () => setSub('project'),
@@ -131,7 +132,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     delete: actions.delete,
   }
   // Read when the menu opens: overdue → "Replan…"; the goal of the day gets no Make goal.
-  const spec = taskMenuSpec(task, { ...ctx, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
+  const spec = taskMenuSpec(task, { ...ctx, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
 
   // One task: the Plan list offers No date when it has one, and Next free slot.
   const bulk = !!ctx.bulkCount && ctx.bulkCount > 1
