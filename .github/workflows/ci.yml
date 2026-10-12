@@ -50,6 +50,8 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci
       - run: npm run lint
+      # Design-system drift (scripts/ds-check.mjs): fails only on hits not in the committed baseline.
+      - run: npm run ds:check -- --baseline scripts/ds-baseline.json
 
   build:
     name: Build
