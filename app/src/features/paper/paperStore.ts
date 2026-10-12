@@ -29,7 +29,8 @@ export type Stage =
   | { kind: 'reading'; captureId: string; read: number; total: number }
   /** `only`: just these lines (`page:index`) — the new scribbles left after the ticks review. */
   | { kind: 'results'; captureId: string; only?: string[] }
-  | { kind: 'unreadable'; captureId: string }
+  /** `heic`: an iPhone photo this browser can't open (no capture yet) — 11i with "Convert it to JPEG first". */
+  | { kind: 'unreadable'; captureId?: string; heic?: boolean; ticks?: TicksTarget }
   | { kind: 'failed'; captureId: string }
   | { kind: 'limit' }
   | { kind: 'denied' }
@@ -81,7 +82,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
 export async function pickPhotos(source: 'camera' | 'gallery', ticks?: TicksTarget): Promise<void> {
   const input = document.createElement('input')
   input.type = 'file'
-  input.accept = 'image/*'
+  input.accept = 'image/*,.heic,.heif' // Windows pickers hide HEIC under image/*
   input.multiple = true
   if (source === 'camera') {
     // A browser where the camera is blocked for the app says so only here (the input just closes).

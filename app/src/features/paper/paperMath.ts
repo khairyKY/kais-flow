@@ -4,6 +4,7 @@ import { parseCommand } from '../command-bar/parseCommand'
 import { cairoDateKey, zoneDateKey } from '../../lib/dateShortcuts'
 import { DEFAULT_ZONE } from '../../lib/appZone'
 import type { Project } from '../../lib/types'
+import type { MoveTarget } from '../tasks/move'
 
 /** What the `capture-image` function stores per line (supabase/functions/capture-image/read.ts). */
 export type LineType = 'task' | 'event' | 'note' | 'journal'
@@ -17,6 +18,8 @@ export interface PageLine {
   page: number
   /** A checkbox on the line: ticked, empty, or none (absent on lines read before the ticks loop). */
   checked?: boolean | null
+  /** 1 (most urgent) – 3, when the page marks the line (!, ★, "urgent"); absent on older reads. */
+  priority?: number | null
 }
 
 export interface CaptureRow {
@@ -125,9 +128,55 @@ export interface EditLine {
   domainId: string | null
   /** The chip's label: the matched project's name, else the page's own word. */
   projectLabel: string | null
+  /** Set only when the user moves the line to an area (the project chip's Move to…). */
+  areaId: string | null
+  priority: number | null
   confidence: number
   box: PageLine['box']
   page: number
+}
+
+/** What the user changed on a line (the chips, the text) — or dropped it. */
+export type LineEdit = Partial<Pick<EditLine, 'text' | 'type' | 'dueAt' | 'timed' | 'projectId' | 'domainId' | 'areaId' | 'projectLabel' | 'priority'>> & { dropped?: boolean }
+
+/** The project chip's Move to… pick, as a line edit (tasks/move's places: project, area, domain, none). */
+export function placeEdit(to: MoveTarget): LineEdit {
+  if (to.kind === 'project') return { projectId: to.id, areaId: null, domainId: to.domainId, projectLabel: to.name }
+  if (to.kind === 'area') return { projectId: null, areaId: to.id, domainId: to.domainId, projectLabel: to.name }
+  if (to.kind === 'domain') return { projectId: null, areaId: null, domainId: to.id, projectLabel: to.name }
+  return { projectId: null, areaId: null, domainId: null, projectLabel: null }
+}
+
+/** The same edit on every key (a selection's bulk Type / Date / Project / Drop). */
+export function editLines(edits: Readonly<Record<string, LineEdit>>, keys: Iterable<string>, patch: LineEdit): Record<string, LineEdit> {
+  const next = { ...edits }
+  for (const k of keys) next[k] = { ...next[k], ...patch }
+  return next
+}
+
+/** Long-press selection: one line in or out. */
+export function toggleKey(sel: ReadonlySet<string>, key: string): Set<string> {
+  const next = new Set(sel)
+  if (!next.delete(key)) next.add(key)
+  return next
+}
+
+// ── the quick look's page strip (11c "hold to reorder") ──
+/** Page `from` dropped on page `to`'s place; the page on screen stays on screen. */
+export function movePage<T>(pages: readonly T[], active: number, from: number, to: number): { pages: T[]; active: number } {
+  const n = pages.length
+  if (from === to || from < 0 || to < 0 || from >= n || to >= n) return { pages: [...pages], active }
+  const next = [...pages]
+  next.splice(to, 0, ...next.splice(from, 1))
+  const at = active === from ? to : from < active && active <= to ? active - 1 : to <= active && active < from ? active + 1 : active
+  return { pages: next, active: at }
+}
+
+// ── HEIC (iPhone photos) ──
+/** A HEIC/HEIF photo, by type or — when the browser gives none (Chromium on Windows) — by name. Safari
+ * decodes them (preparePage makes the JPEG); elsewhere the quick look shows "Convert it to JPEG first". */
+export function isHeic(f: { type: string; name?: string }): boolean {
+  return /^image\/hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name ?? '')
 }
 
 /** A stored line, read against the user's projects and the moment the photo was taken. */
@@ -143,6 +192,8 @@ export function toEditLine(line: PageLine, index: number, projects: readonly Pro
     projectId: project?.id ?? null,
     domainId: project?.domain_id ?? null,
     projectLabel: project?.name ?? line.project,
+    areaId: null,
+    priority: line.priority ?? null,
     confidence: line.confidence,
     box: line.box,
     page: line.page,
@@ -150,7 +201,7 @@ export function toEditLine(line: PageLine, index: number, projects: readonly Pro
 }
 
 export type Planned =
-  | { to: 'task'; title: string; dueAt: string | null; projectId: string | null; domainId: string | null; ref: string }
+  | { to: 'task'; title: string; dueAt: string | null; projectId: string | null; domainId: string | null; areaId: string | null; priority: number | null; ref: string }
   | { to: 'event'; title: string; startsAt: string; endsAt: string; allDay: boolean }
   | { to: 'inbox'; line: EditLine }
   | { to: 'journal'; body: string }
@@ -166,7 +217,7 @@ export function planWrites(lines: readonly EditLine[], captureId: string, mode: 
   const journal: string[] = []
   for (const line of lines) {
     if (line.type === 'task') {
-      out.push({ to: 'task', title: line.text, dueAt: line.dueAt, projectId: line.projectId, domainId: line.domainId, ref: `${captureId}:${line.key}` })
+      out.push({ to: 'task', title: line.text, dueAt: line.dueAt, projectId: line.projectId, domainId: line.domainId, areaId: line.areaId, priority: line.priority, ref: `${captureId}:${line.key}` })
     } else if (line.type === 'event' && line.dueAt) {
       if (line.timed) {
         out.push({ to: 'event', title: line.text, startsAt: line.dueAt, endsAt: new Date(new Date(line.dueAt).getTime() + HOUR).toISOString(), allDay: false })

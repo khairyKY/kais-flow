@@ -66,6 +66,11 @@ describe('capture-image: the answer → lines', () => {
     const read = normaliseRead({ lines: [{ text: 'Buy milk', checked: true }, { text: 'Water the plants', checked: false }, { text: 'call Omar' }, { text: 'x', checked: 'yes' }] }, 0)
     expect(read.lines.map((x) => x.checked)).toEqual([true, false, null, null])
   })
+  it('priority: asked for only when the page marks it, kept as 1–3, anything else null (11e P1)', () => {
+    expect(buildPrompt([])).toMatch(/priority: 1 if the page marks the item as urgent.*2 if marked important.*3 for a single "!", else null/)
+    const read = normaliseRead({ lines: [{ text: 'Assignment 2', priority: 1 }, { text: 'Quiz', priority: 3 }, { text: 'pens', priority: 0 }, { text: 'x', priority: '1' }, { text: 'y' }] }, 0)
+    expect(read.lines.map((x) => x.priority)).toEqual([1, 3, null, null, null])
+  })
   it('caps a runaway answer at 40 lines', () => {
     expect(normaliseRead({ lines: Array.from({ length: 90 }, (_, i) => ({ text: `l${i}` })) }, 0).lines).toHaveLength(40)
   })

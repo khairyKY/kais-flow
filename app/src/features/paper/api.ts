@@ -356,7 +356,7 @@ export function applyResults(capture: CaptureRow, lines: readonly EditLine[], mo
   const undo: (() => void)[] = []
   for (const p of plan) {
     if (p.to === 'task') {
-      const task = createTask({ title: p.title, dueAt: p.dueAt, projectId: p.projectId, domainId: p.domainId, externalRef: { source: 'photo', id: p.ref } })
+      const task = createTask({ title: p.title, dueAt: p.dueAt, projectId: p.projectId, domainId: p.domainId, areaId: p.areaId, priority: p.priority, externalRef: { source: 'photo', id: p.ref } })
       undo.push(() => writeRow('tasks', task, 'delete'))
     } else if (p.to === 'event') {
       const event = createEvent(p.title, p.startsAt, p.endsAt, 'event', null, p.allDay)
