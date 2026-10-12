@@ -1,0 +1,392 @@
+[
+ {
+  "name": "p4a day: planning mode opens — the rail swells, the strip shows one day",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4a day: \"Unscheduled · 12 tasks\" + the hand line",
+  "ok": true,
+  "detail": "UNSCHEDULED · 12 TASKS | pick something, plant it on the right ✿ | ALL | TODAY | OVERDUE | SORT ↕"
+ },
+ {
+  "name": "p4a day: per-project groups with totals — Shaheen · 3 tasks · 1h 30m … No project last",
+  "ok": true,
+  "detail": "[\"SHAHEEN · 3 TASKS · 1H 30M\",\"FORECASTING · 2 TASKS · 1H\",\"NO PROJECT · 7 TASKS · 2H 55M\"]"
+ },
+ {
+  "name": "p4a day: the footer — \"12 tasks · 5h 25m total\" and today's blocks / free time",
+  "ok": true,
+  "detail": "12 TASKS · 5H 25M TOTAL | 3 BLOCKED TODAY · 5H 30M FREE"
+ },
+ {
+  "name": "p4a day: the strip marks the free stretch after 16:00 (\"4h free\")",
+  "ok": true,
+  "detail": "[\"4H FREE\"]"
+ },
+ {
+  "name": "p4a day: an overdue card reads \"Overdue 3d\" in terra, the rest \"30m · Due tomorrow\" / \"↻ Weekly\"",
+  "ok": true,
+  "detail": "Figure out linking GitHub accounts\nOVERDUE 3D\n45M\n⠿"
+ },
+ {
+  "name": "p4a tabs: Overdue lists the one overdue task",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4a Sort ↕ Shortest first: \"Water the plants\" (10m) leads No project",
+  "ok": true,
+  "detail": "Water the plants"
+ },
+ {
+  "name": "p4a drag a card onto the strip: its block lands at 16:30, the card leaves the list",
+  "ok": true,
+  "detail": "{\"placed\":\"2026-07-10T13:30:00.000Z\",\"want\":\"2026-07-10T13:30:00.000Z\",\"all\":[[\"Reply to Youssef about invoice\",\"2026-07-10T13:30:00.000Z\"]],\"slot\":{\"x\":975.90625,\"y\":558,\"width\":219,\"height\":33.75},\"col\":{\"x\":975.90625,\"y\":-555.75,\"width\":219,\"height\":1620},\"from\":{\"x\":387.294189453125,\"y\":364.1170349121094,\"width\":445.31787109375,\"height\":82.10968017578125}}"
+ },
+ {
+  "name": "p4a a click on a card opens the Plan menu (Today · Next free slot · Tomorrow · Pick date…)",
+  "ok": true,
+  "detail": "Today | Next free slot · 13:45 | Tomorrow, first thing | Sat 09:00 | Pick date… | ▸"
+ },
+ {
+  "name": "p4a leave planning mode: the rail and the grid are back",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4a day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4a night: planning mode opens — the rail swells, the strip shows one day",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4a night: \"Unscheduled · 12 tasks\" + the hand line",
+  "ok": true,
+  "detail": "UNSCHEDULED · 12 TASKS | pick something, plant it on the right ✿ | ALL | TODAY | OVERDUE | SORT ↕"
+ },
+ {
+  "name": "p4a night: per-project groups with totals — Shaheen · 3 tasks · 1h 30m … No project last",
+  "ok": true,
+  "detail": "[\"SHAHEEN · 3 TASKS · 1H 30M\",\"FORECASTING · 2 TASKS · 1H\",\"NO PROJECT · 7 TASKS · 2H 55M\"]"
+ },
+ {
+  "name": "p4a night: the footer — \"12 tasks · 5h 25m total\" and today's blocks / free time",
+  "ok": true,
+  "detail": "12 TASKS · 5H 25M TOTAL | 3 BLOCKED TODAY · 5H 30M FREE"
+ },
+ {
+  "name": "p4a night: the strip marks the free stretch after 16:00 (\"4h free\")",
+  "ok": true,
+  "detail": "[\"4H FREE\"]"
+ },
+ {
+  "name": "p4a night: an overdue card reads \"Overdue 3d\" in terra, the rest \"30m · Due tomorrow\" / \"↻ Weekly\"",
+  "ok": true,
+  "detail": "Figure out linking GitHub accounts\nOVERDUE 3D\n45M\n⠿"
+ },
+ {
+  "name": "p4a night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4b day: from the week view, the strip holds two days (\"Fri 10 — Sat 11\")",
+  "ok": true,
+  "detail": "2 Fri 10 — Sat 11"
+ },
+ {
+  "name": "p4b day: one line a task, no groups; the hand line \"two days ahead\"",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4b day: footer \"3 blocked today · 1 blocked tomorrow\"",
+  "ok": true,
+  "detail": "12 TASKS · 5H 25M TOTAL | 3 BLOCKED TODAY · 1 BLOCKED TOMORROW"
+ },
+ {
+  "name": "p4b day: the day row reads \"FRI · TODAY\" / \"SAT\"",
+  "ok": true,
+  "detail": "[\"FRI · TODAY\",\"SAT\"]"
+ },
+ {
+  "name": "p4b day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4b night: from the week view, the strip holds two days (\"Fri 10 — Sat 11\")",
+  "ok": true,
+  "detail": "2 Fri 10 — Sat 11"
+ },
+ {
+  "name": "p4b night: one line a task, no groups; the hand line \"two days ahead\"",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "p4b night: footer \"3 blocked today · 1 blocked tomorrow\"",
+  "ok": true,
+  "detail": "12 TASKS · 5H 25M TOTAL | 3 BLOCKED TODAY · 1 BLOCKED TOMORROW"
+ },
+ {
+  "name": "p4b night: the day row reads \"FRI · TODAY\" / \"SAT\"",
+  "ok": true,
+  "detail": "[\"FRI · TODAY\",\"SAT\"]"
+ },
+ {
+  "name": "p4b night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 day: More options ↗ opens the full page at /new (not a modal)",
+  "ok": true,
+  "detail": "http://localhost:5256/new"
+ },
+ {
+  "name": "e1 day: the sidebar folds to the rail",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 day: what was typed came along (title, the caught !! and *deep-work)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 Create task: the task carries its Notes, the caught priority and label, a clean title, and its block at the clicked 16:30",
+  "ok": true,
+  "detail": "{\"title\":\"Call Omar re: pricing\",\"p\":2,\"l\":[\"deep-work\"],\"b\":\"2026-07-10T13:30:00.000Z\"}"
+ },
+ {
+  "name": "e1 back on the calendar, the sidebar open again",
+  "ok": true,
+  "detail": "http://localhost:5256/calendar"
+ },
+ {
+  "name": "e1 day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 night: More options ↗ opens the full page at /new (not a modal)",
+  "ok": true,
+  "detail": "http://localhost:5256/new"
+ },
+ {
+  "name": "e1 night: the sidebar folds to the rail",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 night: what was typed came along (title, the caught !! and *deep-work)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e1 night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 day: the Offsite span is three pieces in the band — \"Offsite »\", \"« »\", \"« ends 3:00 PM\"",
+  "ok": true,
+  "detail": "[\"Offsite »\",\"« »\",\"« ends 3:00 PM\"]"
+ },
+ {
+  "name": "e3 day: only the outer corners round",
+  "ok": true,
+  "detail": "[\"999px/0px\",\"0px/0px\",\"0px/999px\"]"
+ },
+ {
+  "name": "e3 day: the span is not also drawn in the time grid",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 day: the night shift is cut at midnight — \"⌄ 1:30 AM\" on Tue, \"⌃ from 11:00 PM\" on Wed",
+  "ok": true,
+  "detail": "[\"⌄ 1:30 AM\",\"⌃ from 11:00 PM\"]"
+ },
+ {
+  "name": "e3 a click on a piece opens the span's own block menu",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 phone day: the span's chip reads \"« Offsite »\" mid-way; the night shift ends \"⌄ 01:30\" at the cut",
+  "ok": true,
+  "detail": "{\"chip\":[\"« Offsite »\"],\"into\":[\"⌄ 01:30\"]}"
+ },
+ {
+  "name": "e3 phone day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 night: the Offsite span is three pieces in the band — \"Offsite »\", \"« »\", \"« ends 3:00 PM\"",
+  "ok": true,
+  "detail": "[\"Offsite »\",\"« »\",\"« ends 3:00 PM\"]"
+ },
+ {
+  "name": "e3 night: only the outer corners round",
+  "ok": true,
+  "detail": "[\"999px/0px\",\"0px/0px\",\"0px/999px\"]"
+ },
+ {
+  "name": "e3 night: the span is not also drawn in the time grid",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 night: the night shift is cut at midnight — \"⌄ 1:30 AM\" on Tue, \"⌃ from 11:00 PM\" on Wed",
+  "ok": true,
+  "detail": "[\"⌄ 1:30 AM\",\"⌃ from 11:00 PM\"]"
+ },
+ {
+  "name": "e3 night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "e3 phone night: the span's chip reads \"« Offsite »\" mid-way; the night shift ends \"⌄ 01:30\" at the cut",
+  "ok": true,
+  "detail": "{\"chip\":[\"« Offsite »\"],\"into\":[\"⌄ 01:30\"]}"
+ },
+ {
+  "name": "e3 phone night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r1 the Repeat submenu is the shared picker — Never · Daily ✓ · Weekly · Monthly · Custom…",
+  "ok": true,
+  "detail": "[\"Never\",\"Daily ✓\",\"Weekly\",\"Monthly\",\"Custom…\"]"
+ },
+ {
+  "name": "r1 Weekly from Wed 15: the series ends before it (UNTIL) and a new weekly one starts on it — Mon 13 and Tue 14 stay",
+  "ok": true,
+  "detail": "{\"head\":\"FREQ=DAILY;UNTIL=20260715T052959Z\",\"tail\":[\"FREQ=WEEKLY\",\"2026-07-15T05:30:00.000Z\"]}"
+ },
+ {
+  "name": "r1 Mon 13 and Tue 14 still show the standup",
+  "ok": true,
+  "detail": "2"
+ },
+ {
+  "name": "r1 one Undo toast",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r1 Undo puts the daily series back and drops the new one",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r1 Custom… opens the rule editor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r1 no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "ph day: the create sheet offers Task · Event · Block",
+  "ok": true,
+  "detail": "[\"Task\",\"Event\",\"Block\",\"Save\"]"
+ },
+ {
+  "name": "ph day: the task sheet's chips — P2 caught from \"!!\", Project, Remind, Repeat, + Label, Top-3, notes",
+  "ok": true,
+  "detail": "P2 | PROJECT | REMIND | REPEAT | Top-3"
+ },
+ {
+  "name": "ph Save: the task with P2, its notes and its weekly repeat, and its block at 16:00",
+  "ok": true,
+  "detail": "{\"p\":2,\"n\":\"Ask about the warranty\"}"
+ },
+ {
+  "name": "ph Block holding a task: that task gets its block at 18:00",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "ph Month: the title reads \"July 2026\", a grid of whole weeks with dots on the busy days",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "ph Month: a tap opens that day",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "ph Lists: the strip lists This Week (a scope chip first)",
+  "ok": true,
+  "detail": "[\"This Week\",\"Create official emails for Shaheen\\n30M\",\"Buy birthday present for Mama\\n30M\"]"
+ },
+ {
+  "name": "ph Lists ▸ Project… ▸ Shaheen lists its unscheduled tasks",
+  "ok": true,
+  "detail": "[\"Shaheen\",\"Create official emails for Shaheen\\n30M\",\"Draft social media kit for launch\\n45M\",\"Book photographer for product shots\\n15M\"]"
+ },
+ {
+  "name": "ph a chip's sheet offers Complete and Open task, not only the slots",
+  "ok": true,
+  "detail": "Schedule | BOOK PHOTOGRAPHER FOR PRODUCT SHOTS · 15M | NEXT FREE TODAY | 13:45–14:00 | 14:00–14:15 | 14:15–14:30 | Pick a time… | Pick a date… | Complete | Open task"
+ },
+ {
+  "name": "ph Complete ticks the task off (with Undo)",
+  "ok": true,
+  "detail": "[[\"Book photographer for product shots\",\"done\"]] Done"
+ },
+ {
+  "name": "ph day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "ph night: the create sheet offers Task · Event · Block",
+  "ok": true,
+  "detail": "[\"Task\",\"Event\",\"Block\",\"Save\"]"
+ },
+ {
+  "name": "ph night: the task sheet's chips — P2 caught from \"!!\", Project, Remind, Repeat, + Label, Top-3, notes",
+  "ok": true,
+  "detail": "P2 | PROJECT | REMIND | REPEAT | Top-3"
+ },
+ {
+  "name": "ph night: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "tl the editor's \"+ label\" opens the Label picker; Enter makes and adds \"launch\"",
+  "ok": true,
+  "detail": "[[\"launch\"]]"
+ },
+ {
+  "name": "tl the chip shows on the editor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "tl no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]
