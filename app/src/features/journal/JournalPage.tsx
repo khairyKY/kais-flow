@@ -113,8 +113,9 @@ function PastNote({ state, retrying, onRetry, size }: { state: Extract<ListState
 
 /** The phone Notes / Quotes shelf (1b tabs) when it has nothing to list: empty, offline before it
  * ever loaded, or failed. Journal's fern, still coiled, and one hand line — plus a retry when
- * there's something to retry. No "go add one" button: the Library is parked (K-26), so there's
- * nowhere to send anyone. Loading shows nothing; it's brief, and an unloaded shelf isn't empty. */
+ * there's something to retry. No "go add one" button: it was written while the Library was parked
+ * (K-26; Kai un-parked it 2026-10-12, so a link to /library could come back). Loading shows nothing;
+ * it's brief, and an unloaded shelf isn't empty. */
 type ShelfQuery = { data: unknown[] | undefined; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle'; isFetching: boolean; refetch: () => unknown }
 function ShelfState({ q, what }: { q: ShelfQuery; what: 'notes' | 'quotes' }) {
   const online = useOnline()
@@ -937,7 +938,7 @@ export function JournalPage() {
 
         {/* Notes / Quotes shelf link lists. Polish G: a group shows only when it has something to
             list — a brand-new account used to get two bare headings with nothing under them, and
-            with the Library parked (K-26) there's no way to fill them from here. */}
+            they fill from the Library (un-parked 2026-10-12, in the nav again), not from here. */}
         {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
         {notes.slice(0, 4).map((n) => (
           <div
