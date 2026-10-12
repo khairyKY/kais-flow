@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const calls: string[] = []
 const deleteEqMock = vi.fn(async (_col: string, _val: string) => ({ error: null as unknown }))
+const stored: { id: string; endpoint: string }[] = []
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: (table: string) => ({
@@ -14,11 +15,18 @@ vi.mock('../../lib/supabase', () => ({
           return deleteEqMock(col, val)
         },
       }),
+      select: () => ({
+        eq: (_col: string, endpoint: string) => ({
+          maybeSingle: async () => ({ data: stored.find((r) => r.endpoint === endpoint) ?? null, error: null }),
+        }),
+      }),
     }),
   },
 }))
-vi.mock('../../lib/queryClient', () => ({ queryClient: {} }))
-vi.mock('../../lib/outbox', () => ({ writeRow: vi.fn() }))
+const cache: { rows: unknown[] } = { rows: [] }
+vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => cache.rows } }))
+const writeRow = vi.fn()
+vi.mock('../../lib/outbox', () => ({ writeRow: (...a: unknown[]) => writeRow(...a) }))
 
 function device(opts: { subscribed: boolean; ready?: boolean }) {
   const subscription = {
@@ -28,10 +36,12 @@ function device(opts: { subscribed: boolean; ready?: boolean }) {
       return true
     }),
   }
-  const registration = { pushManager: { getSubscription: async () => (opts.subscribed ? subscription : null) } }
+  const json = { endpoint: subscription.endpoint, keys: { p256dh: 'p', auth: 'a' } }
+  const registration = { pushManager: { getSubscription: async () => (opts.subscribed ? { ...subscription, toJSON: () => json } : null) } }
   vi.stubGlobal('window', { PushManager: function PushManager() {} })
   vi.stubGlobal('navigator', {
     serviceWorker: { ready: opts.ready === false ? new Promise(() => {}) : Promise.resolve(registration) },
+    userAgent: 'test',
   })
   return subscription
 }
@@ -81,5 +91,34 @@ describe('dropThisDevicePush', () => {
     await dropThisDevicePush(50)
     expect(Date.now() - started).toBeLessThan(1000)
     expect(calls).toEqual([])
+  })
+})
+
+describe('subscribeThisDevice', () => {
+  beforeEach(() => {
+    stored.length = 0
+    cache.rows = []
+    writeRow.mockClear()
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'BKey')
+  })
+
+  it("reuses the stored row's id for this endpoint — a new id onto the unique endpoint would be refused", async () => {
+    device({ subscribed: true })
+    stored.push({ id: 'row-1', endpoint: 'https://push.example/abc' })
+    const { subscribeThisDevice } = await import('./api')
+    await subscribeThisDevice()
+    expect(writeRow).toHaveBeenCalledTimes(1)
+    expect(writeRow.mock.calls[0][1]).toMatchObject({ id: 'row-1', endpoint: 'https://push.example/abc', keys: { p256dh: 'p', auth: 'a' } })
+  })
+
+  it('a new endpoint gets a new row; one already in the cache writes nothing', async () => {
+    device({ subscribed: true })
+    const { subscribeThisDevice } = await import('./api')
+    await subscribeThisDevice()
+    expect(writeRow.mock.calls[0][1].id).toMatch(/^[0-9a-f-]{36}$/)
+    writeRow.mockClear()
+    cache.rows = [{ id: 'row-1', endpoint: 'https://push.example/abc' }]
+    await subscribeThisDevice()
+    expect(writeRow).not.toHaveBeenCalled()
   })
 })

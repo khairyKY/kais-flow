@@ -2,18 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // What a notification's buttons do in the app (Tray and Notifications.dc.html 12k).
 const fetched: string[][] = []
+const server = { down: false }
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: () => ({
       select: () => ({
         in: async (_col: string, ids: string[]) => {
           fetched.push(ids)
-          return { data: ids.map((id) => ({ id, title: `server ${id}`, status: 'todo' })) }
+          if (server.down) return { data: null, error: new Error('Failed to fetch') }
+          return { data: ids.map((id) => ({ id, title: `server ${id}`, status: 'todo' })), error: null }
         },
       }),
     }),
   },
 }))
+const toastAction = vi.fn()
+vi.mock('../../lib/undo', () => ({ toastAction: (...a: unknown[]) => toastAction(...a) }))
 const cache: { tasks?: unknown[] } = {}
 vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => cache.tasks } }))
 const completeTaskWithUndo = vi.fn()
@@ -27,6 +31,7 @@ const { actionFromSearch, runNotificationAction, withoutAction } = await import(
 describe('notification actions', () => {
   beforeEach(() => {
     fetched.length = 0
+    server.down = false
     cache.tasks = [{ id: 'a', title: 'Call the tyre supplier', status: 'todo' }, { id: 'd', title: 'Done already', status: 'done' }]
     vi.clearAllMocks()
   })
@@ -42,6 +47,21 @@ describe('notification actions', () => {
     await runNotificationAction({ action: 'done', taskIds: ['a', 'd', 'x'] }, vi.fn())
     expect(fetched).toEqual([['x']])
     expect(completeTaskWithUndo.mock.calls.map(([t]) => (t as { id: string }).id)).toEqual(['a', 'x'])
+  })
+
+  it("a press the server can't answer isn't dropped: it says so, with Try again", async () => {
+    server.down = true
+    await runNotificationAction({ action: 'done', taskIds: ['a', 'x'] }, vi.fn())
+    expect(completeTaskWithUndo).not.toHaveBeenCalled() // not even the cached one: all or nothing, like the press
+    expect(toastAction).toHaveBeenCalledTimes(1)
+    expect(toastAction.mock.calls[0].slice(0, 2)).toEqual(['Couldn’t reach that task just now', 'Try again'])
+    server.down = false
+    ;(toastAction.mock.calls[0][2] as () => void)() // Try again
+    await vi.waitFor(() => expect(completeTaskWithUndo.mock.calls.map(([t]) => (t as { id: string }).id)).toEqual(['a', 'x']))
+    server.down = true
+    await runNotificationAction({ action: 'tomorrow', taskIds: ['x'] }, vi.fn())
+    expect(moveToTomorrowWithUndo).not.toHaveBeenCalled()
+    expect(toastAction).toHaveBeenCalledTimes(2)
   })
 
   it('Tomorrow moves the open ones with one undo', async () => {
