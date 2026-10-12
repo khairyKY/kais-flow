@@ -34,7 +34,7 @@ if [ "$MODE" != harness ]; then
   exit 2
 fi
 
-STATUS=$(cd "$ROOT" && npx supabase status -o env 2>/dev/null)
+STATUS=$(cd "$ROOT" && ${SUPABASE:-npx supabase} status -o env 2>/dev/null)  # SUPABASE: a CLI already on PATH (CI)
 val() { printf '%s\n' "$STATUS" | sed -n "s/^$1=\"\(.*\)\"$/\1/p" | head -1; }
 API_URL=$(val API_URL)
 ANON_KEY=$(val ANON_KEY)
@@ -179,8 +179,12 @@ insert into push_subscriptions (user_id, endpoint, keys, device_label) values
   (:'a', 'https://fcm.googleapis.com/fcm/send/fix0/a1', (:'ka1')::jsonb, 'fix0 a1'),
   (:'a', 'https://updates.push.services.mozilla.com/wpush/v2/fix0/a2', (:'ka2')::jsonb, 'fix0 a2'),
   (:'b', 'https://web.push.apple.com/fix0/b1', (:'kb1')::jsonb, 'fix0 b1');
+-- Task names on the lock screen (off by default since 2026-10-04: "Unlock to see them"), so each
+-- push carries its owner's titles and the S1 checks can tell A's payload from B's.
+insert into app_settings (user_id, lock_screen_names) values (:'a', true), (:'b', true)
+  on conflict (user_id) do update set lock_screen_names = true;
 SQL
-info "seeded: A has 2 push devices (a1,a2), B has 1 (b1); top3/old/reminder tasks each; A has one 10-day-old domain"
+info "seeded: A has 2 push devices (a1,a2), B has 1 (b1); top3/old/reminder tasks each; A has one 10-day-old domain; both show task names"
 
 push_devices() { jq -r .device "$PUSH_LOG" | sort | tr '\n' ' ' | sed 's/ $//'; }
 push_errors()  { jq -r 'select(.error != null) | .device' "$PUSH_LOG" | wc -l | tr -d ' '; }
@@ -247,11 +251,14 @@ expect "notify  per-user counts" "$A_ID attempted=2 sent=2;$B_ID attempted=1 sen
       '[.users[] | select(.user_id == $a or .user_id == $b)] | sort_by(.user_id != $a) | map("\(.user_id) attempted=\(.attempted) sent=\(.sent)") | join(";")')"
 push_bodies | sed 's/^/        /'
 expect "every push decrypted with that device's keys" 0 "$(push_errors)"
-expect "digest on a1" "Top-3: FIX0 alpha top3. 1 area(s) slipping." "$(jq -r 'select(.device=="a1") | .payload.body' "$PUSH_LOG")"
-expect "digest on a2" "Top-3: FIX0 alpha top3. 1 area(s) slipping." "$(jq -r 'select(.device=="a2") | .payload.body' "$PUSH_LOG")"
-expect "digest on b1" "Top-3: FIX0 bravo top3. 0 area(s) slipping." "$(jq -r 'select(.device=="b1") | .payload.body' "$PUSH_LOG")"
+# The digest since 2026-10-12 (notify/copy.ts digestNotice): today's Top 3, goal first, + "N overdue."
+# — it no longer counts slipping areas (sec2.sh §4 checks the view's owner scoping directly).
+notice() { jq -r --arg d "$1" 'select(.device==$d) | "\(.payload.title) | \(.payload.body)"' "$PUSH_LOG"; }
+expect "digest on a1" "Good morning — 1 to tend today | ✶ FIX0 alpha top3." "$(notice a1)"
+expect "digest on a2" "Good morning — 1 to tend today | ✶ FIX0 alpha top3." "$(notice a2)"
+expect "digest on b1" "Good morning — 1 to tend today | ✶ FIX0 bravo top3." "$(notice b1)"
 expect "no device got the other user's titles" 0 \
-  "$(jq -r 'select((.device|startswith("a")) and (.payload.body|contains("bravo")) or (.device|startswith("b")) and (.payload.body|contains("alpha")))' "$PUSH_LOG" | wc -l | tr -d ' ')"
+  "$(jq -r 'select((.device|startswith("a")) and (.payload|tostring|contains("bravo")) or (.device|startswith("b")) and (.payload|tostring|contains("alpha")))' "$PUSH_LOG" | wc -l | tr -d ' ')"
 
 OTHER_DUE=$(sql -c "select count(*) from tasks where user_id not in ('$A_ID', '$B_ID') and status = 'todo' and reminder_sent = false and reminder_at between now() - interval '10 minutes' and now()")
 if [ "$OTHER_DUE" = 0 ]; then
@@ -259,11 +266,13 @@ if [ "$OTHER_DUE" = 0 ]; then
   call notify "$SERVICE_ROLE_KEY" '{"kind":"task_reminder"}'
   expect "notify  service-role task_reminder: status" 200 "$CODE"
   expect "task_reminder devices reached" "a1 a2" "$(push_devices)"
-  expect "task_reminder payload on a1" "1 reminder(s): FIX0 alpha reminder" "$(jq -r 'select(.device=="a1") | .payload.body' "$PUSH_LOG")"
+  # One undated reminder (copy.ts reminderNotice): its title is the notice's title, nothing under it.
+  expect "task_reminder payload on a1" "FIX0 alpha reminder | " "$(notice a1)"
   expect "reminder_sent flipped only on A's due task" "FIX0 alpha reminder|true;FIX0 bravo stale reminder|false" \
     "$(sql -c "select string_agg(title || '|' || reminder_sent, ';' order by title) from tasks where user_id in ('$A_ID','$B_ID') and reminder_at is not null")"
+  # (The digest above also logged a notify.morning_digest history row for each of A and B.)
   expect "activity_log row written under A only" "$A_ID|task.reminder_sent" \
-    "$(sql -c "select string_agg(user_id || '|' || event_type, ';') from activity_log where user_id in ('$A_ID','$B_ID')")"
+    "$(sql -c "select string_agg(user_id || '|' || event_type, ';') from activity_log where user_id in ('$A_ID','$B_ID') and event_type like 'task.%'")"
 else
   skip "service-role task_reminder: $OTHER_DUE other account(s) have a reminder due right now"
 fi
