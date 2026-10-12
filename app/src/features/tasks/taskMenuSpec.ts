@@ -37,6 +37,8 @@ export interface TaskMenuContext {
 
 export const PRIORITY_LABELS: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
 export const REPEAT_LABELS: Record<string, string> = { 'FREQ=DAILY': 'Daily', 'FREQ=WEEKLY': 'Weekly', 'FREQ=MONTHLY': 'Monthly' }
+/** The Repeat submenu's choices, in order (null = Never) — tasks and calendar blocks alike. */
+export const REPEAT_RULES: readonly (string | null)[] = [null, 'FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY']
 
 export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] {
   const n = ctx.bulkCount && ctx.bulkCount > 1 ? ` (${ctx.bulkCount})` : ''

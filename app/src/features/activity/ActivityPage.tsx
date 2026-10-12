@@ -9,7 +9,7 @@ import { usePeople } from '../people/api'
 import { useRoutines } from '../routines/api'
 import { useAllInboxItems } from '../inbox/api'
 import { useDomains } from '../domains/api'
-import { useCalendarEvents } from '../calendar/api'
+import { useCalendarRows } from '../calendar/api'
 import { describeActivity, plural, type ActivityIcon, type ActivityNames } from './describe'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { KindGlyph } from '../notifications/KindGlyph'
@@ -137,7 +137,7 @@ export function ActivityPage() {
   const { data: people = [] } = usePeople()
   const { data: routines = [] } = useRoutines()
   const { data: inboxItems = [] } = useAllInboxItems()
-  const { data: events = [] } = useCalendarEvents()
+  const { data: events = [] } = useCalendarRows() // the stored rows: the log names a series by its row
 
   const formatTime = (isoString: string) => {
     const d = new Date(isoString)

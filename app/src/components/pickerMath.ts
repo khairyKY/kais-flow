@@ -1,6 +1,7 @@
 import { cairoDateKey, daysUntilNextWeek, scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
 import { daysToWeekend, weekendDays as weekendDaysSetting } from '../lib/weekend'
 import { cairoTimeKey, cairoToIso } from '../features/calendar/eventTime'
+import { eventWindow, expandEvents } from '../features/calendar/series'
 import type { CalendarEvent, Task } from '../lib/types'
 
 // ── The date and time pickers' pure half (MK Date Picker / MK Time Picker, DS-CHANGELOG §3).
@@ -128,14 +129,16 @@ export function quickPicks(now: Date, withTime: boolean, weekendDays: readonly n
   return picks.filter((p, i) => picks.findIndex((q) => q.day === p.day) === i)
 }
 
-/** Days holding an open task (due or scheduled) or a live event — the grid's 4px dots. */
+/** Days holding an open task (due or scheduled) or a live event — the grid's 4px dots. A repeating
+ * event marks its days in the year around today (series.eventWindow). */
 export function daysWithItems(tasks: readonly Task[], events: readonly CalendarEvent[]): Set<string> {
   const days = new Set<string>()
   for (const t of tasks) {
     if (t.deleted_at || t.completed_at || t.status === 'done') continue
     for (const at of [t.due_at, t.scheduled_start]) if (at) days.add(cairoDateKey(new Date(at)))
   }
-  for (const e of events) if (!e.deleted_at) days.add(cairoDateKey(new Date(e.starts_at)))
+  const w = eventWindow()
+  for (const e of expandEvents(events, w.from, w.to)) if (!e.deleted_at) days.add(cairoDateKey(new Date(e.starts_at)))
   return days
 }
 
@@ -158,10 +161,11 @@ export interface Busy {
 }
 
 /** The day's busy blocks: timed, busy, live events on Cairo day `day`, clipped to it (an event
- * over midnight counts from 00:00 / until 24:00). Sorted by start. */
+ * over midnight counts from 00:00 / until 24:00), a repeating event's occurrences included — every
+ * free-slot reader (Plan, Schedule, Suggest a time, the time sheet) comes through here. Sorted by start. */
 export function busyOnDay(events: readonly CalendarEvent[], day: string): Busy[] {
   const out: Busy[] = []
-  for (const e of events) {
+  for (const e of expandEvents(events, new Date(cairoToIso(day, '00:00')), new Date(cairoToIso(addDays(day, 1), '00:00')))) {
     if (e.deleted_at || e.all_day || e.busy === false) continue
     const s = new Date(e.starts_at)
     const en = new Date(e.ends_at)

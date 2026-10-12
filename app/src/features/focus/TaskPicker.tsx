@@ -9,8 +9,18 @@ import { filterFocusTasks } from './taskFilter'
 
 /** Focus → "Select a task to focus on" (Kai 2026-10-03: the long list had no search and ran past
  * the window). Type to filter, ↑/↓ to move, Enter picks (the first match until you move), Esc
- * closes. Drawn on <body> beside its trigger and kept inside the window (placeSelect). */
-export function TaskPicker({ tasks, anchorRef, onPick, onClose }: { tasks: Task[]; anchorRef: RefObject<HTMLElement | null>; onPick: (id: string) => void; onClose: () => void }) {
+ * closes. Drawn on <body> beside its trigger (or at `position`, a menu row's — the calendar block's
+ * Link a task…) and kept inside the window (placeSelect). */
+export function TaskPicker({ tasks, anchorRef, position, placeholder = 'Select a task to focus on…', label = 'Search tasks to focus on', onPick, onClose }: {
+  tasks: Task[]
+  anchorRef?: RefObject<HTMLElement | null>
+  /** Screen px, when there is no trigger element. */
+  position?: { x: number; y: number }
+  placeholder?: string
+  label?: string
+  onPick: (id: string) => void
+  onClose: () => void
+}) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const [place, setPlace] = useState<ReturnType<typeof placeSelect> | null>(null)
@@ -18,19 +28,20 @@ export function TaskPicker({ tasks, anchorRef, onPick, onClose }: { tasks: Task[
   const matches = filterFocusTasks(tasks, query)
   useEscapeStack(true, onClose)
 
+  const px = position?.x
+  const py = position?.y
   useLayoutEffect(() => {
-    const el = anchorRef.current
-    if (!el) return
+    const r = anchorRef?.current?.getBoundingClientRect() ?? (px != null && py != null ? { left: px, top: py, bottom: py, width: 0 } : null)
+    if (!r) return
     const z = uiZoom()
-    const r = el.getBoundingClientRect()
     // Rows ~34px + the search field: ask for room for up to 9 rows; the list scrolls past that.
     setPlace(placeSelect({ left: r.left / z, top: r.top / z, bottom: r.bottom / z, width: r.width / z }, { width: window.innerWidth / z, height: window.innerHeight / z }, 11, false))
-  }, [anchorRef])
+  }, [anchorRef, px, py])
 
   useEffect(() => {
     const away = (e: MouseEvent) => {
       const t = e.target as Node
-      if (!panelRef.current?.contains(t) && !anchorRef.current?.contains(t)) onClose()
+      if (!panelRef.current?.contains(t) && !anchorRef?.current?.contains(t)) onClose()
     }
     document.addEventListener('mousedown', away)
     return () => document.removeEventListener('mousedown', away)
@@ -57,8 +68,8 @@ export function TaskPicker({ tasks, anchorRef, onPick, onClose }: { tasks: Task[
             aria-expanded
             aria-controls="kf-focus-picker-list"
             aria-activedescendant={matches[active] ? `kf-focus-pick-${matches[active].id}` : undefined}
-            aria-label="Search tasks to focus on"
-            placeholder="Select a task to focus on…"
+            aria-label={label}
+            placeholder={placeholder}
             onChange={(e) => {
               setQuery(e.target.value)
               setActive(0)

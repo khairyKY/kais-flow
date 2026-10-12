@@ -6,6 +6,7 @@ import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
+import { Icon } from '../../components/Icon'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
@@ -29,6 +30,8 @@ export interface CalendarGridEvent {
   /** Set when the block came from a task — drives the in-block checkbox (R4, 2026-07-20). */
   taskId?: string | null
   taskDone?: boolean
+  /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
+  repeat?: boolean
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -541,6 +544,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfOv: !!slot,
           kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
           kfPinned: e.id === pinnedId,
+          kfRepeat: !!e.repeat,
         }
         return ev
       })}
@@ -551,7 +555,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
-          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean
+          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -626,8 +630,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // user must see); its "+N more" rides the time row until the pin lets go.
         const pinnedMore = !!(more && p.kfPinned)
 
-        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal.
-        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : null
+        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal > ↻ repeating (C10).
+        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
 
         // §5 in-progress elapsed wash: the lived proportion, ACCENT-DEEP at 14%.
         const elapsedPct =
@@ -640,6 +644,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
             {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
+            {badge === 'repeat' && <span className="kf-ev-badge kf-ev-repeat" title="Repeats"><Icon name="repeat" size={10} label="Repeats" /></span>}
             {p.kfTaskId && !arg.isMirror && (
               <span
                 className={`kf-ev-check${done ? ' kf-on' : ''}`}

@@ -14,7 +14,9 @@ import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents } from './api'
+import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { findBlock } from './series'
+import { cairoToIso } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes } from './replan'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
@@ -34,7 +36,7 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
-  | { k: 'block'; id: string }
+  | { k: 'block'; id: string; start: string }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
   | { k: 'schedule'; id: string; replan?: boolean }
@@ -55,7 +57,10 @@ const VIEWS: { v: PhoneView; label: string }[] = [
 ]
 
 export function PhoneCalendar() {
+  // Repeating events (migration 0061): `events` = the year around today (the strip's planning, the
+  // Schedule sheet's free slots); `gridEvents` = what the week strip and the grid show (below).
   const { data: events = [], isPending: eventsPending } = useCalendarEvents()
+  const { data: rows = [] } = useCalendarRows()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
@@ -77,10 +82,10 @@ export function PhoneCalendar() {
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)
   // /calendar?event=<id> (a search hit, Kai 2026-10-06): its day, its sheet, the block in view.
-  const linked = useLinkedEvent(events)
+  const linked = useLinkedEvent(rows)
   if (linked.open) {
     setAnchor(cairoDateKey(new Date(linked.open.starts_at)))
-    setSheet({ k: 'block', id: linked.open.id })
+    setSheet({ k: 'block', id: linked.open.id, start: linked.open.starts_at })
   }
   const linkedMin = linked.event && !linked.event.all_day ? eventSpan(linked.event).start : null
   useEffect(() => {
@@ -96,6 +101,13 @@ export function PhoneCalendar() {
   }
 
   const days = visibleDays(view, anchor, today)
+  const strip = weekPage(anchor, today)
+  // The days on screen and the strip's week, a day either side (a block over midnight).
+  const shown = [...strip, ...days].sort()
+  const gridFrom = cairoToIso(addDays(shown[0], -1), '00:00')
+  const gridTo = cairoToIso(addDays(shown[shown.length - 1], 2), '00:00')
+  const gridRange = useMemo(() => ({ start: new Date(gridFrom), end: new Date(gridTo) }), [gridFrom, gridTo])
+  const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
   // Kai 2026-10-07: the strip is the desktop rail's Overdue · Today · Inbox, one segment at a time
   // (the first with anything in it, until one is picked); a chip opens the 7g sheet.
@@ -104,7 +116,7 @@ export function PhoneCalendar() {
   const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, inbox: inbox.length }
   const [segPick, setSegPick] = useState<Seg | null>(null)
   const seg: Seg = segPick ?? (['overdue', 'today', 'inbox'] as const).find((s) => counts[s] > 0) ?? 'today'
-  const marked = useMemo(() => daysWithItems(tasks, events), [tasks, events])
+  const marked = useMemo(() => daysWithItems(tasks, gridEvents), [tasks, gridEvents])
 
   // CALENDAR.md §3, first match wins: a colour set on the block · a task's project hue (its own, else
   // its domain's) · a meeting (a plain event) blossom · any other task or block lavender.
@@ -147,7 +159,7 @@ export function PhoneCalendar() {
     if (!e.all_day) gridRef.current?.scrollToMinute(eventSpan(e).start, SHEET_LEAD)
     if (e.task_id && overdueBlock(e)) setSheet({ k: 'schedule', id: e.task_id, replan: true })
     else if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
-    else setSheet({ k: 'block', id: e.id })
+    else setSheet({ k: 'block', id: e.id, start: e.starts_at })
   }
 
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
@@ -157,12 +169,12 @@ export function PhoneCalendar() {
     gridRef.current?.centerNow()
   }
 
-  const block = sheet?.k === 'block' ? events.find((e) => e.id === sheet.id) : undefined
+  // findBlock: an edit from the sheet can re-anchor a repeat under it (series.ts).
+  const block = sheet?.k === 'block' ? findBlock(gridEvents, sheet.id, sheet.start) : undefined
   if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
   const filing = sheet?.k === 'file' ? inbox.find((i) => i.id === sheet.id) : undefined
-  const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0 && allDayOn(events, days).length === 0
-  const strip = weekPage(anchor, today)
+  const emptyDay = view === 'day' && !eventsPending && dayBlocks(gridEvents, anchor).length === 0 && allDayOn(gridEvents, days).length === 0
 
   return (
     <div className="pc cal-shell">
@@ -245,7 +257,7 @@ export function PhoneCalendar() {
         step={viewStep(view)}
         today={today}
         now={now}
-        events={events}
+        events={gridEvents}
         look={look}
         pending={marks.pending}
         loading={eventsPending}
@@ -293,7 +305,7 @@ export function PhoneCalendar() {
           title={`${sheet.ids.length} more`}
           meta="At the same time"
           onClose={() => setSheet(null)}
-          items={events
+          items={gridEvents
             .filter((e) => sheet.ids.includes(e.id))
             .map((e) => {
               const s = eventSpan(e)

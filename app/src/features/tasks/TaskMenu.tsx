@@ -15,7 +15,7 @@ import { shortcutHint } from './listShortcuts'
 import { PlanMenu } from './PlanMenu'
 import { isOverdue } from './planMath'
 import { formatDuration, priorityColor } from './taskDisplay'
-import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
+import { PRIORITY_LABELS, REPEAT_LABELS, REPEAT_RULES, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
 import { useStartFocus } from '../today/startFocus'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
@@ -112,10 +112,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     duration: [null, ...DURATIONS].map((m) => ({ label: m ? durationLabel(m) : 'None', run: () => actions.duration?.(m) })),
     priority: [null, 3, 2, 1].map((p) => ({ label: p ? PRIORITY_LABELS[p] : 'None', color: priorityColor(p) ?? undefined, run: () => actions.priority(p) })),
     repeat: [
-      { label: 'Never', run: () => actions.repeat(null) },
-      { label: 'Daily', run: () => actions.repeat('FREQ=DAILY') },
-      { label: 'Weekly', run: () => actions.repeat('FREQ=WEEKLY') },
-      { label: 'Monthly', run: () => actions.repeat('FREQ=MONTHLY') },
+      ...REPEAT_RULES.map((r) => ({ label: r ? REPEAT_LABELS[r] : 'Never', run: () => actions.repeat(r) })),
       // No rrule editor yet: Custom… opens the task, whose Repeat field has the rest.
       { label: 'Custom…', run: () => navigate(`/tasks/${task.id}`) },
     ],

@@ -122,6 +122,18 @@ export interface CalendarEvent {
   deleted_at?: string | null
   created_at: string
   updated_at: string
+  // Migration 0061 (repeating events). Optional: a row cached before it, or written by a client
+  // that never set them, simply has none (the column defaults apply on the server).
+  /** RRULE body on the user's wall clock, anchored at starts_at; null/absent = a one-off. */
+  recurrence_rule?: string | null
+  /** Occurrence starts (ISO, UTC) the series skips. */
+  recurrence_exdates?: string[] | null
+  project_id?: string | null
+  /** A detached occurrence: the series it was dragged out of. */
+  series_id?: string | null
+  /** Client-only, never stored: set on an occurrence features/calendar/series.ts expanded from a
+   * series row (its id is `${seriesId}::${start}`). calendar/api writes resolve it to that row. */
+  seriesId?: string
 }
 
 export interface Cadence {

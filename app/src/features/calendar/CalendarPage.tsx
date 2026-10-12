@@ -3,7 +3,7 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo } from './api'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo } from './api'
 // Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
 // checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
@@ -31,8 +31,11 @@ import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { localDateKey } from '../routines/streaks'
 import { cairoTimeKey, slotFields } from './eventTime'
-import { EventDetailsPanel } from './EventDetailsPanel'
+import { BlockMenu } from './BlockMenu'
+import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
+import { findBlock } from './series'
+import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
@@ -121,6 +124,23 @@ interface QuickCreateState {
   slot: { date: string; start: string; end: string; allDay: boolean } | null
   anchor: { x: number; y: number } | null
 }
+
+/** The block a click opened in the §5 popover: what it was (an edit can re-anchor a repeat under it —
+ * series.findBlock) and where the popover sits. */
+interface Selected {
+  id: string
+  start: string
+  at: { x: number; y: number }
+}
+
+/** besideBlock() of the block on screen, else (not drawn yet) the middle of the window. */
+function anchorOf(id: string): { x: number; y: number } {
+  const el = document.querySelector(`.fc-event[data-kf-id="${CSS.escape(id)}"]`)
+  if (el) return besideBlock(el.getBoundingClientRect(), window.innerWidth, uiZoom())
+  return { x: Math.max(8, (window.innerWidth - BLOCK_MENU_WIDTH * uiZoom()) / 2), y: window.innerHeight / 4 }
+}
+
+const DAY_MS = 86_400_000
 
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
 // J-15 (view-options interplay): one array for the whole module. A fresh `[0, 6]` every render
@@ -278,7 +298,11 @@ export function CalendarPage() {
 
 function DesktopCalendar() {
   const openTask = useOpenTask()
+  // Repeating events (migration 0061) are expanded twice over: `events` covers the year around
+  // today (the rail, Plan's free slots, the footer); `gridEvents` the range the grid shows, wherever
+  // it was paged to. Clicks, drags and the popover act on the grid's.
   const { data: events = [] } = useCalendarEvents()
+  const { data: rows = [] } = useCalendarRows()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: settings } = useAppSettings()
   const { data: domains = [] } = useDomains()
@@ -289,15 +313,25 @@ function DesktopCalendar() {
   const gridRef = useRef<CalendarGridHandle>(null)
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [selected, setSelected] = useState<Selected | null>(null)
   // Kai 2026-10-06: a search hit for an event opened this week, wherever the event was.
-  // /calendar?event=<id> turns the grid to its day and opens its details (once it's loaded).
-  const linked = useLinkedEvent(events)
-  if (linked.open) setSelectedEvent(linked.open)
-  const linkedStart = linked.event?.starts_at
+  // /calendar?event=<id> turns the grid to its day and opens its details (once it's loaded) — a
+  // repeating event's next occurrence. The popover opens once the grid has drawn the block there
+  // (two frames: the turn's scroll would otherwise close it at once).
+  const linked = useLinkedEvent(rows)
+  const [linkOpen, setLinkOpen] = useState<CalendarEvent | null>(null)
+  if (linked.open) setLinkOpen(linked.open)
   useEffect(() => {
-    if (linkedStart) gridRef.current?.gotoDate(new Date(linkedStart))
-  }, [linkedStart])
+    if (!linkOpen) return
+    gridRef.current?.gotoDate(new Date(linkOpen.starts_at))
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
+        setSelected({ id: linkOpen.id, start: linkOpen.starts_at, at: anchorOf(linkOpen.id) })
+        setLinkOpen(null)
+      })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [linkOpen])
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   // The Lists section (folded by default): any smart list / project / area / domain, minus what
@@ -307,6 +341,11 @@ function DesktopCalendar() {
   // Effects 21 — the chip created by a rail drop plays settle-in once.
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
+  // A week either side: month view draws its neighbours' days too.
+  const gridFrom = rangeInfo ? rangeInfo.start.getTime() - 7 * DAY_MS : null
+  const gridTo = rangeInfo ? rangeInfo.end.getTime() + 7 * DAY_MS : null
+  const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
+  const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
   const [viewOptsOpen, setViewOptsOpen] = useState(false)
@@ -341,7 +380,7 @@ function DesktopCalendar() {
   }
   const daisy = daisyAsset(new Date().getHours())
   const motionOn = useMotionEnabled()
-  const conflicts = useMemo(() => computeConflicts(events), [events])
+  const conflicts = useMemo(() => computeConflicts(gridEvents), [gridEvents])
   const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   // Kai 2026-10-03: Settings → Calendar → "Opens on" (synced; unset = Week here). Applied once, when
   // the settings row arrives — a view picked after that is the person's own. '3 days' is the N-day
@@ -379,7 +418,11 @@ function DesktopCalendar() {
 
   // Punch 32 "Show completed": done task-blocks drop out of the grid when toggled off.
   const doneTaskIds = useMemo(() => new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id)), [tasks])
-  const visibleEvents = viewOpts.showCompleted ? events : events.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
+  const visibleEvents = viewOpts.showCompleted ? gridEvents : gridEvents.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
+  // An occurrence's pending write is its series row's.
+  const pendingIds = visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id)
+  const failedIds = visibleEvents.filter((e) => outboxMarks.failed.has(e.seriesId ?? e.id)).map((e) => e.id)
+  const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 
   const scopeValueOptions =
     scope.kind === 'smart'
@@ -468,13 +511,14 @@ function DesktopCalendar() {
     if (task) setPlan({ target: { kind: 'task', r: { task, block: event, late: 0 } }, x, y })
   }
 
-  function openExisting(event: CalendarEvent) {
-    setSelectedEvent(event)
+  /** §5: the block's popover, beside it (or at the pointer, from a right-click's Edit). */
+  function openExisting(event: CalendarEvent, at?: { x: number; y: number }) {
+    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
   }
 
   function handleEventClick(id: string) {
     setContextMenu(null)
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (event) openExisting(event)
   }
 
@@ -484,17 +528,17 @@ function DesktopCalendar() {
 
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (!event) return
     const items: ContextMenuItem[] = []
     if (event.type === 'task') {
-      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
       if (isMissed(event)) items.push({ label: 'Replan…', onClick: () => replanEvent(event, x, y) })
       items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     } else {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     }
     setContextMenu({ items, x, y })
@@ -503,14 +547,14 @@ function DesktopCalendar() {
   /** Punch 33 + Kai 2026-10-12: a block dragged onto the rail does what the section it lands on
    * means (railDrop.ts has the table) — Overdue, or a plain event off any section, is the soft-no. */
   function handleDragToRail(id: string, section: string | null): boolean {
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (!event) return false
     return eventToRail(event, railDropAction(section, !!event.task_id), scopeTarget(scope, projects, areas))
   }
 
   /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
   function handleEventDoubleClick(id: string) {
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (event?.task_id) openTask(event.task_id)
   }
 
@@ -872,7 +916,7 @@ function DesktopCalendar() {
               initialView={VIEW_MAP[viewKind]}
               hideToolbar
               onRangeChange={setRangeInfo}
-              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false }))}
+              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule }))}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
                 if (!t) return
@@ -880,25 +924,20 @@ function DesktopCalendar() {
                 else completeTaskWithUndo(t)
               }}
               onCreate={handleGridCreate}
+              // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
               onMove={(id, start, end, allDay) => {
-                const event = events.find((e) => e.id === id)
-                if (!event) return
-                const prior = { ...event }
-                moveOrResizeEvent(event, start, end, allDay)
-                toastUndo(`Moved · ${event.title}`, () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day))
+                const event = gridEvents.find((e) => e.id === id)
+                if (event) toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
               }}
               onResize={(id, start, end) => {
-                const event = events.find((e) => e.id === id)
-                if (!event) return
-                const prior = { ...event }
-                resizeEvent(event, start, end)
-                toastUndo(`Resized · ${event.title}`, () => resizeEvent(prior, prior.starts_at, prior.ends_at))
+                const event = gridEvents.find((e) => e.id === id)
+                if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
               }}
               onEventClick={handleEventClick}
               onEventDoubleClick={handleEventDoubleClick}
               onExternalDrop={handleExternalDrop}
               onReplan={(id, x, y) => {
-                const event = events.find((e) => e.id === id)
+                const event = gridEvents.find((e) => e.id === id)
                 if (event) replanEvent(event, x, y)
               }}
               railRef={railRef}
@@ -912,8 +951,8 @@ function DesktopCalendar() {
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}
               conflictedIds={Array.from(conflicts.keys())}
-              pendingIds={[...outboxMarks.pending]}
-              failedIds={[...outboxMarks.failed]}
+              pendingIds={pendingIds}
+              failedIds={failedIds}
             />
             </div>
           </div>
@@ -931,12 +970,13 @@ function DesktopCalendar() {
           onChange={patchViewOpts}
         />
       )}
-      {selectedEvent && (
-        <EventDetailsPanel
+      {selected && selectedEvent && (
+        <BlockMenu
+          key={selected.id}
           event={selectedEvent}
-          conflicts={conflicts.get(selectedEvent.id) ?? []}
-          onClose={() => setSelectedEvent(null)}
-          onReplan={isMissed(selectedEvent) ? (x, y) => { replanEvent(selectedEvent, x, y); setSelectedEvent(null) } : undefined}
+          position={selected.at}
+          onClose={() => setSelected(null)}
+          onReplan={(x, y) => replanEvent(selectedEvent, x, y)}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}

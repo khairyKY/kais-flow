@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { Checkbox, Chip } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
+import { Icon } from '../../components/Icon'
 import { addDays, durationLabel, toMin } from '../../components/pickerMath'
 import { longPress, tick } from '../../lib/haptics'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -320,7 +321,13 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             </span>
           )}
           <span className="pc-name"><EmojiText text={ev.title} /></span>
-          {(!multi || stacked) && <span className="pc-time">{time}</span>}
+          {(!multi || stacked) && (
+            <span className="pc-time">
+              {/* C10: one occurrence of a repeating event */}
+              {ev.recurrence_rule && <Icon name="repeat" size={11} label="Repeats" style={{ display: 'inline-block', verticalAlign: '-1px', marginRight: 4 }} />}
+              {time}
+            </span>
+          )}
           {pending.has(ev.id) && <span className="pc-pending" role="img" aria-label="Pending sync" />}
         </div>
         {lifted && (

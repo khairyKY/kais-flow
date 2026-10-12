@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { DateField } from '../../components/DatePicker'
 import { TimeField } from './TimeField'
 
-// ── Small form atoms shared by QuickCreate / TaskEditorPage / EventDetailsPanel —
+// ── Small form atoms shared by QuickCreate / TaskEditorPage / the block menus —
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
 // components so the three editor surfaces don't each re-declare the same styles. ──
 
