@@ -55,7 +55,8 @@ await page.screenshot({ path: `${OUT}/1-plan-0800-day.png` })
 await theme(page, 'night'); await page.screenshot({ path: `${OUT}/1-plan-0800-night.png` }); await theme(page, 'day')
 
 // 2 · Up next rows act like task rows
-const upNext = page.locator('section', { has: page.getByText('Up next', { exact: true }) }).last()
+// fix-today (2026-10-12, Today 2a): desktop Up next is the Now card's ribbon + next two (.td-now).
+const upNext = page.locator('.td-now')
 await rclick(upNext.getByText('Deep work — Q4 plan').first())
 note('menu task-backed', await menuItems(page))
 await page.screenshot({ path: `${OUT}/2-upnext-menu-task.png` })
@@ -101,16 +102,17 @@ note('REST q4 after Done', q4)
 note('11:0x card after Done', await cardText(page))
 
 // 5 · The fold: collapsed by default, opens, remembered
-const fold = page.getByRole('button', { name: /More for today/ })
+// fix-today (Today 2a): the desktop fold is "Also open · N" — three rows, then "Show N more →".
+const fold = page.locator('section[aria-label="Also open"] button.td-more')
 note('fold label', (await fold.innerText()).replace(/\s+/g, ' '))
 note('fold expanded (default)', await fold.getAttribute('aria-expanded'))
-note('All open visible before', await page.getByText(/^All open ·/).isVisible().catch(() => false))
+note('All open visible before', await page.locator('section[aria-label="Also open"] [id^="task-"]').nth(3).isVisible().catch(() => false))
 await fold.click(); await sleep(300)
-note('All open visible after click', await page.getByText(/^All open ·/).isVisible().catch(() => false))
+note('All open visible after click', await page.locator('section[aria-label="Also open"] [id^="task-"]').nth(3).isVisible().catch(() => false))
 await page.reload(); await sleep(1500)
-note('fold expanded after reload', await page.getByRole('button', { name: /More for today/ }).getAttribute('aria-expanded'))
+note('fold expanded after reload', await page.locator('section[aria-label="Also open"] button.td-more').getAttribute('aria-expanded'))
 await page.screenshot({ path: `${OUT}/5-fold-open.png`, fullPage: true })
-await page.getByRole('button', { name: /More for today/ }).click() // leave it collapsed again
+await page.locator('section[aria-label="Also open"] button.td-more').click() // leave it collapsed again
 
 // 6 · 19:00 → Shut down the day; evening ritual seeds tomorrow → Day closed
 await page.clock.setSystemTime(at('19:00')); await page.reload(); await sleep(1500)
