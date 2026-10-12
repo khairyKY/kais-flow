@@ -37,22 +37,12 @@ export function dayOrdinal(entries: JournalEntry[], date: string): number {
   return days.size
 }
 
-/** Consecutive days with something actually written, ending today or yesterday. */
-export function writtenStreak(entries: JournalEntry[], today: string): number {
-  const days = new Set(entries.filter(isWritten).map((e) => e.entry_date))
-  if (days.size === 0) return 0
-  const cursor = new Date(`${today}T00:00:00Z`)
-  if (!days.has(today)) {
-    cursor.setUTCDate(cursor.getUTCDate() - 1)
-    if (!days.has(cursor.toISOString().slice(0, 10))) return 0
-  }
-  let streak = 0
-  for (;;) {
-    const key = cursor.toISOString().slice(0, 10)
-    if (!days.has(key)) return streak
-    streak++
-    cursor.setUTCDate(cursor.getUTCDate() - 1)
-  }
+/** "Kept · N days of showing up": the days this month with something written, up to `today`.
+ * Not a streak — Kai's Notebook rule: "A missed night is just a blank line. No catching up, no
+ * reset." (Product audit 2026-10-12: the old consecutive-days streak went to 0 after one miss.) */
+export function daysWrittenThisMonth(entries: JournalEntry[], today: string): number {
+  const month = today.slice(0, 7)
+  return new Set(entries.filter((e) => isWritten(e) && e.entry_date.startsWith(month) && e.entry_date <= today).map((e) => e.entry_date)).size
 }
 
 /** Rows the Journal page wrote that the cached list doesn't hold yet, keyed by id. */

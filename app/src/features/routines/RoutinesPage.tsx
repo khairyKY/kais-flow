@@ -65,6 +65,10 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
 function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, onEdit, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void; onEdit: () => void; onMenu: (at: { x: number; y: number }) => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
+  // Flow Audit §5: a routine's steps were written and only ever read back into the edit form.
+  // They fold out under the row you check it from — read-only; editing stays in the form.
+  const steps = (routine.steps ?? []).filter((s) => s.trim())
+  const [showSteps, setShowSteps] = useState(false)
 
   function toggle() {
     // Kai 2026-10-07: no confirmation pop-ups for things the row already shows (the box ticks, the dots fill).
@@ -117,7 +121,25 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
         </span>
       )}
       <DayDots routine={routine} completions={completions} onOpen={onOpenTrellis} />
+      {steps.length > 0 && (
+        <button
+          type="button"
+          className="kf-hit"
+          aria-expanded={showSteps}
+          onClick={() => setShowSteps((v) => !v)}
+          style={{ flex: 'none', padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+        >
+          {steps.length} {steps.length === 1 ? 'step' : 'steps'} {showSteps ? '▾' : '▸'}
+        </button>
+      )}
     </>
+  )
+  const stepsFold = showSteps && (
+    <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+      {steps.map((s, i) => (
+        <li key={i}>{s}</li>
+      ))}
+    </ol>
   )
   const more = (
     <button
@@ -143,22 +165,30 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
 
   if (isMobile) {
     return (
-      <div onContextMenu={onContextMenu} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
-        {check}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {name}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>{meta}</div>
+      <div onContextMenu={onContextMenu} style={{ borderBottom: '1px dashed var(--line-dashed)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
+          {check}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {name}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>{meta}</div>
+          </div>
+          {more}
         </div>
-        {more}
+        {stepsFold}
       </div>
     )
   }
   return (
-    <div onContextMenu={onContextMenu} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-      {check}
-      <div style={{ flex: 1, minWidth: 0 }}>{name}</div>
-      {meta}
-      {more}
+    <div onContextMenu={onContextMenu} style={{ borderBottom: '1px dashed var(--line-dashed)' }}>
+      {/* At 1280 with the sidebar open the column is ~370px: the meta wraps under the name instead
+          of sliding over it (the clock used to cover the name's centre). */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px', padding: '11px 2px' }}>
+        {check}
+        <div style={{ flex: '1 1 140px', minWidth: 0 }}>{name}</div>
+        {meta}
+        {more}
+      </div>
+      {stepsFold}
     </div>
   )
 }

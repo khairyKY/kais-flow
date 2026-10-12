@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, addMedia, removeMedia, appendTranscript, type HeldRows, type ListState } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, daysWrittenThisMonth, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, addMedia, removeMedia, appendTranscript, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
@@ -435,7 +435,8 @@ export function JournalPage() {
 
   // Consecutive days with something actually written (an untouched "+ New entry" is not a
   // day journaled — punch item 10, growth stages never lie).
-  const streakDays = useMemo(() => writtenStreak(entries, todayStr), [entries, todayStr])
+  // Kept = days written this month, never a streak that a missed night resets (product audit 2026-10-12).
+  const keptDays = useMemo(() => daysWrittenThisMonth(entries, todayStr), [entries, todayStr])
 
   // "On this day" logic (returns entry from a year ago if exists, or older ones)
   const onThisDayEntry = useMemo(() => {
@@ -1140,19 +1141,19 @@ export function JournalPage() {
           )}
         </section>
 
-        {/* Streak */}
+        {/* Kept */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Kept</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* The export's full fern — but a streak of 0 is a fern that hasn't unfurled yet
+            {/* The export's full fern — but 0 days is a fern that hasn't unfurled yet
                 (growth stages never lie, punch 10). */}
-            <img src={`/ds/assets/fern/${streakDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={`/ds/assets/fern/${keptDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(keptDays)}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up this month</div>
             </div>
           </div>
         </section>

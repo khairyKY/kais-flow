@@ -497,7 +497,8 @@ export function LibraryPage() {
                   <div style={{ display: 'flex', gap: 16 }}>
                     <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <img src={getFernImage(progressPercent)} alt="" style={{ height: 36, opacity: 0.6 }} />
-                      <span className="fhelp" style={{ fontSize: 'var(--fs-meta)' }}>cover</span>
+                      {/* No covers are stored: the slot shows the book's fern and how far in you are (true data). */}
+                      <span className="fhelp" style={{ fontSize: 'var(--fs-meta)' }}>{progressPercent}% read</span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
@@ -972,14 +973,14 @@ export function LibraryPage() {
               <div style={{ width: '100%', maxWidth: 760, padding: '30px 40px 36px', background: 'var(--paper-linen)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <BackLink onClick={() => setSearchParams({ tab: 'books' })}>Library / Books</BackLink>
-                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · via capture</span>
+                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 22, marginTop: 24 }}>
-                  {/* cover slot */}
+                  {/* cover slot — no covers are stored, so it holds the book's fern + how far in (never a placeholder label) */}
                   <div style={{ width: 118, height: 172, flex: 'none', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, transform: 'rotate(-1deg)' }}>
                     <img src={getFernImage(progressPercent)} alt="" style={{ height: 52, opacity: 0.6 }} />
-                    <span className="fhelp" style={{ textAlign: 'center', padding: '0 10px' }}>cover<br />placeholder</span>
+                    <span className="fhelp" style={{ textAlign: 'center', padding: '0 10px' }}>{progressPercent}% read</span>
                   </div>
                   
                   <div style={{ flex: 1, minWidth: 0 }}>
