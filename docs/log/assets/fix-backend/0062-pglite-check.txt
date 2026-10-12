@@ -1,0 +1,11 @@
+PASS overdue-sweep unscheduled 
+PASS routine-reminder-sweep every 5 minutes, kind routine 
+PASS task-reminder-sweep untouched 
+PASS app_settings.routine_on boolean not null default true 
+PASS picks still today's keep their star [[true,1],[true,null],[true,null],[true,null],[true,null],[true,null],[true,null]]
+PASS moved / someday / Trash / cancelled / later-in-their-zone picks lose star and rank [[false,null],[false,null],[false,null],[false,null],[false,null],[false,null],[false,null],[false,null]]
+PASS the undated goal keeps its rank 
+PASS a finished goal keeps its rank (top3 already false) 
+PASS resurfacing never picks a cancelled task 
+PASS resurfacing still picks an open one 
+PASS areas + time_entries in supabase_realtime ["areas","time_entries"]
