@@ -87,3 +87,4 @@
 =======
 - 2026-10-12 19:03 · handoff · fix-inbox: Kai's reviewed Inbox (Inbox.dc.html t3, 3a/3b) built — honest header + Waiting|Dismissed toggle, one "Suggested" row of editable fields, confidence as a word, "Where does this go?" (Task / Journal note / the person it names), compact row, flat cards, keys on the buttons; files to areas, journal, People; bulk + Clear now with one Undo; keys on a mouse selection + Dismissed keys; phone hold/tap/swipe via SwipeRow, pickers as sheets; error/offline states; 1560 tests ×4 TZ, harness 69/69 — `2026-10-12-1903-fix-inbox-handoff.md` (branch claude/fix-inbox)
 >>>>>>> origin/claude/fix-inbox
+- 2026-10-12 19:22 · audit · Product audit — is every feature meant to be? 20 core · 29 supporting · 10 half-built · 7 gimmick candidates; tap counts (~14 phone / ~16 desktop per day); fixes routed to builders, cuts listed for Kai — `2026-10-12-1922-local-audit-product.md`
