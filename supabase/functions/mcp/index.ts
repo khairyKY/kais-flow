@@ -26,6 +26,7 @@ import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
 import type { EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
+import type { RuleBetween } from '../_shared/series.ts'
 
 // Tool calls per key per UTC day. A runaway agent loop stops here; reads of the tool list don't count.
 const DAILY_LIMIT = 500
@@ -86,9 +87,11 @@ function store(tx: Tx): Store {
       return rows.map((p) => ({ ...p, target_date: iso(p.target_date) }) as ProjectRow)
     },
     async events(from, to) {
+      // A repeating event (0061) is one row anchored at its first occurrence: it comes along whenever it
+      // started before `to`, and tools.ts expands it.
       const rows = await tx`
-        select id, title, starts_at, ends_at, all_day, task_id from calendar_events
-        where deleted_at is null and starts_at < ${to}::timestamptz and ends_at > ${from}::timestamptz
+        select id, title, starts_at, ends_at, all_day, task_id, recurrence_rule, recurrence_exdates from calendar_events
+        where deleted_at is null and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
         order by starts_at, id
         limit 300`
       return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as EventRow)
@@ -176,6 +179,9 @@ function nextOccurrence(rule: string, from: Date): Date | null {
   return new RRule({ ...RRule.parseString(rule), dtstart: from }).after(from, false)
 }
 
+/** features/calendar/series.ts's rrule half, on the same rrule. */
+const ruleBetween: RuleBetween = (rule, dtstart, after, before) => new RRule({ ...RRule.parseString(rule), dtstart }).between(after, before, true)
+
 Deno.serve((req) =>
-  handleMcp(req, { withSession, originAllowed: isAllowedOrigin, nextOccurrence, now: () => new Date(), dailyLimit: DAILY_LIMIT }),
+  handleMcp(req, { withSession, originAllowed: isAllowedOrigin, nextOccurrence, ruleBetween, now: () => new Date(), dailyLimit: DAILY_LIMIT }),
 )

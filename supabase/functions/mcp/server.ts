@@ -15,6 +15,7 @@
 // Auth is the user's AI access key (`Authorization: Bearer kf_ai_…`, migration 0051), checked on
 // every request; see docs/MCP.md for why a key and not OAuth.
 import { TOOLS, runTool, userZone, type Store, type ToolDef } from './tools.ts'
+import type { RuleBetween } from '../_shared/series.ts'
 
 export const MODERN_VERSIONS = ['2026-07-28'] as const
 export const LEGACY_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'] as const
@@ -46,6 +47,8 @@ export interface Deps {
   withSession<T>(key: string, count: boolean, fn: (s: Session) => Promise<T>): Promise<SessionResult<T>>
   originAllowed(origin: string): boolean
   nextOccurrence(rule: string, from: Date): Date | null
+  /** rrule's between() — a repeating calendar event's occurrences (tools.ts eventsIn). */
+  ruleBetween: RuleBetween
   now(): Date
   dailyLimit: number
 }
@@ -122,7 +125,7 @@ async function dispatch(method: string, params: Json, s: Session, deps: Deps): P
         return { result: { content: [{ type: 'text', text: "This key is read-only, so it can't change anything. The user can make a read & write key in Kai's Flow → Settings → Integrations → AI assistants." }], isError: true } }
       }
       const zone = userZone(await s.store.timezone())
-      const result = await runTool(tool, params.arguments, { store: s.store, zone, now: deps.now(), nextOccurrence: deps.nextOccurrence })
+      const result = await runTool(tool, params.arguments, { store: s.store, zone, now: deps.now(), nextOccurrence: deps.nextOccurrence, ruleBetween: deps.ruleBetween })
       return { result: { ...result } }
     }
     default:

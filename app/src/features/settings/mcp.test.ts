@@ -19,6 +19,7 @@ import {
   type TaskRow,
 } from '../../../../supabase/functions/mcp/tools.ts'
 import { nextOccurrence } from '../tasks/recurrence'
+import { ruleBetween } from '../calendar/series'
 import { claudeCodeCommand, claudeDesktopConfig, genericConfig, newMcpKey } from './mcpKey'
 
 // The MCP endpoint end to end — HTTP in, HTTP out — against an in-memory Store whose filters mirror
@@ -49,6 +50,8 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): 
   const events: EventRow[] = [
     { id: tid(900), title: 'Standup', starts_at: '2026-10-04T07:00:00Z', ends_at: '2026-10-04T07:15:00Z', all_day: false, task_id: null },
     { id: tid(901), title: 'Next week', starts_at: '2026-10-20T07:00:00Z', ends_at: '2026-10-20T08:00:00Z', all_day: false, task_id: null },
+    // Repeating (0061): weekly from Thu 1 Oct, 18:00 Cairo — one row, its 15th skipped.
+    { id: tid(902), title: 'Choir', starts_at: '2026-10-01T15:00:00Z', ends_at: '2026-10-01T16:30:00Z', all_day: false, task_id: null, recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-15T15:00:00.000Z'] },
   ]
   const hits: SearchHit[] = [
     { entity_type: 'journal_entry', entity_id: tid(800), title: 'Dear diary', snippet: 'private', score: 9 },
@@ -74,7 +77,7 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): 
     },
     getTask: async (id) => s.tasks.find((t) => t.id === id) ?? null,
     projects: async () => projects,
-    events: async (from, to) => events.filter((e) => e.starts_at < to && e.ends_at > from),
+    events: async (from, to) => events.filter((e) => e.starts_at < to && (e.ends_at > from || !!e.recurrence_rule)),
     search: async (_q, limit) => hits.slice(0, limit),
     top3Count: async () => s.tasks.filter((t) => t.top3 && t.status === 'todo').length,
     openOccurrence: async (title, rule, due, except) =>
@@ -108,6 +111,7 @@ function deps(store: Store, over: Partial<Deps> = {}): Deps & { counted: boolean
     },
     originAllowed: (o) => o === 'http://localhost:5173',
     nextOccurrence,
+    ruleBetween,
     now: () => NOW,
     dailyLimit: 500,
     ...over,
@@ -464,10 +468,20 @@ describe('MCP: the tools', () => {
     const d = deps(fakeStore())
     const week = await call(d, 'calendar')
     expect(week.data).toMatchObject({ from: '2026-10-04 00:00', until: '2026-10-11 00:00', timezone: 'Africa/Cairo' })
-    expect(week.data!.events.map((e: { title: string }) => e.title)).toEqual(['Standup'])
+    expect(week.data!.events.map((e: { title: string }) => e.title)).toEqual(['Standup', 'Choir']) // Choir repeats Thursdays
     expect((await call(d, 'calendar', { from: '2026-10-20', to: '2026-10-20' })).data!.events.map((e: { title: string }) => e.title)).toEqual(['Next week'])
     expect((await call(d, 'calendar', { from: '2026-10-01', to: '2026-12-01' })).text).toContain('At most 31 days')
     expect((await call(d, 'calendar', { from: '2026-10-05', to: '2026-10-04' })).text).toContain('on or after')
+  })
+
+  it('calendar: a repeating event is each of its weeks, on the series’ id, minus the skipped one', async () => {
+    const d = deps(fakeStore())
+    const month = await call(d, 'calendar', { from: '2026-10-05', to: '2026-10-31' })
+    const choir = month.data!.events.filter((e: { title: string }) => e.title === 'Choir')
+    expect(choir.map((e: { start: string }) => e.start)).toEqual(['2026-10-08 18:00', '2026-10-22 18:00', '2026-10-29 18:00'])
+    expect(choir[0]).toMatchObject({ id: tid(902), end: '2026-10-08 19:30', repeats: 'FREQ=WEEKLY' })
+    // …and it's in today's list only on its own day.
+    expect((await call(d, 'today')).data!.events.map((e: { title: string }) => e.title)).toEqual(['Standup'])
   })
 })
 
