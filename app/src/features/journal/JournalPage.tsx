@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, addMedia, removeMedia, appendTranscript, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
@@ -10,9 +10,45 @@ import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { Button } from '../../components/kit'
+import { ActionSheet } from '../../components/ActionSheet'
 import { ConfirmCard } from '../projects/ConfirmCard'
+import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
+import { useToastStore } from '../../lib/toastStore'
+import { isCapacitorShell } from '../../lib/platform'
+import { deleteJournalPhoto, pickImages, uploadJournalPhoto, useJournalPhotoUrls } from './media'
 import type { JournalEntry } from '../../lib/types'
 import '../projects/xfx.css'
+
+const toast = (message: string) => useToastStore.getState().push({ message })
+
+/** The card footer's quiet links (＋ New entry's look): mono caps, terra, no chrome. */
+const footLink = { border: 'none', background: 'none', padding: 0, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: 'var(--acc-terra)', cursor: 'pointer' } as const
+
+/** An entry's photos: thumbnails (tap to view full size) with a remove. */
+function EntryPhotos({ paths, onRemove }: { paths: string[]; onRemove: (path: string) => void }) {
+  const urls = useJournalPhotoUrls(paths)
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+      {paths.map((p, i) => (
+        <div key={p} style={{ position: 'relative', width: 72, height: 72, border: '1px solid var(--line-card)', borderRadius: 3, background: 'var(--paper-bone)', overflow: 'hidden' }}>
+          {urls[i] && (
+            <a href={urls[i]} target="_blank" rel="noreferrer" aria-label="Open photo">
+              <img src={urls[i]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </a>
+          )}
+          <button
+            type="button"
+            aria-label="Remove photo"
+            onClick={() => onRemove(p)}
+            style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-crisp)', font: 'inherit', fontSize: 14, lineHeight: '24px', padding: 0, cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
@@ -173,6 +209,9 @@ export function JournalPage() {
   const [gratitude3, setGratitude3] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [confirmDelete, setConfirmDelete] = useState<JournalEntry | null>(null)
+  const [talking, setTalking] = useState(false)
+  const [photoSheet, setPhotoSheet] = useState(false)
+  const [confirmPhoto, setConfirmPhoto] = useState<{ entryId: string; path: string } | null>(null)
 
   const dayMood = dayField(dayEntries, 'mood')
   const dayGratitude = dayField(dayEntries, 'gratitude')
@@ -200,10 +239,15 @@ export function JournalPage() {
   // overwrite the other's field with whatever was on screen when its timer was set. Both
   // compose from here instead of from their captured render, so the loser of the race only
   // rewrites what the winner already wrote.
-  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] })
-  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] }
+  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [], entries })
+  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [], entries }
   const rowNow = (id: string): JournalEntry | undefined => {
     const e = latest.current.dayEntries.find((x) => x.id === id)
+    return e && { ...e, body: latest.current.drafts[id] ?? e.body }
+  }
+  /** Any day's row as it stands now — a photo upload can finish after you've turned the page. */
+  const anyRowNow = (id: string): JournalEntry | undefined => {
+    const e = latest.current.entries.find((x) => x.id === id)
     return e && { ...e, body: latest.current.drafts[id] ?? e.body }
   }
 
@@ -276,6 +320,67 @@ export function JournalPage() {
       }
       toastUndo(`Deleted · ${entryTime(row.created_at)} entry`, () => hold(restoreJournalEntry(row)))
     })
+  }
+
+  // "Talk it out" and "＋ Photo" land on the day's latest entry, or start the day's first one.
+
+  /** Talk it out: the voice sheet (Groq transcription through the `transcribe` function) hands back
+   * the words; they join the entry as a new paragraph and are kept in `transcript` too. */
+  const talkedOut = (heard: string) => {
+    const last = latest.current.dayEntries.at(-1)
+    const cur = last && rowNow(last.id)
+    if (!cur) {
+      save({ entry_date: selectedDate, body: heard.trim(), transcript: heard.trim() }, true)
+    } else {
+      // A pending body save would write the pre-transcript text back over this one.
+      window.clearTimeout(timers.current[cur.id])
+      save({ ...cur, body: appendTranscript(cur.body, heard), transcript: appendTranscript(cur.transcript, heard) }, false)
+      setDrafts(({ [cur.id]: _saved, ...rest }) => rest)
+    }
+    setSaveStatus('Saved · just now')
+  }
+
+  /** ＋ Photo: compress, upload to the private `journal` bucket, add the path to the entry. A failed
+   * upload never touches the words — they're already saved through the outbox. */
+  const addPhotos = async (camera: boolean) => {
+    const files = await pickImages(camera)
+    if (!files.length) return
+    const last = latest.current.dayEntries.at(-1)
+    const entryId = last ? last.id : save({ entry_date: selectedDate, body: '' }, true).id
+    setSaveStatus('Adding photo…')
+    let unreadable = 0
+    let failed = 0
+    for (const file of files) {
+      try {
+        const path = await uploadJournalPhoto(entryId, file)
+        const cur = anyRowNow(entryId)
+        if (!cur) {
+          void deleteJournalPhoto(path).catch(() => {}) // the entry went while it uploaded
+          continue
+        }
+        save({ ...cur, media_paths: addMedia(cur.media_paths, path) }, false)
+      } catch (err) {
+        if (err instanceof Error && err.message === 'decode') unreadable++
+        else failed++
+      }
+    }
+    setSaveStatus('Saved · just now')
+    if (unreadable) toast("Couldn't open that photo — try a JPG or PNG.")
+    if (failed) toast(navigator.onLine ? "The photo didn't upload — your words are saved. Try it again in a bit." : "Photos need a connection — your words are saved. Add it again once you're online.")
+  }
+
+  /** Phone shell: its WebView offers the camera only when asked, so ask which. Browsers put the
+   * camera in their own picker. */
+  const onPhoto = () => (isCapacitorShell() ? setPhotoSheet(true) : void addPhotos(false))
+
+  const removePhoto = async ({ entryId, path }: { entryId: string; path: string }) => {
+    try {
+      await deleteJournalPhoto(path)
+    } catch {
+      return toast(navigator.onLine ? "Couldn't remove the photo just now — try again." : "Removing a photo needs a connection — try again once you're online.")
+    }
+    const cur = anyRowNow(entryId)
+    if (cur) save({ ...cur, media_paths: removeMedia(cur.media_paths, path) }, false)
   }
 
   /** Mood + the three small things are day-level; they ride on the day's first entry. */
@@ -422,6 +527,7 @@ export function JournalPage() {
           </span>
         </div>
         {ta(entry, bodyOf(entry), (v) => handleBodyChange(entry, v), i === 0 ? t.minHeight : t.lineHeight * 3)}
+        {entry.media_paths?.length > 0 && <EntryPhotos paths={entry.media_paths} onRemove={(path) => setConfirmPhoto({ entryId: entry.id, path })} />}
       </div>
     ))
   }
@@ -434,6 +540,33 @@ export function JournalPage() {
       onConfirm={() => { removeEntry(confirmDelete); setConfirmDelete(null) }}
       onCancel={() => setConfirmDelete(null)}
     />
+  )
+
+  // The overlays both layouts share: confirm cards, the voice sheet, the shell's photo choice.
+  const overlays = (
+    <>
+      {confirmCard}
+      {confirmPhoto && (
+        <ConfirmCard
+          title="Remove this photo?"
+          body="It's deleted for good — the entry's words stay."
+          confirmLabel="Remove"
+          onConfirm={() => { void removePhoto(confirmPhoto); setConfirmPhoto(null) }}
+          onCancel={() => setConfirmPhoto(null)}
+        />
+      )}
+      {talking && <VoiceCaptureSheet open onText={talkedOut} onClose={() => setTalking(false)} />}
+      {photoSheet && (
+        <ActionSheet
+          title="Add a photo"
+          items={[
+            { label: 'Take a photo', onSelect: () => void addPhotos(true) },
+            { label: 'Choose from your photos', onSelect: () => void addPhotos(false) },
+          ]}
+          onClose={() => setPhotoSheet(false)}
+        />
+      )}
+    </>
   )
 
   // Renders the mobile sub-panels
@@ -554,8 +687,8 @@ export function JournalPage() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                  <span>🎤 Talk</span>
-                  <span>＋ Photo</span>
+                  <button type="button" onClick={() => setTalking(true)} style={footLink}>🎤 Talk</button>
+                  <button type="button" onClick={onPhoto} style={footLink}>＋ Photo</button>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
                 </div>
               </div>
@@ -622,7 +755,7 @@ export function JournalPage() {
             </>
           )}
         </div>
-        {confirmCard}
+        {overlays}
       </div>
     )
   }
@@ -839,8 +972,8 @@ export function JournalPage() {
                 {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
                     so the card carries the day's "＋ New entry", as 1b's footer does. */}
                 <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>🎤 Talk it out</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>＋ Photo</span>
+                <button type="button" onClick={() => setTalking(true)} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>🎤 Talk it out</button>
+                <button type="button" onClick={onPhoto} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>＋ Photo</button>
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>
@@ -1010,7 +1143,7 @@ export function JournalPage() {
       </aside>
       )}
       </div>
-      {confirmCard}
+      {overlays}
     </div>
   )
 }

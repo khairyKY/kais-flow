@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows } from './journalDay'
+import { addMedia, appendTranscript, journalPhotoPath, removeMedia, entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows } from './journalDay'
 import type { JournalEntry } from '../../lib/types'
 
 function entry(p: Partial<JournalEntry> & { id: string; entry_date: string }): JournalEntry {
@@ -197,5 +197,36 @@ describe('daysLabel', () => {
     expect(daysLabel(0)).toBe('0 days')
     expect(daysLabel(1)).toBe('1 day')
     expect(daysLabel(12)).toBe('12 days')
+  })
+})
+
+describe('journalPhotoPath', () => {
+  it('puts the owner first — the bucket RLS reads foldername[1]', () => {
+    expect(journalPhotoPath('u1', 'e1', 'p1')).toBe('u1/e1/p1.jpg')
+  })
+})
+
+describe('addMedia / removeMedia', () => {
+  it('appends once, in order', () => {
+    expect(addMedia([], 'a')).toEqual(['a'])
+    expect(addMedia(['a'], 'b')).toEqual(['a', 'b'])
+    expect(addMedia(['a', 'b'], 'a')).toEqual(['a', 'b'])
+    expect(addMedia(null, 'a')).toEqual(['a'])
+  })
+  it('removes only that path', () => {
+    expect(removeMedia(['a', 'b', 'c'], 'b')).toEqual(['a', 'c'])
+    expect(removeMedia(['a'], 'z')).toEqual(['a'])
+    expect(removeMedia(undefined, 'a')).toEqual([])
+  })
+})
+
+describe('appendTranscript', () => {
+  it('adds the take as its own paragraph', () => {
+    expect(appendTranscript('Morning walk.  ', ' Saw the heron again. ')).toBe('Morning walk.\n\nSaw the heron again.')
+  })
+  it('handles an empty side', () => {
+    expect(appendTranscript('', ' hello ')).toBe('hello')
+    expect(appendTranscript(null, 'hello')).toBe('hello')
+    expect(appendTranscript('kept', '  ')).toBe('kept')
   })
 })
