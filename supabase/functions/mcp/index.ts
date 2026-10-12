@@ -131,7 +131,9 @@ function store(tx: Tx): Store {
       return rows.length > 0
     },
     async setDue(id, due) {
-      await tx`update tasks set due_at = ${due}::timestamptz, someday = false where id = ${id}::uuid`
+      // Only move_to_tomorrow sets a due date here, and tomorrow is never today: a Top 3 pick gives
+      // its place up, as it does in the app (app/src/features/tasks/top3Rule.ts).
+      await tx`update tasks set due_at = ${due}::timestamptz, someday = false, top3 = false, top3_rank = null where id = ${id}::uuid`
     },
     async insertInbox(row) {
       await tx`

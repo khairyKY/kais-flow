@@ -23,9 +23,13 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['#'], action: 'delete', label: 'Delete' },
 ]
 
-/** Pages supply only the actions they actually wire up; missing ones are silently skipped. */
-export function buildListBindings(actions: Partial<Record<ListActionKey, (task: Task) => void>>): ListBinding<Task>[] {
-  return LIST_SHORTCUTS.filter((s) => actions[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: actions[s.action]! }))
+/** Pages supply only the actions they actually wire up; missing ones are silently skipped. `bulk`:
+ * what a key does to the selected rows, when there's a selection. */
+export function buildListBindings(
+  actions: Partial<Record<ListActionKey, (task: Task) => void>>,
+  bulk: Partial<Record<ListActionKey, (tasks: Task[]) => void>> = {},
+): ListBinding<Task>[] {
+  return LIST_SHORTCUTS.filter((s) => actions[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: actions[s.action]!, runAll: bulk[s.action] }))
 }
 
 /** The matching key for an action's own context-menu row (right-aligned hint) — one source, no drift. */

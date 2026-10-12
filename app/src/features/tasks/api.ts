@@ -6,6 +6,7 @@ import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { toastAction, toastUndo } from '../../lib/undo'
+import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
 import { nextOccurrence, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
@@ -17,7 +18,8 @@ import { dayTop3, moveInTop3, planMakeGoal, rankWrites } from '../today/top3Orde
 import { cachedStarEvents } from '../today/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { fromMin } from '../../components/pickerMath'
-import type { SpreadPick } from './planMath'
+import { todayFor, type SpreadPick } from './planMath'
+import { isTop3Today, openTop3Count } from './top3Rule'
 import { placeTask, planReparent, type MoveTarget } from './move'
 import type { Task } from '../../lib/types'
 
@@ -338,15 +340,51 @@ export function setDuration(task: Task, durationMin: number | null): void {
 }
 
 /** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. A star
- * joins the Top 3 last (no place yet); an unstar gives its place up. */
-export function toggleTop3(task: Task): void {
-  if (!task.top3) {
-    const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-    const currentTop3Count = tasks.filter((t) => t.top3 && t.id !== task.id).length
-    if (currentTop3Count >= MAX_TOP3) return
+ * joins the Top 3 last (no place yet); an unstar gives its place up. The cap counts the open picks
+ * that are still today's (top3Rule), not every stale flag — a pick moved to Thursday frees its slot.
+ * Returns false when the Top 3 was already full. */
+export function toggleTop3(task: Task): boolean {
+  const done = flipTop3(task)
+  // It used to fail silently, which read as "the star is broken".
+  if (!done) useToastStore.getState().push({ message: 'Top 3 is full — take one out first' })
+  return done
+}
+
+function flipTop3(task: Task): boolean {
+  if (task.top3) {
+    writeRow('tasks', { ...task, top3: false, top3_rank: null })
+    logActivity('task.unstarred', 'task', task.id, {})
+    return true
   }
-  writeRow('tasks', { ...task, top3: !task.top3, top3_rank: null, someday: task.top3 ? task.someday : false })
-  logActivity(task.top3 ? 'task.unstarred' : 'task.starred', 'task', task.id, {})
+  if (openTop3Count(cachedTasks(), new Date(), task.id) >= MAX_TOP3) return false
+  const starred: Task = { ...task, top3: true, top3_rank: null, someday: false }
+  // The Top 3 is today's: a pick dated another day comes to today (at its own time), or the star
+  // would be given straight back by releaseTop3.
+  const pick = isTop3Today(starred, new Date()) ? starred : { ...starred, due_at: todayFor(task) }
+  writeRow('tasks', pick)
+  logActivity('task.starred', 'task', task.id, {})
+  return true
+}
+
+/** `T` with tasks selected, and the bulk bar's ☆ (Kai 2026-10-12: "select 3 tasks and press T —
+ * it doesn't work"): stars the selection in order up to the free places, one Undo. When every
+ * selected task is already a pick, it unstars them instead (T toggles, like on one row). */
+export function toggleTop3ManyWithUndo(tasks: Task[]): void {
+  const before = tasks.map(cached)
+  if (before.length > 0 && before.every((t) => t.top3)) {
+    before.forEach((t) => flipTop3(t))
+    toastUndo(before.length === 1 ? 'Removed from Top 3' : `${tasksLabel(before.length)} removed from Top 3`, () => restoreTop3(before))
+    return
+  }
+  const fresh = before.filter((t) => !t.top3 && !t.completed_at)
+  const added = fresh.filter((t) => flipTop3(cached(t)))
+  const left = fresh.length - added.length
+  const full = left > 0 ? ` · Top 3 is full, ${left} left out` : ''
+  if (added.length === 0) {
+    useToastStore.getState().push({ message: 'Top 3 is full — take one out first' })
+    return
+  }
+  toastUndo(`${added.length === 1 ? 'Added' : `${added.length} added`} to Top 3${full}`, () => restoreTop3(added.map((t) => before.find((b) => b.id === t.id)!)))
 }
 
 const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
@@ -366,7 +404,7 @@ export function writeTop3Order(order: readonly Task[]): void {
 function restoreTop3(before: readonly Task[]): void {
   for (const b of before) {
     const now = cached(b)
-    writeRow('tasks', { ...now, top3: b.top3, top3_rank: b.top3_rank ?? null, someday: b.someday })
+    writeRow('tasks', { ...now, top3: b.top3, top3_rank: b.top3_rank ?? null, someday: b.someday, due_at: b.due_at })
     if (now.top3 !== b.top3) logActivity(b.top3 ? 'task.starred' : 'task.unstarred', 'task', b.id, {})
   }
 }
@@ -443,7 +481,8 @@ export function rescheduleDue(task: Task, dueAt: string | null, timed = false): 
   return () => {
     undoBlocks()
     const now = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? before
-    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday })
+    // A pick moved off today gave its Top 3 place up (top3Rule); Undo gives it back.
+    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday, top3: before.top3, top3_rank: before.top3_rank })
     logActivity('task.rescheduled', 'task', task.id, { due_at: before.due_at })
   }
 }

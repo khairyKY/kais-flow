@@ -10,7 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -26,7 +26,7 @@ import { BulkBar } from '../../components/BulkBar'
 import { Skeleton } from '../../components/States'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { cairoDateKey, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
@@ -621,10 +621,14 @@ export function TasksPage() {
     deleteTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  function bulkTop3() {
+    toggleTop3ManyWithUndo(selectedTasks)
+    clearSelection()
+  }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
       : undefined
 
   const bindings = buildListBindings({
@@ -638,6 +642,14 @@ export function TasksPage() {
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
+  }, {
+    // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
+    complete: () => bulkComplete(),
+    today: () => bulkSchedule(scheduleToday()),
+    tomorrow: () => bulkTomorrow(),
+    nextWeek: () => bulkSchedule(scheduleNextWeek()),
+    top3: () => bulkTop3(),
+    delete: () => bulkDelete(),
   })
   useDeepLinkScroll(focusId, flatTasks)
 
@@ -645,6 +657,7 @@ export function TasksPage() {
     active: !kbProjectId && activeTab !== 'done',
     sectionLabel: activeTab === 'done' ? undefined : 'Lists',
     onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
+    selected: selectedTasks,
   })
 
   const isDone = activeTab === 'done'

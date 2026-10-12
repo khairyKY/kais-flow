@@ -66,7 +66,7 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
   const bulk = o.bulk && o.selected && o.bulk.count > 1 ? o.bulk : undefined
   const actions: TaskMenuActions = {
     ...taskActions(task),
-    ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete } : null),
+    ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete, ...(bulk.onTop3 ? { top3: bulk.onTop3 } : null) } : null),
     ...(o.place ? { reorder: (d: -1 | 1) => void moveInTop3Order(task, o.place!.index + d) } : null),
     ...o.actions,
     select: o.onToggleSelect,

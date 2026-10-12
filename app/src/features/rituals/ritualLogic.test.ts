@@ -227,8 +227,9 @@ describe('Shut down — Sweep', () => {
     const rolled = { ...review, due_at: iso('09:00', 28) }
     const done = { ...milk, status: 'done' as const, completed_at: iso('21:41') }
     expect(sweepRows([done, rolled, later], first.seen, new Set(['review', 'milk']), at('21:42')).rows.map((t) => t.id)).toEqual(['milk', 'review'])
-    // Untouched, only what is still today's plate — a starred row always is (Today's own rule).
-    expect(sweepRows([done, rolled, later], first.seen, new Set(), at('21:42')).rows.map((t) => t.id)).toEqual(['review'])
+    // Untouched, only what is still today's plate — and a pick rolled to another day isn't (Kai
+    // 2026-10-12: a moved Top 3 pick gives its place up, features/tasks/top3Rule).
+    expect(sweepRows([done, rolled, later], first.seen, new Set(), at('21:42')).rows.map((t) => t.id)).toEqual([])
   })
 })
 

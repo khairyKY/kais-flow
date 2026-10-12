@@ -59,6 +59,8 @@ export interface BulkActions {
   onSomeday: () => void
   onMove: (to: MoveTarget) => void
   onDelete: () => void
+  /** Add to / Remove from Top 3 for the selection (Kai 2026-10-12). */
+  onTop3?: () => void
 }
 
 /** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */

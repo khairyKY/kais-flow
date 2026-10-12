@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DndContext, MouseSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
@@ -9,7 +9,7 @@ import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { daysOverdue, formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
-import { cairoDateKey, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
@@ -296,6 +296,7 @@ export function TodayPage() {
   function bulkSomeday() { somedayTasksWithUndo(selectedTasks); clearSelection() }
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
+  function bulkTop3() { toggleTop3ManyWithUndo(selectedTasks); clearSelection() }
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
   // app's primary surface. Wired to the same handlers its context menu already uses.
@@ -314,11 +315,20 @@ export function TodayPage() {
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
+  }, {
+    // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
+    complete: () => bulkComplete(),
+    today: () => bulkSchedule(scheduleToday()),
+    tomorrow: () => bulkTomorrow(),
+    nextWeek: () => bulkSchedule(scheduleNextWeek()),
+    top3: () => bulkTop3(),
+    delete: () => bulkDelete(),
   })
   const { focusedId } = useListKeys(selectable, listBindings, {
     active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !replanAt,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
+    selected: selectedTasks,
   })
 
   // Kai 2026-10-07: order the Top 3. Alt+↑/↓ moves the focused Top 3 row (up into first place = the

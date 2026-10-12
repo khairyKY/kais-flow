@@ -1,5 +1,6 @@
 import { cairoDateKey, daysUntilNextMonday } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
+import { isTop3Today } from './top3Rule'
 
 export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all'
 
@@ -14,7 +15,7 @@ function dayDiff(aKey: string, bKey: string): number {
 }
 
 /** A task's bucketing date: its due date, else its scheduled block. Null = undated backlog. */
-function taskDayDiff(task: Task, now: Date): number | null {
+export function taskDayDiff(task: Pick<Task, 'due_at' | 'scheduled_start'>, now: Date): number | null {
   const iso = task.due_at ?? task.scheduled_start
   if (!iso) return null
   return dayDiff(cairoDateKey(now), cairoDateKey(new Date(iso)))
@@ -53,7 +54,7 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
       case 'overdue':
         return diff !== null && diff < 0
       case 'today':
-        return t.top3 || isScheduledToday(t, now) || (diff !== null && diff <= 0)
+        return isTop3Today(t, now) || isScheduledToday(t, now) || (diff !== null && diff <= 0)
       case 'week':
         return diff !== null && diff <= 6
       case 'month':

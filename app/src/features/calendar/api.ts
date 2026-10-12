@@ -115,7 +115,7 @@ function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: Cal
     undo: () => {
       steps.reverse().forEach((step) => step())
       const now = cachedTask(task.id)
-      if (now) writeRow('tasks', { ...now, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end })
+      if (now) writeRow('tasks', { ...now, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end, top3: before.top3, top3_rank: before.top3_rank })
     },
   }
 }

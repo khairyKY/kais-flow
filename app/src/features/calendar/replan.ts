@@ -1,6 +1,7 @@
 import { addDays, busyOnDay, freeSlots } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
+import { isTop3Today } from '../tasks/top3Rule'
 import { scheduleSlots, spanIso } from './phoneGridMath'
 
 // ── Kai 2026-10-07: the calendar's planning rail (Overdue · Today · Inbox, Akiflow's sidebar) and
@@ -51,7 +52,7 @@ export function railBuckets(tasks: readonly Task[], events: readonly CalendarEve
     const due = task.due_at ? cairoDateKey(new Date(task.due_at)) : null
     const missed = [due, block && blockLastDay(block)].filter((d): d is string => !!d && d < today).sort().at(-1)
     if (missed) overdue.push({ task, block, late: dayDiff(missed, today) })
-    else if (due === today || task.top3) todays.push({ task, block: null, late: 0 })
+    else if (due === today || isTop3Today(task, now)) todays.push({ task, block: null, late: 0 })
   }
   const dueMs = (r: RailTask) => (r.task.due_at ? Date.parse(r.task.due_at) : Infinity)
   overdue.sort((a, b) => b.late - a.late || dueMs(a) - dueMs(b))
