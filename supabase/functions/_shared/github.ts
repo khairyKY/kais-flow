@@ -40,10 +40,13 @@ export function parseRepos(input: unknown): string[] | null {
 }
 
 /** One query for issues assigned to `login`, plus the watched repos packed into as few queries as
- * fit GitHub's 256-char limit (several `repo:` terms in one query are OR'd). */
-export function searchQueries(login: string, repos: readonly string[]): string[] {
+ * fit GitHub's 256-char limit (several `repo:` terms in one query are OR'd). `onlyRepos` (the user
+ * saved Settings 2a's rules): with repos picked, ONLY those repos — no assignee query; with none
+ * picked, the assignee query alone. Rules never saved = the old union (assigned anywhere + repos). */
+export function searchQueries(login: string, repos: readonly string[], onlyRepos = false): string[] {
   const base = 'is:open is:issue'
-  const out = LOGIN_RE.test(login) ? [`${base} assignee:${login}`] : []
+  const assigned = !onlyRepos || !repos.some((r) => REPO_RE.test(r))
+  const out = assigned && LOGIN_RE.test(login) ? [`${base} assignee:${login}`] : []
   let terms = ''
   for (const r of repos) {
     if (!REPO_RE.test(r)) continue
@@ -97,6 +100,57 @@ export function toPayload(issue: GhIssue): IssuePayload {
   }
 }
 
+// ── Settings 2a "Rules · how GitHub lands", stored in integrations.data.rules next to data.repos ──
+
+export type GithubLanding = 'inbox' | 'tasks'
+export type GithubPriority = 'high' | 'normal' | 'low'
+export interface GithubRules {
+  /** Where NEW issues land: Inbox letters, or straight into Tasks (unfiled, linked to the issue). */
+  land: GithubLanding
+  /** Where the GitHub letters sit in the Inbox: above your own captures, below them (as before), or
+   * below them folded to the heading. Read by the Inbox; the sync doesn't need it. */
+  priority: GithubPriority
+  /** Paused: neither the cron nor "Sync now" syncs this user. */
+  paused: boolean
+}
+export const DEFAULT_RULES: GithubRules = { land: 'inbox', priority: 'normal', paused: false }
+
+/** Stored or posted rules → valid rules. Anything missing or unknown falls back to the default, which
+ * is the behaviour from before the rules existed. */
+export function readRules(raw: unknown): GithubRules {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  return {
+    land: r.land === 'tasks' ? 'tasks' : 'inbox',
+    priority: r.priority === 'high' || r.priority === 'low' ? r.priority : 'normal',
+    paused: r.paused === true,
+  }
+}
+
+/** A task's external_ref when the sync itself made the task ("Straight to Tasks"). `synced` marks
+ * the ones it may tick off when the issue closes; a task filed by hand from the Inbox has none, so it
+ * is never touched. repo/number are what the recheck reads; checked_at rotates it like payload's. */
+export interface SyncedTaskRef {
+  source: 'github'
+  id: string
+  url: string | null
+  repo: string
+  number: number
+  synced: true
+  checked_at?: string
+}
+
+/** The issue → landing decision: which table a NEW issue goes to under `rules`, and the row (minus
+ * id/user_id). Both keep the node_id in external_ref, which 0027's unique indexes dedupe on. */
+export function landing(issue: GhIssue, rules: GithubRules):
+  | { table: 'inbox_items'; row: { kind: 'github_issue'; raw_text: string; status: 'pending'; payload: IssuePayload; external_ref: { source: 'github'; id: string } } }
+  | { table: 'tasks'; row: { title: string; status: 'todo'; external_ref: SyncedTaskRef } } {
+  const p = toPayload(issue)
+  if (rules.land === 'tasks') {
+    return { table: 'tasks', row: { title: issue.title, status: 'todo', external_ref: { source: 'github', id: p.node_id, url: p.url, repo: p.repo, number: p.number, synced: true } } }
+  }
+  return { table: 'inbox_items', row: { kind: 'github_issue', raw_text: issue.title, status: 'pending', payload: p, external_ref: { source: 'github', id: p.node_id } } }
+}
+
 /** A still-pending github_issue inbox row, as github-sync reads it. */
 export interface PendingRow {
   id: string
@@ -146,7 +200,11 @@ export function planSync(
       update.push({ id: row.id, raw_text: issue.title, payload: { ...row.payload, ...toPayload(issue) } })
     }
   }
+  return { insert, update, recheck: staleFirst(recheck) }
+}
+
+/** Rows to recheck: never-checked first, then least recently checked, capped (one GET each). */
+export function staleFirst<T extends PendingRow>(rows: readonly T[]): T[] {
   const checkedAt = (r: PendingRow) => String(r.payload?.checked_at ?? '')
-  recheck.sort((a, b) => checkedAt(a).localeCompare(checkedAt(b)))
-  return { insert, update, recheck: recheck.slice(0, RECHECK_CAP) }
+  return [...rows].sort((a, b) => checkedAt(a).localeCompare(checkedAt(b))).slice(0, RECHECK_CAP)
 }

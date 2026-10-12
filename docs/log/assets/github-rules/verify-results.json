@@ -1,0 +1,267 @@
+[
+  {
+    "name": "desktop: the rules panel sits in the GitHub card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: four rows as drawn",
+    "ok": true,
+    "detail": "GitHubOpen issues come into your Inbox, ready to become tasks.@kai · Connected · synced 13 Oct, 09:56See issues in your Inbox →Sync nowDisconnectRules · how GitHub landsWatchingEvery open issue in the"
+  },
+  {
+    "name": "desktop: the watched repos are chips (name only), each with its own ✕",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: saved rules → the help names the scope",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Inbox · Normal selected, Pause off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the client reads repos/rules as JSON paths, never `data`",
+    "ok": true,
+    "detail": "provider,updated_at,login:data->>login,status:data->>status,synced_at:data->>synced_at,repos:data->repos,rules:data->rules"
+  },
+  {
+    "name": "add repo: the list came from github-connect (action repos), watched ones left out",
+    "ok": true,
+    "detail": "[\"khairyKY/portfolio\",\"acme/website\"]"
+  },
+  {
+    "name": "add repo: saves the whole state with the new repo",
+    "ok": true,
+    "detail": "{\"action\":\"rules\",\"repos\":\"khairyKY/kais-flow,khairyKY/shaheen_website,khairyKY/portfolio\",\"rules\":{\"land\":\"inbox\",\"priority\":\"normal\",\"paused\":false}}"
+  },
+  {
+    "name": "add repo: the chip shows at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "add repo: a sync starts so its issues arrive now",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "✕: saves without that repo",
+    "ok": true,
+    "detail": "khairyKY/kais-flow,khairyKY/shaheen_website"
+  },
+  {
+    "name": "✕: the chip is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tasks: saves land: tasks (repos unchanged)",
+    "ok": true,
+    "detail": "{\"action\":\"rules\",\"repos\":\"khairyKY/kais-flow,khairyKY/shaheen_website\",\"rules\":{\"land\":\"tasks\",\"priority\":\"normal\",\"paused\":false}}"
+  },
+  {
+    "name": "tasks: the help line says how they land, the card and its link follow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "priority: saves priority high",
+    "ok": true,
+    "detail": "{\"land\":\"inbox\",\"priority\":\"high\",\"paused\":false}"
+  },
+  {
+    "name": "pause: saves paused: true",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "pause: the status reads Paused and the row says nothing syncs",
+    "ok": true,
+    "detail": "GitHubOpen issues come into your Inbox, ready to become tasks.@kai · PausedSee issues in your Inbox →Sync nowDisconnectRules · how GitHub landsWatchingEvery ope"
+  },
+  {
+    "name": "pause: Sync now says it is paused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "every save went through github-connect (no direct write to integrations)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "legacy row (rules never saved): defaults shown, help says assigned issues still come",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "legacy: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "failing token: no rules panel (Reconnect first)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "failed save: says so",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "failed save: the switch goes back to what the server has",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "summary row: says where issues land and that it is paused",
+    "ok": true,
+    "detail": "IntegrationsOpen integrationsGitHubIssues land straight in TasksPausedGoogle CalendarA quiet sync under our own calendarComing soonGroqChat and capture parsing"
+  },
+  {
+    "name": "desktop day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: the panel is in Settings → Connections",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no sideways scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone day: segments and the switch are touch-sized (≥44)",
+    "ok": true,
+    "detail": "segment 48, switch 32 (48 hit)"
+  },
+  {
+    "name": "phone day: the chip ✕ has the kit hit area",
+    "ok": true,
+    "detail": "-12px"
+  },
+  {
+    "name": "phone: Pause saves through github-connect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: the panel is in Settings → Connections",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: no sideways scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone night: segments and the switch are touch-sized (≥44)",
+    "ok": true,
+    "detail": "segment 48, switch 32 (48 hit)"
+  },
+  {
+    "name": "phone night: the chip ✕ has the kit hit area",
+    "ok": true,
+    "detail": "-12px"
+  },
+  {
+    "name": "phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox normal: GitHub letters below your captures (as before)",
+    "ok": true,
+    "detail": "[\"captures\",\"github\"]"
+  },
+  {
+    "name": "desktop inbox normal: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox high: GitHub letters above your captures",
+    "ok": true,
+    "detail": "[\"github\",\"captures\"]"
+  },
+  {
+    "name": "desktop inbox high: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox low: below, folded to the heading",
+    "ok": true,
+    "detail": "[\"captures\",\"github\"] rows 0"
+  },
+  {
+    "name": "desktop inbox low: \"Show 2\" unfolds them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop inbox low: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox normal: GitHub letters below your captures (as before)",
+    "ok": true,
+    "detail": "[\"captures\",\"github\"]"
+  },
+  {
+    "name": "phone inbox normal: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox high: GitHub letters above your captures",
+    "ok": true,
+    "detail": "[\"github\",\"captures\"]"
+  },
+  {
+    "name": "phone inbox high: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox low: below, folded to the heading",
+    "ok": true,
+    "detail": "[\"captures\",\"github\"] rows 0"
+  },
+  {
+    "name": "phone inbox low: \"Show 2\" unfolds them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone inbox low: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
