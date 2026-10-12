@@ -488,7 +488,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
         )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-        <ColorDots value={color ?? 'var(--acc-lavender)'} onChange={setColor} size={expanded ? 22 : 16} />
+        <ColorDots value={color} onChange={setColor} size={expanded ? 22 : 16} />
         <Seg options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} value={busy ? 'busy' : 'free'} onChange={(v) => setBusy(v === 'busy')} style={{ flex: 'none', padding: 2, marginLeft: 'auto' }} />
       </div>
     </>

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -68,10 +68,11 @@ interface CalendarGridProps {
   onExternalDrop: (from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) => void
   /** Kai 2026-10-07: an overdue block's "Replan" (a task block that ended before today, not done). */
   onReplan?: (eventId: string, x: number, y: number) => void
-  /** Punch 33: a block dragged off the grid onto this element unschedules. Returns true when
-   * handled — false (or a non-task block) gets the §7 invalid-drop soft-no instead. */
+  /** Punch 33: a block dragged off the grid onto this element. `section` is the rail section under
+   * the pointer (its `data-section`), null on rail chrome. Returns true when handled — false gets
+   * the §7 invalid-drop soft-no instead. */
   railRef?: React.RefObject<HTMLElement | null>
-  onDragToRail?: (eventId: string) => boolean
+  onDragToRail?: (eventId: string, section: string | null) => boolean
   /** Punch 32 view options with grid-level backing. */
   hour24?: boolean
   firstDay?: number
@@ -104,6 +105,46 @@ function resolveGridDateTime(x: number, y: number): { iso: string; allDay: boole
   if (!timeStr) return { iso: new Date(y0, mo - 1, d).toISOString(), allDay: true }
   const [hh, mm] = timeStr.split(':').map(Number)
   return { iso: new Date(y0, mo - 1, d, hh, mm).toISOString(), allDay: false }
+}
+
+/** The rail section (`data-section`) under a point, inside `rail` only. */
+function railSectionAt(rail: HTMLElement | null | undefined, x: number, y: number): HTMLElement | null {
+  const sec = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-section]') ?? null
+  return sec && rail?.contains(sec) ? sec : null
+}
+
+/** Kai 2026-10-12: while a block is dragged, the rail section under the pointer carries
+ * `data-drop-over` (CalendarPage styles it). Returns the teardown. */
+function trackRailHover(rail: HTMLElement | null | undefined): () => void {
+  if (!rail) return () => {}
+  let over: HTMLElement | null = null
+  const move = (e: MouseEvent) => {
+    const sec = railSectionAt(rail, e.clientX, e.clientY)
+    if (sec === over) return
+    over?.removeAttribute('data-drop-over')
+    sec?.setAttribute('data-drop-over', '')
+    over = sec
+  }
+  window.addEventListener('mousemove', move)
+  return () => {
+    window.removeEventListener('mousemove', move)
+    over?.removeAttribute('data-drop-over')
+  }
+}
+
+/** Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender values (fill
+ * .24 / edge .35 / grip .5); a coloured event restates them in its colour at the same alphas, so
+ * nothing about the block's shape or weight changes. No colour clears them (back to the kind's hue). */
+function paintColor(el: HTMLElement, color: string | null | undefined): void {
+  const s = el.style
+  if (!color) {
+    for (const v of ['--kf-ev-accent', '--kf-ev-fill', '--kf-ev-edge', '--kf-ev-grip']) s.removeProperty(v)
+    return
+  }
+  s.setProperty('--kf-ev-accent', color)
+  s.setProperty('--kf-ev-fill', `color-mix(in srgb, ${color} 24%, transparent)`)
+  s.setProperty('--kf-ev-edge', `color-mix(in srgb, ${color} 55%, transparent)`)
+  s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${color} 65%, transparent)`)
 }
 
 function flashSnap(el: HTMLElement): void {
@@ -230,7 +271,20 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   const narrow = initialView !== 'dayGridMonth' && isNarrow(gridWidth, visibleDays)
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
-  useEffect(() => () => stopGhostRef.current?.(), []) // never strand a ghost on unmount
+  const stopHoverRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => {
+    stopGhostRef.current?.() // never strand a ghost (or a lit rail section) on unmount
+    stopHoverRef.current?.()
+  }, [])
+  // Kai 2026-10-12 ("you can't edit the colours after they've been created"): FullCalendar keeps an
+  // event's element across updates, so eventDidMount — the only place the hue was painted — never
+  // re-ran for a recoloured one. Repaint every block from the current data after each render.
+  useLayoutEffect(() => {
+    const colors = new Map(events.map((e) => [e.id, e.color]))
+    wrapRef.current?.querySelectorAll<HTMLElement>('[data-kf-id]').forEach((el) => {
+      if (colors.has(el.dataset.kfId!)) paintColor(el, colors.get(el.dataset.kfId!))
+    })
+  })
   // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
   const [stackMore, setStackMore] = useState<{ ids: string[]; left: number; bottom: number } | null>(null)
   const closeStackMore = useCallback(() => setStackMore(null), [])
@@ -616,17 +670,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
         info.el.dataset.kfId = info.event.id
-        // Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender
-        // values (fill .24 / edge .35 / grip .5); a coloured event restates them in its colour
-        // at the same alphas, so nothing about the block's shape or weight changes.
-        const own = (info.event.extendedProps as { kfColor?: string })?.kfColor
-        if (own) {
-          const s = info.el.style
-          s.setProperty('--kf-ev-accent', own)
-          s.setProperty('--kf-ev-fill', `color-mix(in srgb, ${own} 24%, transparent)`)
-          s.setProperty('--kf-ev-edge', `color-mix(in srgb, ${own} 55%, transparent)`)
-          s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${own} 65%, transparent)`)
-        }
+        paintColor(info.el, (info.event.extendedProps as { kfColor?: string | null })?.kfColor)
 
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
@@ -649,10 +693,13 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
       eventDragStart={(info) => {
         stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
+        stopHoverRef.current = trackRailHover(railRef?.current)
       }}
       eventDragStop={(info) => {
         const stop = stopGhostRef.current
         stopGhostRef.current = null
+        stopHoverRef.current?.()
+        stopHoverRef.current = null
         const je = info.jsEvent as MouseEvent | null
         const contains = (el: Element | null | undefined) => {
           if (!el || !je) return false
@@ -660,10 +707,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           return je.clientX >= r.left && je.clientX <= r.right && je.clientY >= r.top && je.clientY <= r.bottom
         }
         // The pointer left the grid, so FC reverts (instantly, dragRevertDuration 0).
-        // Rail = punch 33 unschedule; anywhere else = §7 invalid drop → the soft-no:
-        // the ghost shakes ±4px decaying ~320ms and nothing is created.
+        // Rail = the section under the pointer decides (punch 33, Kai 2026-10-12); anywhere else
+        // = §7 invalid drop → the soft-no: the ghost shakes ±4px decaying ~320ms, nothing changes.
         if (je && wrapRef.current && !contains(wrapRef.current)) {
-          const handled = contains(railRef?.current) && (onDragToRail?.(info.event.id) ?? false)
+          const rail = railRef?.current
+          const section = rail && contains(rail) ? (railSectionAt(rail, je.clientX, je.clientY)?.dataset.section ?? null) : undefined
+          const handled = section !== undefined && (onDragToRail?.(info.event.id, section) ?? false)
           if (!handled) {
             const host = document.getElementById(GHOST_ID)
             if (host) {

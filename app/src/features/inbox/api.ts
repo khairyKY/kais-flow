@@ -4,8 +4,11 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { createTask } from '../tasks/api'
-import { placeTask } from '../calendar/api'
+import { createTask, rescheduleDue } from '../tasks/api'
+import { deleteEvent, deleteEventWithUndo, placeTask, restoreEvent } from '../calendar/api'
+import { eventMinutes, type RailDropAction } from '../calendar/railDrop'
+import { NO_PLACE, placeTask as placeIn, type MoveTarget } from '../tasks/move'
+import { scheduleToday } from '../../lib/dateShortcuts'
 import { dayWord, formatDue, githubUrl } from './inboxDisplay'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
@@ -150,6 +153,54 @@ export function fileToCalendar(item: InboxItem, startsAt: string, endsAt: string
     unfile(prior, task)
   })
   return event
+}
+
+/** The calendar rail the other way (Kai 2026-10-12): a block dragged onto the rail does what the
+ * section means (calendar/railDrop decides which). A task's block comes off the calendar — onto
+ * Today it is also due today, no time. A plain event or empty block turns into an inbox capture or
+ * a task (due today, or in the Lists scope's `place`) and goes to Trash. One toast, one Undo that
+ * puts everything back. Returns false for the soft-no. */
+export function eventToRail(event: CalendarEvent, action: RailDropAction, place: MoveTarget = NO_PLACE, now = new Date()): boolean {
+  if (action === 'soft-no') return false
+  if (action === 'unschedule') {
+    deleteEventWithUndo(event, 'Unscheduled')
+    return true
+  }
+  const prior = { ...event }
+  deleteEvent(event)
+  if (action === 'unschedule-today') {
+    // Read after the delete: it just cleared the task's schedule, and rescheduleDue writes this row.
+    const task = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === event.task_id)
+    const undoDue = task ? rescheduleDue(task, scheduleToday(now)) : () => {}
+    toastUndo(`Unscheduled · ${event.title} · Today`, () => {
+      undoDue()
+      restoreEvent(prior)
+    })
+    return true
+  }
+  if (action === 'to-inbox') {
+    const item = captureText(event.title)
+    toastUndo(`Moved to Inbox · ${event.title}`, () => {
+      writeRow('inbox_items', item, 'delete')
+      restoreEvent(prior)
+    })
+    return true
+  }
+  const at = placeIn({ project_id: null, area_id: null, domain_id: null, milestone_id: null }, action === 'to-list' ? place : NO_PLACE)
+  const task = createTask({
+    title: event.title,
+    durationMin: eventMinutes(event),
+    dueAt: action === 'to-today' ? scheduleToday(now) : null,
+    projectId: at.project_id,
+    areaId: at.area_id,
+    domainId: at.domain_id,
+  })
+  toastUndo(`Now a task · ${destinationOf(task)}`, () => {
+    writeRow('tasks', task, 'delete')
+    logActivity('task.deleted', 'task', task.id, { reason: 'calendar rail drop undo' })
+    restoreEvent(prior)
+  })
+  return true
 }
 
 export function dismissInboxItem(item: InboxItem, silent = false): void {
