@@ -2,7 +2,7 @@
   {
     "name": "p1 [day] a click on a row opens the popover beside it (under, or over when there's no room) — never on it",
     "ok": true,
-    "detail": "{\"x\":352.5,\"y\":394.3125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":35.5625,\"width\":375,\"height\":351.875}"
+    "detail": "{\"x\":352.5,\"y\":394.125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":35.375,\"width\":375,\"height\":351.875}"
   },
   {
     "name": "p1 [day] it draws the task's fields (notes, chips, Delete · Open full)",
@@ -47,7 +47,7 @@
   {
     "name": "p1 [night] a click on a row opens the popover beside it (under, or over when there's no room) — never on it",
     "ok": true,
-    "detail": "{\"x\":352.5,\"y\":717.3125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":358.5625,\"width\":375,\"height\":351.875}"
+    "detail": "{\"x\":352.5,\"y\":394.125,\"width\":877.5,\"height\":93.3125} / {\"x\":387.5,\"y\":35.375,\"width\":375,\"height\":351.875}"
   },
   {
     "name": "p1 [night] it draws the task's fields (notes, chips, Delete · Open full)",
@@ -242,7 +242,12 @@
   {
     "name": "q1 title, date + time on the user clock, #project, !!, *label",
     "ok": true,
-    "detail": "{\"id\":\"25df8be0-b181-496f-95cb-453f14d3760b\",\"project_id\":\"b0000000-0000-4000-8000-000000000001\",\"domain_id\":\"d0000000-0000-4000-8000-000000000001\",\"title\":\"submit the report\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-13T12:00:00.000Z\",\"scheduled_start\":\"2026-10-13T12:00:00.000Z\",\"scheduled_end\":\"2026-10-13T12:30:00.000Z\",\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[\"calls\"],\"priority\":2,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-12T07:00:04.717Z\",\"updated_at\":\"2026-10-12T07:00:04.717Z\"}"
+    "detail": "{\"id\":\"7b18a0e8-6393-4e26-95a5-a2cb77e260e7\",\"project_id\":\"b0000000-0000-4000-8000-000000000001\",\"domain_id\":\"d0000000-0000-4000-8000-000000000001\",\"title\":\"submit the report\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-13T12:00:00.000Z\",\"scheduled_start\":\"2026-10-13T12:00:00.000Z\",\"scheduled_end\":\"2026-10-13T12:30:00.000Z\",\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[\"calls\"],\"priority\":2,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-12T07:00:03.217Z\",\"updated_at\":\"2026-10-12T07:00:03.217Z\"}"
+  },
+  {
+    "name": "q1 it says where it went (\"Added to Tomorrow · Forecasting\")",
+    "ok": true,
+    "detail": ""
   },
   {
     "name": "q1 a typed time puts it on the calendar (as the command bar does)",
@@ -251,6 +256,36 @@
   },
   {
     "name": "q no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the bar no longer offers \"⌘ ↵ AI capture\"",
+    "ok": true,
+    "detail": "↵ | QUICK ADD"
+  },
+  {
+    "name": "c2 ⌘/Ctrl+Enter is plain Enter: an instant task from the local parse (tomorrow, #project)",
+    "ok": true,
+    "detail": "{\"id\":\"e3253024-0408-40ff-b8fc-4383e920fff8\",\"project_id\":\"b0000000-0000-4000-8000-000000000001\",\"domain_id\":\"d0000000-0000-4000-8000-000000000001\",\"title\":\"pay rent\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-13T07:00:03.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-12T07:00:04.246Z\",\"updated_at\":\"2026-10-12T07:00:04.246Z\"}"
+  },
+  {
+    "name": "c2 it says where it went",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 a line with no structure lands in the Inbox and says so",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c4 the cheatsheet has no AI capture row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c no page errors",
     "ok": true,
     "detail": ""
   },
@@ -283,6 +318,31 @@
     "name": "d5 Done tab keys: j then e reopens the focused done row",
     "ok": true,
     "detail": ""
+  },
+  {
+    "name": "a1 a paused series is on no list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 a subtask row names its parent (↳)",
+    "ok": true,
+    "detail": "Draft the cohort model\n↳ Plan & implement forecasting logic\n45M\n☆"
+  },
+  {
+    "name": "a3 desktop right-click: Tomorrow is a top row again (with its 2 key), Plan… right after",
+    "ok": true,
+    "detail": "Tomorrow 2 / Plan… ▸ / Move to… ▸"
+  },
+  {
+    "name": "a3 …and it moves the task to tomorrow 09:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a4 a daily repeat finished 5 days late comes back tomorrow 09:00, not already overdue",
+    "ok": true,
+    "detail": "2026-10-13T06:00:00.000Z"
   },
   {
     "name": "d no page errors",

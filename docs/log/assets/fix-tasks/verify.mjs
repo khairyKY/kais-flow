@@ -42,7 +42,7 @@ const task = (n, title, over = {}) => ({
   reminder_at: null, reminder_sent: false, completed_at: null, paused: false, milestone_id: null, deleted_at: null, parent_task_id: null,
   created_at: CREATED, updated_at: CREATED, ...over,
 })
-const FORE = 1, TYRE = 2, REVIEW = 3, SUB1 = 4, SUB2 = 5, INVOICE = 6, OLD = 7, PLANTS = 8
+const FORE = 1, TYRE = 2, REVIEW = 3, SUB1 = 4, SUB2 = 5, INVOICE = 6, OLD = 7, PLANTS = 8, STRETCH = 9, PAUSED = 10
 const TASKS = [
   task(FORE, 'Plan & implement forecasting logic', { project_id: P1, domain_id: D1, due_at: iso('15:00'), priority: 2, duration_min: 30, recurrence_rule: 'FREQ=WEEKLY', notes: 'Start with the cohort model, then wire the RRULE engine…', labels: ['deep-work'], reminder_at: iso('14:30') }),
   task(TYRE, 'Call the tyre supplier', { due_at: iso('09:00') }),
@@ -52,6 +52,8 @@ const TASKS = [
   task(INVOICE, 'Send the invoice', { due_at: iso('09:00', 13) }),
   task(OLD, 'Renew passport', { due_at: iso('09:00', 10) }),
   task(PLANTS, 'Water the plants', { status: 'done', completed_at: iso('08:00'), due_at: iso('08:00') }),
+  task(STRETCH, 'Stretch', { recurrence_rule: 'FREQ=DAILY', due_at: iso('09:00', 7) }),
+  task(PAUSED, 'Paused practice', { recurrence_rule: 'FREQ=DAILY', due_at: iso('09:00'), paused: true }),
 ]
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const DOMAINS = [
@@ -126,9 +128,16 @@ async function settle(state) {
   }
 }
 const row = (page, n) => page.locator(`#task-${id(n)}`)
+/** Scrolled into view first, then clicked — as a person would: a menu closes on a scroll behind it
+ * (ContextMenu, the popover), and Playwright's own scroll-into-view can land after its click. */
+async function steady(loc, opts) {
+  await loc.scrollIntoViewIfNeeded()
+  await sleep(300)
+  await loc.click(opts)
+}
 const pop = (page) => page.locator('.tp-pop')
 const openPop = async (page, n) => {
-  await row(page, n).getByText(TASKS[n - 1].title, { exact: true }).first().click()
+  await steady(row(page, n).getByText(TASKS[n - 1].title, { exact: true }).first())
   await sleep(500)
 }
 
@@ -204,7 +213,12 @@ for (const theme of want('e') ? ['day', 'night'] : []) {
     await settle(state)
     const moved = lastRow(state, 'tasks', id(FORE), w0)
     check("e4 an area carries its domain (placeTask)", moved?.area_id === A1 && moved?.domain_id === D2 && moved?.project_id === null, JSON.stringify({ area: moved?.area_id, domain: moved?.domain_id, project: moved?.project_id }))
-    await page.getByRole('button', { name: /^More for/ }).click()
+    // Scrolled first, as a person would: Playwright's own scroll-into-view lands after the click and a
+    // menu closes on a scroll behind it (ContextMenu, by design).
+    const moreBtn = page.getByRole('button', { name: /^More for/ })
+    await moreBtn.scrollIntoViewIfNeeded()
+    await sleep(300)
+    await moreBtn.click()
     await sleep(300)
     const more = await page.getByRole('menu').last().innerText()
     check('e5 ⋯ has Make goal · Duplicate · Copy link · Delete', ['Make goal of the day', 'Duplicate', 'Copy link', 'Delete'].every((x) => more.includes(x)), more.replace(/\n/g, ' | '))
@@ -216,6 +230,8 @@ for (const theme of want('e') ? ['day', 'night'] : []) {
     await page.keyboard.press('Escape')
     await sleep(200)
     // Subtasks: ⋯ → Rename; a tap on the title opens it.
+    await page.locator(`#sub-${id(SUB2)}`).scrollIntoViewIfNeeded()
+    await sleep(300)
     await page.locator(`#sub-${id(SUB2)}`).getByRole('button', { name: /More actions for/ }).click()
     await page.getByRole('menuitem', { name: 'Rename' }).click()
     await page.getByRole('textbox', { name: 'Subtask title' }).fill('Draft the cohort model v2')
@@ -226,7 +242,7 @@ for (const theme of want('e') ? ['day', 'night'] : []) {
     await sleep(500)
     check('e7 a tap on a subtask opens it', new URL(page.url()).searchParams.get('task') === id(SUB2) && (await pop(page).count()) === 1)
     await page.keyboard.press('Escape')
-    await page.locator(`#sub-${id(SUB2)}`).click({ button: 'right' })
+    await steady(page.locator(`#sub-${id(SUB2)}`), { button: 'right' })
     await page.getByRole('menuitem', { name: 'Delete' }).click()
     await settle(state)
     check('e7 right-click → Delete sends it to Trash, with Undo', !!lastRow(state, 'tasks', id(SUB2), w0)?.deleted_at && (await toastSoon(page, 'Moved to Trash')))
@@ -239,7 +255,7 @@ for (const theme of want('e') ? ['day', 'night'] : []) {
 if (want('r')) {
   const { ctx, page, errors, state } = await open(`/tasks/${id(FORE)}`)
   const w0 = state.writes.length
-  await page.getByRole('button', { name: 'Repeat', exact: true }).click()
+  await steady(page.getByRole('button', { name: 'Repeat', exact: true }))
   await page.getByRole('menuitem', { name: 'Custom…' }).click()
   await sleep(400)
   const editor = page.locator('.kf-pk-pop', { hasText: 'Custom repeat' })
@@ -257,7 +273,7 @@ if (want('r')) {
   // The row ⋯ / right-click menu: Repeat ▸ Custom… opens the same editor.
   await page.goto(`${BASE}/tasks?list=all`, { waitUntil: 'networkidle' })
   await sleep(800)
-  await row(page, TYRE).click({ button: 'right' })
+  await steady(row(page, TYRE), { button: 'right' })
   await page.getByRole('menuitem', { name: 'Repeat' }).hover()
   await sleep(500)
   await page.getByRole('menuitem', { name: 'Custom…' }).click()
@@ -351,9 +367,40 @@ if (want('q')) {
   await settle(state)
   const made = posts(state, 'tasks', w0).find((t) => t.title === 'submit the report')
   check('q1 title, date + time on the user clock, #project, !!, *label', made?.project_id === P1 && made?.due_at === iso('15:00', 13) && made?.priority === 2 && JSON.stringify(made?.labels) === '["calls"]', JSON.stringify(made))
+  check('q1 it says where it went ("Added to Tomorrow · Forecasting")', await toastSoon(page, 'Added to Tomorrow · Forecasting'))
   check('q1 a typed time puts it on the calendar (as the command bar does)', posts(state, 'calendar_events', w0).some((e) => e.task_id === made?.id && e.starts_at === iso('15:00', 13)))
   await shot(page, 'q1-quick-add')
   check('q no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── C: the command bar — Enter is the one capture path (⌘↵ cut), and every landing says where ──
+if (want('c')) {
+  const { ctx, page, errors, state } = await open('/today')
+  const w0 = state.writes.length
+  await page.keyboard.press('Control+k')
+  await sleep(500)
+  const bar = page.locator(`#${'kf-capture-input'}`).or(page.getByPlaceholder(/Send the quote/)).first()
+  const hint = await text(page.locator('.kf-overlay-card, [role="dialog"]').filter({ hasText: 'quick add' }).first())
+  check('c1 the bar no longer offers "⌘ ↵ AI capture"', /quick add/i.test(hint) && !/AI capture/i.test(hint), hint.replace(/\n/g, ' | ').slice(-120))
+  await bar.fill('pay rent tomorrow #forecasting')
+  await bar.press('Control+Enter') // now just Enter: the same instant capture
+  await settle(state)
+  const made = posts(state, 'tasks', w0).find((t) => t.title === 'pay rent')
+  const onTue = made?.due_at && Date.parse(made.due_at) >= cairo('00:00', 13).getTime() && Date.parse(made.due_at) < cairo('00:00', 14).getTime()
+  check('c2 ⌘/Ctrl+Enter is plain Enter: an instant task from the local parse (tomorrow, #project)', made?.project_id === P1 && onTue, JSON.stringify(made))
+  check('c2 it says where it went', await toastSoon(page, 'Added to Tomorrow · Forecasting'))
+  await page.keyboard.press('Control+k')
+  await sleep(500)
+  await bar.fill('think about the garden shed')
+  await bar.press('Enter')
+  await settle(state)
+  check('c3 a line with no structure lands in the Inbox and says so', posts(state, 'inbox_items', w0).some((i) => i.raw_text === 'think about the garden shed') && (await toastSoon(page, 'Added to Inbox')))
+  await page.keyboard.press('?')
+  await sleep(400)
+  const sheet = await text(page.getByRole('dialog', { name: 'Shortcuts' }))
+  check('c4 the cheatsheet has no AI capture row', !/AI capture/i.test(sheet))
+  check('c no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 
@@ -383,6 +430,23 @@ if (want('d')) {
   await page.keyboard.press('e')
   await settle(state)
   check('d5 Done tab keys: j then e reopens the focused done row', [PLANTS, SUB1].some((n) => lastRow(state, 'tasks', id(n), w0)?.status === 'todo'))
+  // Kai 2026-10-12 audit items.
+  await page.goto(`${BASE}/tasks?list=all`, { waitUntil: 'networkidle' })
+  await sleep(800)
+  check('a1 a paused series is on no list', (await row(page, PAUSED).count()) === 0)
+  check('a2 a subtask row names its parent (↳)', /↳\s*Plan & implement forecasting logic/.test(await text(row(page, SUB2))), await text(row(page, SUB2)))
+  await steady(row(page, TYRE), { button: 'right' })
+  await sleep(300)
+  const items = await page.getByRole('menu').first().getByRole('menuitem').allInnerTexts()
+  check('a3 desktop right-click: Tomorrow is a top row again (with its 2 key), Plan… right after', /^Tomorrow/.test(items[0]) && /2/.test(items[0]) && /^Plan/.test(items[1]), items.slice(0, 3).join(' / ').replace(/\n/g, ' '))
+  await shot(page, 'a3-context-menu')
+  await page.getByRole('menuitem', { name: /^Tomorrow/ }).click()
+  await settle(state)
+  check('a3 …and it moves the task to tomorrow 09:00', lastRow(state, 'tasks', id(TYRE), w0)?.due_at === iso('09:00', 13))
+  await row(page, STRETCH).getByRole('checkbox').click()
+  await settle(state)
+  const spawned = posts(state, 'tasks', w0).find((t) => t.title === 'Stretch' && t.id !== id(STRETCH))
+  check('a4 a daily repeat finished 5 days late comes back tomorrow 09:00, not already overdue', spawned?.due_at === iso('09:00', 13), spawned?.due_at)
   check('d no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
