@@ -5,36 +5,64 @@ little JS, built by one Node script with **no dependencies** (no `npm install`).
 cookies, no framework. Separate from the app in `../app` — it doesn't import anything from it.
 
 ```
-node build.mjs          # → dist/  (31 pages, sitemap.xml, robots.txt, field-notes/feed.xml)
+node build.mjs             # → dist/  (31 pages, sitemap.xml, robots.txt, field-notes/feed.xml)
+node tools/check-links.mjs # every internal link, image and share card resolves; placeholders only where Kai still writes
 ```
 
-Preview: serve `dist/` with any static server (`npx serve dist`, `python -m http.server -d dist`).
+Both run in CI (`.github/workflows/ci.yml`, job **Site build**), so a broken page fails the build.
+Preview: serve `dist/` with any static server (`python -m http.server -d dist`), or `npx wrangler dev` here to see it
+exactly as the Worker serves it.
 
-## Deploy on Cloudflare Pages ($0) — Kai does this once
+## Put it live ($0) — Kai does this once, either way
+
+Two free ways on Cloudflare; pick one. Both build from `master`, need no secrets, and rebuild on every push.
+
+### A · Cloudflare Pages
 
 Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick `khairyKY/kais-flow`, then:
 
 | Setting | Value |
 |---|---|
 | Project name | `kais-flow-site` (gives `https://kais-flow-site.pages.dev`) |
-| Production branch | `master` (once `claude/site` is merged; any other branch gets a preview URL) |
+| Production branch | `master` (any other branch gets a preview URL) |
 | Framework preset | None |
 | Build command | `node build.mjs` |
 | Build output directory | `dist` |
 | Root directory (advanced) | `site` |
-| Environment variable | `SITE_URL` = the address people will use, e.g. `https://kais-flow-site.pages.dev` or your own domain. Canonical links, share cards, the sitemap and RSS use it. If the project name above was taken, set it to the `*.pages.dev` address Cloudflare gave you. |
+| Environment variable | `SITE_URL` = the address people will use, e.g. `https://kais-flow-site.pages.dev` or your own domain. Canonical links, share cards, the sitemap and RSS use it. Without it the build takes the project's own `*.pages.dev` address from Cloudflare (`CF_PAGES_URL`). |
 
 Then **Settings → Builds → Build watch paths → Include paths: `site/*`**, so app-only commits don't
 rebuild the site. `404.html` is picked up automatically for unknown addresses; no `_headers` or
-`_redirects` are needed. A custom domain is optional (Pages → Custom domains).
+`_redirects` are needed. Pages ignores `wrangler.jsonc`. A custom domain is optional (Custom domains).
+
+### B · A Worker with static assets — the way the app itself deploys
+
+`site/wrangler.jsonc` is a Worker named `kais-flow-site` that serves `dist/` (unknown addresses get
+`404.html` with a 404). Cloudflare dashboard → **Workers & Pages → Create → Workers → Import a repository**
+(Connect to Git) → pick `khairyKY/kais-flow`, then:
+
+| Setting | Value |
+|---|---|
+| Project (Worker) name | `kais-flow-site` — it must match `name` in `wrangler.jsonc` |
+| Production branch | `master` |
+| Root directory (advanced) | `site` |
+| Build command | `node build.mjs` |
+| Deploy command | `npx wrangler deploy` |
+| Build variable | `SITE_URL` = `https://kais-flow-site.kaidagoat.workers.dev` (or your own domain). Workers Builds doesn't say its address, so without it the build assumes that one — the account's `workers.dev` subdomain, where the app already is (`kais-flow.kaidagoat.workers.dev`). |
+
+The site is then at **https://kais-flow-site.kaidagoat.workers.dev** (`https://kais-flow-site.<account>.workers.dev`
+in general). Optionally **Settings → Build → Build watch paths → `site/*`**. To deploy by hand instead:
+`cd site && node build.mjs && npx wrangler deploy` (needs `npx wrangler login` once).
 
 ## Where things live
 
 | Path | What |
 |---|---|
 | `build.mjs` | renders every page, copies `public/`, writes sitemap/robots/RSS |
+| `wrangler.jsonc` | the Worker (option B): serves `dist/`, `404.html` for unknown addresses |
+| `tools/check-links.mjs` | the build check: links, images, share cards, placeholders, the Arabic switch |
 | `src/releases.json` | **the release notes**, newest first: Field notes, What’s new, RSS, the app’s What’s new sheet and the GitHub Release body all read it |
-| `src/data.mjs` | **every other fact**: app URL, latest release (fallback, from releases.json), the roadmap, contact email |
+| `src/data.mjs` | **every other fact**: app URL, latest release (fallback, from releases.json), the roadmap, contact email, `ARABIC`, the site address (`siteUrl`) |
 | `src/pages/*.mjs` | one module per page group (home, features, paper, guides, info, Arabic…) |
 | `src/lib.mjs` · `src/parts.mjs` | the page shell (header, footer, head tags) and shared sections |
 | `src/tokens.css` | the app's colour/type tokens, copied (not imported) from `app/src/styles/tokens` |
@@ -50,9 +78,12 @@ rebuild the site. `404.html` is picked up automatically for unknown addresses; n
   release when it loads). The app bundles the same file (its What's new sheet), and the release workflow
   writes that entry as the GitHub Release body, which older installs read for "Coming in …". Re-run
   `tools/render-assets.mjs` so the What’s new / Field notes / Download share cards show it.
-- **The roadmap**: `ROADMAP` in `src/data.mjs`.
+- **The roadmap**: `ROADMAP` in `src/data.mjs`. Now = this month’s work; when something ships it leaves for Field notes.
+- **Arabic is off** (Kai, 2026-10-12): `ARABIC = false` in `src/data.mjs`. Nothing builds or links `/ar/` — no EN | ع
+  switch, no hreflang, no sitemap entry, no share card. `src/pages/ar.mjs` and `public/og/ar.png` stay in the repo;
+  `ARABIC = true` brings all of it back (re-check its copy against the app first).
 - **Placeholders for Kai** are shown on the page as `[Kai writes this …]` / `[contact email]`:
-  the About story and photo, `CONTACT_EMAIL`, how long database backups are kept (Privacy §1), and
-  how to make the Akiflow dump (guide: Import your old app).
+  the About story and the photo caption, and `CONTACT_EMAIL` (Privacy §6, Terms). `tools/check-links.mjs` counts
+  them, so a new one can’t slip in unnoticed (and the count needs updating when Kai fills one in).
 - The site loads fonts from Google Fonts and the release number from api.github.com; the privacy
   page says so. Nothing else leaves the browser.

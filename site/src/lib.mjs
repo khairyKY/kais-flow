@@ -2,7 +2,7 @@
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { icon } from './icons.mjs'
-import { APP_URL, REPO, CONTACT_EMAIL } from './data.mjs'
+import { APP_URL, REPO, CONTACT_EMAIL, ARABIC } from './data.mjs'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 
@@ -62,7 +62,7 @@ const T = { en: { skip: 'Skip to content', open: 'Open the app', menu: 'Menu', m
   ar: { skip: 'انتقل إلى المحتوى', open: 'افتح التطبيق', menu: 'القائمة', main: 'الرئيسية', lang: 'اللغة', foot: 'التذييل', tag: 'سجلّ ميداني للأيام', fine: '© 2026 Kai’s Flow · لا ملفات تعريف ارتباط ولا تتبّع على هذا الموقع', home: 'Kai’s Flow، الرئيسية', toNight: 'الوضع الليلي', toDay: 'الوضع النهاري' } }
 
 const navLinks = (lang, path) => NAV[lang].map(([l, h]) => `<a href="${h}"${path.startsWith(h) ? ' aria-current="page"' : ''}>${l}</a>`).join('')
-const langSwitch = (lang) => `<div class="lang" role="group" aria-label="${T[lang].lang}">${lang === 'en'
+const langSwitch = (lang) => !ARABIC ? '' : `<div class="lang" role="group" aria-label="${T[lang].lang}">${lang === 'en'
   ? '<span class="on" lang="en">EN</span><a href="/ar/" lang="ar" hreflang="ar" aria-label="العربية">ع</a>'
   : '<a href="/" lang="en" hreflang="en" aria-label="English">EN</a><span class="on" lang="ar">ع</span>'}</div>`
 
@@ -118,7 +118,7 @@ export const page = ({ site, path, title, description, og = 'home', lang = 'en',
 <title>${fullTitle}</title>
 <meta name="description" content="${esc(description)}">
 ${noindex ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${url}">`}
-${alternates ? `<link rel="alternate" hreflang="en" href="${site}/">\n<link rel="alternate" hreflang="ar" href="${site}/ar/">\n<link rel="alternate" hreflang="x-default" href="${site}/">\n` : ''}<meta property="og:type" content="website">
+${alternates && ARABIC ? `<link rel="alternate" hreflang="en" href="${site}/">\n<link rel="alternate" hreflang="ar" href="${site}/ar/">\n<link rel="alternate" hreflang="x-default" href="${site}/">\n` : ''}<meta property="og:type" content="website">
 <meta property="og:site_name" content="Kai’s Flow">
 <meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(description)}">

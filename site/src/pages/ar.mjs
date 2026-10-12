@@ -1,6 +1,7 @@
 // The Arabic home (RTL). Copy from Kai's Arabic design (13b-12), with two lines corrected to match
 // the app as it is today (Google Calendar isn't connected yet; People keeps notes, not promises).
 // The app screens stay in English and left-to-right until the app itself is translated.
+// Not built while data.mjs ARABIC is false (Kai 2026-10-12: turned off).
 import { img, screen, btn, head2, icon, soon } from '../lib.mjs'
 import { APP_URL } from '../data.mjs'
 
@@ -12,7 +13,8 @@ const FEATURES = [
   ['journal', 't-butter', 'اليوميات والمعشبة', 'دوّن يومك. المشاريع المنتهية تُكبس كالزهور.'],
   ['people', 't-blossom', 'الأشخاص', 'أعياد الميلاد، وآخر مرة تحدثتما، وملاحظات عن كل شخص.'],
   ['download', 't-hyd', 'انقل قوائمك', 'استورد من Todoist وTickTick وNotion وObsidian وAkiflow.'],
-  ['notebook', 't-butter', 'صفحة الدفتر والالتقاط الورقي', 'انسخ يومك إلى دفترك، ثم صوّره ليعود مهامّ.', true],
+  // 2026-10-12: Paper capture is live (v1.0.20); the Notebook page is still to come.
+  ['notebook', 't-butter', 'الالتقاط الورقي', 'صوّر ملاحظاتك المكتوبة بخط اليد فتعود مهامّ، بالعربية أيضًا. صفحة الدفتر قادمة.'],
 ]
 const DAY = [
   ['plan', '١', 'الصباح · نحو ٣ دقائق', 'خطّط ليومي', 'اختر أهم ثلاث مهام، وامنحها وقتًا في التقويم، ودع الباقي ينتظر.', 'sage', 'شاشة خطّط ليومي على الهاتف'],

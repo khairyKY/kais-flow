@@ -1,0 +1,182 @@
+[
+  {
+    "name": "sitemap lists every page",
+    "ok": true,
+    "detail": "30 urls"
+  },
+  {
+    "name": "Arabic is off: /ar/ is not built, not in the sitemap",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Arabic share card is not in the build",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "an unknown address gets the botanical 404",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: no console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: every shown image loads",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: one h1 per page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: no Arabic switch, link or hreflang",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 day: text contrast AA",
+    "ok": true,
+    "detail": "2114 text runs"
+  },
+  {
+    "name": "1440 night: no console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 night: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 night: every shown image loads",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 night: one h1 per page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 night: no Arabic switch, link or hreflang",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440 night: text contrast AA",
+    "ok": true,
+    "detail": "2114 text runs"
+  },
+  {
+    "name": "390 day: no console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 day: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 day: every shown image loads",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 day: one h1 per page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 day: no Arabic switch, link or hreflang",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 day: text contrast AA",
+    "ok": true,
+    "detail": "1928 text runs"
+  },
+  {
+    "name": "390 night: no console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 night: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 night: every shown image loads",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 night: one h1 per page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 night: no Arabic switch, link or hreflang",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 night: text contrast AA",
+    "ok": true,
+    "detail": "1928 text runs"
+  },
+  {
+    "name": "1440: the scroll story pins with motion allowed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440: reduced motion — the story stacks, the little loops are still",
+    "ok": true,
+    "detail": "{\"pos\":\"relative\",\"anim\":false}"
+  },
+  {
+    "name": "390: the scroll story pins with motion allowed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390: reduced motion — the story stacks, the little loops are still",
+    "ok": true,
+    "detail": "{\"pos\":\"relative\",\"anim\":false}"
+  },
+  {
+    "name": "sun/moon flips the theme",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "guide search finds the AI assistant guide",
+    "ok": true,
+    "detail": "Capture from anywhere, Connect an AI assistant, Your data & privacy"
+  },
+  {
+    "name": "the MCP guide carries the three setups from the app",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the roadmap’s Now is this month’s work",
+    "ok": true,
+    "detail": "Events that repeat, and a new menu for calendar events · The Notebook page and the ticks loop · Today and the Inbox, redrawn from Kai’s reviewed designs · Talk it out and photos in the journal"
+  }
+]

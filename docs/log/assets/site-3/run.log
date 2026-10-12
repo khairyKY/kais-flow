@@ -1,0 +1,38 @@
+PASS sitemap lists every page — 30 urls
+PASS Arabic is off: /ar/ is not built, not in the sitemap
+PASS Arabic share card is not in the build
+PASS an unknown address gets the botanical 404
+PASS 1440 day: no console errors
+PASS 1440 day: no sideways scroll
+PASS 1440 day: every shown image loads
+PASS 1440 day: one h1 per page
+PASS 1440 day: no Arabic switch, link or hreflang
+PASS 1440 day: text contrast AA — 2114 text runs
+PASS 1440 night: no console errors
+PASS 1440 night: no sideways scroll
+PASS 1440 night: every shown image loads
+PASS 1440 night: one h1 per page
+PASS 1440 night: no Arabic switch, link or hreflang
+PASS 1440 night: text contrast AA — 2114 text runs
+PASS 390 day: no console errors
+PASS 390 day: no sideways scroll
+PASS 390 day: every shown image loads
+PASS 390 day: one h1 per page
+PASS 390 day: no Arabic switch, link or hreflang
+PASS 390 day: text contrast AA — 1928 text runs
+PASS 390 night: no console errors
+PASS 390 night: no sideways scroll
+PASS 390 night: every shown image loads
+PASS 390 night: one h1 per page
+PASS 390 night: no Arabic switch, link or hreflang
+PASS 390 night: text contrast AA — 1928 text runs
+PASS 1440: the scroll story pins with motion allowed
+PASS 1440: reduced motion — the story stacks, the little loops are still — {"pos":"relative","anim":false}
+PASS 390: the scroll story pins with motion allowed
+PASS 390: reduced motion — the story stacks, the little loops are still — {"pos":"relative","anim":false}
+PASS sun/moon flips the theme
+PASS guide search finds the AI assistant guide — Capture from anywhere, Connect an AI assistant, Your data & privacy
+PASS the MCP guide carries the three setups from the app
+PASS the roadmap’s Now is this month’s work — Events that repeat, and a new menu for calendar events · The Notebook page and the ticks loop · Today and the Inbox, redrawn from Kai’s reviewed designs · Talk it out and photos in the journal
+
+36/36 pass

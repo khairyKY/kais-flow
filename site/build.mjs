@@ -1,18 +1,20 @@
 // Builds the static site into dist/. Node only, no dependencies: `node build.mjs`.
-// SITE_URL (env) = the public origin, used for canonical links, Open Graph images, sitemap and RSS.
+// SITE_URL (env) = the public origin, used for canonical links, Open Graph images, sitemap and RSS
+// (src/data.mjs siteUrl: Cloudflare Pages and Workers Builds get a fallback; set it to be sure).
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { page } from './src/lib.mjs'
 import { pages } from './src/pages/index.mjs'
-import { RELEASES, shortDate } from './src/data.mjs'
+import { RELEASES, shortDate, siteUrl, ARABIC } from './src/data.mjs'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const DIST = path.join(ROOT, 'dist')
-const SITE = (process.env.SITE_URL || 'https://kais-flow-site.pages.dev').replace(/\/+$/, '')
+const SITE = siteUrl(process.env)
 
 fs.rmSync(DIST, { recursive: true, force: true })
 fs.cpSync(path.join(ROOT, 'public'), DIST, { recursive: true })
+if (!ARABIC) fs.rmSync(path.join(DIST, 'og/ar.png'), { force: true }) // kept in public/ for when it's back on
 const read = (f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')
 const write = (rel, text) => { const f = path.join(DIST, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, text) }
 

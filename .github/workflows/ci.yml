@@ -1,7 +1,7 @@
 name: CI
 
 # The automated half of the release gate: the suite under four timezones, lint (0 errors since the
-# D2 fix) and a production build.
+# D2 fix) and a production build — plus the explainer site's build and link check (site/, seconds).
 # Runs on the integration branches, on PRs, and as the first job of Release.
 on:
   push:
@@ -68,3 +68,18 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  # The explainer site (site/): Node only, no install. A broken page, link or share card fails here.
+  site:
+    name: Site build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node build.mjs
+      - run: node tools/check-links.mjs
