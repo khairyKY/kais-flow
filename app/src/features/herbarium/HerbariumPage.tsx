@@ -184,7 +184,7 @@ export function HerbariumPage() {
     // ignores it (Esc / ✕ / Cancel still close).
     const dirty = isEditingLine && editedLineText !== (p.completion_summary || '')
     return (
-      <div className="kf-overlay-scrim" onClick={() => { if (!dirty) { setSelectedSpecimen(null); setIsEditingLine(false) } }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+      <div className="kf-overlay-scrim" onClick={() => { if (!dirty) { setSelectedSpecimen(null); setIsEditingLine(false) } }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
         <div className="kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
@@ -202,8 +202,8 @@ export function HerbariumPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 8, resize: 'none', color: 'var(--ink-body)' }} />
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <span onClick={() => setIsEditingLine(false)} style={{ fontSize: 11.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
-                      <span onClick={handleSaveLine} style={{ fontSize: 11.5, color: 'var(--acc-terra)', fontWeight: 600, cursor: 'pointer' }}>Save</span>
+                      <span onClick={() => setIsEditingLine(false)} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
+                      <span onClick={handleSaveLine} style={{ fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', fontWeight: 600, cursor: 'pointer' }}>Save</span>
                     </div>
                   </div>
                 ) : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>"{p.completion_summary || 'No summary line written.'}"</div>}
@@ -211,8 +211,8 @@ export function HerbariumPage() {
               {!isEditingLine && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 8 }}>
                   {/* The shelf's way into the optional ceremony (the Finish toast offers it too). */}
-                  <button type="button" className="kf-hit" onClick={() => { setSelectedSpecimen(null); setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '') }} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 11.5, color: 'var(--acc-terra)', cursor: 'pointer' }}>Press it ✿</button>
-                  <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Edit the line…</span>
+                  <button type="button" className="kf-hit" onClick={() => { setSelectedSpecimen(null); setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '') }} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer' }}>Press it ✿</button>
+                  <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Edit the line…</span>
                 </div>
               )}
               <div style={{ flex: 1 }}></div>
@@ -252,7 +252,7 @@ export function HerbariumPage() {
     const milestones = p.milestones || []
     const doneMilestones = milestones.filter(m => m.completed).length
     return (
-      <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+      <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
         <style>{PRESS_CSS}</style>
         <div className="kf-overlay-card" style={isMobile
           ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
@@ -268,7 +268,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -287,7 +287,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -302,7 +302,7 @@ export function HerbariumPage() {
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
-                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
+                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
                 <button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
               </div>
             </div>
