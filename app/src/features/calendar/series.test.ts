@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
 import { buildRule, repeatStart, type RepeatSpec } from '../tasks/repeatRule'
-import { detachedCopy, expandEvents, findBlock, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate, withRuleParts } from './series'
+import { alignToRule, detachedCopy, expandEvents, findBlock, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate, withRuleParts } from './series'
 
 // Exact UTC instants and explicit zones throughout, so these hold under every TZ the suite runs in
 // (CI: UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo) — nothing here may read the device zone.
 
 const CAIRO = 'Africa/Cairo'
 const LA = 'America/Los_Angeles'
+const TOKYO = 'Asia/Tokyo'
 
 const ev = (over: Partial<CalendarEvent>): CalendarEvent => ({
   id: 'e1',
@@ -281,5 +282,45 @@ describe('what the Repeat editor writes (tasks/repeatRule), expanded through _sh
     const split = splitSeries(row, { starts_at: '2026-10-19T19:00:00.000Z', ends_at: '2026-10-19T20:00:00.000Z' }, 'e2', '2026-10-12T10:00:00.000Z', CAIRO)!
     expect(split.tail.recurrence_rule).toBe('FREQ=WEEKLY;BYDAY=MO,WE;COUNT=4')
     expect(starts(expandEvents([split.head, split.tail], ...win, CAIRO))).toEqual(run(rule))
+  })
+})
+
+describe('alignToRule — a rule that skips the block’s own day (conductor 2026-10-13)', () => {
+  const WEEKDAYS = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'
+  // Saturday 17 Oct 2026, 09:00 Cairo (06:00Z)
+  const sat = ev({ id: 'sat', starts_at: '2026-10-17T06:00:00.000Z', ends_at: '2026-10-17T06:30:00.000Z', recurrence_rule: WEEKDAYS })
+  const NOW = '2026-10-12T10:00:00.000Z'
+
+  it('Saturday + every weekday: the block stays a one-off on Saturday, the series starts Monday 09:00', () => {
+    const a = alignToRule(sat, 'keep', NOW, CAIRO)!
+    expect(a.series).toMatchObject({ id: 'sat', starts_at: '2026-10-19T06:00:00.000Z', ends_at: '2026-10-19T06:30:00.000Z', recurrence_rule: WEEKDAYS })
+    expect(a.keep).toMatchObject({ id: 'keep', starts_at: sat.starts_at, ends_at: sat.ends_at, recurrence_rule: null, series_id: 'sat' })
+    const shown = starts(expandEvents([a.series, a.keep], ...range('2026-10-17T00:00:00Z', '2026-10-24T00:00:00Z'), CAIRO))
+    expect(shown).toEqual(['2026-10-17T06:00:00.000Z', '2026-10-19T06:00:00.000Z', '2026-10-20T06:00:00.000Z', '2026-10-21T06:00:00.000Z', '2026-10-22T06:00:00.000Z', '2026-10-23T06:00:00.000Z'])
+  })
+
+  it('null when the start matches the rule (a Monday + every weekday, or plain weekly)', () => {
+    expect(alignToRule({ ...sat, starts_at: '2026-10-19T06:00:00.000Z', ends_at: '2026-10-19T06:30:00.000Z' }, 'k', NOW, CAIRO)).toBeNull()
+    expect(alignToRule({ ...sat, recurrence_rule: 'FREQ=WEEKLY' }, 'k', NOW, CAIRO)).toBeNull()
+    expect(alignToRule({ ...sat, recurrence_rule: null }, 'k', NOW, CAIRO)).toBeNull()
+    expect(alignToRule({ ...sat, recurrence_rule: 'FREQ=NOPE' }, 'k', NOW, CAIRO)).toBeNull()
+  })
+
+  it('reads the day on the user’s zone: 06:00Z Saturday is a Friday 23:00 in Los Angeles — that matches', () => {
+    expect(alignToRule(sat, 'k', NOW, LA)).toBeNull()
+    // …and Sunday 01:00Z is Saturday 18:00 in LA: the series moves to Monday 18:00 LA (Tuesday 01:00Z)
+    const la = { ...sat, starts_at: '2026-10-18T01:00:00.000Z', ends_at: '2026-10-18T01:30:00.000Z' }
+    expect(alignToRule(la, 'k', NOW, LA)!.series.starts_at).toBe('2026-10-20T01:00:00.000Z')
+  })
+
+  it('the Nth-weekday rule from the editor: the 2nd Tuesday of the month from a Wednesday', () => {
+    const wed = { ...sat, starts_at: '2026-10-14T06:00:00.000Z', ends_at: '2026-10-14T06:30:00.000Z', recurrence_rule: 'FREQ=MONTHLY;BYDAY=+2TU' }
+    expect(alignToRule(wed, 'k', NOW, CAIRO)!.series.starts_at).toBe('2026-11-10T07:00:00.000Z') // UTC+2 by then
+  })
+
+  it('an all-day block is its date', () => {
+    const day = ev({ id: 'd', all_day: true, starts_at: '2026-10-17T00:00:00.000Z', ends_at: '2026-10-18T00:00:00.000Z', recurrence_rule: WEEKDAYS })
+    const a = alignToRule(day, 'k', NOW, TOKYO)!
+    expect([a.series.starts_at, a.series.ends_at, a.keep.starts_at]).toEqual(['2026-10-19T00:00:00.000Z', '2026-10-20T00:00:00.000Z', '2026-10-17T00:00:00.000Z'])
   })
 })

@@ -158,6 +158,43 @@ export function splitSeries(
   }
 }
 
+/** A rule that doesn't fall on the series' own start (Saturday + "every weekday"): rrule never counts
+ * that start, so the block that was clicked would vanish. Conductor 2026-10-13: the block stays where
+ * it is as a one-off — detached from the series, like a moved occurrence (`keep`, series_id → the
+ * series) — and the series starts at the rule's first start after it. Null when the start matches
+ * (or the rule can't be read, or never fires within ~a year). */
+export function alignToRule(
+  row: CalendarEvent,
+  keepId: string,
+  now: string,
+  zone: string = appZone(),
+  between: RuleBetween = ruleBetween,
+): { series: CalendarEvent; keep: CalendarEvent } | null {
+  const rule = row.recurrence_rule
+  if (!rule) return null
+  const dtstart = new Date(floatingOf(row, row.starts_at, zone))
+  let first: Date | undefined
+  try {
+    first = between(floatingRule(rule, zone, row.all_day), dtstart, dtstart, new Date(dtstart.getTime() + 400 * DAY))[0]
+  } catch {
+    return null
+  }
+  if (!first) return null
+  const start = row.all_day ? first.getTime() : fromFloating(first.getTime(), zone)
+  if (start === Date.parse(row.starts_at)) return null
+  const len = Date.parse(row.ends_at) - Date.parse(row.starts_at)
+  return {
+    series: {
+      ...row,
+      starts_at: new Date(start).toISOString(),
+      ends_at: new Date(start + len).toISOString(),
+      recurrence_exdates: (row.recurrence_exdates ?? []).filter((x) => Date.parse(x) >= start),
+      updated_at: now,
+    },
+    keep: detachedCopy(row, row.starts_at, row.ends_at, row.all_day, keepId, now),
+  }
+}
+
 /** The block a popover / sheet is about, after an edit that may have changed it under it (a repeat
  * re-anchored or re-timed): by id, else the same series' occurrence nearest where it was. */
 export function findBlock<E extends CalendarEvent>(events: readonly E[], id: string, start: string): E | undefined {

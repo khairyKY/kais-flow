@@ -22,7 +22,7 @@
  {
   "name": "p4a day: the strip marks the free stretch after 16:00 (\"4h free\")",
   "ok": true,
-  "detail": "[\"4H FREE\"]"
+  "detail": "[\"1H 15M FREE\",\"4H FREE\"]"
  },
  {
   "name": "p4a day: an overdue card reads \"Overdue 3d\" in terra, the rest \"30m · Due tomorrow\" / \"↻ Weekly\"",
@@ -82,7 +82,7 @@
  {
   "name": "p4a night: the strip marks the free stretch after 16:00 (\"4h free\")",
   "ok": true,
-  "detail": "[\"4H FREE\"]"
+  "detail": "[\"1H 15M FREE\",\"4H FREE\"]"
  },
  {
   "name": "p4a night: an overdue card reads \"Overdue 3d\" in terra, the rest \"30m · Due tomorrow\" / \"↻ Weekly\"",
@@ -301,6 +301,31 @@
  },
  {
   "name": "r1 no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r2 the series starts Mon 13 18:00 on Mon–Fri; Saturday 18:00 stays as a one-off of it",
+  "ok": true,
+  "detail": "{\"series\":[\"FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR\",\"2026-07-13T15:00:00.000Z\"],\"keep\":[\"2026-07-11T15:00:00.000Z\",\"e0000000-0000-4000-8000-000000000004\"]}"
+ },
+ {
+  "name": "r2 on the grid: the Saturday block is still there, and Monday has the series",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r2 one Undo toast — \"· from Mon 13\"",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r2 Undo: the one-off back as it was, the copy gone",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "r2 no page errors",
   "ok": true,
   "detail": ""
  },

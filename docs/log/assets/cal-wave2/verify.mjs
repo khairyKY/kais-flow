@@ -376,7 +376,42 @@ if (want('r1')) {
   await sleep(500)
   check('r1 Custom… opens the rule editor', (await page.getByText('Custom repeat').count()) >= 1)
   await shot(page, 'r1-custom-editor')
+  await page.keyboard.press('Escape')
+  await sleep(300)
   check('r1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── R2 (conductor 2026-10-13): Mon–Fri picked on a SATURDAY block — it stays as a one-off, the series
+// starts Monday, one Undo ──
+if (want('r2')) {
+  const { ctx, page, errors, state } = await open('/calendar')
+  await fc(page, eid(TABLE)).scrollIntoViewIfNeeded()
+  await fc(page, eid(TABLE)).click()
+  await menu(page).waitFor({ timeout: 4000 })
+  await sleep(300)
+  await menu(page).getByRole('menuitem', { name: /Does not repeat/ }).click()
+  await sleep(300)
+  await page.locator('[role="menu"]').last().getByRole('menuitem', { name: 'Custom…' }).click()
+  await sleep(500)
+  for (const d of ['Sat', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']) await page.getByRole('button', { name: d, exact: true }).last().click()
+  await shot(page, 'r2-custom-weekdays')
+  const w = state.writes.length
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await settle(state)
+  const written = posts(state, 'calendar_events', w)
+  const series = written.find((e) => e.id === eid(TABLE))
+  const keep = written.find((e) => e.id !== eid(TABLE))
+  check('r2 the series starts Mon 13 18:00 on Mon–Fri; Saturday 18:00 stays as a one-off of it', series?.recurrence_rule === 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' && series?.starts_at === iso('18:00', 13) && keep?.starts_at === iso('18:00', 11) && keep?.series_id === eid(TABLE) && !keep?.recurrence_rule, JSON.stringify({ series: series && [series.recurrence_rule, series.starts_at], keep: keep && [keep.starts_at, keep.series_id] }))
+  await sleep(600)
+  check('r2 on the grid: the Saturday block is still there, and Monday has the series', (await page.locator(`.fc-event[data-kf-id="${keep?.id}"]`).count()) === 1 && (await page.locator(`.fc-event[data-kf-id="${eid(TABLE)}::${iso('18:00', 13)}"]`).count()) === 1)
+  await shot(page, 'r2-saturday-kept')
+  check('r2 one Undo toast — "· from Mon 13"', await toastSoon(page, 'from Mon 13'))
+  const w2 = state.writes.length
+  await page.locator('.kf-toast', { hasText: 'from Mon 13' }).getByRole('button', { name: 'Undo' }).first().click()
+  await settle(state)
+  check('r2 Undo: the one-off back as it was, the copy gone', posts(state, 'calendar_events', w2).some((e) => e.id === eid(TABLE) && !e.recurrence_rule && e.starts_at === iso('18:00', 11)) && state.writes.slice(w2).some((x) => x.method === 'DELETE'))
+  check('r2 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 
