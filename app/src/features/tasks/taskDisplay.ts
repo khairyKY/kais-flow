@@ -1,4 +1,4 @@
-import { localDateKey } from '../routines/streaks'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
 /** `30` -> "30M", `60` -> "1H", `90` -> "1H30M". */
@@ -10,10 +10,11 @@ export function formatDuration(min: number): string {
   return `${h}H${m}M`
 }
 
-/** Calendar-day difference (local time), not raw ms/24 -- a task due 23:00 yesterday is 1 day overdue, not 0. */
+/** Calendar-day difference on the user's clock (app_settings.timezone — the day the Overdue list
+ * groups by, tasks/grouping), not raw ms/24: a task due 23:00 yesterday is 1 day overdue, not 0. */
 export function daysOverdue(dueAt: string, now = new Date()): number {
-  const [dy, dm, dd] = localDateKey(new Date(dueAt)).split('-').map(Number)
-  const [ny, nm, nd] = localDateKey(now).split('-').map(Number)
+  const [dy, dm, dd] = cairoDateKey(new Date(dueAt)).split('-').map(Number)
+  const [ny, nm, nd] = cairoDateKey(now).split('-').map(Number)
   return Math.round((Date.UTC(ny, nm - 1, nd) - Date.UTC(dy, dm - 1, dd)) / 86400000)
 }
 

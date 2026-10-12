@@ -8,7 +8,9 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import { checkAction } from './completion'
-import { scheduleToday } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
+import { dayShort } from '../../components/pickerMath'
+import { cairoTimeKey } from '../calendar/eventTime'
 import { Checkbox, Chip } from '../../components/kit'
 import { useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
@@ -205,7 +207,7 @@ export function TaskRow({
             )}
             {task.completed_at && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                {cairoTimeKey(new Date(task.completed_at))}
               </span>
             )}
           </>
@@ -317,8 +319,8 @@ export function TaskRow({
           {inProgress && <span style={{ color: 'var(--kf-chip-tasks, #8A4A58)' }}>In progress</span>}
           {inProgress && task.scheduled_start && (
             <span>
-              {new Date(task.scheduled_start).toLocaleDateString([], { weekday: 'short' })}{' '}
-              {new Date(task.scheduled_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              {/* The user's day and clock (app_settings.timezone), not the device's. */}
+              {dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} {cairoTimeKey(new Date(task.scheduled_start))}
             </span>
           )}
           {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}

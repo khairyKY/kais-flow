@@ -162,3 +162,18 @@ export function parseCommand(
 
   return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
 }
+
+/** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
+ * page's quick add (Kai 2026-10-12: its placeholder promised "tomorrow 3pm #forecasting" but only
+ * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm"). */
+export function quickAddTask(parsed: ParsedCommand, typed: string) {
+  return {
+    title: parsed.title || typed,
+    domainId: parsed.domainId,
+    projectId: parsed.projectId,
+    dueAt: parsed.dueAt,
+    durationMin: parsed.durationMin,
+    priority: parsed.priority,
+    labels: parsed.labels,
+  }
+}

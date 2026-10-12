@@ -10,6 +10,8 @@ export interface BulkBarProps {
   onSchedule: (e: ReactMouseEvent) => void
   onMoveToProject: (e: ReactMouseEvent) => void
   onDelete: () => void
+  /** ☆ Top 3 for the selection (tasks/api toggleTop3ManyWithUndo) — pages with task rows pass it. */
+  onTop3?: () => void
   onClear: () => void
   /** Phone app bar's "Select all" — every row the page shows. */
   onSelectAll?: () => void
@@ -44,10 +46,10 @@ const CSS = `
 
 /** Selection mode's bars (DS-CHANGELOG §3 "Selection mode", MK Selection). On a phone: an app bar
  * (✕ · "N selected" · Select all) over the top bar, and a bulk bar that replaces the tab bar —
- * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Project · Delete. On desktop:
+ * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · Delete. On desktop:
  * the floating pill, same actions.
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
-export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onClear, onSelectAll }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
   const actions: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void; menu?: boolean; destructive?: boolean }[] = [
     { label: 'Done', icon: 'check', run: onComplete },
@@ -55,6 +57,9 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
     { label: 'Plan', icon: 'pickdate', run: onSchedule, menu: true },
     // "Move to…" a project, an area or a domain (features/tasks/MovePicker) — "Move" on both.
     { label: 'Move', icon: 'project', run: onMoveToProject, menu: true },
+    // Kai 2026-10-12: the phone had no way to star a selection (desktop had T). Stars them in order up
+    // to the free places, or unstars them when all are already picks — one Undo.
+    ...(onTop3 ? [{ label: 'Top 3', icon: 'star' as const, run: onTop3 }] : []),
     { label: 'Delete', icon: 'delete', run: onDelete, destructive: true },
   ]
 
