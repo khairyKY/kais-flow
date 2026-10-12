@@ -1,0 +1,11 @@
+// The explainer site as a Worker with static assets — the same way the app itself deploys
+// (app/wrangler.jsonc). Workers Builds: root directory `site`, build `node build.mjs`, deploy
+// `npx wrangler deploy`. Cloudflare Pages ignores this file (it has no pages_build_output_dir).
+{
+  "name": "kais-flow-site",
+  "compatibility_date": "2026-07-03",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}

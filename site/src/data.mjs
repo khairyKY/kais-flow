@@ -7,6 +7,22 @@ export const RELEASES_URL = `${REPO}/releases`
 // Kai: put the address people should write to here; until then the pages show "[contact email]".
 export const CONTACT_EMAIL = ''
 
+// Kai 2026-10-12: turned off. `true` brings back /ar/, the EN | ع switch, the hreflang links, its
+// sitemap entry and its share card (src/pages/ar.mjs and public/og/ar.png are kept for that).
+export const ARABIC = false
+
+// The site's public address (canonical links, share cards, sitemap, RSS). SITE_URL wins. Without it:
+// Cloudflare Pages names its deployment (CF_PAGES_URL = https://<hash>.<project>.pages.dev, so the
+// project's own address is that minus the first label); Workers Builds names nothing, so we assume the
+// account's workers.dev subdomain, where the app already lives (kais-flow.kaidagoat.workers.dev).
+export const siteUrl = (env) => {
+  const strip = (u) => u.replace(/\/+$/, '')
+  if (env.SITE_URL) return strip(env.SITE_URL)
+  if (env.CF_PAGES_URL) return strip(env.CF_PAGES_URL.replace(/^(https?:\/\/)[^.]+\.(?=[^.]+\.pages\.dev)/, '$1'))
+  if (env.WORKERS_CI) return 'https://kais-flow-site.kaidagoat.workers.dev'
+  return 'https://kais-flow-site.pages.dev'
+}
+
 // The release notes: ONE file that the site (Field notes, What's new, RSS), the app (its What's new
 // sheet, app/src/lib/whatsNew.ts) and the release workflow (the GitHub Release's body) all read.
 // Newest first, dates are Cairo days. Each: { v, date, title?, highlights: [...], icons?: [one
