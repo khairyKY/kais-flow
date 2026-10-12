@@ -1,0 +1,65 @@
+/* Labels — Overlays.dc.html "Label picker" (.pop / .mi) and "Labels" (the manager panel). */
+
+/* ── picker, desktop popover ── */
+.lp-pop { position: fixed; z-index: 1000; width: 230px; display: flex; flex-direction: column; padding: 6px; box-sizing: border-box;
+  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-input); box-shadow: var(--shadow-popover); }
+.lp-find { display: flex; align-items: center; gap: 8px; margin: 2px 2px 6px; padding: 7px 10px; background: var(--paper-bone);
+  border: 1px solid var(--line-card); border-radius: var(--radius-input); color: var(--ink-faint); font-size: var(--fs-caption); }
+.lp-find input { flex: 1; min-width: 0; padding: 0; border: none; background: none; outline: none; font: inherit; color: var(--ink-body); }
+.lp-find input::placeholder { color: var(--ink-faint); }
+.lp-list { overflow-y: auto; min-height: 0; }
+.lp-mi { display: flex; align-items: center; gap: 11px; width: 100%; padding: 7px 10px; box-sizing: border-box; border: none; border-radius: var(--radius-input);
+  background: none; font: inherit; font-size: var(--fs-body-s); text-align: left; color: var(--ink-body); cursor: pointer; }
+.lp-mi:hover, .lp-mi[data-active] { background: var(--paper-bone); }
+.lp-mi:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.lp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-count { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
+.lp-mark { flex: none; width: 14px; display: inline-flex; justify-content: center; color: var(--acc-terra); }
+.lp-sq { flex: none; width: 10px; height: 10px; border-radius: var(--radius-sharp); }
+.lp-rule { height: 1px; margin: 4px 8px; background: var(--line-dashed); }
+.lp-mi.is-create { color: var(--acc-terra-ink); }
+.lp-plus { flex: none; width: 16px; text-align: center; }
+.lp-empty { padding: 8px 10px; font-size: var(--fs-caption); font-style: italic; color: var(--ink-faint); }
+
+/* ── picker, phone sheet: the action-sheet rows (ActionSheet ACTION_ROW_CSS), 52 tall ── */
+.lp-sheet-find { display: flex; align-items: center; gap: 10px; height: var(--touch-min); margin-bottom: 8px; padding: 0 14px; box-sizing: border-box;
+  border: 1px solid var(--line-control); border-radius: var(--radius-md); background: var(--paper-bone); color: var(--ink-muted); }
+.lp-sheet-find:focus-within { box-shadow: var(--focus-ring); }
+.lp-sheet-find input { flex: 1; min-width: 0; border: none; background: none; outline: none; font: inherit; font-size: var(--fs-body); color: var(--ink-body); }
+.lp-sheet-rows { margin: 0 -20px; }
+.lp-sheet-rows .lp-sq { width: 12px; height: 12px; }
+
+/* ── manager ── */
+.lm { min-width: 0; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-md); box-shadow: var(--shadow-panel); }
+.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; border-bottom: 1px dashed var(--line-dashed); }
+.lm-title { display: inline; margin: 0; font-family: var(--font-display); font-size: var(--fs-lead); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); color: var(--ink-body); }
+.lm-total { margin-left: 9px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.lm-row { display: flex; align-items: center; gap: 11px; padding: 11px 18px; box-sizing: border-box; border-bottom: 1px dashed var(--line-dashed); }
+.lm-row .lp-sq { width: 12px; height: 12px; }
+.lm-name { flex: 1; align-self: stretch; min-width: 0; padding: 0; border: none; background: none; font: inherit; font-size: var(--fs-body); text-align: left; color: var(--ink-body);
+  cursor: text; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lm-count { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
+.lm-edit { padding: 12px 18px; border-bottom: 1px dashed var(--line-dashed); background: var(--paper-bone); }
+.lm-input { width: 100%; box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--acc-lavender); border-radius: var(--radius-input); outline: none;
+  background: var(--paper-parchment); font: inherit; font-size: var(--fs-body); color: var(--ink-body); caret-color: var(--acc-terra); }
+.lm-swatches { display: flex; align-items: center; gap: 8px; margin-top: 11px; }
+.lm-swatch { width: 18px; height: 18px; padding: 0; border: none; border-radius: var(--radius-sharp); cursor: pointer; }
+.lm-swatch[aria-pressed='true'] { outline: 2px solid var(--paper-parchment); box-shadow: 0 0 0 3.5px currentColor; }
+.lm-swatch:focus-visible { outline: 2px solid var(--paper-parchment); box-shadow: var(--focus-ring); }
+.lm-save { margin-left: auto; padding: 6px 0; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--acc-terra-ink); cursor: pointer; }
+.lm-bare { margin: 0 -20px; }
+.lm-new { display: flex; align-items: center; width: 100%; min-height: var(--row-min); padding: 0 18px; border: none; border-bottom: 1px dashed var(--line-dashed);
+  background: none; font: inherit; font-size: var(--fs-body); text-align: left; color: var(--acc-terra-ink); cursor: pointer; }
+.lm-foot { padding: 12px 18px; font-family: var(--font-hand); font-size: var(--fs-hand); color: var(--ink-hand); }
+.lm-empty { padding: 14px 18px; font-size: var(--fs-caption); font-style: italic; color: var(--ink-faint); border-bottom: 1px dashed var(--line-dashed); }
+
+@media (max-width: 767px) {
+  .lm-row { min-height: var(--row-min); padding-top: 0; padding-bottom: 0; }
+  .lm-swatch { width: 28px; height: 28px; }
+  .lm-save { min-height: var(--touch-min); }
+}
+.lp-sheet-rows .lp-name { font-size: var(--fs-body); }
+.lp-sheet-rows .is-create { color: var(--acc-terra-ink); }
+.lp-sheet-rows .lp-mark { width: 24px; }
+.lp-sheet-rows .lp-mark svg { width: 20px; height: 20px; }
