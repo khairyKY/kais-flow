@@ -24,7 +24,6 @@ const TodayPage = page(() => import('./features/today/TodayPage'), 'TodayPage')
 const InboxPage = page(() => import('./features/inbox/InboxPage'), 'InboxPage')
 const TasksPage = page(() => import('./features/tasks/TasksPage'), 'TasksPage')
 const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage')
-const PlanningBoard = page(() => import('./features/calendar/PlanningBoard'), 'PlanningBoard')
 const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
 const RoutinesPage = page(() => import('./features/routines/RoutinesPage'), 'RoutinesPage')
 const WeeklyReviewPage = page(() => import('./features/rituals/WeeklyReviewPage'), 'WeeklyReviewPage')
@@ -119,7 +118,6 @@ const router = createBrowserRouter([
           { path: 'tasks', element: <TasksPage /> },
           { path: 'tasks/:id', element: <TaskEditorPage /> },
           { path: 'calendar', element: <CalendarPage /> },
-          { path: 'planning', element: <PlanningBoard /> },
           { path: 'routines', element: <RoutinesPage /> },
           { path: 'weekly-review', element: <WeeklyReviewPage /> },
           { path: 'settings', element: <SettingsPage /> },

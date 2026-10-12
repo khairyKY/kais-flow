@@ -13,6 +13,7 @@ import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { addDays } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
+import { zoneHour } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
@@ -98,6 +99,10 @@ interface CalendarGridProps {
   justDroppedId?: string | null
   /** How far above the now-line the grid lands (gridClock.ts). */
   scrollLeadMinutes?: number
+  /** Calendar §4 planning mode: the collapsed agenda strip — mono day row (none for one day), no
+   * empty all-day band, and its free stretches drawn as dashed "2h free" boxes. */
+  strip?: boolean
+  freeGaps?: { start: string; end: string; label: string }[]
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -261,6 +266,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   failedIds,
   justDroppedId,
   scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
+  strip = false,
+  freeGaps,
 }, ref) {
   const customView = 'customDayCount'
   // Conductor review 2026-10-12: the grid lays out on the user's zone (lib/appZone) like every other
@@ -457,7 +464,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
       dragScroll
       dayMaxEvents
+      // §4 strip: one day needs no day row; two read "FRI · TODAY" in mono. No empty all-day band.
+      dayHeaders={!strip || visibleDays > 1}
+      allDaySlot={!strip || events.some((e) => e.allDay || isSpan(e))}
       dayHeaderContent={(arg) => {
+        if (strip) {
+          const day = headerDay(arg.date, new Date())
+          return <div className={`cal-strip-dayhead${day.delta === 0 ? ' is-today' : ''}`}>{day.weekday}{day.delta === 0 ? ' · Today' : ''}</div>
+        }
         // Month view's header row is one cell per weekday, not per date — no daisy, no number.
         if (arg.view.type === 'dayGridMonth') {
           return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: zone })}</div>
@@ -469,7 +483,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // explains how the old getUTC* read put "Today" one column late east of Greenwich).
         const now = new Date()
         const day = headerDay(arg.date, now)
-        const stage = daisyColumnStage(day.delta, now.getHours())
+        const stage = daisyColumnStage(day.delta, zoneHour(now)) // the user's clock, not the device's
         const isToday = day.delta === 0
         return (
           <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
@@ -593,11 +607,15 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfRepeat: !!e.repeat,
         }
         return ev
-      })}
+      }).concat(
+        // §4 planning strip: the free stretches, behind the blocks (FullCalendar background events).
+        (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
+      )}
       // 4c renders the title above the time. FC emits them the other way round, so own the
       // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
       // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
       eventContent={(arg) => {
+        if (arg.event.display === 'background') return <span className="kf-free-label">{arg.event.title}</span>
         // Calendar 3e: a span's day piece reads its own label ("Offsite »", "« »", "« ends 3 PM").
         if (arg.event.extendedProps.kfSegOf) {
           return (
@@ -734,6 +752,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         )
       }}
       eventDidMount={(info) => {
+        if (info.event.display === 'background') return // §4's free stretches: not a block
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
         info.el.dataset.kfId = blockIdOf(info.event)
@@ -755,7 +774,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const jsEvent = info.jsEvent as MouseEvent | null
         onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2 })
       }}
-      eventClick={(info: EventClickArg) => onEventClick(blockIdOf(info.event))}
+      eventClick={(info: EventClickArg) => info.event.display !== 'background' && onEventClick(blockIdOf(info.event))}
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
       // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
       eventDragStart={(info) => {
