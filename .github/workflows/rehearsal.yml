@@ -17,7 +17,7 @@ on:
       SUPABASE_ACCESS_TOKEN:
         required: false
   push:
-    branches: ['claude/release-*', 'claude/rehearsal'] # claude/rehearsal: registers the workflow (dispatch needs it on master otherwise); removed after
+    branches: ['claude/release-*']
 
 permissions:
   contents: read
@@ -90,7 +90,7 @@ jobs:
           DB_URL=$(supabase status -o env | sed -n 's/^DB_URL="\(.*\)"$/\1/p')
           echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
           # The migrations schedule cron jobs that POST to production's functions; not from a runner.
-          psql "$DB_URL" -X -q -c "update cron.job set active = false"
+          psql "$DB_URL" -X -q -o /dev/null -c "select cron.alter_job(jobid, active := false) from cron.job"
           applied=$(psql "$DB_URL" -X -At -c "select string_agg(version, ' ' order by version) from supabase_migrations.schema_migrations")
           echo "- $(wc -w <<< "$applied") of $(ls supabase/migrations/*.sql | wc -l) files applied ✓ — $applied" >> "$GITHUB_STEP_SUMMARY"
 
@@ -186,10 +186,9 @@ jobs:
 
       - name: Restore production's schema + migration history into it
         run: |
-          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/prod-schema.sql" > /dev/null
+          PGOPTIONS="-c client_min_messages=error" psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/prod-schema.sql" > /dev/null
           rm -f "$RUNNER_TEMP/prod-schema.sql"
-          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -c "update cron.job set active = false" \
-            -c "create schema if not exists supabase_migrations" \
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -c "create schema if not exists supabase_migrations" \
             -c "create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text)"
           jq -r '.[] | [.version, (.name // "")] | @tsv' "$RUNNER_TEMP/applied.json" \
             | psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -c '\copy supabase_migrations.schema_migrations (version, name) from pstdin'
