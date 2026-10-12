@@ -30,7 +30,7 @@ export const INBOX_SHORTCUTS: ShortcutEntry[] = [
  * section always renders, same as Inbox above. */
 export const TASK_LIST_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['j', 'k'], label: 'Move focus' },
-  { keys: ['e'], label: 'Complete' },
+  { keys: ['e', 'Space'], label: 'Complete' },
   { keys: ['↵'], label: 'Open detail' },
   { keys: ['t'], label: 'Toggle Top 3' },
   { keys: ['1', '2', '3'], label: 'Today · Tmrw · Next wk' },
@@ -39,10 +39,26 @@ export const TASK_LIST_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['#'], label: 'Delete' },
 ]
 
+/** Focus moves on every list (useListKeys), whatever its page binds. */
+export const LIST_NAV: ShortcutEntry = { keys: ['j', 'k'], label: 'Move focus' }
+
+/** The task lists' keys that aren't bindings of their own: select all (useSelectAllKey) and Today's
+ * Top 3 order (Alt+↑/↓) — shown with whatever a task list page registered. */
+export const LIST_EXTRAS: ShortcutEntry[] = [
+  { keys: ['⌘/Ctrl', 'A'], label: 'Select all' },
+  { keys: ['⌥/Alt', '↑/↓'], label: 'Reorder Top 3 (Today)' },
+]
+
+/** Said under the task keys: T, E, 1/2/3 and # act on the whole selection when there is one. */
+export const SELECTION_NOTE = 'With a selection, keys act on all selected.'
+
+/** A binding's key as its keycap: the space bar and Enter read as words / the return glyph. */
+export const keyCap = (key: string): string => (key === ' ' ? 'Space' : key === 'Enter' ? '↵' : key)
+
 /** Command bar's own inline capture syntax — static so the cheatsheet's Command bar section always renders. */
 export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
+  // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture" — the AI fills every capture after it lands).
   { keys: ['↵'], label: 'Quick add' },
-  { keys: ['⌘/Ctrl', '↵'], label: 'AI capture' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },

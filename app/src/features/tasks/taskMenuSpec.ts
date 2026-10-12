@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'plan' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -33,6 +33,8 @@ export interface TaskMenuContext {
   goal?: boolean
   /** A Top 3 row on Today: its place (0 = the goal) and the last open place — Move up / Move down. */
   place?: { index: number; last: number }
+  /** The desktop right-click / ⋯ menu: Tomorrow gets its own top row (the phone swipes for it). */
+  desktop?: boolean
 }
 
 export const PRIORITY_LABELS: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
@@ -46,6 +48,9 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
   if (task.status === 'done' || task.completed_at) return [{ key: 'reopen', label: 'Reopen' }, del]
   const place = !n && ctx.place
   return [
+    // Kai 2026-10-12 audit: under Plan… the most common move took three clicks on desktop — Tomorrow is
+    // back on top there (with its `2` key); the phone keeps its one-swipe Tomorrow and the Plan list.
+    ...(ctx.desktop ? [{ key: 'tomorrow', label: `Tomorrow${n}`, hint: ctx.tomorrowHint } as const] : []),
     // Kai 2026-10-07: Tomorrow + Pick date… became one Plan list (./PlanMenu) — every date option,
     // each saying what it does. Swipe right and the `2` key are still Tomorrow in one move.
     { key: 'plan', label: `${ctx.overdue && !n ? 'Replan' : 'Plan'}…${n}`, sub: true },

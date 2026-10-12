@@ -1,5 +1,4 @@
 import { useState, type CSSProperties } from 'react'
-import { useNavigate } from 'react-router'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
@@ -13,6 +12,7 @@ import { MovePicker } from './MovePicker'
 import { placeKey, type MoveTarget } from './move'
 import { shortcutHint } from './listShortcuts'
 import { PlanMenu } from './PlanMenu'
+import { RepeatEditor, RepeatMenu } from './RepeatMenu'
 import { isOverdue } from './planMath'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, REPEAT_LABELS, REPEAT_RULES, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
@@ -72,12 +72,12 @@ export interface MenuAnchor {
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
   top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
-  project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
+  tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
@@ -102,25 +102,20 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   ctx: TaskMenuContext
 }) {
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
   const startFocus = useStartFocus()
-  const [sub, setSub] = useState<MenuSub | undefined>(anchor.sub)
+  const [sub, setSub] = useState<MenuSub | 'repeat-custom' | undefined>(anchor.sub)
   const { at } = anchor
   const base = task.due_at || task.scheduled_start
 
-  const options: Record<'priority' | 'repeat' | 'remind' | 'duration', Option[]> = {
+  const options: Record<'priority' | 'remind' | 'duration', Option[]> = {
     duration: [null, ...DURATIONS].map((m) => ({ label: m ? durationLabel(m) : 'None', run: () => actions.duration?.(m) })),
     priority: [null, 3, 2, 1].map((p) => ({ label: p ? PRIORITY_LABELS[p] : 'None', color: priorityColor(p) ?? undefined, run: () => actions.priority(p) })),
-    repeat: [
-      ...REPEAT_RULES.map((r) => ({ label: r ? REPEAT_LABELS[r] : 'Never', run: () => actions.repeat(r) })),
-      // No rrule editor yet: Custom… opens the task, whose Repeat field has the rest.
-      { label: 'Custom…', run: () => navigate(`/tasks/${task.id}`) },
-    ],
     remind: base
       ? REMIND_OFFSETS.map((o) => ({ label: o.label, run: () => actions.remind(o.min === null ? null : new Date(new Date(base).getTime() - o.min * 60_000).toISOString()) }))
       : [{ label: 'No reminder', run: () => actions.remind(null) }, { label: 'Pick a date first…', run: () => setSub('date') }],
   }
   const run: Record<TaskMenuKey, () => void> = {
+    tomorrow: actions.tomorrow,
     plan: () => setSub('date'),
     unschedule: () => actions.unschedule?.(),
     project: () => setSub('project'),
@@ -137,7 +132,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     delete: actions.delete,
   }
   // Read when the menu opens: overdue → "Replan…"; the goal of the day gets no Make goal.
-  const spec = taskMenuSpec(task, { ...ctx, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
+  const spec = taskMenuSpec(task, { ...ctx, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
 
   // One task: the Plan list offers No date when it has one, and Next free slot.
   const bulk = !!ctx.bulkCount && ctx.bulkCount > 1
@@ -172,9 +167,13 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
       />
     )
   }
+  // Repeat's presets and its Custom… rule editor (./RepeatMenu) — one picker for every surface.
+  const repeat = { value: task.recurrence_rule, start: base, meta: task.title }
+  if (sub === 'repeat') return <RepeatMenu {...repeat} position={at} onClose={onClose} onChange={actions.repeat} />
+  if (sub === 'repeat-custom') return <RepeatEditor {...repeat} position={at} onClose={onClose} onChange={actions.repeat} />
   if (sub) {
     const list = options[sub]
-    const title = { priority: 'Priority', repeat: 'Repeat', remind: 'Remind', duration: 'Duration' }[sub]
+    const title = { priority: 'Priority', remind: 'Remind', duration: 'Duration' }[sub]
     return isMobile
       ? <ActionSheet key={sub} title={title} meta={task.title} items={list.map((o) => ({ label: o.label, onSelect: o.run }))} onClose={onClose} />
       : <ContextMenu position={at} onClose={onClose} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: o.run }))} />
@@ -197,7 +196,8 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
     if (key === 'plan') return ({ position, onClose: back, closeAll }) => plan((w) => { w(); closeAll() }, position, back)
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
-    if (key === 'priority' || key === 'repeat' || key === 'remind') {
+    if (key === 'repeat') return ({ position, onClose: back, closeAll }) => <RepeatMenu {...repeat} position={position} onClose={back} onChange={(r) => { actions.repeat(r); closeAll() }} onCustom={() => setSub('repeat-custom')} />
+    if (key === 'priority' || key === 'remind') {
       const list = options[key]
       return ({ position, onClose: back, closeAll }) => <ContextMenu position={position} onClose={back} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: () => { o.run(); closeAll() } }))} />
     }

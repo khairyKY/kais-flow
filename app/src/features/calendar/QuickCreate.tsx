@@ -8,7 +8,7 @@ import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formField
 import { createEvent, scheduleTask, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import { createTask, setRecurrence, setLabels, toggleTop3, setSomeday, useTasks } from '../tasks/api'
+import { createTask, setRecurrence, toggleTop3, setSomeday, useTasks } from '../tasks/api'
 import { parseCommand } from '../command-bar/parseCommand'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -16,7 +16,6 @@ import { useDomains } from '../domains/api'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
-import { writeRow } from '../../lib/outbox'
 import { appZone } from '../../lib/appZone'
 
 // ── Editor.dc.html 2a/2b (compact popover) · 1b/1c/1d field
@@ -178,15 +177,15 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       const task = createTask({
         title: title.trim() || 'Untitled task',
         dueAt,
-        projectId,
+        // A task is in a project OR an area (0052); both go in with the row, not as later writes.
+        projectId: areaId ? null : projectId,
+        areaId,
+        labels: labelsText.split(',').map((s) => s.trim()).filter(Boolean),
         priority,
         durationMin: startTime && endTime && diffMinutes(startTime, endTime) > 0 ? diffMinutes(startTime, endTime) : null,
         reminderOffsetMin: reminderOffset ? Number(reminderOffset) : null,
       })
-      if (areaId) writeRow('tasks', { ...task, area_id: areaId, project_id: null })
       if (repeat) setRecurrence(task, repeat)
-      const labels = labelsText.split(',').map((s) => s.trim()).filter(Boolean)
-      if (labels.length) setLabels(task, labels)
       if (top3) toggleTop3(task)
       if (someday) setSomeday(task, true)
       if (slot && date && startTime && endTime) {

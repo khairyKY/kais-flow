@@ -227,3 +227,20 @@ describe('check → second click → Undo on the table (Polish F2a)', () => {
     expect(db.rows()).toEqual(afterCheck)
   })
 })
+
+describe('planCompletion — late, early and paused repeats (Kai 2026-10-12 audit)', () => {
+  it('finished late, the next copy is the first one after today, not one already overdue', () => {
+    // Due Sat 26 Sep, ticked Thu 8 Oct 10:00 Cairo → Sat 10 Oct 09:00, not Tue 29 Sep.
+    const { next } = planCompletion(task(), [], '2026-10-08T07:00:00.000Z', newId)
+    expect(next!.due_at).toBe('2026-10-10T06:00:00.000Z')
+  })
+  it('a daily task done five days late comes back tomorrow at its time', () => {
+    const { next } = planCompletion(task({ recurrence_rule: 'FREQ=DAILY', due_at: '2026-10-07T06:00:00.000Z' }), [], '2026-10-12T07:00:00.000Z', newId)
+    expect(next!.due_at).toBe('2026-10-13T06:00:00.000Z')
+  })
+  it('a paused series spawns nothing until it is resumed', () => {
+    const { done, next } = planCompletion(task({ paused: true }), [], NOW, newId)
+    expect(done.status).toBe('done')
+    expect(next).toBeNull()
+  })
+})

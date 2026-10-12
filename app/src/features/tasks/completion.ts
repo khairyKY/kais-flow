@@ -7,7 +7,7 @@
 // check → undo → check again put TWO copies of next Tuesday on the list.
 
 import type { Task } from '../../lib/types'
-import { nextOccurrence, nextReminderAt } from './recurrence'
+import { nextDue, nextReminderAt } from './recurrence'
 
 /** What completing changes on the task itself — exactly what an undo puts back. */
 export type CompletionFields = Pick<Task, 'status' | 'completed_at' | 'top3'>
@@ -35,8 +35,11 @@ function openOccurrence(existing: readonly Task[], like: Task, at: Date, except:
  * completion instant (ISO), `newId` the id for a spawned occurrence. */
 export function planCompletion(task: Task, existing: readonly Task[], now: string, newId: () => string): CompletionPlan {
   const done: Task = { ...task, status: 'done', completed_at: now, top3: false }
-  if (!task.recurrence_rule || !task.due_at) return { done, next: null }
-  const at = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
+  // A paused series (Perennials ‖) doesn't come back until it's resumed.
+  if (!task.recurrence_rule || !task.due_at || task.paused) return { done, next: null }
+  // From the later of its due date and today, at its own time (./recurrence nextDue): finished late,
+  // the copy isn't born overdue.
+  const at = nextDue(task.recurrence_rule, task.due_at, new Date(now))
   if (!at) return { done, next: null }
   // Reopened and completed again (in this session or after a reload): the occurrence it spawned
   // the first time is still open — don't add another one beside it.
