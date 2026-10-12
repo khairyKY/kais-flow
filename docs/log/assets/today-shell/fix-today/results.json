@@ -297,7 +297,7 @@
   {
     "name": "f2 the right-click menu acts on the selection: \"Plan… (2)\", \"Delete (2)\"",
     "ok": true,
-    "detail": "Tomorrow (2) | 2 | Plan… (2) | ▸ | Move to… (2) | ▸ | Priority | ▸ | Repeat | ▸ | Remind | ▸ | Remove from Top 3 | T | Deselect | ⌃ | click | Delete (2) | #"
+    "detail": "Tomorrow (2) | 2 | Plan… (2) | ▸ | Move to… (2) | ▸ | Priority | ▸ | Labels | ▸ | Repeat | ▸ | Remind | ▸ | Remove from Top 3 | T | Deselect | ⌃ | click | Delete (2) | #"
   },
   {
     "name": "f2 …Remove from Top 3 takes both out (the page's bulk onTop3)",

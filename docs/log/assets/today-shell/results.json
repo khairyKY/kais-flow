@@ -337,7 +337,7 @@
   {
     "name": "k the cheatsheet: \"n New task\" (Anywhere) and \"⇧ N Notebook page\" (Today's section)",
     "ok": true,
-    "detail": "Shortcuts | the quick paths through the garden | ANYWHERE | ⌘/Ctrl | K | Command bar | ⌘/Ctrl | / | Search | ⌘/Ctrl | J | Chat | n | New task | ? | This cheatsheet | Esc | Close overlay | ON A TASK | j | k | Move focus | x | Toggle select | e | Space | Complete | ↵ | Open detail | 1 | Schedule today | 2 | Schedule tomorrow | 3 | Schedule next week | t | Toggle Top 3 | p | Move to… | # | Delete | ⇧ | N | Notebook page | ⌘/Ctrl | A | Select all | ⌥/Alt | ↑/↓ | Reorder Top 3 (Today) | With a selection, keys act on all selected. | INBOX TRIAGE | ↑/↓ | j/k | Move focus | e | File with AI suggestion"
+    "detail": "Shortcuts | the quick paths through the garden | ANYWHERE | ⌘/Ctrl | K | Command bar | ⌘/Ctrl | / | Search | ⌘/Ctrl | J | Chat | n | New task | ? | This cheatsheet | Esc | Close overlay | ON A TASK | j | k | Move focus | x | Toggle select | e | Space | Complete | ↵ | Open detail | 1 | Schedule today | 2 | Schedule tomorrow | 3 | Schedule next week | t | Toggle Top 3 | p | Move to… | l | Labels… | # | Delete | ⇧ | N | Notebook page | ⌘/Ctrl | A | Select all | ⌥/Alt | ↑/↓ | Reorder Top 3 (Today) | With a selection, keys act on all selected. | INBOX TRIAGE | ↑/↓ | j/k | Move focus | e | File with"
   },
   {
     "name": "k N on Today → the capture bar",
@@ -356,6 +356,36 @@
   },
   {
     "name": "k no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l L on a focused row → the Label picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l …Enter creates \"errand\" on that task",
+    "ok": true,
+    "detail": "[[\"Deliver the MVP of the forecasting app\",[\"errand\"]]]"
+  },
+  {
+    "name": "l L with two rows selected → one picker for both",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l …\"calls\" goes on both selected tasks",
+    "ok": true,
+    "detail": "[[\"Plan & implement the forecasting logic\",[\"calls\"]],[\"Create official emails for Shaheen\",[\"calls\"]]]"
+  },
+  {
+    "name": "l the cheatsheet lists \"l Labels…\" in Today's section",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l no page errors",
     "ok": true,
     "detail": ""
   },

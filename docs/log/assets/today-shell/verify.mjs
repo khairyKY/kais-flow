@@ -350,6 +350,47 @@ if (want('k')) {
   await ctx.close()
 }
 
+// ── L · the Label picker key on Today, as on Tasks: the focused row, or every selected one ──
+if (want('l')) {
+  const { ctx, page, errors, state } = await open('09:40', { morning: true })
+  await page.locator('body').click({ position: { x: 5, y: 790 } })
+  await page.keyboard.press('j') // focus the first row (the goal)
+  await sleep(200)
+  await page.keyboard.press('l')
+  await sleep(400)
+  const lp = page.getByRole('dialog', { name: 'Labels' })
+  check('l L on a focused row → the Label picker', (await lp.count()) === 1)
+  let w0 = state.writes.length
+  await page.keyboard.type('errand')
+  await page.keyboard.press('Enter')
+  await settle(state)
+  let wrote = posts(state, 'tasks', w0)
+  check('l …Enter creates "errand" on that task', wrote.some((t) => t.id === id(GOAL) && (t.labels ?? []).includes('errand')), JSON.stringify(wrote.map((t) => [t.title, t.labels])))
+  await shot(page, 'l-label-picker-day', false)
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  await page.locator(`#task-${id(LOGIC)}`).click({ modifiers: ['Control'] })
+  await page.locator(`#task-${id(EMAILS)}`).click({ modifiers: ['Control'] })
+  await sleep(200)
+  await page.keyboard.press('l')
+  await sleep(400)
+  check('l L with two rows selected → one picker for both', (await lp.count()) === 1)
+  w0 = state.writes.length
+  await page.keyboard.type('calls')
+  await page.keyboard.press('Enter')
+  await settle(state)
+  wrote = posts(state, 'tasks', w0)
+  check('l …"calls" goes on both selected tasks', wrote.some((t) => t.id === id(LOGIC) && (t.labels ?? []).includes('calls')) && wrote.some((t) => t.id === id(EMAILS) && (t.labels ?? []).includes('calls')), JSON.stringify(wrote.map((t) => [t.title, t.labels])))
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('?')
+  await sleep(500)
+  check("l the cheatsheet lists \"l Labels…\" in Today's section", /l\s*Labels…/.test(await text(page.locator('[role="dialog"][aria-label="Shortcuts"]'))))
+  check('l no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 // ── W · Worth a look: Plan a step writes the step in place; Snooze a week says so ──
 if (want('w')) {
   const { ctx, page, errors, state } = await open('09:40', { morning: true })
