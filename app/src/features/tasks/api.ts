@@ -8,11 +8,11 @@ import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
-import { nextOccurrence, nextReminderAt } from './recurrence'
+import { nextDue, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
-import { scheduleTomorrow } from '../../lib/dateShortcuts'
+import { scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { legacyGoalId } from '../today/goalStore'
 import { dayTop3, moveInTop3, planMakeGoal, rankWrites } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
@@ -21,6 +21,7 @@ import { fromMin } from '../../components/pickerMath'
 import { todayFor, type SpreadPick } from './planMath'
 import { isTop3Today, openTop3Count } from './top3Rule'
 import { placeTask, planReparent, type MoveTarget } from './move'
+import { addedLine } from './taskSheetMath'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -104,12 +105,21 @@ export function createTask(input: CreateTaskInput): Task {
 // since the outbox keeps only the newest write per row, only the last field survived.
 const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
 const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
+/** A task as the cache has it now (a subtask row's parent title), without subscribing. */
+export const cachedTask = (id: string): Task | undefined => cachedTasks().find((x) => x.id === id && !x.deleted_at)
 
 /** Writes `task`'s current row with `patch` applied — the one way a single-field edit lands. */
 function patchTask(task: Task, patch: Partial<Task>): Task {
   const row = { ...cached(task), ...patch }
   writeRow('tasks', row)
   return row
+}
+
+/** A typed capture's toast (Tasks' quick add, the command bar): where it landed — "Added to Tomorrow ·
+ * Forecasting" (taskSheetMath addedLine) — never a silent landing. Undo sends it to Trash, its block
+ * with it. */
+export function toastAdded(task: Task, place: string | null): void {
+  toastUndo(addedLine(task, place, new Date()), () => deleteTask(cached(task)))
 }
 
 /** Everything needed to take a completion back: the row as it was, and the occurrence it spawned. */
@@ -531,9 +541,17 @@ export function rescheduleDue(task: Task, dueAt: string | null, timed = false): 
   }
 }
 
+/** A repeat needs a date to roll from (completion spawns the next copy from due_at): one set on an
+ * undated task dates it today, first thing, and says so — it used to never repeat, silently. */
 export function setRecurrence(task: Task, rule: string | null): void {
-  patchTask(task, { recurrence_rule: rule })
+  const undated = !!rule && !cached(task).due_at
+  const dueAt = undated ? scheduleToday() : undefined
+  patchTask(task, { recurrence_rule: rule, ...(dueAt ? { due_at: dueAt, someday: false } : null) })
   logActivity('task.recurrence_set', 'task', task.id, { rule })
+  if (dueAt) {
+    logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+    useToastStore.getState().push({ message: 'Repeats from today' })
+  }
 }
 
 export function setReminder(task: Task, reminderAt: string | null): void {
@@ -554,7 +572,8 @@ export function resumeTask(task: Task): void {
 export function skipNextOccurrence(passed: Task): void {
   const task = cached(passed)
   if (task.recurrence_rule && task.due_at) {
-    const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
+    // The round after this one — and never one that's already past (./recurrence nextDue).
+    const next = nextDue(task.recurrence_rule, task.due_at, new Date())
     if (next) {
       // Polish F2a: the reminder moves with the occurrence (same lead, not yet sent) — left
       // behind, it pointed at the skipped time and never fired for the new one.

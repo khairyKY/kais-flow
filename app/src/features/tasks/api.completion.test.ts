@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Task } from '../../lib/types'
 
 // api.ts's completion path, end to end through its real collaborators' seams: every write it
@@ -45,7 +45,12 @@ beforeEach(() => {
   writes.length = 0
   activity.length = 0
   cache = []
+  // Ticked on the day it's due (Sat 26 Sep, 09:45 Cairo): a repeat rolls from the later of its due
+  // date and today (recurrence nextDue), so the clock is pinned. Timers stay real (flush).
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-26T06:45:00.000Z'))
 })
+afterEach(() => void vi.useRealTimers())
 
 describe('completeTaskWithUndo — punch 6 on a single check', () => {
   it('toasts "Done" with an Undo', () => {

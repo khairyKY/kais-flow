@@ -70,6 +70,22 @@ describe('setters write the current row (QuickCreate regression)', () => {
     expect(events.filter((e) => e.type === 'task.updated').map((e) => (e.payload as { field: string }).field)).toEqual(['labels', 'priority', 'duration', 'title', 'notes'])
   })
 
+  it('a repeat set on an undated task dates it today (it could never roll otherwise), and says so', async () => {
+    const { useToastStore } = await import('../../lib/toastStore')
+    const { scheduleToday } = await import('../../lib/dateShortcuts')
+    const task = api.createTask({ title: 'Stretch' })
+    api.setRecurrence(task, 'FREQ=DAILY')
+    expect(outbox.get(task.id)).toMatchObject({ recurrence_rule: 'FREQ=DAILY', due_at: scheduleToday() })
+    expect(useToastStore.getState().toasts.at(-1)?.message).toBe('Repeats from today')
+    // A dated task keeps its date; clearing the repeat never dates anything.
+    const dated = api.createTask({ title: 'Pay rent', dueAt: '2026-11-01T06:00:00.000Z' })
+    api.setRecurrence(dated, 'FREQ=MONTHLY')
+    expect(outbox.get(dated.id)?.due_at).toBe('2026-11-01T06:00:00.000Z')
+    const bare = api.createTask({ title: 'x' })
+    api.setRecurrence(bare, null)
+    expect(outbox.get(bare.id)?.due_at).toBeNull()
+  })
+
   it('carrying tasks to a domain logs each as moved', () => {
     cache = [{ id: 't1', title: 'a', project_id: 'p1', area_id: null, domain_id: 'd1' } as Task]
     const undo = api.carryTasksToDomain('project_id', 'p1', 'd2')

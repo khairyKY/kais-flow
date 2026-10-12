@@ -57,4 +57,8 @@ describe('the rule’s other cases (conductor decision 2026-10-12)', () => {
     expect(isTop3Today(pick({ due_at: null }), NOW)).toBe(true)
     expect(isTop3Today(pick({ due_at: at(-1) }), NOW)).toBe(true)
   })
+  it('a paused series gives its place up (a write that pauses it releases the star)', () => {
+    expect(isTop3Today(pick({ paused: true }), NOW)).toBe(false)
+    expect(releaseTop3(pick({ paused: true }), NOW)).toMatchObject({ top3: false, top3_rank: null })
+  })
 })
