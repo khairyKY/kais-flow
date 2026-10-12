@@ -12,13 +12,13 @@ import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { cairoDateKey, zoneDateKey } from '../../lib/dateShortcuts'
 import { DEFAULT_ZONE } from '../../lib/appZone'
-import { createTask } from '../tasks/api'
+import { completeTask, createTask, undoCompletion } from '../tasks/api'
 import { createEvent } from '../calendar/api'
 import { upsertJournalEntry } from '../journal/api'
 import { preparePage } from './image'
 import { usePaperStore } from './paperStore'
 import { addedSummary, planWrites, shouldResume, type CaptureRow, type EditLine } from './paperMath'
-import type { AppSettings, InboxItem, Project } from '../../lib/types'
+import type { AppSettings, InboxItem, Project, Task } from '../../lib/types'
 
 const BUCKET = 'captures'
 const QUEUE_KEY = 'kf-paper-queue'
@@ -188,6 +188,9 @@ export async function startReading(): Promise<void> {
   if (!pages.length) return
   const id = crypto.randomUUID()
   const takenAt = new Date().toISOString()
+  // A photo of a Notebook page (11l): its results are the ticks review, wherever they're opened from.
+  const ticks = store.stage?.kind === 'look' ? store.stage.ticks : undefined
+  if (ticks) usePaperStore.setState((s) => ({ ticksFor: { ...s.ticksFor, [id]: ticks } }))
   store.show({ kind: 'reading', captureId: id, read: 0, total: pages.length })
   let blobs: Blob[]
   try {
@@ -325,6 +328,24 @@ export function markReviewed(capture: CaptureRow, dropPhoto = false): void {
   const now = new Date().toISOString()
   const keep = !dropPhoto && queryClient.getQueryData<AppSettings>(['app_settings'])?.capture_keep_photos !== false
   writeRow('captures', { ...capture, reviewed_at: now, ...(keep ? {} : { expires_at: now }) })
+}
+
+/** 11l "Mark N done": the ticked tasks done (still-open ones only), one toast, one Undo. A capture with
+ * nothing else on it is reviewed; one with new scribbles stays for the results that follow. */
+export function markTicksDone(capture: CaptureRow, taskIds: readonly string[], reviewed: boolean): number {
+  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
+  const open = taskIds.flatMap((id) => tasks.find((t) => t.id === id && t.status === 'todo') ?? [])
+  const undos = open.map((t) => completeTask(t))
+  const prior = { ...capture }
+  if (reviewed) markReviewed(capture)
+  logActivity('capture.reviewed', 'capture', capture.id, { mode: 'ticks', done: open.length })
+  if (open.length) {
+    toastUndo(`${open.length} done — ticked on paper`, () => {
+      undos.forEach(undoCompletion)
+      if (reviewed) writeRow('captures', prior)
+    })
+  }
+  return open.length
 }
 
 /** "Add all" / "Inbox only": every kept line through the usual helpers, one toast, one Undo. */

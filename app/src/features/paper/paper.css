@@ -103,6 +103,11 @@ button.pp-chip { cursor: pointer; }
 .pp-crop img { position: absolute; max-width: none; display: block; }
 .pp-check-label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc-gold); }
 
+/* 11l · a ticked line: the checkbox (keep / skip), the task, and the paper's own line under it */
+.pp-tickrow { gap: 4px; padding-left: 4px; padding-right: 16px; align-items: center; }
+.pp-tickhit { width: 48px; height: 48px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.pp-tickrow .pp-row-text { cursor: default; }
+
 /* desktop · 11m: the page beside the lines */
 .pp-split { flex: 1; min-height: 0; display: flex; }
 .pp-side { width: 260px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 20px; background: var(--paper-bone); border-right: 1px solid var(--line-card); overflow-y: auto; }

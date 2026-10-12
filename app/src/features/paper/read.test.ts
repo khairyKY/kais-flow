@@ -61,6 +61,11 @@ describe('capture-image: the answer → lines', () => {
     expect(normaliseRead('not json', 0).readable).toBe(false)
     expect(normaliseRead({ lines: [{ text: 'x', type: 'task' }] }, 0).readable).toBe(true) // readable defaults to yes
   })
+  it('a Notebook page’s boxes (11l): ticked, empty, or none — anything else is "none"', () => {
+    expect(buildPrompt([])).toMatch(/checked: .*ticked.*false when it is empty.*null when the line has no box/)
+    const read = normaliseRead({ lines: [{ text: 'Buy milk', checked: true }, { text: 'Water the plants', checked: false }, { text: 'call Omar' }, { text: 'x', checked: 'yes' }] }, 0)
+    expect(read.lines.map((x) => x.checked)).toEqual([true, false, null, null])
+  })
   it('caps a runaway answer at 40 lines', () => {
     expect(normaliseRead({ lines: Array.from({ length: 90 }, (_, i) => ({ text: `l${i}` })) }, 0).lines).toHaveLength(40)
   })
@@ -78,7 +83,7 @@ describe('capture-image: Groq 429 backoff', () => {
 })
 
 describe('capture-image: the row after a page', () => {
-  const l = (text: string, page: number): PageLine => ({ text, type: 'task', when: null, project: null, confidence: 0.9, box: null, page })
+  const l = (text: string, page: number): PageLine => ({ text, type: 'task', when: null, project: null, confidence: 0.9, box: null, page, checked: null })
   it('reading until the last page, then done', () => {
     const one = afterPage({ pages: 2, pages_read: 0, items: [] }, 0, { readable: true, title: null, lines: [l('a', 0)] })
     expect(one).toMatchObject({ pages_read: 1, status: 'reading', error: null })

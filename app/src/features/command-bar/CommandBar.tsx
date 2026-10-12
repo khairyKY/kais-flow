@@ -48,6 +48,7 @@ const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
   { name: 'focus', label: 'Focus', to: '/focus' },
   { name: 'people', label: 'People', to: '/people' },
   { name: 'journal', label: 'Journal', to: '/journal' },
+  { name: 'notebook', label: 'Notebook page', to: '/notebook' },
   { name: 'activity', label: 'Activity', to: '/activity' },
   { name: 'settings', label: 'Settings', to: '/settings' },
   { name: 'search', label: 'Search', to: '/search' },

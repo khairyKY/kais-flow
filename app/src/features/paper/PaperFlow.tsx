@@ -1,7 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Button } from '../../components/kit'
+import { Button, Checkbox } from '../../components/kit'
 import { Icon } from '../../components/Icon'
+import { EmojiText } from '../../components/EmojiText'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { SwipeRow } from '../tasks/SwipeRow'
@@ -10,14 +11,17 @@ import { toastUndo } from '../../lib/undo'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { perZone } from '../../lib/appZone'
 import { useProjects } from '../projects/api'
+import { useTasks } from '../tasks/api'
 import { openCapture } from '../command-bar/commandBarStore'
-import { applyResults, markReviewed, retryCapture, startReading, useCapture, usePageUrls } from './api'
+import { matchTicks } from '../notebook/ticks'
+import { applyResults, markReviewed, markTicksDone, retryCapture, startReading, useCapture, usePageUrls } from './api'
 import { cropFrame, DAILY_PAGES, MAX_PAGES, needsCheck, toEditLine, type CaptureRow, type EditLine, type LineType } from './paperMath'
-import { pickPhotos, usePaperStore, type Stage } from './paperStore'
+import { pickPhotos, usePaperStore, type Stage, type TicksTarget } from './paperStore'
 
 // Paper capture's screens (Paper Capture.dc.html): a quick look 11b/11c, reading 11d, the results sheet
 // 11e–11h (a centred panel on desktop, 11m), couldn't read 11i, the daily limit 11j, camera off 11k,
-// and the photo itself. 11l (the Notebook page's ticks) waits for the Notebook page.
+// and the photo itself. 11l: a photo of a Notebook page (its footer's "Bring back your ticks") opens the
+// ticks review instead — ticked lines matched to that page's tasks (notebook/ticks.ts), "Mark N done".
 
 const TYPE_LABEL: Record<LineType, string> = { task: 'Task', event: 'Event', note: 'Note', journal: 'Journal' }
 const TYPE_HINT: Record<LineType, string> = { task: 'to do', event: 'on the calendar', note: 'to the Inbox', journal: "today's journal" }
@@ -52,6 +56,7 @@ function TopBar({ title, onClose, right }: { title?: ReactNode; onClose: () => v
 
 export function PaperFlow() {
   const stage = usePaperStore((s) => s.stage)
+  const ticksFor = usePaperStore((s) => s.ticksFor)
   const isMobile = useIsMobile()
   if (!stage) return null
   switch (stage.kind) {
@@ -60,7 +65,8 @@ export function PaperFlow() {
     case 'reading':
       return <Reading stage={stage} />
     case 'results':
-      return isMobile ? <PhoneResults id={stage.captureId} /> : <DesktopResults id={stage.captureId} />
+      if (ticksFor[stage.captureId] && !stage.only) return <TicksReview id={stage.captureId} target={ticksFor[stage.captureId]} />
+      return isMobile ? <PhoneResults id={stage.captureId} only={stage.only} /> : <DesktopResults id={stage.captureId} only={stage.only} />
     case 'photo':
       return <PhotoView stage={stage} />
     default:
@@ -196,15 +202,16 @@ function dateChip(iso: string, timed: boolean): string {
 
 type Edit = { text?: string; type?: LineType; dropped?: boolean }
 
-/** The capture's lines as the user has them: read against their projects, with their edits and drops. */
-function useLines(capture: CaptureRow | null) {
+/** The capture's lines as the user has them: read against their projects, with their edits and drops.
+ * `only`: just these keys (what's left after a Notebook page's ticks review). */
+function useLines(capture: CaptureRow | null, only?: string[]) {
   const { data: projects = [] } = useProjects()
   const [edits, setEdits] = useState<Record<string, Edit>>({})
   const read = useMemo(() => {
     if (!capture) return []
     const live = projects.filter((p) => !p.deleted_at)
-    return capture.items.map((it, i) => toEditLine(it, i, live, new Date(capture.created_at)))
-  }, [capture, projects])
+    return capture.items.map((it, i) => toEditLine(it, i, live, new Date(capture.created_at))).filter((l) => !only || only.includes(l.key))
+  }, [capture, projects, only])
   const lines = read.map((l) => ({ ...l, ...edits[l.key] })).filter((l) => !edits[l.key]?.dropped)
   const edit = (key: string, patch: Edit) => setEdits((e) => ({ ...e, [key]: { ...e[key], ...patch } }))
   const drop = (key: string) => {
@@ -328,10 +335,10 @@ function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url
   )
 }
 
-function useResults(id: string) {
+function useResults(id: string, only?: string[]) {
   const capture = useCapture(id)
   const urls = usePageUrls(capture)
-  const { lines, edit, drop } = useLines(capture)
+  const { lines, edit, drop } = useLines(capture, only)
   const close = () => store().close()
   const apply = (mode: 'all' | 'inbox') => {
     if (!capture) return
@@ -383,8 +390,8 @@ function ResultsFoot({ count, apply }: { count: number; apply: (mode: 'all' | 'i
   )
 }
 
-function PhoneResults({ id }: { id: string }) {
-  const r = useResults(id)
+function PhoneResults({ id, only }: { id: string; only?: string[] }) {
+  const r = useResults(id, only)
   if (!r.capture) return null
   const capture = r.capture
   return (
@@ -402,8 +409,8 @@ function PhoneResults({ id }: { id: string }) {
   )
 }
 
-function DesktopResults({ id }: { id: string }) {
-  const r = useResults(id)
+function DesktopResults({ id, only }: { id: string; only?: string[] }) {
+  const r = useResults(id, only)
   const [page, setPage] = useState(0)
   const [hover, setHover] = useState<EditLine | null>(null)
   if (!r.capture) return null
@@ -462,6 +469,97 @@ function DesktopResults({ id }: { id: string }) {
   )
 }
 
+// ── 11l · a Notebook page's ticks: "5 ticked on paper → mark done?" ──
+function TicksReview({ id, target }: { id: string; target: TicksTarget }) {
+  const capture = useCapture(id)
+  const urls = usePageUrls(capture)
+  const { data: tasks = [] } = useTasks()
+  // The page's tasks as they are now: one finished since the page was written isn't offered again.
+  const open = useMemo(() => new Set(tasks.filter((t) => t.status === 'todo').map((t) => t.id)), [tasks])
+  const result = useMemo(() => {
+    const lines = (capture?.items ?? []).map((it, i) => ({ key: `${it.page}:${i}`, text: it.text, checked: it.checked ?? null, item: it }))
+    return matchTicks(lines, target.tasks.filter((t) => open.has(t.id)), target.printed)
+  }, [capture, target, open])
+  const [skipped, setSkipped] = useState<Set<string>>(new Set())
+  const close = () => store().close()
+  if (!capture) return null
+  const chosen = result.ticked.filter((m) => !skipped.has(m.task.id))
+  const fresh = result.fresh.map((l) => l.key)
+  const itemOf = (key: string) => capture.items[Number(key.split(':')[1])]
+  const toggle = (taskId: string) =>
+    setSkipped((s) => {
+      const next = new Set(s)
+      if (next.has(taskId)) next.delete(taskId)
+      else next.add(taskId)
+      return next
+    })
+  // New scribbles go on to the usual results (only them); otherwise the photo is done with.
+  const next = () => (fresh.length ? store().show({ kind: 'results', captureId: id, only: fresh }) : close())
+  const markDone = () => {
+    markTicksDone(capture, chosen.map((m) => m.task.id), !fresh.length)
+    next()
+  }
+  const n = chosen.length
+  return (
+    <Frame label="Bring back your ticks" onClose={close}>
+      <TopBar title="Bring back your ticks" onClose={close} />
+      <div className="pp-rows">
+        <div className="pp-rhead">
+          {urls[0] && (
+            <button type="button" className="pp-thumb" aria-label="See the photo" onClick={() => store().show({ kind: 'photo', captureId: id, page: 0, back: { kind: 'results', captureId: id } })}>
+              <img src={urls[0]} alt="" />
+            </button>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="pp-rtitle">{result.ticked.length ? `${result.ticked.length} ticked on paper → mark done?` : 'No ticks found on this page'}</div>
+            <div className="pp-meta">Matched to {target.label}</div>
+          </div>
+        </div>
+        {!result.ticked.length && <div className="pp-banner">None of the ticked boxes matched a task still open on {target.label}. Hold the camera square over the page and try again — or keep the lines as notes.</div>}
+        {result.ticked.map((m) => {
+          const item = itemOf(m.line.key)
+          return (
+            <div key={m.task.id} className="pp-row">
+              <div className="pp-row-fg pp-tickrow">
+                <span className="pp-tickhit">
+                  <Checkbox checked={!skipped.has(m.task.id)} label={m.task.title} onChange={() => toggle(m.task.id)} />
+                </span>
+                <div className="pp-row-main">
+                  <div className="pp-row-text">
+                    <EmojiText text={m.task.title} />
+                  </div>
+                  <div className="pp-check">
+                    <Crop url={urls[item?.page ?? 0]} box={item?.box ?? null} height={32} maxWidth={220} />
+                    <span className="pp-meta" dir="auto">☑ {m.line.text}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+        {result.open.length > 0 && <div className="pp-banner">{result.open.length} still open on paper · left as they are</div>}
+        {fresh.length > 0 && <div className="pp-banner">New on the page · {fresh.length} — you’ll see {fresh.length === 1 ? 'it' : 'them'} next, like any page.</div>}
+      </div>
+      <div data-sheet-footer className="pp-foot is-row">
+        <Button variant="secondary" onClick={close}>
+          Not now
+        </Button>
+        {n > 0 ? (
+          <Button variant="cta" onClick={markDone}>
+            Mark {n} done
+          </Button>
+        ) : (
+          fresh.length > 0 && (
+            <Button variant="cta" onClick={next}>
+              Review the lines
+            </Button>
+          )
+        )}
+      </div>
+    </Frame>
+  )
+}
+
 // ── the photo itself (from the results, an Inbox row or a task) ──
 function PhotoView({ stage }: { stage: Extract<Stage, { kind: 'photo' }> }) {
   const capture = useCapture(stage.captureId)
@@ -495,6 +593,8 @@ function PhotoView({ stage }: { stage: Extract<Stage, { kind: 'photo' }> }) {
 function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | 'failed' | 'limit' | 'denied' }> }) {
   const capture = useCapture('captureId' in stage ? stage.captureId : null)
   const urls = usePageUrls(capture)
+  // A retake of a Notebook page is still a Notebook page (11l).
+  const ticks = usePaperStore((s) => ('captureId' in stage ? s.ticksFor[stage.captureId] : undefined))
   const close = () => store().close()
   // Couldn't read: the photo goes (it's of nothing useful), and the flow starts over.
   const settle = () => capture && !capture.reviewed_at && markReviewed(capture, true)
@@ -520,10 +620,10 @@ function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | '
     body = 'It came out a little blurry, or there’s no handwriting on it. Hold steady over the page, and let it fill the frame.'
     actions = (
       <>
-        <Button variant="cta" icon={<Icon name="camera" size={18} />} onClick={() => { settle(); close(); void pickPhotos('camera') }}>
+        <Button variant="cta" icon={<Icon name="camera" size={18} />} onClick={() => { settle(); close(); void pickPhotos('camera', ticks) }}>
           Retake
         </Button>
-        <Button variant="secondary" icon={<Icon name="image" size={18} />} onClick={() => { settle(); close(); void pickPhotos('gallery') }}>
+        <Button variant="secondary" icon={<Icon name="image" size={18} />} onClick={() => { settle(); close(); void pickPhotos('gallery', ticks) }}>
           Pick another photo
         </Button>
       </>

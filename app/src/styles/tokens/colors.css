@@ -1,5 +1,6 @@
-/* Light mode — warm paper, botanical linen. This is the primary experience. */
-:root {
+/* Light mode — warm paper, botanical linen. This is the primary experience. `[data-theme="day"]` lets
+   a subtree stay day at night — the Notebook page is a page, so it stays light paper (prompt 10). */
+:root, [data-theme="day"] {
   /* Paper ground */
   --paper-linen:        #EFE9DB;   /* page background */
   --paper-parchment:    #FBF6E9;   /* cards, panels, popovers */

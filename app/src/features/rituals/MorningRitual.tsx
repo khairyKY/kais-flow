@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { useTasks, completeTaskWithUndo, createTask, currentTop3, deleteTasksWithUndo, rescheduleDue, setSomeday, toggleTop3, writeTop3Order } from '../tasks/api'
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
@@ -83,6 +84,9 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const seeds = useSeedsFor(loopDayKey(now))
   const [draft, setDraft, clearDraft] = useDraft<PlanDraft>('plan', loopDayKey(now), () => ({ carry: [], picks: null, chosen: {} }))
   const finished = useRef(false)
+  const navigate = useNavigate()
+  // After "Start the day": the success moment — Done, or the Notebook page to copy the plan by hand.
+  const [started, setStarted] = useState<string[] | null>(null)
 
   const byId = new Map(tasks.map((t) => [t.id, t]))
   const carry = carryRows(tasks, draft.carry, now)
@@ -210,15 +214,16 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
   // "Start the day" (6 intro): the picks become the Top 3 in pick order (the first one the goal, on
   // every device — tasks.top3_rank), every pick with a time (suggested or set) goes on the calendar,
-  // every section counts as walked, and the ritual is finished.
-  function start(close: () => void) {
+  // every section counts as walked, and the ritual is finished. Then the success moment (below).
+  function start() {
     const { unstar, star } = top3Diff(selection, tasks)
     unstar.forEach(toggleTop3)
     star.forEach(toggleTop3)
     const picks = selection.flatMap((id) => byId.get(id) ?? [])
     writeTop3Order([...picks, ...currentTop3().filter((t) => !selection.includes(t.id))]) // a goal finished earlier today goes after
 
-    for (const s of toPlace(slots)) {
+    const placed = toPlace(slots)
+    for (const s of placed) {
       const t = byId.get(s.id)
       if (t) scheduleTask(t, cairoToIso(today, fromMin(s.start)), cairoToIso(today, fromMin(s.end)))
     }
@@ -226,7 +231,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     logRitualFinished('morning', [...PLAN_STEPS])
     playSound('ritual_done')
     finished.current = true
-    close()
+    setStarted([`${picks.length} picked`, `${placed.length} on the calendar`])
   }
 
   // The first pick reads "✶ Goal"; every other pick offers "☆ Make goal" right there.
@@ -362,16 +367,47 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
 
   const changingTask = changing ? byId.get(changing) : undefined
   const dur = changing ? (pickIns.find((p) => p.id === changing)?.dur ?? 30) : 30
+  const leave = () => {
+    if (finished.current) clearDraft()
+    onClose()
+  }
+
+  // The success moment (brainstorm §A: "where most people will meet" the Notebook page) — the plan is
+  // final here, so it offers the page to copy by hand beside Done. No design yet: the evening summary's parts.
+  if (started) {
+    return (
+      <RitualSheet
+        title=""
+        sub=""
+        onClose={leave}
+        left={
+          <div className="rt-summary">
+            <img src="/ds/assets/clover/awake.png" alt="" />
+            <div className="rt-summary-title">The day has a shape.</div>
+            <div className="rt-meta">{started.map((s) => <span key={s}>{s}</span>)}</div>
+          </div>
+        }
+        right={null}
+        footer={(close) => (
+          <div className="rt-foot-row" style={{ flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button type="button" variant="secondary" icon={<Icon name="journal" size={20} />} onClick={() => { leave(); navigate('/notebook') }}>
+              Write it in your notebook
+            </Button>
+            <Button type="button" onClick={close}>
+              Done
+            </Button>
+          </div>
+        )}
+      />
+    )
+  }
 
   return (
     <>
       <RitualSheet
         title="Plan my day"
         sub={`${headerDate(now)} · about 3 minutes`}
-        onClose={() => {
-          if (finished.current) clearDraft()
-          onClose()
-        }}
+        onClose={leave}
         left={
           <>
             {carrySection}
@@ -384,12 +420,12 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             {timesSection}
           </>
         }
-        footer={(close) => (
+        footer={() => (
           <RitualFoot
             workload={<WorkloadLine text={workload.text} over={workload.over ? `${span(workload.over)} over` : undefined} />}
             status={planStatus(carry, slots)}
             cta={
-              <Button type="button" onClick={() => start(close)}>
+              <Button type="button" onClick={start}>
                 Start the day
               </Button>
             }

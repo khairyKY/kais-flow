@@ -206,6 +206,9 @@ export interface AppSettings {
   weekend_days?: number[]
   /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
   help_seen?: string[] | null
+  /** The Notebook page's layout (migration 0063), read through features/notebook/page.ts parseLayout —
+   * absent before the push, null until first edited. */
+  notebook_layout?: unknown
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
