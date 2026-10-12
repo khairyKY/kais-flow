@@ -1,6 +1,6 @@
 // Paper capture: a picked photo → the page we upload. Canvas only, no library: the long edge to 1600px,
 // the quick look's rotation baked in, JPEG stepped down until it's ~250 KB (paperMath has the numbers).
-import { fitWithin, QUALITIES, rotatedSize, TARGET_BYTES } from './paperMath'
+import { fitWithin, isHeic, QUALITIES, rotatedSize, TARGET_BYTES } from './paperMath'
 
 function toBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode failed'))), 'image/jpeg', quality))
@@ -31,7 +31,8 @@ export async function preparePage(file: Blob, rotation: number): Promise<Blob> {
   return blob!
 }
 
-/** Image files from a drop, a paste or a picker (anything else is left out). */
+/** Image files from a drop, a paste or a picker (anything else is left out). A HEIC stays in even with
+ * no type (Chromium gives it none), so it reaches the quick look's "Convert it to JPEG first" instead of vanishing. */
 export function imageFiles(list: FileList | File[] | null | undefined): File[] {
-  return [...(list ?? [])].filter((f) => f.type.startsWith('image/'))
+  return [...(list ?? [])].filter((f) => f.type.startsWith('image/') || isHeic(f))
 }
