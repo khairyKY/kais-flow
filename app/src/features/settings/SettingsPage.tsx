@@ -40,6 +40,7 @@ import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/ap
 import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import './settings.css'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed onto real data. UI pass (Kai 2026-10-08,
@@ -718,15 +719,13 @@ function ResurfacingCard() {
 
 // P-IMPORT entry (Settings.dc.html 2a) + punch 50's Trash entry point — one "your data" card.
 const linkBtn = 'kf-btn kf-press kf-button kf-button--secondary'
-function DataCard({ importer = true }: { importer?: boolean }) {
+function DataCard() {
   const { data: deletedItems = [] } = useDeletedItems()
   return (
     <SCard id="settings-Data" title="Your data">
-      {importer && (
-        <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
-          <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
-        </Row>
-      )}
+      <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
+        <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
+      </Row>
       <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`}>
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
@@ -786,6 +785,7 @@ function CaptureKeyCard() {
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [confirmOff, setConfirmOff] = useState(false)
   const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
@@ -821,11 +821,25 @@ function CaptureKeyCard() {
           {row || shown ? 'New key' : 'Create key'}
         </Button>
         {row && (
-          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteCaptureKey(row.id); setShown(null) })}>
+          <Button variant="ghost" disabled={busy} onClick={() => setConfirmOff(true)}>
             Turn off
           </Button>
         )}
       </div>
+      {/* No Undo here: only the key's hash is stored, and the client never sees it, so a deleted key
+          can't be put back — a short confirm instead. */}
+      {confirmOff && row && (
+        <ConfirmCard
+          title="Turn off the capture key?"
+          body="Shortcuts and bookmarklets using it stop sending to your Inbox. A new key can be made any time, but this one can't come back."
+          confirmLabel="Turn off"
+          onCancel={() => setConfirmOff(false)}
+          onConfirm={() => {
+            setConfirmOff(false)
+            void run(async () => { await deleteCaptureKey(row.id); setShown(null) })
+          }}
+        />
+      )}
       {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
       {/* The short version of docs/CAPTURE.md. The key only ever goes in the header. */}
       <details style={{ marginTop: 12 }}>
@@ -855,12 +869,13 @@ function CaptureKeyCard() {
 // ready-to-paste config per client.
 function McpCard() {
   const { data: row } = useMcpKey()
-  const { data: settings } = useAppSettings()
   const [scope, setScope] = useState<McpScope>('read_write')
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: settings?.timezone ?? 'Africa/Cairo' })
+  const [confirmOff, setConfirmOff] = useState(false)
+  // appZone() is validated — a bad stored timezone would make toLocaleDateString throw.
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
     setErr(null)
@@ -903,11 +918,25 @@ function McpCard() {
           {row || shown ? 'New key' : 'Create key'}
         </Button>
         {row && (
-          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteMcpKey(row.id); setShown(null) })}>
+          <Button variant="ghost" disabled={busy} onClick={() => setConfirmOff(true)}>
             Turn off
           </Button>
         )}
       </div>
+      {/* No Undo here: only the key's hash is stored, and the client never sees it, so a deleted key
+          can't be put back — a short confirm instead (the one other place, besides Delete forever). */}
+      {confirmOff && row && (
+        <ConfirmCard
+          title="Turn off the AI key?"
+          body="Any assistant using it stops reaching your garden. A new key can be made any time, but this one can't come back."
+          confirmLabel="Turn off"
+          onCancel={() => setConfirmOff(false)}
+          onConfirm={() => {
+            setConfirmOff(false)
+            void run(async () => { await deleteMcpKey(row.id); setShown(null) })
+          }}
+        />
+      )}
       {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
       <div className="st-help" style={{ marginTop: 10 }}>A new key stops the old one · your journal and people are never shared · 500 tool calls a day</div>
       <div className="st-mono-box">{MCP_URL}</div>
@@ -1277,6 +1306,8 @@ function MobileSettings() {
       <SoundCatalogCard />
       <CalendarCard phone />
       <TimezoneCard />
+      {/* Parity with the computer: the same cooldown card (its sliders are 44 tall on a phone). */}
+      <ResurfacingCard />
       {/* The phone is where the pushes land, so the whole Notifications card lives here too (12i). */}
       <NotificationsCard />
       {/* The phone has no Organize rail — its domains live here. */}
@@ -1287,8 +1318,9 @@ function MobileSettings() {
       <CaptureKeyCard />
       <PaperSettingsCard />
       <McpCard />
-      {/* Punch 50: the phone's way into Trash. */}
-      <DataCard importer={false} />
+      {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}
+      <DataCard />
+      <ProfileCard />
       <AppUpdateCard />
       <div className="st-phone-foot">everything saves as you touch it ✿</div>
     </div>
