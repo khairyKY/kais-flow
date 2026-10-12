@@ -453,7 +453,8 @@ if (want('n9')) {
   const env = await open('/today?ritual=evening', { at: cairo('21:00') })
   const { page } = env
   await sleep(800)
-  await page.getByRole('button', { name: 'Close the day' }).click()
+  await // Today 2a's rail has its own "Close the day" step; the one meant is the Shut down dialog's.
+  page.getByRole('dialog').getByRole('button', { name: 'Close the day' }).click()
   await sleep(500)
   const link = page.getByRole('button', { name: /Write tomorrow’s page/ })
   check('n9 the summary offers "Write tomorrow’s page"', (await link.count()) === 1)

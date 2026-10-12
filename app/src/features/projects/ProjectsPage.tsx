@@ -360,7 +360,7 @@ export function ProjectsPage() {
 
           {!isEmpty && view === 'archive' && <>
           {archivedProjects.length === 0 && (
-            <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)' }}>Nothing finished yet — pressed projects rest here ✿</div>
+            <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)' }}>Nothing finished yet — pressed projects rest here ✿</div>
           )}
           {archivedProjects.map((p) => {
             const stat = projectStats[p.id] ?? EMPTY_STAT
@@ -368,22 +368,22 @@ export function ProjectsPage() {
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 26, flex: 'none' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                  <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>{stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>{stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => restoreProjectWithUndo(p)}
                   aria-label={`Restore ${p.name}`}
                   className="kf-hit"
-                  style={{ flex: 'none', border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999 }}
+                  style={{ flex: 'none', border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999 }}
                 >
                   restore
                 </button>
               </div>
             )
           })}
-          <Link to="/herbarium" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+          <Link to="/herbarium" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
             Open the Herbarium →
           </Link>
           </>}
@@ -898,7 +898,7 @@ export function ProjectsPage() {
               ))}
 
             <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
                 Open the Herbarium — {archivedProjects.length} pressed specimens →
               </Link>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>

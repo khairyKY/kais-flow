@@ -21,7 +21,7 @@ import { useAppZone } from '../../lib/appZone'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
-import { Checkbox } from '../../components/kit'
+import { Checkbox, Toggle } from '../../components/kit'
 import { Skeleton, ErrorCard } from '../../components/States'
 import './FocusPage.css'
 
@@ -1065,7 +1065,7 @@ export function FocusPage() {
 
       {/* 1e: SETTINGS POPOVER (Modal Overlay) */}
       {isSettingsOpen && (
-        <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.05)', zIndex: 100 }}>
+        <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(var(--kf-shadow-rgb, 60,52,38), 0.05)', zIndex: 100 }}>
           {/* deviation(2026-07-18 audit): no rotate() on the settings card — text containers stay
               transform-free for crisp rendering (same ruling as C4). Washi tape keeps the tilt. */}
           <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
@@ -1228,21 +1228,11 @@ export function FocusPage() {
             {/* Toggles */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start the next round</div>
-              <span
-                onClick={() => saveSettings({ ...settings, autoStartNextRound: !settings.autoStartNextRound })}
-                style={{ width: 34, height: 20, borderRadius: 999, background: settings.autoStartNextRound ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-              >
-                <span style={{ position: 'absolute', top: 2, left: settings.autoStartNextRound ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
-              </span>
+              <Toggle on={settings.autoStartNextRound} label="Auto-start the next round" onToggle={() => saveSettings({ ...settings, autoStartNextRound: !settings.autoStartNextRound })} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start breaks</div>
-              <span
-                onClick={() => saveSettings({ ...settings, autoStartBreaks: !settings.autoStartBreaks })}
-                style={{ width: 34, height: 20, borderRadius: 999, background: settings.autoStartBreaks ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-              >
-                <span style={{ position: 'absolute', top: 2, left: settings.autoStartBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
-              </span>
+              <Toggle on={settings.autoStartBreaks} label="Auto-start breaks" onToggle={() => saveSettings({ ...settings, autoStartBreaks: !settings.autoStartBreaks })} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div>
@@ -1251,12 +1241,7 @@ export function FocusPage() {
                   the dusk scene opens by itself
                 </div>
               </div>
-              <span
-                onClick={() => saveSettings({ ...settings, gardenViewOnLongBreaks: !settings.gardenViewOnLongBreaks })}
-                style={{ width: 34, height: 20, borderRadius: 999, background: settings.gardenViewOnLongBreaks ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-              >
-                <span style={{ position: 'absolute', top: 2, left: settings.gardenViewOnLongBreaks ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
-              </span>
+              <Toggle on={settings.gardenViewOnLongBreaks} label="Garden view on long breaks" onToggle={() => saveSettings({ ...settings, gardenViewOnLongBreaks: !settings.gardenViewOnLongBreaks })} />
             </div>
             {/* Punch 52 + 8 (orchestrator patch): the chime is real again (synthesised, not the
                 missing chime.mp3), and this row is now the SAME switch as Settings' "Focus round
@@ -1264,17 +1249,12 @@ export function FocusPage() {
                 decided nothing. One sound, one setting, wherever you toggle it. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>
-              <span
-                onClick={() => {
-                  const next = !chimeOn
-                  setChimeOn(next)
-                  writeSoundEvents({ ...readSoundEvents(), focus_end: next })
-                  if (next) previewSound('focus_end')
-                }}
-                style={{ width: 34, height: 20, borderRadius: 999, background: chimeOn ? 'var(--acc-sage)' : 'var(--line-solid)', flex: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-              >
-                <span style={{ position: 'absolute', top: 2, left: chimeOn ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', transition: 'left 0.2s' }}></span>
-              </span>
+              <Toggle on={chimeOn} label="Gentle chime at round's end" onToggle={() => {
+                const next = !chimeOn
+                setChimeOn(next)
+                writeSoundEvents({ ...readSoundEvents(), focus_end: next })
+                if (next) previewSound('focus_end')
+              }} />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px dashed var(--line-dashed)' }}>

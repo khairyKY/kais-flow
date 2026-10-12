@@ -81,7 +81,7 @@ import { DateField } from '../../components/DatePicker'
 import './xfx.css'
 
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit), PersonDetailPage's look.
-const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 12, color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
+const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
 
 // Local query hook to retrieve activity log for a specific project/area
 function useActivityLog(entityId: string) {
@@ -774,10 +774,10 @@ export function ProjectDetailPage() {
                             if (e.key === 'Enter') { e.preventDefault(); commitMilestoneEdit() }
                             if (e.key === 'Escape') { e.preventDefault(); setEditingMilestone(null) }
                           }}
-                          style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
+                          style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
                         />
                       ) : (
-                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
+                        <span style={{ fontSize: 'var(--fs-body-s)', color: m.resolvedCompleted ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
                       )}
                       {/* Kai 2026-10-12: the weight changes after it's added — tap it for the −/+ field; each step saves. */}
                       {weighingMilestone === m.id ? (
@@ -857,7 +857,7 @@ export function ProjectDetailPage() {
                   <Checkbox checked={done} label={item.title} onChange={() => (linked ? toggleTaskWithUndo(linked) : toggleProjectChecklistItem(project, item.id))} size={15} />
                   {/* Kai 2026-10-12: rename in place, like a milestone or a log note. */}
                   {renamingChecklist === item.id ? (
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)' }}>
                       <RenameField
                         value={item.title}
                         ariaLabel="Checklist item"
@@ -869,7 +869,7 @@ export function ProjectDetailPage() {
                       />
                     </span>
                   ) : (
-                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
+                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 'var(--fs-body-s)', color: done ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
                   )}
                   <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                     {item.type}
@@ -1068,7 +1068,7 @@ export function ProjectDetailPage() {
                   finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`))
                   navigate('/projects')
                 }}
-                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
                 Archive project
               </button>
@@ -1198,7 +1198,7 @@ export function ProjectDetailPage() {
 
           {/* Open tasks */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {oneOffTasks.length}</span>
+            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {oneOffTasks.length}</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
             <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
               + add task
