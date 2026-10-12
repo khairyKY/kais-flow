@@ -25,7 +25,7 @@ const { RRule } = rrulePkg
 import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
-import type { EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
+import type { BlockRow, EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
 
 // Tool calls per key per UTC day. A runaway agent loop stops here; reads of the tool list don't count.
 const DAILY_LIMIT = 500
@@ -54,11 +54,12 @@ function store(tx: Tx): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.status = 'todo' and t.deleted_at is null
-          and (t.top3 or (not t.someday and (
-            coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
-            or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz))))
-        order by coalesce(t.due_at, t.scheduled_start) nulls last, t.id
+        where t.status = 'todo' and t.deleted_at is null and not t.someday
+          and (coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
+            or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz)
+            or (t.top3 and t.due_at is null and t.scheduled_start is null))
+        -- Picks first, so a long overdue pile can't push them past the limit.
+        order by t.top3 desc, coalesce(t.due_at, t.scheduled_start) nulls last, t.id
         limit 500`)
     },
     async listTasks(f: TaskFilter) {
@@ -100,8 +101,12 @@ function store(tx: Tx): Store {
       const rows = await tx`select entity_type, entity_id, title, snippet, score from search_hybrid(${query}, ${embedding}, ${limit})`
       return rows as unknown as SearchHit[]
     },
-    async top3Count() {
-      const [row] = await tx`select count(*)::int as n from tasks where top3 and status = 'todo' and deleted_at is null`
+    async top3Count(end) {
+      // The Top 3 rule (_shared/today.ts): a pick dated after today isn't one of today's.
+      const [row] = await tx`
+        select count(*)::int as n from tasks
+        where top3 and status = 'todo' and deleted_at is null and not someday
+          and (coalesce(due_at, scheduled_start) is null or coalesce(due_at, scheduled_start) < ${end}::timestamptz)`
       return row.n as number
     },
     async openOccurrence(title, rule, due, exceptId) {
@@ -130,10 +135,24 @@ function store(tx: Tx): Store {
         returning id`
       return rows.length > 0
     },
-    async setDue(id, due) {
-      // Only move_to_tomorrow sets a due date here, and tomorrow is never today: a Top 3 pick gives
-      // its place up, as it does in the app (app/src/features/tasks/top3Rule.ts).
-      await tx`update tasks set due_at = ${due}::timestamptz, someday = false, top3 = false, top3_rank = null where id = ${id}::uuid`
+    async taskBlocks(taskId) {
+      const rows = await tx`select id, starts_at, ends_at, all_day from calendar_events where task_id = ${taskId}::uuid and deleted_at is null`
+      return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as BlockRow)
+    },
+    async reschedule(id, r) {
+      // Only move_to_tomorrow reschedules here, and tomorrow is never today: a Top 3 pick gives its
+      // place up, as it does in the app (app/src/features/tasks/top3Rule.ts).
+      await tx`
+        update tasks set due_at = ${r.due_at}::timestamptz, reminder_at = ${r.reminder_at}::timestamptz,
+          reminder_sent = ${r.reminder_sent}::boolean, scheduled_start = ${r.scheduled_start}::timestamptz,
+          scheduled_end = ${r.scheduled_end}::timestamptz, someday = false, top3 = false, top3_rank = null
+        where id = ${id}::uuid`
+    },
+    async clearBlocks(taskId, ids) {
+      await tx`
+        update calendar_events set deleted_at = now()
+        where task_id = ${taskId}::uuid and deleted_at is null
+          and id in (select jsonb_array_elements_text(${JSON.stringify(ids)}::jsonb)::uuid)`
     },
     async insertInbox(row) {
       await tx`

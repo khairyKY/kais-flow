@@ -4,44 +4,34 @@
 // questions all fell through. Now it also gets a live snapshot of today and a short guide to the app,
 // may reason over the user's data (never invent it), and replies in the user's language.
 
+import { addDays as plusDays, dateKey, DEFAULT_ZONE, wallToInstant } from '../_shared/zone.ts'
+
+/** `top3`: one of today's picks by the Top 3 rule (chat/index.ts decides it with _shared/today.ts). */
 export interface SnapshotTask { title: string; due_at: string | null; scheduled_start: string | null; top3: boolean }
 export interface SnapshotEvent { title: string; starts_at: string; ends_at: string | null; all_day?: boolean | null }
 export interface Hit { entity_type: string; title: string; snippet?: string | null }
 export interface Slip { entity_name: string; days_since: number }
 
-/** Wall-clock parts of `d` in `tz`. */
-function parts(d: Date, tz: string) {
-  const p = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
-      .formatToParts(d)
-      .map((x) => [x.type, x.value]),
-  )
-  return { y: +p.year, m: +p.month, d: +p.day, h: +p.hour, mi: +p.minute }
-}
-
-/** The instant `tz`'s calendar day containing `now` (+ `addDays`) starts. chat passes the user's
- * own zone (app_settings.timezone); Cairo is only the default. */
-export function dayStart(now: Date, tz = 'Africa/Cairo', addDays = 0): Date {
-  const { y, m, d } = parts(now, tz)
-  const guess = Date.UTC(y, m - 1, d + addDays)
-  const w = parts(new Date(guess), tz)
-  const offset = Date.UTC(w.y, w.m - 1, w.d, w.h, w.mi) - guess // the zone's offset at that instant
-  return new Date(guess - offset)
+/** The instant `tz`'s calendar day containing `now` (+ `addDays`) starts — _shared/zone.ts's day math,
+ * so a DST-change day is 23 or 25 hours. chat passes the user's own zone (app_settings.timezone). */
+export function dayStart(now: Date, tz = DEFAULT_ZONE, addDays = 0): Date {
+  return wallToInstant(plusDays(dateKey(now, tz), addDays), 0, 0, tz)
 }
 
 const clock = (iso: string, tz: string) =>
   new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso))
 
 /** "Today" for the model: timed items first, then overdue, Top 3 marked. */
-export function snapshotText(now: Date, tasks: SnapshotTask[], events: SnapshotEvent[], inboxPending: number, tz = 'Africa/Cairo'): string {
+export function snapshotText(now: Date, tasks: SnapshotTask[], events: SnapshotEvent[], inboxPending: number, tz = DEFAULT_ZONE): string {
   const today = dayStart(now, tz).getTime()
   const tomorrow = dayStart(now, tz, 1).getTime()
+  const dayAfter = dayStart(now, tz, 2).getTime()
   const at = (t: SnapshotTask) => t.scheduled_start ?? t.due_at
   const inDay = (iso: string | null, from: number, to: number) => !!iso && Date.parse(iso) >= from && Date.parse(iso) < to
   const line = (t: SnapshotTask) => `- ${t.top3 ? '★ ' : ''}${t.title}${at(t) ? ` (${clock(at(t)!, tz)})` : ''}`
   const todays = tasks.filter((t) => inDay(at(t), today, tomorrow))
   const overdue = tasks.filter((t) => t.due_at && Date.parse(t.due_at) < today)
-  const tomorrows = tasks.filter((t) => inDay(at(t), tomorrow, tomorrow + 86_400_000))
+  const tomorrows = tasks.filter((t) => inDay(at(t), tomorrow, dayAfter))
   const ev = (from: number, to: number) =>
     events.filter((e) => inDay(e.starts_at, from, to)).map((e) => `- ${e.all_day ? 'all day' : clock(e.starts_at, tz)} ${e.title}`)
   const date = new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)
@@ -50,7 +40,7 @@ export function snapshotText(now: Date, tasks: SnapshotTask[], events: SnapshotE
     `Today's tasks:\n${todays.map(line).join('\n') || '(none)'}`,
     `Overdue:\n${overdue.map(line).join('\n') || '(none)'}`,
     `Today's calendar:\n${ev(today, tomorrow).join('\n') || '(nothing)'}`,
-    `Tomorrow:\n${[...tomorrows.map(line), ...ev(tomorrow, tomorrow + 86_400_000)].join('\n') || '(nothing yet)'}`,
+    `Tomorrow:\n${[...tomorrows.map(line), ...ev(tomorrow, dayAfter)].join('\n') || '(nothing yet)'}`,
     `Inbox: ${inboxPending} waiting to be sorted.`,
   ].join('\n\n')
 }
@@ -78,7 +68,7 @@ Rules:
 
 ${o.snapshot}
 
-Top 3 today: ${o.top3.map((t) => t.title).join(', ') || 'none'}
+Top 3 today (the first is the goal of the day): ${o.top3.map((t) => t.title).join(', ') || 'none'}
 Slipping (untouched for a while): ${slipping}
 
 Items matching the question:

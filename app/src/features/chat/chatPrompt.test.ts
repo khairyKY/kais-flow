@@ -25,8 +25,16 @@ describe('chat prompt (the "not in your data" fix)', () => {
     expect(text).toContain('Tomorrow:\n- Call Omar (09:00)')
     expect(text).toContain('Inbox: 3 waiting')
   })
+  it("tomorrow is the user's whole tomorrow, even when it is 25 hours long (DST)", () => {
+    // Sat 31 Oct 2026, 10:00 in Los Angeles; Sunday 1 Nov falls back at 02:00, so it ends at 08:00Z on the 2nd.
+    const sat = new Date('2026-10-31T17:00:00Z')
+    expect(dayStart(sat, 'America/Los_Angeles', 2).toISOString()).toBe('2026-11-02T08:00:00.000Z')
+    const text = snapshotText(sat, [{ title: 'Late Sunday call', due_at: '2026-11-02T07:30:00Z', scheduled_start: null, top3: false }], [], 0, 'America/Los_Angeles')
+    expect(text).toContain('Tomorrow:\n- Late Sunday call (23:30)')
+  })
   it('lets the model reason, forbids invention, answers how-to and the user\'s language', () => {
-    const p = systemPrompt({ now, hits: [], top3: [], slipping: [], snapshot: 'S' })
+    const p = systemPrompt({ now, hits: [], top3: [{ title: 'GCI homework' }, { title: 'Survey' }], slipping: [], snapshot: 'S' })
+    expect(p).toContain('Top 3 today (the first is the goal of the day): GCI homework, Survey')
     expect(p).toContain('You may reason and suggest')
     expect(p).toContain('Never invent')
     expect(p).toContain('Reply in the same language')

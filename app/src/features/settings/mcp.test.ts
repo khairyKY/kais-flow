@@ -9,8 +9,10 @@ import {
   readWhen,
   splitToday,
   tomorrowAt9,
+  tomorrowMoves,
   userZone,
   wallTime,
+  type BlockRow,
   type EventRow,
   type ProjectRow,
   type SearchHit,
@@ -42,9 +44,10 @@ interface Fake extends Store {
   inbox: { id: string; raw_text: string; payload: Record<string, unknown> }[]
   logs: { eventType: string; entityType: string; entityId: string; payload: Record<string, unknown> }[]
   filters: TaskFilter[]
+  blocks: (BlockRow & { task_id: string; deleted_at: string | null })[]
 }
 
-function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): Fake {
+function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], blocks: Fake['blocks'] = []): Fake {
   const projects: ProjectRow[] = [{ id: P1, name: 'Shaheen Website', status: 'active', type: 'standard', domain_id: D1, target_date: '2026-12-01T00:00:00Z' }]
   const events: EventRow[] = [
     { id: tid(900), title: 'Standup', starts_at: '2026-10-04T07:00:00Z', ends_at: '2026-10-04T07:15:00Z', all_day: false, task_id: null },
@@ -61,12 +64,15 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): 
     inbox: [],
     logs: [],
     filters: [],
+    blocks: blocks.map((b) => ({ ...b })),
     timezone: async () => zone,
+    // index.ts's SQL: open, not in Trash, not someday — dated before `end`, scheduled today, or an undated pick.
     dayTasks: async (start, end) =>
       s.tasks.filter((t) => {
-        if (t.status !== 'todo') return false
+        if (t.status !== 'todo' || t.someday) return false
         const dated = t.due_at ?? t.scheduled_start
-        return t.top3 || (!t.someday && ((!!dated && dated < end) || (!!t.scheduled_start && t.scheduled_start >= start && t.scheduled_start < end)))
+        const sched = t.scheduled_start ? Date.parse(t.scheduled_start) : NaN
+        return (!!dated && Date.parse(dated) < Date.parse(end)) || (sched >= Date.parse(start) && sched < Date.parse(end)) || (t.top3 && !dated)
       }),
     listTasks: async (f) => {
       s.filters.push(f)
@@ -76,7 +82,11 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): 
     projects: async () => projects,
     events: async (from, to) => events.filter((e) => e.starts_at < to && e.ends_at > from),
     search: async (_q, limit) => hits.slice(0, limit),
-    top3Count: async () => s.tasks.filter((t) => t.top3 && t.status === 'todo').length,
+    top3Count: async (end) =>
+      s.tasks.filter((t) => {
+        const dated = t.due_at ?? t.scheduled_start
+        return t.top3 && t.status === 'todo' && !t.someday && (!dated || Date.parse(dated) < Date.parse(end))
+      }).length,
     openOccurrence: async (title, rule, due, except) =>
       s.tasks.some((t) => t.id !== except && t.status === 'todo' && t.title === title && t.recurrence_rule === rule && t.due_at === due),
     insertTask: async (t) => void s.tasks.push(t),
@@ -86,7 +96,11 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = []): 
       Object.assign(t, { status: 'done', completed_at: at, top3: false })
       return true
     },
-    setDue: async (id, due) => void Object.assign(s.tasks.find((t) => t.id === id)!, { due_at: due, someday: false }),
+    taskBlocks: async (taskId) => s.blocks.filter((b) => b.task_id === taskId && !b.deleted_at).map(({ id, starts_at, ends_at, all_day }) => ({ id, starts_at, ends_at, all_day })),
+    reschedule: async (id, r) => void Object.assign(s.tasks.find((t) => t.id === id)!, { ...r, someday: false, top3: false, top3_rank: null }),
+    clearBlocks: async (taskId, ids) => {
+      for (const b of s.blocks) if (b.task_id === taskId && ids.includes(b.id)) b.deleted_at = NOW.toISOString()
+    },
     insertInbox: async (row) => void s.inbox.push(row),
     log: async (eventType, entityType, entityId, payload) => void s.logs.push({ eventType, entityType, entityId, payload }),
   }
@@ -166,7 +180,7 @@ describe('MCP: the user clock', () => {
     for (const bad of ['tomorrow', '2026-02-30', '2026-10-05T25:00', '05/10/2026']) expect(readWhen(bad, 'Africa/Cairo')).toBeNull()
   })
 
-  it('sorts open tasks like the app: Top 3, due or scheduled today, overdue', () => {
+  it('sorts open tasks like the app: Top 3 (goal first), due or scheduled today, overdue', () => {
     const rows = [
       task(1, 'starred someday', { top3: true, someday: true }),
       task(2, 'due today 23:30 Cairo', { due_at: '2026-10-04T20:30:00Z' }),
@@ -174,9 +188,14 @@ describe('MCP: the user clock', () => {
       task(4, 'due yesterday', { due_at: '2026-10-03T06:00:00Z' }),
       task(5, 'someday, overdue', { due_at: '2026-10-01T06:00:00Z', someday: true }),
       task(6, 'due tomorrow 00:30 Cairo', { due_at: '2026-10-04T21:30:00Z' }),
+      task(7, 'pick moved to Thursday', { top3: true, top3_rank: 1, due_at: '2026-10-08T06:00:00Z' }),
+      task(8, 'unranked pick, yesterday', { top3: true, due_at: '2026-10-03T06:00:00Z' }),
+      task(9, 'second pick, due today', { top3: true, top3_rank: 2, due_at: '2026-10-04T08:00:00Z' }),
+      task(10, 'the goal', { top3: true, top3_rank: 1 }),
     ]
     const split = splitToday(rows, NOW, 'Africa/Cairo')
-    expect(split.top3.map((t) => t.title)).toEqual(['starred someday'])
+    // The Top 3 rule: someday and moved picks aren't today's; yesterday's unfinished pick still is.
+    expect(split.top3.map((t) => t.title)).toEqual(['the goal', 'second pick, due today', 'unranked pick, yesterday'])
     expect(split.today.map((t) => t.title)).toEqual(['due today 23:30 Cairo', 'block today, due next week'])
     expect(split.overdue.map((t) => t.title)).toEqual(['due yesterday'])
     // In Los Angeles the 23:30-Cairo task is due at 13:30 the same day; tomorrow-00:30-Cairo is today too.
@@ -336,6 +355,7 @@ describe('MCP: the tools', () => {
     task(4, 'Water the plants', { due_at: '2026-10-03T06:00:00Z', recurrence_rule: 'FREQ=DAILY', reminder_at: '2026-10-03T05:50:00Z' }),
     task(5, 'Old done thing', { status: 'done', completed_at: '2026-10-01T10:00:00Z' }),
     task(6, 'Next week', { due_at: '2026-10-11T06:00:00Z' }),
+    task(10, 'Moved pick', { top3: true, due_at: '2026-10-08T06:00:00Z' }), // starred, then moved to Thursday
   ]
 
   it('today: Top 3, due today, overdue and events, in the user\'s zone', async () => {
@@ -388,17 +408,28 @@ describe('MCP: the tools', () => {
 
   it("add_task: a bare date is 09:00 on the user's clock, the project brings its domain, it's logged", async () => {
     const store = fakeStore('America/Los_Angeles')
-    const r = await call(deps(store), 'add_task', { title: '  Book the dentist ', due: '2026-10-07', project_id: P1, top3: true, notes: 'ask for Friday' })
-    expect(r.data!.added).toMatchObject({ title: 'Book the dentist', due: '2026-10-07 09:00', project: 'Shaheen Website', top3: true })
+    const r = await call(deps(store), 'add_task', { title: '  Book the dentist ', due: '2026-10-07', project_id: P1, notes: 'ask for Friday' })
+    expect(r.data!.added).toMatchObject({ title: 'Book the dentist', due: '2026-10-07 09:00', project: 'Shaheen Website' })
     const [t] = store.tasks
-    expect(t).toMatchObject({ title: 'Book the dentist', due_at: '2026-10-07T16:00:00.000Z', project_id: P1, domain_id: D1, top3: true, status: 'todo', someday: false, notes: 'ask for Friday', created_at: NOW.toISOString() })
+    expect(t).toMatchObject({ title: 'Book the dentist', due_at: '2026-10-07T16:00:00.000Z', project_id: P1, domain_id: D1, top3: false, status: 'todo', someday: false, notes: 'ask for Friday', created_at: NOW.toISOString() })
     expect(t.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(store.logs).toEqual([
       { eventType: 'task.created', entityType: 'task', entityId: t.id, payload: { title: 'Book the dentist', source: 'mcp' } },
-      { eventType: 'task.starred', entityType: 'task', entityId: t.id, payload: { source: 'mcp' } },
     ])
     const timed = await call(deps(store), 'add_task', { title: 'Call back', due: '2026-10-07T15:30' })
     expect(timed.data!.added.due).toBe('2026-10-07 15:30')
+  })
+
+  it("add_task with top3: the Top 3 is today's, so a later date comes to today at its own time (flipTop3)", async () => {
+    const store = fakeStore('America/Los_Angeles') // now = Sun 4 Oct, 04:00 in LA
+    const later = await call(deps(store), 'add_task', { title: 'Book the dentist', due: '2026-10-07', top3: true })
+    expect(later.data!.added).toMatchObject({ due: '2026-10-04 09:00', top3: true })
+    expect(store.tasks[0]).toMatchObject({ due_at: '2026-10-04T16:00:00.000Z', top3: true })
+    expect(store.logs.map((l) => l.eventType)).toEqual(['task.created', 'task.starred'])
+    expect((await call(deps(store), 'add_task', { title: 'Call back', due: '2026-10-09T15:30', top3: true })).data!.added.due).toBe('2026-10-04 15:30')
+    // Today or earlier stays where it is; no date stays undated.
+    expect((await call(deps(store), 'add_task', { title: 'Late one', due: '2026-10-02T10:00', top3: true })).data!.added.due).toBe('2026-10-02 10:00')
+    expect((await call(deps(fakeStore('America/Los_Angeles')), 'add_task', { title: 'Whenever', top3: true })).data!.added.due).toBeUndefined()
   })
 
   it('add_task refuses a fourth Top 3 pick, an unknown project and an empty title — writing nothing', async () => {
@@ -413,6 +444,14 @@ describe('MCP: the tools', () => {
     }
     expect(store.tasks).toHaveLength(3)
     expect(store.logs).toEqual([])
+    // A pick moved to another day or parked as someday isn't one of today's three.
+    const stale = fakeStore('Africa/Cairo', [
+      task(1, 'pick', { top3: true }),
+      task(2, 'moved to Thursday', { top3: true, due_at: '2026-10-08T06:00:00Z' }),
+      task(3, 'parked', { top3: true, someday: true }),
+      task(4, 'pick today', { top3: true, due_at: '2026-10-04T06:00:00Z' }),
+    ])
+    expect((await call(deps(stale), 'add_task', { title: 'one more', top3: true })).isError).toBe(false)
   })
 
   it("complete_task: done and logged; a repeat's next occurrence is created once, reminder kept", async () => {
@@ -449,6 +488,42 @@ describe('MCP: the tools', () => {
     expect(r.data!.moved.due).toBe('2026-10-05 09:00')
     expect(store.tasks[0]).toMatchObject({ due_at: '2026-10-05T16:00:00.000Z', someday: false })
     expect(store.logs).toEqual([{ eventType: 'task.rescheduled', entityType: 'task', entityId: tid(9), payload: { due_at: '2026-10-05T16:00:00.000Z', source: 'mcp' } }])
+    expect(r.data!.calendar_blocks_removed).toBeUndefined()
+  })
+
+  it('move_to_tomorrow: the reminder keeps its lead, blocks follow a date-only replan, the pick lets go', async () => {
+    // Due today 15:00 Cairo, reminded at 14:50 (already sent), the goal; a block today and one tomorrow.
+    const blocks = [
+      { id: tid(500), task_id: tid(11), starts_at: '2026-10-04T12:00:00Z', ends_at: '2026-10-04T12:30:00Z', all_day: false, deleted_at: null },
+      { id: tid(501), task_id: tid(11), starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T08:00:00Z', all_day: false, deleted_at: null },
+      { id: tid(502), task_id: tid(12), starts_at: '2026-10-04T12:00:00Z', ends_at: '2026-10-04T13:00:00Z', all_day: false, deleted_at: null },
+    ]
+    const store = fakeStore('Africa/Cairo', [
+      task(11, 'Call the bank', { due_at: '2026-10-04T12:00:00Z', reminder_at: '2026-10-04T11:50:00Z', reminder_sent: true, top3: true, top3_rank: 1, scheduled_start: '2026-10-04T12:00:00Z', scheduled_end: '2026-10-04T12:30:00Z' }),
+    ], blocks)
+    const r = await call(deps(store), 'move_to_tomorrow', { id: tid(11) })
+    // Tomorrow 09:00 Cairo = 06:00Z: the due moved 18 h, so the reminder is tomorrow 08:50 and armed again.
+    expect(store.tasks[0]).toMatchObject({
+      due_at: '2026-10-05T06:00:00.000Z', reminder_at: '2026-10-05T05:50:00.000Z', reminder_sent: false, top3: false, top3_rank: null,
+      scheduled_start: '2026-10-05T07:00:00Z', scheduled_end: '2026-10-05T08:00:00Z', // the block already on tomorrow stays
+    })
+    expect(store.blocks.map((b) => [b.id, !!b.deleted_at])).toEqual([[tid(500), true], [tid(501), false], [tid(502), false]])
+    expect(r.data).toMatchObject({ calendar_blocks_removed: 1, moved: { due: '2026-10-05 09:00' } })
+    expect(r.data!.moved.top3).toBeUndefined()
+    expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.rescheduled', tid(11)], ['calendar_event.deleted', tid(500)]])
+  })
+
+  it('tomorrowMoves: a reminder that stays in the past stays sent; only other-day blocks clear the schedule', () => {
+    const t = task(13, 'x', { due_at: '2026-10-01T06:00:00Z', reminder_at: '2026-09-20T06:00:00Z', reminder_sent: true, scheduled_start: '2026-10-01T06:00:00Z', scheduled_end: '2026-10-01T07:00:00Z' })
+    const due = '2026-10-05T06:00:00.000Z'
+    // Moved 4 days: 20 Sep → 24 Sep, still before now (4 Oct) → not re-armed.
+    expect(tomorrowMoves(t, [], due, NOW, 'Africa/Cairo')).toMatchObject({ reminder_at: '2026-09-24T06:00:00.000Z', reminder_sent: true, scheduled_start: t.scheduled_start, clear: [] })
+    // Its only block is on another day → off the calendar, schedule cleared.
+    const old = { id: tid(600), starts_at: '2026-10-01T06:00:00Z', ends_at: '2026-10-01T07:00:00Z', all_day: false }
+    expect(tomorrowMoves(t, [old], due, NOW, 'Africa/Cairo')).toMatchObject({ scheduled_start: null, scheduled_end: null, clear: [tid(600)] })
+    // An all-day block is read at its noon: stored as tomorrow's UTC midnight, it's tomorrow's.
+    const allDay = { id: tid(601), starts_at: '2026-10-05T00:00:00Z', ends_at: '2026-10-06T00:00:00Z', all_day: true }
+    expect(tomorrowMoves(t, [old, allDay], due, NOW, 'Africa/Cairo').clear).toEqual([tid(600)])
   })
 
   it('add_to_inbox: a pending text capture with the link underneath, logged like ⌘K', async () => {
