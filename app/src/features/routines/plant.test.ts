@@ -12,6 +12,8 @@ describe('routine plants', () => {
     const allowed = MIGRATION.match(/plant in \(([^)]*)\)/)?.[1].match(/'([a-z]+)'/g)?.map((s) => s.slice(1, -1))
     expect(allowed).toEqual(PLANT_ORDER)
     expect(MIGRATION).toMatch(/default 'vine'/)
+    // the same migration's per-step minutes column, beside the plain-string steps (newRoutine.ts readSteps)
+    expect(MIGRATION).toContain(`add column if not exists step_minutes jsonb not null default '[]'::jsonb`)
   })
 
   it("grows every species on the vine's thresholds (bare 0 · 1–6 · 7–29 · 30+)", () => {

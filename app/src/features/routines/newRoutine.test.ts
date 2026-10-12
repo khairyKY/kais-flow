@@ -51,6 +51,7 @@ describe('Edit routine form', () => {
     challenge_end: null,
     active: true,
     steps: ['Neck rolls', 'Hamstrings'],
+    step_minutes: [],
     domain_id: 'd1',
     goal_days: null,
     plant: 'vine',
@@ -147,23 +148,38 @@ describe('the challenge end day', () => {
 })
 
 // Routines 2 (2a/2b): a step carries its minutes, the list its total, and the order is the user's.
+// Stored as two aligned columns (0067): `steps` stays plain strings for builds already installed.
 describe('routine steps with minutes', () => {
-  it('old string steps still read, as steps with no minutes; junk is dropped', () => {
-    expect(readSteps(['Neck rolls', { text: 'Hips', minutes: 3 }, { text: 'Breathe', minutes: 0 }, null as never, { minutes: 2 } as never])).toEqual([
-      { text: 'Neck rolls' },
-      { text: 'Hips', minutes: 3 },
-      { text: 'Breathe' },
-    ])
-    expect(readSteps(undefined)).toEqual([])
+  // A row as a build from before 0067 leaves it: string steps, no step_minutes column.
+  const oldBuildRow = { steps: ['Neck rolls', 'Hamstrings'] }
+
+  it('an old-build row (no step_minutes) reads as steps with no minutes', () => {
+    expect(readSteps(oldBuildRow)).toEqual([{ text: 'Neck rolls' }, { text: 'Hamstrings' }])
+    expect(readSteps({ ...oldBuildRow, step_minutes: null })).toEqual([{ text: 'Neck rolls' }, { text: 'Hamstrings' }])
+    expect(readSteps({})).toEqual([])
   })
 
-  it('a step without minutes is stored as the old bare string; blank steps are dropped', () => {
-    expect(writeSteps([{ text: ' Neck rolls ' }, { text: 'Hips', minutes: 3 }, { text: '   ', minutes: 5 }])).toEqual(['Neck rolls', { text: 'Hips', minutes: 3 }])
+  it('pairs steps[i] with step_minutes[i]; a short, long or junk list means no minutes there', () => {
+    expect(readSteps({ steps: ['a', 'b', 'c'], step_minutes: [2, null, 5] })).toEqual([{ text: 'a', minutes: 2 }, { text: 'b' }, { text: 'c', minutes: 5 }])
+    expect(readSteps({ steps: ['a', 'b', 'c'], step_minutes: [2] })).toEqual([{ text: 'a', minutes: 2 }, { text: 'b' }, { text: 'c' }])
+    expect(readSteps({ steps: ['a'], step_minutes: [2, 3, 4] })).toEqual([{ text: 'a', minutes: 2 }])
+    expect(readSteps({ steps: ['a', 'b'], step_minutes: ['3' as never, 0] })).toEqual([{ text: 'a' }, { text: 'b' }])
+    expect(readSteps({ steps: ['a'], step_minutes: { 0: 4 } as never })).toEqual([{ text: 'a' }])
+  })
+
+  it('defensively still reads object-shaped steps, and skips anything else', () => {
+    expect(readSteps({ steps: [{ text: 'Hips', minutes: 3 }, null, { minutes: 2 }, 'Breathe'] as never })).toEqual([{ text: 'Hips', minutes: 3 }, { text: 'Breathe' }])
+  })
+
+  it('writes plain strings in steps and the minutes aligned beside them; blank steps drop with their minutes', () => {
+    expect(writeSteps([{ text: ' Neck rolls ' }, { text: '   ', minutes: 5 }, { text: 'Hips', minutes: 3 }])).toEqual({ steps: ['Neck rolls', 'Hips'], step_minutes: [null, 3] })
+    expect(writeSteps([{ text: 'a' }, { text: 'b' }])).toEqual({ steps: ['a', 'b'], step_minutes: [] })
   })
 
   it('round-trips through the edit form unchanged', () => {
-    const stored = ['Neck rolls', { text: 'Hips', minutes: 3 }]
+    const stored = { steps: ['Neck rolls', 'Hips'], step_minutes: [null, 3] }
     expect(writeSteps(readSteps(stored))).toEqual(stored)
+    expect(writeSteps(readSteps(oldBuildRow))).toEqual({ ...oldBuildRow, step_minutes: [] })
   })
 
   it("adds up 2a's total, ignoring steps with no minutes", () => {
@@ -186,11 +202,17 @@ describe('routine steps with minutes', () => {
     expect(moveItem(['a', 'b', 'c'], 2, 3)).toEqual(['a', 'b', 'c'])
   })
 
-  it('a reordered, timed step list saves in its new order', () => {
-    const r = { id: 'r1', name: 'Stretch', time_of_day: null, clock_time: null, cadence: { weekdays: [0, 1, 2, 3, 4, 5, 6] }, challenge_start: null, challenge_end: null, active: true, steps: ['a', 'b'], created_at: 'T', updated_at: 'T' }
+  it('a reordered step takes its minutes with it: steps and step_minutes are saved in the same order', () => {
+    const r = { id: 'r1', name: 'Stretch', time_of_day: null, clock_time: null, cadence: { weekdays: [0, 1, 2, 3, 4, 5, 6] }, challenge_start: null, challenge_end: null, active: true, steps: ['a', 'b'], step_minutes: [2, null], created_at: 'T', updated_at: 'T' }
     const form = routineToForm(r)
     const next = applyRoutineForm(r, { ...form, steps: moveItem([...form.steps, { text: 'c', minutes: 5 }], 2, 0) }, '2026-10-13', 'NOW')
-    expect(next?.steps).toEqual([{ text: 'c', minutes: 5 }, 'a', 'b'])
+    expect(next?.steps).toEqual(['c', 'a', 'b'])
+    expect(next?.step_minutes).toEqual([5, 2, null])
+  })
+
+  it('an old-build row saved by this build gains step_minutes and keeps its steps as strings', () => {
+    const r = { id: 'r1', name: 'Stretch', time_of_day: null, clock_time: null, cadence: { weekdays: [1] }, challenge_start: null, challenge_end: null, active: true, ...oldBuildRow, created_at: 'T', updated_at: 'T' }
+    expect(applyRoutineForm(r, routineToForm(r), '2026-10-13', 'NOW')).toMatchObject({ steps: ['Neck rolls', 'Hamstrings'], step_minutes: [] })
   })
 })
 

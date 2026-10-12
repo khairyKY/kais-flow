@@ -117,15 +117,15 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
     seedPlant(from, motion) // Motion 5f — the seed drops out of the plant button
     const { name: trimmed, timeOfDay, cadence, clockTime } = fields
     const days = challengeDays
-    const stepList = writeSteps(steps)
+    const { steps: stepList, step_minutes: stepMinutes } = writeSteps(steps)
     const domain = domainId || null
 
     if (isChallenge && days > 0) {
       const start = localDateKey(new Date())
-      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime, stepList, domain, plant)
+      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime, stepList, domain, plant, stepMinutes)
       useToastStore.getState().push({ message: 'New challenge registered in the soil.' })
     } else {
-      createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain, plant)
+      createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain, plant, stepMinutes)
       useToastStore.getState().push({ message: 'New routine planted ✿' })
     }
     finish()

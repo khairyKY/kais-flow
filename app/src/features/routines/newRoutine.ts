@@ -1,4 +1,4 @@
-import type { Cadence, Routine, RoutinePlant, RoutineStep } from '../../lib/types'
+import type { Cadence, Routine, RoutinePlant } from '../../lib/types'
 import { challengeDays } from './streaks'
 import { addDays } from '../../components/pickerMath'
 import { NAMED_TIMES } from './routineGrouping'
@@ -73,33 +73,36 @@ export interface RoutineFormState extends NewRoutineDraft {
   plant: RoutinePlant
 }
 
-// ── Steps (0028 + 2a's minutes). A stored step is a bare string (no minutes — every step before
-// 2026-10-13) or { text, minutes }; the form and the row fold only ever see StepDraft. ──
+// ── Steps (0028) + 2a's minutes (0067). Stored as two aligned columns so a build that's already
+// installed keeps reading `steps` as the plain strings it always was: `steps[i]` is step i's label,
+// `step_minutes[i]` its minutes or null. The form and the row fold only ever see StepDraft. ──
 
 export interface StepDraft {
   text: string
   minutes?: number
 }
 
-/** A routine's stored steps as drafts: old string steps read as steps with no minutes. */
-export function readSteps(steps: readonly RoutineStep[] | null | undefined): StepDraft[] {
-  return (steps ?? []).flatMap((s) => {
-    if (typeof s === 'string') return [{ text: s }]
-    if (!s || typeof s.text !== 'string') return []
-    const minutes = cleanMinutes(s.minutes)
-    return [minutes ? { text: s.text, minutes } : { text: s.text }]
+/** A routine's stored steps as drafts. A missing, short or non-array `step_minutes` (a row from before
+ * 0067, or one an old build reordered) just means no minutes there. Defensive: a step stored as
+ * `{ text, minutes }` (never written by a release) still reads; anything else is skipped. */
+export function readSteps(r: Pick<Routine, 'steps' | 'step_minutes'>): StepDraft[] {
+  const steps: readonly unknown[] = Array.isArray(r.steps) ? r.steps : []
+  const mins: readonly unknown[] = Array.isArray(r.step_minutes) ? r.step_minutes : []
+  return steps.flatMap((s, i) => {
+    const obj = s && typeof s === 'object' ? (s as { text?: unknown; minutes?: unknown }) : null
+    const text = typeof s === 'string' ? s : typeof obj?.text === 'string' ? obj.text : null
+    if (text === null) return []
+    const minutes = cleanMinutes(mins[i]) ?? cleanMinutes(obj?.minutes)
+    return [minutes ? { text, minutes } : { text }]
   })
 }
 
-/** The form's steps as stored: trimmed, blank ones dropped. A step without minutes stays a bare
- * string, so a build from before minutes (an Android/desktop app not yet updated) still reads it. */
-export function writeSteps(steps: readonly StepDraft[]): RoutineStep[] {
-  return steps.flatMap((s) => {
-    const text = s.text.trim()
-    if (!text) return []
-    const minutes = cleanMinutes(s.minutes)
-    return [minutes ? { text, minutes } : text]
-  })
+/** The form's steps as stored: labels as plain strings (trimmed, blank ones dropped) and their
+ * minutes aligned beside them — reordered together, since both come from the same list. No step
+ * with minutes = `step_minutes: []`. */
+export function writeSteps(drafts: readonly StepDraft[]): { steps: string[]; step_minutes: (number | null)[] } {
+  const kept = drafts.flatMap((s) => (s.text.trim() ? [{ text: s.text.trim(), minutes: cleanMinutes(s.minutes) ?? null }] : []))
+  return { steps: kept.map((s) => s.text), step_minutes: kept.some((s) => s.minutes != null) ? kept.map((s) => s.minutes) : [] }
 }
 
 /** 2a's "10 min total": the steps' minutes added up (0 when none has any). */
@@ -153,7 +156,7 @@ export function routineToForm(r: Routine): RoutineFormState {
     ...repeatOf(r.cadence?.weekdays ?? []),
     reminderOn: !!r.clock_time,
     reminderTime: r.clock_time ?? NEW_ROUTINE_DEFAULTS.reminderTime,
-    steps: readSteps(r.steps),
+    steps: readSteps(r),
     domainId: r.domain_id ?? '',
     isChallenge: span != null || r.goal_days != null,
     challengeDays: r.goal_days ?? span ?? 30,
@@ -176,7 +179,7 @@ export function applyRoutineForm(r: Routine, form: RoutineFormState, todayKey: s
     time_of_day: keepCustomTime ? r.time_of_day : fields.timeOfDay,
     cadence: fields.cadence,
     clock_time: fields.clockTime,
-    steps: writeSteps(form.steps),
+    ...writeSteps(form.steps),
     domain_id: form.domainId || null,
     challenge_start: start,
     challenge_end: start ? addDays(start, form.challengeDays - 1) : null,

@@ -70,7 +70,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
   // Flow Audit §5: a routine's steps were written and only ever read back into the edit form.
   // They fold out under the row you check it from — read-only; editing stays in the form. Routines 2:
   // each with its minutes, and the toggle carries 2a's total ("3 steps · 10 min").
-  const steps = readSteps(routine.steps).filter((s) => s.text.trim())
+  const steps = readSteps(routine).filter((s) => s.text.trim())
   const total = stepsTotal(steps)
   const [showSteps, setShowSteps] = useState(false)
 
