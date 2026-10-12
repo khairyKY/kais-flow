@@ -218,6 +218,12 @@ describe('addMedia / removeMedia', () => {
     expect(removeMedia(['a'], 'z')).toEqual(['a'])
     expect(removeMedia(undefined, 'a')).toEqual([])
   })
+  it("a removal's Undo puts the photo back where it was", () => {
+    const paths = ['a', 'b', 'c']
+    for (let at = 0; at < paths.length; at++) expect(addMedia(removeMedia(paths, paths[at]), paths[at], at)).toEqual(paths)
+    expect(addMedia(['a'], 'b', 9)).toEqual(['a', 'b']) // the list shrank meanwhile: lands at the end
+    expect(addMedia(['a', 'b'], 'b', 0)).toEqual(['a', 'b']) // already back: untouched
+  })
 })
 
 describe('appendTranscript', () => {

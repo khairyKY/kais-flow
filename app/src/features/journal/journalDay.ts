@@ -121,9 +121,13 @@ export function journalPhotoPath(uid: string, entryId: string, photoId: string):
   return `${uid}/${entryId}/${photoId}.jpg`
 }
 
-export function addMedia(paths: string[] | null | undefined, path: string): string[] {
+/** `path` added at the end — or back at index `at` (≥ 0), where a removal's Undo found it. */
+export function addMedia(paths: string[] | null | undefined, path: string, at?: number): string[] {
   const list = paths ?? []
-  return list.includes(path) ? list : [...list, path]
+  if (list.includes(path)) return list
+  const next = [...list]
+  next.splice(at ?? list.length, 0, path)
+  return next
 }
 
 export function removeMedia(paths: string[] | null | undefined, path: string): string[] {
