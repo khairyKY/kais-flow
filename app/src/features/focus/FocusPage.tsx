@@ -3,20 +3,26 @@ import { TaskPicker } from './TaskPicker'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useTasks, completeTaskWithUndo } from '../tasks/api'
-import { useProjects } from '../projects/api'
+import { useProjects, useTimeEntries, logTimeEntry } from '../projects/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
-import { computeStreak, localDateKey } from '../routines/streaks'
+import { computeStreak } from '../routines/streaks'
 import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
+import { useDayRollover } from '../calendar/useDayRollover'
+import { zoneTimeKey } from '../calendar/eventTime'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { readSoundEvents, writeSoundEvents, previewSound } from '../../lib/sounds'
-import { useTimeEntries, logTimeEntry } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
+import { cherryStage, vineStage, fernByLength, wisteriaStage } from '../../lib/growthStages'
+import { zoneDateKey } from '../../lib/dateShortcuts'
+import { useAppZone } from '../../lib/appZone'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
+import { Checkbox } from '../../components/kit'
+import { Skeleton, ErrorCard } from '../../components/States'
 import './FocusPage.css'
 
 // R4-18 (2026-07-20 audit): the duration rows offered fixed presets only — Kai: "where are the
@@ -63,19 +69,32 @@ export function FocusPage() {
   const queryClient = useQueryClient()
   const motionOn = useMotionEnabled()
 
+  // The user's day (their zone, rolled over at their midnight) — never the device's.
+  const zone = useAppZone()
+  useDayRollover()
+  const todayStr = zoneDateKey(new Date(), zone)
+
   // 1. Data queries
-  const { data: tasks = [] } = useTasks()
-  const { data: projects = [] } = useProjects()
-  const { data: timeEntries = [] } = useTimeEntries()
-  const { data: routines = [] } = useRoutines()
-  const { data: completions = [] } = useRoutineCompletions()
-  const { data: journalEntries = [] } = useJournalEntries()
-  const { data: people = [] } = usePeople()
-  const { data: interactions = [] } = useInteractions()
+  const tasksQ = useTasks()
+  const projectsQ = useProjects()
+  const timeEntriesQ = useTimeEntries()
+  const routinesQ = useRoutines()
+  const completionsQ = useRoutineCompletions()
+  const journalQ = useJournalEntries()
+  const peopleQ = usePeople()
+  const interactionsQ = useInteractions()
+  const { data: tasks = [] } = tasksQ
+  const { data: projects = [] } = projectsQ
+  const { data: timeEntries = [] } = timeEntriesQ
+  const { data: routines = [] } = routinesQ
+  const { data: completions = [] } = completionsQ
+  const { data: journalEntries = [] } = journalQ
+  const { data: people = [] } = peopleQ
+  const { data: interactions = [] } = interactionsQ
   const { data: events = [] } = useCalendarEvents()
 
   // Only the first entry's date is used (the "days count"); this used to download the whole log.
-  const { data: activityLogs = [] } = useQuery<Pick<ActivityLogEntry, 'created_at'>[]>({
+  const activityQ = useQuery<Pick<ActivityLogEntry, 'created_at'>[]>({
     queryKey: ['activity_log', 'first'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,6 +106,15 @@ export function FocusPage() {
       return data as Pick<ActivityLogEntry, 'created_at'>[]
     },
   })
+  const { data: activityLogs = [] } = activityQ
+  // The beds and their captions read these — while one is still loading (or failed) the garden
+  // would report empty beds that aren't empty, so it shows a skeleton / retry instead.
+  const gardenQs = [tasksQ, projectsQ, timeEntriesQ, routinesQ, completionsQ, journalQ, peopleQ, interactionsQ, activityQ]
+  const gardenPending = gardenQs.some((q) => q.isPending)
+  const gardenFailed = gardenQs.some((q) => q.isError && !q.data)
+  const retryGarden = () => {
+    for (const q of gardenQs) if (q.isError) void q.refetch()
+  }
 
   // 2. Settings — persisted in focusStore (shared with MiniFocus)
   const settings = useFocusStore((s) => s.settings)
@@ -219,31 +247,21 @@ export function FocusPage() {
   // 4. Botanical Stage Calculations
   // Tasks (Cherry)
   const cherryData = useMemo(() => {
-    const todayStr = localDateKey(new Date())
     const todayTasks = tasks.filter((t) => {
-      const dueToday = t.due_at && localDateKey(new Date(t.due_at)) === todayStr
-      const schedToday = t.scheduled_start && localDateKey(new Date(t.scheduled_start)) === todayStr
+      const dueToday = t.due_at && zoneDateKey(new Date(t.due_at), zone) === todayStr
+      const schedToday = t.scheduled_start && zoneDateKey(new Date(t.scheduled_start), zone) === todayStr
       const completedToday =
-        t.status === 'done' && t.completed_at && localDateKey(new Date(t.completed_at)) === todayStr
+        t.status === 'done' && t.completed_at && zoneDateKey(new Date(t.completed_at), zone) === todayStr
       return dueToday || schedToday || completedToday || (t.top3 && t.status === 'todo')
     })
     const completedCount = todayTasks.filter((t) => t.status === 'done').length
     const totalCount = todayTasks.length
-
-    if (totalCount === 0) return { stage: 'bud', note: 'no tasks scheduled' }
-
-    const ratio = completedCount / totalCount
-    if (ratio === 1) {
-      return { stage: 'fallen', note: `${completedCount} of ${totalCount} petals fell` }
-    }
-    if (ratio >= 0.5) {
-      return { stage: 'bloom', note: `${completedCount} of ${totalCount} tasks done` }
-    }
-    if (ratio > 0) {
-      return { stage: 'opening', note: `${completedCount} of ${totalCount} tasks done` }
-    }
-    return { stage: 'bud', note: `0 of ${totalCount} tasks done` }
-  }, [tasks])
+    // F2: the stage is lib/growthStages' (Today / Tasks bucket the same way); only the caption is ours.
+    const stage = cherryStage(totalCount - completedCount, completedCount)
+    if (totalCount === 0) return { stage, note: 'no tasks scheduled' }
+    if (stage === 'fallen') return { stage, note: `${completedCount} of ${totalCount} petals fell` }
+    return { stage, note: `${completedCount} of ${totalCount} tasks done` }
+  }, [tasks, todayStr, zone])
 
   // Inbox (Hydrangea)
   const hydrangeaData = useMemo(() => {
@@ -254,10 +272,10 @@ export function FocusPage() {
 
   // Calendar (Daisy)
   const daisyData = useMemo(() => {
-    const hour = new Date().getHours()
+    const hour = Number(zoneTimeKey(new Date(), zone).slice(0, 2))
     const asset = daisyAsset(hour)
     return { stage: asset.src, note: asset.note }
-  }, [])
+  }, [zone])
 
   // Routines (Vine)
   const vineData = useMemo(() => {
@@ -273,9 +291,8 @@ export function FocusPage() {
       const s = computeStreak(byRoutine.get(r.id) ?? [], r.cadence)
       currentStreak = Math.max(currentStreak, s.current)
     }
-    const stage = currentStreak >= 30 ? 'lush' : currentStreak >= 7 ? 'flowering' : currentStreak >= 1 ? 'sprouting' : 'bare'
     return {
-      stage,
+      stage: vineStage(currentStreak),
       streak: currentStreak,
       note: currentStreak > 0 ? `day ${currentStreak} — kept again` : 'bare streak',
     }
@@ -283,18 +300,14 @@ export function FocusPage() {
 
   // Journal (Fern)
   const fernData = useMemo(() => {
-    const todayStr = localDateKey(new Date())
     // D-1: one day = many entries, so sum the day rather than reading only the first.
-    const wordCount = journalEntries
-      .filter((e) => e.entry_date === todayStr)
-      .reduce((n, e) => n + e.body.trim().split(/\s+/).filter(Boolean).length, 0)
-
-    let stage = 'coil'
-    if (wordCount > 400) stage = 'unfurl2'
-    else if (wordCount > 100) stage = 'unfurl1'
-
+    // entry_date is the user's day, so it is matched against the user's today (not the device's).
+    const today = journalEntries.filter((e) => e.entry_date === todayStr)
+    const wordCount = today.reduce((n, e) => n + e.body.trim().split(/\s+/).filter(Boolean).length, 0)
+    // F2: the same fern the Journal page draws for this day (fernByLength over the day's text).
+    const stage = fernByLength(today.reduce((n, e) => n + e.body.length, 0))
     return { stage, note: wordCount > 0 ? `${wordCount} words tonight` : 'unwritten journal' }
-  }, [journalEntries])
+  }, [journalEntries, todayStr])
 
   // Projects (Wisteria)
   const wisteriaData = useMemo(() => {
@@ -304,18 +317,19 @@ export function FocusPage() {
     const milestones = proj.milestones || []
     if (milestones.length === 0) return { stage: 'p0', note: `${proj.name} — 0%` }
 
-    const completed = milestones.filter((m) => m.completed).length
-    const pct = Math.round((completed / milestones.length) * 100)
+    // The Projects page's figure (weighted milestones; one with linked tasks is done when they all
+    // are) and F2's wisteriaStage — so the same project never shows two different plants.
+    let weight = 0
+    let done = 0
+    for (const m of milestones) {
+      const linked = tasks.filter((t) => t.milestone_id === m.id)
+      weight += m.weight
+      if (linked.length > 0 ? linked.every((t) => t.status === 'done') : m.completed) done += m.weight
+    }
+    const pct = weight > 0 ? Math.round((done / weight) * 100) : 0
 
-    let stage = 'p0'
-    if (pct >= 90) stage = 'p100'
-    else if (pct >= 70) stage = 'p80'
-    else if (pct >= 50) stage = 'p60'
-    else if (pct >= 30) stage = 'p40'
-    else if (pct >= 10) stage = 'p20'
-
-    return { stage, percent: pct, note: `climbing — ${pct}%` }
-  }, [activeProject, projects])
+    return { stage: wisteriaStage(pct), percent: pct, note: `climbing — ${pct}%` }
+  }, [activeProject, projects, tasks])
 
   // Clover / People — punch 52: the caption used to be the export's literal "folded for the
   // night", which is a lie at 10am in the timer's garden strip. The six sibling beds all report
@@ -341,12 +355,11 @@ export function FocusPage() {
 
   // 5. Stat metrics for Dusk Garden View
   const stats = useMemo(() => {
-    const todayStr = localDateKey(new Date())
     const completedToday = tasks.filter(
-      (t) => t.status === 'done' && t.completed_at && localDateKey(new Date(t.completed_at)) === todayStr
+      (t) => t.status === 'done' && t.completed_at && zoneDateKey(new Date(t.completed_at), zone) === todayStr
     ).length
 
-    const todayEntries = timeEntries.filter((e) => localDateKey(new Date(e.started_at)) === todayStr)
+    const todayEntries = timeEntries.filter((e) => zoneDateKey(new Date(e.started_at), zone) === todayStr)
     const totalMin = todayEntries.reduce((sum, e) => sum + e.duration_min, 0)
     const hrs = Math.floor(totalMin / 60)
     const mins = totalMin % 60
@@ -360,7 +373,7 @@ export function FocusPage() {
       timeText,
       daysCount,
     }
-  }, [tasks, timeEntries, activityLogs])
+  }, [tasks, timeEntries, activityLogs, todayStr, zone])
 
   // ── Punch 52 / item 9: the top strip used to read `Deep work block · 9:00 – 11:00` and
   // `session 2 of 3 today` — both design samples. Both now come from real state, and both
@@ -372,27 +385,25 @@ export function FocusPage() {
   // (times, no name, because nothing in the data names it), then to nothing.
   const blockLabel = useMemo(() => {
     if (!activeTask) return null
-    const todayStr = localDateKey(new Date())
-    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
+    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })
 
     const block = events.find(
-      (e) => e.task_id === activeTask.id && !e.all_day && localDateKey(new Date(e.starts_at)) === todayStr
+      (e) => e.task_id === activeTask.id && !e.all_day && zoneDateKey(new Date(e.starts_at), zone) === todayStr
     )
     if (block) return `${block.title} · ${t(new Date(block.starts_at))} – ${t(new Date(block.ends_at))}`
 
     if (!activeTask.scheduled_start || !activeTask.scheduled_end) return null
     const start = new Date(activeTask.scheduled_start)
-    if (localDateKey(start) !== todayStr) return null
+    if (zoneDateKey(start, zone) !== todayStr) return null
     return `${t(start)} – ${t(new Date(activeTask.scheduled_end))}`
-  }, [activeTask, events])
+  }, [activeTask, events, todayStr, zone])
 
   // Sessions today: work already logged today, plus the one in progress.
   const sessionsToday = useMemo(() => {
-    const todayStr = localDateKey(new Date())
-    const logged = timeEntries.filter((e) => localDateKey(new Date(e.started_at)) === todayStr).length
+    const logged = timeEntries.filter((e) => zoneDateKey(new Date(e.started_at), zone) === todayStr).length
     const inProgress = pomodoroStartIso !== null || stopwatchSeconds > 0 ? 1 : 0
     return logged + inProgress
-  }, [timeEntries, pomodoroStartIso, stopwatchSeconds])
+  }, [timeEntries, pomodoroStartIso, stopwatchSeconds, todayStr, zone])
 
   // Subtask progress: real children (migration 0029, one level deep). Falls back to the task's
   // own notes, and to nothing at all — never to the export's "draft the cohort model".
@@ -462,7 +473,7 @@ export function FocusPage() {
 
   // Render Dusk Garden View (Option 1b)
   if (mode === 'garden') {
-    const weekdayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    const weekdayName = new Date().toLocaleDateString('en-US', { weekday: 'long', timeZone: zone })
     return (
       <div style={{ position: 'absolute', inset: 0, background: 'var(--paper-linen)', zIndex: 30 }}>
         {/* Ambient pollen motes */}
@@ -478,7 +489,14 @@ export function FocusPage() {
           </>
         )}
 
+        {(gardenPending || gardenFailed) && (
+          <div style={{ position: 'absolute', left: '50%', bottom: 140, width: 360, maxWidth: 'calc(100% - 32px)', transform: 'translateX(-50%)', zIndex: 25 }}>
+            {gardenPending ? <Skeleton rows={2} /> : <ErrorCard message="Couldn't read the garden." onRetry={retryGarden} />}
+          </div>
+        )}
+
         {/* The 7 beds */}
+        {!gardenPending && !gardenFailed && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(90px, 6vw)', zIndex: 10, overflowX: 'auto' }}>
           {/* Bed 1: Tasks */}
           <div style={{ textAlign: 'center' }}>
@@ -545,6 +563,7 @@ export function FocusPage() {
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>People &amp; chat</div>
           </div>
         </div>
+        )}
 
         {/* Soil line */}
         <span style={{ position: 'absolute', left: 60, right: 60, bottom: 118, borderBottom: '1.5px dashed rgba(90,82,110,0.5)' }}></span>
@@ -570,13 +589,13 @@ export function FocusPage() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '30px 40px', zIndex: 20 }}>
           <div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#b8b0c8' }}>
-              Your garden · day {stats.daysCount}
+              Your garden{activityQ.data ? ` · day ${stats.daysCount}` : ''}
             </div>
             <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: '-0.015em', color: '#f0ebdd' }}>
               {weekdayName}, closing
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          {!gardenPending && !gardenFailed && <div style={{ display: 'flex', gap: 8 }}>
             <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               {stats.completedToday} task{stats.completedToday === 1 ? '' : 's'} done
             </span>
@@ -586,7 +605,7 @@ export function FocusPage() {
             <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
               {vineData.streak}-day streak
             </span>
-          </div>
+          </div>}
         </div>
 
         {/* Footer */}
@@ -838,7 +857,7 @@ export function FocusPage() {
                       the last round of the cycle. */}
                   of {settings.focusRoundMin} min ·{' '}
                   {currentRound >= settings.roundsBeforeLongBreak ? settings.longBreakMin : settings.shortBreakMin}-min break at{' '}
-                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
+                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })}
                 </div>
               </div>
             </div>
@@ -864,12 +883,14 @@ export function FocusPage() {
         {/* Active Task display */}
         {mode !== 'break' && (
           <>
+            {tasksQ.isPending ? (
+              <div style={{ marginTop: 30, width: 320, maxWidth: '100%' }}><Skeleton rows={1} /></div>
+            ) : tasksQ.isError && !tasksQ.data ? (
+              <div style={{ marginTop: 30, width: 360, maxWidth: '100%' }}><ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQ.refetch()} /></div>
+            ) : (
             <div className="fp-task" style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 30, position: 'relative' }}>
-              <span
-                style={{ width: 19, height: 19, border: '1.5px solid var(--check-border)', borderRadius: 6, flex: 'none', cursor: 'pointer' }}
-                onClick={handleCheckOff}
-                title="Complete task"
-              />
+              {/* The kit box (44+ hit on touch via .kf-checkbox); completing = completeTaskWithUndo's toast + Undo. */}
+              <Checkbox checked={false} size={19} label={activeTask?.title} disabled={!activeTask} onChange={handleCheckOff} />
               <span
                 ref={pickerAnchor}
                 onClick={() => setTaskPickerOpen(!taskPickerOpen)}
@@ -885,6 +906,7 @@ export function FocusPage() {
                 <TaskPicker tasks={tasks} anchorRef={pickerAnchor} onPick={handleSelectTask} onClose={() => setTaskPickerOpen(false)} />
               )}
             </div>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
               {activeProject && (
@@ -1015,7 +1037,9 @@ export function FocusPage() {
           <span className="focus-bloom-glow" style={{ position: 'absolute', left: 158 + projects.indexOf(activeProject) * 150, bottom: 16, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,165,90,0.4), rgba(201,165,90,0) 70%)', pointerEvents: 'none' }}></span>
         )}
 
-        {/* The 7 small beds */}
+        {/* The 7 small beds — only once their data is in (an empty bed while loading would be a lie;
+            the task line above carries the skeleton / retry). */}
+        {!gardenPending && !gardenFailed && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(130px, 7vw)', zIndex: 10 }}>
           <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 120, filter: 'var(--shadow-drop-sm)' }} title={cherryData.note} />
           <img className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 96, animationDelay: '1.2s', filter: 'var(--shadow-drop-sm)' }} title={hydrangeaData.note} />
@@ -1025,6 +1049,7 @@ export function FocusPage() {
           <img className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 110, animationDelay: '1.8s', filter: 'var(--shadow-drop-sm)' }} title={wisteriaData.note} />
           <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
         </div>
+        )}
         <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px dashed var(--line-dashed)' }}></span>
         <div className="fp-garden-note" style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
           the garden grows while you work

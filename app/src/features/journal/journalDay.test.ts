@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { addMedia, appendTranscript, journalPhotoPath, removeMedia, entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows } from './journalDay'
+import { addMedia, appendTranscript, journalPhotoPath, removeMedia, entriesForDay, dayField, dayOrdinal, daysWrittenThisMonth, isWritten, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows } from './journalDay'
 import type { JournalEntry } from '../../lib/types'
 
 function entry(p: Partial<JournalEntry> & { id: string; entry_date: string }): JournalEntry {
@@ -66,29 +66,19 @@ describe('dayOrdinal', () => {
   })
 })
 
-describe('writtenStreak', () => {
-  it('counts back from today', () => {
-    const rows = ['2026-07-27', '2026-07-26', '2026-07-25'].map((d) => entry({ id: d, entry_date: d }))
-    expect(writtenStreak(rows, '2026-07-27')).toBe(3)
+describe('daysWrittenThisMonth — Kept, not a streak', () => {
+  it('a missed night is a blank line, not a reset', () => {
+    const rows = ['2026-07-27', '2026-07-25', '2026-07-03'].map((d) => entry({ id: d, entry_date: d }))
+    expect(daysWrittenThisMonth(rows, '2026-07-27')).toBe(3)
   })
-  it('still stands if today is unwritten but yesterday was', () => {
-    const rows = ['2026-07-26', '2026-07-25'].map((d) => entry({ id: d, entry_date: d }))
-    expect(writtenStreak(rows, '2026-07-27')).toBe(2)
+  it('counts this month only, up to today', () => {
+    const rows = ['2026-06-30', '2026-07-01', '2026-07-28'].map((d) => entry({ id: d, entry_date: d }))
+    expect(daysWrittenThisMonth(rows, '2026-07-27')).toBe(1)
   })
-  it('breaks on a gap and on an empty entry', () => {
-    const rows = [entry({ id: '1', entry_date: '2026-07-27' }), entry({ id: '2', entry_date: '2026-07-25' })]
-    expect(writtenStreak(rows, '2026-07-27')).toBe(1)
-    expect(writtenStreak([entry({ id: '3', entry_date: '2026-07-27', body: '' })], '2026-07-27')).toBe(0)
-  })
-  it('is zero with nothing written', () => {
-    expect(writtenStreak([], '2026-07-27')).toBe(0)
-  })
-  it('does not double-count two entries on the same day', () => {
-    const rows = [
-      entry({ id: 'a', entry_date: '2026-07-27' }),
-      entry({ id: 'b', entry_date: '2026-07-27', created_at: '2026-07-27T19:00:00.000Z' }),
-    ]
-    expect(writtenStreak(rows, '2026-07-27')).toBe(1)
+  it('an empty entry is not a day written; two entries on a day are one', () => {
+    const rows = [entry({ id: 'a', entry_date: '2026-07-27' }), entry({ id: 'b', entry_date: '2026-07-27', created_at: '2026-07-27T19:00:00.000Z' }), entry({ id: 'c', entry_date: '2026-07-26', body: '' })]
+    expect(daysWrittenThisMonth(rows, '2026-07-27')).toBe(1)
+    expect(daysWrittenThisMonth([], '2026-07-27')).toBe(0)
   })
 })
 
@@ -217,6 +207,12 @@ describe('addMedia / removeMedia', () => {
     expect(removeMedia(['a', 'b', 'c'], 'b')).toEqual(['a', 'c'])
     expect(removeMedia(['a'], 'z')).toEqual(['a'])
     expect(removeMedia(undefined, 'a')).toEqual([])
+  })
+  it("a removal's Undo puts the photo back where it was", () => {
+    const paths = ['a', 'b', 'c']
+    for (let at = 0; at < paths.length; at++) expect(addMedia(removeMedia(paths, paths[at]), paths[at], at)).toEqual(paths)
+    expect(addMedia(['a'], 'b', 9)).toEqual(['a', 'b']) // the list shrank meanwhile: lands at the end
+    expect(addMedia(['a', 'b'], 'b', 0)).toEqual(['a', 'b']) // already back: untouched
   })
 })
 

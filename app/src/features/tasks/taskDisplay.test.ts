@@ -42,18 +42,19 @@ describe('formatDuration', () => {
   })
 })
 
+// Days are the user's (lib/appZone, Cairo by default — UTC+3 in July), whatever the device zone.
 describe('daysOverdue', () => {
   it('is 0 for a task due today', () => {
-    const now = new Date('2026-07-08T14:00:00')
-    expect(daysOverdue('2026-07-08T09:00:00', now)).toBe(0)
+    const now = new Date('2026-07-08T14:00:00+03:00')
+    expect(daysOverdue('2026-07-08T09:00:00+03:00', now)).toBe(0)
   })
   it('is 1 for a task due yesterday at 23:00 (calendar-day diff, not raw ms/24)', () => {
-    const now = new Date('2026-07-08T01:00:00')
-    expect(daysOverdue('2026-07-07T23:00:00', now)).toBe(1)
+    const now = new Date('2026-07-08T01:00:00+03:00')
+    expect(daysOverdue('2026-07-07T23:00:00+03:00', now)).toBe(1)
   })
   it('is 6 for a task due 6 days ago', () => {
-    const now = new Date('2026-07-08T10:00:00')
-    expect(daysOverdue('2026-07-02T10:00:00', now)).toBe(6)
+    const now = new Date('2026-07-08T10:00:00+03:00')
+    expect(daysOverdue('2026-07-02T10:00:00+03:00', now)).toBe(6)
   })
 })
 

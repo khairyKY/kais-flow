@@ -21,8 +21,10 @@ personal **capture key**.
 
 - **Address**: `https://<project>.supabase.co/functions/v1/capture`. Settings has the exact address:
   open the capture card's **How to send things here** and press **Copy address**.
-- **Key**: Settings → **External capture endpoint** → **Create key** (on the desktop it's under
-  Settings → Integrations; on the phone it's on the Settings page itself). The key looks like
+- **Key**: Settings → **Advanced** (the last section, at the bottom of the Settings page on the
+  desktop and the phone; also the last item of the desktop's left nav) → **External capture
+  endpoint** → **Create key**. (Until 2026-10-12 it sat under Settings → Integrations on the
+  desktop.) The key looks like
   `kf_` + 43 characters and is shown **once**. Copy it then. Only its SHA-256 is stored.
   **New key** replaces it (the old one stops working) and **Turn off** deletes it.
 - **Request**: `POST`, headers `Authorization: Bearer kf_…` and `Content-Type: application/json`,
