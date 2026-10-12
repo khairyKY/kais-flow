@@ -16,11 +16,11 @@ const FACT_TYPES = ['Interest', 'Birthday', 'Note', 'Family']
 const LOG_CHANNELS = [{ value: 'in person', label: 'In person' }, { value: 'call', label: 'Call' }, { value: 'text', label: 'Text' }, { value: 'email', label: 'Email' }]
 const LOG_DAYS = ['today', 'yesterday', '1w ago'].map((d) => ({ value: d, label: d }))
 // The fsel look (paper-bone field, 12.5px) on the themed Select's trigger.
-const fsel: React.CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)' }
+const fsel: React.CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }
 // The .chip pills as real buttons.
 const chipBtn: React.CSSProperties = { border: 'none', background: 'none', cursor: 'pointer' }
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit).
-const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer', borderRadius: 999 }
+const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer', borderRadius: 999 }
 
 /** A stored fact date for the date picker: legacy "MM-DD" gains this year. */
 function factDateForField(date: string | null | undefined): string {
@@ -235,7 +235,7 @@ export function PersonDetailPage() {
         <form onSubmit={savePerson} style={{ marginTop: 14, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', padding: 14, borderRadius: 3, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
           <div style={{ flex: '1 1 160px' }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Name</div>
-            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 13 }} />
+            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }} />
           </div>
           <div style={{ width: 180 }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Circle</div>
@@ -244,7 +244,7 @@ export function PersonDetailPage() {
               onChange={setEditDomain}
               ariaLabel="Circle"
               options={[{ value: '', label: 'No Circle' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
-              style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 13 }}
+              style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }}
             />
           </div>
           <Button type="submit" variant="cta" style={{ padding: '8px 16px', fontSize: 12 }}>Save</Button>
@@ -263,7 +263,7 @@ export function PersonDetailPage() {
             {f.recurs
               ? <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>yearly ✓</span>
               : <span className="chip" style={{ border: '1px dashed var(--line-solid)', color: 'var(--ink-faint)' }}>once</span>}
-            <button type="button" className="kf-hit" onClick={() => editFact(f)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: '11.5px', color: editingFact === f.id ? 'var(--acc-clover-text)' : 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>{editingFact === f.id ? 'editing…' : 'edit'}</button>
+            <button type="button" className="kf-hit" onClick={() => editFact(f)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: editingFact === f.id ? 'var(--acc-clover-text)' : 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>{editingFact === f.id ? 'editing…' : 'edit'}</button>
           </div>
         ))}
         <div
@@ -306,7 +306,7 @@ export function PersonDetailPage() {
             title="Date"
             placeholder="date?"
             ariaLabel="Fact date"
-            style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)' }}
+            style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)' }}
           />
           <button type="button" aria-pressed={newFactRecurs} aria-label="Repeats yearly" onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)' }}>↻</button>
           {editingFact && <button type="button" onClick={resetFactForm} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>cancel</button>}
@@ -366,7 +366,7 @@ export function PersonDetailPage() {
 
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-        <button type="button" className="kf-hit" onClick={removePerson} style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person</button>
+        <button type="button" className="kf-hit" onClick={removePerson} style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person</button>
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
       </div>
     </div>

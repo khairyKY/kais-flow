@@ -31,7 +31,8 @@ import type { Book, Note, Quote } from '../../lib/types'
  * but media queries still see 1280), so the reader pushed the page sideways. */
 const THREE_PANES_MIN = 880
 
-/** A phone, or a page too narrow for three panes: both get the single-column layout. */
+/** A phone, or a page too narrow for three panes: both get the single-column layout.
+ * ds-ok: not a copy of the kit's useIsMobile, which only reads the viewport; this one also watches the page width. */
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
   useEffect(() => {
@@ -325,7 +326,7 @@ export function LibraryPage() {
 
   /** "Remove …" = Undo toast, no confirm (Flow Audit §4). A real button, 44px tall on a phone. */
   const removeButton = (label: string, onClick: () => void) => (
-    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
       {label}
     </button>
   )

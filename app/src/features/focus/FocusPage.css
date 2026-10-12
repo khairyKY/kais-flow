@@ -16,7 +16,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #C9A55A;
+  background: var(--acc-gold-warm);
   opacity: 0;
   will-change: transform;
 }
