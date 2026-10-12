@@ -1,0 +1,487 @@
+[
+  {
+    "name": "fact \"edit\" writes nothing (the fact is not deleted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "fact \"edit\" loads the form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Save replaces the same fact in place (no dup, no loss)",
+    "ok": true,
+    "detail": "[{\"id\":\"f-bday\",\"label\":\"Birthday\",\"value\":\"July 18\",\"date\":\"2026-07-17\",\"recurs\":true},{\"id\":\"f-climb\",\"label\":\"Interest\",\"value\":\"Climbing\"}]"
+  },
+  {
+    "name": "fact ✕ removes it",
+    "ok": true,
+    "detail": "[{\"id\":\"f-bday\",\"label\":\"Birthday\",\"value\":\"July 18\",\"date\":\"2026-07-17\",\"recurs\":true}]"
+  },
+  {
+    "name": "fact ✕ offers Undo",
+    "ok": true,
+    "detail": "[\"Removed · Interest\"]"
+  },
+  {
+    "name": "fact Undo puts it back",
+    "ok": true,
+    "detail": "[{\"id\":\"f-bday\",\"label\":\"Birthday\",\"value\":\"July 18\",\"date\":\"2026-07-17\",\"recurs\":true},{\"id\":\"f-climb\",\"label\":\"Interest\",\"value\":\"Climbing\"}]"
+  },
+  {
+    "name": "interaction ✕ deletes it",
+    "ok": true,
+    "detail": "?id=eq.50000000-0000-4000-8000-000000000002"
+  },
+  {
+    "name": "interaction Undo re-inserts the same row",
+    "ok": true,
+    "detail": "{\"id\":\"50000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"person_id\":\"50000000-0000-4000-8000-000000000001\",\"summary\":\"Coffee catch up\",\"occurred_at\":\"2026-10-05T10:00:00Z\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}"
+  },
+  {
+    "name": "log a call writes an interaction",
+    "ok": true,
+    "detail": "{\"id\":\"dfd3410b-889c-4cf9-a27b-1810be7ea2c4\",\"person_id\":\"50000000-0000-4000-8000-000000000001\",\"summary\":\"Phone call catch up\",\"occurred_at\":\"2026-10-12T20:09:54.360Z\",\"created_at\":\"2026-10-12T20:09:54.360Z\",\"updated_at\":\"2026-10-12T20:09:54.360Z\"}"
+  },
+  {
+    "name": "log a call offers Undo",
+    "ok": true,
+    "detail": "[\"Call logged · Priya\"]"
+  },
+  {
+    "name": "the call Undo deletes that interaction",
+    "ok": true,
+    "detail": "?id=eq.dfd3410b-889c-4cf9-a27b-1810be7ea2c4"
+  },
+  {
+    "name": "delete person: no confirm, back to the directory",
+    "ok": true,
+    "detail": "http://localhost:5248/people"
+  },
+  {
+    "name": "delete person deletes the row",
+    "ok": true,
+    "detail": "?id=eq.50000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "person Undo re-inserts the person, THEN their interactions",
+    "ok": true,
+    "detail": "[\"people:50000000-0000-4000-8000-000000000001\",\"interactions:50000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "person page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "person ⋯ menu: Open / log / Delete",
+    "ok": true,
+    "detail": "[\"Open\",\"Log a call\",\"Log a text\",\"Met in person\",\"Delete\"]"
+  },
+  {
+    "name": "person row right-click opens the menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop New person form has no native select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "people desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone nudge has \"later\" (parity)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone \"+ New person\" opens a sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone sheet plants the person",
+    "ok": true,
+    "detail": "{\"id\":\"79b57889-2b50-411d-aa3f-41692f0c1992\",\"name\":\"Omar\",\"facts\":[],\"domain_id\":null,\"created_at\":\"2026-10-12T20:10:06.561Z\",\"updated_at\":\"2026-10-12T20:10:06.561Z\"}"
+  },
+  {
+    "name": "people phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone person ⋯ is an ActionSheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Remove book deletes (no confirm)",
+    "ok": true,
+    "detail": "?id=eq.80000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "Remove book offers Undo",
+    "ok": true,
+    "detail": "[\"Removed · Dune\"]"
+  },
+  {
+    "name": "book Undo re-inserts the book, then re-hooks its note",
+    "ok": true,
+    "detail": "[\"books:80000000-0000-4000-8000-000000000001\",\"notes:80000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "book detail: no \"cover placeholder\" / \"via capture\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "book cover slot shows real progress",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sidebar has a Library entry",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "library: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone More sheet has Library",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "journal Kept = days written this month, no streak",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "entry Delete has no confirm card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "entry goes to Trash (deleted_at)",
+    "ok": true,
+    "detail": "{\"id\":\"60000000-0000-4000-8000-000000000009\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"body\":\"Morning pages\",\"entry_date\":\"2026-10-12\",\"mood\":null,\"transcript\":null,\"media_paths\":[],\"gratitude\":[],\"deleted_at\":\"2026-10-12T20:10:28.396Z\",\"created_at\":\"2026-10-12T07:00:00Z\",\"updated_at\":\"2026-10-12T07:00:00Z\"}"
+  },
+  {
+    "name": "entry Delete offers Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "journal: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone ‹ opens the day before",
+    "ok": true,
+    "detail": "Go to day: Monday 12 October 2026 → Go to day: Sunday 11 October 2026"
+  },
+  {
+    "name": "phone › is off on today, on for a past day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone prompt shuffle",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "journal phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "checklist ✕ removes the item",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000003\",\"title\":\"Ship the hero\",\"type\":\"task-linked\",\"completed\":false,\"task_id\":\"10000000-0000-4000-8000-000000000003\"}]"
+  },
+  {
+    "name": "checklist Undo restores it",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000002\",\"title\":\"Buy domain\",\"type\":\"one-shot\",\"completed\":false,\"task_id\":null},{\"id\":\"90000000-0000-4000-8000-000000000003\",\"title\":\"Ship the hero\",\"type\":\"task-linked\",\"completed\":false,\"task_id\":\"10000000-0000-4000-8000-000000000003\"}]"
+  },
+  {
+    "name": "milestone ✕: no confirm card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "milestone ✕ removes it, Undo offered",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "ticking a task-linked line completes its task (with Undo)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000003\",\"status\":\"done\"}"
+  },
+  {
+    "name": "…and the line reads done from the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "list keys work on a project page (j, t → Top 3)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000003\",\"top3\":true}"
+  },
+  {
+    "name": "target date reads in UTC (15 Nov)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "project page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "area: the repeat is one TaskRow under \"Keeps coming back\"",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "area page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Finish archives in one tap",
+    "ok": true,
+    "detail": "{\"id\":\"20000000-0000-4000-8000-000000000001\",\"status\":\"archived\"}"
+  },
+  {
+    "name": "Finish toast offers Undo and \"Press it ✿\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "\"Press it ✿\" opens the ceremony",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "leaving the ceremony writes nothing (the archive already happened)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "finish/press: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a dirty New project form ignores the outside click",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "New project form has no native select",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Esc discarded the desktop draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a clean form closes on the outside click",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Finished view lists the archived project",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Finished view links the Herbarium",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Restore writes it active, with Undo",
+    "ok": true,
+    "detail": "{\"id\":\"20000000-0000-4000-8000-000000000002\",\"status\":\"active\"}"
+  },
+  {
+    "name": "phone New project is a BottomSheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "projects phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "series menu: Edit rule / Skip / Pause / End series",
+    "ok": true,
+    "detail": "[\"Edit rule…\",\"Skip next\",\"Pause\",\"End series\"]"
+  },
+  {
+    "name": "End series: no confirm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "End series → Trash with Undo",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000001\",\"deleted_at\":\"2026-10-12T20:11:06.822Z\"}"
+  },
+  {
+    "name": "perennials: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routine row right-click opens its menu",
+    "ok": true,
+    "detail": "[\"Edit\",\"Streak trellis\",\"Archive\"]"
+  },
+  {
+    "name": "a routine's steps fold out read-only under its row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a dirty routine form ignores the outside click",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scrim tap dismisses the phone sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and keeps its draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Cancel throws the draft away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone shows the Challenge section",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone trellis opens as a sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash row right-click: Restore / Delete forever",
+    "ok": true,
+    "detail": "[\"Restore\",\"Delete forever\"]"
+  },
+  {
+    "name": "trash desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone trash ⋯ is an ActionSheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trash phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Settings: Resurfacing card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Settings: importer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Settings: the capture key sits in Advanced, last",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Settings: Rerun the welcome",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Focus check-off is the kit checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Settings: Advanced holds the capture key",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop Integrations no longer lists the capture key",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day + night sweep: 56 pages rendered without page errors",
+    "ok": true,
+    "detail": "0"
+  }
+]
