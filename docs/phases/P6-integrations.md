@@ -64,3 +64,6 @@ Assign yourself a test issue → wait/trigger sync → check Inbox · `select pa
 - Step 5: `*label` syntax shipped in v1.0.17 (`app/src/features/command-bar/parseCommand.ts`, with labels on task rows and a Label filter). Smart lists (saved filters) are still not built.
 - Step 6 (#66): partly built — Settings → Organize manages domains (create · rename · recolour · merge · delete, v1.0.21). Areas/projects admin and removing the Tasks page's Organize rail are not done.
 - Step 6, ritual reminders: the notify cron also sends routine reminders now (0062, its own switch in Settings → Notifications) — not a P6 item, recorded here because Settings → Notifications lists it.
+
+**2026-10-12 — labels UI (branch `claude/labels`)** (handoff: `docs/log/2026-10-12-2205-labels-handoff.md`)
+- Step 5, labels: the Overlays.dc.html **Label picker** (L on Tasks, with a selection on all of it; the task sheet / popover chips; the desktop row menu) and **Labels manager** (Settings → Organize, and "Manage labels…" in the Tasks Label filter — rename / merge / delete across every task with one Undo, colour, ＋ New). Labels stay free text on `tasks.labels`; colours live in `app_settings.label_meta` (migration 0069, no table). The label smart list is still not built (smart lists aren't).
