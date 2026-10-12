@@ -15,7 +15,7 @@ import { PlanMenu } from './PlanMenu'
 import { RepeatEditor, RepeatMenu } from './RepeatMenu'
 import { isOverdue } from './planMath'
 import { formatDuration, priorityColor } from './taskDisplay'
-import { PRIORITY_LABELS, REPEAT_LABELS, REPEAT_RULES, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
+import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
 import { useStartFocus } from '../today/startFocus'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
