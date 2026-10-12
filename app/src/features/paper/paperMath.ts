@@ -15,6 +15,8 @@ export interface PageLine {
   confidence: number
   box: [number, number, number, number] | null
   page: number
+  /** A checkbox on the line: ticked, empty, or none (absent on lines read before the ticks loop). */
+  checked?: boolean | null
 }
 
 export interface CaptureRow {
