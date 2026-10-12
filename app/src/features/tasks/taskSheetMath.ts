@@ -80,7 +80,9 @@ export function remindChip(reminderIso: string, dueIso: string | null): string {
 export function repeatLabel(rule: string): string {
   if (REPEAT_LABELS[rule]) return REPEAT_LABELS[rule]
   try {
-    const text = RRule.fromString(rule).toText()
+    const { until, ...o } = RRule.parseString(rule.replace(/^RRULE:/, ''))
+    // rrule words an end date in UTC; the user's own calendar day reads right in every zone.
+    const text = new RRule(o).toText() + (until ? ` until ${dayShort(cairoDateKey(until))}` : '')
     return text.charAt(0).toUpperCase() + text.slice(1)
   } catch {
     return 'Repeats'
