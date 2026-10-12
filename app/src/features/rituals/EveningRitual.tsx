@@ -194,6 +194,12 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
             <div className="rt-summary-title">The garden's closed.</div>
             <span className="rt-hand is-mine">See you in the morning ✿</span>
             <div className="rt-meta">{summary.map((s) => <span key={s}>{s}</span>)}</div>
+            {/* The Notebook page, for people who set up their paper journal at night. Past midnight the
+                morning these seeds are for is already "today" on the calendar. */}
+            <button type="button" className="rt-link" onClick={() => navigate(`/notebook?day=${seedTargetDate(new Date()) === cairoDateKey(new Date()) ? 'today' : 'tomorrow'}`)}>
+              Write tomorrow’s page
+              <Icon name="chevright" size={16} />
+            </button>
           </div>
         }
         right={null}
