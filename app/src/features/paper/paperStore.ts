@@ -14,10 +14,21 @@ export interface PageDraft {
   rotation: number
 }
 
+/** "Bring back your ticks" (11l): the Notebook page a photo is of — its day, the tasks it listed, and
+ * the rest of its print (so the page's own headings aren't proposed as new lines). */
+export interface TicksTarget {
+  day: string
+  /** "Saturday’s page" */
+  label: string
+  tasks: { id: string; title: string }[]
+  printed: string[]
+}
+
 export type Stage =
-  | { kind: 'look' }
+  | { kind: 'look'; ticks?: TicksTarget }
   | { kind: 'reading'; captureId: string; read: number; total: number }
-  | { kind: 'results'; captureId: string }
+  /** `only`: just these lines (`page:index`) — the new scribbles left after the ticks review. */
+  | { kind: 'results'; captureId: string; only?: string[] }
   | { kind: 'unreadable'; captureId: string }
   | { kind: 'failed'; captureId: string }
   | { kind: 'limit' }
@@ -34,7 +45,9 @@ interface PaperState {
   waiting: number
   /** Object URLs of pages this device uploaded, by capture — the results sheet reads these first. */
   local: Record<string, string[]>
-  addFiles: (files: File[]) => void
+  /** Captures that are photos of a Notebook page (this session): their results are the ticks review. */
+  ticksFor: Record<string, TicksTarget>
+  addFiles: (files: File[], ticks?: TicksTarget) => void
   show: (stage: Stage | null) => void
   close: () => void
 }
@@ -46,13 +59,16 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   away: false,
   waiting: 0,
   local: {},
-  addFiles: (files) => {
+  ticksFor: {},
+  addFiles: (files, ticks) => {
     const s = get()
-    const fresh = s.stage?.kind === 'look' ? s.pages : []
+    const look = s.stage?.kind === 'look' ? s.stage : null
+    const fresh = look ? s.pages : []
     const room = MAX_PAGES - fresh.length
     const added = files.slice(0, room).map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file), rotation: 0 }))
     if (!added.length) return
-    set({ stage: { kind: 'look' }, pages: [...fresh, ...added], active: fresh.length, away: false })
+    // Another page for the same look keeps its ticks; a new flow is a Notebook page only when it says so.
+    set({ stage: { kind: 'look', ticks: look ? look.ticks : ticks }, pages: [...fresh, ...added], active: fresh.length, away: false })
   },
   show: (stage) => set({ stage, away: false }),
   close: () => set({ stage: null, away: false }),
@@ -60,8 +76,9 @@ export const usePaperStore = create<PaperState>((set, get) => ({
 
 /** Opens the system camera (`camera`) or the photo picker (`gallery`). A plain file input — it works in
  * the Android WebView (Capacitor hands `capture` to the camera app) and in the PWA. A camera the user
- * has switched off for the app shows 11k instead, where the gallery still works. */
-export async function pickPhotos(source: 'camera' | 'gallery'): Promise<void> {
+ * has switched off for the app shows 11k instead, where the gallery still works. `ticks`: the photo is
+ * of a Notebook page (11l) — its results are the ticks review. */
+export async function pickPhotos(source: 'camera' | 'gallery', ticks?: TicksTarget): Promise<void> {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
@@ -86,7 +103,7 @@ export async function pickPhotos(source: 'camera' | 'gallery'): Promise<void> {
   input.onchange = () => {
     const files = imageFiles(input.files)
     input.remove()
-    if (files.length) usePaperStore.getState().addFiles(files)
+    if (files.length) usePaperStore.getState().addFiles(files, ticks)
   }
   input.oncancel = () => input.remove()
   document.body.append(input)
