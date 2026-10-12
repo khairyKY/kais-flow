@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import type { Person, Interaction } from '../../lib/types'
+import { queryClient } from '../../lib/queryClient'
+import { toastUndo } from '../../lib/undo'
+import { zoneDateKey } from '../../lib/dateShortcuts'
+import type { Person, Interaction, Fact } from '../../lib/types'
 
 export function usePeople() {
   return useQuery({
@@ -70,33 +73,28 @@ export function isNudgeSnoozed(map: Record<string, string>, personId: string, no
   return !!wake && Date.parse(wake) > now
 }
 
-/* Days until the next occurrence of a "MM-DD" or freeform month-day string. Null if unparseable. */
-export function getDaysUntilBirthday(val: string | undefined | null): number | null {
+/* Days until the next occurrence of a "MM-DD" / "YYYY-MM-DD" (the date picker's) or freeform
+ * month-day string ("July 17"), counted on the user's calendar (lib/appZone). Null if unparseable. */
+export function getDaysUntilBirthday(val: string | undefined | null, now: Date = new Date()): number | null {
   if (!val) return null
-  let month = 0
-  let day = 0
-  if (val.includes('-')) {
-    const [m, d] = val.split('-')
-    month = parseInt(m, 10) - 1
-    day = parseInt(d, 10)
+  let month: number
+  let day: number
+  const parts = val.trim().split('-')
+  if (parts.length >= 2 && parts.every((p) => /^\d+$/.test(p))) {
+    month = Number(parts[parts.length - 2])
+    day = Number(parts[parts.length - 1])
   } else {
-    const d = new Date(val + ' ' + new Date().getFullYear())
+    const d = new Date(`${val} 2000`) // parsed and read in one (device) zone: just a month + day
     if (isNaN(d.getTime())) return null
-    month = d.getMonth()
+    month = d.getMonth() + 1
     day = d.getDate()
   }
-  const today = new Date()
-  const y = today.getFullYear()
-  const bday = new Date(y, month, day)
-  bday.setHours(0, 0, 0, 0)
-  const todayZero = new Date(y, today.getMonth(), today.getDate())
-  let diff = bday.getTime() - todayZero.getTime()
-  if (diff < 0) {
-    const next = new Date(y + 1, month, day)
-    next.setHours(0, 0, 0, 0)
-    diff = next.getTime() - todayZero.getTime()
-  }
-  return Math.ceil(diff / 86400000)
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null
+  const [y, m, d] = zoneDateKey(now).split('-').map(Number)
+  const today = Date.UTC(y, m - 1, d)
+  let next = Date.UTC(y, month - 1, day)
+  if (next < today) next = Date.UTC(y + 1, month - 1, day)
+  return Math.round((next - today) / 86400000)
 }
 
 export function upsertPerson(
@@ -126,6 +124,56 @@ export function upsertPerson(
 export function deletePerson(personId: string): void {
   writeRow('people', { id: personId } as Person, 'delete')
   logActivity('people.deleted', 'people', personId)
+}
+
+/** Delete = Undo toast, no confirm (Flow Audit §4). The server cascades a person's interactions,
+ * so both are captured first; Undo puts the person back, then every interaction (outbox order). */
+export function deletePersonWithUndo(person: Person): void {
+  const touches = (queryClient.getQueryData<Interaction[]>(['interactions']) ?? []).filter((i) => i.person_id === person.id)
+  deletePerson(person.id)
+  queryClient.setQueryData<Interaction[]>(['interactions'], (old) => old?.filter((i) => i.person_id !== person.id))
+  toastUndo(`Deleted · ${person.name}`, () => restorePerson(person, touches))
+}
+
+export function restorePerson(person: Person, touches: Interaction[]): void {
+  writeRow('people', person)
+  for (const i of touches) writeRow('interactions', i)
+  logActivity('people.restored', 'people', person.id, { name: person.name })
+}
+
+/** `facts` with `fact` put back at `index` (a removal's Undo) — unless it's already there. */
+export function withFactRestored(facts: Fact[], fact: Fact, index: number): Fact[] {
+  if (facts.some((f) => f.id === fact.id)) return facts
+  const next = [...facts]
+  next.splice(Math.min(Math.max(index, 0), next.length), 0, fact)
+  return next
+}
+
+/** `facts` with `fact` replacing the one with its id, or added at the end. */
+export function withFactSaved(facts: Fact[], fact: Fact): Fact[] {
+  return facts.some((f) => f.id === fact.id) ? facts.map((f) => (f.id === fact.id ? fact : f)) : [...facts, fact]
+}
+
+export function removeFactWithUndo(person: Person, factId: string): void {
+  const facts = person.facts ?? []
+  const index = facts.findIndex((f) => f.id === factId)
+  if (index < 0) return
+  const fact = facts[index]
+  upsertPerson({ ...person, facts: facts.filter((f) => f.id !== factId) }, false)
+  toastUndo(`Removed · ${fact.label}`, () => {
+    // Write back onto the person as it is NOW (a rename since then stays).
+    const current = queryClient.getQueryData<Person[]>(['people'])?.find((p) => p.id === person.id) ?? person
+    upsertPerson({ ...current, facts: withFactRestored(current.facts ?? [], fact, index) }, false)
+  })
+}
+
+export const TOUCH_SUMMARY = { call: 'Phone call catch up', text: 'Text message catch up', meet: 'Met in person' } as const
+export type TouchChannel = keyof typeof TOUCH_SUMMARY
+
+/** The one-tap call / text / met chips: logged now, with Undo. */
+export function logTouchWithUndo(person: Pick<Person, 'id' | 'name'>, channel: TouchChannel): void {
+  const row = createInteraction({ person_id: person.id, summary: TOUCH_SUMMARY[channel], occurred_at: nowIso() })
+  toastUndo(`${channel === 'call' ? 'Call' : channel === 'text' ? 'Text' : 'Meeting'} logged · ${person.name}`, () => deleteInteraction(row.id))
 }
 
 export function createInteraction(
@@ -160,4 +208,9 @@ export function updateInteraction(interaction: Interaction, fields: Partial<Pick
 export function deleteInteraction(interactionId: string): void {
   writeRow('interactions', { id: interactionId } as Interaction, 'delete')
   logActivity('people.interaction_deleted', 'people', interactionId)
+}
+
+export function deleteInteractionWithUndo(interaction: Interaction): void {
+  deleteInteraction(interaction.id)
+  toastUndo('Interaction removed', () => writeRow('interactions', interaction))
 }

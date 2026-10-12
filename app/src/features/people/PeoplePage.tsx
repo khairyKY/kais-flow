@@ -1,24 +1,19 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, createInteraction, getDaysUntilBirthday, readNudgeSnoozes, setNudgeSnooze, isNudgeSnoozed, NUDGE_SNOOZE_DAYS } from './api'
+import { usePeople, useInteractions, upsertPerson, getDaysUntilBirthday, readNudgeSnoozes, setNudgeSnooze, isNudgeSnoozed, NUDGE_SNOOZE_DAYS, logTouchWithUndo, deletePersonWithUndo, type TouchChannel } from './api'
 import { useDomains } from '../domains/api'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button } from '../../components/kit'
 import { toastUndo } from '../../lib/undo'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
+import { ActionSheet } from '../../components/ActionSheet'
+import { ContextMenu } from '../../components/ContextMenu'
+import { Icon } from '../../components/Icon'
+import type { IconName } from '../../components/icons/kf'
+import { Select } from '../../components/Select'
+import { Skeleton, ErrorCard } from '../../components/States'
 import '../projects/xfx.css'
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
-}
 
 function getAvatarBgColor(name: string): string {
   const colors = [
@@ -85,7 +80,8 @@ export function PeoplePage() {
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
   const navigate = useNavigate()
-  const { data: people = [] } = usePeople()
+  const peopleQuery = usePeople()
+  const { data: people = [] } = peopleQuery
   const { data: interactions = [] } = useInteractions()
   const { data: domains = [] } = useDomains()
   const [showNewForm, setShowNewForm] = useState(false)
@@ -145,10 +141,8 @@ export function PeoplePage() {
     navigate(`/people/${p.id}`)
   }
 
-  const handleQuickAction = (personId: string, action: string) => {
-    const summary = action === 'call' ? 'Phone call catch up' : action === 'text' ? 'Text message catch up' : 'Met in person'
-    createInteraction({ person_id: personId, summary, occurred_at: new Date().toISOString() })
-  }
+  // The nudge's one-tap touch is logged with Undo, like the person page's chips.
+  const handleQuickAction = (p: Person, channel: TouchChannel) => logTouchWithUndo(p, channel)
 
   // Punch 46: the export varies the nudge action (Mom → call, Tarek → text) but no field on
   // `people` carries a channel. The one real signal is how Kai last reached this person —
@@ -164,6 +158,62 @@ export function PeoplePage() {
     setNudgeSnoozes(setNudgeSnooze(p.id, wakeAt))
     toastUndo(`${p.name} parked for ${NUDGE_SNOOZE_DAYS} days`, () => setNudgeSnoozes(setNudgeSnooze(p.id, null)))
   }
+
+  // A person row's own menu (ProjectsPage's grammar): ⋯ everywhere, right-click on a computer, an
+  // ActionSheet on a phone. Delete = Undo toast, no confirm.
+  const [menu, setMenu] = useState<{ person: Person; x: number; y: number } | null>(null)
+  const rowMenu = (p: Person) => ({
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault()
+      setMenu({ person: p, x: e.clientX, y: e.clientY })
+    },
+  })
+  const moreButton = (p: Person) => (
+    <button
+      type="button"
+      className="kf-hit"
+      aria-label={`More for ${p.name}`}
+      aria-haspopup="menu"
+      onClick={(e) => {
+        const r = e.currentTarget.getBoundingClientRect()
+        setMenu({ person: p, x: r.left, y: r.bottom })
+      }}
+      style={{ flex: 'none', width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'none', padding: 0, color: 'var(--ink-faint)', cursor: 'pointer', borderRadius: 999 }}
+    >
+      <Icon name="dots" size={20} />
+    </button>
+  )
+  const menuActions = (p: Person): { label: string; icon: IconName; danger?: boolean; run: () => void }[] => [
+    { label: 'Open', icon: 'chevright', run: () => navigate(`/people/${p.id}`) },
+    { label: 'Log a call', icon: 'people', run: () => logTouchWithUndo(p, 'call') },
+    { label: 'Log a text', icon: 'send', run: () => logTouchWithUndo(p, 'text') },
+    { label: 'Met in person', icon: 'check', run: () => logTouchWithUndo(p, 'meet') },
+    { label: 'Delete', icon: 'delete', danger: true, run: () => deletePersonWithUndo(p) },
+  ]
+  const menuLayer = menu && (isMobile ? (
+    <ActionSheet
+      title={menu.person.name}
+      meta="Person"
+      onClose={() => setMenu(null)}
+      items={menuActions(menu.person).map((a) => ({ label: a.label, icon: <Icon name={a.icon} />, destructive: a.danger, onSelect: a.run }))}
+    />
+  ) : (
+    <ContextMenu
+      position={{ x: menu.x, y: menu.y }}
+      onClose={() => setMenu(null)}
+      items={menuActions(menu.person).map((a) => ({ label: a.label, icon: <Icon name={a.icon} size={16} />, danger: a.danger, onClick: a.run }))}
+    />
+  ))
+
+  // Designed states: a skeleton until the first load, a retry if it failed — never the empty patch.
+  const loadState = peopleQuery.isPending ? (
+    <div style={{ marginTop: 18 }}><Skeleton rows={4} /></div>
+  ) : peopleQuery.isError && people.length === 0 ? (
+    <div style={{ marginTop: 18 }}><ErrorCard message="Couldn't load your people." onRetry={() => void peopleQuery.refetch()} /></div>
+  ) : null
+  const nudgeChip = { border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)', cursor: 'pointer' } as const
+  const laterChip = { border: '1px dashed var(--ink-hairline)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' } as const
+  const circleOptions = [{ value: '', label: 'No circle' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]
 
   /* ───────── MOBILE LAYOUT (1c) ───────── */
   if (isMobile) {
@@ -185,37 +235,42 @@ export function PeoplePage() {
           >+</button>
         </div>
 
-        {people.length === 0 && (
+        {loadState}
+
+        {!loadState && people.length === 0 && (
           <div style={{ padding: '44px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)', textAlign: 'center', lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
           </div>
         )}
 
-        {/* Nudges (mobile) */}
+        {/* Nudges (mobile) — the same cards as desktop, stacked, each with its "later" */}
         {nudges.length > 0 && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 8px' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>Say hi</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
-            {nudges.slice(0, 1).map((p) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {nudges.map((p, idx) => {
               const latest = latestInteraction.get(p.id)
               const quietText = latest ? weeksQuiet(latest.occurred_at) : 'never reached out'
               const bdayFact = p.facts?.find((f) => f.label === 'Birthday')
               const bdayDays = bdayFact ? getDaysUntilBirthday(bdayFact.date || bdayFact.value) : null
               const bdayLabel = bdayDays !== null && bdayDays <= 14 ? ` · bday ${bdayDays}d` : ''
               return (
-                <div key={p.id} style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 11, transform: 'rotate(-0.3deg)' }}>
+                <div key={p.id} style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 11, transform: `rotate(${idx % 2 === 0 ? -0.3 : 0.3}deg)` }}>
                   <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
                   </div>
-                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
+                  <button type="button" onClick={() => handleQuickAction(p, nudgeChannel(p.id))} className="chip kf-hit" style={{ ...nudgeChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>{nudgeChannel(p.id)}</button>
+                  <button type="button" onClick={() => handleLater(p)} className="chip kf-hit" style={{ ...laterChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>later</button>
                 </div>
               )
             })}
+            </div>
           </>
         )}
 
@@ -231,18 +286,39 @@ export function PeoplePage() {
               const lastTouchText = latest ? timeAgoShort(latest.occurred_at) : '—'
               const summaryShort = latest ? latest.summary.split('—')[0].split('·')[0].trim().slice(0, 30) : ''
               return (
-                <Link key={p.id} to={`/people/${p.id}`} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: idx < groupPeople.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', ...(motion ? staggerDelay(idx) : {}) }}>
-                  <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)', marginTop: 1 }}>{summaryShort}</div>
-                  </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{lastTouchText}</span>
-                </Link>
+                <div key={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: idx < groupPeople.length - 1 ? '1px dashed var(--line-dashed)' : 'none', ...(motion ? staggerDelay(idx) : {}) }}>
+                  <Link to={`/people/${p.id}`} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', textDecoration: 'none' }}>
+                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)', marginTop: 1 }}>{summaryShort}</div>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{lastTouchText}</span>
+                  </Link>
+                  {moreButton(p)}
+                </div>
               )
             })}
           </div>
         ))}
+
+        {/* The + used to set state only the desktop branch rendered — a dead button on a phone.
+            The form rides a sheet; its draft lives here, so a dismiss keeps it. */}
+        {showNewForm && (
+          <BottomSheet
+            title="New person"
+            onClose={() => setShowNewForm(false)}
+            footer={() => <Button type="submit" form="kf-new-person" variant="cta">Add</Button>}
+          >
+            {() => (
+              <form id="kf-new-person" onSubmit={handleNewPerson} style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 4 }}>
+                <input type="text" placeholder="Name" aria-label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required autoFocus style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 16, color: 'var(--ink-body)' }} />
+                <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 15 }} />
+              </form>
+            )}
+          </BottomSheet>
+        )}
+        {menuLayer}
       </div>
     )
   }
@@ -284,16 +360,15 @@ export function PeoplePage() {
       {showNewForm && (
         <form onSubmit={handleNewPerson} style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '16px 0', padding: '12px 16px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3 }}>
           <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 13 }} />
-          <select value={newDomain} onChange={(e) => setNewDomain(e.target.value)} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 13 }}>
-            <option value="">No circle</option>
-            {domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
+          <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 13 }} />
           <Button type="submit" variant="cta" style={{ padding: '8px 16px', fontSize: 12 }}>Add</Button>
         </form>
       )}
 
+      {loadState}
+
       {/* States t1 — no people yet: clover seedling, one line, one action */}
-      {people.length === 0 && (
+      {!loadState && people.length === 0 && (
         <div style={{ padding: '52px 40px 56px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 64, filter: 'var(--shadow-drop-sm)' }} />
           <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
@@ -326,8 +401,8 @@ export function PeoplePage() {
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
                     <div className="fhelp" style={{ marginTop: 2 }}>{quietText}{bdayLabel}{nudgeHint}</div>
                   </div>
-                  <span onClick={() => handleQuickAction(p.id, nudgeChannel(p.id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{nudgeChannel(p.id)}</span>
-                  <span onClick={() => handleLater(p)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>later</span>
+                  <button type="button" onClick={() => handleQuickAction(p, nudgeChannel(p.id))} className="chip kf-hit" style={nudgeChip}>{nudgeChannel(p.id)}</button>
+                  <button type="button" onClick={() => handleLater(p)} className="chip kf-hit" style={laterChip}>later</button>
                 </div>
               )
             })}
@@ -354,7 +429,8 @@ export function PeoplePage() {
               const showBloom = bdayDays !== null && bdayDays <= 14
               const isLast = idx === groupPeople.length - 1
               return (
-                <Link key={p.id} to={`/people/${p.id}`} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 2px', borderBottom: isLast ? 'none' : '1px dashed var(--line-dashed)', textDecoration: 'none', ...(motion ? staggerDelay(idx) : {}) }}>
+                <div key={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: isLast ? 'none' : '1px dashed var(--line-dashed)', ...(motion ? staggerDelay(idx) : {}) }}>
+                <Link to={`/people/${p.id}`} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 13, padding: '11px 2px', textDecoration: 'none' }}>
                   <span className="av" style={{ background: getAvatarBgColor(p.name), position: 'relative' }}>
                     {p.name.charAt(0)}
                     {showBloom && <BloomBadge />}
@@ -371,6 +447,8 @@ export function PeoplePage() {
                   <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>{factCount} facts</span>
                   <span className="fhelp" style={{ width: 52, textAlign: 'right' }}>{lastTouchText}</span>
                 </Link>
+                {moreButton(p)}
+                </div>
               )
             })}
           </div>
@@ -378,6 +456,7 @@ export function PeoplePage() {
       ))}
 
       <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>a light CRM — facts so you remember, nudges so you reach out ✿</div>
+      {menuLayer}
     </div>
   )
 }
