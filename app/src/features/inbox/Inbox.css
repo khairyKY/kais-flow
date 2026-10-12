@@ -126,7 +126,7 @@ a.ib-gh-num:hover { text-decoration: underline; }
   opacity: 0; transition: opacity var(--dur-quick); }
 .ib-select-box[data-checked] { background: var(--acc-sage); }
 /* 3a draws no box: on cards, rows and GitHub lines it sits in the margin (no space held for it). */
-.ib-card .ib-select-box, .ib-row .ib-select-box { position: absolute; left: 3px; top: 21px; }
+.ib-card .ib-select-box, .ib-row .ib-select-box { position: absolute; left: 2px; top: 2px; }
 .ib-row .ib-select-box { top: 50%; margin-top: -7.5px; }
 .ib-gh { position: relative; }
 .ib-gh .ib-select-box { position: absolute; left: -22px; top: 50%; margin-top: -7.5px; }
