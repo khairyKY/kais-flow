@@ -41,11 +41,13 @@ const HEALTH = { id: id('4', 1), user_id: UID, name: 'Health', color: 'var(--acc
 const DAILY = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
 const base = { user_id: UID, clock_time: null, cadence: DAILY, challenge_start: null, challenge_end: null, active: true, domain_id: null, goal_days: null, created_at: T, updated_at: T }
 // A row cached before 0067 (no `plant`) with one old string step and one timed step.
-const STRETCH = { ...base, id: id('7', 1), name: 'Stretch', time_of_day: 'evening', steps: ['Neck rolls', { text: 'Hamstrings & hips', minutes: 3 }] }
+const STRETCH = { ...base, id: id('7', 1), name: 'Stretch', time_of_day: 'evening', steps: ['Neck rolls', 'Hamstrings & hips'], step_minutes: [null, 3] }
 const READ = { ...base, id: id('7', 2), name: 'Read', time_of_day: 'evening', steps: [], plant: 'cherry' }
-const JOURNAL = { ...base, id: id('7', 3), name: 'Journal', time_of_day: 'morning', steps: [], plant: 'fern' }
+// An old-build row: string steps, no step_minutes column at all.
+const JOURNAL = { ...base, id: id('7', 3), name: 'Journal', time_of_day: 'morning', steps: ['Write one page'], plant: 'fern' }
 const WATER = { ...base, id: id('7', 4), name: 'Water the plants', time_of_day: 'morning', steps: [], plant: 'clover' }
-const WALK = { ...base, id: id('7', 5), name: 'Walk', time_of_day: 'afternoon', steps: [], plant: 'daisy' }
+// step_minutes shorter than steps (an old build added a step): the extra step reads with no minutes.
+const WALK = { ...base, id: id('7', 5), name: 'Walk', time_of_day: 'afternoon', steps: ['Shoes on', 'Out the door'], step_minutes: [10], plant: 'daisy' }
 const done = (r, n) => Array.from({ length: n }, (_, i) => ({ id: id('9', r.id.slice(-2) * 100 + i), user_id: UID, routine_id: r.id, completed_on: daysAgo(i + 1), created_at: T }))
 const settings = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: T, updated_at: T }
 const tables = () => ({
@@ -208,8 +210,8 @@ await block(async () => {
   await shot(page, '1-cherry-picked-desktop', formCard(page, false))
   await page.getByRole('button', { name: /Plant routine/ }).click()
   const row = last(await sent(state, 'routines'))
-  check('desktop: the planted row carries the steps in order with minutes, and plant = cherry',
-    row?.name === 'Evening stretch' && row?.plant === 'cherry' && JSON.stringify(row?.steps) === JSON.stringify([{ text: 'Neck & shoulder rolls', minutes: 2 }, { text: 'Slow breathing, lights low', minutes: 5 }, { text: 'Hamstrings & hips', minutes: 3 }]) && row?.time_of_day === 'evening' && JSON.stringify(row?.cadence) === JSON.stringify({ weekdays: [1, 3, 5] }),
+  check('desktop: the planted row has plain-string steps in order, step_minutes aligned [2, 5, 3], plant = cherry',
+    row?.name === 'Evening stretch' && row?.plant === 'cherry' && JSON.stringify(row?.steps) === JSON.stringify(['Neck & shoulder rolls', 'Slow breathing, lights low', 'Hamstrings & hips']) && JSON.stringify(row?.step_minutes) === JSON.stringify([2, 5, 3]) && row?.time_of_day === 'evening' && JSON.stringify(row?.cadence) === JSON.stringify({ weekdays: [1, 3, 5] }),
     JSON.stringify(row))
   check('desktop create: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
@@ -229,8 +231,8 @@ await block(async () => {
   await shot(page, '2-edit-desktop', formCard(page, false))
   await page.getByRole('button', { name: /Save routine/ }).click()
   const row = last(await sent(state, 'routines'))
-  check('edit: saves over the same row — minutes on the old step, plant = fern, the rest kept',
-    row?.id === STRETCH.id && row?.plant === 'fern' && JSON.stringify(row?.steps) === JSON.stringify([{ text: 'Neck rolls', minutes: 4 }, { text: 'Hamstrings & hips', minutes: 3 }]) && row?.time_of_day === 'evening' && row?.name === 'Stretch',
+  check('edit: saves over the same row — steps still strings, step_minutes [4, 3], plant = fern, the rest kept',
+    row?.id === STRETCH.id && row?.plant === 'fern' && JSON.stringify(row?.steps) === JSON.stringify(['Neck rolls', 'Hamstrings & hips']) && JSON.stringify(row?.step_minutes) === JSON.stringify([4, 3]) && row?.time_of_day === 'evening' && row?.name === 'Stretch',
     JSON.stringify(row))
   check('desktop edit: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
@@ -249,6 +251,10 @@ for (const theme of ['day', 'night']) {
       await page.getByRole('button', { name: /2 steps · 3 min/ }).click()
       await sleep(200)
       check('the steps fold under the row: "2 steps · 3 min", each step with its minutes', (await page.getByText('3 min', { exact: true }).count()) === 1 && (await page.getByText('Neck rolls', { exact: true }).isVisible()), '')
+      check('an old-build row (no step_minutes) folds as "1 step", no minutes', (await page.getByRole('button', { name: /^1 step ▸$/ }).count()) === 1)
+      await page.getByRole('button', { name: /2 steps · 10 min/ }).click()
+      await sleep(200)
+      check('a short step_minutes: "2 steps · 10 min", the step past its end has no minutes', (await page.getByText('10 min', { exact: true }).count()) === 1 && (await page.getByText('Out the door', { exact: true }).isVisible()), '')
     } else {
       await page.getByRole('button', { name: /2 steps · 3 min/ }).click()
       await sleep(200)
@@ -323,8 +329,8 @@ await block(async () => {
   await page.getByRole('radio', { name: 'Daisy' }).tap()
   await page.getByRole('button', { name: /Plant routine/ }).tap()
   const row = last(await sent(state, 'routines'))
-  check('phone: planted with steps in order + minutes, plant = daisy',
-    row?.plant === 'daisy' && JSON.stringify(row?.steps) === JSON.stringify([{ text: 'Neck & shoulder rolls', minutes: 2 }, { text: 'Slow breathing, lights low', minutes: 5 }, { text: 'Hamstrings & hips', minutes: 3 }]),
+  check('phone: planted with plain-string steps in order, step_minutes [2, 5, 3], plant = daisy',
+    row?.plant === 'daisy' && JSON.stringify(row?.steps) === JSON.stringify(['Neck & shoulder rolls', 'Slow breathing, lights low', 'Hamstrings & hips']) && JSON.stringify(row?.step_minutes) === JSON.stringify([2, 5, 3]),
     JSON.stringify(row))
   check('phone create: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

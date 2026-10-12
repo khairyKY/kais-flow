@@ -7,13 +7,19 @@ related: design-export/Routines.dc.html 2a/2b; 2026-10-12-1758-edit-after-create
 
 # Routines 2: step minutes + total, step reorder, the five-species plant
 
+> **Revised before merge (conductor, 2026-10-12 ~22:15Z):** step minutes moved out of `routines.steps` into a parallel column, `routines.step_minutes` (same migration 0067), so `steps` stays an array of plain strings and builds already installed keep working. The Release order, Data and Gate sections below describe the shipped shape; the first version (minutes inside `steps` as `{text, minutes}`) was never merged.
+
 Branch `claude/routines-2`, cut from `origin/claude/kai-bugs-1012` (c6d3bd18). Pushed, not merged, not deployed. One migration (0067), no edge functions, no new dependencies (`@dnd-kit/core` was already installed — Today's Top 3 drag uses it). Every write still goes through `lib/outbox.ts` `writeRow`.
 
 ## Release order
 
-1. `db push` **0067 first.** The new client writes `plant` on every routine save; before 0067 PostgREST rejects the unknown column and the write dead-letters in the outbox.
+1. `db push` **0067 first.** The new client writes `plant` and `step_minutes` on every routine save; before 0067 PostgREST rejects the unknown columns and the write dead-letters in the outbox.
 2. Then the frontend.
-3. Older installed builds (Android / Windows app not yet updated) read new rows fine **unless a step has minutes**: they call `.trim()` on each step, so a `{text, minutes}` step breaks their Routines page / edit form until they update. A step without minutes is still written as the old bare string, so routines nobody gives minutes to stay readable everywhere. Ship the app builds with the web release.
+3. **Builds already installed (Android / Windows, updated only when their owner checks) keep working**, because `steps` is still the array of strings they read. What an old build does with a routine:
+   - **shows** its steps as always (no minutes, no species: it draws the vine);
+   - **edits** it: its outbox upserts the row it fetched, so `step_minutes` and `plant` go back unchanged (or, from a copy cached before 0067, are left out and PostgREST leaves them as they are);
+   - **plants** one: it gets `plant 'vine'` and `step_minutes []` from the column defaults;
+   - **reorders, removes or inserts a step**: `steps` changes but `step_minutes` stays by position, so minutes may then sit on the wrong step (or past the end). Accepted (conductor). The new build reads whatever lines up, treats the rest as no minutes, and its next save rewrites both together.
 
 ## What 2a/2b draw, and what was built
 
@@ -41,7 +47,9 @@ Every species buckets the streak on the vine's thresholds (`lib/growthStages` `v
 ## Data
 
 - `routines.plant text not null default 'vine'` + `routines_plant_check` (the five) — `supabase/migrations/0067_routine_plant.sql`. Idempotent (`add column if not exists`).
-- `routines.steps` (0028 jsonb) element = bare string **or** `{ text, minutes }` — no migration. `lib/types.ts`: `RoutineStep`, `RoutinePlant`, `Routine.plant?`. Read through `readSteps` (old strings → `{text}`; junk dropped), written through `writeSteps` (trimmed, blanks dropped, string when no minutes).
+- `routines.step_minutes jsonb not null default '[]'` + `routines_step_minutes_array` (`jsonb_typeof = 'array'`), same migration: `step_minutes[i]` = minutes of `steps[i]`, or null; `[]` = no step has minutes. `routines.steps` (0028) is unchanged: always plain strings.
+- `lib/types.ts`: `Routine.steps?: string[]` (as before), `Routine.step_minutes?`, `Routine.plant?`, `RoutinePlant`.
+- Read: `newRoutine.ts` `readSteps(routine)` pairs `steps[i]` with `step_minutes[i]`; a missing, null, short, long or non-array `step_minutes`, or a junk entry, = no minutes there. Defensive: a step stored as `{ text, minutes }` still reads; anything else is skipped. Write: `writeSteps(drafts)` → `{ steps: string[], step_minutes: (number | null)[] }` from the one ordered list (so a reorder moves both together), blanks dropped with their minutes, `[]` when nothing has minutes.
 - `docs/DATA_MODEL.md`: the routines row + a "Migration 0067" note.
 
 ## ds:check
@@ -50,20 +58,20 @@ Every species buckets the streak on the vine's thresholds (`lib/growthStages` `v
 
 ## Gate
 
-- `npx vitest run`: **1860 passed** (144 files) — +13 tests (`newRoutine.test.ts`: steps read/write/round-trip/total/minutes/move/reordered save, plant default + pick; new `plant.test.ts`: the five in 2a's order **= 0067's check list**, stage mapping, every drawing exists in `public/ds/assets`, unknown/absent → vine). Same 1860 green under TZ = UTC, Africa/Cairo, America/Los_Angeles, Pacific/Kiritimati (PowerShell `$env:TZ`, offsets checked).
+- `npx vitest run`: **1863 passed** (144 files), +16 tests. `newRoutine.test.ts`: an **old-build row** fixture (string steps, no `step_minutes`) reads with no minutes and saves as strings + `[]`; `steps[i]` + `step_minutes[i]` pairing with short / long / junk lists; object-shaped steps still read; strings + aligned minutes written, blanks dropped with their minutes; round-trip; total; minutes chip; move; a reordered step takes its minutes along in both columns; plant default + pick. New `plant.test.ts`: the five in 2a's order **= 0067's check list**, 0067 adds `step_minutes jsonb not null default '[]'`, stage mapping, every drawing exists in `public/ds/assets`, unknown/absent → vine. Same 1863 green under TZ = UTC, Africa/Cairo, America/Los_Angeles, Pacific/Kiritimati (PowerShell `$env:TZ`).
 - `tsc -b`: clean. `npm run lint`: **0 errors** (21 warnings, none in routines). `npm run build`: green.
-- PGlite, 0067 run twice: **12/12** (`docs/log/assets/routines-2/0067-pglite-check.mjs` + `.txt`): column text/not null/default vine; old rows read vine, their steps untouched; each species accepted; `rose` and null rejected; mixed string + `{text, minutes}` steps store and read back in order; one named check after two runs.
-- Browser, real app on the mock backend (`docs/log/assets/routines-2/verify.mjs`, dev server from this worktree, `--mode mock`, http://localhost:5259): **43/43**, each write asserted on the row the outbox POSTed:
-  - desktop: 2a's sample filled → "10 min total", five tiles with Vine chosen; mouse drag of step 3's ⠿ onto step 1 moves it (minutes travel with it, the drop opens no menu); ↓ on a handle moves it and focus follows; Alt+↑ in a step moves it; clicking the first ⠿ offers Move down / Remove step; Move down; Cherry draws a cherry in the header + button; the planted row has the steps in their final order with minutes and `plant: 'cherry'`;
-  - edit an old row (string step, no `plant`): prefilled `['Neck rolls' (no minutes), 'Hamstrings & hips' 3]`, opens on Vine, "3 min total" → minutes 4 → "7 min total", Fern → saved over the same id with `[{Neck rolls,4},{Hamstrings & hips,3}]`, `plant: 'fern'`, the rest kept;
-  - rendering (day + night): garden cards draw vine/bare (no streak), cherry/bloom (8 d), fern/unfurl1 (2 d), clover/four_leaf (31 d), daisy/midday (12 d); the fold reads "2 steps · 3 min" with "3 min" on its step; the cherry routine's trellis is headed by its cherry, grows cherry marks (no vine leaves), and the caption names the cherry; the phone clover trellis;
-  - phone: "Steps · 10 min total", "2m", no ✕, five tiles inside 390; **hold-and-drag with real touch events** (CDP) moves step 3 to the top and opens no sheet; a quick swipe over the ⠿ moves nothing; a tap on the ⠿ opens Move up / Move down / Remove step; Move up; Daisy → planted row in order with minutes, `plant: 'daisy'`;
+- PGlite, 0067 run twice: **19/19** (`docs/log/assets/routines-2/0067-pglite-check.mjs` + `.txt`): `plant` text/not null/default vine, old rows vine, each species accepted, `rose` and null rejected; `step_minutes` jsonb/not null/default `[]`, old rows keep their string steps and get `[]`, a non-array and null rejected; the new client's strings + `[2, null, 5]` read back in order; **an old build's upsert** (only the columns it knows) keeps `step_minutes` and `plant`; an old-build reorder leaves `step_minutes` by position (the accepted misalignment); an old-build insert gets `vine` + `[]`; one of each named check after two runs.
+- Browser, real app on the mock backend (`docs/log/assets/routines-2/verify.mjs`, dev server from this worktree, `--mode mock`, http://localhost:5259): **45/45**, each write asserted on the row the outbox POSTed:
+  - desktop: 2a's sample filled → "10 min total", five tiles with Vine chosen; mouse drag of step 3's ⠿ onto step 1 moves it (minutes travel with it, the drop opens no menu); ↓ on a handle moves it and focus follows; Alt+↑ in a step moves it; clicking the first ⠿ offers Move down / Remove step; Move down; Cherry draws a cherry in the header + button; the planted row has plain-string `steps` in their final order, `step_minutes: [2, 5, 3]` aligned, `plant: 'cherry'`;
+  - edit a pre-0067 row (no `plant`, `step_minutes [null, 3]`): prefilled `['Neck rolls' (no minutes), 'Hamstrings & hips' 3]`, opens on Vine, "3 min total" → minutes 4 → "7 min total", Fern → saved over the same id with `steps` still `['Neck rolls', 'Hamstrings & hips']`, `step_minutes: [4, 3]`, `plant: 'fern'`, the rest kept;
+  - rendering (day + night): garden cards draw vine/bare (no streak), cherry/bloom (8 d), fern/unfurl1 (2 d), clover/four_leaf (31 d), daisy/midday (12 d); the fold reads "2 steps · 3 min" with "3 min" on its step; an **old-build row** (no `step_minutes`) folds as "1 step" with no minutes; a **short** `step_minutes` (`[10]` for two steps) reads "2 steps · 10 min" with the second step bare; the cherry routine's trellis is headed by its cherry, grows cherry marks (no vine leaves), and the caption names the cherry; the phone clover trellis;
+  - phone: "Steps · 10 min total", "2m", no ✕, five tiles inside 390; **hold-and-drag with real touch events** (CDP) moves step 3 to the top and opens no sheet; a quick swipe over the ⠿ moves nothing; a tap on the ⠿ opens Move up / Move down / Remove step; Move up; Daisy → planted row with string `steps` in order, `step_minutes: [2, 5, 3]`, `plant: 'daisy'`;
   - Today desktop + phone render the routine rail; no page errors anywhere.
 - Side-by-side vs the export (design | app top | app scrolled to the picker), 1280×800 and 390×844, day and night: `side-by-side-2a-day.png`, `side-by-side-2a-night.png`, `side-by-side-2b-day.png`, `side-by-side-2b-night.png` (the export draws day only; night is the app's tokens).
 
 **Found and fixed on the way:** the desktop New/Edit routine card was taller than the window at the default 125% interface size (`maxHeight: 90dvh` is zoomed) — its header sat above the top edge (visible in the edit-after-create screenshot too). It now caps at `calc(var(--kf-vh) * 0.9)`, the variable NewProjectModal already uses.
 
-**Not verified:** a real signed-in run against Supabase; Safari/iOS touch (Chrome touch emulation only); the Android/Windows shells; an older installed build reading a timed step (see Release order 3 — reasoned from its code, not run).
+**Not verified:** a real signed-in run against Supabase; Safari/iOS touch (Chrome touch emulation only); the Android/Windows shells; an older installed build against the migrated table (its writes are simulated in the PGlite check; the app itself wasn't run).
 
 ## Not changed (seen)
 
