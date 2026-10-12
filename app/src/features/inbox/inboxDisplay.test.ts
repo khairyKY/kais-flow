@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageLabel, capturedLabel, cardShape, confidenceWord, dayWord, daysAgo, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, suggestedPlace, suggestedTitle } from './inboxDisplay'
+import { ageLabel, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, suggestedPlace, suggestedTitle } from './inboxDisplay'
 import type { Domain, Project } from '../../lib/types'
 
 describe('isToday', () => {
@@ -40,15 +40,6 @@ describe('dayWord', () => {
   it('reads late-evening UTC as the Cairo day it actually falls on', () => {
     // 23:30 UTC on the 1st is 01:30 Cairo on the 2nd — "Tomorrow", not "Today".
     expect(dayWord('2026-08-01T23:30:00Z', now)).toBe('Tomorrow')
-  })
-})
-
-describe('daysAgo', () => {
-  it('never returns negative for clock skew', () => {
-    expect(daysAgo(new Date(Date.now() + 60_000).toISOString())).toBe(0)
-  })
-  it('floors to whole days', () => {
-    expect(daysAgo(new Date(Date.now() - 3 * 86_400_000 - 3600_000).toISOString())).toBe(3)
   })
 })
 
@@ -182,6 +173,9 @@ describe('capturedLabel / dueLabel / dueShort / ageLabel', () => {
     expect(dueShort('2026-10-14T06:00:00Z', NOW)).toBe('Wed 14')
     expect(dueShort('2026-10-13T06:00:00Z', NOW)).toBe('tomorrow')
     expect(dueShort('2026-11-03T06:00:00Z', NOW)).toBe('Tue 3 Nov')
+  })
+  it('GitHub age never goes negative on clock skew', () => {
+    expect(ageLabel('2026-10-12T07:01:00Z', NOW)).toBe('today')
   })
   it('GitHub age: "3 days" / "3d", "1 day", "today"', () => {
     expect(ageLabel('2026-10-09T06:00:00Z', NOW)).toBe('3 days')
