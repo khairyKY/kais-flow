@@ -1,0 +1,13 @@
+{
+  "//": "No deno on this machine: notify + capture-image type-checked strict with tsc and a Deno shim. app/node_modules/.bin/tsc -p docs/log/assets/tray-notices/deno-shim",
+  "compilerOptions": {
+    "target": "ES2022", "lib": ["ES2023", "DOM", "DOM.Iterable"], "module": "ESNext", "moduleResolution": "Bundler",
+    "strict": true, "noEmit": true, "allowImportingTsExtensions": true, "skipLibCheck": true, "types": [],
+    "ignoreDeprecations": "6.0", "baseUrl": ".",
+    "paths": {
+      "npm:@supabase/supabase-js@2": ["../../../../../app/node_modules/@supabase/supabase-js"],
+      "npm:zod@^4": ["../../../../../app/node_modules/zod"]
+    }
+  },
+  "files": ["shim.d.ts", "../../../../../supabase/functions/notify/index.ts", "../../../../../supabase/functions/capture-image/index.ts"]
+}

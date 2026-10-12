@@ -6,7 +6,7 @@
 import type { Task } from '../../lib/types'
 import { taskDayDiff } from './grouping'
 
-type Top3Fields = Pick<Task, 'top3' | 'top3_rank' | 'someday' | 'deleted_at' | 'status' | 'due_at' | 'scheduled_start'>
+type Top3Fields = Pick<Task, 'top3' | 'top3_rank' | 'someday' | 'deleted_at' | 'status' | 'due_at' | 'scheduled_start' | 'paused'>
 
 /** Does this starred task still count as one of TODAY's Top 3?
  *
@@ -14,8 +14,8 @@ type Top3Fields = Pick<Task, 'top3' | 'top3_rank' | 'someday' | 'deleted_at' | '
  * user's days: 0 today, 1 tomorrow, -1 yesterday, null when it has no date at all. */
 export function isTop3Today(task: Top3Fields, now: Date): boolean {
   if (!task.top3) return false
-  // Parked, binned or no longer open: not anybody's pick.
-  if (task.someday || task.deleted_at || task.status !== 'todo') return false
+  // Parked, paused, binned or no longer open: not anybody's pick.
+  if (task.someday || task.paused || task.deleted_at || task.status !== 'todo') return false
   const diff = taskDayDiff(task, now)
   // Undated = "today, whenever" (starring never needs a date). Earlier = yesterday's unfinished pick
   // carried over — the morning ritual offers it again (rituals/loopDay.ts) and Keep & continue keeps

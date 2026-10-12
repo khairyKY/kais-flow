@@ -4,7 +4,7 @@ import code from '../../../public/sw-push.js?raw'
 // public/sw-push.js, run against a fake service-worker global: what a push shows, and where a
 // notification button goes (no keys in the worker — the app does the write).
 
-function worker(windows: { visibilityState: string; postMessage: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn> }[]) {
+function worker(windows: { visibilityState: string; focused?: boolean; postMessage: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn> }[]) {
   const listeners: Record<string, (e: unknown) => void> = {}
   const self = {
     location: { origin: 'https://kais-flow.example' },
@@ -54,6 +54,25 @@ describe('sw-push.js', () => {
     const { self, fire } = worker([])
     await fire('push', { data: { json: () => ({ ...reminder, silent: true }) } })
     expect(self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ silent: true, renotify: false }))
+  })
+
+  it('"Your page is read" is dropped while a window is focused (the results are on screen), shown otherwise', async () => {
+    const paper = { kind: 'paper_ready', title: 'Your page is read — 7 things', body: 'From “OS lecture 3”. 2 need a quick look.', tag: 'paper-c1', actions: [{ action: 'review', title: 'Review' }], url: '/inbox', silent: true, taskIds: ['c1'] }
+    const looking = worker([{ ...win('visible'), focused: true }])
+    await looking.fire('push', { data: { json: () => paper } })
+    expect(looking.self.registration.showNotification).not.toHaveBeenCalled()
+    const away = worker([{ ...win('hidden'), focused: false }])
+    await away.fire('push', { data: { json: () => paper } })
+    expect(away.self.registration.showNotification).toHaveBeenCalledWith('Your page is read — 7 things', expect.objectContaining({ tag: 'paper-c1', silent: true, renotify: false, data: { kind: 'paper_ready', url: '/inbox', taskIds: ['c1'] } }))
+    const focusedReminder = worker([{ ...win('visible'), focused: true }])
+    await focusedReminder.fire('push', { data: { json: () => reminder } })
+    expect(focusedReminder.self.registration.showNotification).toHaveBeenCalled() // only the page read is dropped
+  })
+
+  it('Review from a closed app: it opens on the Inbox with the capture to open', async () => {
+    const { self, fire } = worker([])
+    await fire('notificationclick', clicked({ kind: 'paper_ready', url: '/inbox', taskIds: ['c1'] }, 'review'))
+    expect(self.clients.openWindow).toHaveBeenCalledWith('/inbox?kfAction=review&kfTasks=c1')
   })
 
   it('Done with the app open: the window does it, without coming forward', async () => {

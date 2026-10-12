@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useProjects, useTimeEntries, archiveProject, restoreProject } from '../projects/api'
+import { useProjects, useTimeEntries, finishProjectWithUndo } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { writeRow } from '../../lib/outbox'
 import { toastUndo } from '../../lib/undo'
@@ -9,19 +9,9 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 import { Button } from '../../components/kit'
+import { useIsMobile } from '../../components/BottomSheet'
+import { Skeleton, ErrorCard } from '../../components/States'
 import type { Project } from '../../lib/types'
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
-}
 
 function getSpecimenPlant(projectId: string) {
   const plants = ['/ds/assets/wisteria/p100.png', '/ds/assets/cherry/bloom.png', '/ds/assets/hydrangea/heavy.png', '/ds/assets/fern/full.png']
@@ -69,7 +59,8 @@ export function HerbariumPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: projects = [], isLoading } = useProjects()
+  const projectsQ = useProjects()
+  const { data: projects = [] } = projectsQ
   const { data: tasks = [] } = useTasks()
   const { data: timeEntries = [] } = useTimeEntries()
   const archivedProjects = useMemo(() => projects.filter((p) => p.status === 'archived'), [projects])
@@ -83,16 +74,18 @@ export function HerbariumPage() {
 
   // X2 (Motion 3b): esc obeys immediately on both overlays
   useEscapeStack(!!selectedSpecimen, () => { setSelectedSpecimen(null); setIsEditingLine(false) })
-  // Esc closes the press the same way Skip does: Kai already confirmed the archive on the project
-  // page, so escaping the ceremony must not quietly drop it. The toast's Undo is the way back.
-  useEscapeStack(!!pressingProject, () => finishPressing(null))
+  // The press is optional (product audit 2026-10-12): the project was filed before it opened, so Esc —
+  // like skip — just leaves it.
+  useEscapeStack(!!pressingProject, () => setPressingProject(null))
 
   useEffect(() => {
     const pressParam = searchParams.get('press')
     if (pressParam) {
       const p = projects.find((x) => x.id === pressParam)
       if (p) {
-        setPressingProject(p); setCeremonyBeat(1); setCeremonyLine('')
+        // An old link to a live project: file it first (one tap + Undo), then the optional press.
+        if (p.status !== 'archived') finishProjectWithUndo(p)
+        setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '')
         searchParams.delete('press'); setSearchParams(searchParams)
       }
     }
@@ -157,20 +150,17 @@ export function HerbariumPage() {
     queryClient.invalidateQueries({ queryKey: ['projects'] })
   }
 
-  // Punch 51: the ceremony *is* the archive. The project is still live through all three beats —
-  // the write happens here, when the press closes. `line = null` (Skip, or Esc) archives without
-  // writing a field-guide line; the card falls back to "Pressed specimen." rather than inventing
-  // a sentence in Kai's voice.
+  // Product audit 2026-10-12: Finish / Archive is one tap + Undo (projects/api finishProjectWithUndo);
+  // this ceremony comes after, optional. Closing it — skip, Esc, Back — loses nothing; "Press it"
+  // only writes the field-guide line (Undo puts the old one back). No line, nothing written: the card
+  // falls back to "Pressed specimen." rather than inventing a sentence in Kai's voice.
   const finishPressing = (line: string | null) => {
     if (!pressingProject) return
-    const before = pressingProject
-    archiveProject(line ? { ...before, completion_summary: line } : before)
+    const before = projects.find((x) => x.id === pressingProject.id) ?? pressingProject
     setPressingProject(null)
-    queryClient.invalidateQueries({ queryKey: ['projects'] })
-    toastUndo(`"${before.name}" pressed into the Herbarium`, () => {
-      restoreProject(before) // `before` still carries the pre-press summary, so undo restores both
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    })
+    if (!line || line === (before.completion_summary ?? '')) return
+    writeRow('projects', { ...before, completion_summary: line })
+    toastUndo(`"${before.name}" pressed into the Herbarium`, () => writeRow('projects', before))
   }
 
   const styles = `
@@ -190,9 +180,12 @@ export function HerbariumPage() {
     if (!selectedSpecimen) return null
     const p = selectedSpecimen
     const imgSource = getSpecimenPlant(p.id)
+    // Outside-click rule: a clean card closes on a click outside it; an edited, unsaved line
+    // ignores it (Esc / ✕ / Cancel still close).
+    const dirty = isEditingLine && editedLineText !== (p.completion_summary || '')
     return (
-      <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-        <div className="kf-overlay-card" style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
+      <div className="kf-overlay-scrim" onClick={() => { if (!dirty) { setSelectedSpecimen(null); setIsEditingLine(false) } }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
+        <div className="kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
           <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
@@ -215,7 +208,13 @@ export function HerbariumPage() {
                   </div>
                 ) : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>"{p.completion_summary || 'No summary line written.'}"</div>}
               </div>
-              {!isEditingLine && <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ marginTop: 8, fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer', alignSelf: 'flex-end' }}>Edit the line…</span>}
+              {!isEditingLine && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 8 }}>
+                  {/* The shelf's way into the optional ceremony (the Finish toast offers it too). */}
+                  <button type="button" className="kf-hit" onClick={() => { setSelectedSpecimen(null); setPressingProject(p); setCeremonyBeat(1); setCeremonyLine(p.completion_summary ?? '') }} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 11.5, color: 'var(--acc-terra)', cursor: 'pointer' }}>Press it ✿</button>
+                  <span onClick={() => { setEditedLineText(p.completion_summary || ''); setIsEditingLine(true) }} style={{ fontSize: 11.5, color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>Edit the line…</span>
+                </div>
+              )}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
@@ -269,7 +268,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</span>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -288,7 +287,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span onClick={() => setCeremonyBeat(3)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</span>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
               <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
             </div>
           </>)}
@@ -303,7 +302,7 @@ export function HerbariumPage() {
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
-                <span onClick={() => finishPressing(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</span>
+                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
                 <button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
               </div>
             </div>
@@ -343,7 +342,7 @@ export function HerbariumPage() {
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 14 : 24, marginBottom: 12 }}>
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                {archivedProjects.length} specimens{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
+                {projectsQ.data ? `${archivedProjects.length} specimens` : ' '}{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
               </div>
               <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The Herbarium</h1>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>
@@ -354,7 +353,8 @@ export function HerbariumPage() {
               <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was →</Link>
             </div>
           </div>
-          {isLoading ? <div style={{ padding: 60, textAlign: 'center', color: 'var(--ink-muted)' }}>Reading the field guide...</div>
+          {projectsQ.isPending ? <Skeleton variant="card" />
+          : projectsQ.isError && !projectsQ.data ? <ErrorCard message="Couldn't open the field guide." onRetry={() => void projectsQ.refetch()} />
           : !hasItems ? renderEmptyState()
           : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

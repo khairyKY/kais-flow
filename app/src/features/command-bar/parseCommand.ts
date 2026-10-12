@@ -47,8 +47,8 @@ export interface PriorityDurationTokens {
 
 /** Extracts and strips just the local `!`/`!!`/`!!!` priority flag and `30m`/`1h`/`1h30m`
  * duration syntax — the two tokens with no AI-side equivalent worth waiting on. Shared by the
- * full `parseCommand` pipeline below and the command bar's Ctrl+Enter AI-capture path, which
- * strips these locally but leaves date/tag parsing to the AI parse itself. */
+ * full `parseCommand` pipeline below and the AI capture paths (voice, Quick Capture), which strip
+ * these locally but leave date/tag parsing to the AI parse itself. */
 export function stripPriorityAndDuration(input: string): PriorityDurationTokens {
   let text = input
 
@@ -161,4 +161,19 @@ export function parseCommand(
   const title = text.replace(/\s{2,}/g, ' ').trim()
 
   return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
+}
+
+/** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
+ * page's quick add (Kai 2026-10-12: its placeholder promised "tomorrow 3pm #forecasting" but only
+ * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm"). */
+export function quickAddTask(parsed: ParsedCommand, typed: string) {
+  return {
+    title: parsed.title || typed,
+    domainId: parsed.domainId,
+    projectId: parsed.projectId,
+    dueAt: parsed.dueAt,
+    durationMin: parsed.durationMin,
+    priority: parsed.priority,
+    labels: parsed.labels,
+  }
 }

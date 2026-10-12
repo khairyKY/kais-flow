@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
+import { addedLine, blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).
@@ -112,5 +112,23 @@ describe('blockLine — the block card', () => {
   it('day · start–end · length', () => {
     expect(blockLine({ starts_at: iso('15:00'), ends_at: iso('15:30') }, at('09:00'))).toBe('Sun 27 · 15:00–15:30 · 30m')
     expect(blockLine({ starts_at: iso('09:00', 30), ends_at: iso('10:30', 30) }, at('09:00'))).toBe('Wed 30 · 09:00–10:30 · 1h30')
+  })
+})
+
+describe('addedLine — a capture says where it landed', () => {
+  const now = at('10:00')
+  it('names the day on the user calendar, and the place', () => {
+    expect(addedLine({ due_at: iso('15:00'), someday: false }, null, now)).toBe('Added to Today')
+    expect(addedLine({ due_at: iso('15:00', 28), someday: false }, 'Forecasting', now)).toBe('Added to Tomorrow · Forecasting')
+    expect(addedLine({ due_at: iso('09:00', 30), someday: false }, null, now)).toBe('Added to Wed 30 Sep')
+    expect(addedLine({ due_at: iso('09:00', 25), someday: false }, null, now)).toBe('Added to Overdue')
+  })
+  it('a 00:30 Cairo time is that Cairo day, whatever the device', () => {
+    expect(addedLine({ due_at: iso('00:30', 28), someday: false }, null, now)).toBe('Added to Tomorrow')
+  })
+  it('undated: its place, else Tasks; someday says so', () => {
+    expect(addedLine({ due_at: null, someday: false }, 'Forecasting', now)).toBe('Added to Forecasting')
+    expect(addedLine({ due_at: null, someday: false }, null, now)).toBe('Added to Tasks · no date')
+    expect(addedLine({ due_at: null, someday: true }, null, now)).toBe('Added to Someday')
   })
 })

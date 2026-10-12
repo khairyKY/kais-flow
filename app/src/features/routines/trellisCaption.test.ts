@@ -1,18 +1,20 @@
-import { describe, expect, it } from 'vitest'
-import { computeGraceStreak, computeTrellisDays, localDateKey, rainHeld, routineStartKey, routineStreak, trellisCaption } from './streaks'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, trellisCaption } from './streaks'
+import { addDays } from '../../components/pickerMath'
+import { setAppZone } from '../../lib/appZone'
 import type { Cadence } from '../../lib/types'
 
 // polish-f1 (conductor decision 2026-09-26): "1 rain held" / "it rained … — the vine held on" on
 // a 0-day streak reads as a contradiction, so the trellis never tells the rain story then.
-// Same fixed-date convention as streaks.test.ts: Wed 2026-07-08, mid-afternoon local.
-const NOW = new Date('2026-07-08T15:00:00')
+// Same fixed-date convention as streaks.test.ts: Wed 2026-07-08, mid-afternoon on the user's
+// (Cairo, UTC+3 in July) clock — pinned, so every device TZ run reads the same days.
+beforeEach(() => setAppZone('Africa/Cairo'))
+const NOW = new Date('2026-07-08T15:00:00+03:00')
 const DAILY: Cadence = { weekdays: [0, 1, 2, 3, 4, 5, 6] }
 const MONDAYS: Cadence = { weekdays: [1] }
 
 function dayKey(offset: number): string {
-  const d = new Date(NOW)
-  d.setDate(d.getDate() + offset)
-  return localDateKey(d)
+  return addDays('2026-07-08', offset)
 }
 
 /** What StreakTrellis computes for one routine: header numbers + the caption's story. */

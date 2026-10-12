@@ -37,7 +37,8 @@ function monthEndDiff(now: Date): number {
  * `someday` list and are excluded from every other list (and the default) entirely.
  */
 export function filterByList(tasks: Task[], list: SmartList | null, now: Date = new Date()): Task[] {
-  const open = tasks.filter((t) => t.status === 'todo')
+  // A paused series (Perennials ‖) rests on the Perennials page until it's resumed — no list shows it.
+  const open = tasks.filter((t) => t.status === 'todo' && !t.paused)
   // Punch 27: `all` is every open task — dated, undated (project filings), and someday alike.
   // It's the one list where nothing can hide; groupTasks gives undated rows their own
   // "No date" group so a fresh Inbox filing is findable in seconds.
@@ -78,7 +79,7 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
 export function todayListTasks(tasks: Task[], now: Date = new Date()): Task[] {
   const today = cairoDateKey(now)
   return tasks.filter((t) => {
-    if (t.someday || t.status === 'cancelled') return false
+    if (t.someday || t.status === 'cancelled' || (t.paused && !t.completed_at)) return false
     // Finished rows stay listed (struck through) on the Cairo day they were finished. A `done` row
     // with no completed_at (e.g. a CSV import) can't be placed on a day — never show it as open.
     if (t.completed_at) return cairoDateKey(new Date(t.completed_at)) === today
@@ -106,7 +107,7 @@ export interface RailScope {
  * (the rail is for placing work on the calendar, and someday tasks are explicitly parked). */
 export function filterByScope(tasks: Task[], scope: RailScope, now: Date = new Date()): Task[] {
   if (scope.kind === 'smart') return filterByList(tasks, scope.id as SmartList, now)
-  const open = tasks.filter((t) => t.status === 'todo' && !t.someday)
+  const open = tasks.filter((t) => t.status === 'todo' && !t.someday && !t.paused)
   switch (scope.kind) {
     case 'project':
       return open.filter((t) => t.project_id === scope.id)

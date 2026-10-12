@@ -58,7 +58,8 @@ export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tou
   )
 }
 
-// [K-26] punch 65: Library parked to v2 (row removed). Journal is back per D-1. Focus
+// [K-26] punch 65 parked the Library; fix-grammar (2026-10-12) brings its row back beside Journal,
+// with the icon it had before the park. Journal is back per D-1. Focus
 // (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
 // deviation(2026-09-26 audit): the export's sheet has no Tasks, Projects, Activity or Trash, so on
 // a phone those four pages had no way in at all. Each carries the icon the collapsed sidebar rail
@@ -73,6 +74,7 @@ const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number;
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
   { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
   { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 20 },
+  { to: '/library', label: 'Library', img: `${A}/tools/pen.png`, imgHeight: 16 },
   { to: '/people', label: 'People', dot: '--acc-clover' },
   // Tour & help 14i: the Guide waits in More, beside Settings.
   { to: '/guide', label: 'Guide', glyph: <GuideGlyph size={18} /> },

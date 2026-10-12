@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoutine, createChallenge, updateRoutine } from './api'
 import { localDateKey } from './streaks'
 import { useDomains } from '../domains/api'
 import { Select } from '../../components/Select'
+import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
@@ -10,8 +11,14 @@ import { seedPlant } from '../../lib/seedPlant'
 import { TimeField } from '../calendar/TimeField'
 import { Toggle } from '../../components/kit'
 import { NumberField } from '../../components/NumberField'
-import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, draftToRoutineFields, routineToForm, type RepeatMode, type RoutineFormState, type TimeMode } from './newRoutine'
+import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, draftToRoutineFields, formChanged, routineToForm, type RepeatMode, type RoutineFormState, type TimeMode } from './newRoutine'
 import type { Routine } from '../../lib/types'
+
+// Phone: the form rides the kit BottomSheet, whose scrim/swipe/Back always dismiss — and
+// "closing never discards" (BottomSheet's contract), so a dismissed sheet parks its draft here
+// and the same form (same routine, or a new one) opens with it again. Plant/Save/Cancel clear it.
+// ponytail: one module-level draft — a reload drops it; enough for "I tapped outside by mistake".
+let parked: { key: string; form: RoutineFormState } | null = null
 
 // ── New routine — pixel contract Routines.dc.html #2a (desktop) / #2b (iPhone sheet).
 // "Steps" and "Domain" are real since migration 0028 (routines.steps jsonb + domain_id).
@@ -38,36 +45,51 @@ const WEEKDAY_COLS: { day: number; label: string }[] = [
 
 export function NewRoutineForm({ onClose, initialChallenge = false, routine }: { onClose: () => void; initialChallenge?: boolean; routine?: Routine }) {
   const motion = useMotionEnabled()
-  useEscapeStack(true, onClose)
-  useBodyScrollLock(true)
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  // 2a's fields sit on a parchment modal and use bone for contrast; 2b's sheet is linen and
-  // swaps to parchment fields with a bone "raised" tone — same pattern the mock repeats for
-  // every field container and its active/highlight state.
-  const fieldBg = isMobile ? 'var(--paper-parchment)' : 'var(--paper-bone)'
-  const fieldBgRaised = isMobile ? 'var(--paper-bone)' : 'var(--paper-parchment)'
+  const isMobile = useIsMobile()
+  // Desktop modal only — on a phone the BottomSheet owns Esc/Back and the scroll lock.
+  useEscapeStack(!isMobile, () => finish())
+  useBodyScrollLock(!isMobile)
+  // 2a's fields sit on a parchment modal and use bone for contrast. The phone form now rides the
+  // kit BottomSheet, which is parchment too (2b's linen sheet was the hand-made one), so both
+  // keep bone fields with a parchment "raised" tone.
+  const fieldBg = 'var(--paper-bone)'
+  const fieldBgRaised = 'var(--paper-parchment)'
+  const closeSheet = useRef<(() => void) | null>(null)
 
+  const draftKey = routine?.id ?? (initialChallenge ? 'new-challenge' : 'new')
   const [initial] = useState<RoutineFormState>(() =>
     routine ? routineToForm(routine) : { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: initialChallenge, challengeDays: 30 },
   )
-  const [name, setName] = useState(initial.name)
-  const [steps, setSteps] = useState<string[]>(initial.steps)
-  const [domainId, setDomainId] = useState(initial.domainId)
+  const [start] = useState<RoutineFormState>(() => (parked?.key === draftKey ? parked.form : initial))
+  const [name, setName] = useState(start.name)
+  const [steps, setSteps] = useState<string[]>(start.steps)
+  const [domainId, setDomainId] = useState(start.domainId)
   const { data: domains = [] } = useDomains()
-  const [timeMode, setTimeMode] = useState<TimeMode>(initial.timeMode)
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>(initial.repeatMode)
-  const [customWeekdays, setCustomWeekdays] = useState<number[]>(initial.customWeekdays)
-  const [reminderOn, setReminderOn] = useState(initial.reminderOn)
-  const [reminderTime, setReminderTime] = useState(initial.reminderTime)
-  const [isChallenge, setIsChallenge] = useState(initial.isChallenge)
-  const [challengeDays, setChallengeDays] = useState(initial.challengeDays)
+  const [timeMode, setTimeMode] = useState<TimeMode>(start.timeMode)
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>(start.repeatMode)
+  const [customWeekdays, setCustomWeekdays] = useState<number[]>(start.customWeekdays)
+  const [reminderOn, setReminderOn] = useState(start.reminderOn)
+  const [reminderTime, setReminderTime] = useState(start.reminderTime)
+  const [isChallenge, setIsChallenge] = useState(start.isChallenge)
+  const [challengeDays, setChallengeDays] = useState(start.challengeDays)
+  const form: RoutineFormState = { name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime, steps, domainId, isChallenge, challengeDays }
+  const dirty = formChanged(form, initial)
+
+  // Park the draft when the phone sheet is dismissed (not saved or cancelled) with changes in it.
+  const latest = useRef({ form, dirty, isMobile, done: false })
+  latest.current = { ...latest.current, form, dirty, isMobile }
+  useEffect(() => () => {
+    const l = latest.current
+    if (!l.done && l.isMobile && l.dirty) parked = { key: draftKey, form: l.form }
+  }, [draftKey])
+
+  /** Saved or cancelled: the draft is spent. A phone sheet leaves through its exit animation. */
+  function finish() {
+    latest.current.done = true
+    if (parked?.key === draftKey) parked = null
+    if (isMobile && closeSheet.current) closeSheet.current()
+    else onClose()
+  }
 
   function toggleWeekday(day: number) {
     setCustomWeekdays((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day].sort()))
@@ -75,12 +97,11 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
 
   function submit(from?: HTMLElement) {
     if (routine) {
-      const form = { name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime, steps, domainId, isChallenge, challengeDays }
       const next = applyRoutineForm(routine, form, localDateKey(new Date()), new Date().toISOString())
       if (!next) return
       updateRoutine(next)
       useToastStore.getState().push({ message: 'Routine updated' })
-      onClose()
+      finish()
       return
     }
     const fields = draftToRoutineFields({ name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime })
@@ -99,7 +120,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
       createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain)
       useToastStore.getState().push({ message: 'New routine planted ✿' })
     }
-    onClose()
+    finish()
   }
 
   const seg = (mode: TimeMode, full: string, short: string) => (
@@ -147,7 +168,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}</h1>
         </div>
         {!isMobile && (
-          <span onClick={onClose} style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 13, cursor: 'pointer' }}>✕</span>
+          <button type="button" aria-label="Close" className="kf-hit" onClick={finish} style={{ width: 28, height: 28, padding: 0, font: 'inherit', borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 13, cursor: 'pointer' }}>✕</button>
         )}
       </div>
 
@@ -300,12 +321,9 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
-        {!isMobile && (
-          <>
-            <span style={{ flex: 1 }} />
-            <button type="button" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
-          </>
-        )}
+        {!isMobile && <span style={{ flex: 1 }} />}
+        {/* Cancel throws the draft away (on a phone too — dismissing the sheet keeps it). */}
+        <button type="button" onClick={finish} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: isMobile ? 14.5 : 13, padding: isMobile ? '14px 18px' : '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
         <button
           type="button"
           onClick={(e) => submit(e.currentTarget)}
@@ -319,23 +337,21 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
   )
 
   if (isMobile) {
+    // The kit sheet (handle, detents, swipe/scrim/Back to dismiss) in place of a hand-made one.
     return (
-      <>
-        <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="kf-sheet"
-          style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, background: 'var(--paper-linen)', borderRadius: '24px 24px 0 0', boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.22)', padding: '12px 22px calc(26px + env(safe-area-inset-bottom))', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain' }}
-        >
-          <div style={{ width: 38, height: 4, borderRadius: 2, background: 'var(--line-solid)', margin: '0 auto 16px' }} />
-          {body}
-        </div>
-      </>
+      <BottomSheet onClose={onClose} detent="full" handleGap={4}>
+        {(close) => {
+          closeSheet.current = close
+          return body
+        }}
+      </BottomSheet>
     )
   }
 
+  // The outside-click rule: a clean form closes on a click outside it; one with unsaved changes
+  // ignores it (Esc / ✕ / Cancel still close).
   return (
-    <div onClick={onClose} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div onClick={() => { if (!dirty) finish() }} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div onClick={(e) => e.stopPropagation()} className="kf-overlay-card" style={{ width: 620, maxWidth: '100%', maxHeight: '90dvh', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
         {body}
       </div>

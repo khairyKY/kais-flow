@@ -27,6 +27,21 @@ export function useStarEvents(taskIds: readonly string[]) {
   })
 }
 
+/** When the weekly review was last closed (`review.week_closed`, WeeklyReviewPage) within the past
+ * eight days — enough for Today's review prompt (./todayLayout reviewDue). Under ['activity_log'], so
+ * the ritual / review invalidations reach it. */
+export function useWeekClosedAt(now: Date) {
+  const since = new Date(now.getTime() - 8 * 86_400_000).toISOString().slice(0, 10)
+  return useQuery({
+    queryKey: ['activity_log', 'week_closed', since],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('activity_log').select('created_at').eq('event_type', 'review.week_closed').gte('created_at', since)
+      if (error) throw error
+      return (data as { created_at: string }[]).map((r) => r.created_at)
+    },
+  })
+}
+
 /** Every star event this device has read — so Make goal / Move up–down order the Top 3 exactly as
  * Today (or the tray) drew it, from outside React. */
 export function cachedStarEvents(): StarEvent[] {

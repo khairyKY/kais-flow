@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { queryClient } from '../../lib/queryClient'
+import { toastUndo } from '../../lib/undo'
 import type { Book, Note, Quote, Commentary } from '../../lib/types'
 
 // --- Books API ---
@@ -148,6 +149,38 @@ export function deleteQuote(id: string): void {
   const fakeRow = { id } as Quote
   writeRow('quotes', fakeRow, 'delete')
   logActivity('quote.deleted', 'quote', id, {})
+}
+
+// Remove = Undo toast, no confirm (Flow Audit §4). Undo writes the captured row back through the
+// outbox: the upsert replaces a still-queued delete, or re-inserts the row once the delete went out.
+// Commentary has no foreign key (0021: a bare parent_id), so a note's or quote's thoughts stay put
+// and hang off the same id again.
+function putBack(table: 'books' | 'notes' | 'quotes', kind: 'book' | 'note' | 'quote', row: Book | Note | Quote): void {
+  writeRow(table, row)
+  logActivity(`${kind}.restored`, kind, row.id, {})
+}
+
+/** The server unhooks a removed book's notes and quotes (0021: book_id `on delete set null`), so
+ * they're captured too and Undo hooks them back after the book (outbox order = flush order). */
+export function removeBookWithUndo(book: Book): void {
+  const notes = (queryClient.getQueryData<Note[]>(['notes']) ?? []).filter((n) => n.book_id === book.id)
+  const quotes = (queryClient.getQueryData<Quote[]>(['quotes']) ?? []).filter((q) => q.book_id === book.id)
+  deleteBook(book.id)
+  toastUndo(`Removed · ${book.title}`, () => {
+    putBack('books', 'book', book)
+    for (const n of notes) writeRow('notes', n)
+    for (const q of quotes) writeRow('quotes', q)
+  })
+}
+
+export function removeNoteWithUndo(note: Note): void {
+  deleteNote(note.id)
+  toastUndo(`Removed · ${note.title || 'note'}`, () => putBack('notes', 'note', note))
+}
+
+export function removeQuoteWithUndo(quote: Quote): void {
+  deleteQuote(quote.id)
+  toastUndo('Removed · quote', () => putBack('quotes', 'quote', quote))
 }
 
 // --- Commentary API ---

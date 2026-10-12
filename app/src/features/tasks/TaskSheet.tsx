@@ -1,34 +1,25 @@
-import { useEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { useLocation, useNavigate } from 'react-router'
-import { ActionSheet } from '../../components/ActionSheet'
-import { BottomSheet } from '../../components/BottomSheet'
-import { EmojiText } from '../../components/EmojiText'
+import { useEffect, useReducer, useRef, useState } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router'
+import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Icon } from '../../components/Icon'
-import type { IconName } from '../../components/icons/kf'
-import { Button, Checkbox, Chip, Star } from '../../components/kit'
+import { Button, Checkbox, Star } from '../../components/kit'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { EmptyState, OfflineChip } from '../../components/States'
 import { TimePicker } from '../../components/TimePicker'
-import { tomorrowHint } from '../../lib/dateShortcuts'
 import { useOutboxMarks } from '../../lib/outbox'
-import { useToastStore } from '../../lib/toastStore'
 import { useOnline } from '../../lib/useOnline'
+import type { Task } from '../../lib/types'
 import { deleteEventWithUndo, moveEventWithUndo, scheduleTask, useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { eventSpan } from '../calendar/phoneGridMath'
-import { useDomains } from '../domains/api'
-import { useAreas } from '../areas/api'
-import { placeName } from './move'
 import { useFocusStore } from '../focus/focusStore'
 import { githubUrl } from '../inbox/inboxDisplay'
-import { useProjects } from '../projects/api'
 import { useStartFocus } from '../today/startFocus'
-import { usePaperStore } from '../paper/paperStore'
-import { completeTaskWithUndo, currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, reopenTaskWithUndo, setDuration, setLabels, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
-import { TASK_PARAM } from './openTask'
-import { TaskMenu, type MenuSub, type TaskMenuActions } from './TaskMenu'
-import { blockLine, createdLine, dayWord, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
-import { taskActions } from './useRowGrammar'
+import { completeTaskWithUndo, deleteTasksWithUndo, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
+import { TASK_PARAM, taskAnchor } from './openTask'
+import { PhotoSource, SubtaskList, TaskChips, TaskMoreMenu, useTaskControls } from './TaskFields'
+import { TaskPopover } from './TaskPopover'
+import { blockLine, createdLine, dayWord, doneLine, dueChip, nextDates, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
 import { useTaskDraft } from './useTaskDraft'
 import '../../components/pickers.css'
 import './taskSheet.css'
@@ -38,98 +29,110 @@ import './taskSheet.css'
 // openTask). Medium first, full by the handle or the keyboard. No Save / Cancel: every edit writes at
 // once through the same outbox helpers as the rows, the footer flickers "✓ Saved" then reads "Edited
 // HH:MM" (offline: "○ Pending sync"), and closing — ✕, scrim, swipe, Back — never discards. Each chip
-// opens the row ⋯ menu's own picker (TaskMenu, opened on that sub-picker). ──
+// opens the row ⋯ menu's own picker (TaskMenu, opened on that sub-picker). The controls are the ones
+// the desktop popover and editor use too (./TaskFields). ──
 
-const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)' }
-const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)' }
-
+/** `?task=<id>` (AppLayout): the sheet on a phone; on desktop the task detail popover anchored to the
+ * row it was opened from — or, opened with no row on screen (a cold link), the editor page. */
 export function TaskSheet({ id }: { id: string }) {
+  const isMobile = useIsMobile()
+  // Read once: the row can leave the list while the popover is open (checked off, moved).
+  const [anchor] = useState(() => taskAnchor(id))
+  if (isMobile) return <PhoneTaskSheet id={id} />
+  return anchor ? <TaskPopover id={id} anchor={anchor} /> : <Navigate to={`/tasks/${id}`} replace />
+}
+
+/** Runs once the sheet has left: pops the entry openTask pushed (so Back doesn't reopen it); a cold
+ * link has none, so it just drops the param. Then the write that waited for the exit (Delete, done). */
+function useDismiss() {
   const navigate = useNavigate()
   const location = useLocation()
+  const after = useRef<(() => void) | null>(null)
+  return {
+    dismiss() {
+      if ((location.state as { taskSheet?: boolean } | null)?.taskSheet) void navigate(-1)
+      else {
+        const params = new URLSearchParams(location.search)
+        params.delete(TASK_PARAM)
+        const search = params.toString()
+        void navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true })
+      }
+      after.current?.()
+    },
+    /** Close first, write after (4f): the row behind collapses and the Undo toast lands on the page. */
+    closeThen(close: () => void, write: () => void) {
+      after.current = write
+      close()
+    },
+  }
+}
+
+function PhoneTaskSheet({ id }: { id: string }) {
   const tasksQuery = useTasks()
   const tasks = tasksQuery.data ?? []
   const task = tasks.find((t) => t.id === id)
+  const { dismiss } = useDismiss()
+  if (task) return <LoadedSheet task={task} tasks={tasks} />
+
+  // 4i: nothing cached yet (a cold link) — the sheet opens at once with its skeleton. 4j: gone.
+  const loading = tasksQuery.isPending
+  return (
+    <BottomSheet
+      detent={loading ? 'medium' : 'content'}
+      handleGap={loading ? 4 : 14}
+      onClose={dismiss}
+      footer={loading ? () => (
+        <>
+          <div className="ts-foot ts-skel" style={{ paddingTop: 0, gap: 6 }}><span style={{ width: 90, height: 10 }} /><span style={{ width: 70, height: 10 }} /></div>
+          <Button disabled icon={<Icon name="check" size={20} />}>Mark complete</Button>
+        </>
+      ) : undefined}
+    >
+      {(close) =>
+        loading ? (
+          <div className="ts-skel" role="status" aria-label="Loading" aria-busy="true">
+            <div><span style={{ width: 22, height: 22, borderRadius: 6, flex: 'none' }} /><span style={{ flex: 1, height: 18 }} /></div>
+            <div><span className="is-pill" style={{ width: 150 }} /><span className="is-pill" style={{ width: 64 }} /></div>
+            <div><span className="is-pill" style={{ width: 128 }} /><span className="is-pill" style={{ width: 52 }} /><span className="is-pill" style={{ width: 96 }} /></div>
+            <span style={{ height: 64, borderRadius: 8 }} />
+            <span style={{ width: '45%', height: 12 }} />
+            <span style={{ width: '70%', height: 12 }} />
+          </div>
+        ) : (
+          <EmptyState image="/ds/assets/cherry/fallen.png" line="This task was deleted on another device." action={{ label: 'Close', onClick: close }} />
+        )
+      }
+    </BottomSheet>
+  )
+}
+
+function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
   const { data: events = [] } = useCalendarEvents()
-  const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
-  const { data: areas = [] } = useAreas()
   const online = useOnline()
   const { pending } = useOutboxMarks('tasks')
   const startFocus = useStartFocus()
   const focusMin = useFocusStore((s) => s.settings.focusRoundMin)
   const [saved, setSaved] = useState<{ at: number; field: string } | null>(null)
   const [, rerender] = useReducer((n: number) => n + 1, 0)
-  const [picker, setPicker] = useState<MenuSub | null>(null)
   const [blockTime, setBlockTime] = useState(false)
   const [more, setMore] = useState(false)
-  const [labelMenu, setLabelMenu] = useState<string | null>(null)
-  const [label, setLabel] = useState('')
-  const after = useRef<(() => void) | null>(null)
-  const draft = useTaskDraft(task, (field) => setSaved({ at: Date.now(), field }))
+  const { dismiss, closeThen } = useDismiss()
+  const onSaved = (field: string) => setSaved({ at: Date.now(), field })
+  const draft = useTaskDraft(t, onSaved)
+  // The chips open the ⋯ menu's pickers; every write they make flickers "Saved" and names its chip
+  // (4k: offline, the changed chip keeps its selected ring until the outbox flushes).
+  const controls = useTaskControls(t, onSaved)
+  const { edit, place } = controls
 
   // "✓ Saved" settles on "Edited HH:MM" once SAVED_MS has passed.
   useEffect(() => {
     if (!saved) return
-    const t = setTimeout(rerender, SAVED_MS)
-    return () => clearTimeout(t)
+    const timer = setTimeout(rerender, SAVED_MS)
+    return () => clearTimeout(timer)
   }, [saved])
 
-  /** Runs once the sheet has left: pops the entry openTask pushed (so Back doesn't reopen it); a cold
-   * link has none, so it just drops the param. Then the write that waited for the exit (Delete, done). */
-  function dismiss() {
-    if ((location.state as { taskSheet?: boolean } | null)?.taskSheet) void navigate(-1)
-    else {
-      const params = new URLSearchParams(location.search)
-      params.delete(TASK_PARAM)
-      const search = params.toString()
-      void navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true })
-    }
-    after.current?.()
-  }
-  /** Close first, write after (4f): the row behind collapses and the Undo toast lands on the page. */
-  const closeThen = (close: () => void, write: () => void) => {
-    after.current = write
-    close()
-  }
-
-  if (!task) {
-    // 4i: nothing cached yet (a cold link) — the sheet opens at once with its skeleton. 4j: gone.
-    const loading = tasksQuery.isPending
-    return (
-      <BottomSheet
-        detent={loading ? 'medium' : 'content'}
-        handleGap={loading ? 4 : 14}
-        onClose={dismiss}
-        footer={loading ? () => (
-          <>
-            <div className="ts-foot ts-skel" style={{ paddingTop: 0, gap: 6 }}><span style={{ width: 90, height: 10 }} /><span style={{ width: 70, height: 10 }} /></div>
-            <Button disabled icon={<Icon name="check" size={20} />}>Mark complete</Button>
-          </>
-        ) : undefined}
-      >
-        {(close) =>
-          loading ? (
-            <div className="ts-skel" role="status" aria-label="Loading" aria-busy="true">
-              <div><span style={{ width: 22, height: 22, borderRadius: 6, flex: 'none' }} /><span style={{ flex: 1, height: 18 }} /></div>
-              <div><span className="is-pill" style={{ width: 150 }} /><span className="is-pill" style={{ width: 64 }} /></div>
-              <div><span className="is-pill" style={{ width: 128 }} /><span className="is-pill" style={{ width: 52 }} /><span className="is-pill" style={{ width: 96 }} /></div>
-              <span style={{ height: 64, borderRadius: 8 }} />
-              <span style={{ width: '45%', height: 12 }} />
-              <span style={{ width: '70%', height: 12 }} />
-            </div>
-          ) : (
-            <EmptyState image="/ds/assets/cherry/fallen.png" line="This task was deleted on another device." action={{ label: 'Close', onClick: close }} />
-          )
-        }
-      </BottomSheet>
-    )
-  }
-
-  const t = task
   const now = new Date()
   const done = t.status === 'done' || !!t.completed_at
-  // Its project, else its area, else its domain (Kai 2026-10-07: the chip opens "Move to…").
-  const place = placeName(t, projects, areas, domains)
   const block = events.find((e) => e.task_id === t.id)
   const span = block && eventSpan(block)
   const subs = t.parent_task_id ? null : tasks.filter((c) => c.parent_task_id === t.id)
@@ -140,51 +143,6 @@ export function TaskSheet({ id }: { id: string }) {
   const issueUrl = githubUrl(t.external_ref?.url) // a filed GitHub issue (P6 step 4)
   const dur = t.duration_min || 30
   const suggestion = block || done ? null : suggestTimes(events, t.due_at, now, dur)
-
-  const edit = (field: string, write: () => void) => {
-    write()
-    setSaved({ at: Date.now(), field })
-  }
-  // The chips open the ⋯ menu's pickers; every write they make flickers "Saved" and names its chip
-  // (4k: offline, the changed chip keeps its selected ring until the outbox flushes).
-  const a = taskActions(t)
-  const on = <A extends unknown[]>(field: MenuSub, write: (...args: A) => void) => (...args: A) => edit(field, () => write(...args))
-  const actions: TaskMenuActions = {
-    ...a,
-    schedule: on('date', a.schedule),
-    tomorrow: on('date', a.tomorrow), // the Plan list's Tomorrow, first thing — was a quick pick through schedule
-    slot: a.slot && on('date', a.slot),
-    clearDate: a.clearDate && on('date', a.clearDate),
-    someday: on('date', a.someday),
-    move: on('project', a.move),
-    priority: on('priority', a.priority),
-    repeat: on('repeat', a.repeat),
-    remind: on('remind', a.remind),
-    duration: on('duration', (m: number | null) => setDuration(t, m)),
-  }
-  const chip = (field: MenuSub, value: ReactNode, tone: 'date' | 'duration' | 'project' | 'priority', icon?: IconName) => (
-    <Chip key={field} tone={tone} icon={icon && <Icon name={icon} size={16} />} selected={pendingOffline && saved?.field === field} onClick={() => setPicker(field)}>
-      {value}
-    </Chip>
-  )
-  const unset = (field: MenuSub, name: string, icon: IconName) => (
-    <Chip key={field} tone="bordered" icon={<Icon name={icon} size={16} />} style={DASHED} onClick={() => setPicker(field)}>
-      {name}
-    </Chip>
-  )
-  const addLabel = () => {
-    const l = label.trim()
-    setLabel('')
-    if (l && !t.labels.includes(l)) edit('labels', () => setLabels(t, [...t.labels, l]))
-  }
-  const copyLink = () => {
-    const push = useToastStore.getState().push
-    const url = `${window.location.origin}/tasks/${t.id}`
-    void (navigator.clipboard?.writeText(url) ?? Promise.reject(new Error('no clipboard'))).then(
-      () => push({ message: 'Link copied' }),
-      () => push({ message: "Couldn't copy the link" }),
-    )
-  }
   const meta = [place, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
 
   return (
@@ -252,33 +210,7 @@ export function TaskSheet({ id }: { id: string }) {
             </div>
           )}
 
-          <div className="ts-chips">
-            {t.due_at ? chip('date', dueChip(t.due_at, now), 'date') : unset('date', 'Date', 'calendar')}
-            {t.duration_min ? chip('duration', durationLabel(t.duration_min), 'duration') : unset('duration', 'Duration', 'clock')}
-            {place ? chip('project', <EmojiText text={place} />, 'project') : unset('project', 'Move to…', 'projects')}
-            {t.priority ? chip('priority', `P${t.priority}`, 'priority') : unset('priority', 'Priority', 'priority')}
-            {t.recurrence_rule ? chip('repeat', repeatLabel(t.recurrence_rule), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
-            {t.reminder_at ? chip('remind', remindChip(t.reminder_at, t.due_at), 'date', 'remind') : unset('remind', 'Remind', 'remind')}
-            {t.labels.map((l) => (
-              <Chip key={`label-${l}`} tone="bordered" icon={<Icon name="label" size={16} />} style={PILL} onClick={() => setLabelMenu(l)}>
-                {l}
-              </Chip>
-            ))}
-            <input
-              className="kf-chip kf-chip--bordered ts-label-add"
-              value={label}
-              placeholder="+ Label"
-              aria-label="Add a label"
-              enterKeyHint="done"
-              onChange={(e) => setLabel(e.target.value)}
-              onBlur={addLabel}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter') return
-                e.preventDefault()
-                e.currentTarget.blur()
-              }}
-            />
-          </div>
+          <TaskChips task={t} controls={controls} ringed={pendingOffline ? saved?.field : null} now={now} />
           {next && (
             <div className="ts-next">
               <Icon name="repeat" size={16} />
@@ -291,55 +223,11 @@ export function TaskSheet({ id }: { id: string }) {
               View issue ↗
             </a>
           )}
-          {t.external_ref?.source === 'photo' && (
-            // Paper capture: the task came off a photographed page — reopen the photo (kept 7 days).
-            <button
-              type="button"
-              className="ts-next ts-photo"
-              onClick={() => {
-                const [captureId, page] = t.external_ref!.id.split(':')
-                usePaperStore.getState().show({ kind: 'photo', captureId, page: Number(page) || 0 })
-              }}
-            >
-              <Icon name="camera" size={16} />
-              From a photo of your page
-            </button>
-          )}
+          <PhotoSource task={t} className="ts-next ts-photo" />
 
           <textarea className="ts-notes" value={draft.notes} placeholder="Add notes" aria-label="Notes" onChange={(e) => draft.setNotes(e.target.value)} onBlur={draft.saveNotes} />
 
-          {subs && (
-            <>
-              <div className="ts-sec">Subtasks{subs.length > 0 && ` · ${subs.filter((c) => c.status === 'done').length}/${subs.length}`}</div>
-              {subs.map((c) => (
-                <div key={c.id} className="ts-sub">
-                  <span className="ts-box">
-                    <Checkbox subtask checked={c.status === 'done'} label={c.title} onChange={() => edit('subtasks', () => toggleTaskWithUndo(c))} />
-                  </span>
-                  <span className={`ts-sub-title${c.status === 'done' ? ' is-done' : ''}`}>
-                    <EmojiText text={c.title} />
-                  </span>
-                </div>
-              ))}
-              <label className="ts-sub">
-                <span className="ts-box">
-                  <Icon name="plus" size={20} />
-                </span>
-                <input
-                  className="ts-sub-add"
-                  value={draft.subtask}
-                  placeholder="Add a subtask"
-                  enterKeyHint="done"
-                  onChange={(e) => draft.setSubtask(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Enter') return
-                    e.preventDefault()
-                    draft.addSubtask()
-                  }}
-                />
-              </label>
-            </>
-          )}
+          {subs && <SubtaskList subs={subs} draft={draft} edit={edit} />}
 
           {(block || suggestion) && <div className="ts-sec">Schedule on calendar</div>}
           {block ? (
@@ -386,16 +274,7 @@ export function TaskSheet({ id }: { id: string }) {
             </div>
           )}
 
-          {picker && (
-            <TaskMenu
-              key={picker}
-              task={t}
-              anchor={{ at: { x: 0, y: 0 }, sub: picker }}
-              onClose={() => setPicker(null)}
-              actions={actions}
-              ctx={{ tomorrowHint: tomorrowHint(), projectName: place }}
-            />
-          )}
+          {controls.menu}
           {blockTime && block && span && (
             <TimePicker
               day={span.day}
@@ -411,27 +290,7 @@ export function TaskSheet({ id }: { id: string }) {
             />
           )}
           {more && (
-            <ActionSheet
-              title={t.title}
-              meta={meta || undefined}
-              onClose={() => setMore(false)}
-              items={[
-                // Kai 2026-10-07: the goal of the day from the task itself (not on the goal, not once done).
-                ...(done || currentTop3()[0]?.id === t.id ? [] : [{ label: 'Make goal of the day', icon: <Icon name="focus-ring" size={24} />, onSelect: () => edit('top3', () => makeGoalWithUndo(t)) }]),
-                // The icon set has no duplicate / link glyph yet: plus and send stand in (SCREENS §Task sheet).
-                { label: 'Duplicate', icon: <Icon name="duplicate" size={24} />, onSelect: () => duplicateTaskWithUndo(t) },
-                { label: 'Copy link', icon: <Icon name="link" size={24} />, onSelect: copyLink },
-                { label: 'Delete', icon: <Icon name="delete" size={24} />, hint: 'Undo 6s', destructive: true, onSelect: () => closeThen(close, () => deleteTasksWithUndo([t])) },
-              ]}
-            />
-          )}
-          {labelMenu && (
-            <ActionSheet
-              title={labelMenu}
-              meta={t.title}
-              onClose={() => setLabelMenu(null)}
-              items={[{ label: 'Remove label', icon: <Icon name="delete" size={24} />, destructive: true, onSelect: () => edit('labels', () => setLabels(t, t.labels.filter((x) => x !== labelMenu))) }]}
-            />
+            <TaskMoreMenu task={t} at={{ x: 0, y: 0 }} meta={meta || undefined} edit={edit} onClose={() => setMore(false)} onDelete={() => closeThen(close, () => deleteTasksWithUndo([t]))} />
           )}
         </>
       )}

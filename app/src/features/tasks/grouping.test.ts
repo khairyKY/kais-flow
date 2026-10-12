@@ -289,3 +289,18 @@ describe('planningColumns', () => {
     }
   })
 })
+
+describe('a paused series (Perennials ‖) rests off every list (Kai 2026-10-12 audit)', () => {
+  const paused = task({ id: 'p', recurrence_rule: 'FREQ=DAILY', due_at: NOW.toISOString(), paused: true })
+  const live = task({ id: 'l', recurrence_rule: 'FREQ=DAILY', due_at: NOW.toISOString() })
+  it('no smart list shows it, All included', () => {
+    for (const list of ['today', 'week', 'month', 'all', null] as const) {
+      expect(filterByList([paused, live], list, NOW).map((t) => t.id), String(list)).toEqual(['l'])
+    }
+  })
+  it('Today and its badge leave it out; the rail scopes too', () => {
+    expect(todayListTasks([paused, live], NOW).map((t) => t.id)).toEqual(['l'])
+    expect(todayOpenCount([paused, live], NOW)).toBe(1)
+    expect(filterByScope([paused, live], { kind: 'smart', id: 'today' }, NOW).map((t) => t.id)).toEqual(['l'])
+  })
+})

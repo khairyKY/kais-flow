@@ -1,5 +1,6 @@
 import type { Cadence, Routine } from '../../lib/types'
-import { challengeDays, localDateKey } from './streaks'
+import { challengeDays } from './streaks'
+import { addDays } from '../../components/pickerMath'
 import { NAMED_TIMES } from './routineGrouping'
 
 // The New routine form's state → the fields createRoutine/createChallenge take. Kept out of the
@@ -70,11 +71,13 @@ export interface RoutineFormState extends NewRoutineDraft {
   challengeDays: number
 }
 
-/** `key` + n calendar days, as a local "YYYY-MM-DD" key. */
-export function addDays(key: string, n: number): string {
-  const d = new Date(`${key}T00:00:00`)
-  d.setDate(d.getDate() + n)
-  return localDateKey(d)
+/** `key` + n calendar days (pure day-key math — no device clock, no DST). */
+export { addDays }
+
+/** Whether the form holds unsaved changes against where it started (the outside-click rule: a
+ * changed form ignores a click outside it; Esc / Cancel still close). */
+export function formChanged(now: RoutineFormState, start: RoutineFormState): boolean {
+  return (Object.keys(start) as (keyof RoutineFormState)[]).some((k) => JSON.stringify(now[k]) !== JSON.stringify(start[k]))
 }
 
 const isNamedTime = (t: string | null) => (NAMED_TIMES as readonly string[]).includes(t ?? '')

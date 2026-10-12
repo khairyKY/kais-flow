@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hasStructure, parseCommand, stripLabels, stripPriorityAndDuration } from './parseCommand'
+import { hasStructure, parseCommand, quickAddTask, stripLabels, stripPriorityAndDuration } from './parseCommand'
 import type { Domain, Project } from '../../lib/types'
 
 const domains: Domain[] = [
@@ -231,5 +231,34 @@ describe('parseCommand, zone: cairo (T-4)', () => {
     expected.setHours(10, 0, 0, 0)
     if (expected < morning) expected.setDate(expected.getDate() + 1)
     expect(device).toBe(expected.toISOString())
+  })
+})
+
+describe('quickAddTask (the Tasks page and command bar quick add)', () => {
+  // Monday 12 Oct 2026, 10:00 in Cairo (UTC+3).
+  const now = new Date('2026-10-12T07:00:00Z')
+  const forecasting: Project = { id: 'p9', domain_id: 'd1', name: 'Forecasting', type: 'standard', status: 'active', created_at: '', updated_at: '' }
+  it('reads the placeholder example: a date, a time, a #project — on the user clock', () => {
+    const typed = 'submit the report tomorrow 3pm #forecasting'
+    const parsed = parseCommand(typed, domains, [forecasting], { now, zone: 'cairo' })
+    expect(quickAddTask(parsed, typed)).toEqual({
+      title: 'submit the report',
+      domainId: 'd1',
+      projectId: 'p9',
+      dueAt: '2026-10-13T12:00:00.000Z',
+      durationMin: null,
+      priority: null,
+      labels: [],
+    })
+    expect(parsed.dueTimed).toBe(true)
+  })
+  it('priority, duration and labels too; a date alone is not timed', () => {
+    const typed = 'pay rent friday !! 15m *home'
+    const parsed = parseCommand(typed, domains, projects, { now, zone: 'cairo' })
+    expect(quickAddTask(parsed, typed)).toMatchObject({ title: 'pay rent', priority: 2, durationMin: 15, labels: ['home'] })
+    expect(parsed.dueTimed).toBe(false)
+  })
+  it('a line that is all tokens keeps what was typed as its title', () => {
+    expect(quickAddTask(parseCommand('tomorrow 9am', domains, projects, { now, zone: 'cairo' }), 'tomorrow 9am').title).toBe('tomorrow 9am')
   })
 })

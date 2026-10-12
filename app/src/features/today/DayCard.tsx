@@ -1,149 +1,81 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { Button } from '../../components/kit'
+import { Icon } from '../../components/Icon'
 import { EmojiText } from '../../components/EmojiText'
 import type { RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
 import { resumeMeta } from '../rituals/ritualLogic'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { ritualFinished, ritualProgress, type RitualState } from './dayPhase'
+import { ritualFinished } from './dayPhase'
 import type { Day } from './useDay'
 
-// deviation(2026-09-26 daily cycle): the Day card. Today.dc.html 1a/1b pin two ritual cards
-// (Morning 2/4 · Evening 0/2) under the date; docs/DAILY-CYCLE.md replaces them with ONE card that
-// always says the next move — Plan your day → Now → Shut down the day → Day closed (./dayPhase).
-// No new look: it is the pinned ritual card's shell (parchment, line-card border, 3px radius,
-// crisp shadow, sun/moon glyph, thin progress bar, mono count) with kit Buttons for its actions.
-// Either ritual stays one tap away from the links along its foot, in every state.
+// deviation(2026-09-26 daily cycle): the Day card — ONE next move, Plan your day → Now → Shut down
+// the day → Day closed (./dayPhase). Today.dc.html 2a (2026-09-28, Kai's reviewed desktop pass) puts
+// the day in one "Now" card at the top; at the ritual moments its head is the Day card's (this),
+// otherwise the Now state (TodayPage NowCard). The two rituals themselves live in the rail's Rituals
+// checklist (2a: "Rituals live only in the rail"), so the card's old ritual links are gone.
 // On a phone the same state drives the ritual card (RitualCard, Today Phone ruling 2) instead.
 
-interface DayCardProps {
-  day: Day
-  inboxCount: number
-  overdueCount: number
-  onOpenRitual: (kind: RitualKind) => void
-}
-
-export function DayCard({ day, inboxCount, overdueCount, onOpenRitual }: DayCardProps) {
-  const { state, morning, evening, seeds, tally } = day
-  const btn: CSSProperties = { fontSize: 12.5, padding: '7px 14px' }
-  const links = <RitualLinks morning={morning} evening={evening} onOpen={onOpenRitual} />
-
-  if (state.phase === 'plan') {
-    return (
-      <Shell icon={<SunIcon />} links={links}
-        title={<>Plan your day<Minutes>· ~5 min</Minutes></>}
-        meta={[`${inboxCount} in inbox`, `${overdueCount} overdue`, `Top 3 ${tally.picked}/3`]}
-        bar={{ ritual: morning, color: 'var(--acc-sage)' }}
-        actions={<Button type="button" variant="secondary" style={btn} onClick={() => onOpenRitual('morning')}>Begin</Button>}
-      />
-    )
-  }
-
-  if (state.phase === 'shutdown') {
-    return (
-      <Shell icon={<MoonIcon />} links={links}
-        title={<>Shut down the day<Minutes>· ~3 min</Minutes></>}
-        meta={tally.picked > 0 ? [`Top 3 ${tally.done}/${tally.picked} done`] : ['close the loops · seed tomorrow']}
-        bar={{ ritual: evening, color: 'var(--acc-lavender)' }}
-        actions={<Button type="button" variant="secondary" style={btn} onClick={() => onOpenRitual('evening')}>Begin</Button>}
-      />
-    )
-  }
-
-  if (state.phase === 'closed') {
-    // Tomorrow's seeds = what the evening's seeds beat planted for the coming loop day — exactly
-    // what the morning ritual's Top-3 step will pre-select (rituals/loopDay.ts).
-    return (
-      <Shell icon={<MoonIcon />} links={links}
-        title="Day closed ✿"
-        body={seeds.length > 0 ? (
-          <div style={{ marginTop: 5 }}>
-            <Caption>Tomorrow's seeds</Caption>
-            <div style={{ marginTop: 3, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>
-              {seeds.map((t, i) => (
-                <span key={t.id}>{i > 0 && <span style={{ color: 'var(--ink-faint)' }}> · </span>}<EmojiText text={t.title} /></span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ marginTop: 3, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)' }}>The garden's closed. See you in the morning ✿</div>
-        )}
-      />
-    )
-  }
-
-  // Kai 2026-09-27: "why display the same thing twice… why a button for open and done… why does
-  // that next even exist if I see the top 3 today and below it the up next?" During the day the
-  // card steps aside: Top 3 and Up next show each thing as what it is (a task row: checkbox = done,
-  // tap = open; an event row: tap = open; the running one reads "Now"). Start focus is in each
-  // row's menu. The card returns only for the ritual moments: plan, shut down, day closed.
-  return null
-}
-
-// ── The card's shell: the retired RitualCard's look, one layout for every state (desktop). ──
-function Shell({ icon, caption, captionTone = 'time', title, meta, body, bar, actions, links }: {
-  icon: ReactNode
-  caption?: string
-  captionTone?: 'now' | 'time'
+/** The desktop Now card's head at a ritual moment. */
+export interface CardHead {
+  glyph?: ReactNode
+  caption: string
+  tone: 'now' | 'over' | 'done' | 'quiet'
   title: ReactNode
-  meta?: string[]
-  body?: ReactNode
-  bar?: { ritual: RitualState; color: string }
-  actions?: ReactNode
-  links: ReactNode
-}) {
-  const pct = bar && bar.ritual.total > 0 ? Math.round((Math.min(bar.ritual.done, bar.ritual.total) / bar.ritual.total) * 100) : 0
+  sub?: ReactNode
+  action?: ReactNode
+}
+
+/** The head row of the desktop Now card at Plan / Shut down / Day closed (TodayPage NowCard draws
+ * the same row for the moment's states). */
+export function DeskRitualHead({ kind, day, inboxCount, overdueCount, onOpenRitual }: { kind: 'plan' | 'shutdown' | 'closed'; day: Day; inboxCount: number; overdueCount: number; onOpenRitual: (kind: RitualKind) => void }) {
+  const h = ritualHead(kind, day, inboxCount, overdueCount, onOpenRitual)
   return (
-    <section
-      aria-label="Your day"
-      data-day-card
-      data-tour="plan"
-      style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 16px 9px' }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-        <span style={{ flex: 'none', display: 'inline-flex' }}>{icon}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {caption && <Caption tone={captionTone}>{caption}</Caption>}
-          <div style={{ fontSize: 14.5, color: 'var(--ink-body)', fontWeight: 500, lineHeight: 1.3, marginTop: caption ? 2 : 0 }}>{title}</div>
-          {meta && meta.length > 0 && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {meta.map((m) => <span key={m}>{m}</span>)}
-            </div>
-          )}
-          {body}
-          {bar && (
-            <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: 'var(--line-card)', overflow: 'hidden', maxWidth: 320 }}>
-              <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: bar.color }} />
-            </div>
-          )}
-        </div>
-        {actions && <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none', flexWrap: 'wrap' }}>{actions}</div>}
+    <div className="td-now-head">
+      <span className="td-now-glyph">{h.glyph}</span>
+      <div className="td-now-text">
+        <div className="td-cap" data-tone={h.tone}><span className="td-cap-dot" aria-hidden />{h.caption}</div>
+        <div className="td-now-title">{h.title}</div>
+        {h.sub && <div className="td-now-sub">{h.sub}</div>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>{links}</div>
-    </section>
-  )
-}
-
-function Caption({ children, tone = 'time' }: { children: ReactNode; tone?: 'now' | 'time' }) {
-  return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)' }}>{children}</div>
-  )
-}
-
-function Minutes({ children }: { children: ReactNode }) {
-  return <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontWeight: 400, letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>
-}
-
-// "A small secondary link on the card opens either ritual any time" — both, with their progress.
-function RitualLinks({ morning, evening, onOpen }: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void }) {
-  const link: CSSProperties = { background: 'none', border: 'none', padding: '2px 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('morning')}>Morning ritual {ritualProgress(morning)}</button>
-      <span aria-hidden style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>·</span>
-      <button type="button" className="kf-link-terra kf-hit" style={link} onClick={() => onOpen('evening')}>Evening ritual {ritualProgress(evening)}</button>
+      {h.action && <span style={{ flex: 'none' }}>{h.action}</span>}
     </div>
   )
+}
+
+function ritualHead(kind: 'plan' | 'shutdown' | 'closed', day: Day, inboxCount: number, overdueCount: number, onOpenRitual: (kind: RitualKind) => void): CardHead {
+  const { tally, seeds } = day
+  if (kind === 'closed') {
+    // Tomorrow's seeds = what the evening's seeds beat planted for the coming loop day — exactly
+    // what the morning ritual's Top-3 step will pre-select (rituals/loopDay.ts).
+    return {
+      glyph: <MoonIcon />,
+      caption: 'Evening ✓',
+      tone: 'quiet',
+      title: 'Day closed ✿',
+      sub: seeds.length > 0
+        ? <>Tomorrow's seeds · {seeds.map((t, i) => <span key={t.id}>{i > 0 && ' · '}<EmojiText text={t.title} /></span>)}</>
+        : <span className="tp-hand">The garden's closed. See you in the morning ✿</span>,
+    }
+  }
+  const ritual: RitualKind = kind === 'plan' ? 'morning' : 'evening'
+  const r = kind === 'plan' ? day.morning : day.evening
+  // 6m: a ritual closed half-way — "2 of 4 done", "~1 min left · Pick your 3 next", Resume.
+  const resume = r.done > 0 && !ritualFinished(r)
+  const sub = resume
+    ? resumeMeta(ritual, day.steps[ritual]).join(' · ')
+    : kind === 'plan'
+      ? `${inboxCount} in inbox · ${overdueCount} overdue · Top 3 ${tally.picked}/3`
+      : tally.picked > 0 ? `Top 3 ${tally.done}/${tally.picked} done` : 'close the loops · seed tomorrow'
+  return {
+    glyph: kind === 'plan' ? <SunIcon /> : <MoonIcon />,
+    caption: `${kind === 'plan' ? 'Morning' : 'Evening'} · ${resume ? `${r.done} of ${r.total} done` : kind === 'plan' ? '~5 min' : '~3 min'}`,
+    tone: 'quiet',
+    title: kind === 'plan' ? 'Plan your day' : 'Shut down the day',
+    sub,
+    action: <Button type="button" variant="secondary" onClick={() => onOpenRitual(ritual)}>{resume ? 'Resume' : 'Begin'}</Button>,
+  }
 }
 
 const SunIcon = () => (
@@ -194,9 +126,27 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
   )
 }
 
-function RitualShell({ glyph, caption, title, meta, pct, action, children }: { glyph: ReactNode; caption: string; title: string; meta: string[]; pct?: number; action?: ReactNode; children?: ReactNode }) {
+/** DAILY-CYCLE step 5 on a phone: the weekly review on its day (./todayLayout reviewDue — the first
+ * day of the user's weekend) until the week is closed. The ritual card's anatomy, flat; Review opens
+ * the Weekly review. */
+export function ReviewCard() {
+  const navigate = useNavigate()
   return (
-    <section aria-label="Your day" data-day-card data-tour="plan" className="tp-ritual">
+    <RitualShell
+      label="Weekly review"
+      glyph={<span style={{ color: 'var(--acc-buttercream-text)', display: 'inline-flex' }}><Icon name="review" size={26} /></span>}
+      caption="Weekly · today"
+      title="Weekly review"
+      meta={['Sweep every area', 'close the week']}
+      action={<Button type="button" variant="secondary" onClick={() => navigate('/weekly-review')}>Review</Button>}
+    />
+  )
+}
+
+function RitualShell({ label, glyph, caption, title, meta, pct, action, children }: { label?: string; glyph: ReactNode; caption: string; title: string; meta: string[]; pct?: number; action?: ReactNode; children?: ReactNode }) {
+  // A `label`led card isn't the day's next move — no Day card hooks (data-day-card, the tour's "plan").
+  return (
+    <section aria-label={label ?? 'Your day'} data-day-card={label ? undefined : true} data-tour={label ? undefined : 'plan'} className="tp-ritual">
       <span className="tp-glyph">{glyph}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="tp-caption">{caption}</div>

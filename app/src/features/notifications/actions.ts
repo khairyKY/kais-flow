@@ -7,6 +7,7 @@ import { BUNDLED_VERSION, openWhatsNew } from '../../lib/whatsNew'
 import { native } from '../tray/native'
 import { isCapacitorShell } from '../../lib/platform'
 import { toastAction } from '../../lib/undo'
+import { usePaperStore } from '../paper/paperStore'
 import type { Task } from '../../lib/types'
 
 // What a notification's buttons do (Tray and Notifications.dc.html 12k), wherever they were pressed:
@@ -67,6 +68,12 @@ async function openTasksFor(a: NotificationAction, navigate: (to: string) => voi
   }
 }
 
+async function openPaperResults(captureId: string | undefined): Promise<void> {
+  if (!captureId) return
+  const { data } = await supabase.from('captures').select('id').eq('id', captureId).is('reviewed_at', null).maybeSingle()
+  if (data) usePaperStore.getState().show({ kind: 'results', captureId })
+}
+
 export async function runNotificationAction(a: NotificationAction, navigate: (to: string) => void): Promise<void> {
   const focus = useFocusStore.getState()
   switch (a.action) {
@@ -92,6 +99,12 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
       return
     case 'shutdown':
       navigate('/today?ritual=evening')
+      return
+    case 'review':
+      // Paper capture ready: the Inbox, with the page's results open while it still waits for review
+      // (one reviewed since only lands on the Inbox — Review never adds its lines twice).
+      navigate('/inbox')
+      await openPaperResults(a.taskIds?.[0])
       return
     case 'whats-new':
       // The Windows "vX is out" toast's button (features/whats-new): bring the window forward, open the sheet.

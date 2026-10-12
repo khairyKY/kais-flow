@@ -1,5 +1,5 @@
 import type { ActivityLogEntry } from '../../lib/types'
-import { digestNotice, nudgeNotice, reminderNotice, routineNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
 import type { KindId } from '../notifications/kinds'
 
@@ -24,7 +24,7 @@ export type ActivityCategory =
   | 'projects'
   | 'review'
   | 'library'
-  /** What was sent: reminders, the digest, the nudge (Tray and Notifications.dc.html 12j). */
+  /** What was sent: reminders, the digest, the nudge, pages read, birthdays, sync (Tray and Notifications.dc.html 12j). */
   | 'notifications'
   /** Onboarding, and any event newer than this map. */
   | 'garden'
@@ -587,6 +587,22 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
     case 'onboarding':
       return { text: 'Planted your garden', details: 'the welcome, done', category: 'garden', icon: 'seedling', href: null }
     case 'notify': {
+      const said = { text: str(e.payload, 'title'), details: str(e.payload, 'body'), category: 'notifications' as const, icon: 'notice' as const }
+      if (type === 'notify.paper_ready') {
+        // Review opens the page's results while it still waits (notifications/actions.ts).
+        const id = str(e.payload, 'capture_id')
+        return { ...said, text: said.text || 'Your page is read', href: '/inbox', notice: { kind: 'paper_ready', actions: id ? paperReadyNotice({ id, title: null, items: [] }, {}).actions : [], taskIds: id ? [id] : [] } }
+      }
+      if (type === 'notify.birthday') {
+        // One person: "Open Omar" while they're still in People; several: Open → People.
+        const id = str(e.payload, 'person_id')
+        const name = id ? names.person(id) : undefined
+        const open = !id ? birthdayNotice([], {}) : name ? birthdayNotice([{ id, name, lastSpokeDays: null }], { lock_screen_names: true }) : null
+        return { ...said, text: said.text || 'A birthday', href: open?.url ?? null, notice: { kind: 'birthday', actions: open?.actions ?? [], taskIds: [] } }
+      }
+      if (type === 'notify.sync_problem') {
+        return { ...said, text: said.text || syncNotice(1).title, href: '/today', notice: { kind: 'sync_problem', actions: syncNotice(1).actions, taskIds: [] } }
+      }
       // notify.morning_digest / notify.evening_nudge / notify.routine: the notice as it was sent, with its buttons.
       const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : type === 'notify.routine' ? 'routine' : 'morning_digest'
       const sent = kind === 'morning_digest' ? digestNotice([], {}) : kind === 'routine' ? routineNotice([{ id: '', name: '', clock_time: '' }], {}) : nudgeNotice(0, 0)

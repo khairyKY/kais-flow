@@ -42,18 +42,23 @@ describe('formatDuration', () => {
   })
 })
 
+// Days on the user's clock (Africa/Cairo by default, UTC+3 in July) — whatever the device's zone.
 describe('daysOverdue', () => {
   it('is 0 for a task due today', () => {
-    const now = new Date('2026-07-08T14:00:00')
-    expect(daysOverdue('2026-07-08T09:00:00', now)).toBe(0)
+    const now = new Date('2026-07-08T14:00:00+03:00')
+    expect(daysOverdue('2026-07-08T09:00:00+03:00', now)).toBe(0)
   })
   it('is 1 for a task due yesterday at 23:00 (calendar-day diff, not raw ms/24)', () => {
-    const now = new Date('2026-07-08T01:00:00')
-    expect(daysOverdue('2026-07-07T23:00:00', now)).toBe(1)
+    const now = new Date('2026-07-08T01:00:00+03:00')
+    expect(daysOverdue('2026-07-07T23:00:00+03:00', now)).toBe(1)
   })
   it('is 6 for a task due 6 days ago', () => {
-    const now = new Date('2026-07-08T10:00:00')
-    expect(daysOverdue('2026-07-02T10:00:00', now)).toBe(6)
+    const now = new Date('2026-07-08T10:00:00+03:00')
+    expect(daysOverdue('2026-07-02T10:00:00+03:00', now)).toBe(6)
+  })
+  it('counts the user day, not the device day: 22:30Z is already tomorrow in Cairo', () => {
+    // On a UTC device both are 7 July; on the user's clock the due day is 8 July — not overdue.
+    expect(daysOverdue('2026-07-07T22:30:00Z', new Date('2026-07-08T08:00:00Z'))).toBe(0)
   })
 })
 
