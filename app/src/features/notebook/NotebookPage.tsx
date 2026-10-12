@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { SheetTitle } from '../../components/TimePicker'
 import { BackLink, Button, Segmented } from '../../components/kit'
 import { ContextMenu } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
+import { Float } from '../../components/Float'
 import { Icon } from '../../components/Icon'
 import { Skeleton } from '../../components/States'
 import { useAuth } from '../auth/AuthProvider'
@@ -264,12 +264,12 @@ export function NotebookPage() {
   )
   const extras = (
     <>
-      {createPortal(
+      {/* The print copy sits on <body> (the kit's Float), so print CSS can hide every other child of it. */}
+      <Float>
         <div className={`nb-print-root is-${paper}`} aria-hidden="true">
           <Paper blocks={blocks} dayN={dayN} />
-        </div>,
-        document.body,
-      )}
+        </div>
+      </Float>
       {menu && (
         <ContextMenu
           position={menu}

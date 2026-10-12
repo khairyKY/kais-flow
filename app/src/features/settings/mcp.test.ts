@@ -462,15 +462,30 @@ describe('MCP: the tools', () => {
     const store = fakeStore('Africa/Cairo', seed())
     const r = await call(deps(store), 'complete_task', { id: tid(4) })
     expect(r.data!.done).toMatchObject({ title: 'Water the plants', status: 'done', completed: '2026-10-04 14:00' })
-    expect(r.data!.next).toMatchObject({ title: 'Water the plants', due: '2026-10-04 09:00', repeats: 'FREQ=DAILY' })
+    // Rolls from max(due, today) like the app (_shared/repeat.ts): due yesterday, done at 14:00 today →
+    // tomorrow 09:00, not today's 09:00 that has already gone by.
+    expect(r.data!.next).toMatchObject({ title: 'Water the plants', due: '2026-10-05 09:00', repeats: 'FREQ=DAILY' })
     const next = store.tasks.find((t) => t.id === r.data!.next.id)!
-    expect(next).toMatchObject({ status: 'todo', due_at: '2026-10-04T06:00:00.000Z', reminder_at: '2026-10-04T05:50:00.000Z', reminder_sent: false, completed_at: null })
+    expect(next).toMatchObject({ status: 'todo', due_at: '2026-10-05T06:00:00.000Z', reminder_at: '2026-10-05T05:50:00.000Z', reminder_sent: false, completed_at: null })
     expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.completed', tid(4)], ['task.created', next.id]])
     expect(store.logs[1].payload).toEqual({ recurrence_parent: tid(4), source: 'mcp' })
     // Already done → says so, writes nothing more.
     const again = await call(deps(store), 'complete_task', { id: tid(4) })
     expect([again.isError, again.text]).toEqual([true, '"Water the plants" is already done.'])
     expect(store.logs).toHaveLength(2)
+  })
+
+  it('complete_task: a daily task finished five days late comes back tomorrow, not four days overdue', async () => {
+    const store = fakeStore('Africa/Cairo', [task(9, 'Stretch', { due_at: '2026-09-29T06:00:00Z', recurrence_rule: 'FREQ=DAILY' })])
+    const r = await call(deps(store), 'complete_task', { id: tid(9) })
+    expect(r.data!.next).toMatchObject({ due: '2026-10-05 09:00' })
+  })
+
+  it('complete_task: a weekly Monday rule keeps its weekday on the user’s clock', async () => {
+    // 2026-10-04 is a Sunday; a Monday 08:00 Tokyo series rolls to Monday 5 Oct 08:00 Tokyo (Sunday 23:00 UTC).
+    const store = fakeStore('Asia/Tokyo', [task(10, 'Review', { due_at: '2026-09-27T23:00:00Z', recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO' })])
+    const r = await call(deps(store), 'complete_task', { id: tid(10) })
+    expect(r.data!.next).toMatchObject({ due: '2026-10-05 08:00' })
   })
 
   it('complete_task: a repeat rule rrule chokes on writes nothing', async () => {

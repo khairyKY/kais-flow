@@ -31,7 +31,7 @@ export function placeUnderRow(row: { left: number; top: number; bottom: number }
   return { left, top: Math.max(EDGE, row.top - GAP - size.height), maxHeight: roomAbove }
 }
 
-const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }
+const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }
 
 export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) {
   const navigate = useNavigate()
@@ -111,12 +111,12 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
           <Body task={task} commit={commit} onDelete={() => { close(); deleteTasksWithUndo([task]) }} onExpand={expand} />
         ) : tasksQuery.isPending ? (
           <div className="ts-skel" role="status" aria-label="Loading" aria-busy="true" style={{ paddingTop: 0 }}>
-            <div><span style={{ width: 19, height: 19, borderRadius: 5, flex: 'none' }} /><span style={{ flex: 1, height: 17 }} /></div>
+            <div><span style={{ width: 19, height: 19, borderRadius: 'var(--radius-input)', flex: 'none' }} /><span style={{ flex: 1, height: 17 }} /></div>
             <span style={{ width: '70%', height: 12 }} />
             <div><span className="is-pill" style={{ width: 80, height: 24 }} /><span className="is-pill" style={{ width: 64, height: 24 }} /></div>
           </div>
         ) : (
-          <div style={{ fontSize: 14, color: 'var(--ink-muted)' }}>
+          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
             This task was deleted on another device.
             <div className="tp-foot">
               <span />

@@ -67,6 +67,7 @@ export function useTaskControls(task: Task, onSaved?: (field: string) => void) {
     repeat: on('repeat', a.repeat),
     remind: on('remind', a.remind),
     duration: on('duration', (m: number | null) => setDuration(task, m)),
+    labels: on('labels', (l: string[]) => setLabels(task, l)),
     top3: on('top3', a.top3),
     goal: on('top3', a.goal),
   }
@@ -95,13 +96,11 @@ const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)' }
 const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)' }
 
 /** The chip row (Task Sheet.dc.html 4a; the popover's chips): date · duration · place · priority ·
- * repeat · remind · labels · + Label. A set chip shows its value, an unset one is dashed; each opens
- * its picker. `ringed`: the field whose write is still queued offline (4k). */
+ * repeat · remind · labels (or a dashed Label). A set chip shows its value, an unset one is dashed;
+ * each opens its picker — every label chip opens the Label picker (./LabelPicker), where a tap
+ * adds or takes one off. `ringed`: the field whose write is still queued offline (4k). */
 export function TaskChips({ task, controls, ringed, now = new Date() }: { task: Task; controls: TaskControls; ringed?: string | null; now?: Date }) {
-  const isMobile = useIsMobile()
-  const [label, setLabel] = useState('')
-  const [labelMenu, setLabelMenu] = useState<{ label: string; at: Point } | null>(null)
-  const { open, edit, place } = controls
+  const { open, place } = controls
   const chip = (field: MenuSub, value: ReactNode, tone: 'date' | 'duration' | 'project' | 'priority', icon?: IconName) => (
     <Chip key={field} tone={tone} icon={icon && <Icon name={icon} size={16} />} selected={ringed === field} onClick={(e) => open(field, e)}>
       {value}
@@ -112,12 +111,6 @@ export function TaskChips({ task, controls, ringed, now = new Date() }: { task: 
       {name}
     </Chip>
   )
-  const addLabel = () => {
-    const l = label.trim()
-    setLabel('')
-    if (l && !task.labels.includes(l)) edit('labels', () => setLabels(task, [...task.labels, l]))
-  }
-  const removeLabel = (l: string) => edit('labels', () => setLabels(task, task.labels.filter((x) => x !== l)))
   return (
     <div className="ts-chips">
       {task.due_at ? chip('date', dueChip(task.due_at, now), 'date') : unset('date', 'Date', 'calendar')}
@@ -127,35 +120,11 @@ export function TaskChips({ task, controls, ringed, now = new Date() }: { task: 
       {task.recurrence_rule ? chip('repeat', repeatLabel(task.recurrence_rule), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
       {task.reminder_at ? chip('remind', remindChip(task.reminder_at, task.due_at), 'date', 'remind') : unset('remind', 'Remind', 'remind')}
       {task.labels.map((l) => (
-        <Chip key={`label-${l}`} tone="bordered" icon={<Icon name="label" size={16} />} style={PILL} onClick={(e) => setLabelMenu({ label: l, at: anchorUnder(e) })}>
+        <Chip key={`label-${l}`} tone="bordered" icon={<Icon name="label" size={16} />} style={PILL} selected={ringed === 'labels'} onClick={(e) => open('labels', e)}>
           {l}
         </Chip>
       ))}
-      <input
-        className="kf-chip kf-chip--bordered ts-label-add"
-        value={label}
-        placeholder="+ Label"
-        aria-label="Add a label"
-        enterKeyHint="done"
-        onChange={(e) => setLabel(e.target.value)}
-        onBlur={addLabel}
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter') return
-          e.preventDefault()
-          e.currentTarget.blur()
-        }}
-      />
-      {labelMenu &&
-        (isMobile ? (
-          <ActionSheet
-            title={labelMenu.label}
-            meta={task.title}
-            onClose={() => setLabelMenu(null)}
-            items={[{ label: 'Remove label', icon: <Icon name="delete" size={24} />, destructive: true, onSelect: () => removeLabel(labelMenu.label) }]}
-          />
-        ) : (
-          <ContextMenu position={labelMenu.at} onClose={() => setLabelMenu(null)} items={[{ label: 'Remove label', danger: true, icon: <Icon name="delete" size={16} />, onClick: () => removeLabel(labelMenu.label) }]} />
-        ))}
+      {task.labels.length === 0 && unset('labels', 'Label', 'label')}
     </div>
   )
 }

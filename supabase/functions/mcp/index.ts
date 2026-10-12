@@ -24,6 +24,7 @@ import rrulePkg from 'npm:rrule@2'
 const { RRule } = rrulePkg
 import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
+import { fromWall, toWall } from '../_shared/repeat.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
 import type { BlockRow, EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
 import type { RuleBetween } from '../_shared/series.ts'
@@ -193,9 +194,13 @@ async function withSession<T>(key: string, count: boolean, fn: (s: Session) => P
   })) as SessionResult<T>
 }
 
-/** features/tasks/recurrence.ts nextOccurrence, on the same rrule. */
-function nextOccurrence(rule: string, from: Date): Date | null {
-  return new RRule({ ...RRule.parseString(rule), dtstart: from }).after(from, false)
+/** features/tasks/recurrence.ts nextOccurrence, on the same rrule: the rule runs on the user's wall
+ * clock (a daily 09:00 stays 09:00 across DST; BYDAY reads the user's weekday). */
+function nextOccurrence(rule: string, from: Date, zone: string, after: Date): Date | null {
+  const { until, ...options } = RRule.parseString(rule.replace(/^RRULE:/, ''))
+  const r = new RRule({ ...options, ...(until ? { until: toWall(until, zone) } : null), dtstart: toWall(from, zone) })
+  const next = r.after(toWall(after, zone), false)
+  return next ? fromWall(next, zone) : null
 }
 
 /** features/calendar/series.ts's rrule half, on the same rrule. */

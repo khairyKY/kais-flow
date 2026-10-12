@@ -8,6 +8,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { DateField } from '../../components/DatePicker'
 import { NumberField } from '../../components/NumberField'
 import { Select } from '../../components/Select'
+import { Button } from '../../components/kit'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import './xfx.css'
 
@@ -30,7 +31,7 @@ interface Draft {
 let draft: Draft | null = null
 
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit).
-const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 12, color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
+const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
 
 // Extracted from ProjectsPage (2026-07-18 audit) so the Tasks rail can open the same
 // designed modal. `domains` is optional — when omitted the modal fetches them itself.
@@ -181,7 +182,7 @@ export function NewProjectModal({
                 options={domains.map((d) => ({ value: d.id, label: d.name }))}
                 ariaLabel="Domain"
                 placeholder="Domain"
-                style={{ width: '100%', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', minHeight: isMobile ? 44 : undefined }}
+                style={{ width: '100%', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', minHeight: isMobile ? 44 : undefined }}
               />
             </div>
 
@@ -256,7 +257,7 @@ export function NewProjectModal({
                     value={newMilestoneTitle}
                     onChange={(e) => setNewMilestoneTitle(e.target.value)}
                     placeholder="Milestone title…"
-                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'var(--fs-caption)', background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                   />
                   <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
@@ -276,11 +277,10 @@ export function NewProjectModal({
   // Cancel throws the draft away; every other close keeps it.
   const actions = (close: () => void) => (
     <>
-      <button onClick={() => { discard(); close() }} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer', minHeight: isMobile ? 44 : undefined }}>Cancel</button>
-      <button onClick={(e) => handlePlant(e.currentTarget, close)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: isMobile ? 44 : undefined }}>
-        <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 16 }} />
+      <Button variant="secondary" onClick={() => { discard(); close() }}>Cancel</Button>
+      <Button onClick={(e) => handlePlant(e.currentTarget, close)} icon={<img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 16 }} />}>
         {type === 'area' ? 'Plant Area' : 'Plant Project'}
-      </button>
+      </Button>
     </>
   )
 
@@ -294,8 +294,8 @@ export function NewProjectModal({
   }
 
   return (
-    <div className="kf-overlay-scrim" onClick={() => { if (!dirty) onClose() }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.4)', backdropFilter: 'blur(3px)' }}>
-      <div className="dv-card kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-popover)' }}>
+    <div className="kf-overlay-scrim" onClick={() => { if (!dirty) onClose() }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
+      <div className="dv-card kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.3 }} />
         <div style={{ padding: '26px 30px 28px', position: 'relative', zIndex: 10 }}>
 
@@ -305,7 +305,7 @@ export function NewProjectModal({
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>Plant something new</h1>
             </div>
-            <button type="button" className="kf-hit" onClick={() => { discard(); onClose() }} title="Close" aria-label="Close" style={{ width: 28, height: 28, padding: 0, borderRadius: '999px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', font: 'inherit', fontSize: 13, cursor: 'pointer' }}>✕</button>
+            <button type="button" className="kf-hit" onClick={() => { discard(); onClose() }} title="Close" aria-label="Close" style={{ width: 28, height: 28, padding: 0, borderRadius: '999px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', font: 'inherit', fontSize: 'var(--fs-body-s)', cursor: 'pointer' }}>✕</button>
           </div>
 
           {fields}

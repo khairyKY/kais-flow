@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode } from 
 import { Link } from 'react-router'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
+import { filterChip } from './filterChip'
 import type { IconName } from './icons/kf'
 import './kit.css'
 
@@ -42,12 +43,12 @@ export function Button({ variant = 'cta', icon, loading = false, selected, class
 // ── Chip / tag — surface-tinted (§04) ──
 // date / project / duration / priority are the capture parse chips (DS-CHANGELOG §3): same box +
 // a 16px glyph. No inline ✕ (a 16px target) — tapping the chip opens its picker, which has Remove.
-type ChipTone = 'tasks' | 'inbox' | 'routed' | 'sage' | 'overdue' | 'terra' | 'gold' | 'lavender' | 'hydrangea' | 'clover' | 'bordered' | 'date' | 'project' | 'duration' | 'priority'
+type ChipTone = 'tasks' | 'inbox' | 'routed' | 'sage' | 'overdue' | 'terra' | 'gold' | 'lavender' | 'hydrangea' | 'clover' | 'bordered' | 'date' | 'project' | 'duration' | 'priority' | 'filter'
 
 // punch 57 → 2026-09-28: the surface tints are the --block-* tokens (day + night pairs) with the
 // matching -text ink (tasks blossom, inbox hydrangea, routed sage, overdue terra-ink).
 // gold and clover have no block token, so they keep the color-mix over their accent.
-const chipTones: Record<ChipTone, CSSProperties> = {
+const chipTones: Record<Exclude<ChipTone, 'filter'>, CSSProperties> = {
   tasks: { background: 'var(--block-blossom)', color: 'var(--acc-blossom-text)' },
   inbox: { background: 'var(--block-hydrangea)', color: 'var(--acc-hydrangea-deep)' },
   hydrangea: { background: 'var(--block-hydrangea)', color: 'var(--acc-hydrangea-deep)' },
@@ -65,6 +66,7 @@ const chipTones: Record<ChipTone, CSSProperties> = {
   priority: { background: 'var(--block-terra)', color: 'var(--acc-terra-ink)' },
 }
 const parseGlyph: Partial<Record<ChipTone, IconName>> = { date: 'calendar', project: 'projects', duration: 'clock', priority: 'priority' }
+// tone="filter" is Search's `.fchip`: its box is ./filterChip (shared with a Select trigger).
 
 type ChipProps = {
   tone?: ChipTone
@@ -72,29 +74,42 @@ type ChipProps = {
   style?: CSSProperties
   /** A 16px leading glyph; parse tones bring their own. */
   icon?: ReactNode
-  /** 1.5px inset ring in the chip ink + check 16. */
+  /** 1.5px inset ring in the chip ink + check 16 (tone="filter": the inverted fill instead). */
   selected?: boolean
   loading?: boolean
   disabled?: boolean
+  /** tone="filter" only: an optional filter's dashed outline, solid once it's on. */
+  dashed?: boolean
+  /** A count after the label, a step quieter (the filter chips' "Tasks 9"). */
+  count?: number
   /** Makes the chip a button (48 hit on touch) — e.g. a parse chip opening its picker (anchored on
    * the event's chip). */
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
-export function Chip({ tone = 'bordered', children, style, icon, selected, loading, disabled, onClick }: ChipProps) {
+export function Chip({ tone = 'bordered', children, style, icon, selected, loading, disabled, dashed, count, onClick }: ChipProps) {
+  const filter = tone === 'filter' ? filterChip(!!selected, dashed) : null
+  const ring = selected && !filter
   const glyphName = parseGlyph[tone]
-  const glyph = loading ? <span className="kf-spinner kf-spinner--sm" aria-hidden="true" /> : selected ? <Icon name="check" size={16} /> : icon ?? (glyphName && <Icon name={glyphName} size={16} />)
-  const className = `kf-chip${tone === 'bordered' ? ' kf-chip--bordered' : ''}${glyph ? ' kf-chip--glyph' : ''}${selected ? ' kf-chip--selected' : ''}`
-  const chipStyle = { ...chipTones[tone], ...style }
+  const glyph = loading ? <span className="kf-spinner kf-spinner--sm" aria-hidden="true" /> : ring ? <Icon name="check" size={16} /> : icon ?? (glyphName && <Icon name={glyphName} size={16} />)
+  const className = `${filter ? filter.className : 'kf-chip'}${tone === 'bordered' ? ' kf-chip--bordered' : ''}${glyph ? ' kf-chip--glyph' : ''}${ring ? ' kf-chip--selected' : ''}`
+  const chipStyle = { ...(tone === 'filter' ? filter?.style : chipTones[tone]), ...style }
+  const counted = count !== undefined && (
+    <b className="kf-chip-count" style={filter && selected ? { color: 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' } : undefined}>
+      {count}
+    </b>
+  )
   return onClick ? (
     <button type="button" className={`${className} kf-press kf-hit`} style={chipStyle} onClick={onClick} disabled={disabled} aria-pressed={selected} aria-busy={loading || undefined}>
       {glyph}
       {children}
+      {counted}
     </button>
   ) : (
     <span className={className} style={chipStyle} aria-disabled={disabled || undefined}>
       {glyph}
       {children}
+      {counted}
     </span>
   )
 }

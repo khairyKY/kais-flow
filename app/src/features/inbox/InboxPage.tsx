@@ -19,6 +19,7 @@ import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
 import { usePeople } from '../people/api'
 import { useProjects } from '../projects/api'
+import { githubRulesOf, useIntegrations } from '../settings/api'
 import { useOpenTask } from '../tasks/openTask'
 import { MovePicker } from '../tasks/MovePicker'
 import { SelectCircle, SwipeRow } from '../tasks/SwipeRow'
@@ -91,7 +92,13 @@ export function InboxPage() {
   const ghUpdated = (i: InboxItem) => String((i.payload as { updated_at?: string } | null)?.updated_at ?? i.created_at)
   const githubItems = items.filter((i) => i.kind === 'github_issue').sort((a, b) => ghUpdated(b).localeCompare(ghUpdated(a)))
   const captures = items.filter((i) => i.kind !== 'github_issue')
-  const orderedItems = [...captures, ...githubItems]
+  // Settings 2a "Priority in inbox ordering": High puts the GitHub letters above your own captures,
+  // Normal below them (as before), Low below them and folded to the heading (a deep link unfolds).
+  const { data: integrations = [] } = useIntegrations()
+  const ghPriority = githubRulesOf(integrations.find((i) => i.provider === 'github')).rules.priority
+  const [ghOpen, setGhOpen] = useState(false)
+  const ghFolded = ghPriority === 'low' && !ghOpen && !githubItems.some((i) => i.id === focusId)
+  const orderedItems = ghPriority === 'high' ? [...githubItems, ...captures] : ghFolded ? captures : [...captures, ...githubItems]
   const ghRepos = new Set(githubItems.map((i) => (i.payload as { repo?: string } | null)?.repo))
 
   const draftOf = (i: InboxItem) => drafts[i.id] ?? defaultDraft(i, projects, domains)
@@ -298,40 +305,49 @@ export function InboxPage() {
   else if (state === 'resting') list = <ErrorCard message="Your Inbox didn't load." onRetry={() => void pendingQ.refetch()} />
   else if (state === 'away') list = <p className="ib-quiet">Your Inbox will be here when you're back online. Anything you capture now is kept.</p>
   else if (zero) list = <EmptyInboxCard />
-  else
+  else {
+    const ghSection = githubItems.length > 0 && (
+      <section className="ib-gh-sec" style={ghPriority === 'high' ? { marginBottom: 'var(--sp-5)' } : undefined}>
+        <div className="ib-gh-head">
+          <span className="ib-gh-label">{isMobile ? 'From GitHub' : githubHeading(githubItems)}</span>
+          <span className="ib-rule" />
+          {/* deviation(Inbox t3): 3a says "most urgent first", but nothing ranks them (P6 step 3 is
+              skipped on purpose); they're in last-updated order, and the line says so. */}
+          {ghPriority === 'low' ? (
+            <button type="button" className="ib-meta ib-gh-fold kf-hit" aria-expanded={!ghFolded} onClick={() => setGhOpen(ghFolded)}>
+              {ghFolded ? `Show ${githubItems.length}` : 'Fold'}
+            </button>
+          ) : (
+            !isMobile && <span className="ib-meta">recently updated first</span>
+          )}
+        </div>
+        {!ghFolded && githubItems.map((item) => (
+          <GithubRow
+            key={item.id}
+            item={item}
+            phone={isMobile}
+            open={openIds.has(item.id)}
+            showRepo={ghRepos.size > 1}
+            highlighted={item.id === focusId || item.id === focusedId}
+            selected={selected.has(item.id)}
+            selecting={selectionActive}
+            now={now}
+            onOpen={() => toggleOpen(item.id)}
+            onFile={() => fileOne(item, draftOf(item))}
+            onDismiss={() => dismissOne(item)}
+            onToggleSelect={() => toggleSelected(item.id)}
+          />
+        ))}
+      </section>
+    )
     list = (
       <>
+        {ghPriority === 'high' && ghSection}
         {captures.length > 0 && <div className="ib-list kf-dim">{captures.map(card)}</div>}
-        {githubItems.length > 0 && (
-          <section className="ib-gh-sec">
-            <div className="ib-gh-head">
-              <span className="ib-gh-label">{isMobile ? 'From GitHub' : githubHeading(githubItems)}</span>
-              <span className="ib-rule" />
-              {/* deviation(Inbox t3): 3a says "most urgent first", but nothing ranks them (P6 step 3 is
-                  skipped on purpose); they're in last-updated order, and the line says so. */}
-              {!isMobile && <span className="ib-meta">recently updated first</span>}
-            </div>
-            {githubItems.map((item) => (
-              <GithubRow
-                key={item.id}
-                item={item}
-                phone={isMobile}
-                open={openIds.has(item.id)}
-                showRepo={ghRepos.size > 1}
-                highlighted={item.id === focusId || item.id === focusedId}
-                selected={selected.has(item.id)}
-                selecting={selectionActive}
-                now={now}
-                onOpen={() => toggleOpen(item.id)}
-                onFile={() => fileOne(item, draftOf(item))}
-                onDismiss={() => dismissOne(item)}
-                onToggleSelect={() => toggleSelected(item.id)}
-              />
-            ))}
-          </section>
-        )}
+        {ghPriority !== 'high' && ghSection}
       </>
     )
+  }
 
   return (
     <div className="ib-page" style={{ userSelect: selectionActive ? 'none' : undefined }}>

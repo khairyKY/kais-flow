@@ -1,0 +1,402 @@
+[
+  {
+    "name": "11c-day phone: the strip says \"3 pages · page 2\" and \"hold to reorder\" (as drawn)",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 2\nHOLD TO REORDER"
+  },
+  {
+    "name": "11c-day phone: hold page 3 → it lifts and follows the finger",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-day phone: dropped on page 1's place → the shown page (was 2) is now 3",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 3\nHOLD TO REORDER"
+  },
+  {
+    "name": "11c-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11c-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-day phone: read in the new order (page 1 = the old page 3, the lecture second)",
+    "ok": true,
+    "detail": "1200,1600,1200"
+  },
+  {
+    "name": "11c-night phone: the strip says \"3 pages · page 2\" and \"hold to reorder\" (as drawn)",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 2\nHOLD TO REORDER"
+  },
+  {
+    "name": "11c-night phone: hold page 3 → it lifts and follows the finger",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-night phone: dropped on page 1's place → the shown page (was 2) is now 3",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 3\nHOLD TO REORDER"
+  },
+  {
+    "name": "11c-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11c-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11c-night phone: read in the new order (page 1 = the old page 3, the lecture second)",
+    "ok": true,
+    "detail": "1200,1600,1200"
+  },
+  {
+    "name": "11c desktop: the strip says \"drag to reorder\"",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 2\nDRAG TO REORDER"
+  },
+  {
+    "name": "11c desktop: a plain click still picks a page (under 6px is not a drag)",
+    "ok": true,
+    "detail": "3 PAGES · PAGE 1\nDRAG TO REORDER"
+  },
+  {
+    "name": "11c desktop: mouse drag page 1 → 3, then ⌥← on it — read as [second, lecture, third]",
+    "ok": true,
+    "detail": "1200,1600,1200"
+  },
+  {
+    "name": "11e-day Assignment 2's chips as drawn: Task · Thu 8 Oct · 23:59 · OS · P1",
+    "ok": true,
+    "detail": "Task Thu 8 Oct · 23:59 OS P1"
+  },
+  {
+    "name": "11e-day the heading line: Note · OS · page title",
+    "ok": true,
+    "detail": "Note OS page title"
+  },
+  {
+    "name": "11e-day every chip but \"page title\" is a button (type, date, project, priority)",
+    "ok": true,
+    "detail": "16/17"
+  },
+  {
+    "name": "11e-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11e-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11f type menu: Task to do · Event on the calendar · Note to Inbox · Journal to today’s entry",
+    "ok": true,
+    "detail": "Task | to do | Event | on the calendar | Note | to Inbox | Journal | to today’s entry"
+  },
+  {
+    "name": "11f Quiz → Event, its date chip kept (Sun 11 Oct)",
+    "ok": true,
+    "detail": "Event Sun 11 Oct OS"
+  },
+  {
+    "name": "11f editing a line → the banner says \"Editing 1 line\"",
+    "ok": true,
+    "detail": "Editing 1 line"
+  },
+  {
+    "name": "11f …and back to \"2 lines need a look\" once it closes",
+    "ok": true,
+    "detail": "2 lines need a look — the handwriting is beside them. Swipe left to drop a line."
+  },
+  {
+    "name": "date chip → the date picker → Tomorrow: \"Mon 5 Oct\"",
+    "ok": true,
+    "detail": "Task Mon 5 Oct OS P1"
+  },
+  {
+    "name": "project chip → Move to… → Study",
+    "ok": true,
+    "detail": "Task Study"
+  },
+  {
+    "name": "priority chip → P2 · High",
+    "ok": true,
+    "detail": "Task Mon 5 Oct OS P2"
+  },
+  {
+    "name": "⋯ → Add a priority… → P1: the chip appears",
+    "ok": true,
+    "detail": "Task P1"
+  },
+  {
+    "name": "select-day hold a line → \"1 selected\", circles on every line",
+    "ok": true,
+    "detail": "1 selected\nSelect all"
+  },
+  {
+    "name": "select-day a tap adds a line → \"2 selected\"; footer Type · Date · Project · Drop",
+    "ok": true,
+    "detail": "2 selected\nSelect all / Type\nDate\nProject\nDrop"
+  },
+  {
+    "name": "select-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "select-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "select-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bulk Type → Note: both lines are Notes, the selection ends",
+    "ok": true,
+    "detail": "Note OS / Note Kai's Flow"
+  },
+  {
+    "name": "bulk Drop: \"2 lines dropped\" with Undo, Add all 5",
+    "ok": true,
+    "detail": "[\"2 lines dropped\"]"
+  },
+  {
+    "name": "…Undo brings both back (Add all 7)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Select all → \"7 selected\"",
+    "ok": true,
+    "detail": "7 selected\nSelect all"
+  },
+  {
+    "name": "✕ clears it — the sheet is back to Inbox only · Add all 7",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Add all: Assignment 2 → P2, due Mon 5 Oct, in OS",
+    "ok": true,
+    "detail": "{\"id\":\"6390c335-2f3e-47ca-9260-070072285826\",\"project_id\":\"p0000000-0000-4000-8000-000000000001\",\"domain_id\":null,\"title\":\"Assignment 2\",\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-05T06:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":2,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-04T06:52:24.023Z\",\"updated_at\":\"2026-10-04T06:52:24.023Z\",\"external_ref\":{\"source\":\"photo\",\"id\":\"e5c0c3f3-68ee-4616-8160-c98ec296d66b:0:1\"}}"
+  },
+  {
+    "name": "…Read ch. 4 → in Study",
+    "ok": true,
+    "detail": "{\"id\":\"bb22b43b-1e25-4d77-8e8f-91b00186900f\",\"project_id\":\"p0000000-0000-4000-8000-000000000003\",\"domain_id\":null,\"title\":\"Read ch. 4 — scheduling\",\"notes\":null,\"status\":\"todo\",\"due_at\":null,\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-04T06:52:24.024Z\",\"updated_at\":\"2026-10-04T06:52:24.024Z\",\"external_ref\":{\"source\":\"photo\",\"id\":\"e5c0c3f3-68ee-4616-8160-c98ec296d66b:0:2\"}}"
+  },
+  {
+    "name": "…Buy blue pens → P1",
+    "ok": true,
+    "detail": "{\"id\":\"148533e2-7657-4644-bb26-b0b96cd2ab9a\",\"project_id\":null,\"domain_id\":null,\"title\":\"Buy blue pens\",\"notes\":null,\"status\":\"todo\",\"due_at\":null,\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":1,\"duration_min\":null,\"someday\":false,\"area_id\":null,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"created_at\":\"2026-10-04T06:52:24.025Z\",\"updated_at\":\"2026-10-04T06:52:24.025Z\",\"external_ref\":{\"source\":\"photo\",\"id\":\"e5c0c3f3-68ee-4616-8160-c98ec296d66b:0:6\"}}"
+  },
+  {
+    "name": "…3 tasks, the Quiz an all-day event on Sun 11 Oct, 3 notes",
+    "ok": true,
+    "detail": "3/1/3"
+  },
+  {
+    "name": "…toast \"Added 3 tasks · 1 event · 3 notes\"",
+    "ok": true,
+    "detail": "[\"Added 3 tasks · 1 event · 3 notes\"]"
+  },
+  {
+    "name": "11e-night Assignment 2's chips as drawn: Task · Thu 8 Oct · 23:59 · OS · P1",
+    "ok": true,
+    "detail": "Task Thu 8 Oct · 23:59 OS P1"
+  },
+  {
+    "name": "11e-night the heading line: Note · OS · page title",
+    "ok": true,
+    "detail": "Note OS page title"
+  },
+  {
+    "name": "11e-night every chip but \"page title\" is a button (type, date, project, priority)",
+    "ok": true,
+    "detail": "16/17"
+  },
+  {
+    "name": "11e-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "11e-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "11e-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "select-night hold a line → \"1 selected\", circles on every line",
+    "ok": true,
+    "detail": "1 selected\nSelect all"
+  },
+  {
+    "name": "select-night a tap adds a line → \"2 selected\"; footer Type · Date · Project · Drop",
+    "ok": true,
+    "detail": "2 selected\nSelect all / Type\nDate\nProject\nDrop"
+  },
+  {
+    "name": "select-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "select-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "select-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ⌃-click two lines → \"2 selected\", the footer Type · Date · Project · Drop",
+    "ok": true,
+    "detail": "2 selected\nSelect all"
+  },
+  {
+    "name": "select-desktop-day no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "select-desktop-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "select-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop bulk Project → Study on both",
+    "ok": true,
+    "detail": "Task Study / Task Study"
+  },
+  {
+    "name": "desktop Esc ends the selection, the panel stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop chips: priority → P3, Quiz date → next week (Mon 12 Oct)",
+    "ok": true,
+    "detail": "Task Thu 8 Oct · 23:59 OS P3 / Task Mon 12 Oct OS"
+  },
+  {
+    "name": "desktop Add all: Study ×2, P3, the Quiz due 12 Oct",
+    "ok": true,
+    "detail": "[[\"Assignment 2\",\"p0000000-0000-4000-8000-000000000001\",3,\"2026-10-08T20:59:00.000Z\"],[\"Read ch. 4 — scheduling\",\"p0000000-0000-4000-8000-000000000003\",null,null],[\"Ask Dr. Hany about lab groups\",\"p0000000-0000-4000-8000-000000000001\",null,null],[\"Quiz\",\"p0000000-0000-4000-8000-000000000001\",null,\"2026-10-12T06:00:00.000Z\"],[\"Buy blue pens\",\"p0000000-0000-4000-8000-000000000003\",null,null]]"
+  },
+  {
+    "name": "desktop-night ⌃-click two lines → \"2 selected\", the footer Type · Date · Project · Drop",
+    "ok": true,
+    "detail": "2 selected\nSelect all"
+  },
+  {
+    "name": "select-desktop-night no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "select-desktop-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "select-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic-day an iPhone photo Chrome can’t open → 11i, \"Convert it to JPEG first\", Retake · Pick another photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic-day no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "heic-day no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic: Pick another photo → the gallery → the quick look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic: one HEIC among pages → left out with a toast, the other page kept",
+    "ok": true,
+    "detail": "[\"An iPhone photo (HEIC) this browser can’t open was left out — convert it to JPEG first.\"]"
+  },
+  {
+    "name": "heic-night an iPhone photo Chrome can’t open → 11i, \"Convert it to JPEG first\", Retake · Pick another photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic-night no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "heic-night no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "heic desktop: a dropped .heic with no type → 11i \"Convert it to JPEG first\"",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -439,6 +439,29 @@
   gap: 16px;
   max-width: 780px;
 }
+/* Settings 2a: GitHub's "Rules · how GitHub lands" — bone, under a dashed rule, out to the card's
+   edges (the padded card's 24 / 20; phone 16 / 16). */
+.st-gh-rules {
+  margin: 16px -24px -20px;
+  padding: 16px 24px 4px;
+  background: var(--paper-bone);
+  border-top: 1px dashed var(--line-dashed);
+  border-radius: 0 0 var(--radius-sharp) var(--radius-sharp);
+}
+.st-gh-rules-label + .st-row {
+  border-top: none;
+}
+.st-chip-x {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.st-chip-x:hover {
+  color: var(--ink-body);
+}
 .st-group-label {
   display: flex;
   align-items: center;
@@ -527,5 +550,9 @@
   }
   .st-chip {
     font-size: 13px;
+  }
+  .st-gh-rules {
+    margin: 16px -16px -16px;
+    padding: 12px 16px 0;
   }
 }

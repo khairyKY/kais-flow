@@ -22,6 +22,8 @@ import { parseCommand } from '../command-bar/parseCommand'
 import { addTypedTask } from '../command-bar/quickAdd'
 import { useListKeys } from '../../components/useListKeys'
 import { MovePicker } from './MovePicker'
+import { LabelPicker } from './LabelPicker'
+import { LabelManagerOverlay } from './LabelManager'
 import { placeKey, type MoveTarget } from './move'
 import { BulkBar } from '../../components/BulkBar'
 import { ErrorCard, OfflineChip, Skeleton } from '../../components/States'
@@ -109,10 +111,12 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
 
 // The tools' triggers (Sort, Label): mono meta, no box — the click-cycler look J-12 kept.
 const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }
+const MANAGE_LABELS = ' manage' // a label is trimmed, so none starts with a space
 const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
-function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void }) {
+function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
+  const labelRef = useRef<HTMLButtonElement>(null)
   // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
   // (a deep link to Done/All would otherwise land on a tab scrolled out of sight).
   useEffect(() => {
@@ -175,8 +179,14 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
         {(labels.length > 0 || label) && (
           <Select
             value={label ?? ''}
-            onChange={(v) => onLabel(v || null)}
-            options={[{ value: '', label: 'All labels' }, ...labels.map((l) => ({ value: l, label: l }))]}
+            triggerRef={labelRef}
+            onChange={(v) => {
+              if (v !== MANAGE_LABELS) return onLabel(v || null)
+              const r = labelRef.current?.getBoundingClientRect()
+              onManageLabels({ x: r?.left ?? 0, y: (r?.bottom ?? 0) + 4 })
+            }}
+            // The Labels manager (Overlays.dc.html) from where the labels are — also Settings → Organize.
+            options={[{ value: '', label: 'All labels' }, ...labels.map((l) => ({ value: l, label: l })), { value: MANAGE_LABELS, label: 'Manage labels…' }]}
             title="Filter by label"
             ariaLabel="Label filter"
             className="kf-hit"
@@ -573,6 +583,9 @@ export function TasksPage() {
   const allCount = filterByList(displayTasks, 'all', now).length
 
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
+  // L (Overlays.dc.html "Label picker · keyboard L"): the focused row, or every selected one.
+  const [kbLabelIds, setKbLabelIds] = useState<string[] | null>(null)
+  const [manageLabelsAt, setManageLabelsAt] = useState<{ x: number; y: number } | null>(null)
   const kbProjectTask = kbProjectId ? flatTasks.find((t) => t.id === kbProjectId) : null
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -657,6 +670,7 @@ export function TasksPage() {
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
+    labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
   }, {
@@ -666,6 +680,7 @@ export function TasksPage() {
     tomorrow: () => bulkTomorrow(),
     nextWeek: () => bulkSchedule(scheduleNextWeek()),
     top3: () => bulkTop3(),
+    labels: (ts) => setKbLabelIds(ts.map((t) => t.id)),
     delete: () => bulkDelete(),
   })
   useDeepLinkScroll(focusId, flatTasks)
@@ -686,7 +701,7 @@ export function TasksPage() {
     [openTask],
   )
   const { focusedId: kbFocusedId } = useListKeys(isDone ? doneRows : flatTasks, isDone ? doneBindings : bindings, {
-    active: !kbProjectId,
+    active: !kbProjectId && !kbLabelIds,
     sectionLabel: isDone ? 'Done' : 'Lists',
     onSelectAll: isDone ? undefined : () => setSelected(new Set(flatTasks.map((t) => t.id))),
     selected: isDone ? undefined : selectedTasks,
@@ -749,7 +764,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} />
+        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
@@ -946,6 +961,9 @@ export function TasksPage() {
       {kbProjectTask && (
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
+
+      {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
+      {manageLabelsAt && <LabelManagerOverlay at={manageLabelsAt} onClose={() => setManageLabelsAt(null)} />}
 
       {!isDone && selected.size > 0 && (
         <BulkBar

@@ -211,7 +211,7 @@ export function PerennialsPage() {
       >
         <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
           <TaskRow task={t} border={false} />
-          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
             {formatRecurrenceRule(t.recurrence_rule || '')} · {t.paused ? 'paused · ' : ''}{formatLastCompleted(lastDone)}
           </div>
         </div>

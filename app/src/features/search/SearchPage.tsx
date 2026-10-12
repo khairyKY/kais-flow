@@ -5,6 +5,9 @@ import { useSearch } from './useSearch'
 import { resultCountLine, SEARCH_RESTING } from './searchState'
 import { chipCounts, describeRow, groupRows, indexSearchData, NO_FILTERS, searchRows, TIME_WINDOWS, type GroupView, type RowView, type SearchFilters, type SearchRow } from './searchView'
 import { EmojiText } from '../../components/EmojiText'
+import { Icon } from '../../components/Icon'
+import { Chip } from '../../components/kit'
+import { filterChip } from '../../components/filterChip'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -28,10 +31,13 @@ function openChat() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', metaKey: true, ctrlKey: true, bubbles: true }))
 }
 
-const PILL: CSSProperties = { marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', background: 'none', cursor: 'pointer', font: 'inherit' }
-const HAND: CSSProperties = { marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }
-// 1a sets these at 8.5–9.5px; the app's smallest label is --fs-meta (2026-10-08 UI pass: no sub-10px text).
-const MONO_META: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap', flex: 'none' }
+// `font` first: the shorthand resets font-size, so the size has to come after it (it used to come
+// before, and the pill drew at the inherited 16px instead of 1b's 13.5).
+const PILL: CSSProperties = { font: 'inherit', marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-pill)', padding: '9px 18px', background: 'none', cursor: 'pointer' }
+const HAND: CSSProperties = { marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand-l)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }
+// 1a sets these at 8.5–9.5px, tracked 0.06–0.1em; the app's smallest label is --fs-meta (2026-10-08 UI
+// pass: no sub-10px text) on the one metadata tracking, --ls-meta.
+const MONO_META: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', whiteSpace: 'nowrap', flex: 'none' }
 
 /** Every place the query occurs, marked (1a .hl). */
 function Highlight({ text, query }: { text: string; query: string }) {
@@ -58,15 +64,18 @@ function Glyph({ hit, view, dot }: { hit: SearchHit; view: RowView; dot: string 
         </svg>
       )
     case 'task':
+      // The checkbox's own radius and check mark (kit Checkbox), drawn still — the row is the button.
       return view.done ? (
-        <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 10, flex: 'none', marginTop: 2 }} aria-hidden>✓</span>
+        <span style={{ width: 17, height: 17, borderRadius: 'var(--radius-input)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', flex: 'none', marginTop: 2 }} aria-hidden>
+          <Icon name="check" strokeWidth={2.2} style={{ width: '72%', height: '72%' }} />
+        </span>
       ) : (
-        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none', marginTop: 2, boxSizing: 'border-box' }} aria-hidden />
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 'var(--radius-input)', flex: 'none', marginTop: 2, boxSizing: 'border-box' }} aria-hidden />
       )
     case 'calendar_event':
       return <span style={{ width: 4, height: 30, borderRadius: 2, background: 'var(--acc-lavender)', flex: 'none', marginTop: 1 }} aria-hidden />
     case 'journal_entry':
-      return <span style={{ ...MONO_META, letterSpacing: '0.08em', color: 'var(--ink-faint)', width: 52, marginTop: 4, whiteSpace: 'normal' }}>{view.date}</span>
+      return <span style={{ ...MONO_META, color: 'var(--ink-faint)', width: 52, marginTop: 4, whiteSpace: 'normal' }}>{view.date}</span>
     case 'project':
     case 'area':
       return <span style={{ width: 9, height: 9, borderRadius: '50%', background: view.color ?? dot, flex: 'none', marginTop: 5 }} aria-hidden />
@@ -75,7 +84,7 @@ function Glyph({ hit, view, dot }: { hit: SearchHit; view: RowView; dot: string 
   }
 }
 
-const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 3, marginRight: 7 }
+const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 3, marginRight: 7 }
 
 function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row: SearchRow; view: RowView; dot: string; query: string; active: boolean; last: boolean; onGo: () => void; onHover: () => void }) {
   // 1a draws a done / past title on --ink-hairline; text rides --ink-faint since the 2026-10-08 UI pass (AA).
@@ -93,11 +102,11 @@ function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row
     >
       <Glyph hit={row.hit} view={view} dot={dot} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: view.quoted ? 14 : 14.5, lineHeight: view.quoted ? 1.5 : undefined, color: titleColor, textDecoration: view.done ? 'line-through' : undefined, overflowWrap: 'anywhere' }}>
+        <div style={{ fontSize: view.quoted ? 'var(--fs-body-s)' : 'var(--fs-body)', lineHeight: view.quoted ? 1.5 : undefined, color: titleColor, textDecoration: view.done ? 'line-through' : undefined, overflowWrap: 'anywhere' }}>
           <Highlight text={view.title} query={query} />
         </div>
         {view.line && (
-          <div style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-faint)', overflowWrap: 'anywhere' }}>
+          <div style={{ marginTop: 4, fontSize: 'var(--fs-caption)', lineHeight: 1.5, color: 'var(--ink-faint)', overflowWrap: 'anywhere' }}>
             {view.related && <span style={RELATED_TAG}>Related</span>}
             {view.related ? <EmojiText text={view.line} /> : <Highlight text={view.line} query={query} />}
           </div>
@@ -105,7 +114,7 @@ function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row
       </div>
       {view.flag && <span style={{ ...MONO_META, color: 'var(--acc-terra)', marginTop: 4 }}>{view.flag}</span>}
       {view.chip && (
-        <span style={{ ...MONO_META, letterSpacing: '0.06em', padding: '4px 8px', borderRadius: 999, marginTop: 1, ...(row.hit.entity_type === 'project' ? { background: 'color-mix(in srgb, var(--acc-blossom) 22%, transparent)', color: 'var(--acc-blossom-text)' } : { background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)' }) }}>
+        <span style={{ ...MONO_META, padding: '4px 8px', borderRadius: 'var(--radius-pill)', marginTop: 1, ...(row.hit.entity_type === 'project' ? { background: 'color-mix(in srgb, var(--acc-blossom) 22%, transparent)', color: 'var(--acc-blossom-text)' } : { background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)' }) }}>
           {view.chip}
         </span>
       )}
@@ -118,7 +127,7 @@ function ResultGroup({ group, query, ix, now, onGo, offset, activeIndex, onHover
   return (
     <section data-search-group={group.key}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 4px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: group.tint, whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: group.tint, whiteSpace: 'nowrap' }}>
           {group.label} · {group.total}
         </span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
@@ -138,28 +147,13 @@ function ResultGroup({ group, query, ix, now, onGo, offset, activeIndex, onHover
       ))}
       {showAll && (
         <div style={{ padding: '10px 2px 0', borderTop: '1px dashed var(--line-dashed)' }}>
-          <button type="button" onClick={onShowAll} className="kf-hit" style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+          <button type="button" onClick={onShowAll} className="kf-hit" style={{ font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
             Show all {group.total} →
           </button>
         </div>
       )}
     </section>
   )
-}
-
-/** A filter chip — Search.dc.html `.fchip`. Type chips are solid, the two filters dashed until on. */
-function Chip({ children, count, on, dashed, onClick }: { children: ReactNode; count?: number; on: boolean; dashed?: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={on} className="kf-hit" style={chipStyle(on, dashed)}>
-      {children}
-      {count !== undefined && <b style={{ fontWeight: 400, color: on ? 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' : 'var(--ink-faint)' }}>{count}</b>}
-    </button>
-  )
-}
-
-// Active chip inverts with the theme: dark-on-cream by day, cream-on-violet at night.
-function chipStyle(on: boolean, dashed = false): CSSProperties {
-  return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, background: on ? 'var(--ink-body)' : 'none', color: on ? 'var(--paper-linen)' : 'var(--ink-muted)', border: `1px ${dashed && !on ? 'dashed' : 'solid'} ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', whiteSpace: 'nowrap', flex: 'none' }
 }
 
 // Search.dc.html 1b — bare soil, one action toward the chat. The export's frame also draws the
@@ -291,6 +285,7 @@ export function SearchPage() {
   const trimmed = query.trim()
   const filtered = filters.openOnly || filters.window !== 'any'
   const windowLabel = TIME_WINDOWS.find((w) => w.value === filters.window)!.label
+  const whenChip = filterChip(filters.window !== 'any', true)
 
   function goTo(hit: SearchHit) {
     openHit(hit) // the thing itself — a task as the sheet on a phone, the editor on a computer
@@ -298,9 +293,10 @@ export function SearchPage() {
 
   const typeChips = (
     <>
-      <Chip on={groupFilter === null} count={rows.length} onClick={() => setGroupFilter(null)}>All</Chip>
+      {/* Search.dc.html `.fchip` is the kit's filter chip: type chips solid, the two filters dashed until on. */}
+      <Chip tone="filter" selected={groupFilter === null} count={rows.length} onClick={() => setGroupFilter(null)}>All</Chip>
       {chips.map((c) => (
-        <Chip key={c.key} on={groupFilter === c.key} count={c.count} onClick={() => { setGroupFilter(c.key); setActiveIndex(0) }}>
+        <Chip key={c.key} tone="filter" selected={groupFilter === c.key} count={c.count} onClick={() => { setGroupFilter(c.key); setActiveIndex(0) }}>
           {c.label}
         </Chip>
       ))}
@@ -308,14 +304,14 @@ export function SearchPage() {
   )
   const filterChips = (
     <>
-      <Chip dashed on={filters.openOnly} onClick={() => setFilters((f) => ({ ...f, openOnly: !f.openOnly }))}>Open only</Chip>
+      <Chip tone="filter" dashed selected={filters.openOnly} onClick={() => setFilters((f) => ({ ...f, openOnly: !f.openOnly }))}>Open only</Chip>
       <Select
         value={filters.window}
         onChange={(v) => setFilters((f) => ({ ...f, window: v as SearchFilters['window'] }))}
         options={TIME_WINDOWS}
         ariaLabel="When"
-        className="kf-hit"
-        style={chipStyle(filters.window !== 'any', true)}
+        className={`${whenChip.className} kf-press kf-hit`}
+        style={whenChip.style}
         display={<>{windowLabel} ▾</>}
       />
     </>
@@ -328,7 +324,7 @@ export function SearchPage() {
       {/* Phone: the box pins while the groups scroll under it. */}
       <div style={isMobile ? { position: 'sticky', top: -20, zIndex: 2, background: 'var(--paper-linen)', padding: '20px 0 6px', margin: '-20px 0 0' } : undefined}>
         <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? '13px 16px' : '16px 20px', display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 14 }}>
-          <span style={{ fontSize: isMobile ? 16 : 19, color: 'var(--ink-faint)' }}>⌕</span>
+          <span style={{ fontSize: 'var(--fs-lead)', color: 'var(--ink-faint)' }}>⌕</span>
           <input
             ref={inputRef}
             value={query}
@@ -342,15 +338,15 @@ export function SearchPage() {
             placeholder="Search the garden…"
             enterKeyHint="search"
             aria-label="Search"
-            style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: isMobile ? 19 : 24, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
+            style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
           />
-          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc clears</span>}
+          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc clears</span>}
         </div>
       </div>
 
       {/* One count line, and none while resting — a search that didn't answer knows no count. */}
       {trimmed && resultCountLine(search, rows.length) && (
-        <div data-search-count style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div data-search-count style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           {resultCountLine(search, rows.length)}
         </div>
       )}

@@ -85,6 +85,8 @@
 /* ── GitHub (3a): "From GitHub · repo — recently updated first"; #n · title · age · File · Dismiss. ── */
 .ib-gh-sec { margin-top: var(--sp-2); }
 .ib-gh-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-1); }
+/* Priority Low (Settings 2a): the GitHub letters wait folded under their heading. */
+.ib-gh-fold { padding: 0; border: none; background: none; font-family: inherit; text-decoration: underline; cursor: pointer; }
 .ib-gh-label { font-family: var(--font-mono); font-size: var(--fs-mono-l); letter-spacing: var(--ls-mono); text-transform: uppercase; color: var(--ink-muted); white-space: nowrap; }
 .ib-gh { display: flex; align-items: center; gap: 14px; padding: var(--sp-3) var(--sp-1); border-bottom: 1px dashed var(--line-dashed); outline: none; border-radius: var(--radius-sharp); }
 .ib-gh-sec > :last-child .ib-gh, .ib-gh-sec > .ib-gh:last-child { border-bottom: none; }

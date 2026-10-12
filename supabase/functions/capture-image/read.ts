@@ -21,6 +21,9 @@ export interface PageLine {
   /** The line's checkbox (a Notebook page's ☐, 11l "Bring back your ticks"): true = ticked, crossed or
    * filled in, false = an empty box, null = no box. */
   checked: boolean | null
+  /** 1 (most urgent) – 3 when the page marks the line (!!!/!!/!, a star, "urgent"), else null — the
+   * results sheet's P1–P3 chip (11e). Absent on lines read before it was asked for. */
+  priority?: 1 | 2 | 3 | null
 }
 
 export interface PageRead {
@@ -49,10 +52,11 @@ Rules:
 - confidence: 0 to 1, how sure you are that you read the handwriting right. Be honest: messy or half-guessed words get 0.6 or less.
 - box: where the item's handwriting is, as [x1, y1, x2, y2] on a 0–1000 grid of the image (top-left to bottom-right).
 - checked: if the line starts with a checkbox, true when it is ticked, crossed or filled in (☑ ✓ ✗ ■), false when it is empty (☐ □), null when the line has no box. Leave the box itself out of text.
+- priority: 1 if the page marks the item as urgent ("!!!", "urgent", "asap", a star, a box drawn round it), 2 if marked important ("!!", "important"), 3 for a single "!", else null. Most lines are null. Leave the marks out of text.
 - title: the page's heading if it has one (e.g. "OS lecture 3 — 4 Oct"), else null.
 - readable: false if the photo is blank, too blurry, or not handwriting at all.
 
-Answer with ONLY a JSON object: {"readable": true, "title": string|null, "lines": [{"text": string, "type": string, "when": string|null, "project": string|null, "confidence": number, "box": [number, number, number, number], "checked": boolean|null}]}`
+Answer with ONLY a JSON object: {"readable": true, "title": string|null, "lines": [{"text": string, "type": string, "when": string|null, "project": string|null, "confidence": number, "box": [number, number, number, number], "checked": boolean|null, "priority": 1|2|3|null}]}`
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
@@ -87,7 +91,8 @@ export function normaliseRead(raw: unknown, page: number): PageRead {
     const type = LINE_TYPES.includes(it.type as LineType) ? (it.type as LineType) : 'note'
     const confidence = typeof it.confidence === 'number' && Number.isFinite(it.confidence) ? clamp01(it.confidence) : 0.5
     const checked = typeof it.checked === 'boolean' ? it.checked : null
-    lines.push({ text, type, when: str(it.when, 80), project: str(it.project, 80), confidence, box: normaliseBox(it.box), page, checked })
+    const priority = it.priority === 1 || it.priority === 2 || it.priority === 3 ? it.priority : null
+    lines.push({ text, type, when: str(it.when, 80), project: str(it.project, 80), confidence, box: normaliseBox(it.box), page, checked, priority })
   }
   return { readable: o.readable !== false && lines.length > 0, title: str(o.title, 120), lines }
 }

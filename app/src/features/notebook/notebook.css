@@ -29,7 +29,8 @@
 .nb-time { flex: none; min-width: 12ch; font-family: var(--font-mono); font-size: var(--fs-body); color: var(--ink-muted); white-space: nowrap; }
 .nb-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .nb-line.is-blank .nb-text { align-self: stretch; border-bottom: 1px dashed var(--line-dashed); }
-.nb-line.is-done .nb-text, .nb-row-item.is-done { color: var(--ink-hairline); }
+/* done = faint ink (--ink-hairline is non-text: 3:1, under AA) */
+.nb-line.is-done .nb-text, .nb-row-item.is-done { color: var(--ink-faint); }
 .nb-row { flex-wrap: wrap; column-gap: var(--sp-6); row-gap: var(--sp-1); }
 .nb-row-item { display: inline-flex; align-items: baseline; gap: var(--sp-2); white-space: nowrap; }
 .nb-sub { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono); color: var(--ink-faint); }

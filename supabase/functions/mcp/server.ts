@@ -47,7 +47,7 @@ export interface Deps {
    * request counts against the key's daily limit (tool calls only). */
   withSession<T>(key: string, count: boolean, fn: (s: Session) => Promise<T>): Promise<SessionResult<T>>
   originAllowed(origin: string): boolean
-  nextOccurrence(rule: string, from: Date): Date | null
+  nextOccurrence(rule: string, from: Date, zone: string, after: Date): Date | null
   /** rrule's between() — a repeating calendar event's occurrences (tools.ts eventsIn). */
   ruleBetween: RuleBetween
   now(): Date
