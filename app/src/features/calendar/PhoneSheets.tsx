@@ -18,10 +18,9 @@ import { useProjects } from '../projects/api'
 import { Segmented } from '../rituals/RitualChrome'
 import { completeTaskWithUndo, createTask, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
-import { REPEAT_LABELS, REPEAT_RULES } from '../tasks/taskMenuSpec'
 import { SAVED_MS } from '../tasks/taskSheetMath'
-import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent } from './api'
-import { blockMenuSpec, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent, type BlockRef } from './api'
+import { blockMenuSpec, eventRepeatRules, isUntitled, onWeekend, repeatChoice, type BlockMenuKey } from './blockMenuSpec'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
@@ -69,7 +68,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
   return (
     <button type="button" className="kf-as-row" onClick={(e) => onClick(e.currentTarget)}>
       <span className="kf-as-icon" aria-hidden><Icon name={icon} /></span>
-      <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px', color: quiet ? 'var(--ink-muted)' : undefined }}>{label}</span>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body)', lineHeight: 'calc(20 / 15)', color: quiet ? 'var(--ink-muted)' : undefined }}>{label}</span>
       {hint && <span className="kf-as-hint">{hint}</span>}
       {chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
     </button>
@@ -156,12 +155,14 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
  * Done / leaving it). Kai 2026-10-12: date, length, project, repeat, colour, task link and More here
  * too, so the phone does all the desktop does. Delete / Discard sits in the footer; a repeat asks
  * This event / All events. */
-export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: {
+export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, onClose }: {
   event: CalendarEvent
   look: { fill: string; ink: string }
   slotRect: SlotRect
   pending: boolean
   onMove: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
+  /** A repeat edited from a later occurrence splits (calendar/api): the sheet follows the new block. */
+  onRebind?: (ref: BlockRef) => void
   onClose: () => void
 }) {
   const { data: tasks = [] } = useTasks()
@@ -324,7 +325,10 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
             const to = { day: span.day, start, end: start + (d ?? len) }
             if (to.start === span.start && to.end === span.end) return
             // A repeat moves as a whole series (decision 2026-10-12); a one-off like a drag.
-            if (event.seriesId) retimeEventWithUndo(event, span, to)
+            if (event.seriesId) {
+              const ref = retimeEventWithUndo(event, span, to)
+              if (ref) onRebind?.(ref)
+            }
             else onMove(event, span, to, d ? 'bottom' : 'move')
             saved()
           }}
@@ -351,7 +355,12 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
           title="Repeat"
           meta={event.title}
           onClose={() => setPicker(null)}
-          items={REPEAT_RULES.map((r) => choice(r ? REPEAT_LABELS[r] : 'Does not repeat', (event.recurrence_rule ?? null) === r, () => setEventRepeat(event, r)))}
+          items={eventRepeatRules(onWeekend(event)).map((r) =>
+            choice(repeatChoice(r), (event.recurrence_rule ?? null) === r, () => {
+              const ref = setEventRepeat(event, r)
+              if (ref) onRebind?.(ref)
+            }),
+          )}
         />
       )}
       {picker === 'more' && (

@@ -298,7 +298,7 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onClose={() => setSheet(null)} />
+        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start })} onClose={() => setSheet(null)} />
       )}
       {sheet?.k === 'more' && (
         <ActionSheet

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { detachedCopy, expandEvents, findBlock, rerule, retimeSeries, rowOf, withExdate, withoutExdate } from './series'
+import { detachedCopy, expandEvents, findBlock, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate, withRuleParts } from './series'
 
 // Exact UTC instants and explicit zones throughout, so these hold under every TZ the suite runs in
 // (CI: UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo) — nothing here may read the device zone.
@@ -171,5 +171,61 @@ describe('series row edits', () => {
   it('rowOf finds the series row behind an occurrence', () => {
     expect(rowOf(occ('2026-10-19T06:00:00.000Z', '2026-10-19T06:30:00.000Z'), [ev({ id: 'z' }), row])).toBe(row)
     expect(rowOf({ id: 'e1::whatever' }, [row])).toBe(row)
+  })
+})
+
+describe('splitSeries — "this and following" (conductor decision 2026-10-12)', () => {
+  const weekly = ev({ recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-26T06:00:00.000Z'] })
+  const at = (start: string, end: string) => ({ starts_at: start, ends_at: end })
+  const NOW = '2026-10-12T10:00:00.000Z'
+  const win = range('2026-10-01T00:00:00Z', '2026-12-01T00:00:00Z')
+
+  it('ends the series just before the occurrence and starts a new one there — together they draw exactly what the one did', () => {
+    const split = splitSeries(weekly, at('2026-10-19T06:00:00.000Z', '2026-10-19T06:30:00.000Z'), 'e2', NOW, CAIRO)!
+    expect(split.head).toMatchObject({ id: 'e1', starts_at: weekly.starts_at, recurrence_rule: 'FREQ=WEEKLY;UNTIL=20261019T085959Z', recurrence_exdates: [] })
+    expect(split.tail).toMatchObject({ id: 'e2', starts_at: '2026-10-19T06:00:00.000Z', ends_at: '2026-10-19T06:30:00.000Z', recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-26T06:00:00.000Z'], series_id: null, created_at: NOW })
+    expect(starts(expandEvents([split.head, split.tail], ...win, CAIRO))).toEqual(starts(expandEvents([weekly], ...win, CAIRO)))
+  })
+
+  it('across the end of Cairo summer time the UNTIL is on the wall clock', () => {
+    const split = splitSeries(weekly, at('2026-11-02T07:00:00.000Z', '2026-11-02T07:30:00.000Z'), 'e2', NOW, CAIRO)!
+    expect(split.head.recurrence_rule).toBe('FREQ=WEEKLY;UNTIL=20261102T085959Z')
+    expect(split.head.recurrence_exdates).toEqual(['2026-10-26T06:00:00.000Z'])
+    expect(starts(expandEvents([split.head, split.tail], ...win, CAIRO))).toEqual(starts(expandEvents([weekly], ...win, CAIRO)))
+  })
+
+  it('reads the zone it is given (Los Angeles), not the device', () => {
+    const row = ev({ starts_at: '2026-10-24T16:00:00.000Z', ends_at: '2026-10-24T17:00:00.000Z', recurrence_rule: 'FREQ=WEEKLY' })
+    const split = splitSeries(row, at('2026-11-07T17:00:00.000Z', '2026-11-07T18:00:00.000Z'), 'e2', NOW, LA)!
+    expect(split.head.recurrence_rule).toBe('FREQ=WEEKLY;UNTIL=20261107T085959Z')
+    expect(starts(expandEvents([split.head, split.tail], ...win, LA))).toEqual(starts(expandEvents([row], ...win, LA)))
+  })
+
+  it('COUNT: the head is bounded by UNTIL, the tail keeps what was left (skipped starts count too)', () => {
+    const row = ev({ recurrence_rule: 'FREQ=DAILY;COUNT=5', recurrence_exdates: ['2026-10-13T06:00:00.000Z'] })
+    const split = splitSeries(row, at('2026-10-14T06:00:00.000Z', '2026-10-14T06:30:00.000Z'), 'e2', NOW, CAIRO)!
+    expect(split.head.recurrence_rule).toBe('FREQ=DAILY;UNTIL=20261014T085959Z')
+    expect(split.tail.recurrence_rule).toBe('FREQ=DAILY;COUNT=3')
+    expect(starts(expandEvents([split.head, split.tail], ...win, CAIRO))).toEqual(['2026-10-12T06:00:00.000Z', '2026-10-14T06:00:00.000Z', '2026-10-15T06:00:00.000Z', '2026-10-16T06:00:00.000Z'])
+  })
+
+  it('an all-day series splits on its dates', () => {
+    const row = ev({ all_day: true, starts_at: '2026-10-12T00:00:00.000Z', ends_at: '2026-10-13T00:00:00.000Z', recurrence_rule: 'FREQ=WEEKLY' })
+    const split = splitSeries(row, at('2026-10-26T00:00:00.000Z', '2026-10-27T00:00:00.000Z'), 'e2', NOW, LA)!
+    expect(split.head.recurrence_rule).toBe('FREQ=WEEKLY;UNTIL=20261025T235959Z')
+    expect(starts(expandEvents([split.head, split.tail], ...win, 'Asia/Tokyo'))).toEqual(starts(expandEvents([row], ...win, 'Asia/Tokyo')))
+  })
+
+  it('null when nothing of the series is left before the occurrence — the first one, or every earlier one skipped', () => {
+    expect(splitSeries(weekly, at(weekly.starts_at, weekly.ends_at), 'e2', NOW, CAIRO)).toBeNull()
+    const skipped = ev({ recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-12T06:00:00.000Z'] })
+    expect(splitSeries(skipped, at('2026-10-19T06:00:00.000Z', '2026-10-19T06:30:00.000Z'), 'e2', NOW, CAIRO)).toBeNull()
+    expect(splitSeries(ev({}), at('2026-10-19T06:00:00.000Z', '2026-10-19T06:30:00.000Z'), 'e2', NOW, CAIRO)).toBeNull()
+    expect(splitSeries(ev({ recurrence_rule: 'FREQ=NOPE' }), at('2026-10-19T06:00:00.000Z', '2026-10-19T06:30:00.000Z'), 'e2', NOW, CAIRO)).toBeNull()
+  })
+
+  it('withRuleParts replaces, drops and appends parts', () => {
+    expect(withRuleParts('FREQ=DAILY;COUNT=5;INTERVAL=2', { COUNT: null, UNTIL: '20261019T085959Z' })).toBe('FREQ=DAILY;INTERVAL=2;UNTIL=20261019T085959Z')
+    expect(withRuleParts('FREQ=WEEKLY;UNTIL=20270101T000000Z', { UNTIL: '20261019T085959Z' })).toBe('FREQ=WEEKLY;UNTIL=20261019T085959Z')
   })
 })

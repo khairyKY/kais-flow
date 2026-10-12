@@ -186,7 +186,7 @@
 .pc-bs-colors { margin: var(--sp-3) 0 var(--sp-3); }
 .pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }
 /* §5a "From task" + the task's title, quiet, above Complete / Open task. */
-.pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: 14px; line-height: 20px; color: var(--ink-muted); border-top: 1px dashed var(--line-dashed); }
+.pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: var(--fs-body-s); line-height: calc(20 / 14); color: var(--ink-muted); border-top: 1px dashed var(--line-dashed); }
 .pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }
 .pc-bs-save.is-pending { color: var(--sig-offline); }
 .pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }

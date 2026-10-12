@@ -5,7 +5,7 @@
 import { appZone } from '../../lib/appZone'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { durationLabel, fromMin } from '../../components/pickerMath'
-import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
+import { REPEAT_LABELS, REPEAT_RULES } from '../tasks/taskMenuSpec'
 import { eventSpan } from './phoneGridMath'
 
 export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete'
@@ -63,8 +63,30 @@ export function blockDate(e: Pick<CalendarEvent, 'starts_at' | 'all_day'>): stri
   return new Date(e.starts_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: e.all_day ? 'UTC' : appZone() })
 }
 
+/** Monday to Friday (Google's "Every weekday"). */
+export const WEEKDAYS_RULE = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'
+
+/** A block's Repeat choices: the tasks' (Never / Daily / Weekly / Monthly) + Every weekday — offered
+ * on a weekday block only: a series runs from its own start, and rrule never counts a Saturday start
+ * for a Monday–Friday rule, so the block that was clicked would vanish. Custom… waits for a rule editor. */
+export function eventRepeatRules(weekend: boolean): readonly (string | null)[] {
+  return weekend ? REPEAT_RULES : [...REPEAT_RULES, WEEKDAYS_RULE]
+}
+
+/** "Daily" · "Every weekday" · "Does not repeat" — the submenu's row. */
+export function repeatChoice(rule: string | null): string {
+  return rule ? (rule === WEEKDAYS_RULE ? 'Every weekday' : REPEAT_LABELS[rule] ?? 'Custom') : 'Does not repeat'
+}
+
 export function repeatLabel(rule: string | null | undefined): string {
+  if (rule === WEEKDAYS_RULE) return 'Repeats every weekday'
   return rule ? `Repeats ${(REPEAT_LABELS[rule] ?? 'custom').toLowerCase()}` : 'Does not repeat'
+}
+
+/** Sat / Sun on the user's clock (an all-day block: its date, in no zone). */
+export function onWeekend(e: Pick<CalendarEvent, 'starts_at' | 'all_day'>): boolean {
+  const day = new Date(e.starts_at).toLocaleDateString('en-US', { weekday: 'short', timeZone: e.all_day ? 'UTC' : appZone() })
+  return day === 'Sat' || day === 'Sun'
 }
 
 export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): BlockMenuEntry[] {
