@@ -108,7 +108,8 @@ describe('the 4am regression — an overdue task replanned to 04:00 today lands 
   })
 
   it('and a Plan scrolls the grid to it (CalendarGrid gotoDate): two hours above 04:00, not the afternoon', () => {
-    expect(scrollTimeNear(new Date(2026, 9, 7, 4, 0))).toBe('02:00:00')
+    // 04:00 on the user's clock (the grid's — CalendarGrid `timeZone`), whatever the device's.
+    expect(scrollTimeNear(new Date(cairo(TODAY, '04:00')))).toBe('02:00:00')
   })
 })
 

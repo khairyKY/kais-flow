@@ -1,4 +1,3 @@
-import { addDays, busyOnDay, freeSlots } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { isTop3Today } from '../tasks/top3Rule'
@@ -114,11 +113,4 @@ export function dueFollows(dueAt: string | null, startsAt: string, now: Date): b
 export function nextFreeSlot(events: readonly CalendarEvent[], now: Date, dur: number): { starts_at: string; ends_at: string } | null {
   const s = scheduleSlots(events, now, dur).slots[0]
   return s ? spanIso({ day: s.day, start: s.start, end: s.start + dur }) : null
-}
-
-/** Plan ▸ Tomorrow first thing: tomorrow's first `dur`-minute gap from 08:00, else 09:00. */
-export function tomorrowFirst(events: readonly CalendarEvent[], now: Date, dur: number): { starts_at: string; ends_at: string } {
-  const day = addDays(cairoDateKey(now), 1)
-  const start = freeSlots(busyOnDay(events, day), day, now, dur, 1)[0]?.start ?? 9 * 60
-  return spanIso({ day, start, end: start + dur })
 }

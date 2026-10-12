@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { placeAtPointer } from '../../components/selectPlacement'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
+import { Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
 import { createEvent, scheduleTask, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
@@ -425,12 +426,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
+            {/* Conductor review 2026-10-12: the kit's switch, not the OS checkbox (the label still toggles it). */}
             <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={top3} onChange={(e) => setTop3(e.target.checked)} style={{ accentColor: 'var(--acc-terra)' }} />
+              <Toggle on={top3} label="Top-3 today" onToggle={() => setTop3((v) => !v)} />
               <span style={{ color: 'var(--acc-terra)', fontSize: 15 }}>★</span> Top-3 today
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--ink-faint)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={someday} onChange={(e) => setSomedayFlag(e.target.checked)} style={{ accentColor: 'var(--acc-terra)' }} />
+              <Toggle on={someday} label="Someday" onToggle={() => setSomedayFlag((v) => !v)} />
               <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 13, opacity: 0.7 }} /> Someday
             </label>
           </div>
@@ -448,7 +450,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose }: QuickCreateP
       {expanded && (
         <>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, fontSize: 12.5, color: 'var(--ink-muted)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} style={{ accentColor: 'var(--acc-lavender)' }} />
+            <Toggle on={allDay} label="All day" onToggle={() => setAllDay((v) => !v)} />
             All day
           </label>
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 12%, transparent)', borderRadius: 6, padding: '9px 12px' }}>

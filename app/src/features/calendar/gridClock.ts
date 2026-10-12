@@ -1,22 +1,23 @@
 // J-15 — the two places the time grid meets the wall clock. Pure, so both are unit-tested in
 // UTC and in Africa/Cairo (the zone the bug only showed up in).
-import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
+import { appZone } from '../../lib/appZone'
+import { cairoDateKey, cairoWallTimeToIso, zoneDateKey } from '../../lib/dateShortcuts'
+import { zoneTimeKey } from './eventTime'
 
 /** A day column's header, read from the Date FullCalendar hands `dayHeaderContent`.
  *
- * That Date is a real local-midnight Date (`dateEnv.toDate(marker)`), NOT a UTC-encoded marker —
- * so its calendar fields come from the LOCAL getters. Reading them through getUTC* (as the header
- * did) moves every label one day back east of Greenwich: in Cairo (UTC+2/+3) local midnight is
- * still the previous day in UTC, so today's column read "Fri 25", "· Today" landed on tomorrow,
- * and the now-line sat under yesterday's name — Kai's "the bar is showing yesterday". */
-export function headerDay(date: Date, now: Date): { delta: number; weekday: string; day: string } {
-  const delta = Math.round(
-    (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86_400_000,
-  )
+ * That Date is a real instant (`dateEnv.toDate(marker)`) — the column's midnight on the grid's
+ * clock, which is the user's zone (CalendarGrid's `timeZone`, ./zonePlugin) — NOT a UTC-encoded
+ * marker. So its day is read on that zone. (Reading it through getUTC* once moved every label a day
+ * back east of Greenwich — Kai's "the bar is showing yesterday"; reading it on the device's clock
+ * did the same for a device away from the user's zone.) */
+export function headerDay(date: Date, now: Date, zone: string = appZone()): { delta: number; weekday: string; day: string } {
+  const key = zoneDateKey(date, zone)
+  const delta = Math.round((Date.parse(key) - Date.parse(zoneDateKey(now, zone))) / 86_400_000)
   return {
     delta,
-    weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
-    day: String(date.getDate()).padStart(2, '0'),
+    weekday: new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+    day: key.slice(8),
   }
 }
 
@@ -25,9 +26,10 @@ export const SCROLL_LEAD_DESKTOP_MIN = 120
 
 /** Where the grid opens: `leadMinutes` (2h by default) above the now-line, floored to its 30-min
  * slot (so the top edge sits on a grid line), never before midnight. FullCalendar `scrollTime` /
- * `scrollToTime`. */
-export function scrollTimeNear(now: Date, leadMinutes: number = SCROLL_LEAD_DESKTOP_MIN): string {
-  const minutes = Math.max(0, now.getHours() * 60 + now.getMinutes() - leadMinutes)
+ * `scrollToTime` — on the grid's clock, the user's zone. */
+export function scrollTimeNear(now: Date, leadMinutes: number = SCROLL_LEAD_DESKTOP_MIN, zone: string = appZone()): string {
+  const [h, m] = zoneTimeKey(now, zone).split(':').map(Number)
+  const minutes = Math.max(0, h * 60 + m - leadMinutes)
   const slot = minutes - (minutes % 30)
   return `${String(Math.floor(slot / 60)).padStart(2, '0')}:${String(slot % 60).padStart(2, '0')}:00`
 }

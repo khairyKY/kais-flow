@@ -7,15 +7,17 @@ import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, sch
 // Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
 // checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
-import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue } from '../tasks/api'
+import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue, moveToTomorrowWithUndo } from '../tasks/api'
 import { useRowGrammar } from '../tasks/useRowGrammar'
+import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { railDropAction, scopeTarget, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
-import { nextFreeSlot, railBuckets, railMinutes, tomorrowFirst, type RailTask } from './replan'
+import { nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
+import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
-import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -29,7 +31,6 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { localDateKey } from '../routines/streaks'
 import { cairoTimeKey, slotFields } from './eventTime'
 import { BlockMenu } from './BlockMenu'
 import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
@@ -77,26 +78,32 @@ const SMART_LIST_OPTIONS = [
   { value: 'someday', label: 'Someday' },
 ]
 
+// The grid's range is on the user's zone (CalendarGrid `timeZone`): FullCalendar hands its days'
+// midnights as instants, so they are read as that zone's dates, then drawn as dates in no zone.
+const noon = (key: string) => new Date(`${key}T12:00:00Z`)
+
 function weekNumber(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil(((d.getTime() - start.getTime()) / 86400000 + start.getDay() + 1) / 7)
+  const day = noon(cairoDateKey(d))
+  const start = new Date(Date.UTC(day.getUTCFullYear(), 0, 1))
+  return Math.ceil(((day.getTime() - start.getTime()) / 86400000 + start.getUTCDay() + 1) / 7)
 }
 
-/** FullCalendar's range end is exclusive — subtract a day so a "last day" label reads right. */
+/** FullCalendar's range end is exclusive — its last day is the one just before it. */
 function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
-  if (viewKind === 'month') return start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  if (viewKind === 'day') return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  const lastDay = new Date(end.getTime() - 86400000)
-  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const endStr = start.getMonth() === lastDay.getMonth() ? String(lastDay.getDate()) : lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${startStr} — ${endStr}`
+  const first = noon(cairoDateKey(start))
+  const last = noon(cairoDateKey(new Date(end.getTime() - 1)))
+  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('en-US', { ...o, timeZone: 'UTC' })
+  if (viewKind === 'month') return fmt(first, { month: 'long', year: 'numeric' })
+  if (viewKind === 'day') return fmt(first, { weekday: 'short', month: 'short', day: 'numeric' })
+  const endStr = first.getUTCMonth() === last.getUTCMonth() ? String(last.getUTCDate()) : fmt(last, { month: 'short', day: 'numeric' })
+  return `${fmt(first, { month: 'short', day: 'numeric' })} — ${endStr}`
 }
 
 /** Rough "how full is today" read for the rail footer — a 12h daytime window (9–21) minus
  * busy-block minutes. Not a real free/busy engine, just the botanical footer's one line. */
 function todaysLoad(events: CalendarEvent[]): { blocked: number; freeHours: number } {
-  const key = localDateKey(new Date())
-  const todays = events.filter((e) => !e.all_day && localDateKey(new Date(e.starts_at)) === key)
+  const key = cairoDateKey(new Date())
+  const todays = events.filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === key)
   const busyMin = todays.filter((e) => e.busy).reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)
   return { blocked: todays.length, freeHours: Math.max(0, Math.round(12 - busyMin / 60)) }
 }
@@ -263,6 +270,20 @@ function RailTaskCard({ r, i, domains, projects, areas, onPlan }: { r: RailTask;
           </>
         )}
         <PlanButton title={t.title} onPlan={onPlan} />
+        {/* Conductor review 2026-10-12: ⋯ on every task row — the one task menu, as right-click
+            opens it. dragGuard'd like Plan ▾, so pressing it never picks the card up. */}
+        <span
+          style={{ display: 'inline-flex', flex: 'none' }}
+          ref={(el) =>
+            dragGuard(() => {
+              if (!el) return
+              const r = el.getBoundingClientRect()
+              grammar.openMenu({ x: r.left, y: r.bottom })
+            })(el)
+          }
+        >
+          <RowMenuButton title={t.title} onOpen={() => {}} />
+        </span>
       </div>
       {grammar.menuNode}
     </div>
@@ -455,16 +476,18 @@ function DesktopCalendar() {
     return () => draggable.destroy()
   }, [])
 
-  // ── Plan ▾ (a rail card's, an overdue block's Replan, the details panel's): Today · Next free
-  // slot · Tomorrow first thing · Pick date…. A time puts it on the calendar (its block moves there —
-  // never a second one); a date alone plans the day (calendar/replan has the rule). ──
+  // ── Plan ▾ (a rail card's, an overdue block's Replan, the block menu's): Today · Next free slot ·
+  // Tomorrow, first thing · Pick date…. A time puts it on the calendar (its block moves there —
+  // never a second one); a date alone plans the day (calendar/replan has the rule). Conductor review
+  // 2026-10-12: Today and Tomorrow mean what every other Plan menu means (Settings' glossary,
+  // tasks/planMath): Today = today at the task's own time, else 09:00 (todayFor); Tomorrow =
+  // tomorrow 09:00, the one Tomorrow (moveToTomorrowWithUndo — swipe right, the 2 key). ──
   const [plan, setPlan] = useState<{ target: PlanTarget; x: number; y: number } | null>(null)
   function planFor(target: PlanTarget): ContextMenuItem[] {
     const now = new Date()
     const dur = target.kind === 'task' ? railMinutes(target.r) : inboxMinutes(target.item)
     const title = target.kind === 'task' ? target.r.task.title : inboxTitle(target.item)
     const next = nextFreeSlot(events, now, dur)
-    const first = tomorrowFirst(events, now, dur)
     const at = (s: { starts_at: string; ends_at: string }) => {
       const d = new Date(s.starts_at)
       return cairoDateKey(d) === cairoDateKey(now) ? cairoTimeKey(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${cairoTimeKey(d)}`
@@ -479,9 +502,14 @@ function DesktopCalendar() {
       else toastUndo(`Planned · ${dayWord(iso)}`, rescheduleDue(target.r.task, iso))
     }
     return [
-      { label: 'Today', icon: <Icon name="today" size={16} />, onClick: () => day(scheduleToday(now)) },
+      { label: 'Today', icon: <Icon name="today" size={16} />, onClick: () => day(todayFor(target.kind === 'task' ? target.r.task : undefined, now)) },
       ...(next ? [{ label: `Next free slot · ${at(next)}`, icon: <Icon name="clock" size={16} />, onClick: () => place(next.starts_at, next.ends_at) }] : []),
-      { label: `Tomorrow first thing · ${cairoTimeKey(new Date(first.starts_at))}`, icon: <Icon name="tomorrow" size={16} />, onClick: () => place(first.starts_at, first.ends_at) },
+      {
+        label: 'Tomorrow, first thing',
+        hint: tomorrowHint(now),
+        icon: <Icon name="tomorrow" size={16} />,
+        onClick: () => (target.kind === 'task' ? moveToTomorrowWithUndo([target.r.task]) : day(scheduleTomorrow(now))),
+      },
       {
         label: 'Pick date…',
         icon: <Icon name="pickdate" size={16} />,
