@@ -1,0 +1,217 @@
+[
+  {
+    "name": "export 2a/2b rendered for the side-by-side",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: \"10 min total\" under the steps (2a)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the picker lists the five species, Vine chosen",
+    "ok": true,
+    "detail": "[\"VINE\",\"CHERRY\",\"FERN\",\"CLOVER\",\"DAISY\"]"
+  },
+  {
+    "name": "desktop: dragging step 3 by its ⠿ onto step 1 moves it to the top",
+    "ok": true,
+    "detail": "[\"Slow breathing, lights low\",\"Neck & shoulder rolls\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "desktop: a step keeps its minutes when it moves",
+    "ok": true,
+    "detail": "[\"5\",\"2\",\"3\"]"
+  },
+  {
+    "name": "desktop: the drop opened no menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: ↓ on a ⠿ moves the step down, focus follows it",
+    "ok": true,
+    "detail": "[\"Neck & shoulder rolls\",\"Slow breathing, lights low\",\"Hamstrings & hips\"] focus=1"
+  },
+  {
+    "name": "desktop: Alt+↑ in a step moves it up",
+    "ok": true,
+    "detail": "[\"Slow breathing, lights low\",\"Neck & shoulder rolls\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "desktop: clicking the ⠿ opens Move down / Remove step (no Move up on the first)",
+    "ok": true,
+    "detail": "[\"Move down\",\"Remove step\"]"
+  },
+  {
+    "name": "desktop: Move down from the ⠿ menu",
+    "ok": true,
+    "detail": "[\"Neck & shoulder rolls\",\"Slow breathing, lights low\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "desktop: picking Cherry draws a cherry in the header and on Plant routine",
+    "ok": true,
+    "detail": "/ds/assets/cherry/opening.png"
+  },
+  {
+    "name": "desktop: the planted row carries the steps in order with minutes, and plant = cherry",
+    "ok": true,
+    "detail": "{\"id\":\"abf9c214-86cd-47ee-a10b-3c6bc473abac\",\"name\":\"Evening stretch\",\"time_of_day\":\"evening\",\"clock_time\":\"21:30\",\"cadence\":{\"weekdays\":[1,3,5]},\"challenge_start\":\"2026-10-13\",\"challenge_end\":\"2026-11-11\",\"active\":true,\"steps\":[{\"text\":\"Neck & shoulder rolls\",\"minutes\":2},{\"text\":\"Slow breathing, lights low\",\"minutes\":5},{\"text\":\"Hamstrings & hips\",\"minutes\":3}],\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"plant\":\"cherry\",\"goal_days\":30,\"created_at\":\"2026-10-12T21:58:27.530Z\",\"updated_at\":\"2026-10-12T21:58:27.530Z\"}"
+  },
+  {
+    "name": "desktop create: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edit: old string step + timed step prefill",
+    "ok": true,
+    "detail": "[[\"Neck rolls\",\"Hamstrings & hips\"],[\"\",\"3\"]]"
+  },
+  {
+    "name": "edit: a routine from before 0067 opens on Vine",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edit: \"3 min total\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edit: the total follows (\"7 min total\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edit: saves over the same row — minutes on the old step, plant = fern, the rest kept",
+    "ok": true,
+    "detail": "{\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"clock_time\":null,\"cadence\":{\"weekdays\":[0,1,2,3,4,5,6]},\"challenge_start\":null,\"challenge_end\":null,\"active\":true,\"domain_id\":null,\"goal_days\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T21:58:32.406Z\",\"id\":\"70000000-0000-4000-8000-000000000001\",\"name\":\"Stretch\",\"time_of_day\":\"evening\",\"steps\":[{\"text\":\"Neck rolls\",\"minutes\":4},{\"text\":\"Hamstrings & hips\",\"minutes\":3}],\"plant\":\"fern\"}"
+  },
+  {
+    "name": "desktop edit: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "garden cards draw each routine's own species at its streak stage",
+    "ok": true,
+    "detail": "[\"/ds/assets/vine/sprouting.png\",\"/ds/assets/fern/coil.png\",\"/ds/assets/fern/full.png\",\"/ds/assets/vine/bare.png\",\"/ds/assets/cherry/bloom.png\",\"/ds/assets/fern/unfurl1.png\",\"/ds/assets/clover/four_leaf.png\",\"/ds/assets/daisy/midday.png\"]"
+  },
+  {
+    "name": "the steps fold under the row: \"2 steps · 3 min\", each step with its minutes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "trellis: a cherry routine is headed by its cherry at its stage and grows cherry marks",
+    "ok": true,
+    "detail": "[\"/ds/assets/vine/sprouting.png\",\"/ds/assets/fern/coil.png\",\"/ds/assets/fern/full.png\",\"/ds/assets/vine/lush.png\",\"/ds/assets/vine/bare.png\",\"/ds/assets/cherry/bloom.png\",\"/ds/assets/fern/unfurl1.png\",\"/ds/assets/clover/four_leaf.png\",\"/ds/assets/daisy/midday.png\"]"
+  },
+  {
+    "name": "trellis caption names the cherry",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines desktop day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines desktop night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the label carries the total — \"Steps · 10 min total\" (2b)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: minutes read \"2m\" (2b) and no ✕ on the rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: all five plant tiles fit at 390 (no scroll)",
+    "ok": true,
+    "detail": "[[20,80],[88,148],[156,216],[224,284],[292,352]]"
+  },
+  {
+    "name": "phone: hold-and-drag moves step 3 to the top",
+    "ok": true,
+    "detail": "[\"Slow breathing, lights low\",\"Neck & shoulder rolls\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "phone: the drag opened no sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: a quick swipe over the ⠿ moves nothing",
+    "ok": true,
+    "detail": "[\"Slow breathing, lights low\",\"Neck & shoulder rolls\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "phone: tapping the ⠿ opens Move up / Move down / Remove step",
+    "ok": true,
+    "detail": "[\"Move up\",\"Move down\",\"Remove step\"]"
+  },
+  {
+    "name": "phone: Move up from the sheet",
+    "ok": true,
+    "detail": "[\"Neck & shoulder rolls\",\"Slow breathing, lights low\",\"Hamstrings & hips\"]"
+  },
+  {
+    "name": "phone: planted with steps in order + minutes, plant = daisy",
+    "ok": true,
+    "detail": "{\"id\":\"ed8e1947-33b9-401f-98b3-c5b6236d9b93\",\"name\":\"Evening stretch\",\"time_of_day\":\"evening\",\"clock_time\":null,\"cadence\":{\"weekdays\":[1,3,5]},\"challenge_start\":null,\"challenge_end\":null,\"active\":true,\"steps\":[{\"text\":\"Neck & shoulder rolls\",\"minutes\":2},{\"text\":\"Slow breathing, lights low\",\"minutes\":5},{\"text\":\"Hamstrings & hips\",\"minutes\":3}],\"domain_id\":null,\"plant\":\"daisy\",\"created_at\":\"2026-10-12T21:58:58.132Z\",\"updated_at\":\"2026-10-12T21:58:58.132Z\"}"
+  },
+  {
+    "name": "phone create: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night desktop form: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night phone form: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines phone day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "routines phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today desktop: the routine rail lists today's routines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today phone: the routine rail lists today's routines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "today phone: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
