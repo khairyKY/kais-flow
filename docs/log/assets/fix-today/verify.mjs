@@ -369,13 +369,20 @@ if (want('f')) {
   await page.locator(`#upnext-${eid(SYNC)}`).click()
   await sleep(800)
   check('f3 an Up next event opens /calendar?event=<id>', page.url().includes(`/calendar?event=${eid(SYNC)}`), page.url())
-  // F4 N on Today → the Notebook page; the capture bar stays shut.
+  // F4 (today-shell, conductor 2026-10-13: one meaning per key) N is New task on Today too — the
+  // capture bar; the Notebook page is Shift+N.
   await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
   await sleep(1500)
   await page.locator('body').click({ position: { x: 5, y: 790 } })
   await page.keyboard.press('n')
   await sleep(600)
-  check('f4 N on Today → /notebook?day=today (not the capture bar)', page.url().includes('/notebook?day=today'), page.url())
+  check('f4 N on Today → the capture bar (New task), not the Notebook', page.url().endsWith('/today') && (await page.evaluate(() => document.activeElement?.id === 'kf-capture-input')), page.url())
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  await page.locator('body').click({ position: { x: 5, y: 790 } })
+  await page.keyboard.press('Shift+N')
+  await sleep(600)
+  check('f4 Shift+N on Today → /notebook?day=today', page.url().includes('/notebook?day=today'), page.url())
   // F5 the pill opens the capture bar.
   await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
   await sleep(1500)

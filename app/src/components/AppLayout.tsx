@@ -3,11 +3,14 @@ import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-route
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
-import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow } from './syncQueue'
+import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow, type SyncView } from './syncQueue'
 import { useRealtimeSync } from '../lib/realtime'
 import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
+import { useProjects } from '../features/projects/api'
+import { dayOfJourney, firstCreatedAt } from '../features/today/journey'
+import { useIsMobile } from './BottomSheet'
 import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
@@ -300,11 +303,17 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Overall streak across active routines — Editor 1a footer widget, real data.
+// Today 2a's sidebar foot: "6-day streak / best 21 · day 42" — the highest current routine streak (the
+// streak the removed terrarium band showed), the best, and the day of the journey (today/journey, the
+// phone header's "Day N"). Pinned with the footer rows, so a short window never scrolls it out of view.
 // Vine stage by streak length: bare / sprouting / flowering / lush (growth system).
 function StreakWidget() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
+  const { data: tasks = [] } = useTasks()
+  const { data: inbox = [] } = usePendingInboxItems()
+  const { data: projects = [] } = useProjects()
+  const day = dayOfJourney(useMemo(() => firstCreatedAt(tasks, inbox, projects, routines), [tasks, inbox, projects, routines]), new Date())
 
   const { current, best } = useMemo(() => {
     const byRoutine = new Map<string, string[]>()
@@ -327,16 +336,11 @@ function StreakWidget() {
   const stage = current >= 30 ? 'lush' : current >= 7 ? 'flowering' : current >= 1 ? 'sprouting' : 'bare'
 
   return (
-    <div
-      className="app-vine"
-      style={{ margin: '0 22px 12px', padding: '12px 0', borderTop: '1px dashed var(--line-sidebar)', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', alignItems: 'center', gap: 10 }}
-    >
-      <img src={`${A}/vine/${stage}.png`} alt="" style={{ height: 40, width: 'auto', filter: 'var(--shadow-drop-sm)' }} />
-      <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Streak</div>
-        <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 1 }}>
-          {current} {current === 1 ? 'day' : 'days'} · best {best}
-        </div>
+    <div className="app-vine">
+      <img src={`${A}/vine/${stage}.png`} alt="" />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
       </div>
     </div>
   )
@@ -382,17 +386,27 @@ function queueAgo(ts: number): string {
   return min < 60 ? `${min} min ago` : `${Math.round(min / 60)}h ago`
 }
 
-// ── Topbar sync strip — States.dc.html 2a/2b/2d, wired to the REAL outbox queue. Kai 2026-10-07:
-// it flipped "Syncing ↻ 1" ↔ "Synced ●" (with a glint) on every write, about two seconds per change.
-// It now says nothing while writes flush and speaks only when something is slow, offline or not
-// saved (useSyncStatus, ./syncQueue.ts); a brief "Synced" (2d's glint) ends an offline / not-saved spell. ──
-function TopBar() {
-  const owner = useOwner()
+/** The sidebar's words for the sync status (Today 2a's "● synced" on the Settings row): calm says
+ * "synced"; trouble says what the phone's strip says, short enough for the row. */
+function sideSyncLabel(v: SyncView): string {
+  if (v.kind === 'syncing') return 'syncing…'
+  if (v.kind === 'offline') return v.n > 0 ? `offline · ${v.n}` : 'offline'
+  if (v.kind === 'parked') return `${v.n} not saved`
+  return 'synced'
+}
+
+// ── The sync status — States.dc.html 2a/2b/2d, wired to the REAL outbox queue — and its queue
+// popover. One home per layout: a computer's sidebar Settings row (Today 2a / Inbox 3a: "● synced"),
+// a phone's top bar (no sidebar there). Kai 2026-10-07: the strip flipped "Syncing ↻ 1" ↔ "Synced ●"
+// (with a glint) on every write, about two seconds per change. The phone strip now says nothing while
+// writes flush and speaks only when something is slow, offline or not saved (useSyncStatus,
+// ./syncQueue.ts); the sidebar keeps 2a's steady "synced" and changes only on the same events. A brief
+// "Synced" (2d's glint) ends an offline / not-saved spell. ──
+function SyncStatus({ side = false }: { side?: boolean }) {
   const motionOn = useMotionEnabled()
   const { view, online, queue, waiting: n, parked, seeParked } = useSyncStatus()
-  const zone = useAppZone()
   const rows = useMemo(() => syncRows(queue), [queue])
-  const label = syncLabel(view)
+  const label = side ? sideSyncLabel(view) : syncLabel(view)
   // The popover; `parked` holds the not-saved rows it was opened on — opening it is seeing them.
   const [pop, setPop] = useState<{ parked: SyncRow[] | null } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
@@ -413,11 +427,6 @@ function TopBar() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [popOpen])
 
-  // F5b: design format is `Fri 10 Jul` — weekday, day (no zero-pad), month, no commas. On the
-  // user's clock (it read the device's, a day off from every page below it on a device abroad).
-  const now = new Date()
-  const part = (o: Intl.DateTimeFormatOptions) => now.toLocaleDateString('en-GB', { ...o, timeZone: zone })
-  const dateLabel = `${part({ weekday: 'short' })} ${part({ day: 'numeric' })} ${part({ month: 'short' })}`
   const rowList = (list: SyncRow[]) => (
     <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
       {list.map((r) => (
@@ -431,43 +440,39 @@ function TopBar() {
   )
   const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>{text}</div>
   return (
-    <div
-      className="app-topbar"
-      style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
-            (lib/owner.ts). The zone on the right is the user's own (Settings → Timezone): the
-            app's day boundary (B2), so that's the clock it's really keeping. The sync part shows
-            only when there is something to say. */}
-        <span className="app-topbar-where">
-          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel}{label ? ' ·' : ''}
-        </span>
-        {label && (
-          <button
-            type="button"
-            onClick={togglePop}
-            className="kf-hit app-topbar-sync"
-            data-sync={view.kind}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: view.kind === 'parked' ? 'var(--acc-terra-ink)' : view.kind === 'synced' ? 'inherit' : 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-          >
-            {label}
-            {/* States 2d — the only celebration is one glint on the dot, 300ms, when trouble clears. */}
-            {view.kind === 'synced' && (
-              <span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
-            )}
-          </button>
-        )}
-        <span className="app-topbar-echo">
-          <SeasonTopbarEcho />
-        </span>
-      </div>
-      <div className="app-topbar-zone" style={{ flex: 'none' }}>{zone}</div>
+    <>
+      {side ? (
+        // Today 2a: a 6px dot + "synced" at the Settings row's right; on the icon rows (a short or
+        // collapsed sidebar) only the dot shows, on the gear's corner, and the words are its title.
+        <button type="button" onClick={togglePop} className="kf-side-sync" data-sync={view.kind} title={`Sync: ${label}`} aria-label={`Sync: ${label}`}>
+          <span className="kf-side-sync-dot" style={view.kind === 'synced' && motionOn ? { animation: 'twinkle 300ms var(--ease-out)' } : undefined} />
+          <span className="app-footer-label">{label}</span>
+        </button>
+      ) : (
+        label && (
+          <>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              onClick={togglePop}
+              className="kf-hit app-topbar-sync"
+              data-sync={view.kind}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: view.kind === 'parked' ? 'var(--acc-terra-ink)' : view.kind === 'synced' ? 'inherit' : 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              {label}
+              {/* States 2d — the only celebration is one glint on the dot, 300ms, when trouble clears. */}
+              {view.kind === 'synced' && (
+                <span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>
+              )}
+            </button>
+          </>
+        )
+      )}
 
       {pop && (
         <div
           ref={popRef}
-          className="kf-sync-pop kf-overlay-card"
+          className={`kf-sync-pop kf-overlay-card${side ? ' kf-sync-pop--side' : ''}`}
           style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '12px 14px', textTransform: 'none', letterSpacing: 'normal' }}
         >
           {pop.parked ? (
@@ -494,6 +499,41 @@ function TopBar() {
           )}
         </div>
       )}
+    </>
+  )
+}
+
+// ── The shell's top bar (SPEC §2): `{app name} · {day} {date}` · the season echo … the user's zone.
+// Not on a computer's Today (2a: "Date said three times (top bar, eyebrow, H1). Now it's only the H1")
+// or Inbox (3a: "The top bar is removed") — AppLayout skips it there; every other page's frame keeps
+// it. The sync status rides it only on a phone; on a computer it lives on the sidebar's Settings row. ──
+function TopBar({ sync }: { sync: boolean }) {
+  const owner = useOwner()
+  const zone = useAppZone()
+  // F5b: design format is `Fri 10 Jul` — weekday, day (no zero-pad), month, no commas. On the
+  // user's clock (it read the device's, a day off from every page below it on a device abroad).
+  const now = new Date()
+  const part = (o: Intl.DateTimeFormatOptions) => now.toLocaleDateString('en-GB', { ...o, timeZone: zone })
+  const dateLabel = `${part({ weekday: 'short' })} ${part({ day: 'numeric' })} ${part({ month: 'short' })}`
+  return (
+    <div
+      className="app-topbar"
+      style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
+            (lib/owner.ts). The zone on the right is the user's own (Settings → Timezone): the
+            app's day boundary (B2), so that's the clock it's really keeping. The sync part shows
+            only when there is something to say. */}
+        <span className="app-topbar-where">
+          <span className="app-topbar-owner" title={owner.flow} style={{ visibility: owner.pending ? 'hidden' : undefined }}>{owner.flow}</span> · {dateLabel}
+        </span>
+        {sync && <SyncStatus />}
+        <span className="app-topbar-echo">
+          <SeasonTopbarEcho />
+        </span>
+      </div>
+      <div className="app-topbar-zone" style={{ flex: 'none' }}>{zone}</div>
     </div>
   )
 }
@@ -506,12 +546,16 @@ function isTypingTarget(target: EventTarget | null): boolean {
 /** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
 const OPEN_SEARCH_EVENT = 'kf-open-search'
 
+/** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"). */
+const NO_TOPBAR = ['/today', '/inbox']
+
 export function AppLayout() {
   useRealtimeSync()
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
   const { pathname } = useLocation()
+  const isMobile = useIsMobile()
   const openTaskId = useSearchParams()[0].get(TASK_PARAM)
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -627,6 +671,31 @@ export function AppLayout() {
           .app-sidebar:not(.collapsed) .app-sidebar-footer .app-footer-label { display: none !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row { padding: 8px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row:hover { transform: none; }
+        }
+        /* Today 2a's sidebar foot: the streak, pinned above the footer rows (only the nav scrolls). */
+        .app-vine { flex: none; margin: 0 22px 12px; padding-top: 12px; border-top: 1px dashed var(--line-sidebar); display: flex; align-items: center; gap: 10px; }
+        .app-vine img { height: 36px; width: auto; flex: none; filter: var(--shadow-drop-sm); }
+        /* 2a's "● synced" on the Settings row: a mono note at the row's right, its own button. */
+        .kf-settings-row { position: relative; }
+        .kf-side-sync { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 4px 0 4px 6px; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta-l); color: var(--ink-muted); cursor: pointer; }
+        .kf-side-sync[data-sync='parked'] { color: var(--acc-terra-ink); }
+        .kf-side-sync-dot { width: 6px; height: 6px; flex: none; box-sizing: border-box; border-radius: 50%; background: var(--acc-sage); }
+        .kf-side-sync[data-sync='syncing'] .kf-side-sync-dot { background: var(--ink-faint); }
+        .kf-side-sync[data-sync='offline'] .kf-side-sync-dot { background: none; border: 1px solid var(--ink-muted); }
+        .kf-side-sync[data-sync='parked'] .kf-side-sync-dot { background: var(--acc-terra); }
+        .kf-sync-pop.kf-sync-pop--side { top: auto; bottom: calc(100% + 6px); left: 0; }
+        /* Icon rows (a short or a collapsed sidebar): the dot alone, on the gear's corner. */
+        .app-sidebar.collapsed .kf-side-sync { top: 2px; right: 2px; transform: none; padding: 2px; }
+        /* Short sidebar (1280×800 at the default 125% is 640 layout px): the pinned streak costs ~50px,
+           so the column tightens a little to keep Tend's five rows in view with the Plan drawer open. */
+        @container kf-sidebar (max-height: 799px) {
+          .app-sidebar:not(.collapsed) .kf-side-sync { top: 2px; right: 2px; transform: none; padding: 2px; }
+          .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
+          .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
+          .app-sidebar:not(.collapsed) .app-vine { margin-bottom: 4px; padding-top: 6px; line-height: 1.25; }
+          .app-sidebar:not(.collapsed) .app-sidebar-footer { padding-bottom: 8px !important; }
+          .app-vine img { height: 28px; }
         }
         /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
            width and the label floats over the page. Styled to the export's nav row: parchment,
@@ -770,10 +839,16 @@ export function AppLayout() {
             answers keep the old "Kai's Flow / Personal · Cairo". The city is the user's zone's
             (Settings → Timezone; Cairo by default) — the app's day boundary (B2). Names are
             user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
-        <div className="app-sidebar-header" style={{ padding: '0 22px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
-          <div title={owner.flow} style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
+        {/* Today 2a: the app icon beside the wordmark; 2a drops the hand line ("a field journal of
+            days ✿"). deviation(2026-10-13 today-shell): the workspace · city line stays — it is
+            the only place the workspace answer shows, and with no top bar on Today / Inbox the
+            only place the user's zone does. */}
+        <div className="app-sidebar-header" style={{ padding: '0 22px 16px', visibility: owner.pending ? 'hidden' : undefined }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/icon-192.png" alt="" style={{ width: 28, height: 28, flex: 'none' }} />
+            <div title={owner.flow} style={{ minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
+          </div>
           <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</div>
-          <div style={{ marginTop: 7, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1.2deg)' }}>a field journal of days ✿</div>
         </div>
 
         <PlanDrawer />
@@ -790,9 +865,9 @@ export function AppLayout() {
         </nav>
 
         <div style={{ flex: 1 }} />
+        </div>
 
         <StreakWidget />
-        </div>
 
         {/* Shell fit (2026-09-26): the footer rows are pinned below the scrolling column. At the
             default 125% size a 1280×800 window is only ~640 layout px tall, so inside the scroll
@@ -806,22 +881,26 @@ export function AppLayout() {
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}><GuideGlyph /></span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>
           </NavLink>
-          <NavLink
-            to="/settings"
-            title="Settings"
-            aria-label="Settings"
-            className="kf-side-row"
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
-          >
-            <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
-            <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
-          </NavLink>
+          {/* Today 2a: the sync status sits on the Settings row ("● synced"), its own button beside the link. */}
+          <div className="kf-settings-row">
+            <NavLink
+              to="/settings"
+              title="Settings"
+              aria-label="Settings"
+              className="kf-side-row"
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
+            >
+              <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
+              <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
+            </NavLink>
+            {!isMobile && <SyncStatus side />}
+          </div>
           {footerRow(SignOutGlyph, 'Sign out', undefined, signOutFlow.request, true)}
         </div>
       </aside>
 
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <TopBar />
+        {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
         <div className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
             <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
