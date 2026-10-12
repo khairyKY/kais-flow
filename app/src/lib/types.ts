@@ -235,6 +235,9 @@ export interface AppSettings {
   /** The Notebook page's layout (migration 0063), read through features/notebook/page.ts parseLayout —
    * absent before the push, null until first edited. */
   notebook_layout?: unknown
+  /** Label colours, { name: colour token } (migration 0069), read through features/tasks/labels.ts
+   * parseLabelMeta — absent before the push, null until a label is first coloured. */
+  label_meta?: unknown
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

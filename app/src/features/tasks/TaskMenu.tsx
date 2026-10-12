@@ -14,6 +14,7 @@ import { shortcutHint } from './listShortcuts'
 import { PlanMenu } from './PlanMenu'
 import { RepeatEditor, RepeatMenu } from './RepeatMenu'
 import { isOverdue } from './planMath'
+import { LabelPicker } from './LabelPicker'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
 import { useStartFocus } from '../today/startFocus'
@@ -44,6 +45,9 @@ export interface TaskMenuActions {
   clearDate?: () => void
   /** The task sheet's Duration chip. */
   duration?: (min: number | null) => void
+  /** The Label picker's tap, through the surface's own setter (the task sheet's "Saved"); without
+   * it the picker writes itself (labels.ts toggleLabel). */
+  labels?: (labels: string[]) => void
   /** Plan's Next free slot → Confirm (single task). */
   slot?: (startsAt: string, endsAt: string) => void
   /** A Top 3 row's Move up / Move down. */
@@ -64,7 +68,7 @@ export interface BulkActions {
 }
 
 /** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */
-export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration'
+export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration' | 'labels'
 export interface MenuAnchor {
   at: { x: number; y: number }
   /** Open straight on a picker (the swipe's Plan / Project, the task sheet's chips). */
@@ -73,7 +77,7 @@ export interface MenuAnchor {
 
 const ICONS: Record<TaskMenuKey, IconName> = {
   tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
-  top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
+  labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
@@ -120,6 +124,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     unschedule: () => actions.unschedule?.(),
     project: () => setSub('project'),
     priority: () => setSub('priority'),
+    labels: () => setSub('labels'),
     repeat: () => setSub('repeat'),
     remind: () => setSub('remind'),
     top3: actions.top3,
@@ -171,6 +176,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   const repeat = { value: task.recurrence_rule, start: base, meta: task.title }
   if (sub === 'repeat') return <RepeatMenu {...repeat} position={at} onClose={onClose} onChange={actions.repeat} />
   if (sub === 'repeat-custom') return <RepeatEditor {...repeat} position={at} onClose={onClose} onChange={actions.repeat} />
+  if (sub === 'labels') return <LabelPicker taskIds={[task.id]} position={at} onClose={onClose} meta={task.title} onSet={actions.labels} />
   if (sub) {
     const list = options[sub]
     const title = { priority: 'Priority', remind: 'Remind', duration: 'Duration' }[sub]
@@ -196,6 +202,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
     if (key === 'plan') return ({ position, onClose: back, closeAll }) => plan((w) => { w(); closeAll() }, position, back)
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
+    if (key === 'labels') return ({ position, onClose: back }) => <LabelPicker taskIds={[task.id]} position={position} onClose={back} onSet={actions.labels} />
     if (key === 'repeat') return ({ position, onClose: back, closeAll }) => <RepeatMenu {...repeat} position={position} onClose={back} onChange={(r) => { actions.repeat(r); closeAll() }} onCustom={() => setSub('repeat-custom')} />
     if (key === 'priority' || key === 'remind') {
       const list = options[key]
