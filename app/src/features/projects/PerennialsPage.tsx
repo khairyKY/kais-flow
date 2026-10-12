@@ -205,14 +205,16 @@ export function PerennialsPage() {
           e.preventDefault()
           setMenu({ id: t.id, x: e.clientX, y: e.clientY })
         }}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px dashed var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
+        // Phone: the next-date chip and the series button wrap under the task, or the title gets ~150px.
+        style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: 'center', gap: isMobile ? '0 10px' : 10, paddingBottom: isMobile ? 6 : 0, borderBottom: '1px dashed var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
           <TaskRow task={t} border={false} />
           <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
             {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
           </div>
         </div>
+        {isMobile && <span style={{ flex: 1 }} />}
         {t.paused ? (
           <Chip tone="bordered">Paused</Chip>
         ) : (
@@ -228,7 +230,7 @@ export function PerennialsPage() {
             const r = e.currentTarget.getBoundingClientRect()
             setMenu({ id: t.id, x: r.left, y: r.bottom })
           }}
-          style={{ flex: 'none', width: 28, height: 28, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          style={{ flex: 'none', width: isMobile ? 44 : 28, height: isMobile ? 44 : 28, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
         >
           <Icon name="repeat" size={18} />
         </button>
