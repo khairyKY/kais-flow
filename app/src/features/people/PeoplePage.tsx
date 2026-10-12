@@ -254,8 +254,8 @@ export function PeoplePage() {
                     <div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
                   </div>
-                  <button type="button" onClick={() => handleQuickAction(p, nudgeChannel(p.id))} className="chip kf-hit" style={{ ...nudgeChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>{nudgeChannel(p.id)}</button>
-                  <button type="button" onClick={() => handleLater(p)} className="chip kf-hit" style={{ ...laterChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>later</button>
+                  <button type="button" onClick={() => handleQuickAction(p, nudgeChannel(p.id))} className="chip kf-hit" style={{ ...nudgeChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>{nudgeChannel(p.id)}</button>
+                  <button type="button" onClick={() => handleLater(p)} className="chip kf-hit" style={{ ...laterChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>later</button>
                 </div>
               )
             })}
@@ -301,8 +301,8 @@ export function PeoplePage() {
           >
             {() => (
               <form id="kf-new-person" onSubmit={handleNewPerson} style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 4 }}>
-                <input type="text" placeholder="Name" aria-label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required autoFocus style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 16, color: 'var(--ink-body)' }} />
-                <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 15 }} />
+                <input type="text" placeholder="Name" aria-label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required autoFocus style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-body-l)', color: 'var(--ink-body)' }} />
+                <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ width: '100%', minHeight: 44, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-body)' }} />
               </form>
             )}
           </BottomSheet>
@@ -348,8 +348,8 @@ export function PeoplePage() {
       {/* New person form (inline) */}
       {showNewForm && (
         <form onSubmit={handleNewPerson} style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '16px 0', padding: '12px 16px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3 }}>
-          <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 13 }} />
-          <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 13 }} />
+          <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} required style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-body-s)' }} />
+          <Select value={newDomain} onChange={setNewDomain} ariaLabel="Circle" options={circleOptions} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-body-s)' }} />
           <Button type="submit" variant="cta" style={{ padding: '8px 16px', fontSize: 12 }}>Add</Button>
         </form>
       )}
