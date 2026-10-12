@@ -69,6 +69,8 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   it('repeat labels follow the task menu’s words', () => {
     expect(repeatLabel(null)).toBe('Does not repeat')
     expect(repeatLabel('FREQ=MONTHLY')).toBe('Repeats monthly')
-    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,WE')).toBe('Repeats custom')
+    // a custom rule (the shared Repeat editor) reads in words
+    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,WE')).toBe('Every week on Monday, Wednesday')
+    expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')).toBe('Every weekday')
   })
 })

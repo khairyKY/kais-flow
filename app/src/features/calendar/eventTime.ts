@@ -24,6 +24,11 @@ export function cairoTimeKey(d: Date): string {
   return zoneTimeKey(d)
 }
 
+/** The hour on the user's clock (0–23) — what the daisy's stage reads, never the device's hour. */
+export function zoneHour(d: Date = new Date(), zone: string = appZone()): number {
+  return Number(zoneTimeKey(d, zone).slice(0, 2))
+}
+
 /** A wall-clock date ("YYYY-MM-DD") + time ("HH:MM") in `zone` -> the UTC instant to store.
  * DST-correct (the tz database). The one wall hour a zone repeats when summer time ends (Cairo:
  * 23:00–24:00 on the last Thursday of October) reads as its second, winter-time pass. */

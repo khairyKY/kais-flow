@@ -15,9 +15,9 @@ import { TaskPicker } from '../focus/TaskPicker'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
-import { REPEAT_LABELS, REPEAT_RULES } from '../tasks/taskMenuSpec'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRepeat, updateEvent } from './api'
 import { BLOCK_MENU_WIDTH, blockMenuSpec, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
 
@@ -41,7 +41,7 @@ const LENGTHS: { min: number; label: string }[] = [
   { min: 120, label: 'Deep' },
 ]
 
-const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-hairline)' }
+const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }
 const check = <Icon name="check" size={13} style={{ color: 'var(--acc-terra)' }} />
 
 /** The swatch a block wears: its own colour, else its kind's (a meeting blossom, a task / block lavender). */
@@ -94,7 +94,7 @@ function TitleRow({ event, untitled, gone }: { event: CalendarEvent; untitled: b
           e.preventDefault()
           e.currentTarget.blur()
         }}
-        style={{ flex: 1, minWidth: 0, resize: 'none', border: 'none', outline: 'none', background: 'none', padding: 0, margin: 0, fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 500, lineHeight: 1.35, color: 'var(--ink-body)', fieldSizing: 'content' } as CSSProperties}
+        style={{ flex: 1, minWidth: 0, resize: 'none', border: 'none', outline: 'none', background: 'none', padding: 0, margin: 0, fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-body-s)', fontWeight: 500, lineHeight: 1.35, color: 'var(--ink-body)', fieldSizing: 'content' } as CSSProperties}
       />
       {colourAt && (
         <ContextMenu
@@ -171,6 +171,13 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
   const span = eventSpan(event)
   const len = span.end - span.start
 
+  // Repeat: from a later occurrence the series splits there (calendar/api).
+  const repeat = { value: event.recurrence_rule ?? null, start: event.starts_at, meta: event.title }
+  const setRepeat = (r: string | null) => {
+    if ((event.recurrence_rule ?? null) !== r) setEventRepeat(event, r)
+  }
+  const [customAt, setCustomAt] = useState<{ x: number; y: number } | null>(null)
+
   const remove = (run: () => void) => {
     gone.current = true
     run()
@@ -213,7 +220,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
                 LENGTHS.map((l) => ({
                   label: l.label,
                   on: len === l.min,
-                  icon: <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, width: 32, color: len === l.min ? 'var(--acc-lavender-deep)' : 'var(--ink-hairline)' }}>{durationLabel(l.min)}</span>,
+                  icon: <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', width: 32, color: len === l.min ? 'var(--acc-lavender-deep)' : 'var(--ink-faint)' }}>{durationLabel(l.min)}</span>,
                   run: () => { if (len !== l.min) retimeEventWithUndo(event, span, { ...span, end: span.start + l.min }) },
                 })),
                 closeAll,
@@ -227,13 +234,10 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
           <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={event.project_id ?? null} onSelect={(id) => { if (id !== (event.project_id ?? null)) updateEvent(event, { project_id: id }); closeAll() }} onClose={back} />
         )
       case 'repeat':
+        // The one Repeat picker (tasks/RepeatMenu): the presets, and Custom… — the rule editor, which
+        // takes this popover's place (a submenu can't hold it).
         return ({ position: at, onClose: back, closeAll }) => (
-          <ContextMenu
-            position={at}
-            onClose={back}
-            label="Repeat"
-            items={choices(REPEAT_RULES.map((r) => ({ label: r ? REPEAT_LABELS[r] : 'Does not repeat', on: (event.recurrence_rule ?? null) === r, run: () => { if ((event.recurrence_rule ?? null) !== r) setEventRepeat(event, r) } })), closeAll)}
-          />
+          <RepeatMenu {...repeat} position={at} onClose={back} onChange={(r) => { setRepeat(r); closeAll() }} onCustom={() => setCustomAt(at)} />
         )
       case 'link':
         return ({ position: at, onClose: back, closeAll }) => (
@@ -312,13 +316,14 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     before: e.caption && (
       <>
         <div style={{ ...CAPTION, padding: '4px 9px 5px' }}>{e.caption.label}</div>
-        <div style={{ padding: '0 9px 7px', fontSize: 12.5, lineHeight: 1.45, color: 'var(--ink-muted)' }}><EmojiText text={e.caption.text} /></div>
+        <div style={{ padding: '0 9px 7px', fontSize: 'var(--fs-caption)', lineHeight: 1.45, color: 'var(--ink-muted)' }}><EmojiText text={e.caption.text} /></div>
       </>
     ),
     onClick: run[e.key],
     submenu: submenu(e.key),
   })
 
+  if (customAt) return <RepeatEditor {...repeat} position={customAt} onClose={onClose} onChange={setRepeat} />
   return (
     <ContextMenu
       position={position}

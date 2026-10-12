@@ -12,7 +12,9 @@ import { useAppZone } from '../../lib/appZone'
 import { dayHint, fromMin } from '../../components/pickerMath'
 import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
-import { detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, withExdate, withoutExdate } from './series'
+import { detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
+import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
+import { repeatLabel } from './blockMenuSpec'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -268,21 +270,68 @@ export function moveToDayWithUndo(event: CalendarEvent, day: string): void {
   toastUndo(`Moved to ${dayHint(day, cairoDateKey(new Date()))}`, moveOrResizeEvent(event, starts, ends, true))
 }
 
-/** The block's time of day and length from its own controls (the popover's Duration, the phone
- * sheet's Time): a one-off moves like a drag; a repeating event moves as a whole series. */
-export function retimeEventWithUndo(event: CalendarEvent, from: Span, to: Span): void {
-  const row = seriesOf(event)
-  if (!row) return moveEventWithUndo(event, from, to, to.start === from.start ? 'bottom' : 'move')
-  writeRow('calendar_events', retimeSeries(row, fromMin(to.start), to.end - to.start))
-  const today = cairoDateKey(new Date())
-  toastUndo(to.start === from.start ? `Resized to ${rangeText(to.start, to.end)}` : movedText(from, { ...to, day: from.day }, today), () => writeRow('calendar_events', row))
+/** Where the block that was edited stands now (a sheet kept open over it re-finds it by these). */
+export interface BlockRef {
+  id: string
+  start: string
 }
 
-/** Repeat from a block (`rule` null = does not repeat). Task blocks never repeat — their task does. */
-export function setEventRepeat(event: CalendarEvent, rule: string | null): void {
+/** "This and following" (conductor decision 2026-10-12): the series ends just before `occ` and a new
+ * one starts there, built by `tailOf`. Undefined when nothing of the series is left before `occ` —
+ * the caller then edits the row in place. The Undo puts the original row back and drops the new one. */
+function splitAt(row: CalendarEvent, occ: CalendarEvent, tailOf: (tail: CalendarEvent) => CalendarEvent): { tail: CalendarEvent; undo: () => void } | undefined {
+  const split = splitSeries(row, occ, crypto.randomUUID(), nowIso())
+  if (!split) return undefined
+  const tail = tailOf(split.tail)
+  writeRow('calendar_events', split.head)
+  writeRow('calendar_events', tail)
+  logActivity('calendar_event.created', 'calendar_event', tail.id, { title: tail.title, type: tail.type, split_from: row.id })
+  return {
+    tail,
+    undo: () => {
+      writeRow('calendar_events', row)
+      writeRow('calendar_events', tail, 'delete')
+    },
+  }
+}
+
+/** The block's time of day and length from its own controls (the popover's Duration, the phone
+ * sheet's Time): a one-off moves like a drag; a repeating event moves as a series from this
+ * occurrence on — the earlier ones keep their time (a split). */
+export function retimeEventWithUndo(event: CalendarEvent, from: Span, to: Span): BlockRef | null {
+  const row = seriesOf(event)
+  if (!row) {
+    moveEventWithUndo(event, from, to, to.start === from.start ? 'bottom' : 'move')
+    return null
+  }
+  const today = cairoDateKey(new Date())
+  const message = to.start === from.start ? `Resized to ${rangeText(to.start, to.end)}` : movedText(from, { ...to, day: from.day }, today)
+  const retime = (r: CalendarEvent) => retimeSeries(r, fromMin(to.start), to.end - to.start)
+  const split = splitAt(row, event, retime)
+  if (split) {
+    toastUndo(`${message} · from ${dayHint(from.day, today)}`, split.undo)
+    return { id: occurrenceId(split.tail.id, new Date(split.tail.starts_at).toISOString()), start: split.tail.starts_at }
+  }
+  writeRow('calendar_events', retime(row))
+  toastUndo(message, () => writeRow('calendar_events', row))
+  return null
+}
+
+/** Repeat from a block (`rule` null = does not repeat). Task blocks never repeat — their task does.
+ * From a later occurrence it applies from there on (a split); the earlier ones stay. One Undo. */
+export function setEventRepeat(event: CalendarEvent, rule: string | null): BlockRef | null {
   const row = event.seriesId ? seriesOf(event) : event
-  if (!row || row.task_id) return
-  writeRow('calendar_events', rerule(row, event, rule))
+  if (!row || row.task_id) return null
+  const ref = (r: CalendarEvent) => ({ id: rule ? occurrenceId(r.id, new Date(r.starts_at).toISOString()) : r.id, start: r.starts_at })
+  const split = event.seriesId ? splitAt(row, event, (tail) => rerule(tail, tail, rule)) : undefined
+  if (split) {
+    toastUndo(`${repeatLabel(rule)} · from ${dayHint(cairoDateKey(new Date(event.starts_at)), cairoDateKey(new Date()))}`, split.undo)
+    return ref(split.tail)
+  }
+  const next = rerule(row, event, rule)
+  writeRow('calendar_events', next)
+  toastUndo(repeatLabel(rule), () => writeRow('calendar_events', row))
+  return ref(next)
 }
 
 /** "Link a task…": a plain one-off block takes the task (its block now — the task is scheduled

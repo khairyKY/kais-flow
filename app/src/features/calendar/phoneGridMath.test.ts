@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { allDayOn, bubbleText, dayBlocks, dragSpan, edgeScrollSpeed, EDGE_MAX_SPEED, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel } from './phoneGridMath'
+import { allDayOn, bubbleText, dayBlocks, dragSpan, edgeScrollSpeed, EDGE_MAX_SPEED, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel, monthGrid, addMonths, monthTitle } from './phoneGridMath'
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).
@@ -53,6 +53,19 @@ describe('blocks: spans, clipping, the 15-minute drag', () => {
     expect(dayBlocks([late], '2026-09-27').map((b) => [b.start, b.end])).toEqual([[1380, 1440]])
     expect(dayBlocks([late], '2026-09-28').map((b) => [b.start, b.end])).toEqual([[0, 60]])
     expect(dayBlocks([ev('09:00', '10:00', 27, { all_day: true }), ev('10:00', '11:00', 27, { deleted_at: iso('08:00') })], '2026-09-27')).toEqual([])
+  })
+  it('Calendar 3e: a piece cut at midnight knows its open edges; a day-long block goes to the all-day row', () => {
+    const late = ev('23:00', '01:00', 27, { ends_at: iso('01:00', 28) })
+    expect(dayBlocks([late], '2026-09-27').map((b) => [b.from, b.into])).toEqual([[false, true]])
+    expect(dayBlocks([late], '2026-09-28').map((b) => [b.from, b.into])).toEqual([[true, false]])
+    // ending exactly at midnight is not a cut
+    const toMidnight = ev('22:00', '00:00', 27, { ends_at: iso('00:00', 28) })
+    expect(dayBlocks([toMidnight], '2026-09-27').map((b) => [b.end, b.into])).toEqual([[1440, false]])
+    expect(dayBlocks([toMidnight], '2026-09-28')).toEqual([])
+    const offsite = ev('09:00', '15:00', 27, { ends_at: iso('15:00', 29) })
+    expect(dayBlocks([offsite], '2026-09-28')).toEqual([])
+    expect(allDayOn([offsite], ['2026-09-28'])).toEqual([offsite])
+    expect(allDayOn([offsite], ['2026-09-30'])).toEqual([])
   })
   const tyre = { day: '2026-09-27', start: 900, end: 930 }
   it('a move keeps the length and snaps to 15 minutes (16px)', () => {
@@ -127,5 +140,25 @@ describe('Schedule sheet: the next 3 free slots', () => {
     const s = scheduleSlots(busy, at('13:40'), 210)
     expect(s.today).toBe(false)
     expect(s.slots.map((x) => slotLabel(x, 210, '2026-09-27'))).toEqual(['Tomorrow 08:00', 'Tue 29 11:00', 'Wed 30 13:00'])
+  })
+})
+
+describe('month (phone parity)', () => {
+  it('the weeks holding the month, Sunday first: October 2026 starts Thu 1st → from Sun 27 Sep, 5 rows', () => {
+    const g = monthGrid('2026-10-14')
+    expect(g).toHaveLength(35)
+    expect([g[0], g[4], g.at(-1)]).toEqual(['2026-09-27', '2026-10-01', '2026-10-31'])
+  })
+  it('Monday first, and a month that needs 6 rows (August 2026: Sat 1st)', () => {
+    expect(monthGrid('2026-10-14', true)[0]).toBe('2026-09-28')
+    const aug = monthGrid('2026-08-20')
+    expect(aug).toHaveLength(42)
+    expect(aug[6]).toBe('2026-08-01')
+  })
+  it('visibleDays(month) is the grid; a month pages by months', () => {
+    expect(visibleDays('month', '2026-10-14', '2026-10-13')).toEqual(monthGrid('2026-10-14'))
+    expect(addMonths('2026-10-31', 1)).toBe('2026-11-01')
+    expect(addMonths('2026-01-15', -1)).toBe('2025-12-01')
+    expect(monthTitle('2026-10-14')).toBe('October 2026')
   })
 })

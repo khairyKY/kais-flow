@@ -2,7 +2,7 @@ import { RRule } from 'rrule'
 import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent } from '../../lib/types'
-import { expandSeries, rowIdOf, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
+import { expandSeries, floatingRule, fromFloating, rowIdOf, ruleStamp, toFloating, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
 import { zoneToIso } from './eventTime'
 
 // ── Repeating events, the app half (migration 0061; the expansion itself is the shared
@@ -73,6 +73,89 @@ export function rerule(row: CalendarEvent, occ: Pick<CalendarEvent, 'starts_at' 
   if (!occ.seriesId) return { ...row, recurrence_rule: rule, recurrence_exdates: rule ? row.recurrence_exdates ?? [] : [] }
   const later = (row.recurrence_exdates ?? []).filter((x) => Date.parse(x) > Date.parse(occ.starts_at))
   return { ...row, starts_at: occ.starts_at, ends_at: occ.ends_at, recurrence_rule: rule, recurrence_exdates: rule ? later : [] }
+}
+
+// ── "This and following" (conductor decision 2026-10-12): a repeat changed — or the series re-timed —
+// from a LATER occurrence must not erase or move the earlier ones. Google's split: the original row
+// ends just before the clicked occurrence (UNTIL), and a new row starts the series there. ──
+
+const ruleParts = (rule: string) => rule.split(';').map((p) => p.trim()).filter(Boolean)
+const partKey = (p: string) => p.split('=')[0].toUpperCase()
+
+/** The rule body with `set`'s parts replaced (null drops one), the rest in their order. */
+export function withRuleParts(rule: string, set: Record<string, string | null>): string {
+  const keys = new Set(Object.keys(set))
+  const out = ruleParts(rule).filter((p) => !keys.has(partKey(p)))
+  for (const [k, v] of Object.entries(set)) if (v != null) out.push(`${k}=${v}`)
+  return out.join(';')
+}
+
+const rulePart = (rule: string, key: string) => ruleParts(rule).find((p) => partKey(p) === key)?.split('=')[1]
+
+/** An instant of `row` on the clock its rule runs in (series.ts in _shared: floating wall time; an
+ * all-day row's stored date is already that). */
+const floatingOf = (row: Pick<CalendarEvent, 'all_day'>, at: string, zone: string) => (row.all_day ? Date.parse(at) : toFloating(Date.parse(at), zone))
+
+/** The two rows a split leaves: the original, now ending before the occurrence, and the new series
+ * starting on it (same rule — COUNT carries what was left of it — and the skips from there on). */
+export interface SeriesSplit {
+  head: CalendarEvent
+  tail: CalendarEvent
+}
+
+/**
+ * Splits `row` at its occurrence `occ`. Null when nothing of the series is left before `occ` (it is
+ * the first live occurrence): the caller edits the row in place then — no earlier block to keep.
+ */
+export function splitSeries(
+  row: CalendarEvent,
+  occ: Pick<CalendarEvent, 'starts_at' | 'ends_at'>,
+  tailId: string,
+  now: string,
+  zone: string = appZone(),
+  between: RuleBetween = ruleBetween,
+): SeriesSplit | null {
+  const rule = row.recurrence_rule
+  if (!rule) return null
+  const at = Date.parse(occ.starts_at)
+  const dtstart = new Date(floatingOf(row, row.starts_at, zone))
+  let earlier: Date[]
+  try {
+    earlier = between(floatingRule(rule, zone, row.all_day), dtstart, dtstart, new Date(floatingOf(row, occ.starts_at, zone) - 1))
+  } catch {
+    return null
+  }
+  const exdates = (row.recurrence_exdates ?? []).map(iso)
+  const skip = new Set(exdates)
+  const real = (f: Date) => new Date(row.all_day ? f.getTime() : fromFloating(f.getTime(), zone)).toISOString()
+  if (!earlier.some((f) => !skip.has(real(f)))) return null
+  const count = Number(rulePart(rule, 'COUNT'))
+  const { seriesId: _occ, ...base } = row
+  return {
+    head: {
+      ...base,
+      // UNTIL is UTC (RFC 5545; _shared/series floatingRule reads it on the wall clock): a second before.
+      recurrence_rule: withRuleParts(rule, { COUNT: null, UNTIL: ruleStamp(at - 1000) }),
+      recurrence_exdates: exdates.filter((x) => Date.parse(x) < at),
+      updated_at: now,
+    },
+    tail: {
+      ...base,
+      id: tailId,
+      starts_at: occ.starts_at,
+      ends_at: occ.ends_at,
+      // COUNT counts every start the rule makes, skipped or not (RFC 5545) — what's left after the head's.
+      recurrence_rule: count > 0 ? withRuleParts(rule, { COUNT: String(Math.max(1, count - earlier.length)) }) : rule,
+      recurrence_exdates: exdates.filter((x) => Date.parse(x) >= at),
+      // A series of its own: "All events" on either half leaves the other; Google's id stays on the head.
+      series_id: null,
+      gcal_id: null,
+      gcal_etag: null,
+      source: 'native',
+      created_at: now,
+      updated_at: now,
+    },
+  }
 }
 
 /** The block a popover / sheet is about, after an edit that may have changed it under it (a repeat
