@@ -8,11 +8,13 @@ import { useTasks } from '../tasks/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, completionRate, computeTrellisDays, routineStartKey } from '../routines/streaks'
-import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { cairoDateKey } from '../../lib/dateShortcuts'
+import { addDays, startOfWeek } from './reviewWeek'
 import { appZone } from '../../lib/appZone'
+import { fernByFraction } from '../../lib/growthStages'
+import { toastUndo } from '../../lib/undo'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
-import { logActivity } from '../../lib/activity'
 import { useMotionEnabled } from '../../lib/motion'
 import { FieldLabel } from './RitualChrome'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -26,20 +28,6 @@ import type { Area, CalendarEvent, Domain, Project, Routine, RoutineCompletion, 
 
 const A = '/ds/assets'
 
-// The review week runs Sunday 00:00 → Sunday 00:00 on the user's clock (2026-10-12 review: it
-// used the device's, so a phone in another zone swept a different week than the laptop).
-function midnightOf(key: string, plusDays = 0): Date {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(zoneWallTimeToIso(appZone(), y, m, d + plusDays))
-}
-export function startOfWeek(now: Date): Date {
-  const key = cairoDateKey(now)
-  return midnightOf(key, -new Date(`${key}T00:00:00Z`).getUTCDay())
-}
-/** `n` days after a midnight on the user's clock — wall-clock days, so a DST week is still 7 days. */
-function addDays(d: Date, n: number): Date {
-  return midnightOf(cairoDateKey(d), n)
-}
 // "Hours" throughout this page means time actually blocked on the calendar (the same real
 // proxy the Closing Ritual's sun dial uses) — completed-task duration_min is too sparse
 // (often null) to carry a whole review page. `taskFilter` scopes to a domain/project via
@@ -136,17 +124,37 @@ export function WeeklyReviewPage() {
   const openTasks = tasks.filter((t) => t.status === 'todo')
   const looseCount = openTasks.filter((t) => !t.project_id && !t.domain_id && !t.someday).length
 
-  const allSwept = domains.length > 0 && domains.every((d) => sweptAt.has(d.id))
+  // Nothing to sweep (no domains yet) never blocks closing the week.
+  const allSwept = domains.every((d) => sweptAt.has(d.id))
+  // Closed this week: the latest close/reopen row for this week wins (rows come oldest first).
+  const closedAt = useMemo(() => {
+    let at: string | null = null
+    for (const e of reviewEvents) {
+      if ((e.payload as { week?: string } | null)?.week !== weekKey) continue
+      if (e.event_type === 'review.week_closed') at = e.created_at
+      if (e.event_type === 'review.week_reopened') at = null
+    }
+    return at
+  }, [reviewEvents, weekKey])
+
+  function closeWeek() {
+    logReviewEvent(weekStart.toISOString(), 'review.week_closed', 'review', weekKey, { week: weekKey })
+    toastUndo('Week closed ✿', () => logReviewEvent(weekStart.toISOString(), 'review.week_reopened', 'review', weekKey, { week: weekKey }))
+  }
   const currentDomainId = domains.find((d) => !sweptAt.has(d.id))?.id ?? null
 
   return (
     <div style={{ maxWidth: isMobile ? undefined : 1000 }}>
       <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
         <div style={{ minWidth: 0 }}>
-          <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} isMobile={isMobile} />
+          <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} closed={!!closedAt} isMobile={isMobile} />
 
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
-            {domains.length === 0 && <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No domains yet.</p>}
+            {domains.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>
+                No domains yet — the sweep walks your domains one by one. <Link to="/settings" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
+              </p>
+            )}
             {domains.map((d) => (
               <DomainCard
                 key={d.id}
@@ -167,11 +175,17 @@ export function WeeklyReviewPage() {
 
           {/* The phone had no way to close the week (2026-10-12 parity review). */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'flex-end' : 'space-between', marginTop: isMobile ? 20 : 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
-            {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>sweep all three and the frond unfurls flat ✿</span>}
+            {/* The design's "sweep all three" was its sample count — say the real one. */}
+            {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{domains.length === 1 ? 'sweep it' : `sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
+            {closedAt ? (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
+                Week closed ✿ · {new Date(closedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })}
+              </span>
+            ) : (
             <button
               type="button"
               disabled={!allSwept}
-              onClick={() => logActivity('review.week_closed', 'review', weekStart.toISOString(), {})}
+              onClick={closeWeek}
               style={{
                 border: '1px solid var(--line-solid)',
                 background: allSwept ? 'var(--acc-terra)' : 'var(--paper-bone)',
@@ -186,6 +200,7 @@ export function WeeklyReviewPage() {
             >
               {allSwept ? 'Close the week ✓' : `Close the week · ${sweptAt.size}/${domains.length}`}
             </button>
+            )}
           </div>
 
           <button
@@ -244,7 +259,9 @@ const WEEK_DOTS: [number, number, string][] = [
   [254, 16, 'var(--acc-moss)'],
 ]
 
-function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domainsSwept: number; domainsTotal: number; allSwept: boolean; isMobile: boolean }) {
+function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }: { domainsSwept: number; domainsTotal: number; allSwept: boolean; closed: boolean; isMobile: boolean }) {
+  // The frond unfurls as the sweep goes (it was fixed at unfurl2); flat once the week is closed.
+  const fern = closed ? 'full' : fernByFraction(domainsTotal ? domainsSwept / domainsTotal : 0)
   const motion = useMotionEnabled()
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
@@ -257,7 +274,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, isMobile }: { domai
         .motion-on .kf-ink { animation: kfInkBleed 480ms var(--ease-out) both; }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
-        <img src={`${A}/fern/unfurl2.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
+        <img src={`${A}/fern/${fern}.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
         <div>
           <FieldLabel>Weekly Review · week {weekNumber}</FieldLabel>
           <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The sweep</h1>

@@ -60,7 +60,7 @@ export function useReviewEventsThisWeek(weekStartIso: string) {
       const { data, error } = await supabase
         .from('activity_log')
         .select('*')
-        .in('event_type', ['domain.swept', 'review.verdict'])
+        .in('event_type', ['domain.swept', 'review.verdict', 'review.week_closed', 'review.week_reopened'])
         .gte('created_at', weekStartIso)
         // J-27: a re-opened sweep can revise a verdict, and the page folds these rows into a
         // Map in order — oldest first so the LATEST verdict is the one that survives a reload.
@@ -78,7 +78,7 @@ export function useReviewEventsThisWeek(weekStartIso: string) {
  * only covers a table's own `[table]` key, not this `['activity_log', 'review_week', …]` one. */
 export function logReviewEvent(
   weekStartIso: string,
-  eventType: 'domain.swept' | 'review.verdict',
+  eventType: 'domain.swept' | 'review.verdict' | 'review.week_closed' | 'review.week_reopened',
   entityType: string,
   entityId: string,
   payload: Record<string, unknown>,
