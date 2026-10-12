@@ -231,7 +231,7 @@ push_bodies | sed 's/^/        /'
 : > "$PUSH_LOG"
 call notify "$B_TOKEN" '{"kind":"test"}'
 expect "notify  B test: devices reached" "b1" "$(push_devices)"
-for kind in morning_digest evening_nudge task_reminder routine overdue bogus; do
+for kind in morning_digest evening_nudge task_reminder routine birthday paper_ready overdue bogus; do
   : > "$PUSH_LOG"
   call notify "$A_TOKEN" "{\"kind\":\"$kind\"}"
   expect "notify  A $kind" 403 "$CODE"

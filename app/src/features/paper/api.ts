@@ -15,6 +15,7 @@ import { DEFAULT_ZONE } from '../../lib/appZone'
 import { createTask } from '../tasks/api'
 import { createEvent } from '../calendar/api'
 import { upsertJournalEntry } from '../journal/api'
+import { tellPaperRead } from '../notifications/local'
 import { preparePage } from './image'
 import { usePaperStore } from './paperStore'
 import { addedSummary, planWrites, shouldResume, type CaptureRow, type EditLine } from './paperMath'
@@ -131,6 +132,7 @@ async function readFrom(id: string, paths: string[], from: number, takenAt: stri
     }
     const row = queryClient.getQueryData<CaptureRow[]>(['captures'])?.find((r) => r.id === id)
     const n = row?.items.length ?? 0
+    if (row?.status === 'done') tellPaperRead(row) // the notice (12k), when nobody's looking at the app
     if (row?.status === 'failed') {
       if (watching(id)) usePaperStore.getState().show({ kind: 'unreadable', captureId: id })
       else toastAction("Couldn't read your page", 'Look', () => usePaperStore.getState().show({ kind: 'unreadable', captureId: id }))

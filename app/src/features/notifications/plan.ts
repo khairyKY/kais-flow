@@ -1,6 +1,7 @@
-import { clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
+import { BIRTHDAY_AT, birthdaysOn, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
 import { isOverdue, todaysTop3 } from '../../../../supabase/functions/_shared/today.ts'
 import { addDays, dateKey, wallToInstant } from '../../../../supabase/functions/_shared/zone.ts'
 import { dueReminders } from '../tray/trayState'
@@ -14,7 +15,7 @@ import { KIND_IDS, KIND_LOOK } from './kinds'
 //  - Android (android.ts): the next few days, handed to the OS as scheduled notifications, so they
 //    arrive with the app closed. Re-planned whenever the data changes while the app runs.
 // The same rules as notify: the digest's Top 3 and overdue count are _shared/today.ts's, routine
-// reminders notify/routine.ts's (2026-10-12).
+// reminders notify/routine.ts's, birthdays notify/birthday.ts's (2026-10-12).
 // Pure, so the same rules (kind switches, pause, quiet hours, lock-screen names) are tested here.
 
 export interface PlanTask {
@@ -48,6 +49,9 @@ export interface PlanInput {
   /** Routines with a reminder time (routines.clock_time) and their check-offs. */
   routines?: readonly ReminderRoutine[]
   completions?: readonly RoutineDone[]
+  /** People (their Birthday fact) and the interactions logged with them ("Last spoke 12 days ago"). */
+  people?: readonly PersonFacts[]
+  interactions?: readonly Spoke[]
   prefs: PlanPrefs | null | undefined
   /** The window: notices whose moment falls in (from, to]. */
   from: Date
@@ -67,7 +71,7 @@ function wallTimes(min: number, from: Date, to: Date, zone: string): Date[] {
   return out
 }
 
-export function localPlan({ tasks, projects = [], routines = [], completions = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
+export function localPlan({ tasks, projects = [], routines = [], completions = [], people = [], interactions = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
   const out: Planned[] = []
   const add = (key: string, at: Date, build: (said: Date) => Notice | null) => {
     const said = new Date(Math.max(at.getTime(), now.getTime()))
@@ -100,6 +104,12 @@ export function localPlan({ tasks, projects = [], routines = [], completions = [
   }
   for (const [at, group] of routineGroups) {
     add(`routine:${group.map((r) => r.id).join(',')}@${new Date(at).toISOString()}`, new Date(at), () => routineNotice(group as (ReminderRoutine & { clock_time: string })[], prefs))
+  }
+
+  // Birthdays at 08:00 on the user's clock (12j), as this device last synced its people.
+  for (const at of wallTimes(BIRTHDAY_AT, from, to, zone)) {
+    const today = birthdaysOn(people, interactions, dateKey(at, zone), zone)
+    if (today.length) add(`birthday:${today.map((b) => b.id).join(',')}@${at.toISOString()}`, at, () => birthdayNotice(today, prefs))
   }
 
   // The morning digest and the evening nudge, at the user's own times (Settings → Notifications).
@@ -148,7 +158,8 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
   if (d.channel === 'web' && d.permission !== 'unsupported' && !d.subscribed) out.push('This device isn’t subscribed — tap “Subscribe this device” first.')
   if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone)}.`)
   if (inQuietHours(p, now, zone)) out.push('Quiet hours are on — notifications come without a sound.')
-  const off = KIND_IDS.filter((k) => !kindOn(k, p)).map((k) => KIND_LOOK[k].label)
+  // Kinds turned off that start on — Birthday starting off (12i) isn't something in the way.
+  const off = KIND_IDS.filter((k) => !kindOn(k, p) && kindOn(k, null)).map((k) => KIND_LOOK[k].label)
   if (off.length) out.push(`Turned off: ${off.join(', ')}.`)
   return out
 }
