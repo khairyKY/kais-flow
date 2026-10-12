@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 // The edge functions' pure GitHub logic — Deno-free on purpose so it can be tested here.
-import { parseRepos, planSync, searchQueries, toPayload, type GhIssue, type PendingRow } from '../../../../supabase/functions/_shared/github.ts'
+import { DEFAULT_RULES, landing, parseRepos, planSync, readRules, searchQueries, staleFirst, toPayload, type GhIssue, type PendingRow } from '../../../../supabase/functions/_shared/github.ts'
 
 const issue = (n: number, over: Partial<GhIssue> = {}): GhIssue => ({
   node_id: `I_${n}`,
@@ -51,6 +51,57 @@ describe('searchQueries', () => {
   })
   it('drops a malformed login instead of injecting it', () => {
     expect(searchQueries('kai repo:evil/x', [])).toEqual([])
+  })
+  it('once the rules are saved, picked repos are the whole scope; none picked = assigned only', () => {
+    expect(searchQueries('kai', ['acme/app'], true)).toEqual(['is:open is:issue repo:acme/app'])
+    expect(searchQueries('kai', [], true)).toEqual(['is:open is:issue assignee:kai'])
+    // a list of nothing valid still means "none picked", not "nothing at all"
+    expect(searchQueries('kai', ['not a repo'], true)).toEqual(['is:open is:issue assignee:kai'])
+  })
+})
+
+describe('readRules', () => {
+  it('no rules saved = the behaviour from before: Inbox, normal, syncing', () => {
+    expect(readRules(undefined)).toEqual(DEFAULT_RULES)
+    expect(readRules(null)).toEqual({ land: 'inbox', priority: 'normal', paused: false })
+  })
+  it('keeps known values and drops anything else to the default', () => {
+    expect(readRules({ land: 'tasks', priority: 'high', paused: true })).toEqual({ land: 'tasks', priority: 'high', paused: true })
+    expect(readRules({ land: 'calendar', priority: 'urgent', paused: 'yes', extra: 1 })).toEqual(DEFAULT_RULES)
+    expect(readRules('tasks')).toEqual(DEFAULT_RULES)
+  })
+})
+
+describe('landing (issue → where it lands)', () => {
+  it('Inbox: a pending github_issue letter, deduped on the node_id', () => {
+    expect(landing(issue(7), DEFAULT_RULES)).toEqual({
+      table: 'inbox_items',
+      row: { kind: 'github_issue', raw_text: 'Issue 7', status: 'pending', payload: toPayload(issue(7)), external_ref: { source: 'github', id: 'I_7' } },
+    })
+  })
+  it('Straight to Tasks: an unfiled todo with the issue link, marked as the sync’s own', () => {
+    expect(landing(issue(7), { ...DEFAULT_RULES, land: 'tasks' })).toEqual({
+      table: 'tasks',
+      row: { title: 'Issue 7', status: 'todo', external_ref: { source: 'github', id: 'I_7', url: 'https://github.com/acme/app/issues/7', repo: 'acme/app', number: 7, synced: true } },
+    })
+  })
+  it('priority and pause never change the row', () => {
+    expect(landing(issue(7), { land: 'inbox', priority: 'low', paused: true })).toEqual(landing(issue(7), DEFAULT_RULES))
+  })
+  it('a non-github.com link is dropped on a task too', () => {
+    const l = landing(issue(7, { html_url: 'javascript:alert(1)' }), { ...DEFAULT_RULES, land: 'tasks' })
+    expect(l.table === 'tasks' && l.row.external_ref.url).toBeNull()
+  })
+})
+
+describe('staleFirst', () => {
+  it('never-checked first, then oldest check; capped at 20', () => {
+    const rows = [row(1, { checked_at: '2026-09-27T09:00:00Z' }), row(2), ...Array.from({ length: 25 }, (_, i) => row(100 + i, { checked_at: '2026-09-27T08:00:00Z' }))]
+    const out = staleFirst(rows)
+    expect(out).toHaveLength(20)
+    expect(out[0].id).toBe('row-2')
+    expect(out.some((r) => r.id === 'row-1')).toBe(false)
+    expect(rows[0].id).toBe('row-1') // the input isn't reordered
   })
 })
 

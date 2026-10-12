@@ -4,8 +4,8 @@
 //  - a signed-in user's "Sync now" (Settings › Integrations): syncs only that user.
 // Anyone else gets 401.
 //
-//   { action: 'sync' } → { fetched, new, updated, dismissed }            (user)
-//                      → { users, failed, fetched, new, updated, dismissed } (cron)
+//   { action: 'sync' } → { fetched, new, updated, dismissed, completed }            (user)
+//                      → { users, failed, fetched, new, updated, dismissed, completed } (cron)
 //
 // Per user: one search for open issues assigned to them, plus one (rarely two) for their watched
 // repos — the search API allows 30 requests/min per token, and every user syncs with their own
@@ -20,11 +20,17 @@
 // counted against the global parse cap via takeAiAllowance (_shared/quota.ts) — ranking every
 // user's backlog every 30 min would burn the shared Groq free quota by itself.
 //
+// Settings 2a's rules (integrations.data.rules, _shared/github.ts readRules): paused users are
+// skipped by the cron and "Sync now" answers `paused`; with the rules saved, picked repos are the
+// whole scope (searchQueries' onlyRepos); "Straight to Tasks" lands new issues as unfiled tasks
+// (external_ref.synced), which the recheck ticks off when their issue closes or disappears —
+// a task filed by hand from the Inbox is never touched. No rules saved = the behaviour from before.
+//
 // Errors are stable codes (SEC-3). The PAT is never logged or returned.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
-import { ghGet, parseRepos, planSync, searchQueries, toPayload, type GhIssue, type PendingRow } from '../_shared/github.ts'
+import { ghGet, landing, parseRepos, planSync, readRules, searchQueries, staleFirst, type GhIssue, type PendingRow, type SyncedTaskRef } from '../_shared/github.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -38,7 +44,9 @@ interface GithubData {
   login?: string
   repos?: string[]
   status?: 'ok' | 'failing'
-  synced_at?: string
+  synced_at?: string | null
+  /** Settings 2a — absent until the user first saves the rules panel. */
+  rules?: unknown
 }
 
 interface Counts {
@@ -46,6 +54,8 @@ interface Counts {
   new: number
   updated: number
   dismissed: number
+  /** Synced tasks ticked off because their issue closed or disappeared. */
+  completed: number
 }
 
 class GithubError extends Error {
@@ -54,9 +64,9 @@ class GithubError extends Error {
   }
 }
 
-async function searchAll(token: string, login: string, repos: string[]): Promise<GhIssue[]> {
+async function searchAll(token: string, login: string, repos: string[], onlyRepos: boolean): Promise<GhIssue[]> {
   const out: GhIssue[] = []
-  for (const q of searchQueries(login, repos)) {
+  for (const q of searchQueries(login, repos, onlyRepos)) {
     // ponytail: one page of 100 per query, most recently updated first. Past 100 open issues the
     // oldest ones aren't imported; add paging if someone really has that many.
     const res = await ghGet(`/search/issues?q=${encodeURIComponent(q)}&sort=updated&order=desc&per_page=100`, token)
@@ -99,7 +109,8 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
       .eq('updated_at', updated_at)
 
   try {
-    const fetched = await searchAll(token, data.login ?? '', data.repos ?? [])
+    const rules = readRules(data.rules)
+    const fetched = await searchAll(token, data.login ?? '', data.repos ?? [], data.rules != null)
     const ids = [...new Set(fetched.map((i) => i.node_id))]
 
     const pending = must(
@@ -107,30 +118,27 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
         .eq('user_id', userId).eq('kind', 'github_issue').eq('status', 'pending').is('deleted_at', null)
         .eq('external_ref->>source', 'github'),
     ) as PendingRow[]
-    // Rows in ANY status (filed, dismissed, trashed) block a re-insert.
-    const known = ids.length === 0 ? [] : must(
-      await db.from('inbox_items').select('ref:external_ref->>id')
-        .eq('user_id', userId).eq('external_ref->>source', 'github').in('external_ref->>id', ids),
-    ) as { ref: string }[]
+    // Rows in ANY status (filed, dismissed, trashed) block a re-insert — inbox letters and tasks
+    // alike, so switching where issues land never brings one back as the other.
+    const known = ids.length === 0 ? [] : [
+      ...must(await db.from('inbox_items').select('ref:external_ref->>id')
+        .eq('user_id', userId).eq('external_ref->>source', 'github').in('external_ref->>id', ids)) as { ref: string }[],
+      ...must(await db.from('tasks').select('ref:external_ref->>id')
+        .eq('user_id', userId).eq('external_ref->>source', 'github').in('external_ref->>id', ids)) as { ref: string }[],
+    ]
 
     const plan = planSync(fetched, pending, new Set(known.map((k) => k.ref)), data.synced_at ?? null)
-    const counts: Counts = { fetched: ids.length, new: 0, updated: 0, dismissed: 0 }
+    const counts: Counts = { fetched: ids.length, new: 0, updated: 0, dismissed: 0, completed: 0 }
 
-    const inserted = await insertNew(db, plan.insert.map((i) => ({
-      id: crypto.randomUUID(),
-      user_id: userId,
-      kind: 'github_issue',
-      raw_text: i.title,
-      status: 'pending',
-      payload: toPayload(i),
-      external_ref: { source: 'github', id: i.node_id },
-    })))
-    counts.new = inserted.length
-    if (inserted.length > 0) {
-      must(await db.from('activity_log').insert(inserted.map((id) => ({
-        user_id: userId, event_type: 'inbox.captured', entity_type: 'inbox_item', entity_id: id, payload: { kind: 'github_issue' },
-      }))))
-    }
+    const landed = plan.insert.map((i) => landing(i, rules))
+    const letters = await insertNew(db, 'inbox_items', landed.flatMap((l) => (l.table === 'inbox_items' ? [{ id: crypto.randomUUID(), user_id: userId, ...l.row }] : [])))
+    const tasks = await insertNew(db, 'tasks', landed.flatMap((l) => (l.table === 'tasks' ? [{ id: crypto.randomUUID(), user_id: userId, ...l.row }] : [])))
+    counts.new = letters.length + tasks.length
+    const events = [
+      ...letters.map((r) => ({ user_id: userId, event_type: 'inbox.captured', entity_type: 'inbox_item', entity_id: r.id, payload: { kind: 'github_issue' } })),
+      ...tasks.map((r) => ({ user_id: userId, event_type: 'task.created', entity_type: 'task', entity_id: r.id, payload: { title: r.title, source: 'github' } })),
+    ]
+    if (events.length > 0) must(await db.from('activity_log').insert(events))
 
     for (const u of plan.update) {
       must(await db.from('inbox_items').update({ raw_text: u.raw_text, payload: u.payload })
@@ -152,6 +160,34 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
           user_id: userId, event_type: 'inbox.dismissed', entity_type: 'inbox_item', entity_id: row.id, payload: { reason: verdict },
         }))
       }
+    }
+
+    // "Straight to Tasks": open tasks this sync made whose issue left the results — closed or gone
+    // ticks them off; still open (unassigned, repo unwatched) only stamps checked_at.
+    const fetchedIds = new Set(ids)
+    const openTasks = must(
+      await db.from('tasks').select('id, title, external_ref')
+        .eq('user_id', userId).eq('status', 'todo').is('deleted_at', null)
+        .eq('external_ref->>source', 'github').eq('external_ref->>synced', 'true'),
+    ) as { id: string; title: string; external_ref: SyncedTaskRef }[]
+    const missing = openTasks.filter((t) => !fetchedIds.has(t.external_ref.id))
+      .map((t) => ({ id: t.id, raw_text: t.title, payload: { ...t.external_ref }, external_ref: t.external_ref }))
+    for (const row of staleFirst(missing)) {
+      const verdict = await recheck(token, row)
+      if (verdict === 'stop') break
+      if (verdict === 'open') {
+        must(await db.from('tasks').update({ external_ref: { ...row.external_ref, checked_at: startedAt } })
+          .eq('id', row.id).eq('user_id', userId).eq('status', 'todo'))
+        continue
+      }
+      // The same write as ticking it off in the app (and the mcp function's markDone).
+      const done = must(await db.from('tasks').update({ status: 'done', completed_at: startedAt, top3: false })
+        .eq('id', row.id).eq('user_id', userId).eq('status', 'todo').is('deleted_at', null).select('id')) as { id: string }[]
+      if (done.length === 0) continue
+      counts.completed++
+      must(await db.from('activity_log').insert({
+        user_id: userId, event_type: 'task.completed', entity_type: 'task', entity_id: row.id, payload: { source: 'github', reason: verdict },
+      }))
     }
 
     must(await saveData({ status: 'ok', synced_at: startedAt }))
@@ -185,20 +221,20 @@ async function recheck(token: string, row: PendingRow): Promise<'open' | 'closed
   return issue.state === 'closed' ? 'closed on GitHub' : 'open'
 }
 
-/** Inserts the batch; returns the ids that landed. If a concurrent sync (cron + "Sync now") got
+/** Inserts the batch; returns the rows that landed. If a concurrent sync (cron + "Sync now") got
  * there first, the unique index rejects the batch — then row by row, skipping the duplicates. */
-async function insertNew(db: SupabaseClient, rows: { id: string }[]): Promise<string[]> {
+async function insertNew<T extends { id: string }>(db: SupabaseClient, table: 'inbox_items' | 'tasks', rows: T[]): Promise<T[]> {
   if (rows.length === 0) return []
-  const { error } = await db.from('inbox_items').insert(rows)
-  if (!error) return rows.map((r) => r.id)
+  const { error } = await db.from(table).insert(rows)
+  if (!error) return rows
   if (error.code !== '23505') throw new Error(`db ${error.code}`)
-  const ids: string[] = []
+  const out: T[] = []
   for (const row of rows) {
-    const { error: e } = await db.from('inbox_items').insert(row)
-    if (!e) ids.push(row.id)
+    const { error: e } = await db.from(table).insert(row)
+    if (!e) out.push(row)
     else if (e.code !== '23505') throw new Error(`db ${e.code}`)
   }
-  return ids
+  return out
 }
 
 function describe(e: unknown): string {
@@ -218,8 +254,9 @@ Deno.serve(async (req) => {
       console.error('github-sync: listing integrations failed', error.code)
       return jsonResponse(req, { error: 'server_error' }, 500)
     }
-    const totals = { users: 0, failed: 0, fetched: 0, new: 0, updated: 0, dismissed: 0 }
-    const queue = [...(rows as IntegrationRow[])]
+    const totals = { users: 0, failed: 0, fetched: 0, new: 0, updated: 0, dismissed: 0, completed: 0 }
+    // Paused in Settings 2a: skipped entirely until the user turns Pause off.
+    const queue = (rows as IntegrationRow[]).filter((r) => !readRules(r.data.rules).paused)
     await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
       for (let row = queue.shift(); row; row = queue.shift()) {
         totals.users++
@@ -229,6 +266,7 @@ Deno.serve(async (req) => {
           totals.new += c.new
           totals.updated += c.updated
           totals.dismissed += c.dismissed
+          totals.completed += c.completed
         } catch (e) {
           totals.failed++
           console.error('github-sync: user sync failed', describe(e))
@@ -245,6 +283,7 @@ Deno.serve(async (req) => {
     .eq('user_id', auth.user.id).eq('provider', 'github').maybeSingle()
   if (error) return jsonResponse(req, { error: 'server_error' }, 500)
   if (!row) return jsonResponse(req, { error: 'not_connected' }, 404)
+  if (readRules((row as IntegrationRow).data.rules).paused) return jsonResponse(req, { error: 'paused' }, 409)
   try {
     return jsonResponse(req, await syncUser(db, row as IntegrationRow))
   } catch (e) {
