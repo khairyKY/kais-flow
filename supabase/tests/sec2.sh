@@ -490,18 +490,23 @@ printf '%s\n' "$CROSS" | sed 's/^/        /'
 expect "0013: B's activity counts as touching A's entities" "old|area=0,domain=0,project=0" "$(printf '%s\n' "$CROSS" | grep '^old|')"
 expect "0036: A's entities keep A's own last touch" "new|area=9,domain=9,project=9" "$(printf '%s\n' "$CROSS" | grep '^new|')"
 
-# End to end: notify's digest (service role) counts A's slipping areas from the view.
+# End to end: notify's digest (service role) on A's device, with B's rows pointing at A's entities.
+# Until 2026-10-12 the digest said "N area(s) slipping" from the view; it now says today's Top 3 (+ "N
+# overdue.") and reads no slipping at all, so the view's owner scoping is the SQL checks above.
 sql -v a="$A_ID" -v b="$B_ID" <<'SQL' >/dev/null
 insert into activity_log (user_id, event_type, entity_type, entity_id)
 select :'b'::uuid, 'sec2.foreign', 'domain', id from domains where user_id = :'a'
 union all select :'b', 'sec2.foreign', 'project', id from projects where user_id = :'a'
 union all select :'b', 'sec2.foreign', 'area', id from areas where user_id = :'a';
 insert into tasks (user_id, title, top3) values (:'a', 'SEC2 alpha top3', true);
+insert into app_settings (user_id, lock_screen_names) values (:'a', true)
+  on conflict (user_id) do update set lock_screen_names = true; -- names in the push (off by default)
 SQL
 : > "$PUSH_LOG"
 call notify "$SERVICE_ROLE_KEY" '{"kind":"morning_digest"}'
-expect "digest on a1 still counts A's 3 stale entities though B's rows point at them (0013: 0)" \
-  "Top-3: SEC2 alpha top3. 3 area(s) slipping." "$(jq -r 'select(.device=="a1") | .payload.body' "$PUSH_LOG")"
+expect "digest on a1: A's own Top 3 though B's rows point at A's entities" \
+  "Good morning — 1 to tend today | ✶ SEC2 alpha top3." \
+  "$(jq -r 'select(.device=="a1") | "\(.payload.title) | \(.payload.body)"' "$PUSH_LOG")"
 
 # =============================================================================================
 wipe

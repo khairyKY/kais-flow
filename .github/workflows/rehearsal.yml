@@ -117,9 +117,9 @@ jobs:
           for s in fix0-auth sec2 notify-prune fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
-            result=$(grep -E '^[0-9]+ passed|retainer-reload: all checks passed' "$log" | tail -1 | sed 's/^NOTICE: *//')
+            result=$(grep -oE '^[0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)
             echo "- $s: ${result:-no result line — see the step log}"
-            grep -E '^  FAIL ' "$log" | head -30 | sed 's/^  FAIL /    - FAIL /'
+            grep -E '^  FAIL ' "$log" | head -30 | sed 's/^  FAIL /    - FAIL /' || true
           done >> "$GITHUB_STEP_SUMMARY"
 
   production:
@@ -186,7 +186,10 @@ jobs:
 
       - name: Restore production's schema + migration history into it
         run: |
-          PGOPTIONS="-c client_min_messages=error" psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/prod-schema.sql" > /dev/null
+          # As postgres, pg_dump's GRANTs on the vector extension's functions only warn ("no privileges
+          # were granted", ~500 lines); those are dropped. Errors still stop the restore.
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/prod-schema.sql" 2>&1 > /dev/null \
+            | { grep -v 'WARNING:  no privileges were granted for' || true; }
           rm -f "$RUNNER_TEMP/prod-schema.sql"
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -c "create schema if not exists supabase_migrations" \
             -c "create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text)"
