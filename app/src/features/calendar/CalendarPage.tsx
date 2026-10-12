@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
@@ -325,6 +326,7 @@ export function CalendarPage() {
 
 function DesktopCalendar() {
   const openTask = useOpenTask()
+  const navigate = useNavigate()
   // Repeating events (migration 0061) are expanded twice over: `events` covers the year around
   // today (the rail, Plan's free slots, the footer); `gridEvents` the range the grid shows, wherever
   // it was paged to. Clicks, drags and the popover act on the grid's.
@@ -1141,6 +1143,12 @@ function DesktopCalendar() {
           onClose={() => {
             setQuickCreate(null)
             gridRef.current?.unselect()
+          }}
+          // Editor 1b–1d: "More options ↗" is the full create page, with what was typed.
+          onExpand={(draft) => {
+            setQuickCreate(null)
+            gridRef.current?.unselect()
+            void navigate('/new', { state: { draft } })
           }}
         />
       )}

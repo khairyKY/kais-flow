@@ -257,6 +257,50 @@ if (want('p4b')) {
   }
 }
 
+// ── E1: Editor 1b–1d — the popover's More options ↗ is the full create page (sidebar folded, Notes) ──
+if (want('e1')) {
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors, state } = await open('/calendar', { theme })
+    // A click on an empty slot at 16:30 today opens the 2a popover.
+    await page.locator('.fc-timegrid-slot-lane[data-time="16:30:00"]').first().scrollIntoViewIfNeeded()
+    await sleep(300)
+    const slot = await page.locator('.fc-timegrid-slot-lane[data-time="16:30:00"]').first().boundingBox()
+    const col = await page.locator('.fc-timegrid-col.fc-day-today').first().boundingBox()
+    await page.mouse.click(col.x + col.width / 2, slot.y + 6)
+    await sleep(500)
+    await shot(page, `e1-popover-${theme}`)
+    await page.locator('.kf-quickcreate').getByRole('button', { name: 'Task', exact: true }).click()
+    await page.locator('.kf-quickcreate input[aria-label="Title"]').fill('Call Omar re: pricing !! *deep-work')
+    await page.locator('.kf-quickcreate').getByRole('button', { name: /More options/ }).click()
+    await sleep(1200)
+    check(`e1 ${theme}: More options ↗ opens the full page at /new (not a modal)`, page.url().endsWith('/new') && (await page.locator('.kf-scrim').count()) === 0 && (await page.getByRole('heading', { name: 'Something new' }).count()) === 1, page.url())
+    check(`e1 ${theme}: the sidebar folds to the rail`, (await page.locator('.app-sidebar.collapsed').count()) === 1)
+    check(`e1 ${theme}: what was typed came along (title, the caught !! and *deep-work)`, (await page.locator('input[aria-label="Title"]').inputValue()) === 'Call Omar re: pricing !! *deep-work' && /high/i.test(await page.locator('.kf-quickcreate').innerText()))
+    await page.locator('textarea[aria-label="Notes"]').fill('Bring the Q3 numbers')
+    await page.mouse.move(0, 0)
+    await shot(page, `e1-create-task-${theme}`)
+    if (theme === 'day') {
+      await page.getByRole('button', { name: /^Event/ }).click()
+      await sleep(300)
+      await shot(page, 'e1-create-event-day')
+      await page.getByRole('button', { name: /^Time block/ }).click()
+      await sleep(300)
+      await shot(page, 'e1-create-block-day')
+      await page.getByRole('button', { name: /^Task/ }).click()
+      await sleep(300)
+      const w = state.writes.length
+      await page.getByRole('button', { name: /Create task/ }).click()
+      await settle(state)
+      const t = posts(state, 'tasks', w).find((x) => x.notes === 'Bring the Q3 numbers')
+      const b = posts(state, 'calendar_events', w).find((x) => x.task_id === t?.id)
+      check('e1 Create task: the task carries its Notes, the caught priority and label, a clean title, and its block at the clicked 16:30', !!t && t.title === 'Call Omar re: pricing' && t.priority === 2 && t.labels?.includes('deep-work') && b?.starts_at === iso('16:30'), JSON.stringify({ title: t?.title, p: t?.priority, l: t?.labels, b: b?.starts_at }))
+      check('e1 back on the calendar, the sidebar open again', page.url().endsWith('/calendar') && (await page.locator('.app-sidebar.collapsed').count()) === 0, page.url())
+    }
+    check(`e1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1))
 await browser.close()
 const failed = results.filter((r) => !r.ok)
