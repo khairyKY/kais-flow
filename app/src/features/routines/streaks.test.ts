@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { aggregateCompletionRate, challengeDays, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakOfGoal, streakRiskMessage, todayTally } from './streaks'
+import { aggregateCompletionRate, challengeDays, completionRate, computeGraceStreak, computeStreak, computeTrellisDays, dailyCompletionRatios, localDateKey, routineStartKey, routineStreak, routinesForToday, streakOfGoal, todayTally } from './streaks'
 import { addDays, weekday } from '../../components/pickerMath'
 import { setAppZone } from '../../lib/appZone'
 import { zoneWallTimeToIso } from '../../lib/dateShortcuts'
@@ -232,31 +232,6 @@ describe('computeTrellisDays', () => {
     const days = computeTrellisDays([dayKey(-1)], DAILY, 3, NOW)
     expect(days[2].state).toBe('off')
     expect(days[1].state).toBe('grew')
-  })
-})
-
-describe('streakRiskMessage', () => {
-  it('flags a scheduled-today routine with an active streak not yet done today', () => {
-    const r = routine({ name: 'Meditate', cadence: DAILY })
-    const completions = completionsFor(r.id, [dayKey(-1), dayKey(-2), dayKey(-3)])
-    const msg = streakRiskMessage([r], completions, NOW)
-    expect(msg).toContain('Meditate')
-    expect(msg).toContain('3-day')
-  })
-
-  it('returns null once the routine is already done today', () => {
-    const r = routine({ name: 'Meditate', cadence: DAILY })
-    const completions = completionsFor(r.id, [dayKey(-1), dayKey(0)])
-    expect(streakRiskMessage([r], completions, NOW)).toBeNull()
-  })
-
-  it('returns null when nothing is scheduled today', () => {
-    const r = routine({ name: 'Weekly review', cadence: { weekdays: [1] } }) // Monday only; NOW is Wednesday
-    expect(streakRiskMessage([r], [], NOW)).toBeNull()
-  })
-
-  it('returns null when there is no streak to lose', () => {
-    expect(streakRiskMessage([routine({ name: 'Fresh habit', cadence: DAILY })], [], NOW)).toBeNull()
   })
 })
 

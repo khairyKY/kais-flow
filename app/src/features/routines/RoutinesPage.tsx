@@ -135,7 +135,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     </>
   )
   const stepsFold = showSteps && (
-    <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+    <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', listStyle: 'decimal', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
       {steps.map((s, i) => (
         <li key={i}>{s}</li>
       ))}

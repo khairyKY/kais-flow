@@ -301,23 +301,6 @@ export function trellisCaption(days: TrellisDay[], current: number, status: Stre
   return { kind: 'bare' }
 }
 
-/** No `goal` field exists on a routine, so "streak vs. goal" is read as "streak vs. today":
- * flags the routine with the longest streak that's scheduled today, not yet done, and would
- * break if skipped. Null when nothing active is actually at risk right now. */
-export function streakRiskMessage(routines: Routine[], completions: RoutineCompletion[], today: Date = new Date()): string | null {
-  const todayKey = localDateKey(today)
-  let worst: { name: string; current: number } | null = null
-  for (const routine of routines) {
-    if (!isScheduled(todayKey, routine.cadence)) continue
-    const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
-    if (dates.includes(todayKey)) continue
-    const { current } = computeStreak(dates, routine.cadence, today)
-    if (current > 0 && (!worst || current > worst.current)) worst = { name: routine.name, current }
-  }
-  if (!worst) return null
-  return `${worst.name}'s ${worst.current}-day streak is on the line — complete it today to keep it.`
-}
-
 /** Days in a challenge window, both ends counted ("YYYY-MM-DD" keys; Sep 1 → Sep 30 = 30). */
 export function challengeDays(start: string, end: string): number {
   return Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1
