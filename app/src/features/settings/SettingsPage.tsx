@@ -1075,6 +1075,19 @@ function GroupLabel({ children }: { children: ReactNode }) {
   )
 }
 
+// Kai 2026-10-12 ("fix or cut" → fix, by moving it): the capture key is a power tool, so it leaves the
+// Integrations list for a quiet Advanced section at the bottom of Settings, desktop and phone, still
+// fully working. Its card keeps the title "External capture endpoint" — docs/CAPTURE.md and the
+// guides find it by that name.
+function AdvancedSection() {
+  return (
+    <div id="settings-Advanced" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+      <GroupLabel>Advanced</GroupLabel>
+      <CaptureKeyCard />
+    </div>
+  )
+}
+
 function IntegrationsPage() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
@@ -1100,12 +1113,10 @@ function IntegrationsPage() {
       />
 
       <GroupLabel>Capture from anywhere</GroupLabel>
-      <div className="st-pair">
-        <CaptureKeyCard />
-        <SCard plain padded title="Share target" sub="Share to Kai’s Flow from any app on your phone — links, notes, half-thoughts.">
-          <div className="st-help">It’s in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
-        </SCard>
-      </div>
+      {/* The capture key moved to Settings → Advanced (Kai 2026-10-12). */}
+      <SCard plain padded title="Share target" sub="Share to Kai’s Flow from any app on your phone — links, notes, half-thoughts.">
+        <div className="st-help">It’s in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
+      </SCard>
       {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
       <PaperSettingsCard />
 
@@ -1219,10 +1230,10 @@ function OrganizeCard() {
   )
 }
 
-// The capture endpoint's key card lives on the Integrations page, so it has no row of its own.
+// The capture endpoint's key card lives in Advanced, at the bottom of the page (Kai 2026-10-12).
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card (punch 21);
 // 'Data' holds the importer and punch 50's Trash entry point. UI pass: in the order the page reads.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App', 'Advanced'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data' }
 
@@ -1284,6 +1295,7 @@ function DesktopSettings() {
             </div>
           </div>
         )}
+        {page === 'all' && <AdvancedSection />}
       </div>
     </div>
   )
@@ -1312,16 +1324,16 @@ function MobileSettings() {
       <NotificationsCard />
       {/* The phone has no Organize rail — its domains live here. */}
       <OrganizeCard />
-      {/* P6: the phone has no Integrations page, so GitHub, the capture key, photos and AI sit here. */}
+      {/* P6: the phone has no Integrations page, so GitHub, photos and AI sit here (the capture key: Advanced). */}
       <GroupLabel>Connections</GroupLabel>
       <GithubProvider github={github} />
-      <CaptureKeyCard />
       <PaperSettingsCard />
       <McpCard />
       {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}
       <DataCard />
       <ProfileCard />
       <AppUpdateCard />
+      <AdvancedSection />
       <div className="st-phone-foot">everything saves as you touch it ✿</div>
     </div>
   )
