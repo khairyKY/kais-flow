@@ -1,0 +1,25 @@
+PASS book found by author — ["book:Four Thousand Weeks"]
+PASS book found by its title (FTS, 3 words) — ["book:Four Thousand Weeks"]
+PASS a half-typed title finds the book (lexical tier 2) — [["book",2]]
+PASS note found by its body, titled by its title — ["note:Pricing model ideas"]
+PASS note found by a tag — ["note:Pricing model ideas"]
+PASS an untitled note is titled by its body — ["note:Efficiency trap maps onto the inbox — clearing it faster refills it faster."]
+PASS an empty-string title also falls back to the body — ["note:Untitled note about the herbarium"]
+PASS quote found by its text, snippet "author · source" — [["quote","Mary Oliver · Devotions"]]
+PASS quote found by author + source — ["quote:Attention is the beginning of devotion."]
+PASS a quote without author/source has a null snippet — [["quote",null]]
+PASS a row found by FTS and lexical merges into one hit — ["book:Four Thousand Weeks"]
+PASS A never sees B's book — ["Oliver Burkeman"]
+PASS A never sees B's note — ["note:Pricing model ideas"]
+PASS B sees only B's quote — ["Mary Oliver · B copy"]
+PASS signed out: nothing — []
+PASS tasks still found (lexical + FTS) — 46
+PASS task notes still searched — ["task:Water the basil"]
+PASS 3+ words, 45 FTS matches: the 40th (weakest kept) scores 1/100 — 40 rows, min 0.01
+PASS no word in common: only the vector neighbour comes back — ["task:Pay the electricity bill"]
+PASS … and it scores below the literal floor (0.5/61) — 0.00819672131147541
+PASS found by both arms: above the floor — 2.0245901639344264
+PASS a neighbour past distance 0.35 is not returned — []
+PASS one search_hybrid, SECURITY INVOKER, STABLE — [{"prosecdef":false,"provolatile":"s"}]
+
+all passed

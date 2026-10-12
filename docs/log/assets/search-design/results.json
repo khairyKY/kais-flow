@@ -1,0 +1,312 @@
+[
+  {
+    "name": "a count line",
+    "ok": true,
+    "detail": "22 RESULTS FOR 'OMAR'"
+  },
+  {
+    "name": "a chips in 1a order with counts, then the two filters",
+    "ok": true,
+    "detail": "[\"All22\",\"Tasks9\",\"Events3\",\"Inbox2\",\"Projects1\",\"Journal5\",\"People1\",\"Library1\",\"Open only\"]"
+  },
+  {
+    "name": "a \"Any time ▾\" filter present",
+    "ok": true,
+    "detail": "ANY TIME ▾"
+  },
+  {
+    "name": "a groups in 1a order (People, Tasks, Events, Inbox, Journal, Projects, Library)",
+    "ok": true,
+    "detail": "[\"person\",\"task\",\"calendar_event\",\"inbox_item\",\"journal_entry\",\"project\",\"library\"]"
+  },
+  {
+    "name": "a Tasks peeks 5, the last a Related row \"In Shaheen website\"",
+    "ok": true,
+    "detail": "Invoice the retainer\nRELATEDIn Shaheen website\nFRI 31 JUL"
+  },
+  {
+    "name": "a \"Show all 9 →\" under Tasks, \"Show all 5 →\" under Journal, none under Events",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a task row: the day chip \"Tomorrow 15:00\" and the \"!!\" flag",
+    "ok": true,
+    "detail": "Call Omar about pricing | \"Lock the retainer number before Omar flies out on Thursday.\" | !! | TOMORROW 15:00"
+  },
+  {
+    "name": "a task row with a matching note shows it quoted",
+    "ok": true,
+    "detail": "Call Omar about pricing | \"Lock the retainer number before Omar flies out on Thursday.\" | !! | TOMORROW 15:00"
+  },
+  {
+    "name": "a event rows: day + times; the past one says so",
+    "ok": true,
+    "detail": "Coffee — Omar\nPast · Tue 30 Jun"
+  },
+  {
+    "name": "a person row: \"Last touch · 2d ago\"",
+    "ok": true,
+    "detail": "Omar El-Sayed\nStudio Runs the Shaheen retainer\nLAST TOUCH · 2D AGO"
+  },
+  {
+    "name": "a project row: \"1 open · retainer\", \"11h this month\"",
+    "ok": true,
+    "detail": "Shaheen website | Omar's studio · 1 open · retainer | 11H THIS MONTH"
+  },
+  {
+    "name": "a journal row: the date column and a quoted passage",
+    "ok": true,
+    "detail": "JUL 08\n\"Omar pushed back on the timeline and he was right — the buffer was fantasy.\""
+  },
+  {
+    "name": "a library row: \"Note · …\"",
+    "ok": true,
+    "detail": "Pricing notes\nNote · \"From the Omar call: anchor on outcomes, not hours.\""
+  },
+  {
+    "name": "a the query is marked in the rows",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "a Show all → the Tasks chip, all 9 rows, no other group",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a a done task: struck, \"Done Tuesday · Shaheen website\"",
+    "ok": true,
+    "detail": "line-through ✓\nReply to Omar's issue comments\nDone Tuesday · Shaheen website"
+  },
+  {
+    "name": "a Open only: the done task, the filed capture and the past event step out (22 → 19)",
+    "ok": true,
+    "detail": "19 RESULTS FOR 'OMAR' [\"All19\",\"Tasks8\",\"Events2\",\"Inbox1\",\"Projects1\",\"Journal5\",\"People1\",\"Library1\",\"Open only\"]"
+  },
+  {
+    "name": "a Open only is pressed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a Any time ▾ lists the windows",
+    "ok": true,
+    "detail": "[\"Any time\",\"Today\",\"This week\",\"This month\",\"This year\"]"
+  },
+  {
+    "name": "a This week (Mon 6 – Sun 12 Jul, Cairo): 6 rows",
+    "ok": true,
+    "detail": "6 RESULTS FOR 'OMAR' [\"Omar El-SayedStudio Runs the Shaheen ret\",\"Call Omar about pricing\\\"Lock the retaine\",\"✓Reply to Omar's issue commentsDone Tues\",\"Pricing call — OmarSat 11 Jul · 15:00 – \",\"Omar mentioned a Zamalek studio for the \",\"Jul 08\\\"Omar pushed back on the timeline \"]"
+  },
+  {
+    "name": "a the trigger reads \"This week ▾\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a back to Any time: 22",
+    "ok": true,
+    "detail": "22 RESULTS FOR 'OMAR'"
+  },
+  {
+    "name": "a a Library hit opens its note in the Library",
+    "ok": true,
+    "detail": "http://localhost:5253/library?tab=notes&noteId=d0000000-0000-4000-8000-000000000002"
+  },
+  {
+    "name": "a a task hit opens the task (desktop: its editor)",
+    "ok": true,
+    "detail": "http://localhost:5253/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "a no page errors (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a no page errors (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b the search was asked (day)",
+    "ok": true,
+    "detail": "[\"recurring invoces automation\"]"
+  },
+  {
+    "name": "b 1b: bare soil + the chat pill, no rows (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b \"0 results for …\" (day)",
+    "ok": true,
+    "detail": "0 RESULTS FOR 'RECURRING INVOCES AUTOMATION'"
+  },
+  {
+    "name": "b no page errors (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b the search was asked (night)",
+    "ok": true,
+    "detail": "[\"recurring invoces automation\"]"
+  },
+  {
+    "name": "b 1b: bare soil + the chat pill, no rows (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b \"0 results for …\" (night)",
+    "ok": true,
+    "detail": "0 RESULTS FOR 'RECURRING INVOCES AUTOMATION'"
+  },
+  {
+    "name": "b no page errors (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c resting: the clover, the line, Try again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c no count line, no \"error\" anywhere",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c Try again asks again",
+    "ok": true,
+    "detail": "1 → 2"
+  },
+  {
+    "name": "c no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d offline: the offline line, no Try again, no \"error\"",
+    "ok": true,
+    "detail": "[\"offline: Offline ◌ — search wakes when the connection does.\"]  online=false"
+  },
+  {
+    "name": "d back online: the answer arrives without a tap",
+    "ok": true,
+    "detail": "22 RESULTS FOR 'OMAR'"
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e one hit (a done task)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e Open only hides it: \"Nothing here with these filters.\" + Clear filters, chips stay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e Clear filters brings it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f the book, then its note and quote as Related \"From Four Thousand Weeks\"",
+    "ok": true,
+    "detail": "[\"Four Thousand Weeks\\nBook · Oliver Burkeman\",\"Efficiency trap\\nRELATEDFrom Four Thousand Weeks\",\"\\\"The garden does not hurry, and yet everything is accomplished in its season.\\\"\\nRELATEDFrom Four Thousand Weeks\"]"
+  },
+  {
+    "name": "f the chip: Library 3",
+    "ok": true,
+    "detail": "[\"All3\",\"Library3\",\"Open only\"]"
+  },
+  {
+    "name": "f the book opens in the Library",
+    "ok": true,
+    "detail": "http://localhost:5253/library?tab=books&bookId=d0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g the overlay shows the Library group",
+    "ok": true,
+    "detail": "⌕ | LIBRARY | Four Thousand Weeks | Oliver Burkeman | Open selected | ↵ | View all results | ↵"
+  },
+  {
+    "name": "g View all results → /search?q=burkeman",
+    "ok": true,
+    "detail": "http://localhost:5253/search?q=burkeman"
+  },
+  {
+    "name": "g the overlay says nothing came up for neighbours-only",
+    "ok": true,
+    "detail": "⌕\n\nNothing's come up for that — try fewer words.\n\nView all results\n↵"
+  },
+  {
+    "name": "g no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no sideways page scroll (day)",
+    "ok": true,
+    "detail": "{\"doc\":390,\"main\":390,\"mainClient\":390,\"chips\":993,\"chipsClient\":390}"
+  },
+  {
+    "name": "p the chips scroll sideways in one row (day)",
+    "ok": true,
+    "detail": "{\"doc\":390,\"main\":390,\"mainClient\":390,\"chips\":993,\"chipsClient\":390}"
+  },
+  {
+    "name": "p scrolled 900px: the search box is still pinned at the top",
+    "ok": true,
+    "detail": "{\"x\":54,\"y\":76,\"width\":303,\"height\":28.5}"
+  },
+  {
+    "name": "p a task hit opens the task sheet over the page",
+    "ok": true,
+    "detail": "http://localhost:5253/search?q=omar&task=10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "p no page errors (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no sideways page scroll (night)",
+    "ok": true,
+    "detail": "{\"doc\":390,\"main\":390,\"mainClient\":390,\"chips\":993,\"chipsClient\":390}"
+  },
+  {
+    "name": "p the chips scroll sideways in one row (night)",
+    "ok": true,
+    "detail": "{\"doc\":390,\"main\":390,\"mainClient\":390,\"chips\":993,\"chipsClient\":390}"
+  },
+  {
+    "name": "p no page errors (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s side-by-side images written",
+    "ok": true,
+    "detail": "side-1a-desktop-day.jpg, side-1a-desktop-night.jpg, side-1a-phone-day.jpg, side-1a-phone-night.jpg, side-1b-empty-day.jpg, side-1b-empty-night.jpg"
+  }
+]

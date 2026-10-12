@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { SEARCH_GROUPS, useOpenSearchHit } from './api'
+import { useOpenSearchHit } from './api'
+import { SEARCH_GROUPS } from './searchView'
 import { useSearch } from './useSearch'
 import { SEARCH_RESTING } from './searchState'
 import { EmojiText } from '../../components/EmojiText'
@@ -43,7 +44,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   // Punch 49: groups are data-driven — an entity type search_hybrid doesn't return yet (i.e.
   // before migration 0031 is pushed) simply has no hits and renders no heading.
-  const groups = SEARCH_GROUPS.map((g) => ({ ...g, hits: results.filter((r) => r.entity_type === g.type) })).filter((g) => g.hits.length > 0)
+  const groups = SEARCH_GROUPS.map((g) => ({ ...g, hits: results.filter((r) => g.types.includes(r.entity_type)) })).filter((g) => g.hits.length > 0)
   // Flat list in render order so activeIndex maps 1:1 to visible rows.
   const ordered = groups.flatMap((g) => g.hits)
 
@@ -151,7 +152,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
           {groups.reduce<{ nodes: React.ReactNode[]; offset: number }>(
             (acc, g) => {
-              acc.nodes.push(<ResultGroup key={g.type} label={g.label} dot={g.dot} hits={g.hits} offset={acc.offset} />)
+              acc.nodes.push(<ResultGroup key={g.key} label={g.label} dot={g.dot} hits={g.hits} offset={acc.offset} />)
               acc.offset += g.hits.length
               return acc
             },

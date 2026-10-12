@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { SearchEntityType } from '../../lib/types'
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
-const { searchDestination, SEARCH_GROUPS } = await import('./api')
+const { searchDestination } = await import('./api')
+const { SEARCH_GROUPS } = await import('./searchView')
 
 // Every entity type search_hybrid returns (0054) → where its result opens: the thing itself.
 const ID = '11111111-2222-4333-8444-555555555555'
@@ -14,6 +15,9 @@ const TABLE: [SearchEntityType, ReturnType<typeof searchDestination>][] = [
   ['inbox_item', { href: `/inbox?focus=${ID}` }], // shown even when filed / dismissed / snoozed
   ['journal_entry', { href: `/journal?focus=${ID}` }], // turns to the entry's day
   ['calendar_event', { href: `/calendar?event=${ID}` }], // turns to its day, opens its details
+  ['book', { href: `/library?tab=books&bookId=${ID}` }], // 0064: the Library opens the one item
+  ['note', { href: `/library?tab=notes&noteId=${ID}` }],
+  ['quote', { href: `/library?tab=quotes&quoteId=${ID}` }],
 ]
 
 describe('a search result opens the thing itself', () => {
@@ -22,7 +26,7 @@ describe('a search result opens the thing itself', () => {
   })
 
   it('every type the overlay can render has a destination, and the table covers them all', () => {
-    const rendered = SEARCH_GROUPS.map((g) => g.type).sort()
+    const rendered = SEARCH_GROUPS.flatMap((g) => g.types).sort()
     expect(TABLE.map(([t]) => t).sort()).toEqual(rendered)
   })
 })
