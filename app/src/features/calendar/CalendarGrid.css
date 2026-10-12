@@ -484,6 +484,8 @@
   color: var(--ink-body);
   pointer-events: none;
 }
+/* C10 repeating — the kit's ↻ glyph in the block's own edge hue, quiet. */
+.fc .fc-timegrid-event .kf-ev-repeat { color: var(--kf-ev-edge, var(--acc-lavender-deep)); }
 /* completed petal badge (9x7, tilted 38°) */
 .fc .fc-timegrid-event .kf-ev-petal {
   width: 9px; height: 7px;

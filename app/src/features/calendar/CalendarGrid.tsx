@@ -6,10 +6,13 @@ import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
+import { Icon } from '../../components/Icon'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { layoutOverlaps } from './overlapLayout'
-import { cairoDateKey } from '../../lib/dateShortcuts'
+import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { appZone, useAppZone } from '../../lib/appZone'
+import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
@@ -29,6 +32,8 @@ export interface CalendarGridEvent {
   /** Set when the block came from a task — drives the in-block checkbox (R4, 2026-07-20). */
   taskId?: string | null
   taskDone?: boolean
+  /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
+  repeat?: boolean
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -102,9 +107,10 @@ function resolveGridDateTime(x: number, y: number): { iso: string; allDay: boole
   const [y0, mo, d] = dateEl.getAttribute('data-date')!.split('-').map(Number)
   const timeEl = stack.find((el) => el.hasAttribute('data-time'))
   const timeStr = timeEl?.getAttribute('data-time') ?? null
-  if (!timeStr) return { iso: new Date(y0, mo - 1, d).toISOString(), allDay: true }
+  if (!timeStr) return { iso: new Date(y0, mo - 1, d).toISOString(), allDay: true } // a date in no zone (slotFields)
   const [hh, mm] = timeStr.split(':').map(Number)
-  return { iso: new Date(y0, mo - 1, d, hh, mm).toISOString(), allDay: false }
+  // The slot's wall clock is the grid's: the user's zone (`timeZone` below), not the device's.
+  return { iso: zoneWallTimeToIso(appZone(), y0, mo, d, hh, mm), allDay: false }
 }
 
 /** The rail section (`data-section`) under a point, inside `rail` only. */
@@ -243,6 +249,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
 }, ref) {
   const customView = 'customDayCount'
+  // Conductor review 2026-10-12: the grid lays out on the user's zone (lib/appZone) like every other
+  // surface — a slot, a block and the now-line read the same clock QuickCreate and the phone do.
+  const zone = useAppZone()
   const fcRef = useRef<FullCalendar>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   // CALENDAR.md §5 temporal states (in progress / past / ran over) move with the clock — one
@@ -321,7 +330,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     events.filter((e) => !e.allDay).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
     pinnedId,
   )
-  const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })
+  const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24, timeZone: zone })
 
   useImperativeHandle(ref, () => ({
     unselect: () => fcRef.current?.getApi().unselect(),
@@ -372,7 +381,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     <FullCalendar
       key={`${initialView}-${dayCount}-${density}`}
       ref={fcRef}
-      plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+      plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin, intlZonePlugin]}
+      timeZone={zone}
       initialView={initialView}
       firstDay={firstDay}
       hiddenDays={hiddenDays}
@@ -429,7 +439,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       dayHeaderContent={(arg) => {
         // Month view's header row is one cell per weekday, not per date — no daisy, no number.
         if (arg.view.type === 'dayGridMonth') {
-          return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+          return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: zone })}</div>
         }
         // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
         // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
@@ -463,7 +473,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       nowIndicatorContent={(arg) =>
         arg.isAxis ? null : (
           <span className="cal-now-chip">
-            {new Date().toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}
+            {clockTime(Date.now())}
           </span>
         )
       }
@@ -541,6 +551,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfOv: !!slot,
           kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
           kfPinned: e.id === pinnedId,
+          kfRepeat: !!e.repeat,
         }
         return ev
       })}
@@ -551,7 +562,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const p = arg.event.extendedProps as {
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
-          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean
+          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -586,7 +597,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             </>
           )
         } else if (p.kfRanOver) {
-          timeText = `Ran over · ${new Date(p.kfEnd).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24 })}`
+          timeText = `Ran over · ${clockTime(p.kfEnd)}`
         } else if (!done && p.kfStart <= now && now < p.kfEnd) {
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
         } else if ((p.kfOv || narrow) && arg.timeText) {
@@ -626,8 +637,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // user must see); its "+N more" rides the time row until the pin lets go.
         const pinnedMore = !!(more && p.kfPinned)
 
-        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal.
-        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : null
+        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal > ↻ repeating (C10).
+        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
 
         // §5 in-progress elapsed wash: the lived proportion, ACCENT-DEEP at 14%.
         const elapsedPct =
@@ -640,6 +651,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
             {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
+            {badge === 'repeat' && <span className="kf-ev-badge kf-ev-repeat" title="Repeats"><Icon name="repeat" size={10} label="Repeats" /></span>}
             {p.kfTaskId && !arg.isMirror && (
               <span
                 className={`kf-ev-check${done ? ' kf-on' : ''}`}

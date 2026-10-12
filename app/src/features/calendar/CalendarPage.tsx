@@ -3,19 +3,21 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo } from './api'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo } from './api'
 // Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
 // checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
-import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue } from '../tasks/api'
+import { useTasks, completeTaskWithUndo, uncompleteTask, rescheduleDue, moveToTomorrowWithUndo } from '../tasks/api'
 import { useRowGrammar } from '../tasks/useRowGrammar'
+import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { railDropAction, scopeTarget, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
-import { nextFreeSlot, railBuckets, railMinutes, tomorrowFirst, type RailTask } from './replan'
+import { nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
+import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
-import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -29,10 +31,12 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { localDateKey } from '../routines/streaks'
 import { cairoTimeKey, slotFields } from './eventTime'
-import { EventDetailsPanel } from './EventDetailsPanel'
+import { BlockMenu } from './BlockMenu'
+import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
+import { findBlock } from './series'
+import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { railYields, visibleDayCount } from './weekFit'
@@ -74,26 +78,32 @@ const SMART_LIST_OPTIONS = [
   { value: 'someday', label: 'Someday' },
 ]
 
+// The grid's range is on the user's zone (CalendarGrid `timeZone`): FullCalendar hands its days'
+// midnights as instants, so they are read as that zone's dates, then drawn as dates in no zone.
+const noon = (key: string) => new Date(`${key}T12:00:00Z`)
+
 function weekNumber(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil(((d.getTime() - start.getTime()) / 86400000 + start.getDay() + 1) / 7)
+  const day = noon(cairoDateKey(d))
+  const start = new Date(Date.UTC(day.getUTCFullYear(), 0, 1))
+  return Math.ceil(((day.getTime() - start.getTime()) / 86400000 + start.getUTCDay() + 1) / 7)
 }
 
-/** FullCalendar's range end is exclusive — subtract a day so a "last day" label reads right. */
+/** FullCalendar's range end is exclusive — its last day is the one just before it. */
 function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
-  if (viewKind === 'month') return start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  if (viewKind === 'day') return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  const lastDay = new Date(end.getTime() - 86400000)
-  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const endStr = start.getMonth() === lastDay.getMonth() ? String(lastDay.getDate()) : lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${startStr} — ${endStr}`
+  const first = noon(cairoDateKey(start))
+  const last = noon(cairoDateKey(new Date(end.getTime() - 1)))
+  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('en-US', { ...o, timeZone: 'UTC' })
+  if (viewKind === 'month') return fmt(first, { month: 'long', year: 'numeric' })
+  if (viewKind === 'day') return fmt(first, { weekday: 'short', month: 'short', day: 'numeric' })
+  const endStr = first.getUTCMonth() === last.getUTCMonth() ? String(last.getUTCDate()) : fmt(last, { month: 'short', day: 'numeric' })
+  return `${fmt(first, { month: 'short', day: 'numeric' })} — ${endStr}`
 }
 
 /** Rough "how full is today" read for the rail footer — a 12h daytime window (9–21) minus
  * busy-block minutes. Not a real free/busy engine, just the botanical footer's one line. */
 function todaysLoad(events: CalendarEvent[]): { blocked: number; freeHours: number } {
-  const key = localDateKey(new Date())
-  const todays = events.filter((e) => !e.all_day && localDateKey(new Date(e.starts_at)) === key)
+  const key = cairoDateKey(new Date())
+  const todays = events.filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === key)
   const busyMin = todays.filter((e) => e.busy).reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)
   return { blocked: todays.length, freeHours: Math.max(0, Math.round(12 - busyMin / 60)) }
 }
@@ -121,6 +131,23 @@ interface QuickCreateState {
   slot: { date: string; start: string; end: string; allDay: boolean } | null
   anchor: { x: number; y: number } | null
 }
+
+/** The block a click opened in the §5 popover: what it was (an edit can re-anchor a repeat under it —
+ * series.findBlock) and where the popover sits. */
+interface Selected {
+  id: string
+  start: string
+  at: { x: number; y: number }
+}
+
+/** besideBlock() of the block on screen, else (not drawn yet) the middle of the window. */
+function anchorOf(id: string): { x: number; y: number } {
+  const el = document.querySelector(`.fc-event[data-kf-id="${CSS.escape(id)}"]`)
+  if (el) return besideBlock(el.getBoundingClientRect(), window.innerWidth, uiZoom())
+  return { x: Math.max(8, (window.innerWidth - BLOCK_MENU_WIDTH * uiZoom()) / 2), y: window.innerHeight / 4 }
+}
+
+const DAY_MS = 86_400_000
 
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
 // J-15 (view-options interplay): one array for the whole module. A fresh `[0, 6]` every render
@@ -243,6 +270,20 @@ function RailTaskCard({ r, i, domains, projects, areas, onPlan }: { r: RailTask;
           </>
         )}
         <PlanButton title={t.title} onPlan={onPlan} />
+        {/* Conductor review 2026-10-12: ⋯ on every task row — the one task menu, as right-click
+            opens it. dragGuard'd like Plan ▾, so pressing it never picks the card up. */}
+        <span
+          style={{ display: 'inline-flex', flex: 'none' }}
+          ref={(el) =>
+            dragGuard(() => {
+              if (!el) return
+              const r = el.getBoundingClientRect()
+              grammar.openMenu({ x: r.left, y: r.bottom })
+            })(el)
+          }
+        >
+          <RowMenuButton title={t.title} onOpen={() => {}} />
+        </span>
       </div>
       {grammar.menuNode}
     </div>
@@ -278,7 +319,11 @@ export function CalendarPage() {
 
 function DesktopCalendar() {
   const openTask = useOpenTask()
+  // Repeating events (migration 0061) are expanded twice over: `events` covers the year around
+  // today (the rail, Plan's free slots, the footer); `gridEvents` the range the grid shows, wherever
+  // it was paged to. Clicks, drags and the popover act on the grid's.
   const { data: events = [] } = useCalendarEvents()
+  const { data: rows = [] } = useCalendarRows()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: settings } = useAppSettings()
   const { data: domains = [] } = useDomains()
@@ -289,15 +334,25 @@ function DesktopCalendar() {
   const gridRef = useRef<CalendarGridHandle>(null)
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [selected, setSelected] = useState<Selected | null>(null)
   // Kai 2026-10-06: a search hit for an event opened this week, wherever the event was.
-  // /calendar?event=<id> turns the grid to its day and opens its details (once it's loaded).
-  const linked = useLinkedEvent(events)
-  if (linked.open) setSelectedEvent(linked.open)
-  const linkedStart = linked.event?.starts_at
+  // /calendar?event=<id> turns the grid to its day and opens its details (once it's loaded) — a
+  // repeating event's next occurrence. The popover opens once the grid has drawn the block there
+  // (two frames: the turn's scroll would otherwise close it at once).
+  const linked = useLinkedEvent(rows)
+  const [linkOpen, setLinkOpen] = useState<CalendarEvent | null>(null)
+  if (linked.open) setLinkOpen(linked.open)
   useEffect(() => {
-    if (linkedStart) gridRef.current?.gotoDate(new Date(linkedStart))
-  }, [linkedStart])
+    if (!linkOpen) return
+    gridRef.current?.gotoDate(new Date(linkOpen.starts_at))
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
+        setSelected({ id: linkOpen.id, start: linkOpen.starts_at, at: anchorOf(linkOpen.id) })
+        setLinkOpen(null)
+      })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [linkOpen])
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   // The Lists section (folded by default): any smart list / project / area / domain, minus what
@@ -307,6 +362,11 @@ function DesktopCalendar() {
   // Effects 21 — the chip created by a rail drop plays settle-in once.
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
+  // A week either side: month view draws its neighbours' days too.
+  const gridFrom = rangeInfo ? rangeInfo.start.getTime() - 7 * DAY_MS : null
+  const gridTo = rangeInfo ? rangeInfo.end.getTime() + 7 * DAY_MS : null
+  const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
+  const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
   const [viewOptsOpen, setViewOptsOpen] = useState(false)
@@ -341,7 +401,7 @@ function DesktopCalendar() {
   }
   const daisy = daisyAsset(new Date().getHours())
   const motionOn = useMotionEnabled()
-  const conflicts = useMemo(() => computeConflicts(events), [events])
+  const conflicts = useMemo(() => computeConflicts(gridEvents), [gridEvents])
   const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   // Kai 2026-10-03: Settings → Calendar → "Opens on" (synced; unset = Week here). Applied once, when
   // the settings row arrives — a view picked after that is the person's own. '3 days' is the N-day
@@ -379,7 +439,11 @@ function DesktopCalendar() {
 
   // Punch 32 "Show completed": done task-blocks drop out of the grid when toggled off.
   const doneTaskIds = useMemo(() => new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id)), [tasks])
-  const visibleEvents = viewOpts.showCompleted ? events : events.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
+  const visibleEvents = viewOpts.showCompleted ? gridEvents : gridEvents.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
+  // An occurrence's pending write is its series row's.
+  const pendingIds = visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id)
+  const failedIds = visibleEvents.filter((e) => outboxMarks.failed.has(e.seriesId ?? e.id)).map((e) => e.id)
+  const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 
   const scopeValueOptions =
     scope.kind === 'smart'
@@ -412,16 +476,18 @@ function DesktopCalendar() {
     return () => draggable.destroy()
   }, [])
 
-  // ── Plan ▾ (a rail card's, an overdue block's Replan, the details panel's): Today · Next free
-  // slot · Tomorrow first thing · Pick date…. A time puts it on the calendar (its block moves there —
-  // never a second one); a date alone plans the day (calendar/replan has the rule). ──
+  // ── Plan ▾ (a rail card's, an overdue block's Replan, the block menu's): Today · Next free slot ·
+  // Tomorrow, first thing · Pick date…. A time puts it on the calendar (its block moves there —
+  // never a second one); a date alone plans the day (calendar/replan has the rule). Conductor review
+  // 2026-10-12: Today and Tomorrow mean what every other Plan menu means (Settings' glossary,
+  // tasks/planMath): Today = today at the task's own time, else 09:00 (todayFor); Tomorrow =
+  // tomorrow 09:00, the one Tomorrow (moveToTomorrowWithUndo — swipe right, the 2 key). ──
   const [plan, setPlan] = useState<{ target: PlanTarget; x: number; y: number } | null>(null)
   function planFor(target: PlanTarget): ContextMenuItem[] {
     const now = new Date()
     const dur = target.kind === 'task' ? railMinutes(target.r) : inboxMinutes(target.item)
     const title = target.kind === 'task' ? target.r.task.title : inboxTitle(target.item)
     const next = nextFreeSlot(events, now, dur)
-    const first = tomorrowFirst(events, now, dur)
     const at = (s: { starts_at: string; ends_at: string }) => {
       const d = new Date(s.starts_at)
       return cairoDateKey(d) === cairoDateKey(now) ? cairoTimeKey(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${cairoTimeKey(d)}`
@@ -436,9 +502,14 @@ function DesktopCalendar() {
       else toastUndo(`Planned · ${dayWord(iso)}`, rescheduleDue(target.r.task, iso))
     }
     return [
-      { label: 'Today', icon: <Icon name="today" size={16} />, onClick: () => day(scheduleToday(now)) },
+      { label: 'Today', icon: <Icon name="today" size={16} />, onClick: () => day(todayFor(target.kind === 'task' ? target.r.task : undefined, now)) },
       ...(next ? [{ label: `Next free slot · ${at(next)}`, icon: <Icon name="clock" size={16} />, onClick: () => place(next.starts_at, next.ends_at) }] : []),
-      { label: `Tomorrow first thing · ${cairoTimeKey(new Date(first.starts_at))}`, icon: <Icon name="tomorrow" size={16} />, onClick: () => place(first.starts_at, first.ends_at) },
+      {
+        label: 'Tomorrow, first thing',
+        hint: tomorrowHint(now),
+        icon: <Icon name="tomorrow" size={16} />,
+        onClick: () => (target.kind === 'task' ? moveToTomorrowWithUndo([target.r.task]) : day(scheduleTomorrow(now))),
+      },
       {
         label: 'Pick date…',
         icon: <Icon name="pickdate" size={16} />,
@@ -468,13 +539,14 @@ function DesktopCalendar() {
     if (task) setPlan({ target: { kind: 'task', r: { task, block: event, late: 0 } }, x, y })
   }
 
-  function openExisting(event: CalendarEvent) {
-    setSelectedEvent(event)
+  /** §5: the block's popover, beside it (or at the pointer, from a right-click's Edit). */
+  function openExisting(event: CalendarEvent, at?: { x: number; y: number }) {
+    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
   }
 
   function handleEventClick(id: string) {
     setContextMenu(null)
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (event) openExisting(event)
   }
 
@@ -484,17 +556,17 @@ function DesktopCalendar() {
 
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (!event) return
     const items: ContextMenuItem[] = []
     if (event.type === 'task') {
-      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
       if (isMissed(event)) items.push({ label: 'Replan…', onClick: () => replanEvent(event, x, y) })
       items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     } else {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event) } })
+      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
     }
     setContextMenu({ items, x, y })
@@ -503,14 +575,14 @@ function DesktopCalendar() {
   /** Punch 33 + Kai 2026-10-12: a block dragged onto the rail does what the section it lands on
    * means (railDrop.ts has the table) — Overdue, or a plain event off any section, is the soft-no. */
   function handleDragToRail(id: string, section: string | null): boolean {
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (!event) return false
     return eventToRail(event, railDropAction(section, !!event.task_id), scopeTarget(scope, projects, areas))
   }
 
   /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
   function handleEventDoubleClick(id: string) {
-    const event = events.find((e) => e.id === id)
+    const event = gridEvents.find((e) => e.id === id)
     if (event?.task_id) openTask(event.task_id)
   }
 
@@ -872,7 +944,7 @@ function DesktopCalendar() {
               initialView={VIEW_MAP[viewKind]}
               hideToolbar
               onRangeChange={setRangeInfo}
-              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false }))}
+              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule }))}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
                 if (!t) return
@@ -880,25 +952,20 @@ function DesktopCalendar() {
                 else completeTaskWithUndo(t)
               }}
               onCreate={handleGridCreate}
+              // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
               onMove={(id, start, end, allDay) => {
-                const event = events.find((e) => e.id === id)
-                if (!event) return
-                const prior = { ...event }
-                moveOrResizeEvent(event, start, end, allDay)
-                toastUndo(`Moved · ${event.title}`, () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day))
+                const event = gridEvents.find((e) => e.id === id)
+                if (event) toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
               }}
               onResize={(id, start, end) => {
-                const event = events.find((e) => e.id === id)
-                if (!event) return
-                const prior = { ...event }
-                resizeEvent(event, start, end)
-                toastUndo(`Resized · ${event.title}`, () => resizeEvent(prior, prior.starts_at, prior.ends_at))
+                const event = gridEvents.find((e) => e.id === id)
+                if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
               }}
               onEventClick={handleEventClick}
               onEventDoubleClick={handleEventDoubleClick}
               onExternalDrop={handleExternalDrop}
               onReplan={(id, x, y) => {
-                const event = events.find((e) => e.id === id)
+                const event = gridEvents.find((e) => e.id === id)
                 if (event) replanEvent(event, x, y)
               }}
               railRef={railRef}
@@ -912,8 +979,8 @@ function DesktopCalendar() {
               onEventContextMenu={handleEventContextMenu}
               onGridContextMenu={handleGridContextMenu}
               conflictedIds={Array.from(conflicts.keys())}
-              pendingIds={[...outboxMarks.pending]}
-              failedIds={[...outboxMarks.failed]}
+              pendingIds={pendingIds}
+              failedIds={failedIds}
             />
             </div>
           </div>
@@ -931,12 +998,13 @@ function DesktopCalendar() {
           onChange={patchViewOpts}
         />
       )}
-      {selectedEvent && (
-        <EventDetailsPanel
+      {selected && selectedEvent && (
+        <BlockMenu
+          key={selected.id}
           event={selectedEvent}
-          conflicts={conflicts.get(selectedEvent.id) ?? []}
-          onClose={() => setSelectedEvent(null)}
-          onReplan={isMissed(selectedEvent) ? (x, y) => { replanEvent(selectedEvent, x, y); setSelectedEvent(null) } : undefined}
+          position={selected.at}
+          onClose={() => setSelected(null)}
+          onReplan={(x, y) => replanEvent(selectedEvent, x, y)}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}

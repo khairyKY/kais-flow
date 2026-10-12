@@ -1,19 +1,27 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import { ACTION_ROW_CSS } from '../../components/ActionSheet'
+import { ACTION_ROW_CSS, ActionSheet } from '../../components/ActionSheet'
 import { BottomSheet } from '../../components/BottomSheet'
 import { DatePicker } from '../../components/DatePicker'
+import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button, Chip, SectionLabel } from '../../components/kit'
 import { DURATIONS, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
+import { ProjectPicker } from '../../components/ProjectPicker'
 import { SheetTitle, TimePicker } from '../../components/TimePicker'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent } from '../../lib/types'
+import { useDomains } from '../domains/api'
+import { TaskPicker } from '../focus/TaskPicker'
+import { useProjects } from '../projects/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { createTask } from '../tasks/api'
+import { completeTaskWithUndo, createTask, uncompleteTask, useTasks } from '../tasks/api'
+import { useOpenTask } from '../tasks/openTask'
+import { REPEAT_LABELS, REPEAT_RULES } from '../tasks/taskMenuSpec'
 import { SAVED_MS } from '../tasks/taskSheetMath'
-import { createEvent, deleteEventWithUndo, scheduleTask, updateEvent } from './api'
+import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent } from './api'
+import { blockMenuSpec, isUntitled, type BlockMenuKey } from './blockMenuSpec'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
@@ -56,16 +64,22 @@ function notPast(day: string, start: number): number {
   return Math.max(start, Math.min(DAY_MIN - 15, Math.ceil(toMin(cairoTimeKey(new Date())) / 15) * 15))
 }
 
-/** A kit action row (ActionSheet's look): icon · label · hint · chevron. */
-function Row({ icon, label, hint, onClick }: { icon: IconName; label: string; hint?: string; onClick: () => void }) {
+/** A kit action row (ActionSheet's look): icon · label · hint · chevron. `quiet`: nothing set yet. */
+function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: IconName; label: string; hint?: string; quiet?: boolean; chevron?: boolean; onClick: (el: HTMLElement) => void }) {
   return (
-    <button type="button" className="kf-as-row" onClick={onClick}>
+    <button type="button" className="kf-as-row" onClick={(e) => onClick(e.currentTarget)}>
       <span className="kf-as-icon" aria-hidden><Icon name={icon} /></span>
-      <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{label}</span>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px', color: quiet ? 'var(--ink-muted)' : undefined }}>{label}</span>
       {hint && <span className="kf-as-hint">{hint}</span>}
-      <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />
+      {chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
     </button>
   )
+}
+
+/** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
+const ROW_ICONS: Record<BlockMenuKey, IconName> = {
+  date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', complete: 'check', open: 'tasks', replan: 'pickdate',
+  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete',
 }
 
 /** 7c — tap an empty slot: Task (default) or Event, 30 minutes, the keyboard up at once. The slot is
@@ -136,9 +150,12 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   )
 }
 
-/** 7d — tap a plain event (a task block opens as its task, the Task sheet): Date and Time move it,
- * Delete removes it with Undo. An all-day event keeps its date — no Date, no Time. Kai 2026-10-07
- * ("it felt like a read-only pop-up"): the title is a field (renames on Done / leaving it). */
+/** 7d — tap a plain event (a task block opens as its task, the Task sheet): the same rows as the
+ * desktop popover (./blockMenuSpec — Calendar.dc.html §5) on the sheet's own rows, each committing as
+ * it's picked. Kai 2026-10-07 ("it felt like a read-only pop-up"): the title is a field (renames on
+ * Done / leaving it). Kai 2026-10-12: date, length, project, repeat, colour, task link and More here
+ * too, so the phone does all the desktop does. Delete / Discard sits in the footer; a repeat asks
+ * This event / All events. */
 export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: {
   event: CalendarEvent
   look: { fill: string; ink: string }
@@ -147,18 +164,30 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
   onMove: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
   onClose: () => void
 }) {
-  const [timeOpen, setTimeOpen] = useState(false)
-  const [dateOpen, setDateOpen] = useState(false)
-  const [title, setTitle] = useState(event.title)
+  const { data: tasks = [] } = useTasks()
+  const { data: projects = [] } = useProjects()
+  const { data: domains = [] } = useDomains()
+  const openTask = useOpenTask()
+  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'more' | 'delete'>(null)
+  const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
+  const [untitled] = useState(() => isUntitled(event))
+  const [title, setTitle] = useState(untitled ? '' : event.title)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  const saved = () => setSavedAt(Date.now())
   const rename = () => {
     const name = title.trim()
-    if (!name || name === event.title) return setTitle(event.title)
+    if (!name || name === event.title) return setTitle(untitled && !name ? '' : event.title)
     updateEvent(event, { title: name })
-    setSavedAt(Date.now())
+    saved()
   }
-  // Delete: the sheet leaves first, then the block goes and the Undo toast lands on the page.
+  // Delete / Unschedule / Open task: the sheet leaves first, then the block goes and the Undo toast
+  // lands on the page (or the task opens over it).
   const after = useRef<(() => void) | null>(null)
+  const closeRef = useRef<(() => void) | null>(null)
+  const leave = (run: () => void) => {
+    after.current = run
+    closeRef.current?.()
+  }
   useEffect(() => {
     if (savedAt == null) return
     const t = window.setTimeout(() => setSavedAt(null), SAVED_MS)
@@ -166,9 +195,32 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
   }, [savedAt])
   const span = eventSpan(event)
   const len = span.end - span.start
-  const today = cairoDateKey(new Date())
+  const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
+  const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
+  const spec = blockMenuSpec(event, { task, projectName: project?.name })
+  const del = spec.at(-1)!
   const kind = event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
   const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
+  const run: Partial<Record<BlockMenuKey, (el: HTMLElement) => void>> = {
+    date: () => setPicker('date'),
+    time: () => setPicker('time'),
+    project: () => setPicker('project'),
+    repeat: () => setPicker('repeat'),
+    more: () => setPicker('more'),
+    complete: () => {
+      if (!task) return
+      if (task.status === 'done') uncompleteTask(task)
+      else completeTaskWithUndo(task)
+    },
+    open: () => leave(() => event.task_id && openTask(event.task_id)),
+    unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
+    link: (el) => {
+      const r = el.getBoundingClientRect()
+      setLinkAt({ x: r.left + 16, y: r.top })
+    },
+  }
+  const remove = del.sub ? () => setPicker('delete') : () => leave(() => deleteEventWithUndo(event, untitled ? 'Discarded' : 'Deleted'))
+  const choice = (label: string, on: boolean, act: () => void) => ({ label, selected: on, onSelect: () => { if (!on) { act(); saved() } } })
   return (
     <>
       <BottomSheet
@@ -178,41 +230,38 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
           after.current?.()
         }}
         handleGap={8}
-        footer={(close) => (
-          <Button
-            variant="ghost"
-            className="pc-bs-delete"
-            icon={<Icon name="delete" size={20} />}
-            onClick={() => {
-              after.current = () => deleteEventWithUndo(event, 'Deleted')
-              close()
-            }}
-          >
-            Delete
-          </Button>
-        )}
+        footer={(close) => {
+          closeRef.current = close
+          return (
+            <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={remove}>
+              {del.label}
+            </Button>
+          )
+        }}
       >
-        {() => (
-          <>
-            <div className="pc-bs-head">
-              <div className="pc-bs-title">
-                <input
-                  className="pc-qc-title pc-bs-title-in"
-                  aria-label="Title"
-                  enterKeyHint="done"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={rename}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.currentTarget.blur()
-                  }}
-                />
+        {(close) => {
+          closeRef.current = close
+          return (
+            <>
+              <div className="pc-bs-head">
+                <div className="pc-bs-title">
+                  <input
+                    className="pc-qc-title pc-bs-title-in"
+                    aria-label="Title"
+                    enterKeyHint="done"
+                    placeholder="Add title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={rename}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur()
+                    }}
+                  />
+                </div>
+                <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
               </div>
-              <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
-            </div>
-            {/* Kai 2026-10-12: the grid draws a plain event's colour, so its sheet changes it — the
-                desktop panel's swatches, saved on tap. A task block wears its project's hue. */}
-            {!event.task_id && (
+              {/* Kai 2026-10-12: the colour changes after creation — the desktop title dot's swatches,
+                  saved on tap, for every block (the grid draws a block's own colour first). */}
               <div className="pc-bs-colors">
                 <ColorDots
                   value={event.color ?? null}
@@ -220,41 +269,51 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
                   onChange={(c) => {
                     if (c === (event.color ?? null)) return
                     updateEvent(event, { color: c })
-                    setSavedAt(Date.now())
+                    saved()
                   }}
                 />
               </div>
-            )}
-            <div className="pc-bs-rows">
-              <style>{ACTION_ROW_CSS}</style>
-              {!event.all_day && (
-                <>
-                  <Row icon="pickdate" label="Date" hint={dayHint(span.day, today)} onClick={() => setDateOpen(true)} />
-                  <Row icon="clock" label="Time" hint={rangeText(span.start, span.end)} onClick={() => setTimeOpen(true)} />
-                </>
-              )}
-            </div>
-            {(pending || savedAt != null) && <div className={`pc-bs-save${pending ? ' is-pending' : ''}`}>{pending ? '○ Pending sync' : '✓ Saved'}</div>}
-          </>
-        )}
+              <div className="pc-bs-rows">
+                <style>{ACTION_ROW_CSS}</style>
+                {spec.slice(0, -1).map((e) => (
+                  <Fragment key={e.key}>
+                    {e.caption && (
+                      <div className="pc-bs-caption">
+                        <SectionLabel>{e.caption.label}</SectionLabel>
+                        <EmojiText text={e.caption.text} />
+                      </div>
+                    )}
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => run[e.key]?.(el)} />
+                  </Fragment>
+                ))}
+              </div>
+              {(pending || savedAt != null) && <div className={`pc-bs-save${pending ? ' is-pending' : ''}`}>{pending ? '○ Pending sync' : '✓ Saved'}</div>}
+            </>
+          )
+        }}
       </BottomSheet>
-      <Held rect={event.all_day || timeOpen || dateOpen ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
-      {dateOpen && (
+      <Held rect={event.all_day || picker === 'date' || picker === 'time' ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
+      {picker === 'date' && (
         <DatePicker
           mode="day"
           title="Date"
           meta={event.title}
-          value={span.day}
+          value={event.all_day ? event.starts_at.slice(0, 10) : span.day}
           quick
           onPick={(day) => {
-            if (day === span.day) return
-            onMove(event, span, { ...span, day }, 'move')
-            setSavedAt(Date.now())
+            if (event.seriesId) {
+              // One occurrence leaves its series for another day: this sheet's block is gone.
+              moveToDayWithUndo(event, day)
+              return leave(() => {})
+            }
+            if (event.all_day) moveToDayWithUndo(event, day)
+            else if (day !== span.day) onMove(event, span, { ...span, day }, 'move')
+            saved()
           }}
-          onClose={() => setDateOpen(false)}
+          onClose={() => setPicker(null)}
         />
       )}
-      {timeOpen && (
+      {picker === 'time' && (
         <TimePicker
           day={span.day}
           value={fromMin(span.start)}
@@ -264,10 +323,74 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onClose }: 
             const start = toMin(hhmm)
             const to = { day: span.day, start, end: start + (d ?? len) }
             if (to.start === span.start && to.end === span.end) return
-            onMove(event, span, to, d ? 'bottom' : 'move')
-            setSavedAt(Date.now())
+            // A repeat moves as a whole series (decision 2026-10-12); a one-off like a drag.
+            if (event.seriesId) retimeEventWithUndo(event, span, to)
+            else onMove(event, span, to, d ? 'bottom' : 'move')
+            saved()
           }}
-          onClose={() => setTimeOpen(false)}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'project' && (
+        <ProjectPicker
+          position={{ x: 0, y: 0 }}
+          projects={projects}
+          domains={domains}
+          currentProjectId={event.project_id ?? null}
+          meta={event.title}
+          onSelect={(id) => {
+            if (id === (event.project_id ?? null)) return
+            updateEvent(event, { project_id: id })
+            saved()
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'repeat' && (
+        <ActionSheet
+          title="Repeat"
+          meta={event.title}
+          onClose={() => setPicker(null)}
+          items={REPEAT_RULES.map((r) => choice(r ? REPEAT_LABELS[r] : 'Does not repeat', (event.recurrence_rule ?? null) === r, () => setEventRepeat(event, r)))}
+        />
+      )}
+      {picker === 'more' && (
+        <ActionSheet
+          title="More"
+          meta={event.title}
+          onClose={() => setPicker(null)}
+          items={[
+            choice('Event', event.type === 'event', () => updateEvent(event, { type: 'event' })),
+            choice('Time block', event.type === 'time_block', () => updateEvent(event, { type: 'time_block' })),
+            choice('Busy', event.busy, () => updateEvent(event, { busy: true })),
+            choice('Free', !event.busy, () => updateEvent(event, { busy: false })),
+          ]}
+        />
+      )}
+      {picker === 'delete' && (
+        <ActionSheet
+          title="Delete"
+          meta={event.title}
+          onClose={() => setPicker(null)}
+          items={[
+            { label: 'This event', destructive: true, onSelect: () => leave(() => deleteEventWithUndo(event, 'Deleted')) },
+            { label: 'All events', destructive: true, onSelect: () => leave(() => deleteSeriesWithUndo(event)) },
+          ]}
+        />
+      )}
+      {linkAt && (
+        <TaskPicker
+          tasks={tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)}
+          position={linkAt}
+          placeholder="Link a task…"
+          label="Search tasks to link"
+          onPick={(id) => {
+            const t = tasks.find((x) => x.id === id)
+            if (t) linkTaskWithUndo(event, t)
+            setLinkAt(null)
+            saved()
+          }}
+          onClose={() => setLinkAt(null)}
         />
       )}
     </>

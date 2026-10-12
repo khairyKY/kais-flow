@@ -188,6 +188,13 @@ describe('time rows, busy blocks and free slots', () => {
     expect(busyOnDay(late, '2026-09-27').map((b) => [b.start, b.end])).toEqual([[1320, 1440], [1380, 1440]])
     expect(busyOnDay(late, day).map((b) => [b.title, b.start, b.end])).toEqual([['Late', 0, 60]])
   })
+  it('a repeating event is busy on every day it lands on — stored as one row (migration 0061)', () => {
+    // Weekly, Monday 12 Oct 09:00–10:00 Cairo (+3); 2 Nov is after the fall-back (+2), still 09:00.
+    const standup = [ev('Standup', '2026-10-12T06:00:00Z', '2026-10-12T07:00:00Z', { recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-19T06:00:00.000Z'] })]
+    expect(busyOnDay(standup, '2026-11-02').map((b) => [b.title, b.start, b.end])).toEqual([['Standup', 540, 600]])
+    expect(busyOnDay(standup, '2026-10-19')).toEqual([]) // skipped that week
+    expect(busyOnDay(standup, '2026-11-03')).toEqual([])
+  })
   it('on the October fall-back day the wall clock still reads right', () => {
     // 19:00Z = 22:00 (+3); 21:30Z = 23:30 (+2, after the 24:00 → 23:00 switch)
     expect(busyOnDay([ev('Film', '2026-10-29T19:00:00Z', '2026-10-29T21:30:00Z')], '2026-10-29').map((b) => [b.start, b.end])).toEqual([[1320, 1410]])

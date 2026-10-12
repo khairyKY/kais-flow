@@ -41,10 +41,12 @@ describe('an Up next block', () => {
   it('Tomorrow moves the block a Cairo day on at its own time, with an Undo that puts it back', () => {
     const e = event({ task_id: 't1', type: 'task' })
     expect(blockTomorrowHint(e)).toBe('Sun 10:00')
+    const undo = vi.fn()
+    vi.mocked(moveOrResizeEvent).mockReturnValueOnce(undo)
     moveBlockToTomorrow(e)
     expect(moveOrResizeEvent).toHaveBeenCalledWith(e, cairo(27, '10:00'), cairo(27, '11:30'))
-    vi.mocked(toastUndo).mock.calls[0][1]()
-    expect(moveOrResizeEvent).toHaveBeenLastCalledWith(e, e.starts_at, e.ends_at, false)
+    // The Undo is the move's own (calendar/api returns it — one occurrence of a repeat undoes its detach).
+    expect(vi.mocked(toastUndo).mock.calls[0][1]).toBe(undo)
   })
 
   it("Unschedule takes the block off the calendar with the calendar's own Undo", () => {

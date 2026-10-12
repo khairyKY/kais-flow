@@ -20,6 +20,7 @@ import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
 // The user's clock is _shared/zone.ts (notify and chat read the same one); re-exported for the tests.
 export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
+import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,11 @@ export interface EventRow {
   ends_at: string
   all_day: boolean
   task_id: string | null
+  /** A repeating event (migration 0061): one row, expanded by the tools (_shared/series.ts). */
+  recurrence_rule?: string | null
+  recurrence_exdates?: string[] | null
+  /** Set on an occurrence expandSeries made: the row's id. */
+  seriesId?: string
 }
 
 /** One of a task's live calendar blocks (move_to_tomorrow). */
@@ -145,7 +151,8 @@ export interface Store {
   getTask(id: string): Promise<TaskRow | null>
   /** Not in Trash, by name. */
   projects(): Promise<ProjectRow[]>
-  /** Not in Trash, overlapping [from, to), by start. */
+  /** Not in Trash: overlapping [from, to), plus every repeating row starting before `to` (the tools
+   * expand those — a series' row is its first occurrence). By start. */
   events(fromIso: string, toIso: string): Promise<EventRow[]>
   search(query: string, limit: number): Promise<SearchHit[]>
   /** Today's open picks (top3Rule): starred, open, not in Trash, not someday, undated or dated before `todayEndIso`. */
@@ -171,6 +178,14 @@ export interface ToolContext {
   now: Date
   /** rrule's next occurrence strictly after `from` (index.ts: npm:rrule; the test: the app's recurrence.ts). */
   nextOccurrence: (rule: string, from: Date) => Date | null
+  /** rrule's between() for a repeating event (index.ts: npm:rrule; the test: the app's series.ts). */
+  ruleBetween: RuleBetween
+}
+
+/** The events in [start, end): one-off rows as the store found them, each repeating row as its
+ * occurrences there — the app's own expansion (features/calendar/series.ts). */
+async function eventsIn(ctx: ToolContext, start: Date, end: Date): Promise<EventRow[]> {
+  return expandSeries(await ctx.store.events(start.toISOString(), end.toISOString()), start, end, ctx.zone, ctx.ruleBetween)
 }
 
 // ── input checks: a bad argument is a tool error the model can read and fix ─────────────────────
@@ -251,9 +266,11 @@ function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown
 }
 
 function eventOut(e: EventRow, zone: string): Record<string, unknown> {
-  const o: Record<string, unknown> = { id: e.id, title: e.title, start: wallTime(e.starts_at, zone), end: wallTime(e.ends_at, zone) }
+  // An occurrence answers with its series' id — the one stored, the one search returns.
+  const o: Record<string, unknown> = { id: e.seriesId ?? e.id, title: e.title, start: wallTime(e.starts_at, zone), end: wallTime(e.ends_at, zone) }
   if (e.all_day) o.all_day = true
   if (e.task_id) o.task_id = e.task_id
+  if (e.recurrence_rule) o.repeats = e.recurrence_rule
   return o
 }
 
@@ -351,7 +368,7 @@ export const TOOLS: readonly ToolDef[] = [
     async run(_a, ctx) {
       const { date, start, end } = dayWindow(ctx.now, ctx.zone)
       const rows = await ctx.store.dayTasks(start.toISOString(), end.toISOString())
-      const events = await ctx.store.events(start.toISOString(), end.toISOString())
+      const events = await eventsIn(ctx, start, end)
       const { top3, today, overdue } = splitToday(rows, ctx.now, ctx.zone)
       return {
         date,
@@ -626,7 +643,7 @@ export const TOOLS: readonly ToolDef[] = [
       const end = bound(to, 'to', ctx.zone)
       if (end <= start) return bad('"to" must be on or after "from".')
       if (end.getTime() - start.getTime() > 32 * 86400_000) return bad('At most 31 days at once — ask for a shorter range.')
-      const events = await ctx.store.events(start.toISOString(), end.toISOString())
+      const events = await eventsIn(ctx, start, end)
       // `until` is exclusive: a `to` day ends at the next midnight.
       return { from: wallTime(start.toISOString(), ctx.zone), until: wallTime(end.toISOString(), ctx.zone), timezone: ctx.zone, events: events.map((e) => eventOut(e, ctx.zone)) }
     },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { blockLastDay, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves, tomorrowFirst } from './replan'
+import { blockLastDay, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves } from './replan'
 
 // The user's zone is the default Africa/Cairo (UTC+3 until the last Thursday of October 2026), so
 // every instant below is a Cairo wall time — and the suite runs under 4 device zones in CI.
@@ -117,10 +117,8 @@ describe('the small rules beside it', () => {
     expect(dueFollows(null, cairo('2026-10-07', '16:00'), NOW)).toBe(false)
   })
 
-  it('Next free slot: today\'s first gap from now; Tomorrow first thing: from 08:00, around what\'s there', () => {
+  it('Next free slot: today’s first gap from now', () => {
     const busy = [block('m', null, '2026-10-07', '15:00', '16:00'), block('t', null, '2026-10-08', '08:00', '09:30')]
     expect(nextFreeSlot(busy, NOW, 30)).toEqual({ starts_at: cairo('2026-10-07', '16:00'), ends_at: cairo('2026-10-07', '16:30') })
-    expect(tomorrowFirst(busy, NOW, 60)).toEqual({ starts_at: cairo('2026-10-08', '09:30'), ends_at: cairo('2026-10-08', '10:30') })
-    expect(tomorrowFirst([], NOW, 60).starts_at).toBe(cairo('2026-10-08', '08:00'))
   })
 })

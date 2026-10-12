@@ -15,6 +15,12 @@ export interface ContextMenuItem {
   labelColor?: string
   /** Right-aligned keycap hint (e.g. `"E"`, `"#"`, `"⌃click"`) — the row's own keyboard shortcut, when it has one. */
   shortcut?: string
+  /** Right-aligned value before the ▸ — "2h", a project's dot, a check on the current choice. */
+  hint?: React.ReactNode
+  /** A dashed hairline above the row. Unset: one is drawn where danger rows start (the old rule). */
+  divider?: boolean
+  /** Quiet content between the divider and the row (the block menu's "From task" caption). */
+  before?: React.ReactNode
   /** Renders a child popover beside this item — opens on hover (short intent delay) or click,
    *  parent stays open. `onClose` collapses just this submenu (Escape/outside-click, so Escape
    *  closes child-first); wrap action callbacks with `closeAll` so picking something inside the
@@ -26,6 +32,12 @@ interface ContextMenuProps {
   items: ContextMenuItem[]
   position: { x: number; y: number }
   onClose: () => void
+  /** Above the rows, with a dashed hairline under it when rows follow (the block menu's title). */
+  header?: React.ReactNode
+  /** A fixed width instead of growing from 180px. */
+  width?: number
+  /** The menu's accessible name. */
+  label?: string
 }
 
 const SUBMENU_OPEN_DELAY = 150
@@ -36,7 +48,7 @@ const SUBMENU_OPEN_DELAY = 150
 const SUBMENU_SWITCH_DELAY = 300
 const SUBMENU_WIDTH = 220
 
-export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
+export function ContextMenu({ items, position, onClose, header, width, label }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const openTimer = useRef<number | null>(null)
@@ -129,6 +141,7 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
       <div
         ref={menuRef}
         role="menu"
+        aria-label={label}
         className="kf-fade"
         style={{
           position: 'fixed',
@@ -140,14 +153,18 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
           boxShadow: 'var(--shadow-popover)',
           borderRadius: 5,
           padding: 6,
-          minWidth: 180,
+          minWidth: width ?? 180,
+          width,
         }}
       >
+        {header}
+        {header && items.length > 0 && <div style={{ margin: '2px 7px 4px', borderTop: '1px dashed var(--line-dashed)' }} />}
         {items.map((item, i) => (
           <div key={i}>
-            {i > 0 && items[i - 1].danger !== item.danger && (
+            {i > 0 && (item.divider ?? items[i - 1].danger !== item.danger) && (
               <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
             )}
+            {item.before}
             <button
               ref={(el) => { itemRefs.current[i] = el }}
               role="menuitem"
@@ -182,7 +199,8 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
             >
               {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--ink-faint)' }}>{item.icon}</span>}
-              <span style={{ flex: 1 }}>{item.label}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+              {item.hint != null && <span style={{ display: 'inline-flex', alignItems: 'center', flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{item.hint}</span>}
               {/* J-17: the hint column draws keycaps (Kai: "include them in right-click context menus"). */}
               {item.shortcut && !item.submenu && <KeyCombo keys={splitKeyCombo(item.shortcut)} size="sm" />}
               {item.submenu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>▸</span>}
