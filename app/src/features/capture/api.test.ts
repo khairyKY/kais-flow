@@ -316,7 +316,7 @@ describe('a timed capture lands on the calendar', () => {
     expect(unplace.mock.invocationCallOrder[0]).toBeLessThan(writeRow.mock.invocationCallOrder[writeRow.mock.calls.findIndex((c) => c[2] === 'delete')])
   })
 
-  it('voice / ⌘↵ captures with a time are blocked the same way', async () => {
+  it('voice captures with a time are blocked the same way', async () => {
     invoke.mockResolvedValue({ data: { kind: 'task', cleaned_text: 'x', title: 'Crypto session', due_at: at4, has_time: true, confidence: 0.92 }, error: null })
     createTask.mockReturnValue({ ...base, due_at: at4 })
     await captureWithAI('crypto session 4am tomorrow', 'voice', 'crypto session 4am tomorrow')

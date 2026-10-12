@@ -31,9 +31,8 @@ import { useResurfacePick } from '../resurfacing/api'
 import { useTimeEntries } from '../focus/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
-import { openCapture } from '../command-bar/commandBarStore'
+import { CAPTURE_INPUT_ID, openCapture } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button, Star, KeyCombo } from '../../components/kit'
-import { splitKeyCombo } from '../../lib/shortcuts'
 import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -67,7 +66,8 @@ import { useStarEvents, useWeekClosedAt } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
 import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
-import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, remainingWork, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, workloadLine, RIBBON_FROM_MIN, RIBBON_TO_MIN, type WorkloadInput } from './todayLayout'
+import { blockMeta, blockOf, dayCounts, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, workloadLine, RIBBON_FROM_MIN, RIBBON_TO_MIN, type WorkloadInput } from './todayLayout'
+import { dayOfJourney, firstCreatedAt } from './journey'
 import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { flushOutbox, useOutboxMarks } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
@@ -336,7 +336,8 @@ export function TodayPage() {
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
   const kbProjectTask = kbProjectId ? selectable.find((t) => t.id === kbProjectId) : null
   const openTask = useOpenTask()
-  const listBindings = buildListBindings({
+  const navigate = useNavigate()
+  const listBindings = [...buildListBindings({
     complete: (t) => completeTaskWithUndo(t),
     open: (t) => openTask(t.id),
     today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
@@ -354,7 +355,7 @@ export function TodayPage() {
     nextWeek: () => bulkSchedule(scheduleNextWeek()),
     top3: () => bulkTop3(),
     delete: () => bulkDelete(),
-  })
+  }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }]
   const { focusedId } = useListKeys(selectable, listBindings, {
     active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !replanAt,
     sectionLabel: 'Lists',
@@ -380,13 +381,15 @@ export function TodayPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
-  // The Notebook page (Kai's 2026-10-03 brainstorm, conductor 2026-10-12): N on Today opens it.
-  // Capture so it runs before the shell's global N (new task), which it replaces on this page only.
-  const navigate = useNavigate()
+  // The Notebook page (Kai's 2026-10-03 brainstorm): Shift+N on Today. N is New task everywhere — one
+  // meaning per key (conductor 2026-10-13) — so this never takes a plain n. Listed in the page's own
+  // cheatsheet section (NOTEBOOK_KEY in listBindings); runs at capture so the list's copy can't fire too.
   useEffect(() => {
     if (!keysOn) return
     function onKey(e: KeyboardEvent) {
-      if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return
+      // Layout-proof like the shell's keys: on an Arabic keyboard Shift+N arrives as another key, code 'KeyN'.
+      const n = /^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() === 'n' : e.code === 'KeyN'
+      if (!n || !e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return
       if (document.querySelector('[role="dialog"], [role="menu"]')) return
       e.preventDefault()
       e.stopImmediatePropagation()
@@ -443,11 +446,8 @@ export function TodayPage() {
   const reviewToday = reviewDue(now, weekendDays(), weekClosed)
 
   // Ported from the retired Terrarium.tsx — day count since the earliest record, for the phone
-  // header's "Day N" (Today Phone ruling 1). Desktop 2a cut it ("The terrarium · Day 42").
-  const firstRecord = useMemo(
-    () => [...tasks.map((t) => t.created_at), ...pendingInbox.map((i) => i.created_at), ...projects.map((p) => p.created_at), ...routines.map((r) => r.created_at)].sort()[0] ?? null,
-    [tasks, pendingInbox, projects, routines],
-  )
+  // header's "Day N" (Today Phone ruling 1). On a desktop it's the sidebar foot's "day N" (2a, AppLayout).
+  const firstRecord = useMemo(() => firstCreatedAt(tasks, pendingInbox, projects, routines), [tasks, pendingInbox, projects, routines])
   const dayNumber = dayOfJourney(firstRecord, now)
 
   const upcomingBirthdays = useMemo(() => {
@@ -574,6 +574,7 @@ export function TodayPage() {
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
+          onTop3={bulkTop3}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />
@@ -772,7 +773,7 @@ export function TodayPage() {
   const nextUp = upNextEvents(events, now).find((e) => new Date(e.starts_at).getTime() > now.getTime() && !(e.task_id && doneTaskIds.has(e.task_id)))
   const header = (
     <div className="td-head">
-      <div style={{ minWidth: 0 }}>
+      <div>
         <h1 className="td-date">{dateLabel}</h1>
         {!tasksPending && (
           <div className="td-sum">
@@ -801,7 +802,7 @@ export function TodayPage() {
     <section>
       <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
       {routinesTotal === 0 && (
-        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand)', textDecoration: 'none' }}>
+        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand)', textDecoration: 'none' }}>
           {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
           {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
         </Link>
@@ -912,6 +913,8 @@ export function TodayPage() {
 
 /** The Notebook page (another builder's route; Kai's analog-journal export). */
 const NOTEBOOK_PATH = '/notebook?day=today'
+/** Its key on Today, as the cheatsheet draws it (two caps). */
+const NOTEBOOK_KEY = ['⇧', 'N']
 
 /** A Top 3 task's block today, as its row's meta ("13:30–15:00 · 1H30M") — Up next skips it. */
 function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | undefined {
@@ -954,16 +957,16 @@ const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
 // ── Desktop chrome (Today.dc.html 2a) ──
 
 /** 2a header: "+ Add a task…" with the capture keycap and the mic inside (rule 6: capture is
- * type-first). The field opens the capture bar; the mic, the voice sheet. 2a's keycap reads N — on
- * Today N opens the Notebook page (conductor 2026-10-12), so it shows the capture chord instead. */
+ * type-first). The field opens the capture bar; the mic, the voice sheet. The keycap reads N, as 2a
+ * draws it: N is New task everywhere (the Notebook page is Shift+N). */
 function AddTaskPill() {
   const [voice, setVoice] = useState(false)
   return (
     <div className="td-pill">
-      <button type="button" className="td-pill-field" data-tour="command-bar" onClick={openCapture} title="Capture — type, or use the mic to talk">
+      <button type="button" className="td-pill-field" data-tour="command-bar" onClick={openCapture} title="Capture — type, or use the mic to talk (N)">
         <Icon name="plus" size={18} />
         <span className="td-pill-text">Add a task…</span>
-        <KeyCombo keys={splitKeyCombo('⌘K')} size="sm" />
+        <KeyCombo keys={['N']} size="sm" />
       </button>
       <button type="button" className="td-pill-mic" aria-label="Voice capture" title="Voice capture" onClick={() => setVoice(true)}>
         <Icon name="mic" size={16} strokeWidth={2} />
@@ -977,10 +980,10 @@ function AddTaskPill() {
   )
 }
 
-/** The Notebook page's quiet way in on desktop (an icon button beside capture; N on Today). */
+/** The Notebook page's quiet way in on desktop (an icon button beside capture; Shift+N on Today). */
 function NotebookButton() {
   return (
-    <Link to={NOTEBOOK_PATH} className="td-icon-btn" aria-label="Notebook page" title="Notebook page (N)">
+    <Link to={NOTEBOOK_PATH} className="td-icon-btn" aria-label="Notebook page" title="Notebook page (Shift+N)">
       <Icon name="journal" size={20} />
     </Link>
   )
@@ -1351,7 +1354,7 @@ function PhoneSummary({ workload, now, online, syncing, over, counts }: { worklo
         <Icon name={over > 0 ? 'alert' : 'clock'} size={20} />
         <span style={{ flex: 1, minWidth: 0 }}>{workloadLine({ ...workload, focusedMin: focusedToday(entries, now) })}</span>
         {syncing ? (
-          <span className="tp-syncing" style={{ fontSize: 'var(--fs-meta)', letterSpacing: '0.06em' }}>Syncing</span>
+          <span className="tp-syncing" style={{ fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)' }}>Syncing</span>
         ) : over > 0 && <span className="tp-over">{span(over)} over</span>}
       </div>
       {counts.total > 0 && (
@@ -1894,7 +1897,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
       <span style={{ marginTop: 1 }}>{check}</span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-        <div className="td-row-title is-pick">{title}</div>
+        <div className="td-row-title">{title}</div>
         {metaRow(projectName, dot, meta ? null : task.duration_min, <>{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
       </div>
       {tail}
@@ -1908,8 +1911,20 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   // areas both live at /projects/:id (ProjectDetailPage renders either); a domain has no
   // detail page, so it lands on the garden overview.
   const to = row.entity_type === 'domain' ? '/projects' : `/projects/${row.entity_id}`
-  // 2a rule 9 (actions are verbs): "reviewed" became Plan a step (its page, where the next step is
-  // planned) and Snooze a week (the review mark — the card stays away while it's untouched < 7 days).
+  const { data: projects = [] } = useProjects()
+  // 2a rule 9 (actions are verbs): "reviewed" became Plan a step and Snooze a week (the review mark —
+  // the card stays away while it's untouched < 7 days). Plan a step writes the next step in place
+  // (conductor 2026-10-13): the capture bar opens on "#Project ", so Enter files it there. An area or
+  // a domain has no #tag in the command bar, so its Plan a step still opens its page.
+  function planStep() {
+    const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+    if (!project) return navigate(to)
+    const text = `${projectTag(project, projects)} `
+    window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: text }))
+    openCapture()
+    const input = document.getElementById(CAPTURE_INPUT_ID) as HTMLInputElement | null
+    requestAnimationFrame(() => input?.setSelectionRange(text.length, text.length)) // type after the tag
+  }
   return (
     <div
       // Motion 3e (WB-1): markReviewed() looks the card up by this id to play the exit
@@ -1924,8 +1939,8 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
       <div className="td-nudge-name">{row.entity_name}</div>
       <div className="td-nudge-why">untouched for {Math.floor(row.days_since)} days</div>
       <div className="td-nudge-actions">
-        <Button type="button" variant="cta" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); navigate(to) }}>Plan a step</Button>
-        <Button type="button" variant="secondary" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); markReviewed(row) }}>Snooze a week</Button>
+        <Button type="button" variant="cta" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); planStep() }}>Plan a step</Button>
+        <Button type="button" variant="secondary" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); markReviewed(row, 'Snoozed a week') }}>Snooze a week</Button>
       </div>
     </div>
   )

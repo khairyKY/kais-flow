@@ -6,6 +6,7 @@
 import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
 import { daysToWeekend } from '../../lib/weekend'
 import { cairoTimeKey } from '../calendar/eventTime'
+import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
 import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { formatDuration } from '../tasks/taskDisplay'
 import { isTop3Today } from '../tasks/top3Rule'
@@ -145,16 +146,12 @@ export function ribbonSpan(b: UpNextEvent, now: Date): { left: number; width: nu
   return b.all_day || width <= 0 ? null : { left, width }
 }
 
-/** The working day the workload is measured against — Plan my day's 09:00–18:00 (rituals/ritualLogic
- * DAY_FROM / DAY_TO; an 18:00 gym isn't workload). */
-export const WORK_FROM_MIN = 9 * 60
-export const WORK_TO_MIN = 18 * 60
-
 /** MK Workload "over capacity": minutes of the plan that don't fit in what's left of today's working
- * day (from now, or 09:00, to 18:00, on the user's clock) — 0 when it fits. */
+ * day — Plan my day's own window (rituals/ritualLogic DAY_FROM–DAY_TO, 09:00–18:00; an 18:00 gym
+ * isn't workload), from now or its start, on the user's clock — 0 when it fits. */
 export function overCapacity(openTop3: readonly WorkItem[], events: readonly Block[], now: Date, doneTaskIds: ReadonlySet<string>): number {
-  const from = Math.max(now.getTime(), dayAt(now, WORK_FROM_MIN))
-  const to = dayAt(now, WORK_TO_MIN)
+  const from = Math.max(now.getTime(), dayAt(now, DAY_FROM))
+  const to = dayAt(now, DAY_TO)
   const work = workLeft(openTop3, workBlocks(events, now, doneTaskIds), from, to)
   return Math.max(0, Math.round(work - Math.max(0, (to - from) / 60_000)))
 }
@@ -191,12 +188,17 @@ export function top3Planned(picks: readonly WorkItem[], events: readonly Block[]
   }, 0)
 }
 
-/** Ruling 1's "Day N": Cairo calendar days since the first record, that day being Day 1 — one
- * number all day long, whatever the hour. */
-export function dayOfJourney(firstIso: string | null, now: Date): number {
-  if (!firstIso) return 1
-  const day = (d: Date) => Date.parse(`${cairoDateKey(d)}T00:00:00Z`) / 86_400_000
-  return Math.max(1, day(now) - day(new Date(firstIso)) + 1)
+// "Day N" lives in ./journey (light enough for the shell's first chunk); re-exported for its callers.
+export { dayOfJourney } from './journey'
+
+/** "Worth a look" → Plan a step: the `#tag` that files a capture into `project`. The command bar's
+ * rule (command-bar/parseCommand) reads one word after `#` and takes the first project whose name
+ * contains it, so this is the first word of the name that lands on this project, not on another.
+ * ponytail: a word chrono reads as a date ("#May") is eaten before the tag; add a guard if it bites. */
+export function projectTag(project: { id: string; name: string }, projects: readonly { id: string; name: string }[]): string {
+  const words = project.name.split(/\s+/).filter(Boolean)
+  const lands = (w: string) => projects.find((p) => p.name.toLowerCase().includes(w.toLowerCase()))?.id === project.id
+  return `#${words.find(lands) ?? words[0] ?? ''}`
 }
 
 /** Minutes of focus logged on today's Cairo date (time_entries). */

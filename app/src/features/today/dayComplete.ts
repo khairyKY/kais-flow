@@ -1,4 +1,4 @@
-import { localDateKey } from '../routines/streaks'
+import { zoneDateKey } from '../../lib/dateShortcuts'
 
 // Punch 23 — THE once-per-day gate for the day-complete celebration (Effects 2d).
 // One key, one dwell, one implementation. TasksPage currently carries a duplicate
@@ -8,9 +8,10 @@ import { localDateKey } from '../routines/streaks'
 export const DAY_DONE_KEY = 'kf.dayDoneShown'
 export const DAY_DONE_DWELL_MS = 3000 // spec: 3s dwell (DRIFT-AUDIT P0 #14)
 
-/** True exactly once per calendar day — and marks the day claimed as a side effect. */
+/** True exactly once per day — the user's day (lib/appZone), not the device's — and marks the day
+ * claimed as a side effect. */
 export function claimDayComplete(now = new Date()): boolean {
-  const today = localDateKey(now)
+  const today = zoneDateKey(now)
   try {
     if (localStorage.getItem(DAY_DONE_KEY) === today) return false
     localStorage.setItem(DAY_DONE_KEY, today)
