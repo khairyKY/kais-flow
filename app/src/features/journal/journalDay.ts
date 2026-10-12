@@ -112,3 +112,28 @@ export function daysLabel(n: number): string {
 export function entryTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
 }
+
+// ── Talk it out + photos (the IO half is ./media.ts) ──
+
+/** `<uid>/<entry>/<photo>.jpg` in the `journal` bucket — the first folder is the owner, which is what
+ * the bucket's RLS checks (migration 0060). */
+export function journalPhotoPath(uid: string, entryId: string, photoId: string): string {
+  return `${uid}/${entryId}/${photoId}.jpg`
+}
+
+export function addMedia(paths: string[] | null | undefined, path: string): string[] {
+  const list = paths ?? []
+  return list.includes(path) ? list : [...list, path]
+}
+
+export function removeMedia(paths: string[] | null | undefined, path: string): string[] {
+  return (paths ?? []).filter((p) => p !== path)
+}
+
+/** Spoken words join the entry as their own paragraph (the command bar's dictation joins with a space;
+ * a journal take is a thought of its own). Also accumulates `transcript` across takes. */
+export function appendTranscript(body: string | null | undefined, heard: string): string {
+  const a = (body ?? '').trimEnd()
+  const b = heard.trim()
+  return a && b ? `${a}\n\n${b}` : a || b
+}
