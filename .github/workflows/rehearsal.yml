@@ -17,7 +17,7 @@ on:
       SUPABASE_ACCESS_TOKEN:
         required: false
   push:
-    branches: ['claude/release-*']
+    branches: ['claude/release-*', 'claude/rehearsal'] # claude/rehearsal: registers the workflow (dispatch needs it on master otherwise); removed after
 
 permissions:
   contents: read
