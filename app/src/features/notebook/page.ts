@@ -50,7 +50,7 @@ const order = (ids: BlockId[], on: BlockId[]) => ids.map((id) => ({ id, on: on.i
 // preset ever adds it: the habits are the user's own routines, nothing else.
 export const PRESETS: Record<PresetId, { label: string; layout: NotebookLayout }> = {
   kai: {
-    label: "Kai's page",
+    label: 'Kai’s page',
     layout: {
       marks: 'box',
       blocks: order(['header', 'tasks', 'habits', 'notes', 'night', 'top3'], ['header', 'tasks', 'habits', 'notes', 'night']),
