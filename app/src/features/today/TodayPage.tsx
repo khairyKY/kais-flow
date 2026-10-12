@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
@@ -7,23 +7,23 @@ import { isOverdue, todayFor } from '../tasks/planMath'
 import { DndContext, MouseSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
-import { daysOverdue, formatDuration } from '../tasks/taskDisplay'
+import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
-import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useAreas } from '../areas/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
-import { computeStreak, localDateKey, routinesForToday, todayTally } from '../routines/streaks'
+import { routinesForToday, todayTally } from '../routines/streaks'
 import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
-import { CaptureCta } from '../capture/CaptureCta'
 import { useRitualStepsToday, type RitualKind } from '../rituals/api'
 import { useRitualPins } from '../rituals/ritualPins'
+import { PLAN_STEPS, SHUT_STEPS } from '../rituals/ritualLogic'
 import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
@@ -31,9 +31,9 @@ import { useResurfacePick } from '../resurfacing/api'
 import { useTimeEntries } from '../focus/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
-import { useTerrariumStore } from './terrariumStore'
 import { openCapture } from '../command-bar/commandBarStore'
-import { SectionLabel, Checkbox, Button, Star } from '../../components/kit'
+import { SectionLabel, Checkbox, Button, Star, KeyCombo } from '../../components/kit'
+import { splitKeyCombo } from '../../lib/shortcuts'
 import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -51,31 +51,42 @@ import { useOnline } from '../../lib/useOnline'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
-import { ritualProgress, type RitualState } from './dayPhase'
-import { upNextClock, upNextLabel } from './upNext'
+import { cairoMinutes, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
+import { isInProgress, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { LabelChips } from '../tasks/TaskRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
+import type { BulkActions } from '../tasks/TaskMenu'
 import { useOpenTask } from '../tasks/openTask'
-import { DayCard, RitualCard } from './DayCard'
+import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard'
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
-import { useStarEvents } from './api'
-import { blockMeta, blockOf, dayOfJourney, eventMetas, focusedToday, foldOpen, remainingWork, runningBlock, topCard, upNextItems, workloadLine, type WorkloadInput } from './todayLayout'
-import { filterByList } from '../tasks/grouping'
+import { useStarEvents, useWeekClosedAt } from './api'
+import { useStartFocus } from './startFocus'
+import { useFocusNow } from './focusNow'
+import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
+import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, remainingWork, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, workloadLine, RIBBON_FROM_MIN, RIBBON_TO_MIN, type WorkloadInput } from './todayLayout'
+import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { flushOutbox, useOutboxMarks } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
+import type { ContextMenuItem } from '../../components/ContextMenu'
 import './today.css'
 import { appZone } from '../../lib/appZone'
+import { weekendDays } from '../../lib/weekend'
 
-// ── Today — pixel contract: Today.dc.html 1a (desktop, design lines 107-221) + States.dc.html
+// The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
+const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
+
+// ── Today — pixel contract: Today.dc.html 2a (desktop, "reviewed pass", 2026-09-28) + States.dc.html
 // 1a/1b (empty/done), and on a phone (< 768px) Today Phone.dc.html 2a–2n with the 2026-09-28
-// rulings (design-export/SCREENS-2026-09-28.md §Today). The shell owns the sidebar/topbar/tab-bar;
-// this is the main content, wired to real data. What goes where — the NOW slip, Up next, the fold,
-// the header line — is ./todayLayout, shared by both layouts: each item shows once. ──
+// rulings (design-export/SCREENS-2026-09-28.md §Today). The Now card / NOW slip states are MK Now
+// Card.dc.html (./nowCard), the phone header line MK Workload. The shell owns the sidebar/topbar/
+// tab-bar; this is the main content, wired to real data. What goes where — the Now card, Up next,
+// the folds, the header line — is ./todayLayout + ./nowCard, shared by both layouts: each item
+// shows once. Where 2a and a later Kai ruling disagree the ruling holds (docs/log fix-today handoff). ──
 
 const A = '/ds/assets'
 const PROJECT_DOTS = ['--acc-moss', '--acc-blossom', '--acc-lavender', '--acc-hydrangea', '--acc-buttercream', '--acc-sage']
@@ -100,13 +111,6 @@ function weightedMilestonePct(project: Project, tasks: Task[]): number {
 function isToday(iso: string | null): boolean {
   if (!iso) return false
   return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
-}
-
-function cherryStage(open: number, done: number): string {
-  if (open + done === 0) return 'bud'
-  if (done === 0) return 'opening'
-  if (open === 0) return 'fallen'
-  return 'bloom'
 }
 
 export function TodayPage() {
@@ -149,7 +153,6 @@ export function TodayPage() {
     }
     return s
   })
-  const terrariumOn = useTerrariumStore((s) => s.on)
   const isMobile = useIsMobile()
   // DS-CHANGELOG §3 Offline: a phone row not yet synced carries a pending ring while offline.
   const online = useOnline()
@@ -206,21 +209,44 @@ export function TodayPage() {
   const now = day.now
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const doneTaskIds = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id))
-  // Each item once (./todayLayout, rulings 3–4). Only the phone has the NOW slip; on desktop the
-  // running block stays in Up next, reading "Now".
-  const slip = isMobile ? runningBlock(events, now, doneTaskIds) : null
-  const slipTask = slip?.task_id ? taskById.get(slip.task_id) : undefined
-  const upNext = upNextItems(events, now, slip, top3Ids)
-  const upNextTasks = upNext.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
-  const allOpen = foldOpen(visible, top3Ids, slip ? [slip, ...upNext] : upNext).sort(doneAfterOpen)
+  const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
+  const nothingPlanned = !tasksPending && open.length === 0 && doneToday === 0
+
+  // The Now card / NOW slip (MK Now Card, ./nowCard): running · over · paused · just done · next ·
+  // free. It shares the top slot with the ritual card (./todayLayout topCard): something under way
+  // wins, Next / Free give way to Plan / Shut down / Day closed.
+  const focus = useFocusNow()
+  // Just done needs the wall clock (a 4s window), not the minute clock.
+  const nowS = nowState({ events, taskOf: (id) => taskById.get(id), now, clockMs: Date.now(), focus })
+  const [, rerender] = useState(0)
+  const doneUntil = nowS?.kind === 'done' ? nowS.at.getTime() + JUST_DONE_MS : null
+  useEffect(() => {
+    if (doneUntil == null) return
+    const t = setTimeout(() => rerender((n) => n + 1), Math.max(0, doneUntil - Date.now()) + 50)
+    return () => clearTimeout(t)
+  }, [doneUntil])
+  const empty = nothingPlanned && !eventsPending && upNextEvents(events, now).length === 0
+  const card = tasksPending ? null : topCard(day.state.phase, nowS?.kind ?? null, empty)
+  // Desktop (Today 2a): the card's ribbon and next two are the day's Up next, so the card stays all
+  // day — with no head while nothing runs ('idle', Kai's "no card during the day"). An empty day
+  // keeps only the Plan / Shut down / Day closed moments, as the Day card always did.
+  const deskCard = tasksPending ? null : card ?? (!empty ? 'idle' : day.state.phase === 'now' ? null : day.state.phase)
+  const topSlot = isMobile ? card : deskCard
+  const headBlock = topSlot === 'slip' ? nowBlock(nowS) : null
+  const headTask = topSlot === 'slip' && nowS && 'task' in nowS ? nowS.task : undefined
+  // Each item once (./todayLayout, rulings 3–4): Up next skips the card's block and the Top 3's.
+  const upNext = upNextItems(events, now, headBlock, top3Ids)
+  // Desktop lists the next two under the ribbon (2a); the rest are on the ribbon, and their tasks
+  // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE).
+  const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
+  const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
+  const allOpen = foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown).sort(doneAfterOpen)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
   const openCount = restOpen.filter((t) => !t.completed_at).length
-  const doneToday = tasks.filter((t) => isToday(t.completed_at)).length
-  const nothingPlanned = !tasksPending && open.length === 0 && doneToday === 0
   const allDone = !tasksPending && open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
@@ -243,7 +269,7 @@ export function TodayPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   // Every task row on the page, in screen order, once (a Top 3 task that is also the slip's block
   // shows twice by design — Open question 1 — but is one selection).
-  const selectable = [...new Map([...top3InOrder, ...(slipTask ? [slipTask] : []), ...upNextTasks, ...allOpen].map((t) => [t.id, t] as const)).values()].filter((t) => !t.completed_at)
+  const selectable = [...new Map([...top3InOrder, ...(headTask ? [headTask] : []), ...upNextTasks, ...allOpen].map((t) => [t.id, t] as const)).values()].filter((t) => !t.completed_at)
   const selectedTasks = selectable.filter((t) => selected.has(t.id))
   // Kai 2026-07-21 (clarified): the visible per-row select SQUARES go, but selectability
   // stays — Ctrl/Cmd+click toggles a row, Ctrl+A still selects all, the BulkBar still rides
@@ -259,8 +285,9 @@ export function TodayPage() {
   function clearSelection() {
     setSelected(new Set())
   }
-  // The one task-row grammar (features/tasks/SwipeRow + TaskMenu): each row's selection props.
-  const rowSelection = (t: Task) => ({ selected: selected.has(t.id), onToggleSelect: () => toggleSelected(t.id), selecting: selected.size > 0 })
+  // The one task-row grammar (features/tasks/SwipeRow + TaskMenu): each row's selection props, and
+  // with several rows selected the ⋯ / right-click menu acts on all of them (as on Tasks).
+  const rowSelection = (t: Task): RowSelection => ({ selected: selected.has(t.id), onToggleSelect: () => toggleSelected(t.id), selecting: selected.size > 0, bulk })
   useEscapeStack(selected.size > 0, clearSelection)
 
   // Punch 19: click-away deselects. A click on empty page space clears the multi-select;
@@ -297,6 +324,10 @@ export function TodayPage() {
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
   function bulkTop3() { toggleTop3ManyWithUndo(selectedTasks); clearSelection() }
+  // Kai 2026-10-12: a row's menu ignored the selection — it gets the page's bulk handlers.
+  const bulk: BulkActions | undefined = selected.size > 1
+    ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
+    : undefined
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
   // app's primary surface. Wired to the same handlers its context menu already uses.
@@ -349,6 +380,21 @@ export function TodayPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+  // The Notebook page (Kai's 2026-10-03 brainstorm, conductor 2026-10-12): N on Today opens it.
+  // Capture so it runs before the shell's global N (new task), which it replaces on this page only.
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (!keysOn) return
+    function onKey(e: KeyboardEvent) {
+      if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return
+      if (document.querySelector('[role="dialog"], [role="menu"]')) return
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      navigate(NOTEBOOK_PATH)
+    }
+    window.addEventListener('keydown', onKey, { capture: true })
+    return () => window.removeEventListener('keydown', onKey, { capture: true })
+  }, [keysOn, navigate])
   const dragSensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   function onTop3Drop(e: DragEndEvent) {
     // The drop's mouseup is followed by a click on the moved row — it must not open the task.
@@ -368,10 +414,9 @@ export function TodayPage() {
   // Kai 2026-10-03: the phone shows the routines for now (+ Anytime); other times fold into one line each.
   const routineSplit = splitByTimeOfDay(routineGroups, Number(cairoTimeKey(now).slice(0, 2)))
   const [openRoutineGroups, setOpenRoutineGroups] = useState<string[]>([])
-  const doneKeys = useMemo(() => {
-    const today = localDateKey(new Date())
-    return new Set(completions.filter((c) => c.completed_on === today).map((c) => c.routine_id))
-  }, [completions])
+  // The user's day (lib/appZone), like the hour above — not the device's.
+  const todayKey = zoneDateKey(now)
+  const doneKeys = useMemo(() => new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id)), [completions, todayKey])
   const { due: routinesTotal, done: routinesDone } = todayTally(routines, completions)
   const hasActiveRoutines = routines.some((r) => r.active)
 
@@ -392,21 +437,13 @@ export function TodayPage() {
     void flushOutbox().then(() => queryClient.invalidateQueries({ queryKey: ['activity_log'] }))
   }
   const overdueCount = filterByList(tasks, 'overdue').length
-
-  const streak = useMemo(() => {
-    const byRoutine = new Map<string, string[]>()
-    for (const c of completions) {
-      const arr = byRoutine.get(c.routine_id) ?? []
-      arr.push(c.completed_on)
-      byRoutine.set(c.routine_id, arr)
-    }
-    let best = 0
-    for (const r of routines) if (r.active) best = Math.max(best, computeStreak(byRoutine.get(r.id) ?? [], r.cadence).current)
-    return best
-  }, [routines, completions])
+  // DAILY-CYCLE step 5, the weekly review: prompted on its day (the first day of the user's
+  // weekend) until this week's review is closed (./todayLayout reviewDue).
+  const { data: weekClosed = [] } = useWeekClosedAt(now)
+  const reviewToday = reviewDue(now, weekendDays(), weekClosed)
 
   // Ported from the retired Terrarium.tsx — day count since the earliest record, for the phone
-  // header's "Day N" (Today Phone ruling 1). Desktop 1a's band omits it.
+  // header's "Day N" (Today Phone ruling 1). Desktop 2a cut it ("The terrarium · Day 42").
   const firstRecord = useMemo(
     () => [...tasks.map((t) => t.created_at), ...pendingInbox.map((i) => i.created_at), ...projects.map((p) => p.created_at), ...routines.map((r) => r.created_at)].sort()[0] ?? null,
     [tasks, pendingInbox, projects, routines],
@@ -446,8 +483,8 @@ export function TodayPage() {
 
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: appZone() })
   const dateLabelShort = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: appZone() })
-  const hyd = pendingInbox.length === 0 ? 'zero' : pendingInbox.length < 5 ? 'light' : pendingInbox.length < 20 ? 'medium' : 'heavy'
-  const vine = streak >= 30 ? 'lush' : streak >= 7 ? 'flowering' : streak >= 1 ? 'sprouting' : 'bare'
+  // "2 of 6 done" — today's own work (./todayLayout dayCounts): 2a's summary, the phone's hairline.
+  const counts = dayCounts(tasks, now)
 
   const resurfacing = !!resurfacePick
   const slippingCards = (
@@ -573,8 +610,6 @@ export function TodayPage() {
   // ── Phone: Today Phone.dc.html 2a–2n. Header line → NOW slip or ritual card → Top 3 → Up next
   // → Routines → the quiet fold. Four section labels, each item once. ──
   if (isMobile) {
-    const empty = nothingPlanned && !eventsPending && upNext.length === 0 && !slip
-    const card = tasksPending ? null : topCard(day.state.phase, slip, empty)
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     const metas = eventMetas(upNext, now)
     const blockMetaOf = (t: Task) => {
@@ -594,18 +629,21 @@ export function TodayPage() {
       doneToday,
       remaining: remainingWork(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds),
     }
+    // MK Workload: amber + "2H OVER" when the plan doesn't fit the working day (during the day only).
+    const over = day.state.phase === 'now' && !empty ? overCapacity(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds) : 0
     return (
       <div className="tp">
         <PhoneBar title={dateLabelShort} morning={day.morning} evening={day.evening} onOpenRitual={openRitual} />
         {tasksPending ? (
           <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
         ) : (
-          <PhoneSummary workload={workload} now={now} online={online} syncing={fetchingSlowly} />
+          <PhoneSummary workload={workload} now={now} online={online} syncing={fetchingSlowly} over={over} counts={counts} />
         )}
 
-        {card === 'slip' && slip && <NowSlip event={slip} task={slipTask} now={now} sel={slipTask ? rowSelection(slipTask) : {}} />}
+        {card === 'slip' && nowS && <NowSlip state={nowS} sel={headTask ? rowSelection(headTask) : {}} />}
         {card && card !== 'slip' && <RitualCard kind={card} day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />}
         {card && <FirstTodayHint />}
+        {!tasksPending && reviewToday && <ReviewCard />}
         {birthdayCards.length > 0 && <div style={{ padding: '8px 16px 0' }}>{birthdayCards}</div>}
 
         {empty ? (
@@ -727,80 +765,50 @@ export function TodayPage() {
     )
   }
 
-  // ── Desktop: Today.dc.html 1a. ──
+  // ── Desktop: Today.dc.html 2a ("Desktop — reviewed pass"). One date and a one-line summary, the
+  // typed capture pill → the Now card (the moment, the 8–20 ribbon, the next two) → Today's three,
+  // Overdue, Also open | the rail: Rituals, Routines, Worth a look. The terrarium band is gone (2a:
+  // "replaces the decorative terrarium band"); its counts live in the summary and the sidebar. ──
+  const nextUp = upNextEvents(events, now).find((e) => new Date(e.starts_at).getTime() > now.getTime() && !(e.task_id && doneTaskIds.has(e.task_id)))
   const header = (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 }}>
-      <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Today</div>
-        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 42, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{dateLabel}</h1>
-      </div>
-      <CaptureCta />
-    </div>
-  )
-
-  const terrarium = terrariumOn && (
-    <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '14px 22px', display: 'flex', alignItems: 'center', gap: 26, marginBottom: 26, transform: 'rotate(-0.3deg)' }}>
-      <span aria-hidden style={{ position: 'absolute', top: -9, left: 44, width: 66, height: 16, background: 'color-mix(in srgb, var(--acc-sage) 36%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18 }}>
-        <img src={`${A}/cherry/${cherryStage(open.length, doneToday)}.png`} alt="Tasks" style={{ height: 58, filter: 'var(--shadow-drop-sm)' }} />
-        <img src={`${A}/hydrangea/${hyd}.png`} alt="Inbox" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
-        <img src={`${A}/vine/${vine}.png`} alt="Routines" style={{ height: 54, filter: 'var(--shadow-drop-sm)' }} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The terrarium</div>
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>pressed &amp; kept, one day at a time</div>
-      </div>
-      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.7 }}>
-        <div>{pendingInbox.length} in inbox</div>
-        <div>{doneToday} of {open.length + doneToday} done</div>
-        <div style={{ color: 'var(--acc-sage-text)' }}>{streak}-day streak</div>
-      </div>
-    </div>
-  )
-
-  // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): Day card → Top 3 → Up next → Routines
-  // lead; the lists that don't drive the next move rest under one quiet "More for today" fold.
-  // Desktop keeps its rail (Routines first, then Slipping / From a while ago — already peripheral).
-  const showAllOpen = !tasksPending && !nothingPlanned && !allDone
-  const allOpenSection = showAllOpen && (
-    <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
-      <SectionLabel style={{ marginBottom: 6 }}>{`All open · ${openCount}`}</SectionLabel>
-      {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
-      <div className="kf-dim">
-        {restOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
-          <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-            <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
+    <div className="td-head">
+      <div style={{ minWidth: 0 }}>
+        <h1 className="td-date">{dateLabel}</h1>
+        {!tasksPending && (
+          <div className="td-sum">
+            {counts.total > 0 && `${counts.done} of ${counts.total} done`}
+            {counts.total > 0 && nextUp && ' · '}
+            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {cairoTimeKey(new Date(nextUp.starts_at))}</span></>}
+            {counts.total === 0 && !nextUp && 'A fresh page'}
           </div>
-        ))}
+        )}
       </div>
-      {/* Punch 17: the rest lives on the Tasks "All" tab (built in parallel — link regardless). */}
-      {restOpen.length > ALL_OPEN_CAP && (
-        <Link to="/tasks?list=all" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
-          View all →
-        </Link>
-      )}
-    </section>
+      <div className="td-head-actions">
+        <NotebookButton />
+        <AddTaskPill />
+      </div>
+    </div>
   )
-  const slippingSection = slipping.length > 0 && (
-    <section>
-      <SectionLabel style={{ marginBottom: 12 }}><span style={{ color: 'var(--acc-terra)' }}>Slipping</span></SectionLabel>
-      {slippingCards}
-    </section>
-  )
+
+  // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): the next move leads; the lists that don't
+  // drive it stay quiet — 2a's "Also open · N" shows three rows and folds the rest behind "Show N
+  // more" (the old "More for today" fold, remembered per device), the overdue pile its own fold.
+  const showLists = !tasksPending && !nothingPlanned && !allDone
+  const openRow = (t: Task, i: number) => <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
   // Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
   // The section now either carries content or offers the one designed way in.
   const routinesSection = (
     <section>
       <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
       {routinesTotal === 0 && (
-        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', textDecoration: 'none' }}>
+        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand)', textDecoration: 'none' }}>
           {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
           {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
         </Link>
       )}
       {routineGroups.map((g) => (
         <div key={g.key}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '2px 0 5px' }}>{g.label}</div>
+          <div className="td-rail-sub">{g.label}</div>
           {g.items.map((r) => (
             <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} />
           ))}
@@ -808,61 +816,49 @@ export function TodayPage() {
       ))}
     </section>
   )
-  // Punch 2: ResurfaceCard returns null when nothing has resurfaced, so this was a
-  // bare heading. The heading now only appears with a card under it.
-  const resurfaceSection = resurfacing && (
-    <section>
-      <SectionLabel style={{ marginBottom: 12 }}>From a while ago</SectionLabel>
-      <ResurfaceCard />
-    </section>
-  )
-  const moreForToday = showAllOpen && (
-    <>
-      {overdueOpen.length > 0 && (
-        <MoreForToday label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
-          <section>
-            <div className="kf-dim">
-              {overdueOpen.slice(0, ALL_OPEN_CAP).map((t, i) => (
-                <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
-              ))}
-            </div>
-            {overdueOpen.length > ALL_OPEN_CAP && (
-              <Link to="/tasks?list=overdue" className="kf-link-terra" style={{ ...linkStyle, display: 'inline-block', marginTop: 10 }}>
-                View all →
-              </Link>
-            )}
-          </section>
-        </MoreForToday>
-      )}
-      <MoreForToday summary={openCount > 0 ? `${openCount} open` : ''}>
-        {allOpenSection}
-      </MoreForToday>
-    </>
-  )
+  // 2a rule 7: a nudge never flags what the screen already treats as a priority — no slipping card
+  // for a project one of today's open picks belongs to.
+  const pickProjects = new Set(top3InOrder.filter((t) => !t.completed_at && t.project_id).map((t) => t.project_id))
+  const nudges = slipping.filter((r) => !(r.entity_type === 'project' && pickProjects.has(r.entity_id)))
+  const stageOf = (row: SlippingRow) => {
+    const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+    return wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
+  }
+  const inProgressIds = new Set([...(nowS?.kind === 'running' && nowS.task ? [nowS.task.id] : []), ...(focus?.running ? [focus.taskId] : [])])
 
   return (
     // Kai 2026-10-03: the shared page width, left-aligned like Tasks (it was 1010 centred, and
     // shrank to its content inside the flex route — index.css .kf-route > *).
-    <div style={{ maxWidth: 'var(--kf-page-max)' }}>
-      {terrarium}
+    <div className="td" style={{ maxWidth: 'var(--kf-page-max)' }}>
       {header}
 
-      {/* deviation(2026-09-26 daily cycle): ONE Day card with the next move replaces the two
-          pinned ritual cards (./DayCard, ./dayPhase). Pins now decide which ritual it prompts. */}
-      <div className="kf-daycard-slot" style={{ marginTop: 20 }}>
-        <DayCard day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} onOpenRitual={openRitual} />
-      </div>
-      {!tasksPending && <FirstTodayHint style={{ padding: '10px 0 0 24px', fontSize: 'var(--fs-hand-l)' }} />}
+      {deskCard && (
+        <NowCard
+          slot={deskCard}
+          state={nowS}
+          ritual={deskCard === 'slip' || deskCard === 'idle' ? undefined : <DeskRitualHead kind={deskCard} day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} onOpenRitual={openRitual} />}
+          events={events}
+          now={now}
+          next={upNextShown}
+          taskById={taskById}
+          top3Ids={top3Ids}
+          focus={focus}
+          firstPick={top3InOrder.find((t) => !t.completed_at)}
+          rowSelection={rowSelection}
+        />
+      )}
+      {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14, fontSize: 'var(--fs-hand-l)' }} />}
 
-      <div style={{ height: 1, borderBottom: '1px dashed var(--line-solid)', margin: '26px 0 28px' }} />
-
-      {/* The side column (Routines · Slipping) grows with the page too, from 264 to 340. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) clamp(264px, 28%, 340px)', gap: 44, alignItems: 'start' }}>
-        <div className="kf-bulk-anchor" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
+      {/* The side column grows with the page too, from 264 to 340 (Kai 2026-10-03). */}
+      <div className="td-grid">
+        <div className="kf-bulk-anchor td-main">
           {birthdayCards}
           <section data-tour="top3" className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
-            <SectionLabel style={{ marginBottom: 14 }}>Top 3 for today</SectionLabel>
+            {(() => {
+              const planned = top3Planned(top3InOrder, events, now)
+              return <SectionLabel action={planned > 0 ? <span className="td-label-note">{span(planned)} planned</span> : undefined} style={{ marginBottom: 16 }}>Today's three</SectionLabel>
+            })()}
             {tasksPending ? (
               <>
                 <Skeleton variant="card" />
@@ -876,12 +872,12 @@ export function TodayPage() {
               <DndContext sensors={dragSensors} onDragEnd={onTop3Drop}>
                 {goal && (
                   <Top3Slot key={goal.id} id={goal.id} open={!goal.completed_at}>
-                    <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} meta={blockMetaFor(goal, events, now)} place={placeOf(goal)} {...rowSelection(goal)} />
+                    <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} meta={blockMetaFor(goal, events, now)} inProgress={inProgressIds.has(goal.id)} place={placeOf(goal)} {...rowSelection(goal)} />
                   </Top3Slot>
                 )}
-                {restTop3.map((t) => (
+                {restTop3.map((t, i) => (
                   <Top3Slot key={t.id} id={t.id} open={!t.completed_at}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border meta={blockMetaFor(t, events, now)} place={placeOf(t)} {...rowSelection(t)} highlighted={t.id === focusedId} />
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border={i < restTop3.length - 1} pick meta={blockMetaFor(t, events, now)} inProgress={inProgressIds.has(t.id)} place={placeOf(t)} {...rowSelection(t)} highlighted={t.id === focusedId} />
                   </Top3Slot>
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
@@ -889,21 +885,23 @@ export function TodayPage() {
             )}
           </section>
 
-          <section className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
-            <SectionLabel action={<Link to="/calendar" className="kf-link-terra" style={linkStyle}>Open calendar →</Link>} style={{ marginBottom: 12 }}>Up next</SectionLabel>
-            {!eventsPending && upNext.length === 0 && <Empty line="A clear afternoon." />}
-            {upNext.map((e, i) => (
-              <EventRow key={e.id} event={e} task={e.task_id ? taskById.get(e.task_id) : undefined} border={i > 0} now={now} rowSelection={rowSelection} />
-            ))}
-          </section>
-
-          {moreForToday}
+          {showLists && overdueOpen.length > 0 && (
+            <MoreForToday label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
+              <section>
+                <div className="kf-dim">{overdueOpen.slice(0, ALL_OPEN_CAP).map(openRow)}</div>
+                {overdueOpen.length > ALL_OPEN_CAP && (
+                  <Link to="/tasks?list=overdue" className="td-more">View all →</Link>
+                )}
+              </section>
+            </MoreForToday>
+          )}
+          {showLists && restOpen.length > 0 && <AlsoOpen count={openCount} rows={restOpen} render={openRow} motion={motion} />}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+        <div className="td-rail">
+          <RitualsRail day={day} now={now} onOpen={openRitual} review={reviewToday} />
           {routinesSection}
-          {slippingSection}
-          {resurfaceSection}
+          <WorthALook rows={nudges} resurfacing={resurfacing} stageOf={stageOf} />
         </div>
       </div>
 
@@ -912,7 +910,8 @@ export function TodayPage() {
   )
 }
 
-const linkStyle = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)', textDecoration: 'none' }
+/** The Notebook page (another builder's route; Kai's analog-journal export). */
+const NOTEBOOK_PATH = '/notebook?day=today'
 
 /** A Top 3 task's block today, as its row's meta ("13:30–15:00 · 1H30M") — Up next skips it. */
 function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | undefined {
@@ -920,18 +919,372 @@ function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | u
   return b ? blockMeta(b, now) : undefined
 }
 
+/** Days past its due date on the user's calendar (lib/appZone) — 0 = due today, null = no date. */
+function overdueDays(task: Task): number | null {
+  if (!task.due_at) return null
+  const diff = taskDayDiff({ due_at: task.due_at, scheduled_start: null }, new Date())
+  return diff === null ? null : -diff
+}
+
+/** Today 2a's metadata: sans 12.5 in --ink-muted (rule 4), a 6px project dot, "30m", "in progress"
+ * in terra. The block's own meta keeps its order ("13:30–15:00 · starts in 20m"). */
 function metaRow(projectName: string | undefined, dot: string, duration: number | null, extra?: React.ReactNode) {
   return (
-    <div style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+    <div className="td-meta">
       {projectName && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot }} />
+        <span>
+          <span className="td-dot" style={{ background: dot }} />
           {projectName}
         </span>
       )}
-      {duration != null && <span>{formatDuration(duration)}</span>}
+      {duration != null && <span>{formatDuration(duration).toLowerCase()}</span>}
       {extra}
     </div>
+  )
+}
+
+/** A block's meta on a desktop row: "Now" reads "in progress" (2a), lengths in lower case. */
+const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
+  <>
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.toLowerCase()}</span>)}
+    {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
+  </>
+)
+
+// ── Desktop chrome (Today.dc.html 2a) ──
+
+/** 2a header: "+ Add a task…" with the capture keycap and the mic inside (rule 6: capture is
+ * type-first). The field opens the capture bar; the mic, the voice sheet. 2a's keycap reads N — on
+ * Today N opens the Notebook page (conductor 2026-10-12), so it shows the capture chord instead. */
+function AddTaskPill() {
+  const [voice, setVoice] = useState(false)
+  return (
+    <div className="td-pill">
+      <button type="button" className="td-pill-field" data-tour="command-bar" onClick={openCapture} title="Capture — type, or use the mic to talk">
+        <Icon name="plus" size={18} />
+        <span className="td-pill-text">Add a task…</span>
+        <KeyCombo keys={splitKeyCombo('⌘K')} size="sm" />
+      </button>
+      <button type="button" className="td-pill-mic" aria-label="Voice capture" title="Voice capture" onClick={() => setVoice(true)}>
+        <Icon name="mic" size={16} strokeWidth={2} />
+      </button>
+      {voice && (
+        <Suspense fallback={null}>
+          <VoiceCaptureSheet open onClose={() => setVoice(false)} />
+        </Suspense>
+      )}
+    </div>
+  )
+}
+
+/** The Notebook page's quiet way in on desktop (an icon button beside capture; N on Today). */
+function NotebookButton() {
+  return (
+    <Link to={NOTEBOOK_PATH} className="td-icon-btn" aria-label="Notebook page" title="Notebook page (N)">
+      <Icon name="journal" size={20} />
+    </Link>
+  )
+}
+
+/** "48 min left" under an hour, "1h 20m" past it. */
+const minsText = (n: number) => (n < 60 ? `${n} min` : span(n))
+
+/** Today 2a's Now card: the moment (MK Now Card states, ./nowCard) or, at a ritual moment, the Day
+ * card's next move (./DayCard DeskRitualHead); under it the 8 AM–8 PM ribbon and the next two blocks
+ * (2a: it "replaces both the decorative terrarium band and the Up next list"). No Done / Open
+ * buttons (Kai 2026-09-27) — Start focus is the one action; a task the card stands for keeps the
+ * task-row grammar (click opens, right-click menu, ⌃click selects) and, when it isn't a Top 3 row
+ * below, its checkbox. */
+function NowCard({ slot, state: s, ritual, events, now, next, taskById, top3Ids, focus, firstPick, rowSelection }: {
+  /** 'slip' = something under way (./nowCard); 'idle' = nothing runs: no head, ribbon + next two. */
+  slot: 'slip' | 'idle' | 'plan' | 'shutdown' | 'closed'
+  state: NowState<CalendarEvent, Task> | null
+  /** The ritual moment's head (DeskRitualHead) — set for every slot but 'slip'. */
+  ritual?: React.ReactNode
+  events: CalendarEvent[]
+  now: Date
+  next: CalendarEvent[]
+  taskById: Map<string, Task>
+  top3Ids: ReadonlySet<string>
+  focus: ReturnType<typeof useFocusNow>
+  firstPick?: Task
+  rowSelection: (t: Task) => RowSelection
+}) {
+  const moment = slot === 'slip' ? s : null
+  const block = nowBlock(moment)
+  const ritualSlot = slot !== 'slip' && slot !== 'idle'
+  return (
+    <section className="td-now" aria-label="Your day" data-now={moment ? moment.kind : slot} data-day-card={ritualSlot || undefined} data-tour={ritualSlot ? 'plan' : undefined}>
+      {moment ? <MomentHead state={moment} taskById={taskById} top3Ids={top3Ids} focus={focus} firstPick={firstPick} rowSelection={rowSelection} /> : ritual}
+      <Ribbon events={events} now={now} head={block} taskById={taskById} />
+      <div className="td-next">
+        {next.length === 0 ? (
+          <span>Nothing else on the calendar today</span>
+        ) : (
+          next.map((e) => {
+            const t = e.task_id ? taskById.get(e.task_id) : undefined
+            return t ? <NextTaskItem key={e.id} event={e} task={t} sel={rowSelection(t)} /> : <NextEventItem key={e.id} event={e} />
+          })
+        )}
+        <Link to="/calendar" className="td-cal-link">Calendar →</Link>
+      </div>
+    </section>
+  )
+}
+
+/** The Now card's head row for the moment's state (caption · title · sub, one action). */
+function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelection }: { state: NowState<CalendarEvent, Task>; taskById: Map<string, Task>; top3Ids: ReadonlySet<string>; focus: ReturnType<typeof useFocusNow>; firstPick?: Task; rowSelection: (t: Task) => RowSelection }) {
+  const startFocus = useStartFocus()
+  const navigate = useNavigate()
+  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const block = nowBlock(s)
+  const task = 'task' in s ? s.task : undefined
+  const focusTask = focus ? taskById.get(focus.taskId) : undefined
+  // Start focus: the card's task; for a time block with none, the task in focus or the first open
+  // pick (2a: "Deep work — Forecasting · working on <the pick>"); a meeting has nothing to focus on.
+  const target = task ?? (block && block.type !== 'event' ? focusTask ?? firstPick : undefined)
+  const working = focus?.running && focusTask && focusTask.id !== task?.id ? <> · working on <span className="td-ink"><EmojiText text={focusTask.title} /></span></> : null
+  const focusBtn = (label = 'Start focus') => target && <Button type="button" variant="secondary" className="td-focus-btn" onClick={() => startFocus(target)}>{label}</Button>
+  let head: CardHead
+  switch (s.kind) {
+    case 'running':
+      head = { caption: `Now · ${time(s.block.starts_at)}–${time(s.block.ends_at)}`, tone: 'now', title: <EmojiText text={s.block.title} />, sub: <>{minsText(s.leftMin)} left{working}</>, action: focusBtn() }
+      break
+    case 'over':
+      head = { caption: `Now · ${minsText(s.overMin)} over`, tone: 'over', title: <EmojiText text={s.block.title} />, sub: <>ended {time(s.block.ends_at)}{working}</>, action: focusBtn() }
+      break
+    case 'paused':
+      head = { caption: s.since ? `Paused · since ${time(s.since)}` : 'Paused', tone: 'quiet', title: <EmojiText text={s.task.title} />, sub: `${minsText(s.leftMin)} left in the round`, action: focusBtn('Resume focus') }
+      break
+    case 'done':
+      head = { caption: `Done · ${time(s.at)}`, tone: 'done', title: <span className="td-struck"><EmojiText text={s.task.title} /></span>, action: <Button type="button" variant="secondary" icon={<Icon name="undo" size={16} />} onClick={() => reopenTaskWithUndo(s.task)}>Undo</Button> }
+      break
+  }
+  return (
+    <div className="td-now-head">
+      {task && s.kind !== 'done' ? (
+        <NowHeadTask task={task} block={block ?? undefined} head={head} check={!top3Ids.has(task.id)} sel={rowSelection(task)} />
+      ) : (
+        <NowHeadText head={head} onOpen={block ? () => navigate(eventPath(block)) : undefined} event={block ?? undefined} />
+      )}
+      {head.action && <span style={{ flex: 'none' }}>{head.action}</span>}
+    </div>
+  )
+}
+
+function NowHeadText({ head, onOpen, event }: { head: CardHead; onOpen?: () => void; event?: CalendarEvent }) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  return (
+    <>
+      <div className="td-now-text" onClick={onOpen} role={onOpen ? 'link' : undefined} style={onOpen ? { cursor: 'pointer' } : undefined} onContextMenu={event ? (e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) } : undefined}>
+        <div className="td-cap" data-tone={head.tone}><span className="td-cap-dot" aria-hidden />{head.caption}</div>
+        <div className="td-now-title">{head.title}</div>
+        {head.sub && <div className="td-now-sub">{head.sub}</div>}
+      </div>
+      {menu && event && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
+    </>
+  )
+}
+
+/** The card's head when it stands for a task: the task row's grammar on the text. */
+function NowHeadTask({ task, block, head, check, sel }: { task: Task; block?: CalendarEvent; head: CardHead; check: boolean; sel: RowSelection }) {
+  const g = useTodayRow(task, { ...sel, ...(block ? blockGrammar(block) : null) })
+  const bloom = useBloomCheck(task)
+  const openTask = useOpenTask()
+  return (
+    <>
+    <div id={`now-${task.id}`} className="td-now-text" style={{ cursor: 'pointer', background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined }} onClickCapture={ctrlSelect(sel, !!task.completed_at)} onClick={() => openTask(task.id)} onContextMenu={g.onContextMenu}>
+      <div className="td-cap" data-tone={head.tone}><span className="td-cap-dot" aria-hidden />{head.caption}</div>
+      <div className="td-now-title">
+        {check && <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex', marginRight: 10, verticalAlign: '-2px' }}><Checkbox label={task.title} checked={bloom.checking} size={20} onChange={bloom.toggle} /></span>}
+        {head.title}
+      </div>
+      {head.sub && <div className="td-now-sub">{head.sub}</div>}
+    </div>
+    {g.menuNode}
+    </>
+  )
+}
+
+/** 2a's day ribbon: 8 AM–8 PM, every timed block today in its calendar colour (CALENDAR.md kinds:
+ * a meeting blossom, a task / time block lavender, or the event's own colour), the card's block
+ * outlined in terra with its spent part filled, a terra now line. A block opens on click. */
+function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now: Date; head: CalendarEvent | null; taskById: Map<string, Task> }) {
+  const navigate = useNavigate()
+  const openTask = useOpenTask()
+  const today = cairoDateKey(now)
+  const t = now.getTime()
+  const blocks = events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+  const nowPct = ribbonPct(t, now)
+  const hours = Array.from({ length: (RIBBON_TO_MIN - RIBBON_FROM_MIN) / 120 + 1 }, (_, i) => RIBBON_FROM_MIN / 60 + i * 2)
+  return (
+    <div className="td-ribbon">
+      <div className="td-ribbon-track">
+        <span className="td-ribbon-rail" aria-hidden />
+        {blocks.map((e) => {
+          const pos = ribbonSpan(e, now)
+          if (!pos) return null
+          const task = e.task_id ? taskById.get(e.task_id) : undefined
+          const start = new Date(e.starts_at).getTime()
+          const end = new Date(e.ends_at).getTime()
+          const isHead = e.id === head?.id
+          const spent = isHead ? Math.min(100, Math.max(0, ((t - start) / Math.max(1, end - start)) * 100)) : 0
+          const color = e.color ?? (e.type === 'event' && !e.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)')
+          return (
+            <button
+              key={e.id}
+              type="button"
+              className="td-rb"
+              data-head={isHead || undefined}
+              data-past={end <= t || undefined}
+              data-done={task?.status === 'done' || undefined}
+              style={{ left: `${pos.left}%`, width: `${pos.width}%`, '--rb': color } as React.CSSProperties}
+              title={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} · ${e.title}`}
+              aria-label={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} ${e.title}`}
+              onClick={() => (task ? openTask(task.id) : navigate(eventPath(e)))}
+            >
+              {isHead && spent > 0 && <span className="td-rb-spent" style={{ width: `${spent}%` }} />}
+            </button>
+          )
+        })}
+        {nowPct > 0 && nowPct < 100 && <span className="td-ribbon-now" style={{ left: `${nowPct}%` }} aria-hidden />}
+      </div>
+      <div className="td-ribbon-axis" aria-hidden>{hours.map((h) => <span key={h}>{h}</span>)}</div>
+    </div>
+  )
+}
+
+/** One of the next two under the ribbon — a task's block is the task (checkbox, opens it, its menu). */
+function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; sel: RowSelection }) {
+  const g = useTodayRow(task, { ...sel, ...blockGrammar(event) })
+  const openTask = useOpenTask()
+  const done = task.status === 'done'
+  return (
+    <>
+      <span id={`upnext-${event.id}`} className="td-next-item" data-selected={sel.selected || g.menuOpen || undefined} role="link" tabIndex={0} title="Open task" onClickCapture={ctrlSelect(sel, done)} onClick={() => openTask(task.id)} onKeyDown={(e) => e.key === 'Enter' && openTask(task.id)} onContextMenu={g.onContextMenu}>
+        <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}><Checkbox label={task.title} checked={done} size={16} onChange={() => toggleTaskWithUndo(task)} /></span>
+        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
+      </span>
+      {g.menuNode}
+    </>
+  )
+}
+
+/** …and a plain event: its colour, time and title; opens on the calendar; right-click = its menu. */
+function NextEventItem({ event }: { event: CalendarEvent }) {
+  const navigate = useNavigate()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const open = () => navigate(eventPath(event))
+  return (
+    <>
+      <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title="Open in calendar" onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
+        <span className="td-next-sq" style={{ background: event.color ?? (event.task_id ? 'var(--acc-lavender)' : event.type === 'event' ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
+        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="td-ink"><EmojiText text={event.title} /></span>
+      </span>
+      {menu && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
+    </>
+  )
+}
+
+/** "Also open · N" (2a #13): three rows, then "Show N more →" — the old "More for today" fold,
+ * remembered per device. Open, it lists up to ALL_OPEN_CAP and links the rest to Tasks. */
+function AlsoOpen({ count, rows, render, motion }: { count: number; rows: Task[]; render: (t: Task, i: number) => React.ReactNode; motion: boolean }) {
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(MORE_OPEN_KEY) === '1' } catch { return false }
+  })
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    try { localStorage.setItem(MORE_OPEN_KEY, next ? '1' : '0') } catch { /* storage off: this visit only */ }
+  }
+  const shown = rows.slice(0, open ? ALL_OPEN_CAP : ALSO_OPEN_FIRST)
+  // "Show N more" counts the open ones folded away (rows finished today sort last, struck — A3).
+  const hidden = rows.slice(ALSO_OPEN_FIRST).filter((t) => !t.completed_at).length || rows.length - ALSO_OPEN_FIRST
+  return (
+    <section aria-label="Also open" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
+      <SectionLabel style={{ marginBottom: 6 }}>{`Also open · ${count}`}</SectionLabel>
+      {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
+      <div className="kf-dim">{shown.map(render)}</div>
+      {hidden > 0 && (
+        <button type="button" className="td-more" aria-expanded={open} onClick={toggle}>
+          {open ? 'Show fewer' : `Show ${hidden} more →`}
+        </button>
+      )}
+      {/* Punch 17: Today is a glance — the rest lives on the Tasks "All" tab. */}
+      {open && rows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="td-more">View all {rows.length} →</Link>}
+    </section>
+  )
+}
+const ALSO_OPEN_FIRST = 3
+
+// The ritual step names — rituals/ritualLogic STEP_NAME's words (not exported there).
+const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbox', top3: 'Pick your 3', block: 'Suggested times', sweep: 'Sweep', line: 'One line', seeds: "Tomorrow's 3", goodnight: 'Close the day' }
+
+/** 2a's rail "Rituals" — the rituals' one home (2a #5): each a checklist of its own steps walked
+ * today (R4-D1: a ritual's progress is its steps, never routines). Morning is open until the evening
+ * (Shut down's 17:00, Kai 2026-09-28 — 2a drew 7 PM); then Evening. Any row opens its ritual. */
+function RitualsRail({ day, now, onOpen, review }: { day: ReturnType<typeof useDay>; now: Date; onOpen: (kind: RitualKind) => void; review: boolean }) {
+  const evening = cairoMinutes(now) >= SHUTDOWN_FROM
+  const from = `${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`
+  return (
+    <section aria-label="Rituals" data-tour="plan">
+      <SectionLabel action={<Link to="/routines" className="td-label-note td-label-link">Edit</Link>} style={{ marginBottom: 12 }}>Rituals</SectionLabel>
+      <RitualGroup kind="morning" label="Morning" r={day.morning} steps={PLAN_STEPS} logged={day.steps.morning} open={!evening} onOpen={onOpen} />
+      <RitualGroup kind="evening" label={evening ? 'Evening' : `Evening · from ${from}`} r={day.evening} steps={SHUT_STEPS} logged={day.steps.evening} open={evening} onOpen={onOpen} split />
+      {/* DAILY-CYCLE step 5 on its day, until the week is closed — the ritual rows' look. */}
+      {review && (
+        <div className="td-rit is-split" data-ritual="review">
+          <Link to="/weekly-review" className="td-rit-head" style={{ textDecoration: 'none' }}>
+            <span className="td-rit-dot" data-kind="review" aria-hidden />
+            <span className="td-rit-name" data-open>Weekly review</span>
+            <span className="td-rit-count">today</span>
+          </Link>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function RitualGroup({ kind, label, r, steps, logged, open, onOpen, split }: { kind: RitualKind; label: string; r: RitualState; steps: readonly string[]; logged: ReadonlySet<string>; open: boolean; onOpen: (kind: RitualKind) => void; split?: boolean }) {
+  const finished = ritualFinished(r)
+  // dayPhase morningState counts a task block today as "Suggested times" once the ritual was walked.
+  const inferred = r.done > logged.size
+  const isDone = (s: string) => finished || logged.has(s) || (s === 'block' && inferred)
+  return (
+    <div className={`td-rit${split ? ' is-split' : ''}`} data-ritual={kind}>
+      <button type="button" className="td-rit-head" aria-expanded={open} onClick={() => onOpen(kind)}>
+        <span className="td-rit-dot" data-kind={kind} aria-hidden />
+        <span className="td-rit-name" data-open={open || undefined}>{label}</span>
+        <span className="td-rit-count">{ritualProgress(r)}</span>
+      </button>
+      {open && steps.map((s) => (
+        <button key={s} type="button" className="td-rit-step" data-done={isDone(s) || undefined} onClick={() => onOpen(kind)}>
+          <span className="td-rit-box" aria-hidden>{isDone(s) && <Icon name="check" size={12} strokeWidth={2.4} />}</span>
+          <span>{STEP_LABEL[s] ?? s}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** 2a "Worth a look · 1 of 2": one nudge at a time — the slipping cards (Kai's A4/punch-20 card:
+ * the real wisteria stage, the body opens it) and the resurfaced memory share the slot; "1 of 2"
+ * steps through them. Nothing to nudge → no section. */
+function WorthALook({ rows, resurfacing, stageOf }: { rows: SlippingRow[]; resurfacing: boolean; stageOf: (row: SlippingRow) => string }) {
+  const [i, setI] = useState(0)
+  const total = rows.length + (resurfacing ? 1 : 0)
+  if (total === 0) return null
+  const at = i % total
+  const count = total > 1 && (
+    <button type="button" className="td-label-note td-label-link" aria-label={`Nudge ${at + 1} of ${total} — next`} onClick={() => setI(at + 1)}>{at + 1} of {total}</button>
+  )
+  return (
+    <section aria-label="Worth a look">
+      <SectionLabel action={count || undefined} style={{ marginBottom: 12 }}>Worth a look</SectionLabel>
+      {at < rows.length ? <SlippingCard row={rows[at]} stage={stageOf(rows[at])} /> : <ResurfaceCard />}
+    </section>
   )
 }
 
@@ -954,6 +1307,10 @@ function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; mo
   return (
     <div className="tp-bar" data-scrolled={scrolled || undefined}>
       <h1 className="tp-bar-title">{title}</h1>
+      {/* The Notebook page's quiet way in (Kai's 2026-10-03 brainstorm). */}
+      <Link to={NOTEBOOK_PATH} className="tp-icon" aria-label="Notebook page">
+        <Icon name="journal" />
+      </Link>
       {/* AppLayout owns the overlay; this asks it to open. */}
       <button type="button" className="tp-icon" aria-label="Search" onClick={() => window.dispatchEvent(new Event('kf-open-search'))}>
         <Icon name="search" />
@@ -976,8 +1333,9 @@ function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; mo
 }
 
 /** Ruling 1: the Workload line under the title ("Day 84 · …"), a Syncing dot while cached data
- * refreshes (2m), and the offline chip in its place while offline (2h). */
-function PhoneSummary({ workload, now, online, syncing }: { workload: Omit<WorkloadInput, 'focusedMin'>; now: Date; online: boolean; syncing: boolean }) {
+ * refreshes (2m), and the offline chip in its place while offline (2h). MK Workload: over capacity
+ * it turns amber with an alert and "2H OVER"; the progress hairline under it is today's done share. */
+function PhoneSummary({ workload, now, online, syncing, over, counts }: { workload: Omit<WorkloadInput, 'focusedMin'>; now: Date; online: boolean; syncing: boolean; over: number; counts: { done: number; total: number } }) {
   const { data: entries = [] } = useTimeEntries()
   if (!online) {
     return (
@@ -986,12 +1344,22 @@ function PhoneSummary({ workload, now, online, syncing }: { workload: Omit<Workl
       </div>
     )
   }
+  const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0
   return (
-    <div className="tp-sum">
-      <Icon name="clock" size={20} />
-      <span style={{ flex: 1, minWidth: 0 }}>{workloadLine({ ...workload, focusedMin: focusedToday(entries, now) })}</span>
-      {syncing && <span className="tp-syncing" style={{ fontSize: 'var(--fs-meta)', letterSpacing: '0.06em' }}>Syncing</span>}
-    </div>
+    <>
+      <div className={`tp-sum${over > 0 ? ' is-over' : ''}`}>
+        <Icon name={over > 0 ? 'alert' : 'clock'} size={20} />
+        <span style={{ flex: 1, minWidth: 0 }}>{workloadLine({ ...workload, focusedMin: focusedToday(entries, now) })}</span>
+        {syncing ? (
+          <span className="tp-syncing" style={{ fontSize: 'var(--fs-meta)', letterSpacing: '0.06em' }}>Syncing</span>
+        ) : over > 0 && <span className="tp-over">{span(over)} over</span>}
+      </div>
+      {counts.total > 0 && (
+        <div className="tp-hairline tp-progress" role="progressbar" aria-label={`Today · ${counts.done} of ${counts.total} done`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+          <span style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </>
   )
 }
 
@@ -1027,47 +1395,77 @@ function FirstTodayHint({ style }: { style?: React.CSSProperties }) {
   return on ? <div className="tp-hand tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
 }
 
-/** The NOW slip (MK 11, option 1b "Taped slip"): only while a block actually runs (./todayLayout).
- * Ring = time elapsed, minutes left inside. Tap = open it; ✓ = done + Undo (a task's block only —
- * a plain event has nothing to complete); swipe / hold behave as the task's row. */
-function NowSlip({ event, task, now, sel }: { event: CalendarEvent; task?: Task; now: Date; sel: RowSelection }) {
+/** /calendar?event=<id> — the calendar turns to the event's day and opens it (CalendarPage). */
+const eventPath = (e: CalendarEvent) => `/calendar?event=${e.id}`
+
+
+/** The NOW slip (MK 11, option 1b "Taped slip") in each MK Now Card state (./nowCard) — only while
+ * something runs: the ring is the time spent (running), full amber "+20" (over), a frozen hairline
+ * (paused), full with ✓ (just done). Tap = open it; ✓ = done + Undo (a task only — a plain event has
+ * nothing to complete); just done's ↶ = Undo. A task's slip keeps the task row's swipe / hold / ⋯. */
+function NowSlip({ state: s, sel }: { state: NowState<CalendarEvent, Task>; sel: RowSelection }) {
   const navigate = useNavigate()
   const openTask = useOpenTask()
-  const start = new Date(event.starts_at).getTime()
-  const end = new Date(event.ends_at).getTime()
-  const pct = Math.min(100, Math.max(0, Math.round(((now.getTime() - start) / Math.max(1, end - start)) * 100)))
-  const left = Math.max(1, Math.ceil((end - now.getTime()) / 60_000))
-  const open = () => (task ? openTask(task.id) : navigate('/calendar'))
+  const block = nowBlock(s)
+  const task = 'task' in s ? s.task : undefined
+  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const track = 'var(--line-card)'
+  let ring: { bg: string; label: React.ReactNode; tone: string; aria: string }
+  let caption: string
+  let tone = ''
+  switch (s.kind) {
+    case 'running':
+      ring = { bg: `conic-gradient(var(--acc-sage-text) 0 ${s.pct}%, ${track} ${s.pct}% 100%)`, label: formatDuration(s.leftMin), tone: 'now', aria: `${s.leftMin} minutes left` }
+      caption = `Now · until ${time(s.block.ends_at)}`
+      tone = 'is-now'
+      break
+    case 'over':
+      ring = { bg: 'var(--sig-amber)', label: `+${s.overMin}`, tone: 'over', aria: `${s.overMin} minutes over` }
+      caption = `Now · ${formatDuration(s.overMin)} over`
+      tone = 'is-over'
+      break
+    case 'paused':
+      ring = { bg: `conic-gradient(var(--ink-hairline) 0 ${s.pct}%, ${track} ${s.pct}% 100%)`, label: formatDuration(s.leftMin), tone: 'quiet', aria: `paused, ${s.leftMin} minutes left` }
+      caption = s.since ? `Paused · since ${time(s.since)}` : 'Paused'
+      break
+    case 'done':
+      ring = { bg: 'var(--acc-sage-text)', label: <Icon name="check" size={18} strokeWidth={2} />, tone: 'now', aria: 'done' }
+      caption = `Done · ${time(s.at)}`
+      tone = 'is-now'
+      break
+  }
+  const title = block && s.kind !== 'paused' && s.kind !== 'done' ? block.title : task?.title ?? ''
+  const open = () => (task ? openTask(task.id) : block ? navigate(eventPath(block)) : undefined)
   const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', transform: 'rotate(-0.3deg)' } as const
-  const inner = (done?: React.ReactNode) => (
+  const inner = (action?: React.ReactNode) => (
     <>
       <span aria-hidden className="tp-tape" />
-      <span className="tp-ring" style={{ background: `conic-gradient(var(--acc-sage-text) 0 ${pct}%, var(--line-card) ${pct}% 100%)` }} aria-label={`${left} minutes left`}>
-        <span>{formatDuration(left)}</span>
+      <span className="tp-ring" data-tone={ring.tone} style={{ background: ring.bg }} aria-label={ring.aria}>
+        <span>{ring.label}</span>
       </span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-        <div className="tp-caption is-now">Now · until {cairoTimeKey(new Date(end))}</div>
-        <div className="tp-slip-title"><EmojiText text={event.title} /></div>
+        <div className={`tp-caption ${tone}`}>{caption}</div>
+        <div className={`tp-slip-title${s.kind === 'done' ? ' is-done' : ''}`}><EmojiText text={title} /></div>
       </div>
-      {done}
+      {action}
     </>
   )
-  if (!task) {
-    return (
-      <div className="tp-slip-wrap">
-        <div id={`slip-${event.id}`} style={card} role="link" aria-label={`Now: ${event.title}`} onClick={open}>{inner()}</div>
-      </div>
+  const id = `slip-${block?.id ?? task?.id}`
+  const wrap = (body: React.ReactNode) => <div className="tp-slip-wrap" data-now={s.kind}>{body}</div>
+  if (s.kind === 'done') {
+    const undo = (
+      <button type="button" className="tp-slip-done" aria-label={`Undo: "${s.task.title}"`} onClick={(e) => { e.stopPropagation(); reopenTaskWithUndo(s.task) }}>
+        <span><Icon name="undo" size={20} strokeWidth={2} /></span>
+      </button>
     )
+    return wrap(<div id={id} style={card}>{inner(undo)}</div>)
   }
-  return (
-    <div className="tp-slip-wrap">
-      <SlipTask event={event} task={task} card={card} sel={sel} inner={inner} />
-    </div>
-  )
+  if (!task) return wrap(<div id={id} style={card} role="link" aria-label={`${caption}: ${title}`} onClick={open}>{inner()}</div>)
+  return wrap(<SlipTask id={id} block={block ?? undefined} task={task} card={card} sel={sel} inner={inner} />)
 }
 
-function SlipTask({ event, task, card, sel, inner }: { event: CalendarEvent; task: Task; card: React.CSSProperties; sel: RowSelection; inner: (done?: React.ReactNode) => React.ReactNode }) {
-  const g = useTodayRow(task, { ...sel, ...blockGrammar(event) })
+function SlipTask({ id, block, task, card, sel, inner }: { id: string; block?: CalendarEvent; task: Task; card: React.CSSProperties; sel: RowSelection; inner: (action?: React.ReactNode) => React.ReactNode }) {
+  const g = useTodayRow(task, { ...sel, ...(block ? blockGrammar(block) : null) })
   const done = g.selecting ? (
     <span className="tp-hit"><SelectCircle on={!!sel.selected} title={task.title} /></span>
   ) : (
@@ -1076,25 +1474,45 @@ function SlipTask({ event, task, card, sel, inner }: { event: CalendarEvent; tas
     </button>
   )
   return (
-    <SwipeRow id={`slip-${event.id}`} onContextMenu={g.onContextMenu} contentStyle={{ ...card, backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined }} {...g.swipeProps} overlay={g.menuNode}>
+    <SwipeRow id={id} onContextMenu={g.onContextMenu} contentStyle={{ ...card, backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined }} {...g.swipeProps} overlay={g.menuNode}>
       {inner(done)}
     </SwipeRow>
   )
 }
 
-/** Ruling 5: time on the left (mono), a 3px lavender rule, title and meta. Tap opens it (the
- * calendar); no checkbox, no ⋯ — the event sheet holds the actions. */
+/** A plain event's menu — the desktop right-click list, the phone's action sheet (one grammar). */
+function EventMenu({ event, at, onClose }: { event: CalendarEvent; at: { x: number; y: number }; onClose: () => void }) {
+  const isMobile = useIsMobile()
+  const navigate = useNavigate()
+  const items: ContextMenuItem[] = eventMenuItems(event, () => navigate(eventPath(event)))
+  return isMobile ? (
+    <ActionSheet title={<EmojiText text={event.title} />} items={items.map((i) => ({ label: i.label, destructive: i.danger, onSelect: () => i.onClick?.() }))} onClose={onClose} />
+  ) : (
+    <ContextMenu items={items} position={at} onClose={onClose} />
+  )
+}
+
+/** Ruling 5: time on the left (mono), a 3px lavender rule, title and meta. Tap opens the event on
+ * the calendar. Kai 2026-10-12: the same grammar as desktop Up next — a ⋯ (and right-click) with
+ * Open in calendar · Delete. The menu is the row's sibling: it portals, but React events would
+ * still bubble a menu tap into the row. */
 function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }) {
   const navigate = useNavigate()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const open = () => navigate(eventPath(event))
   return (
-    <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={() => navigate('/calendar')} onKeyDown={(e) => e.key === 'Enter' && navigate('/calendar')}>
-      <span className="tp-ev-time">{cairoTimeKey(new Date(event.starts_at))}</span>
-      <span className="tp-ev-rule" aria-hidden />
-      <div className="tp-ev-body">
-        <div className="tp-title"><EmojiText text={event.title} /></div>
-        <div className="tp-meta">{meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>)}</div>
+    <>
+      <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
+        <span className="tp-ev-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="tp-ev-rule" aria-hidden />
+        <div className="tp-ev-body">
+          <div className="tp-title"><EmojiText text={event.title} /></div>
+          <div className="tp-meta">{meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>)}</div>
+        </div>
+        <span style={{ alignSelf: 'center' }}><RowMenuButton title={event.title} onOpen={setMenu} /></span>
       </div>
-    </div>
+      {menu && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
+    </>
   )
 }
 
@@ -1229,7 +1647,16 @@ function useBloomCheck(task: Task) {
   }
 }
 
-type RowSelection = Pick<RowGrammarOptions, 'selected' | 'onToggleSelect' | 'selecting'>
+type RowSelection = Pick<RowGrammarOptions, 'selected' | 'onToggleSelect' | 'selecting' | 'bulk'>
+
+/** Kai 2026-07-21: no visible select squares on desktop — Ctrl/Cmd+click toggles a row's selection
+ * (every task row on Today: Top 3, the goal card, the Now card's task, the next two, the lists). */
+const ctrlSelect = (sel: RowSelection, done: boolean) => (e: React.MouseEvent) => {
+  if (!(e.ctrlKey || e.metaKey) || done || !sel.onToggleSelect) return
+  e.preventDefault()
+  e.stopPropagation()
+  sel.onToggleSelect()
+}
 
 /** A Today row's grammar: swipe, ⋯ / right-click, hold to select (features/tasks). */
 function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule' | 'place'>) {
@@ -1275,7 +1702,7 @@ function Top3Slot({ id, open, children }: { id: string; open: boolean; children:
   )
 }
 
-function GoalCard({ task, projectName, dot, compact, meta, place, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; meta?: string[]; place?: RowGrammarOptions['place'] } & RowSelection) {
+function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, place, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; meta?: string[]; inProgress?: boolean; place?: RowGrammarOptions['place'] } & RowSelection) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
   const openTask = useOpenTask()
@@ -1289,7 +1716,7 @@ function GoalCard({ task, projectName, dot, compact, meta, place, ...sel }: { ta
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
     const lines = done ? [`${doneAt(task)} · a four-leaf day`] : meta ?? ([projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean) as string[])
     return (
-      <SwipeRow id={`task-${task.id}`} className="tp-goal" onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
+      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 17, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
         <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
@@ -1306,21 +1733,26 @@ function GoalCard({ task, projectName, dot, compact, meta, place, ...sel }: { ta
       </SwipeRow>
     )
   }
+  // Today 2a: 20 gold box · serif 20/600 title · one meta line led by the mono "✶ Goal of the day",
+  // then project, block time and its real due state · the four-leaf clover. The one taped, tilted
+  // card on the page (2a rule 3).
   const box = { borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }
-  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={19} /> : <Checkbox label={task.title} checked={bloom.checking} size={19} bloom onChange={bloom.toggle} style={box} />
+  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom onChange={bloom.toggle} style={box} />
+  const due = overdueDays(task)
   return (
-    <SwipeRow id={`task-${task.id}`} onContextMenu={g.onContextMenu} style={{ marginBottom: 8 }} contentStyle={{ ...card, padding: '17px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
+    <SwipeRow id={`task-${task.id}`} tabIndex={-1} onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-      <span style={{ marginTop: 16 }}>{check}</span>
+      <span style={{ marginTop: 3 }}>{check}</span>
       <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>✶ Goal of the day</span>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3, marginTop: 5 }}><EmojiText text={task.title} /></div>
-        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}<span>{done ? 'Done today' : 'Due today'}</span></>)}
+        <div className={`td-goal-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
+        <div className="td-meta td-goal-meta">
+          <span className="td-goal-tag">✶ Goal of the day</span>
+          {projectName && <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>}
+          {deskBlockMeta(meta, inProgress && !done)}
+          {done ? <span>{doneAt(task)}</span> : due === 0 ? <span>Due today</span> : due !== null && due > 0 ? <span className="td-terra">Overdue {due}d</span> : null}
+        </div>
       </div>
-      <div style={{ textAlign: 'center', flex: 'none' }}>
-        <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 34, filter: 'var(--shadow-drop-sm)' }} />
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 13, color: 'var(--acc-gold)', marginTop: -2 }}>for luck</div>
-      </div>
+      <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 32, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
       {more}
     </SwipeRow>
   )
@@ -1341,7 +1773,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, pick, block, meta, pending, place, ...sel }: {
+function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, pick, block, meta, pending, inProgress = false, place, ...sel }: {
   task: Task
   /** A Top 3 row: its place, for Move up / Move down in its menu. */
   place?: RowGrammarOptions['place']
@@ -1360,12 +1792,14 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   meta?: string[]
   /** Not synced yet while offline (phone): the pending ring. */
   pending?: boolean
+  /** Desktop: its block is running, or it's the task in focus — "in progress" (2a). */
+  inProgress?: boolean
 } & RowSelection) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
-  // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders,
-  // via the shared taskDisplay helper — same "Overdue Nd" treatment, same ↻ glyph.
-  const dueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : null
+  // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders — same
+  // "Overdue Nd" treatment, same ↻ glyph — counted in the user's days (lib/appZone).
+  const dueDays = !done && !task.someday ? overdueDays(task) : null
   const dueBadges = dueDays !== null || task.recurrence_rule ? (
     <>
       {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>}
@@ -1375,18 +1809,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   ) : null
   const openTask = useOpenTask()
   const g = useTodayRow(task, { ...sel, place, ...(block ? blockGrammar(block) : null) })
-  // Kai 2026-07-21: no visible select squares on desktop — Ctrl/Cmd+click toggles selection.
-  function selectClick(e: React.MouseEvent) {
-    if (!(e.ctrlKey || e.metaKey) || done || !sel.onToggleSelect) return
-    e.preventDefault()
-    e.stopPropagation()
-    sel.onToggleSelect()
-  }
   const open = () => openTask(task.id)
   const rowProps = {
     id: block ? `upnext-${block.id}` : `task-${task.id}`,
     tabIndex: highlighted ? 0 : -1,
-    onClickCapture: selectClick,
+    onClickCapture: ctrlSelect(sel, done),
     onContextMenu: g.onContextMenu,
     style: {
       borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
@@ -1434,101 +1861,43 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
       </SwipeRow>
     )
   }
-  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={17} /> : <span style={{ marginTop: 2 }}><Checkbox label={task.title} checked={bloom.checking} bloom={task.top3} onChange={bloom.toggle} /></span>
+  // Desktop (Today 2a): 20px boxes (rule 14). Top 3 rows carry no star — being in the section says
+  // it (#12); other rows keep ☆ as a hover action. The ⋯ stays on every row (Wave L).
+  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom={task.top3} onChange={bloom.toggle} />
   const tail = !g.selecting && (
     <>
-      {!done && (
-        <span className="kf-hit" onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)', fontSize: 16, lineHeight: 1, cursor: 'pointer' }}>
+      {!done && !pick && (
+        <button type="button" className="kf-hit td-star" aria-label={task.top3 ? `Remove "${task.title}" from Top 3` : `Add "${task.title}" to Top 3`} onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)' }}>
           {task.top3 ? '★' : '☆'}
-        </span>
+        </button>
       )}
       <RowMenuButton title={task.title} onOpen={g.openMenu} />
     </>
   )
-  const title = { color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' } as const
+  const title = <span className={done ? 'td-struck' : undefined}><EmojiText text={task.title} /></span>
+  if (hollow) {
+    // 2a "Also open": one line — the title, then the row's one fact in a right-aligned column.
+    const fact = dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
+      : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>
+      : projectName ? <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>
+      : task.recurrence_rule ? <span>↻</span> : null
+    return (
+      <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 2px' }}>
+        {check}
+        <div onClick={open} className="td-row-title">{title}</div>
+        {fact && <span className="td-meta td-row-fact">{fact}</span>}
+        {tail}
+      </SwipeRow>
+    )
+  }
   return (
-    <SwipeRow {...rowProps} contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: hollow ? '10px 2px' : '11px 2px' }}>
-      {check}
+    <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
+      <span style={{ marginTop: 1 }}>{check}</span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-        <div style={{ fontSize: hollow ? 14.5 : 15, ...title }}><EmojiText text={task.title} /></div>
-        {metaRow(projectName, dot, task.duration_min, <>{meta && <span>{meta.join(' · ')}</span>}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
+        <div className="td-row-title is-pick">{title}</div>
+        {metaRow(projectName, dot, meta ? null : task.duration_min, <>{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
       </div>
       {tail}
-    </SwipeRow>
-  )
-}
-
-// Kai 2026-07-21: "where are the checkboxes for the top 3 tasks and the entire task behaviour" —
-// Up-next rows backed by a task now carry the task's own checkbox and strike through when done,
-// same contract as the calendar block (only task-linked entries are completable; plain events
-// have nothing to complete).
-//
-// Loop A (2026-09-26, Kai: "I can't right click what is in the up next section"): the rows were
-// display-only. Now every row behaves like a task row — a click opens it (the task editor, or the
-// calendar for a plain event; the calendar has no per-event deep link), right-click opens the row
-// menu (./rowMenus). Polish F2a: the list is what's running and still to come today (upNext.ts);
-// the page's minute clock (./useDay) flips "Now" on time. Desktop only — the phone has PhoneEventRow.
-function EventRow({ event, task, border, now, rowSelection }: { event: CalendarEvent; task?: Task; border: boolean; now: Date; rowSelection: (t: Task) => RowSelection }) {
-  const clock = upNextClock
-  const navigate = useNavigate()
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
-  // Polish D (2026-09-26 audit): "Now" was the FIRST event of the day whatever the clock said —
-  // a 10:00 meeting at 08:38. It now reads "Now" only while the event runs (upNext.ts).
-  const label = upNextLabel(event.starts_at, event.ends_at, now)
-  const labelColor = label.tone === 'now' ? 'var(--acc-terra)' : 'var(--ink-faint)'
-  const done = task?.status === 'done'
-  const openTask = useOpenTask()
-  const open = () => (task ? openTask(task.id) : navigate('/calendar'))
-  // The checkbox acts on its own; its click must not also open the row.
-  const own = (e: React.MouseEvent) => e.stopPropagation()
-  const check = task && (
-    <span onClick={own} style={{ display: 'inline-flex', flex: 'none' }}>
-      <Checkbox label={task.title} checked={!!done} size={15} onChange={() => toggleTaskWithUndo(task)} />
-    </span>
-  )
-  const titleStyle = { textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink-hairline)' : 'var(--ink-body)' } as const
-  const cells = (checkSlot: React.ReactNode) => (
-    <>
-      <span style={{ width: 88, flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: labelColor }}>{label.text}</span>
-      {checkSlot}
-      <div style={{ flex: 1, minWidth: 0, fontSize: 14.5, ...titleStyle }}><EmojiText text={event.title} /></div>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{clock(event.starts_at)}–{clock(event.ends_at)}</span>
-    </>
-  )
-  const rowStyle = { display: 'flex', gap: 16, padding: '9px 0', alignItems: 'center', cursor: 'pointer' } as const
-  const borderTop = border ? '1px dashed var(--line-dashed)' : 'none'
-  if (task) return <UpNextTaskRow event={event} task={task} open={open} rowStyle={rowStyle} borderTop={borderTop} sel={rowSelection(task)} check={check} cells={cells} />
-  // A plain event only opens or goes. The menu is a sibling of the row, not a child: it portals to
-  // <body>, but React events still bubble through the component tree, and a menu click reaching
-  // the row would also open it.
-  return (
-    <>
-      <div id={`upnext-${event.id}`} onClick={open} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }} title="Open in calendar" style={{ ...rowStyle, borderTop }}>
-        {cells(null)}
-      </div>
-      {menu && <ContextMenu items={eventMenuItems(event, open)} position={menu} onClose={() => setMenu(null)} />}
-    </>
-  )
-}
-
-// Loop A (Kai: "I can't right click what is in the up next section") → the one grammar: a
-// task-backed block is a task row. Its Tomorrow moves the block to the same time tomorrow (a block
-// keeps the time it was given), and its menu can also take it off the calendar.
-function UpNextTaskRow({ event, task, open, rowStyle, borderTop, sel, check, cells }: { event: CalendarEvent; task: Task; open: () => void; rowStyle: React.CSSProperties; borderTop: string; sel: RowSelection; check: React.ReactNode; cells: (checkSlot: React.ReactNode) => React.ReactNode }) {
-  const g = useTodayRow(task, { ...sel, ...blockGrammar(event) })
-  return (
-    <SwipeRow
-      id={`upnext-${event.id}`}
-      onClick={open}
-      onContextMenu={g.onContextMenu}
-      title="Open task"
-      style={{ borderTop, background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined }}
-      contentStyle={rowStyle}
-      {...g.swipeProps}
-      overlay={g.menuNode}
-    >
-      {cells(g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : check)}
-      {!g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />}
     </SwipeRow>
   )
 }
@@ -1539,23 +1908,25 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   // areas both live at /projects/:id (ProjectDetailPage renders either); a domain has no
   // detail page, so it lands on the garden overview.
   const to = row.entity_type === 'domain' ? '/projects' : `/projects/${row.entity_id}`
+  // 2a rule 9 (actions are verbs): "reviewed" became Plan a step (its page, where the next step is
+  // planned) and Snooze a week (the review mark — the card stays away while it's untouched < 7 days).
   return (
     <div
       // Motion 3e (WB-1): markReviewed() looks the card up by this id to play the exit
       // before the stack heals. Same scheme in the Weekly Review sweep.
       id={`slipping-${row.entity_type}:${row.entity_id}`}
-      className="kf-lift"
+      className="kf-lift td-nudge"
       onClick={() => navigate(to)}
       role="link"
-      // deviation(punch 15, 2026-07-26): export tilts this card rotate(0.4deg); dropped — the
-      // sub-degree transform blurred the title + mono caption (see QuickCreate's 07-18 deviation).
-      style={{ position: 'relative', border: '1px solid var(--line-goal)', background: 'var(--paper-goal)', padding: '12px 14px', boxShadow: 'var(--shadow-card)', borderRadius: 3, cursor: 'pointer' }}
     >
       {/* punch 20: the wisteria is the entity's real growth stage, computed by the caller. */}
-      <img src={`${A}/wisteria/${stage}.png`} alt="" style={{ position: 'absolute', top: 8, right: 10, height: 56, opacity: 0.7 }} />
-      <div style={{ fontSize: 13.5, color: 'var(--ink-body)', fontWeight: 500, paddingRight: 40 }}>{row.entity_name}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)', marginTop: 5 }}>{Math.floor(row.days_since)} days untouched</div>
-      <button onClick={(e) => { e.stopPropagation(); markReviewed(row) }} style={{ marginTop: 9, background: 'none', border: 'none', color: 'var(--acc-terra)', font: 'inherit', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>reviewed</button>
+      <img src={`${A}/wisteria/${stage}.png`} alt="" className="td-nudge-art" />
+      <div className="td-nudge-name">{row.entity_name}</div>
+      <div className="td-nudge-why">untouched for {Math.floor(row.days_since)} days</div>
+      <div className="td-nudge-actions">
+        <Button type="button" variant="cta" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); navigate(to) }}>Plan a step</Button>
+        <Button type="button" variant="secondary" className="td-btn-sm" onClick={(e) => { e.stopPropagation(); markReviewed(row) }}>Snooze a week</Button>
+      </div>
     </div>
   )
 }
