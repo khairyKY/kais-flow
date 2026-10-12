@@ -26,6 +26,8 @@ import { LabelPicker } from './LabelPicker'
 import { LabelManagerOverlay } from './LabelManager'
 import { placeKey, type MoveTarget } from './move'
 import { BulkBar } from '../../components/BulkBar'
+import { DragRow, DropZone, type DragLoad } from '../../components/drag'
+import { dropTasks, taskVerdict, type FileSpot } from './fileDrop'
 import { ErrorCard, OfflineChip, Skeleton } from '../../components/States'
 import { cherryStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from '../today/dayComplete'
@@ -304,8 +306,9 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
         <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {/* Motion 2d: an area takes a dragged task (Move to… by drag). */}
           {areas.map((a) => (
-            <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></span>
+            <DropZone key={a.id} id={`rail:${a.id}`} spot={{ kind: 'place', label: a.name, to: { kind: 'area', id: a.id, domainId: a.domain_id, name: a.name } }} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></DropZone>
           ))}
         </div>
         <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
@@ -325,13 +328,14 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
             const pct = inProject.length === 0 ? 0 : Math.round((done / inProject.length) * 5) * 20
             const domainName = domains.find((d) => d.id === p.domain_id)?.name ?? 'no domain'
             return (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              // Motion 2d: a project takes a dragged task (Move to… by drag).
+              <DropZone key={p.id} id={`rail:${p.id}`} spot={{ kind: 'place', label: p.name, to: { kind: 'project', id: p.id, domainId: p.domain_id, name: p.name } }} style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 8 }}>
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
                 </div>
-              </div>
+              </DropZone>
             )
           })}
         </div>
@@ -656,6 +660,23 @@ export function TasksPage() {
     clearSelection()
   }
 
+  // Motion 2c/2d: a row picks up — with the rest of the selection when it's part of one — and files
+  // onto the sidebar's Today / Someday or the rail's areas and projects (./fileDrop; the ⋯ menu's
+  // Plan and Move to… are the same actions by tap and key).
+  function dragLoad(t: Task): DragLoad<FileSpot> {
+    const ids = selected.has(t.id) && selected.size > 1 ? [t.id, ...selectedTasks.filter((x) => x.id !== t.id).map((x) => x.id)] : [t.id]
+    const lifted = () => ids.flatMap((id) => tasks.filter((x) => x.id === id))
+    return {
+      ids,
+      label: t.title,
+      verdict: (spot) => taskVerdict(lifted(), spot),
+      drop: (spot) => {
+        dropTasks(lifted(), spot)
+        if (ids.length > 1) clearSelection()
+      },
+    }
+  }
+
   const bulkActions: BulkActions | undefined =
     selected.size > 1
       ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
@@ -900,7 +921,7 @@ export function TasksPage() {
               <div key={group.key}>
                 {!isSomeday && <SectionHeader group={group} />}
                 {shownTasks(group).map((t, i) => (
-                  <div key={t.id} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
+                  <DragRow key={t.id} id={t.id} load={dragLoad(t)} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
                       highlighted={t.id === kbFocusedId || t.id === focusId}
@@ -913,7 +934,7 @@ export function TasksPage() {
                       onComplete={handleRowComplete}
                       onReopen={handleRowReopen}
                     />
-                  </div>
+                  </DragRow>
                 ))}
                 {shownTasks(group).length < group.tasks.length && (
                   <button

@@ -12,7 +12,7 @@ import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { dayShort } from '../../components/pickerMath'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { Checkbox, Chip } from '../../components/kit'
-import { useMotionEnabled } from '../../lib/motion'
+import { softNo, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
@@ -346,7 +346,8 @@ export function TaskRow({
 
       {!grammar.selecting && (
         <span
-          onClick={() => toggleTop3(task)}
+          // Effects 2j: a full Top 3 refuses the star — it shakes once and the toast says why.
+          onClick={(e) => toggleTop3(task) || softNo(e.currentTarget)}
           title={task.top3 ? 'Remove from Top 3' : 'Add to Top 3'}
           className="kf-hit"
           style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-solid)', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}

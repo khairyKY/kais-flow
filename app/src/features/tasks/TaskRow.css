@@ -65,6 +65,12 @@
 .kf-swipe.kf-lift:active { transform: none; }
 .kf-swipe-fg { position: relative; touch-action: pan-y; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .kf-swipe-fg[data-moved] { background: var(--paper-parchment); box-shadow: var(--shadow-card); }
+/* Effects 2l — the long-press bloom (SwipeRow): a sage bloom grows under the finger over the hold
+   (--dur-longpress, the same 400ms that selects), the row presses to 0.985; let go early, it drains. */
+.kf-swipe-fg[data-pressing] { transform: scale(0.985); }
+.kf-press-bloom-clip { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 180ms var(--ease-out); }
+.kf-press-bloom-clip[data-out] { opacity: 0; }
+.kf-press-bloom { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--acc-sage) 32%, transparent), transparent 65%); animation: pressBloom var(--dur-longpress) var(--ease-out) forwards; }
 @media (pointer: coarse) {
   .kf-swipe-fg { user-select: none; -webkit-user-select: none; } /* a hold selects the row, not a word */
   .kf-swipe:not([data-swiping]) > .kf-swipe-fg:active { background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay)); }

@@ -18,6 +18,8 @@ import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { useIsMobile } from '../../components/BottomSheet'
+import { DragRow, DropZone } from '../../components/drag'
+import { projectVerdict, type FileSpot } from '../tasks/fileDrop'
 import './xfx.css'
 
 // Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month. target_date is
@@ -743,8 +745,11 @@ export function ProjectsPage() {
                   return stat && stat.pct >= 80 && stat.pct < 100 && (stat.totalMilestones - stat.doneMilestones === 1)
                 })
 
+                // Motion 2c/2d: a project card drags to another domain's column (the row menu's Domain…).
+                const column: FileSpot = { kind: 'domain', label: d.name, id: d.id }
                 return (
-                  <div key={d.id} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
+                  // ds-ok: Projects.dc.html 2a draws the board column at a 10px radius
+                  <DropZone key={d.id} id={`board:${d.id}`} spot={column} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
                       <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
@@ -759,8 +764,8 @@ export function ProjectsPage() {
 
                         const slipping = isSlippingProject(p.id)
                         return (
+                          <DragRow key={p.id} id={p.id} disabled={isMobile} load={{ ids: [p.id], label: p.name, verdict: (spot: FileSpot) => projectVerdict(p, spot), drop: (spot: FileSpot) => spot.kind === 'domain' && reparentProject(p, spot.id, spot.label) }}>
                           <div
-                            key={p.id}
                             onClick={() => navigate(`/projects/${p.id}`)}
                             {...rowMenu('project', p.id, p.name)}
                             className="kf-lift-tilt"
@@ -808,6 +813,7 @@ export function ProjectsPage() {
                               {stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                             </div>
                           </div>
+                          </DragRow>
                         )
                       })}
 
@@ -828,7 +834,7 @@ export function ProjectsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </DropZone>
                 )
               })}
           </div>

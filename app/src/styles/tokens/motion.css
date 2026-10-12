@@ -26,6 +26,19 @@
   --ease-emphasized-accel: cubic-bezier(0.3, 0, 0.8, 0.15);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
+  /* Motion 2b / 3a / 4e — the stack: one curve both ways. The dim is 2b's 14% over the page
+     beneath, as a share of --scrim (0.36 × 0.39); a phone's 3a is 12% (below). */
+  --dur-stack: 380ms;
+  --ease-stack: cubic-bezier(0.32, 0.72, 0, 1);
+  --stack-dim: 0.39;
+  --shadow-stack-y: 0 -12px 34px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.25);
+  --shadow-stack-x: -12px 0 30px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.22);
+  /* Motion 2c / 5b — the ghost in hand; Effects 2j — it rides home in 380ms when a drop is refused. */
+  --shadow-lift: 0 14px 30px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.26);
+  --dur-ghost-home: 380ms;
+}
+@media (max-width: 767px) {
+  :root { --stack-dim: 0.33; }
 }
 
 @keyframes cloverSway {
@@ -96,6 +109,50 @@
 @keyframes itemFadeIn {
   0%   { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: none; }
+}
+
+/* Motion 2b — the stack, vertical (a computer): the detail rides up over its page, which recedes
+   26px to 0.98 under the dim; back, the detail drops away and the page eases forward. */
+@keyframes stackOverIn   { from { transform: translateY(102%); } to { transform: none; } }
+@keyframes stackOverOut  { from { transform: none; } to { transform: translateY(102%); } }
+@keyframes stackUnderOut { from { transform: none; } to { transform: translateY(-26px) scale(0.98); } }
+@keyframes stackUnderIn  { from { transform: translateY(-26px) scale(0.98); } to { transform: none; } }
+/* Motion 3a — the same stack turned horizontal for touch: in from the right, the page beneath
+   recedes 30%. */
+@keyframes stackOverInX   { from { transform: translateX(103%); } to { transform: none; } }
+@keyframes stackOverOutX  { from { transform: none; } to { transform: translateX(103%); } }
+@keyframes stackUnderOutX { from { transform: none; } to { transform: translateX(-30%); } }
+@keyframes stackUnderInX  { from { transform: translateX(-30%); } to { transform: none; } }
+@keyframes stackDimIn  { from { opacity: 0; } to { opacity: var(--stack-dim); } }
+@keyframes stackDimOut { from { opacity: var(--stack-dim); } to { opacity: 0; } }
+
+/* Motion 2c — the ghost in hand: lifted to 1.04 and idling with a slow ±1° float. */
+@keyframes dragFloat {
+  0%, 100% { transform: rotate(-0.9deg) scale(1.04); }
+  50%      { transform: rotate(1deg) translateY(-2.5px) scale(1.04); }
+}
+/* Effects 2j — the soft no: one decaying ±4px shake in 320ms, no red, no flash. The calendar's
+   kfCalSoftNo (CalendarGrid.css) is the same curve. */
+@keyframes softNo {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-4px); }
+  30%  { transform: translateX(4px); }
+  45%  { transform: translateX(-3px); }
+  62%  { transform: translateX(2px); }
+  80%  { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+/* Motion 4d — the catch: where the ghost lands gives a 2px dip, a soft catch, not a bounce. */
+@keyframes dropCatch {
+  0%, 100% { transform: none; }
+  40%      { transform: translateY(2px) scale(0.996); }
+}
+/* Effects 2l — the long-press bloom: a sage fill grows under the finger while the hold counts.
+   It shows from a fifth of the way in, so a touch that turns into a scroll never flashes it. */
+@keyframes pressBloom {
+  0%   { opacity: 0; transform: scale(0.2); }
+  20%  { opacity: 0.35; transform: scale(0.36); }
+  100% { opacity: 0.75; transform: scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
