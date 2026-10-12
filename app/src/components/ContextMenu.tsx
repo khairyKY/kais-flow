@@ -200,7 +200,7 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
             >
               {item.icon && <span style={{ display: 'inline-flex', color: item.danger ? 'var(--sig-overdue)' : 'var(--ink-faint)' }}>{item.icon}</span>}
               <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
-              {item.hint != null && <span style={{ display: 'inline-flex', alignItems: 'center', flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>{item.hint}</span>}
+              {item.hint != null && <span style={{ display: 'inline-flex', alignItems: 'center', flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{item.hint}</span>}
               {/* J-17: the hint column draws keycaps (Kai: "include them in right-click context menus"). */}
               {item.shortcut && !item.submenu && <KeyCombo keys={splitKeyCombo(item.shortcut)} size="sm" />}
               {item.submenu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>▸</span>}

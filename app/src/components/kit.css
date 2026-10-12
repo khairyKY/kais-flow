@@ -134,6 +134,18 @@ button.kf-press {
 .kf-chip--selected {
   box-shadow: inset 0 0 0 1.5px currentColor;
 }
+/* Filter chip (tone="filter", Search.dc.html `.fchip`): the box is kit.tsx filterChip()'s; on a
+   phone the `.kf-chip` rule below (h 32, padding 0 12) wins, as it does for every chip. */
+.kf-chip--filter {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 6px 11px;
+}
+.kf-chip-count {
+  font-weight: var(--fw-regular);
+  color: var(--ink-faint);
+}
 button.kf-chip {
   cursor: pointer;
 }
