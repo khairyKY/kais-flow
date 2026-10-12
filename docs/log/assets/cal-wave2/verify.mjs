@@ -471,6 +471,23 @@ if (want('ph')) {
   }
 }
 
+// ── TL: the task editor's Labels open the shared Label picker (conductor 2026-10-13) ──
+if (want('tl')) {
+  const { ctx, page, errors, state } = await open(`/tasks/${tid(2)}`)
+  await page.getByRole('button', { name: '+ label' }).click()
+  await sleep(500)
+  await page.keyboard.type('launch')
+  await page.keyboard.press('Enter')
+  await settle(state)
+  check('tl the editor\'s "+ label" opens the Label picker; Enter makes and adds "launch"', posts(state, 'tasks').some((t) => t.id === tid(2) && t.labels?.includes('launch')), JSON.stringify(posts(state, 'tasks').map((t) => t.labels)))
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  check('tl the chip shows on the editor', (await page.getByRole('button', { name: /Labels: launch/ }).count()) === 1)
+  await shot(page, 'tl-editor-labels')
+  check('tl no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1))
 await browser.close()
 const failed = results.filter((r) => !r.ok)
