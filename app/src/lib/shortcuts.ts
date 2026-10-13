@@ -64,6 +64,7 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['every …'], label: 'Repeat (every week, every mon, fri)' },
   { keys: ['//'], label: 'Notes — the rest of the line' },
   { keys: ['<'], label: 'Date (<friday)' },
+  { keys: ['Esc'], label: 'Last token back to words (no token left: close)' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },
 ]
 

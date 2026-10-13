@@ -23,6 +23,9 @@ export interface ParsedCommand {
   recurrence: string | null
   /** `// the rest` — the notes, as written (P7e A6). */
   notes: string | null
+  /** The words each recognised token took — the bar's chips — in the order they sit in the line.
+   * The bar's Esc hands the last one back as `ignore` (P7e A10). */
+  tokens: string[]
 }
 
 /** `*calls`, `*q3-review`: a `*` at a word start, then letters, digits, `_` or `-`. */
@@ -56,7 +59,12 @@ export interface ParseCommandOptions {
    * app_settings.timezone (T-4: the app's one day boundary and render zone) — what the command bar
    * reads. `device` keeps the old reading for callers whose own form is device-local. */
   zone?: 'cairo' | 'device'
+  /** Token words to read as plain words (the bar's Esc, P7e A10): they stay in the title. */
+  ignore?: readonly string[]
 }
+
+/** Stands in for an ignored token's characters while the line is read; no reader matches it. */
+const MASK = '\uE000'
 
 /** T-4: chrono read the text against the user's clock (see the reference in `parseCommand`), so its
  * components are that wall-clock: turn them into the instant with the tz database, which gets
@@ -84,13 +92,17 @@ export function parseCommand(
   input: string,
   domains: Domain[],
   projects: Project[],
-  { now = new Date(), zone = 'device' }: ParseCommandOptions = {},
+  { now = new Date(), zone = 'device', ignore = [] }: ParseCommandOptions = {},
 ): ParsedCommand {
   // Each token found is blanked out of `work` with spaces of its own length, so every index in `work`
-  // is still an index into `input`; the title is what's left.
+  // is still an index into `input`; the title is what's left. Ignored words are masked the same way.
+  // ponytail: ignored by their words, so the same words typed again elsewhere in the line stay words too.
   let work = input
-  const take = (start: number, end: number) => {
+  for (const words of ignore) if (words) work = work.split(words).join(MASK.repeat(words.length))
+  const spans: [number, number][] = []
+  const take = (start: number, end: number, chip = true) => {
     work = work.slice(0, start) + ' '.repeat(end - start) + work.slice(end)
+    if (chip) spans.push([start, end])
   }
 
   // `//` and everything after it are the notes, read as written (P7e A6, Akiflow's description mark).
@@ -172,12 +184,14 @@ export function parseCommand(
         domainMatch = domain.name
       }
     }
-    take(tagMatch.index, tagMatch.index + tagMatch[0].length)
+    // A #tag that names nothing still leaves the title, as always — but there's no chip to take back.
+    take(tagMatch.index, tagMatch.index + tagMatch[0].length, !!(projectId || domainId))
   }
 
-  const title = work.replace(/\s{2,}/g, ' ').trim()
+  const title = work.replace(new RegExp(`${MASK}+`, 'g'), (run, at: number) => input.slice(at, at + run.length)).replace(/\s{2,}/g, ' ').trim()
+  const tokens = spans.sort((a, b) => a[0] - b[0]).map(([start, end]) => input.slice(start, end))
 
-  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, tokens }
 }
 
 /** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks

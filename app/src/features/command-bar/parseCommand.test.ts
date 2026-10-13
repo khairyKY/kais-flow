@@ -297,3 +297,25 @@ describe('// notes and <date (P7e A6)', () => {
     expect(p('a < b').title).toBe('a < b')
   })
 })
+
+// P7e A10: the bar's first Esc hands the last recognised token back to the title.
+describe('tokens and ignore (P7e A10)', () => {
+  const now = new Date('2026-10-12T07:00:00Z')
+  const p = (input: string, ignore: string[] = []) => parseCommand(input, domains, projects, { now, zone: 'cairo', ignore })
+
+  it('lists the words each chip took, in line order (an unmatched #tag has no chip)', () => {
+    expect(p('call Omar tomorrow 3pm #shaheen').tokens).toEqual(['tomorrow 3pm', '#shaheen'])
+    expect(p('Sync every week !! *calls 30m #nowhere // agenda').tokens).toEqual(['every week', '!!', '*calls', '30m', '// agenda'])
+    expect(p('file taxes <friday').tokens).toEqual(['<friday'])
+    expect(p('buy milk').tokens).toEqual([])
+  })
+
+  it('ignored words stay in the title and set nothing', () => {
+    expect(p('call Omar tomorrow 3pm #shaheen', ['#shaheen'])).toMatchObject({ title: 'call Omar #shaheen', projectId: null, tokens: ['tomorrow 3pm'] })
+    const plain = p('Read Monday notes', ['Monday'])
+    expect(plain).toMatchObject({ title: 'Read Monday notes', dueAt: null, tokens: [] })
+    expect(hasStructure(plain)).toBe(false)
+    expect(p('Gym every monday 6pm', ['every monday'])).toMatchObject({ title: 'Gym every monday', recurrence: null, dueTimed: true })
+    expect(p('wow !! nice // later', ['// later', '!!'])).toMatchObject({ title: 'wow !! nice // later', priority: null, notes: null })
+  })
+})

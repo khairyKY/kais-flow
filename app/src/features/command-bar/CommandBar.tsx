@@ -92,6 +92,8 @@ export function CommandBar() {
   const mobile = useIsMobile()
   const [text, setText] = useState('')
   const [jumpSelected, setJumpSelected] = useState(false)
+  /** Token words Esc handed back to the title (P7e A10) — read as plain words until the line is gone. */
+  const [ignored, setIgnored] = useState<string[]>([])
   const [hint, setHint] = useState(false)
   const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing'>('off')
   const take = useRef<{ recorder: MediaRecorder; stream: MediaStream } | null>(null)
@@ -117,7 +119,6 @@ export function CommandBar() {
   }, [])
 
   // The phone sheet brings its own Esc/Back and scroll lock (kit BottomSheet).
-  useEscapeStack(open && !mobile, () => setOpen(false))
   useBodyScrollLock(open && !mobile)
 
   // ⌘K lives in AppLayout's hotkey effect (punch 5): keeping a copy here would double-fire —
@@ -133,6 +134,7 @@ export function CommandBar() {
     // A dismissed phone sheet keeps its half-typed draft (kit Bottom sheet: dismissing never
     // discards); the desktop bar starts fresh each time, as before.
     if (!mobile) setText('')
+    if (!mobile) setIgnored([])
     setJumpSelected(false)
     // stopDictation only touches refs and setters.
   }, [open, mobile]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -140,7 +142,14 @@ export function CommandBar() {
   useEffect(() => () => stopDictation(false), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // T-4: "10am" means 10:00 in Cairo on any device — the zone every date in the app renders in.
-  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo' }), [text, domains, projects])
+  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo', ignore: ignored }), [text, domains, projects, ignored])
+  // P7e A10 (Akiflow's Esc): the first Esc hands the last recognised token back to the title — its chip
+  // goes, its words stay — and with none left, Esc closes the bar.
+  useEscapeStack(open && !mobile, () => {
+    const last = parsed.tokens.at(-1)
+    if (last) setIgnored((words) => [...words, last])
+    else setOpen(false)
+  })
   const jumpView = useMemo(() => matchJumpView(text), [text])
   const closeBar = () => setOpen(false)
 
@@ -167,6 +176,7 @@ export function CommandBar() {
       useToastStore.getState().push({ message: 'Added to Inbox' })
     }
     setText('')
+    setIgnored([])
     close()
   }
 
@@ -261,6 +271,7 @@ export function CommandBar() {
       value={text}
       onChange={(e) => {
         setText(e.target.value)
+        if (!e.target.value.trim()) setIgnored([])
         setJumpSelected(false)
       }}
       // Paper capture: a pasted photo of notes opens the quick look instead of landing as text.
