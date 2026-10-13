@@ -4,31 +4,19 @@ import { EmojiText } from './EmojiText'
 import { Float } from './Float'
 import { motionOnNow, playOnce, useMotionEnabled } from '../lib/motion'
 import { uiZoom } from '../lib/uiScale'
+import { useShellSpots, type DragLoad, type ShellSpot, type Spot } from './dragSpots'
 import './drag.css'
+
+export type { DragLoad, Spot } from './dragSpots'
 
 // ── The one drag grammar outside the calendar: Motion 2c (the ghost in hand), 2d (filing across
 // containers), 4d (lift, the catch, the edge scroll, the stacked ghost) and Effects 2j (the soft no).
 // Built on @dnd-kit/core like the Top 3, routine-step and paper-page drags. A computer's mouse only:
 // a phone's hold selects (SwipeRow) and every drag here has its tap and keyboard path in the row's
 // ⋯ menu (Move to…, Plan, Domain…). A load says what it does where it lands; a spot only says what
-// it is — so the shell's sidebar takes a task and an inbox capture without knowing either. ──
-
-/** A place something can be dropped. `label` is what a screen reader hears. */
-export interface Spot {
-  kind: string
-  label: string
-}
-
-/** What's in hand. `verdict` (method syntax, so a load typed for its own spots still fits here):
- * true = takes it, false = refuses it (the soft no), null = not a place for this load at all. */
-export interface DragLoad<S extends Spot = Spot> {
-  /** Everything lifted together — the selection, when the row is part of one. */
-  ids: readonly string[]
-  /** What the ghost says (the first one's title). */
-  label: string
-  verdict(spot: S): boolean | null
-  drop(spot: S): void
-}
+// it is — so the shell's sidebar takes a task and an inbox capture without knowing either.
+// This module (and @dnd-kit) loads with the pages that drag (Today, Tasks, Inbox, Projects), not with
+// the shell: each wraps itself in a DragShell, and the sidebar's spots join it through ./dragSpots. ──
 
 const NOTHING: ReadonlySet<string> = new Set()
 const Lifted = createContext<ReadonlySet<string>>(NOTHING)
@@ -66,8 +54,9 @@ const announcements: Announcements = {
 
 type Ghost = { load: DragLoad; sourceId: UniqueIdentifier; from: { x: number; y: number }; grab: number; leaving: null | 'settle' | 'home' }
 
-/** Wraps the app shell: every DragRow and drop spot inside it is one drag world (the page's rows and
- * the sidebar's destinations). Pages with a drag of their own keep their own nested DndContext. */
+/** Wraps a page that drags: every DragRow and drop spot inside it — and the shell's spots registered
+ * through ./dragSpots (the sidebar's Today / Due Today / Someday) — is one drag world. A drag of a
+ * page's own (the Paper pages, routine steps) keeps its own nested DndContext. */
 export function DragShell({ children }: { children: ReactNode }) {
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const [ghost, setGhost] = useState<Ghost | null>(null)
@@ -115,9 +104,26 @@ export function DragShell({ children }: { children: ReactNode }) {
       }}
     >
       <Lifted.Provider value={ghost && !ghost.leaving ? new Set(ghost.load.ids) : NOTHING}>{children}</Lifted.Provider>
+      {[...useShellSpots()].map(([id, s]) => (
+        <ShellTarget key={id} id={id} shell={s} />
+      ))}
       {ghost && <GhostCard ghost={ghost} onGone={gone} />}
     </DndContext>
   )
+}
+
+/** A shell spot as a drop target of this page's drag world: its element, its class handed back. */
+function ShellTarget({ id, shell }: { id: string; shell: ShellSpot }) {
+  const { ref, className } = useDropSpot(id, shell.spot)
+  useLayoutEffect(() => {
+    ref(shell.el)
+    return () => ref(null)
+  }, [ref, shell.el])
+  useLayoutEffect(() => {
+    shell.setClass(className)
+    return () => shell.setClass('')
+  }, [className, shell])
+  return null
 }
 
 /** The ghost (2c): follows the pointer, lifted 1.04 under --shadow-lift, floats while held; with

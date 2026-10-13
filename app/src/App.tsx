@@ -21,9 +21,26 @@ function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, n
   pageLoaders.push(load)
   return lazy(() => load().then((m) => ({ default: m[name] })))
 }
-const TodayPage = page(() => import('./features/today/TodayPage'), 'TodayPage')
-const InboxPage = page(() => import('./features/inbox/InboxPage'), 'InboxPage')
-const TasksPage = page(() => import('./features/tasks/TasksPage'), 'TasksPage')
+// Motion 2c/2d: a page that drags holds the drag world (components/drag + @dnd-kit), loaded with it —
+// not with the shell; the sidebar's filing spots join it through components/dragSpots.
+function dragPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+  const loadBoth = () => Promise.all([load(), import('./components/drag')])
+  pageLoaders.push(loadBoth)
+  return lazy(() =>
+    loadBoth().then(([m, { DragShell }]) => {
+      const Page: ComponentType = m[name]
+      const Dragging = () => (
+        <DragShell>
+          <Page />
+        </DragShell>
+      )
+      return { default: Dragging }
+    }),
+  )
+}
+const TodayPage = dragPage(() => import('./features/today/TodayPage'), 'TodayPage')
+const InboxPage = dragPage(() => import('./features/inbox/InboxPage'), 'InboxPage')
+const TasksPage = dragPage(() => import('./features/tasks/TasksPage'), 'TasksPage')
 const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage')
 const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
 const CreatePage = page(() => import('./features/calendar/CreatePage'), 'CreatePage')
@@ -33,7 +50,7 @@ const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'Set
 // [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
 const SearchPage = page(() => import('./features/search/SearchPage'), 'SearchPage')
 const SharePage = page(() => import('./features/capture/SharePage'), 'SharePage')
-const ProjectsPage = page(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
+const ProjectsPage = dragPage(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
 const ProjectDetailPage = page(() => import('./features/projects/ProjectDetailPage'), 'ProjectDetailPage')
 const PerennialsPage = page(() => import('./features/projects/PerennialsPage'), 'PerennialsPage')
 const JournalPage = page(() => import('./features/journal/JournalPage'), 'JournalPage')

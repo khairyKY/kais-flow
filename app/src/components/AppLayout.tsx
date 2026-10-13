@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams, type LinkProps } from 'react-router'
-import { DragShell, useDropSpot } from './drag'
+import { useShellSpot } from './dragSpots'
 import type { FileSpot } from '../features/tasks/fileDrop'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
@@ -116,9 +116,9 @@ const CULTIVATE: NavItem[] = [
 const TODAY_SPOT: FileSpot = { kind: 'today', label: 'Today' }
 const SOMEDAY_SPOT: FileSpot = { kind: 'someday', label: 'Someday' }
 
-/** A sidebar link that is also a drop spot (components/drag). */
+/** A sidebar link that is also a drop spot (components/dragSpots: live while a page that drags is open). */
 function SpotLink({ spot, className, ...link }: LinkProps & { spot: FileSpot | null }) {
-  const drop = useDropSpot(`side:${String(link.to)}`, spot)
+  const drop = useShellSpot(`side:${String(link.to)}`, spot)
   return <Link ref={drop.ref} className={`${className ?? ''} ${drop.className}`} {...link} />
 }
 
@@ -249,7 +249,7 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
     setFly({ x: r.right / z + 8, y: (r.top + r.height / 2) / z })
   }
   const hideFly = () => setFly(null)
-  const drop = useDropSpot(`side:${item.to}`, item.to === '/today' ? TODAY_SPOT : null)
+  const drop = useShellSpot(`side:${item.to}`, item.to === '/today' ? TODAY_SPOT : null)
   return (
     <Link
       ref={drop.ref}
@@ -687,7 +687,6 @@ export function AppLayout() {
   }, [pathname, navigate])
 
   return (
-    <DragShell>
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
@@ -1021,6 +1020,5 @@ export function AppLayout() {
       <ToastHost />
       {signOutFlow.prompt}
     </div>
-    </DragShell>
   )
 }
