@@ -22,7 +22,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
-import { dayBounds, ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
+import { dayBounds, ritualDue, ritualOn, shutDownOn, type RitualSettings } from './ritual.ts'
 import { routinesDueAt, type ReminderRoutine } from './routine.ts'
 import { birthdayDue, birthdayGroups, type PersonFacts } from './birthday.ts'
 import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
@@ -135,11 +135,20 @@ async function buildPayload(
   if (kind === 'evening_nudge') {
     // "4 done · 2 left": finished today, and still open for today (due today or before) — the user's today.
     const day = dayBounds(clock.now, zone)
-    const [done, left] = await Promise.all([
+    const [done, left, shut] = await Promise.all([
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', day.start).lt('completed_at', day.end),
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).is('deleted_at', null).lt('due_at', day.end),
+      // A29: the app's `ritual.finished` rows (notify/ritual.ts shutDownOn). A loop day began at most 28
+      // hours ago, so two days of rows cover it, on the (user_id, created_at) index.
+      supabase
+        .from('activity_log')
+        .select('payload')
+        .eq('user_id', userId)
+        .eq('event_type', 'ritual.finished')
+        .gte('created_at', new Date(clock.now.getTime() - 2 * 86_400_000).toISOString()),
     ])
-    if (done.error || left.error) throw done.error ?? left.error
+    if (done.error || left.error || shut.error) throw done.error ?? left.error ?? shut.error
+    if (shutDownOn(shut.data ?? [], clock.now, zone)) return null // Shut down is done: the day is closed
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
     const n = nudgeNotice(done.count ?? 0, left.count ?? 0)
     if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, n)

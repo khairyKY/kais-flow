@@ -21,7 +21,9 @@ import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGroupi
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
-import { useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { useReviewEventsThisWeek, useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { loopNow } from '../rituals/loopDay'
+import { startOfWeek } from '../rituals/reviewWeek'
 import { useRitualPins } from '../rituals/ritualPins'
 import { PLAN_STEPS, SHUT_STEPS } from '../rituals/ritualLogic'
 import { MorningRitual } from '../rituals/MorningRitual'
@@ -64,7 +66,7 @@ import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
-import { useStarEvents, useWeekClosedAt } from './api'
+import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
 import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
@@ -437,9 +439,11 @@ export function TodayPage() {
   }
   const overdueCount = filterByList(tasks, 'overdue').length
   // DAILY-CYCLE step 5, the weekly review: prompted on its day (the first day of the user's
-  // weekend) until this week's review is closed (./todayLayout reviewDue).
-  const { data: weekClosed = [] } = useWeekClosedAt(now)
-  const reviewToday = reviewDue(now, weekendDays(), weekClosed)
+  // weekend) until this week's review is closed (./todayLayout reviewDue). The Weekly review's own
+  // read of the week, so its Close and Undo reach this prompt without a refetch.
+  const weekend = weekendDays()
+  const { data: reviewEvents = [] } = useReviewEventsThisWeek(startOfWeek(loopNow(now), weekend).toISOString())
+  const reviewToday = reviewDue(now, weekend, reviewEvents)
 
   // Ported from the retired Terrarium.tsx — day count since the earliest record, for the phone
   // header's "Day N" (Today Phone ruling 1). On a desktop it's the sidebar foot's "day N" (2a, AppLayout).

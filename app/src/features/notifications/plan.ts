@@ -1,5 +1,5 @@
 import { birthdayNotice, clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
-import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
+import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, shutDownOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
 import { BIRTHDAY_AT, birthdayGroups, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
 import { isOverdue, todaysTop3 } from '../../../../supabase/functions/_shared/today.ts'
@@ -52,6 +52,9 @@ export interface PlanInput {
   /** People (their Birthday fact) and the interactions logged with them ("Last spoke 12 days ago"). */
   people?: readonly PersonFacts[]
   interactions?: readonly Spoke[]
+  /** The `ritual.finished` rows this device holds (rituals/api useRitualFinishedRows): once Shut down
+   * is done on a loop day, that day's evening nudge stays quiet, as notify's does (ritual.ts shutDownOn). */
+  finished?: readonly { payload: unknown }[]
   prefs: PlanPrefs | null | undefined
   /** The window: notices whose moment falls in (from, to]. */
   from: Date
@@ -71,7 +74,7 @@ function wallTimes(min: number, from: Date, to: Date, zone: string): Date[] {
   return out
 }
 
-export function localPlan({ tasks, projects = [], routines = [], completions = [], people = [], interactions = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
+export function localPlan({ tasks, projects = [], routines = [], completions = [], people = [], interactions = [], finished = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
   const out: Planned[] = []
   const add = (key: string, at: Date, build: (said: Date) => Notice | null) => {
     const said = new Date(Math.max(at.getTime(), now.getTime()))
@@ -122,6 +125,8 @@ export function localPlan({ tasks, projects = [], routines = [], completions = [
       add(`${kind}@${at.toISOString()}`, at, () => {
         // That morning's Top 3 (goal first) and overdue count, notify's rules (_shared/today.ts).
         if (kind === 'morning_digest') return digestNotice(todaysTop3(live, at, zone).map((t) => t.title), prefs, live.filter((t) => isOverdue(t, at, zone)).length)
+        // Shut down already walked on that loop day: no nudge (A29, notify's rule).
+        if (shutDownOn(finished, at, zone)) return null
         // "4 done · 2 left" for that day, as this device last saw it (notify's evening_nudge rule).
         const day = dayBounds(at, zone)
         const done = live.filter((t) => t.status === 'done' && !!t.completed_at && t.completed_at >= day.start && t.completed_at < day.end).length

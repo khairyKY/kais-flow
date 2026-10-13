@@ -15,7 +15,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { logRitualFinished, logRitualStep, setSeed, useDraft, useRitualStepsToday, useSeedsFor } from './api'
-import { loopDayKey, seedTargetDate } from './loopDay'
+import { loopDayKey, loopNow, seedTargetDate } from './loopDay'
 import { SHUT_STEPS, closeDay, daysBetween, headerDate, rolledMeta, seedDayName, span, swapIn, sweepRows, tomorrowSuggestions, withPick } from './ritualLogic'
 import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, Section } from './RitualChrome'
 import type { Task } from '../../lib/types'
@@ -42,7 +42,10 @@ interface ShutDraft {
 const A = '/ds/assets'
 
 export function EveningRitual({ onClose }: { onClose: () => void }) {
-  const now = new Date()
+  // A29: the loop day's clock. Past midnight (before 04:00) you are still closing the day you lived,
+  // so its plate, its "done", "Left today" and Tomorrow (→ the morning these seeds are for) read that
+  // day — not the calendar's, which sent Tomorrow a day late.
+  const now = loopNow(new Date())
   const day = loopDayKey(now)
   const navigate = useNavigate()
   const { data: tasks = [], isPending } = useTasks()
@@ -66,7 +69,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const suggestions = tomorrowSuggestions(tasks, rows, now)
   const stars = (draft.stars ?? (seeded.length ? seeded.map((t) => t.id) : suggestions.slice(0, 3).map((s) => s.task.id))).filter((id) => byId.get(id)?.status === 'todo')
   const seedList = [...suggestions, ...stars.filter((id) => !suggestions.some((s) => s.task.id === id)).map((id) => ({ task: byId.get(id)!, why: 'Planted' }))]
-  const doneToday = tasks.filter((t) => t.completed_at && cairoDateKey(new Date(t.completed_at)) === cairoDateKey(now)).length
+  const doneToday = tasks.filter((t) => t.completed_at && loopDayKey(new Date(t.completed_at)) === day).length
   const focused = focusedToday(timeEntries, now)
   const stats = [`${doneToday} done`, ...(focused > 0 ? [`${span(focused)} focused`] : [])]
   const selecting = selected.size > 0
@@ -97,7 +100,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   }
   function roll(list: Task[]) {
     const fresh = list.filter((t) => !isRolled(t) && t.status === 'todo')
-    fresh.forEach((t) => rollUndo.current.set(t.id, rescheduleDue(t, scheduleTomorrow())))
+    fresh.forEach((t) => rollUndo.current.set(t.id, rescheduleDue(t, scheduleTomorrow(now))))
     setDraft((d) => ({ seen, rolled: { ...d.rolled, ...Object.fromEntries(fresh.map((t) => [t.id, t.due_at])) } }))
   }
   function unroll(t: Task) {
@@ -166,7 +169,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     const plan = closeDay(stars, seeded.map((t) => t.id), new Set(open.map((t) => t.id)))
     plan.seed.forEach((id) => byId.get(id) && setSeed(byId.get(id)!, true))
     plan.unseed.forEach((id) => byId.get(id) && setSeed(byId.get(id)!, false))
-    plan.roll.forEach((id) => byId.get(id) && rescheduleDue(byId.get(id)!, scheduleTomorrow()))
+    plan.roll.forEach((id) => byId.get(id) && rescheduleDue(byId.get(id)!, scheduleTomorrow(now)))
     const steps = SHUT_STEPS.filter((s) => s !== 'line' || wroteLine)
     steps.forEach(logStep)
     logRitualFinished('evening', steps)
