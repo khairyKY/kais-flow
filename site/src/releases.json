@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.1.3",
+    "date": "2026-10-13",
+    "title": "A privacy page on the app, ready for Google Calendar",
+    "highlights": [
+      "The privacy policy now lives on the app's own address too, and says exactly what Google Calendar sync will do: read the calendars you choose, never change them"
+    ],
+    "icons": [
+      "lock"
+    ],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.1.2",
     "date": "2026-10-13",
     "title": "Your assistant plans the week, and keys for everything",

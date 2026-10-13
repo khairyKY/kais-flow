@@ -88,6 +88,9 @@ export default defineConfig({
         // for a niche icon a user may see a handful of. Cached on first use instead
         // (runtimeCaching below); an unseen one falls back to the plain character.
         globIgnores: ['**/emoji/**'],
+        // The privacy policy is a real page (public/privacy.html — Google's OAuth consent screen links it),
+        // never the app shell.
+        navigateFallbackDenylist: [/^\/privacy\.html$/],
         runtimeCaching: [
           {
             urlPattern: /\/emoji\/.*\.svg$/,
