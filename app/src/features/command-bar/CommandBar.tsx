@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
+import { useAreas } from '../areas/api'
+import { useLabels } from '../tasks/labels'
+import { EmojiText } from '../../components/EmojiText'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { captureText } from '../inbox/api'
 import { enrichTypedInboxItem, transcribeAudio } from '../capture/api'
@@ -12,6 +15,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { hasStructure, parseCommand } from './parseCommand'
 import { addTypedTask } from './quickAdd'
 import { formatDueChip } from './dueChip'
+import { jumpTargets, matchJump, type JumpTarget } from './jump'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
@@ -33,37 +37,6 @@ const CHIP_BASE: React.CSSProperties = {
 }
 
 const PRIORITY_NAME: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
-
-// F3b (D-5 ruling, punch 59): Go-to lives inside ⌘K — type a view name, a jump row
-// appears; ↓ selects it, ↵ navigates. Plain ↵ still quick-adds. Parked surfaces
-// (Library) and dev routes are deliberately absent until they return. Journal is back in the sidebar (U-14).
-const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
-  { name: 'today', label: 'Today', to: '/today' },
-  { name: 'inbox', label: 'Inbox', to: '/inbox' },
-  { name: 'tasks', label: 'Tasks', to: '/tasks' },
-  { name: 'calendar', label: 'Calendar', to: '/calendar' },
-  { name: 'projects', label: 'Projects', to: '/projects' },
-  { name: 'routines', label: 'Routines', to: '/routines' },
-  { name: 'review', label: 'Review', to: '/weekly-review' },
-  { name: 'focus', label: 'Focus', to: '/focus' },
-  { name: 'people', label: 'People', to: '/people' },
-  { name: 'journal', label: 'Journal', to: '/journal' },
-  { name: 'notebook', label: 'Notebook page', to: '/notebook' },
-  { name: 'activity', label: 'Activity', to: '/activity' },
-  { name: 'settings', label: 'Settings', to: '/settings' },
-  { name: 'search', label: 'Search', to: '/search' },
-  { name: 'herbarium', label: 'Herbarium', to: '/herbarium' },
-  { name: 'perennials', label: 'Perennials', to: '/perennials' },
-  { name: 'trash', label: 'Trash', to: '/trash' },
-]
-
-/** Unique-prefix match, ≥2 chars — "in" → Inbox, but "t" (today/tasks/trash) offers nothing. */
-function matchJumpView(input: string): (typeof JUMP_VIEWS)[number] | null {
-  const q = input.trim().toLowerCase()
-  if (q.length < 2) return null
-  const hits = JUMP_VIEWS.filter((v) => v.name.startsWith(q))
-  return hits.length === 1 ? hits[0] : null
-}
 
 /** The centre button is a plus that also records while held, so the phone sheet's first three opens
  * say what it does: tap to type · hold to talk. Counted per device. */
@@ -102,6 +75,8 @@ export function CommandBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
+  const { data: areas = [] } = useAreas()
+  const { labels } = useLabels()
   const uid = useAuth().session?.user.id
   // Paper capture 11a: pages saved offline wait on this device until they can be read.
   const waiting = usePaperStore((s) => s.waiting)
@@ -140,10 +115,11 @@ export function CommandBar() {
 
   // T-4: "10am" means 10:00 in Cairo on any device — the zone every date in the app renders in.
   const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo' }), [text, domains, projects])
-  const jumpView = useMemo(() => matchJumpView(text), [text])
+  // P7e A9: the jump reaches every project, area and label too, not only the views.
+  const jumpView = matchJump(text, jumpTargets(projects, areas, labels.map((l) => l.name)))
   const closeBar = () => setOpen(false)
 
-  function jumpTo(view: NonNullable<ReturnType<typeof matchJumpView>>) {
+  function jumpTo(view: JumpTarget) {
     setOpen(false)
     navigate(view.to)
   }
@@ -448,7 +424,10 @@ export function CommandBar() {
                 }}
               >
                 <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
+                <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>
+                  <EmojiText text={jumpView.label} />
+                  {jumpView.kind && <span style={{ color: 'var(--ink-faint)' }}> · {jumpView.kind}</span>}
+                </span>
                 {/* Polish F2b (conductor decision 2026-09-26, J-17): shortcut hints are keycaps. */}
                 <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                   {jumpSelected ? (

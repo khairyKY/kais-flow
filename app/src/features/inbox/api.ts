@@ -4,7 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { createTask, rescheduleDue } from '../tasks/api'
+import { completeTask, createTask, rescheduleDue } from '../tasks/api'
 import { deleteEvent, deleteEventWithUndo, placeTask, restoreEvent } from '../calendar/api'
 import { eventMinutes, type RailDropAction } from '../calendar/railDrop'
 import { NO_PLACE, placeTask as placeIn, type MoveTarget } from '../tasks/move'
@@ -205,6 +205,20 @@ export function fileMany(pairs: readonly (readonly [InboxItem, FileTo])[]): void
   const done = pairs.map(([item, to]) => fileQuietly(item, to))
   const someday = pairs.every(([, to]) => to.to === 'task' && to.someday)
   toastUndo(done.length === 1 ? done[0].message : `${captures(done.length)} filed${someday ? ' to Someday' : ''}`, () => done.forEach((d) => d.undo()))
+}
+
+/** "Done now" (P7e A8, Akiflow's inbox-zero E): a two-minute capture filed as a task that is already
+ * done — its card's title, date and place. One toast, one Undo: the task goes, the capture comes back. */
+export function fileDone(pairs: readonly (readonly [InboxItem, Extract<FileTo, { to: 'task' }>])[]): void {
+  if (!pairs.length) return
+  const done = pairs.map(([item, to]) => {
+    const prior = { ...item }
+    const at = placeIn(NOWHERE, to.place)
+    const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, silent: true })
+    completeTask(task)
+    return { title: task.title, undo: () => unfile(prior, task) }
+  })
+  toastUndo(done.length === 1 ? `Filed "${done[0].title}" as done` : `${captures(done.length)} filed as done`, () => done.forEach((d) => d.undo()))
 }
 
 /** Every row written back as it was — the Undo of the bulk actions below. `deleted_at` is sent

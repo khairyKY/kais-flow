@@ -8,6 +8,7 @@ import {
   snoozeInboxItem,
   restoreInboxItem,
   fileCapture,
+  fileDone,
   fileMany,
   dismissMany,
   snoozeMany,
@@ -28,6 +29,7 @@ import { listState } from '../journal/journalDay'
 import { CaptureCta } from '../capture/CaptureCta'
 import { ReadyScans, ScanPaperButton } from '../paper/PaperInbox'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
+import { INBOX_KEYS } from '../../lib/shortcuts'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ErrorCard, OfflineChip, Skeleton } from '../../components/States'
@@ -179,6 +181,23 @@ export function InboxPage() {
   // be a 365-day snooze, so the capture vanished for a year (product audit, Inbox row).
   const asSomeday = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: null, place: draftOf(i).place, someday: true }] as const
   const somedayOne = (item: InboxItem) => breatheOut(item.id, () => fileMany([asSomeday(item)]))
+  // P7e A8: Space files the capture as a task already done (Akiflow's "done now"), with its card's title, date and place.
+  const asDone = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, place: draftOf(i).place }] as const
+  const doneOne = (item: InboxItem) => breatheOut(item.id, () => fileDone([asDone(item)]))
+  function bulkDone(sel: InboxItem[]) {
+    fileDone(sel.map(asDone))
+    clearSelection()
+  }
+  // P7e A8: P opens the card's own date picker. A compact or unsure card opens full first, and a note
+  // or person draft turns into a task (only a task has a date). GitHub rows have no date to plan.
+  function planOne(item: InboxItem) {
+    if (item.kind === 'github_issue') return
+    const d = draftOf(item)
+    if (d.to !== 'task') setDraft(item.id, { ...d, to: 'task', personId: null })
+    openCard(item.id)
+    // ponytail: presses the card's own Due date field once it has rendered — the same picker a click opens.
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`#inbox-${item.id} [aria-label="Due date"]`)?.click())
+  }
   function bulkSomeday() {
     fileMany(selectedItems.map(asSomeday))
     clearSelection()
@@ -240,21 +259,25 @@ export function InboxPage() {
     setFocusedId(orderedItems[idx + 1]?.id ?? orderedItems[idx - 1]?.id ?? null)
   }
   // Keys act on a mouse selection when there is one (useListKeys `selected` + `runAll`), else on
-  // the focused row. Waiting: E file (as the card says) · D dismiss · S snooze · ⏎ open. Dismissed: R restore.
+  // the focused row. Waiting: E file (as the card says) · Space done now · P plan · D dismiss · S snooze · ⏎ open.
+  // Dismissed: R restore. The letters live in lib/shortcuts INBOX_KEYS, the table the cheatsheet reads.
   const waitingBindings: ListBinding<InboxItem>[] = [
-    { keys: ['e'], label: 'File', run: (i) => { fileOne(i, draftOf(i)); advance(i) }, runAll: bulkFileAsDrafted },
-    { keys: ['d'], label: 'Dismiss', run: (i) => { dismissOne(i); advance(i) }, runAll: bulkDismiss },
-    { keys: ['s'], label: 'Snooze', run: (i) => setKbSnoozeId(i.id), runAll: (sel) => setBulkSnoozePos(rowAnchor('inbox-', sel[0].id)) },
+    { ...INBOX_KEYS.file, run: (i) => { fileOne(i, draftOf(i)); advance(i) }, runAll: bulkFileAsDrafted },
+    { ...INBOX_KEYS.done, run: (i) => { doneOne(i); advance(i) }, runAll: bulkDone },
+    { ...INBOX_KEYS.plan, run: planOne },
+    { ...INBOX_KEYS.dismiss, run: (i) => { dismissOne(i); advance(i) }, runAll: bulkDismiss },
+    { ...INBOX_KEYS.snooze, run: (i) => setKbSnoozeId(i.id), runAll: (sel) => setBulkSnoozePos(rowAnchor('inbox-', sel[0].id)) },
     {
-      keys: ['Enter'],
-      label: 'Open',
+      ...INBOX_KEYS.open,
       run: (i) => {
+        // A31: on a computer a GitHub row has nothing to open in place; ↵ opens the issue, as a click on its number does.
+        if (i.kind === 'github_issue' && !isMobile) return document.querySelector<HTMLElement>(`#inbox-${i.id} .ib-gh-num`)?.click()
         openCard(i.id)
         if (i.kind !== 'github_issue') setEditId(i.id)
       },
     },
   ]
-  const dismissedBindings: ListBinding<InboxItem>[] = [{ keys: ['r'], label: 'Restore', run: (i) => restoreInboxItem(i), runAll: bulkRestore }]
+  const dismissedBindings: ListBinding<InboxItem>[] = [{ ...INBOX_KEYS.restore, run: (i) => restoreInboxItem(i), runAll: bulkRestore }]
   // Snoozed shares Dismissed's R: it brings the capture back to Waiting now.
   const { focusedId, setFocusedId } = useListKeys(visibleItems, tab === 'waiting' ? waitingBindings : dismissedBindings, {
     idPrefix: 'inbox-',

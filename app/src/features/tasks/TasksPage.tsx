@@ -562,6 +562,17 @@ export function TasksPage() {
 
   const filteredBase = filterByList(displayTasks, list, now)
   const [labelFilter, setLabelFilter] = useState<string | null>(null)
+  // P7e A9: ⌘K's label jump lands as ?label=<name>. Taken into the filter, then dropped from the
+  // address, so the next jump (even to the same label, even from this page) applies again.
+  const labelParam = searchParams.get('label')
+  useEffect(() => {
+    if (labelParam === null) return
+    setLabelFilter(labelParam)
+    const p = new URLSearchParams(searchParams)
+    p.delete('label')
+    setSearchParams(p, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labelParam])
   const filtered = filteredBase.filter((t) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter)))
   const [sort, setSort] = useState<SortKey>('smart')
   const groups = applySort(groupTasks(filtered, now), sort)
