@@ -504,6 +504,15 @@ describe('MCP: the tools', () => {
     expect(store.logs).toHaveLength(2)
   })
 
+  it('complete_task: "Ends after N times" counts down on the copies and the last one ends the series (p7e A13)', async () => {
+    const store = fakeStore('Africa/Cairo', [task(9, 'Stretch', { due_at: '2026-10-04T06:00:00Z', recurrence_rule: 'FREQ=DAILY;COUNT=2' })])
+    const r = await call(deps(store), 'complete_task', { id: tid(9) })
+    expect(r.data!.next).toMatchObject({ due: '2026-10-05 09:00', repeats: 'FREQ=DAILY;COUNT=1' })
+    const last = await call(deps(store), 'complete_task', { id: r.data!.next.id })
+    expect(last.data!.next ?? null).toBeNull()
+    expect(store.tasks.filter((t) => t.status === 'todo')).toHaveLength(0)
+  })
+
   it('complete_task: a daily task finished five days late comes back tomorrow, not four days overdue', async () => {
     const store = fakeStore('Africa/Cairo', [task(9, 'Stretch', { due_at: '2026-09-29T06:00:00Z', recurrence_rule: 'FREQ=DAILY' })])
     const r = await call(deps(store), 'complete_task', { id: tid(9) })

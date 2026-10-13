@@ -26,7 +26,7 @@ import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
 export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
-import { rollAfter } from '../_shared/repeat.ts'
+import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -865,13 +865,16 @@ export const TOOLS: readonly ToolDef[] = [
       // the task done with its series silently ended.
       let next: TaskRow | null = null
       // A paused series (Perennials ‖) doesn't come back until it's resumed (completion.ts).
-      if (t.recurrence_rule && t.due_at && !t.paused) {
+      // "Ends after N times": the copy carries one fewer, and the last one (COUNT=1) spawns nothing.
+      const nextRule = t.recurrence_rule ? ruleAfterThis(t.recurrence_rule) : null
+      if (t.recurrence_rule && nextRule && t.due_at && !t.paused) {
         // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
-        const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
-        if (at && !(await ctx.store.openOccurrence(t.title, t.recurrence_rule, at.toISOString(), t.id))) {
+        const at = ctx.nextOccurrence(stepOf(t.recurrence_rule), new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
+        if (at && !(await ctx.store.openOccurrence(t.title, nextRule, at.toISOString(), t.id))) {
           next = {
             ...t,
             id: crypto.randomUUID(),
+            recurrence_rule: nextRule,
             status: 'todo',
             completed_at: null,
             due_at: at.toISOString(),

@@ -4,6 +4,19 @@
 // late comes back tomorrow instead of four days overdue. Pure; rrule is injected by the caller.
 import { dateKey, wallTime, wallToInstant } from './zone.ts'
 
+/** "Ends after N times" — the app's features/tasks/recurrence.ts ruleAfterThis: a task's COUNT is how
+ * many are left, this one included, so the next copy carries one fewer and COUNT=1 is the last (null:
+ * the series ends here). A rule without COUNT comes back unchanged. */
+export function ruleAfterThis(rule: string): string | null {
+  const n = Number(/(?:^|;)COUNT=(\d+)/i.exec(rule)?.[1] ?? 0)
+  if (!n) return rule
+  return n > 1 ? rule.replace(/COUNT=\d+/i, `COUNT=${n - 1}`) : null
+}
+
+/** The rule's step without its COUNT: the count rides on the copies (ruleAfterThis), so rolling with it
+ * would restart it from every copy's own due date and never end. */
+export const stepOf = (rule: string): string => rule.split(';').filter((p) => !/^COUNT=/i.test(p)).join(';')
+
 /** The instant to roll the rule after: max(due, today at the due's wall-clock time). */
 export function rollAfter(dueIso: string, now: Date, zone: string): Date {
   const due = new Date(dueIso)
