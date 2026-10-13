@@ -54,7 +54,7 @@ import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
-import { cairoMinutes, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
+import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
 import { isInProgress, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
@@ -1232,7 +1232,7 @@ const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbo
  * today (R4-D1: a ritual's progress is its steps, never routines). Morning is open until the evening
  * (Shut down's 17:00, Kai 2026-09-28 — 2a drew 7 PM); then Evening. Any row opens its ritual. */
 function RitualsRail({ day, now, onOpen, review }: { day: ReturnType<typeof useDay>; now: Date; onOpen: (kind: RitualKind) => void; review: boolean }) {
-  const evening = cairoMinutes(now) >= SHUTDOWN_FROM
+  const evening = isEvening(now) // on until 04:00, the loop day's turn (A29)
   const from = `${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`
   return (
     <section aria-label="Rituals" data-tour="plan">

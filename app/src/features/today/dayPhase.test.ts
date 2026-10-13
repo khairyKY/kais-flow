@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cairoMinutes, dayPhase, eveningState, isPlanned, morningState, ritualFinished, type DayPhaseInput } from './dayPhase'
+import { cairoMinutes, dayPhase, eveningState, isEvening, isPlanned, morningState, ritualFinished, type DayPhaseInput } from './dayPhase'
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-26 (EEST).
 const at = (cairoHHMM: string) => {
@@ -166,5 +166,11 @@ describe('eveningState', () => {
   })
   it('all five beats is finished', () => {
     expect(ritualFinished(eveningState(new Set(['sweep', 'garden', 'line', 'seeds', 'goodnight']), 5))).toBe(true)
+  })
+})
+
+describe('isEvening — the rail and the card agree on the loop day’s evening (A29)', () => {
+  it('17:00 → 03:59 is evening; 04:00 → 16:59 is not', () => {
+    expect([at('16:59'), at('17:00'), at('23:59'), at('00:00'), at('03:59'), at('04:00')].map(isEvening)).toEqual([false, true, true, true, true, false])
   })
 })

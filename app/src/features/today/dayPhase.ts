@@ -81,6 +81,13 @@ export function cairoMinutes(now: Date): number {
   return h * 60 + m
 }
 
+/** The loop day's evening: from 17:00, and on past midnight until 04:00, when the loop day turns over
+ * (rituals/loopDay.ts, A29) — Shut down's time on the Day card and in the rail. */
+export function isEvening(now: Date): boolean {
+  const minutes = cairoMinutes(now)
+  return minutes >= SHUTDOWN_FROM || minutes < LOOP_DAY_ROLLOVER_HOUR * 60
+}
+
 export function ritualFinished(r: RitualState): boolean {
   return r.finished ?? (r.total > 0 && r.done >= r.total)
 }
@@ -98,12 +105,11 @@ export function isPlanned(input: Pick<DayPhaseInput<unknown, unknown>, 'now' | '
 
 export function dayPhase<E, T>(input: DayPhaseInput<E, T>): DayCardState<E, T> {
   const prompts = input.prompts ?? { morning: true, evening: true }
-  const minutes = cairoMinutes(input.now)
-  // A29: until 04:00 it is still the loop day's evening (rituals/loopDay.ts) — Shut down, never Plan.
-  const night = minutes < LOOP_DAY_ROLLOVER_HOUR * 60
+  // A29: until 04:00 it is still the loop day's evening (isEvening) — Shut down, never Plan.
+  const evening = isEvening(input.now)
   if (ritualFinished(input.evening)) return { phase: 'closed' }
-  if (prompts.evening && (minutes >= SHUTDOWN_FROM || night)) return { phase: 'shutdown' }
-  if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL && !night) return { phase: 'plan' }
+  if (prompts.evening && evening) return { phase: 'shutdown' }
+  if (prompts.morning && !isPlanned(input) && !evening && cairoMinutes(input.now) < PLAN_UNTIL) return { phase: 'plan' }
   const soon = input.nextUp && (input.nextUpSoon ?? true)
   const item: NowItem<E, T> | null = soon && input.nextUp
     ? { kind: 'event', event: input.nextUp }
