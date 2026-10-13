@@ -9,6 +9,8 @@ import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
+import { sortByOrder } from '../tasks/manualOrder'
+import { moveInListWithUndo } from '../tasks/api'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
@@ -244,7 +246,8 @@ export function TodayPage() {
   // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE).
   const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
-  const allOpen = foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown).sort(doneAfterOpen)
+  // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
+  const allOpen = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
@@ -369,6 +372,13 @@ export function TodayPage() {
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
+    // ⌘/Ctrl+↑/↓ (p7e A22): a Top 3 row moves in the Top 3 (as Alt+↑/↓); the rest within the overdue
+    // fold or More for today. Up next follows the calendar, so it has no order to change.
+    reorder: (rows, dir) => {
+      const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
+      if (pick) moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir)
+      else moveInListWithUndo([overdueOpen, restOpen.filter((t) => !t.completed_at)], rows, dir)
+    },
   })
 
   // Kai 2026-10-07: order the Top 3. Alt+↑/↓ moves the focused Top 3 row (up into first place = the

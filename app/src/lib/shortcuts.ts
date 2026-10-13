@@ -51,6 +51,7 @@ export const LIST_NAV: ShortcutEntry = { keys: ['j', 'k'], label: 'Move focus' }
 export const LIST_EXTRAS: ShortcutEntry[] = [
   { keys: ['⌘/Ctrl', 'A'], label: 'Select all' },
   { keys: ['⌥/Alt', '↑/↓'], label: 'Reorder Top 3 (Today)' },
+  { keys: ['⌘/Ctrl', '↑/↓'], label: 'Move task up / down' }, // p7e A22: useListKeys' reorder
 ]
 
 /** Said under the task keys: T, E, 1/2/3 and # act on the whole selection when there is one. */
