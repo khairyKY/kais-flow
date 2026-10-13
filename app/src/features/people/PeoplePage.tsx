@@ -229,7 +229,7 @@ export function PeoplePage() {
         {!loadState && people.length === 0 && (
           <div style={{ padding: '44px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)', textAlign: 'center', lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
+            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', textAlign: 'center', lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
           </div>
         )}
 
@@ -249,10 +249,10 @@ export function PeoplePage() {
               const bdayLabel = bdayDays !== null && bdayDays <= 14 ? ` · bday ${bdayDays}d` : ''
               return (
                 <div key={p.id} style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 11, transform: `rotate(${idx % 2 === 0 ? -0.3 : 0.3}deg)` }}>
-                  <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
+                  <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>{quietText}{bdayLabel}</div>
                   </div>
                   <button type="button" onClick={() => handleQuickAction(p, nudgeChannel(p.id))} className="chip kf-hit" style={{ ...nudgeChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>{nudgeChannel(p.id)}</button>
                   <button type="button" onClick={() => handleLater(p)} className="chip kf-hit" style={{ ...laterChip, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>later</button>
@@ -277,9 +277,9 @@ export function PeoplePage() {
               return (
                 <div key={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: idx < groupPeople.length - 1 ? '1px dashed var(--line-dashed)' : 'none', ...(motion ? staggerDelay(idx) : {}) }}>
                   <Link to={`/people/${p.id}`} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', textDecoration: 'none' }}>
-                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
+                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
+                      <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>{p.name}</div>
                       <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)', marginTop: 1 }}>{summaryShort}</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{lastTouchText}</span>
@@ -322,7 +322,7 @@ export function PeoplePage() {
         .chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
         .flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
         .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono); text-transform: uppercase; color: var(--ink-faint); }
         .slabel .r { flex: 1; height: 1px; border-bottom: 1px dashed var(--line-dashed); }
         .av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--ink-body); flex: none; }
       `}</style>
@@ -332,8 +332,8 @@ export function PeoplePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 50, filter: 'var(--shadow-drop-sm)' }} />
           <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>People · kept close</div>
-            <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The clover patch</h1>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>People · kept close</div>
+            <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The clover patch</h1>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -361,7 +361,7 @@ export function PeoplePage() {
         <div style={{ padding: '52px 40px 56px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 64, filter: 'var(--shadow-drop-sm)' }} />
           <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No one in the clover patch yet — plant the first person.</div>
-          <button onClick={() => setShowNewForm(true)} className="kf-lift" style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>+ New person</button>
+          <button onClick={() => setShowNewForm(true)} className="kf-lift" style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>+ New person</button>
         </div>
       )}
 
@@ -425,7 +425,7 @@ export function PeoplePage() {
                     {showBloom && <BloomBadge />}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14.5px', color: 'var(--ink-body)' }}>{p.name}</div>
+                    <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-body)' }}>{p.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{summaryText}</div>
                   </div>
                   {showBloom && (
@@ -444,7 +444,7 @@ export function PeoplePage() {
         </div>
       ))}
 
-      <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>a light CRM — facts so you remember, nudges so you reach out ✿</div>
+      <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>a light CRM — facts so you remember, nudges so you reach out ✿</div>
       {menuLayer}
     </div>
   )
