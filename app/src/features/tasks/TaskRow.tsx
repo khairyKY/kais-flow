@@ -324,7 +324,7 @@ export function TaskRow({
             </span>
           )}
           {overdue && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {overdueDays}d</span>}
-          {inProgress && <span style={{ color: 'var(--kf-chip-tasks, #8A4A58)' }}>In progress</span>}
+          {inProgress && <span style={{ color: 'var(--acc-blossom-text)' }}>In progress</span>}
           {inProgress && task.scheduled_start && (
             <span>
               {/* The user's day and clock (app_settings.timezone), not the device's. */}

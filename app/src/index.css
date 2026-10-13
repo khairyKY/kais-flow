@@ -143,13 +143,13 @@ body::before {
   mix-blend-mode: overlay;
 }
 
-/* Foundation patch (punch 57): night values for the two literals that have no day/night
-   token pair. Every other site reuses an existing token, or a night-only token via the
-   fallback pattern `var(--night-token, <day literal>)` — so day stays byte-exact against
-   the export and night flips automatically. */
+/* Foundation patch (punch 57): night value for a literal that has no day/night token pair.
+   Every other site reuses an existing token, or a night-only token via the fallback pattern
+   `var(--night-token, <day literal>)` — so day stays byte-exact against the export and night
+   flips automatically. (The blossom chip ink's --kf-chip-tasks went 2026-10-13: it was
+   --acc-blossom-text, #8A4A58 / #E9BFC5, under another name.) */
 [data-theme='night'] {
   --kf-shadow-rgb: 0, 0, 0; /* warm-brown drop shadows → neutral, matching the night shadow set */
-  --kf-chip-tasks: #E9BFC5; /* blossom chip ink (day #8A4A58); there is no --acc-blossom-text */
 }
 
 ::-webkit-scrollbar {
