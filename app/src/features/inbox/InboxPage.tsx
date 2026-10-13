@@ -29,6 +29,7 @@ import { listState } from '../journal/journalDay'
 import { CaptureCta } from '../capture/CaptureCta'
 import { ReadyScans, ScanPaperButton } from '../paper/PaperInbox'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
+import { INBOX_KEYS } from '../../lib/shortcuts'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ErrorCard, OfflineChip, Skeleton } from '../../components/States'
@@ -259,23 +260,24 @@ export function InboxPage() {
   }
   // Keys act on a mouse selection when there is one (useListKeys `selected` + `runAll`), else on
   // the focused row. Waiting: E file (as the card says) · Space done now · P plan · D dismiss · S snooze · ⏎ open.
-  // Dismissed: R restore. (Space and P are P7e A8; their letters may move with Kai's B3 ruling.)
+  // Dismissed: R restore. The letters live in lib/shortcuts INBOX_KEYS, the table the cheatsheet reads.
   const waitingBindings: ListBinding<InboxItem>[] = [
-    { keys: ['e'], label: 'File', run: (i) => { fileOne(i, draftOf(i)); advance(i) }, runAll: bulkFileAsDrafted },
-    { keys: [' '], label: 'Done now', run: (i) => { doneOne(i); advance(i) }, runAll: bulkDone },
-    { keys: ['p'], label: 'Plan', run: planOne },
-    { keys: ['d'], label: 'Dismiss', run: (i) => { dismissOne(i); advance(i) }, runAll: bulkDismiss },
-    { keys: ['s'], label: 'Snooze', run: (i) => setKbSnoozeId(i.id), runAll: (sel) => setBulkSnoozePos(rowAnchor('inbox-', sel[0].id)) },
+    { ...INBOX_KEYS.file, run: (i) => { fileOne(i, draftOf(i)); advance(i) }, runAll: bulkFileAsDrafted },
+    { ...INBOX_KEYS.done, run: (i) => { doneOne(i); advance(i) }, runAll: bulkDone },
+    { ...INBOX_KEYS.plan, run: planOne },
+    { ...INBOX_KEYS.dismiss, run: (i) => { dismissOne(i); advance(i) }, runAll: bulkDismiss },
+    { ...INBOX_KEYS.snooze, run: (i) => setKbSnoozeId(i.id), runAll: (sel) => setBulkSnoozePos(rowAnchor('inbox-', sel[0].id)) },
     {
-      keys: ['Enter'],
-      label: 'Open',
+      ...INBOX_KEYS.open,
       run: (i) => {
+        // A31: on a computer a GitHub row has nothing to open in place; ↵ opens the issue, as a click on its number does.
+        if (i.kind === 'github_issue' && !isMobile) return document.querySelector<HTMLElement>(`#inbox-${i.id} .ib-gh-num`)?.click()
         openCard(i.id)
         if (i.kind !== 'github_issue') setEditId(i.id)
       },
     },
   ]
-  const dismissedBindings: ListBinding<InboxItem>[] = [{ keys: ['r'], label: 'Restore', run: (i) => restoreInboxItem(i), runAll: bulkRestore }]
+  const dismissedBindings: ListBinding<InboxItem>[] = [{ ...INBOX_KEYS.restore, run: (i) => restoreInboxItem(i), runAll: bulkRestore }]
   // Snoozed shares Dismissed's R: it brings the capture back to Waiting now.
   const { focusedId, setFocusedId } = useListKeys(visibleItems, tab === 'waiting' ? waitingBindings : dismissedBindings, {
     idPrefix: 'inbox-',

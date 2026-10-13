@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
-import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS, LIST_EXTRAS, LIST_NAV, SELECTION_NOTE, keyCap } from '../lib/shortcuts'
+import { GLOBAL_SHORTCUTS, SHEET_SECTIONS, LIST_EXTRAS, LIST_NAV, SELECTION_NOTE, keyCap } from '../lib/shortcuts'
+import { LIST_SHORTCUTS } from '../features/tasks/listShortcuts'
 import { usePageShortcutsStore, type ShortcutEntry } from '../lib/pageShortcutsStore'
 import { restartTour } from '../features/tour/help'
 // J-17: the keycap lives in the shared kit now — this overlay was its only user before.
@@ -36,7 +37,7 @@ const link = { background: 'none', border: 'none', padding: '6px 0', font: 'inhe
 /** The whole keymap — a 3-column reference (Anywhere, On a task, Inbox triage + Command bar). "On a
  * task" is what the list page underneath registered (useListKeys → pageShortcutsStore: the keys it
  * really dispatches on, so the sheet can't drift from them), plus the keys every task list has; with
- * no list page mounted it falls back to the static Tasks list (lib/shortcuts.ts). Tour & help 14k-3
+ * no list page mounted it falls back to the Tasks keys table itself (tasks/listShortcuts.ts). Tour & help 14k-3
  * gives it the paper treatment: a solid taped sheet with a fern, a ×, and the way back to the tour
  * and the Guide. */
 export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -47,7 +48,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
   const lists = page.section === 'Lists'
   const taskKeys = page.section
     ? [LIST_NAV, ...page.entries.map((e) => ({ ...e, keys: e.keys.map(keyCap) })), ...(lists ? LIST_EXTRAS : [])]
-    : [...TASK_LIST_SHORTCUTS, ...LIST_EXTRAS]
+    : [LIST_NAV, ...LIST_SHORTCUTS.map((e) => ({ keys: e.keys.map(keyCap), label: e.label })), ...LIST_EXTRAS] // A31: the Tasks table itself, never a copy
   const taskTitle = page.section && !lists ? `On a task · ${page.section}` : 'On a task'
 
   if (!open) return null
@@ -96,9 +97,11 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
             <Category title={taskTitle} entries={taskKeys} note={!page.section || lists ? SELECTION_NOTE : undefined} />
           </div>
           <div>
-            <Category title="Inbox triage" entries={INBOX_SHORTCUTS} />
-            <div style={{ marginTop: 20 }} />
-            <Category title="Command bar" entries={COMMAND_BAR_SHORTCUTS} />
+            {SHEET_SECTIONS.map((section, i) => (
+              <div key={section.title} style={i ? { marginTop: 20 } : undefined}>
+                <Category title={section.title} entries={section.entries} />
+              </div>
+            ))}
           </div>
         </div>
 
