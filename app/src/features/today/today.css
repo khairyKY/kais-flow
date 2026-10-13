@@ -38,7 +38,6 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--fw-medium);
-  font-size: var(--fs-page-title);
   line-height: 1.15;
   letter-spacing: -0.015em;
   color: var(--ink-body);

@@ -277,7 +277,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
         <img src={`${A}/fern/${fern}.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
         <div>
           <FieldLabel>Weekly Review · week {weekNumber}</FieldLabel>
-          <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The sweep</h1>
+          <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The sweep</h1>
         </div>
       </div>
       {!isMobile && motion && allSwept && (

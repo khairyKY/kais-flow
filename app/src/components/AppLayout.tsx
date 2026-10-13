@@ -871,6 +871,9 @@ export function AppLayout() {
              grows down and in from the glyph's corner, so the clip can't cut it under 44 and it never
              reaches past the box onto the next photo or the words above. */
           .kf-hit.kf-hit-corner::after { inset: 0 0 auto auto; width: var(--touch-min); height: var(--touch-min); }
+          /* A small text control with neighbours close by (the phone journal footer's links, 12px apart): the area
+             grows to 44px, centred, and no further, so it never reaches the next one; a side already 44 stays put. */
+          .kf-hit.kf-hit-min::after { inset: min(0px, calc(50% - 22px)); }
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 

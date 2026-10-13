@@ -1,0 +1,34 @@
+# phone-taps negative controls (2026-10-13)
+
+## 1. The pixel harness sees a tap area that draws
+AppLayout's .kf-hit-min::after given background: rgba(255,0,0,.2) for one run (ONLY=journal,journal-thought), then restored byte-for-byte (cmp).
+Expected: every phone view FAILs (coarse pointer), desktop stays identical (fine pointer: no area).
+
+PASS day-desktop-journal  1280×800  0 px differ · 308 elements, 0 styles differ
+FAIL day-phone-journal-thought  390×844  13373 px differ · 256 elements, 0 styles differ
+FAIL day-phone-journal  390×844  9328 px differ · 252 elements, 0 styles differ
+FAIL day-phone360-journal-thought  360×844  13375 px differ · 256 elements, 0 styles differ
+FAIL day-phone360-journal  360×844  9328 px differ · 252 elements, 0 styles differ
+FAIL day-phone430-journal-thought  430×844  13374 px differ · 256 elements, 0 styles differ
+FAIL day-phone430-journal  430×844  9328 px differ · 252 elements, 0 styles differ
+PASS night-desktop-journal  1280×800  0 px differ · 308 elements, 0 styles differ
+FAIL night-phone-journal-thought  390×844  13376 px differ · 256 elements, 0 styles differ
+FAIL night-phone-journal  390×844  9328 px differ · 252 elements, 0 styles differ
+FAIL night-phone360-journal-thought  360×844  13375 px differ · 256 elements, 0 styles differ
+FAIL night-phone360-journal  360×844  9328 px differ · 252 elements, 0 styles differ
+FAIL night-phone430-journal-thought  430×844  13374 px differ · 256 elements, 0 styles differ
+FAIL night-phone430-journal  430×844  9328 px differ · 252 elements, 0 styles differ
+
+2/14 identical
+
+## 2. journal-media's new tap checks fail on the code before the fix
+app/src/components/AppLayout.tsx and features/journal/JournalPage.tsx restored from HEAD (the v1.1.1 tree) for one run, then put back byte-for-byte (cmp).
+
+FAIL phone-360 card footer: each a solid ≥44×44 tap area — ＋ New entry drawn 93.2×18 hit 94×19 · 🎤 Talk drawn 57.5×18 hit 59×19 · ＋ Photo drawn 61.1×18 hit 62×19
+FAIL phone-360 thought editor (Cancel, Save): each a solid ≥44×44 tap area — Cancel drawn 37.2×44 hit 39×45 · Save drawn 42.4×44 hit 43×45 (notched)
+FAIL phone-390 card footer: each a solid ≥44×44 tap area — ＋ New entry drawn 93.2×18 hit 94×19 · 🎤 Talk drawn 57.5×18 hit 59×19 · ＋ Photo drawn 61.1×18 hit 62×19
+FAIL phone-390 thought editor (Cancel, Save): each a solid ≥44×44 tap area — Cancel drawn 37.2×44 hit 39×45 · Save drawn 42.4×44 hit 43×45 (notched)
+FAIL phone-430 card footer: each a solid ≥44×44 tap area — ＋ New entry drawn 93.2×18 hit 94×19 · 🎤 Talk drawn 57.5×18 hit 59×19 · ＋ Photo drawn 61.1×18 hit 62×19
+FAIL phone-430 thought editor (Cancel, Save): each a solid ≥44×44 tap area — Cancel drawn 37.2×44 hit 39×45 · Save drawn 42.4×44 hit 43×45 (notched)
+
+114/120 passed
