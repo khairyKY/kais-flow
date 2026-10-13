@@ -1,5 +1,9 @@
-import { useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { streamChat } from './api'
+import { SEND, loadChat, saveChat, type DisplayMessage } from './history'
+import { useAuth } from '../auth/AuthProvider'
+import { appendDictation } from '../capture/holdToTalk'
+import { toastUndo } from '../../lib/undo'
 import { useOpenSearchHit } from '../search/api'
 import { AI_ALLOWANCE_USED_UP } from '../capture/aiAllowance'
 import { useBodyScrollLock, useEscapeStack } from '../../lib/overlayStack'
@@ -9,24 +13,31 @@ import { takeChatStarter } from '../widgets/native'
 import type { IconName } from '../../components/icons/kf'
 import './chat.css'
 
+// The voice sheet (and its recorder) loads only when the mic is used.
+const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
+
+function longPressMs(): number {
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-longpress')) || 400
+}
+
 const STARTERS: [IconName, string][] = [
   ['sprout', 'What’s on today?'],
   ['delete', 'What should I drop?'],
   ['tomorrow', 'How do I move a task to tomorrow?'],
 ]
 
-interface DisplayMessage {
-  role: 'user' | 'assistant'
-  content: string
-  citations?: Citation[]
-}
-
 export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [messages, setMessages] = useState<DisplayMessage[]>([])
+  const uid = useAuth().session?.user.id
+  // A28: the conversation stays (this device, this account) until Clear.
+  const [messages, setMessages] = useState<DisplayMessage[]>(() => loadChat(uid))
   const [input, setInput] = useState(() => takeChatStarter() ?? '') // the Ask widget's chip types its question
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const openHit = useOpenSearchHit()
+  /** The mic's voice sheet; `release` = the finger lifted after a hold, so the take ends and sends. */
+  const [voice, setVoice] = useState<{ release: boolean } | null>(null)
+  const pressedAt = useRef(0)
+  useEffect(() => saveChat(uid, messages), [uid, messages])
   useBodyScrollLock(open)
   useEscapeStack(open, onClose) // F3 (punch 12): Esc closes the ⌘J drawer like every other overlay
 
@@ -53,7 +64,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     abortRef.current = controller
     try {
       await streamChat(
-        history.map((m) => ({ role: m.role, content: m.content })),
+        history.slice(-SEND).map((m) => ({ role: m.role, content: m.content })),
         {
           onDelta: (delta) => {
             setMessages((prev) => {
@@ -76,6 +87,22 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     } finally {
       setBusy(false)
     }
+  }
+
+  function clear() {
+    const prior = messages
+    setMessages([])
+    toastUndo('Chat cleared', () => {
+      saveChat(uid, prior) // the panel may be closed by now
+      setMessages(prior)
+    })
+  }
+
+  /** The words heard become the message (after anything already typed), sent at once. */
+  function askHeard(heard: string) {
+    const text = appendDictation(input, heard)
+    setInput('')
+    void send(text)
   }
 
   function goToCitation(c: Citation) {
@@ -106,6 +133,11 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px dashed var(--line-dashed)' }}>
         <img src="/ds/assets/clover/awake.png" alt="" className="kf-lean" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>Chat</span>
+        {messages.length > 0 && !busy && (
+          <button type="button" className="kf-chat-clear" onClick={clear}>
+            Clear
+          </button>
+        )}
         <button type="button" onClick={onClose} className="kf-hit" style={{ marginLeft: 'auto', border: 'none', background: 'none', color: 'var(--ink-faint)', fontSize: 16, cursor: 'pointer', padding: 4, lineHeight: 1 }}>
           ✕
         </button>
@@ -202,6 +234,29 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             opacity: busy ? 0.6 : 1,
           }}
         />
+        {/* A28: the mic — tap to talk (the sheet's Stop & send), or hold while you speak and let go. */}
+        <button
+          type="button"
+          className="kf-chat-mic"
+          aria-label="Talk — tap, or hold while you speak"
+          title="Talk — tap, or hold while you speak"
+          disabled={busy}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return
+            e.currentTarget.setPointerCapture(e.pointerId)
+            pressedAt.current = Date.now()
+            setVoice({ release: false })
+          }}
+          onPointerUp={() => {
+            if (Date.now() - pressedAt.current >= longPressMs()) setVoice((v) => v && { release: true })
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+          onClick={(e) => {
+            if (e.detail === 0) setVoice({ release: false }) // Enter / Space: the tap path
+          }}
+        >
+          <Icon name="mic" size={16} />
+        </button>
         <button
           type="submit"
           disabled={busy || !input.trim()}
@@ -225,6 +280,11 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           ↑
         </button>
       </form>
+      {voice && (
+        <Suspense fallback={null}>
+          <VoiceCaptureSheet open release={voice.release} onText={askHeard} onClose={() => setVoice(null)} />
+        </Suspense>
+      )}
     </div>
   )
 }
