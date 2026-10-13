@@ -234,7 +234,7 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
   const ai = await readQuietly(rawText)
   if (!ai) return
   const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
-  if (current.status !== 'pending') return // triaged meanwhile — the person's call stands
+  if (current.status !== 'pending' || current.deleted_at) return // triaged (or undone) meanwhile — the person's call stands
   const read = { ...current, ai_parse: ai as unknown as Record<string, unknown>, confidence: ai.confidence, updated_at: nowIso() }
   if (ai.kind !== 'task' || ai.confidence < confidenceThreshold()) {
     writeRow('inbox_items', read)

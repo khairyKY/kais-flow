@@ -11,7 +11,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { useCalendarRows } from '../calendar/api'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -699,9 +699,9 @@ export function TasksPage() {
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
     complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => openTask(t.id), // F3 punch 29: Enter opens detail
-    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
+    today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     labels: (t) => setKbLabelIds([t.id]),

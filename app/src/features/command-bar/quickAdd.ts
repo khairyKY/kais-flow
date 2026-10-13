@@ -1,12 +1,11 @@
 import { blockIfTimed, enrichTypedInboxItem, enrichTypedTask } from '../capture/api'
 import { createEvent, deleteEvent } from '../calendar/api'
-import { captureText } from '../inbox/api'
+import { captureText, uncapture } from '../inbox/api'
 import { createTask, toastAdded } from '../tasks/api'
 import { addDays } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { writeRow } from '../../lib/outbox'
 import { playSound } from '../../lib/sounds'
-import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
@@ -22,8 +21,9 @@ export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' 
   if (kind === 'event') addTypedEvent(parsed, typed)
   else if (hasStructure(parsed)) addTypedTask(parsed, typed, parsed.projectMatch ?? parsed.domainMatch)
   else {
-    void enrichTypedInboxItem(captureText(typed), typed)
-    useToastStore.getState().push({ message: 'Added to Inbox' })
+    const item = captureText(typed)
+    void enrichTypedInboxItem(item, typed)
+    toastUndo('Added to Inbox', () => uncapture(item)) // P7e A17: it had no Undo
   }
 }
 

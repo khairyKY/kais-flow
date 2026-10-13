@@ -337,6 +337,19 @@ export function restoreInboxItem(item: InboxItem, silent = false): void {
   if (!silent) toastUndo('Restored to Inbox', () => writeRow('inbox_items', prior))
 }
 
+/** The bar's "Added to Inbox · Undo" (P7e A17): the capture goes to Trash — with the task the AI filed it as,
+ * when its read landed first (that task never should have existed: removed outright, as unfile does). */
+export function uncapture(item: InboxItem): void {
+  const now = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
+  const filed = now.filed_task_id ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === now.filed_task_id) : undefined
+  if (filed) {
+    deleteEventsForTask(filed.id)
+    writeRow('tasks', filed, 'delete')
+    logActivity('task.deleted', 'task', filed.id, { reason: 'capture undo' })
+  }
+  purgeInboxItem({ ...now, status: 'pending', filed_task_id: null })
+}
+
 /** The Dismissed tab's "Clear now" (2a): into Trash, not gone — Trash keeps it 30 days, then the
  * server's `compost-expired` pg_cron job (migration 0032) deletes it for good. */
 export function purgeInboxItem(item: InboxItem): void {

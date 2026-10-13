@@ -22,7 +22,8 @@ import { fromMin } from '../../components/pickerMath'
 import { todayFor, type SpreadPick } from './planMath'
 import { isTop3Today, openTop3Count } from './top3Rule'
 import { placeTask, planReparent, type MoveTarget } from './move'
-import { addedLine } from './taskSheetMath'
+import { addedLine, dueChip } from './taskSheetMath'
+import { PRIORITY_LABELS } from './taskMenuSpec'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -378,6 +379,39 @@ export function somedayTasksWithUndo(tasks: Task[]): void {
 
 /** A field edit the slipping view should see (it reads entity_type='task' activity). */
 const logUpdate = (task: Task, field: string) => logActivity('task.updated', 'task', task.id, { field })
+
+/** P7e A17: a field edit with "<message> · Undo" — Priority, Repeat, Remind and Duration from a menu,
+ * the task sheet, the editor or a key. `write` runs on each task (through its own setter); Undo writes
+ * back every field it changed, as it was. Nothing changed (the same pick again), no toast. */
+export function editWithUndo(tasks: readonly Task[], message: string, write: (task: Task) => void): void {
+  const changes = tasks.flatMap((t) => {
+    const before = cached(t)
+    write(before)
+    const after = cached(t)
+    const keys = (Object.keys(after) as (keyof Task)[]).filter((k) => k !== 'updated_at' && after[k] !== before[k])
+    return keys.length ? [{ before, back: Object.fromEntries(keys.map((k) => [k, before[k] ?? null])) as Partial<Task> }] : []
+  })
+  if (changes.length === 0) return
+  toastUndo(message, () =>
+    changes.forEach(({ before, back }) => {
+      patchTask(before, back)
+      logUpdate(before, Object.keys(back).join(','))
+    }),
+  )
+}
+
+/** Priority for one task or a selection (the menus, `!`, the bulk bar), with one Undo. */
+export function prioritizeWithUndo(tasks: readonly Task[], priority: number | null): void {
+  const name = priority ? (PRIORITY_LABELS[priority] ?? `P${priority}`) : null
+  const message = tasks.length > 1 ? `${tasksLabel(tasks.length)} · priority ${name?.toLowerCase() ?? 'off'}` : name ? `Priority · ${name}` : 'Priority off'
+  editWithUndo(tasks, message, (t) => setPriority(t, priority))
+}
+
+/** One task to a day, or off its date, with "Planned · Mon 09:00" / "Date taken off" · Undo — the Plan
+ * list, keys 1 and 3, Someday's → Today and the editor's date fields all land here (P7e A17). */
+export function planWithUndo(task: Task, dueAt: string | null, timed = false): void {
+  toastUndo(dueAt ? `Planned · ${dueChip(dueAt, new Date())}` : 'Date taken off', rescheduleDue(task, dueAt, timed))
+}
 
 export function setLabels(task: Task, labels: string[]): void {
   patchTask(task, { labels })

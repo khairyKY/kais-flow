@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
@@ -346,9 +346,9 @@ export function TodayPage() {
   const listBindings = [...buildListBindings({
     complete: (t) => completeTaskWithUndo(t),
     open: (t) => openTask(t.id),
-    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
+    today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     labels: (t) => setKbLabelIds([t.id]),

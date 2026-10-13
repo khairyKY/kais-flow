@@ -45,9 +45,9 @@ export interface TaskMenuActions {
   clearDate?: () => void
   /** The task sheet's Duration chip. */
   duration?: (min: number | null) => void
-  /** The Label picker's tap, through the surface's own setter (the task sheet's "Saved"); without
-   * it the picker writes itself (labels.ts toggleLabel). */
-  labels?: (labels: string[]) => void
+  /** After a Label picker tap (the task sheet's "Saved"); the picker writes itself (labels.ts
+   * toggleLabel, with its Undo — P7e A17). */
+  labels?: () => void
   /** Plan's Next free slot → Confirm (single task). */
   slot?: (startsAt: string, endsAt: string) => void
   /** A Top 3 row's Move up / Move down. */

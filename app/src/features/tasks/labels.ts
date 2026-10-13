@@ -108,15 +108,17 @@ const writeMeta = (next: LabelMeta) => {
 }
 const tasksWord = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
-/** The picker's tap: one task quietly (like any field edit); several (`L` on a selection) with one
- * Undo. `label` is taken as typed — a new one is simply the first task to carry it. */
+/** The picker's tap — every one, from a row's `L`, a selection's or the task sheet — with one Undo
+ * (P7e A17: one task used to change quietly). `label` is taken as typed — a new one is simply the
+ * first task to carry it. */
 export function toggleLabel(taskIds: readonly string[], label: string): void {
   const all = cachedTasks()
   const plan = planToggle(taskIds.flatMap((id) => all.find((t) => t.id === id) ?? []), label)
   plan.forEach((p) => setLabels(p.task, p.labels))
-  if (taskIds.length < 2 || plan.length === 0) return
+  if (plan.length === 0) return
   const on = plan[0].labels.includes(label)
-  toastUndo(`${on ? 'Added' : 'Removed'} “${label}” ${on ? 'to' : 'from'} ${tasksWord(plan.length)}`, () => plan.forEach((p) => setLabels(p.task, p.task.labels)))
+  const many = taskIds.length > 1 ? ` ${on ? 'to' : 'from'} ${tasksWord(plan.length)}` : ''
+  toastUndo(`${on ? 'Added' : 'Removed'} “${label}”${many}`, () => plan.forEach((p) => setLabels(p.task, p.task.labels)))
 }
 
 /** Rename (or merge into an existing label) / delete, everywhere, with one Undo that puts back every
