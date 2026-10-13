@@ -109,6 +109,26 @@ From then on, google-sync reads the chosen calendars **every 15 minutes**. It re
 
 On the grid, Google events look like normal events, in their calendar's colour. You can't drag, resize or delete them. Click one and it says **"From Google · <calendar name>"**. They count as busy for free time and overlaps.
 
+## 8. Your plan in Google as busy (and Reconnect, if you connected before 2026-10-14)
+
+Kai's Flow also writes your own plan (time blocks, task blocks and your own events) to your **main** Google calendar as private **busy** events, so anyone who sees your free/busy in Google sees you busy then. Kai decided this on 2026-10-14.
+
+- It uses the scope `https://www.googleapis.com/auth/calendar.events.owned`. Google describes it as *"See, create, change, and delete events on Google calendars you own"*. It can't reach calendars that are only shared with you.
+- Every event it writes carries a private tag. Only events with that tag are ever changed or deleted. Your other Google events are never touched.
+- The events are private (others see only "busy"), they're titled with your block's title, and they have no Google reminders, because Kai's Flow already reminds you. A block you marked **Free** goes to Google as free.
+- They cover a week ago to 60 days ahead, the same window as the read side. A block that moves, changes or goes in Kai's Flow follows within 15 minutes, or on **Sync now**. Older ones are removed from Google as they leave the window. If you edit or delete one of them in Google, the next sync puts it back the way Kai's Flow has it: Kai's Flow is the truth.
+
+**If you connected before 2026-10-14** `[KAI]`, your grant can only read. Nothing breaks: your calendars keep syncing. To allow the write:
+
+1. Google Cloud → **Google Auth Platform → Data Access → Add or remove scopes**. Paste `https://www.googleapis.com/auth/calendar.events.owned` into "Manually add scopes", click **Add to table**, then **Update**, then **Save**. Like the read scope, Google lists it as *sensitive*. Don't submit anything for verification.
+2. In the app: **Settings → Integrations → Google Calendar** (phone: Settings → Connections) now says **"Allow Kai's Flow to show your blocks in Google"**. Click **Reconnect**.
+3. On Google's page, choose the same account, click through "Google hasn't verified this app" (**Advanced → Go to Kai's Flow (unsafe)**), leave **both** boxes ticked, and click **Continue**.
+4. Back on Settings, the row now has **"Show my plan in Google as busy"**, switched on. The first sync writes your blocks. It makes at most 150 changes a run, so a full first plan can take two runs (15 minutes apart).
+
+**A new connection** asks for both scopes at once: leave both boxes ticked. If you untick the write box, reading still works, and the row offers Reconnect for the write later.
+
+**Turning "Show my plan in Google as busy" off** deletes Kai's Flow's events from Google at once. **Disconnect** deletes them too, before it revokes access.
+
 ## If something goes wrong
 
 | You see | Why | Fix |
@@ -118,10 +138,8 @@ On the grid, Google events look like normal events, in their calendar's colour. 
 | Google says `redirect_uri_mismatch` | The URI in step 4 isn't exactly the one above, or the change hasn't spread yet. | Fix it, wait a few minutes, connect again. |
 | "Access expired — reconnect" | The publishing status is Testing (7 days), or access was removed at Google. | Publish the app (step 3), then Reconnect. |
 | "leave the calendar box ticked on Google's page" | The calendar box on the consent page was unticked. | Connect again and leave it ticked. |
+| "Allow Kai's Flow to show your blocks in Google" stays after a Reconnect | The "create, change, and delete events" box was unticked, or Data Access doesn't list `calendar.events.owned` yet. | Do step 8.1, then Reconnect and leave both boxes ticked. |
+| Your blocks aren't in Google | "Show my plan in Google as busy" is off, or the first sync hasn't run yet. | Switch it on, or press **Sync now**. |
 | "Google didn't give lasting access" | Rare: Google sent no refresh token. | Remove Kai's Flow at <https://myaccount.google.com/permissions>, then Connect again. |
 
-**Disconnect** (in Settings) revokes the access at Google and removes every synced event from Kai's Flow. Your own events aren't touched.
-
-## Not built yet (follow-up)
-
-Our blocks going out to Google as "busy" (Akiflow's two-way sync). It needs the `calendar.events` scope and a writer, and Kai decided on read-only for now (2026-10-13).
+**Disconnect** (in Settings) first deletes the busy events Kai's Flow wrote to your Google calendar (best effort), then revokes the access at Google and removes every synced event from Kai's Flow. Your own events in Kai's Flow aren't touched.
