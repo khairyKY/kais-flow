@@ -1,5 +1,31 @@
 [
   {
+    "v": "v1.1.2",
+    "date": "2026-10-13",
+    "title": "Your assistant plans the week, and keys for everything",
+    "highlights": [
+      "Your AI assistant can plan your week: reschedule and edit tasks, add, move or delete events and Time blocks. Adding a task over MCP works again",
+      "Ctrl+Z undoes the last thing you did; i, u and / jump to Inbox, Upcoming and Search; ⌘K reaches projects, areas and labels",
+      "The calendar has keys: d, w, m, 1–7, ← → and t, and ⌘-click on a slot makes a task",
+      "The bar understands more: “every week”, // for notes, <friday, links, and events. The tray follows the same rules",
+      "A timed capture filed from the Inbox lands on the calendar; “Ends after N times” really ends, and Yearly is a repeat",
+      "After midnight, Shut down closes the day you lived, and the evening nudge stays quiet once you have",
+      "Birthdays a week ahead, archived projects stop slipping, and routines get a description",
+      "On a phone, the journal's controls are easier to tap and a tap on your words never deletes the entry; a paused series stays quiet everywhere"
+    ],
+    "icons": [
+      "chat",
+      "keyboard",
+      "calendar",
+      "sprout",
+      "routine",
+      "moon",
+      "people",
+      "journal"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
     "v": "v1.1.1",
     "date": "2026-10-13",
     "title": "Journal photos that go when you say so",
