@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
-import { DndContext, MouseSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { formatDuration } from '../tasks/taskDisplay'
@@ -404,16 +404,6 @@ export function TodayPage() {
     window.addEventListener('keydown', onKey, { capture: true })
     return () => window.removeEventListener('keydown', onKey, { capture: true })
   }, [keysOn, navigate])
-  const dragSensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
-  function onTop3Drop(e: DragEndEvent) {
-    // The drop's mouseup is followed by a click on the moved row — it must not open the task.
-    const swallow = (ev: Event) => ev.stopPropagation()
-    window.addEventListener('click', swallow, { capture: true, once: true })
-    setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0)
-    const t = top3InOrder.find((x) => x.id === e.active.id)
-    const to = top3InOrder.findIndex((x) => x.id === e.over?.id)
-    if (t && to >= 0) moveInTop3Order(t, to)
-  }
 
   // Polish D (2026-09-26 audit): the rail counted and listed EVERY active routine — a Sunday-only
   // "Plan the week" on a Saturday, "1/5" where Routines said "1 of 3". The count and the rows now
@@ -879,19 +869,19 @@ export function TodayPage() {
             ) : allDone ? (
               <DoneTodayCard />
             ) : (
-              <DndContext sensors={dragSensors} onDragEnd={onTop3Drop}>
+              <>
                 {goal && (
-                  <Top3Slot key={goal.id} id={goal.id} open={!goal.completed_at}>
+                  <Top3Slot key={goal.id} task={goal} index={0}>
                     <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} meta={blockMetaFor(goal, events, now)} inProgress={inProgressIds.has(goal.id)} place={placeOf(goal)} {...rowSelection(goal)} />
                   </Top3Slot>
                 )}
                 {restTop3.map((t, i) => (
-                  <Top3Slot key={t.id} id={t.id} open={!t.completed_at}>
+                  <Top3Slot key={t.id} task={t} index={i + 1}>
                     <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border={i < restTop3.length - 1} pick meta={blockMetaFor(t, events, now)} inProgress={inProgressIds.has(t.id)} place={placeOf(t)} {...rowSelection(t)} highlighted={t.id === focusedId} />
                   </Top3Slot>
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
-              </DndContext>
+              </>
             )}
           </section>
 
@@ -1685,32 +1675,28 @@ const blockGrammar = (event: CalendarEvent) => ({ actions: { tomorrow: () => mov
 
 const doneAt = (task: Task) => (task.completed_at ? `Done ${cairoTimeKey(new Date(task.completed_at))}` : 'Done')
 
+/** A place in the Top 3: its index in the day's order (0 = the goal). */
+type Top3Spot = Spot & { kind: 'top3'; index: number }
+
 /** Desktop: a Top 3 row that drags (mouse only — touch keeps its swipes) onto another's place;
- * dropped on the goal card it becomes the goal. Every row is a drop target, only open ones drag. */
-function Top3Slot({ id, open, children }: { id: string; open: boolean; children: React.ReactNode }) {
-  const drag = useDraggable({ id, disabled: !open })
-  const drop = useDroppable({ id })
-  const t = drag.transform
+ * dropped on the goal card it becomes the goal. Every row is a drop target, only open ones drag.
+ * On the shared drag kit (components/drag): the spot under the pointer and the ghost are placed in
+ * the root zoom's px — its own DndContext moved the row by dnd-kit's un-zoomed delta, so at 125% a
+ * row aimed at the goal card landed one place off. Its own place is no place (null, not a soft no). */
+function Top3Slot({ task, index, children }: { task: Task; index: number; children: React.ReactNode }) {
+  const drop = useDropSpot<Top3Spot>(`top3:${task.id}`, { kind: 'top3', label: index === 0 ? 'the goal' : `place ${index + 1}`, index })
+  const load: DragLoad = {
+    ids: [task.id],
+    label: task.title,
+    verdict: (spot) => (spot.kind === 'top3' && (spot as Top3Spot).index !== index ? true : null),
+    drop: (spot) => void moveInTop3Order(task, (spot as Top3Spot).index),
+  }
   return (
-    <div
-      ref={(el) => {
-        drag.setNodeRef(el)
-        drop.setNodeRef(el)
-      }}
-      {...drag.listeners}
-      data-top3-slot={id}
-      style={{
-        position: 'relative',
-        transform: t ? `translate3d(${t.x}px, ${t.y}px, 0)` : undefined,
-        zIndex: drag.isDragging ? 5 : undefined,
-        cursor: drag.isDragging ? 'grabbing' : undefined,
-        borderRadius: 3,
-        outline: drop.isOver && !drag.isDragging ? '2px dashed var(--acc-sage)' : undefined,
-        outlineOffset: 2,
-      }}
-    >
-      {children}
-    </div>
+    <DragRow id={task.id} load={load} disabled={!!task.completed_at}>
+      <div ref={drop.ref} className={drop.className} data-top3-slot={task.id} style={{ position: 'relative', borderRadius: 3 }}>
+        {children}
+      </div>
+    </DragRow>
   )
 }
 
