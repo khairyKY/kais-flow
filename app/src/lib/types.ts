@@ -246,6 +246,9 @@ export interface AppSettings {
   /** Label colours, { name: colour token } (migration 0069), read through features/tasks/labels.ts
    * parseLabelMeta — absent before the push, null until a label is first coloured. */
   label_meta?: unknown
+  /** Checklist templates, [{ id, name, items: [{ title, type }] }] (migration 0079), read through
+   * features/projects/templates.ts parseTemplates — absent before the push, null until the first is saved. */
+  checklist_templates?: unknown
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
