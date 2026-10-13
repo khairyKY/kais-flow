@@ -663,6 +663,11 @@ export function AppLayout() {
       }
       // ⌘Z / Ctrl+Z (P7e A3): the newest toast's Undo. Inside a field the browser's own undo runs.
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && pressed(e, 'z', 'KeyZ') && !keysResting(e) && undoLatest()) e.preventDefault()
+      // ⌘, / Ctrl+, (P7e A7): Settings.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && pressed(e, ',', 'Comma') && !keysResting(e)) {
+        e.preventDefault()
+        navigate('/settings')
+      }
       if (isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
       if (e.key === 'n') {
         e.preventDefault()
@@ -672,10 +677,22 @@ export function AppLayout() {
         e.preventDefault()
         setShortcutsOpen((v) => !v)
       }
+      // P7e A7, Akiflow's single keys: i Inbox, u Upcoming, bare / Search. (t stays Top 3, g stays in ⌘K: D-5.)
+      if (keysResting(e)) return
+      const go = !e.shiftKey && pressed(e, 'i', 'KeyI') ? '/inbox' : !e.shiftKey && pressed(e, 'u', 'KeyU') ? '/tasks?list=upcoming' : null
+      if (go) {
+        e.preventDefault()
+        navigate(go)
+      }
+      // '/' wherever the layout puts it (Shift+7 on German); on a non-Latin layout, the unshifted Slash key.
+      if (e.key === '/' || (e.code === 'Slash' && !e.shiftKey && !/^[\x20-\x7e]$/.test(e.key))) {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [setCommandBarOpen, toggleCommandBar])
+  }, [setCommandBarOpen, toggleCommandBar, navigate])
 
   // Motion 2b/4e: Esc pops a detail page off the stack — after any open overlay has had its turn
   // (lib/overlayStack closes the topmost and marks the key handled).

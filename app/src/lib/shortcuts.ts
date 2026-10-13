@@ -4,12 +4,17 @@ import type { ShortcutEntry } from './pageShortcutsStore'
 // `g` Go-to (D-5: folded into ⌘K), the Navigate section (t/i/u — never bound),
 // the Calendar section (no keydown listener exists), Inbox's f/x rows (code binds
 // e/d), and the command bar's `//` note syntax (never parsed).
+// P7e A7 (2026-10-13): i and u are bound now, in the shell (AppLayout); t stays Top 3.
 /** Always-on bindings, regardless of page — rendered by the `?` cheatsheet's first section. */
 export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['⌘/Ctrl', 'K'], label: 'Command bar' },
-  { keys: ['⌘/Ctrl', '/'], label: 'Search' },
+  { keys: ['/'], label: 'Search' },
+  { keys: ['⌘/Ctrl', '/'], label: 'Search, even mid-typing' },
   { keys: ['⌘/Ctrl', 'J'], label: 'Chat' },
   { keys: ['⌘/Ctrl', 'Z'], label: 'Undo the last action' },
+  { keys: ['⌘/Ctrl', ','], label: 'Settings' },
+  { keys: ['i'], label: 'Go to Inbox' },
+  { keys: ['u'], label: 'Go to Upcoming' },
   { keys: ['n'], label: 'New task' },
   { keys: ['?'], label: 'This cheatsheet' },
   { keys: ['Esc'], label: 'Close overlay' },
